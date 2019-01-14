@@ -1,0 +1,133 @@
+//
+//! @file CIniMap.cpp
+//! @copyright 1992 - 2016 Dennis Robinson (http://www.menasoft.com)
+//
+#include "StdAfx.h"
+#include "CIniMap.h"
+
+namespace Gray
+{
+	HRESULT CIniKeyValue::GetValInt(int* piValue) const
+	{
+		//! get value type converted to int.
+		//! error as if using scanf("%d")
+		ASSERT_N(piValue != nullptr);
+		const char* pszVal = m_sVal.c_str();
+		const char* pszEnd = nullptr;
+		*piValue = StrT::toI(pszVal, &pszEnd);
+		if (pszEnd == nullptr || pszEnd <= pszVal)
+			return HRESULT_WIN32_C(ERROR_DATATYPE_MISMATCH);
+		return S_OK;
+	}
+	HRESULT CIniKeyValue::GetValDouble(double* pdValue) const
+	{
+		//! get value type converted to double.
+		//! error as if using scanf("%lf")
+		ASSERT_N(pdValue != nullptr);
+		const char* pszVal = m_sVal.c_str();
+		const char* pszEnd = nullptr;
+		*pdValue = StrT::toDouble(pszVal, &pszEnd);
+		if (pszEnd == nullptr || pszEnd <= pszVal)
+			return HRESULT_WIN32_C(ERROR_DATATYPE_MISMATCH);
+		return S_OK;
+	}
+
+	//***************************************************************
+
+	ITERATE_t CIniMap::Find(const IniChar_t* pszPropTag) const
+	{
+		ATOMCODE_t ac = CAtomRef::FindAtomStr(pszPropTag).get_HashCode();
+		if (ac == 0)
+			return k_ITERATE_BAD;
+		return this->FindIForKey(ac);
+	}
+
+	const IniChar_t* CIniMap::GetVal(const IniChar_t* pszPropTag) const
+	{
+		//! get the value of a named attribute.
+		ITERATE_t i = Find(pszPropTag);
+		if (i < 0)
+			return nullptr;
+		return GetAt(i).m_sVal;
+	}
+
+	HRESULT CIniMap::SetVal(const IniChar_t* pszPropTag, CStringI sValue)
+	{
+		//! will replace if existing key.
+		//! @return E_INVALIDARG,  HRESULT_WIN32_C(ERROR_UNKNOWN_PROPERTY)
+		ITERATE_t i = this->Add(CIniKeyValue(pszPropTag, sValue));
+		return (HRESULT)i;
+	}
+
+	HRESULT CIniMap::PropGet(const IniChar_t* pszPropTag, OUT CStringI& rsValue) const // override
+	{
+		//! IIniBaseGetter
+		ITERATE_t i = Find(pszPropTag);
+		if (i < 0)
+			return HRESULT_WIN32_C(ERROR_UNKNOWN_PROPERTY);
+		rsValue = GetAt(i).m_sVal;
+		return (HRESULT)i;
+	}
+
+	HRESULT CIniMap::PropSet(const IniChar_t* pszPropTag, const IniChar_t* pszValue) // override
+	{
+		//! IIniBaseSetter
+		//! will replace if existing key.
+		//! @return E_INVALIDARG,  HRESULT_WIN32_C(ERROR_UNKNOWN_PROPERTY)
+		return SetVal(pszPropTag, pszValue);
+	}
+
+	HRESULT CIniMap::PropEnum(IPROPIDX_t ePropIdx, OUT CStringI& rsValue, CStringI* psKey) const // override
+	{
+		//! IIniBaseEnumerator
+		//! Enum the values and keys of the map.
+		//! @arg = optionally return psKey. nullptr = don't care.
+		if (!this->IsValidIndex(ePropIdx))
+			return HRESULT_WIN32_C(ERROR_UNKNOWN_PROPERTY);
+		const CIniKeyValue& val = GetAt(ePropIdx);
+		if (psKey != nullptr)
+		{
+			*psKey = val.m_aKey;
+		}
+		rsValue = val.m_sVal;
+		return (HRESULT)ePropIdx;
+	}
+
+	void CIniMap::SetCopy(const CIniMap& rAttribs)
+	{
+		//! Copy the attributes from rAttribs to this.
+		ASSERT(&rAttribs != this);
+		for (int i = 0; i < rAttribs.GetSize(); i++)
+		{
+			const CIniKeyValue& e = rAttribs.GetAt(i);
+			this->Add(CIniKeyValue(e.m_aKey, e.m_sVal));
+		}
+	}
+
+	HRESULT CIniMap::GetValInt(const IniChar_t* pszPropTag, int* piValue) const
+	{
+		//! error as if using scanf("%d")
+		ITERATE_t i = this->Find(pszPropTag);
+		if (i < 0)
+			return HRESULT_WIN32_C(ERROR_UNKNOWN_PROPERTY);
+		return GetAt(i).GetValInt(piValue);
+	}
+
+	HRESULT CIniMap::GetValDouble(const IniChar_t* pszPropTag, double* pdValue) const
+	{
+		//! error as if using scanf("%lf")
+		ITERATE_t i = this->Find(pszPropTag);
+		if (i < 0)
+			return HRESULT_WIN32_C(ERROR_UNKNOWN_PROPERTY);
+		return GetAt(i).GetValDouble(pdValue);
+	}
+
+	HRESULT CIniMap::SetValInt(const IniChar_t* pszPropTag, int iVal)
+	{
+		char szBuffer[StrT::k_LEN_MAX_KEY];
+		StrT::ItoA(iVal, szBuffer, STRMAX(szBuffer));
+		return SetVal(pszPropTag, szBuffer);
+	}
+
+}
+

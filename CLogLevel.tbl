@@ -1,0 +1,12 @@
+//
+//! @file CLogLevel.tbl
+//! @copyright 1992 - 2016 Dennis Robinson (http://www.menasoft.com)
+//
+LOGLEVELDEF(ANY,	0,	"",				"Anything. All. Very minor detail.")
+LOGLEVELDEF(TRACE,	1,	"Trace:",		"Low level debug trace. common event")
+LOGLEVELDEF(INFO,	2,	"Info:",		"Miscellaneous normal events.")
+LOGLEVELDEF(MAJOR,	3,	"Major:",		"Miscellaneous major events.")
+LOGLEVELDEF(WARN,	4,	"WARNING:",		"Strange events.")
+LOGLEVELDEF(ERROR,	5,	"ERROR:",		"Non-fatal errors. can continue.")
+LOGLEVELDEF(CRIT,	6,	"CRITICAL:",	"Critical. might not continue.")		// user really should see this.
+LOGLEVELDEF(FATAL,	7,	"FATAL:",		"Fatal error ! cannot continue.")

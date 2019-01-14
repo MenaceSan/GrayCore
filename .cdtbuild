@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?fileVersion 3.1.0?>
+
+<ManagedProjectBuildInfo>
+<project id="GrayCore.cdt.managedbuild.target.gnu.exe.299762833" name="Gnu Executable" projectType="cdt.managedbuild.target.gnu.exe">
+<configuration id="cdt.managedbuild.config.gnu.exe.debug.1552291346" name="Debug" description="" parent="cdt.managedbuild.config.gnu.exe.debug" artifactName="GrayCore" errorParsers="org.eclipse.cdt.core.MakeErrorParser;org.eclipse.cdt.core.GCCErrorParser;org.eclipse.cdt.core.GLDErrorParser;org.eclipse.cdt.core.GASErrorParser" cleanCommand="rm -rf">
+<toolChain superClass="cdt.managedbuild.toolchain.gnu.exe.debug" id="cdt.managedbuild.toolchain.gnu.exe.debug.173403239" name="GCC Tool Chain">
+<tool superClass="cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug" id="cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.1065351785" name="GCC C++ Compiler">
+<option superClass="gnu.cpp.compiler.option.preprocessor.def" id="gnu.cpp.compiler.option.preprocessor.def.1092397962" valueType="definedSymbols">
+<listOptionValue value="_DEBUG" builtIn="false"/>
+</option>
+</tool>
+<tool superClass="cdt.managedbuild.tool.gnu.c.compiler.exe.debug" id="cdt.managedbuild.tool.gnu.c.compiler.exe.debug.539701761" name="GCC C Compiler">
+<option superClass="gnu.c.compiler.option.preprocessor.def.symbols" id="gnu.c.compiler.option.preprocessor.def.symbols.1070148958" valueType="definedSymbols">
+<listOptionValue value="_DEBUG" builtIn="false"/>
+</option>
+</tool>
+<tool superClass="cdt.managedbuild.tool.gnu.c.linker.exe.debug" id="cdt.managedbuild.tool.gnu.c.linker.exe.debug.2146166894" name="GCC C Linker"/>
+<tool superClass="cdt.managedbuild.tool.gnu.cpp.linker.exe.debug" id="cdt.managedbuild.tool.gnu.cpp.linker.exe.debug.907553348" name="GCC C++ Linker">
+<option superClass="gnu.cpp.link.option.nostart" id="gnu.cpp.link.option.nostart.882837195" value="true" valueType="boolean"/>
+<option superClass="gnu.cpp.link.option.shared" id="gnu.cpp.link.option.shared.618045383" value="true" valueType="boolean"/>
+<option superClass="gnu.cpp.link.option.implname" id="gnu.cpp.link.option.implname.1832406301" value="" valueType="string"/>
+<option superClass="gnu.cpp.link.option.defname" id="gnu.cpp.link.option.defname.1857005035" value="" valueType="string"/>
+<option superClass="gnu.cpp.link.option.nostdlibs" id="gnu.cpp.link.option.nostdlibs.1379820978" value="false" valueType="boolean"/>
+<option superClass="gnu.cpp.link.option.soname" id="gnu.cpp.link.option.soname.1023697499" value="" valueType="string"/>
+<option superClass="gnu.cpp.link.option.other" id="gnu.cpp.link.option.other.2003122811"/>
+</tool>
+<tool superClass="cdt.managedbuild.tool.gnu.assembler.exe.debug" id="cdt.managedbuild.tool.gnu.assembler.exe.debug.1067133926" name="GCC Assembler"/>
+<macros/>
+</toolChain>
+<resourceConfiguration id="cdt.managedbuild.config.gnu.exe.debug.1552291346./GrayCore/GrayCore7.vcproj" name="GrayCore7.vcproj" exclude="true" resourcePath="/GrayCore/GrayCore7.vcproj" toolsToInvoke="" rcbsApplicability="disable"/>
+<resourceConfiguration id="cdt.managedbuild.config.gnu.exe.debug.1552291346./GrayCore/GrayCore8.vcproj" name="GrayCore8.vcproj" exclude="true" resourcePath="/GrayCore/GrayCore8.vcproj" toolsToInvoke="" rcbsApplicability="disable"/>
+<resourceConfiguration id="cdt.managedbuild.config.gnu.exe.debug.1552291346./GrayCore/CFile.cpp" name="CFile.cpp" exclude="false" resourcePath="/GrayCore/CFile.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.1065351785./GrayCore/CFile.cpp" rcbsApplicability="disable">
+<tool superClass="cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.1065351785" id="cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.1065351785./GrayCore/CFile.cpp" name="GCC C++ Compiler">
+<option superClass="gnu.cpp.compiler.option.other.verbose" id="gnu.cpp.compiler.option.other.verbose.1453355361" value="true" valueType="boolean"/>
+</tool>
+</resourceConfiguration>
+<resourceConfiguration id="cdt.managedbuild.config.gnu.exe.debug.1552291346./GrayCore/GrayCore7.sln" name="GrayCore7.sln" exclude="true" resourcePath="/GrayCore/GrayCore7.sln" toolsToInvoke="" rcbsApplicability="disable"/>
+<resourceConfiguration id="cdt.managedbuild.config.gnu.exe.debug.1552291346./GrayCore/GrayCore8.sln" name="GrayCore8.sln" exclude="true" resourcePath="/GrayCore/GrayCore8.sln" toolsToInvoke="" rcbsApplicability="disable"/>
+<resourceConfiguration id="cdt.managedbuild.config.gnu.exe.debug.1552291346./GrayCore/ReadMe.txt" name="ReadMe.txt" exclude="true" resourcePath="/GrayCore/ReadMe.txt" toolsToInvoke="" rcbsApplicability="disable"/>
+</configuration>
+<configuration id="cdt.managedbuild.config.gnu.exe.release.150083558" name="Release" description="" parent="cdt.managedbuild.config.gnu.exe.release" artifactName="GrayCore" errorParsers="org.eclipse.cdt.core.MakeErrorParser;org.eclipse.cdt.core.GCCErrorParser;org.eclipse.cdt.core.GLDErrorParser;org.eclipse.cdt.core.GASErrorParser" cleanCommand="rm -rf">
+<toolChain superClass="cdt.managedbuild.toolchain.gnu.exe.release" id="cdt.managedbuild.toolchain.gnu.exe.release.1827542211" name="GCC Tool Chain">
+<tool superClass="cdt.managedbuild.tool.gnu.cpp.compiler.exe.release" id="cdt.managedbuild.tool.gnu.cpp.compiler.exe.release.528153522" name="GCC C++ Compiler"/>
+<tool superClass="cdt.managedbuild.tool.gnu.c.compiler.exe.release" id="cdt.managedbuild.tool.gnu.c.compiler.exe.release.913860617" name="GCC C Compiler"/>
+<tool superClass="cdt.managedbuild.tool.gnu.c.linker.exe.release" id="cdt.managedbuild.tool.gnu.c.linker.exe.release.1253198620" name="GCC C Linker"/>
+<tool superClass="cdt.managedbuild.tool.gnu.cpp.linker.exe.release" id="cdt.managedbuild.tool.gnu.cpp.linker.exe.release.241817469" name="GCC C++ Linker">
+<option superClass="gnu.cpp.link.option.nostart" id="gnu.cpp.link.option.nostart.12684181" value="true" valueType="boolean"/>
+<option superClass="gnu.cpp.link.option.nostdlibs" id="gnu.cpp.link.option.nostdlibs.1243690482" value="true" valueType="boolean"/>
+<option superClass="gnu.cpp.link.option.shared" id="gnu.cpp.link.option.shared.271656306" value="true" valueType="boolean"/>
+</tool>
+<tool superClass="cdt.managedbuild.tool.gnu.assembler.exe.release" id="cdt.managedbuild.tool.gnu.assembler.exe.release.1096732654" name="GCC Assembler"/>
+<macros/>
+</toolChain>
+<resourceConfiguration id="cdt.managedbuild.config.gnu.exe.release.150083558./GrayCore/GrayCore7.sln" name="GrayCore7.sln" exclude="true" resourcePath="/GrayCore/GrayCore7.sln" toolsToInvoke="" rcbsApplicability="disable"/>
+<resourceConfiguration id="cdt.managedbuild.config.gnu.exe.release.150083558./GrayCore/GrayCore8.sln" name="GrayCore8.sln" exclude="true" resourcePath="/GrayCore/GrayCore8.sln" toolsToInvoke="" rcbsApplicability="disable"/>
+<resourceConfiguration id="cdt.managedbuild.config.gnu.exe.release.150083558./GrayCore/GrayCore7.vcproj" name="GrayCore7.vcproj" exclude="true" resourcePath="/GrayCore/GrayCore7.vcproj" toolsToInvoke="" rcbsApplicability="disable"/>
+<resourceConfiguration id="cdt.managedbuild.config.gnu.exe.release.150083558./GrayCore/GrayCore8.vcproj" name="GrayCore8.vcproj" exclude="true" resourcePath="/GrayCore/GrayCore8.vcproj" toolsToInvoke="" rcbsApplicability="disable"/>
+<resourceConfiguration id="cdt.managedbuild.config.gnu.exe.release.150083558./GrayCore/ReadMe.txt" name="ReadMe.txt" exclude="true" resourcePath="/GrayCore/ReadMe.txt" toolsToInvoke="" rcbsApplicability="disable"/>
+</configuration>
+<macros/>
+</project>
+</ManagedProjectBuildInfo>

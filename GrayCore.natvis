@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+  <!-- https://msdn.microsoft.com/en-us/library/jj620914%28v=vs.120%29.aspx#BKMK_Using_Natvis_files -->
+  <Type Name="Gray::CStringT&lt;char&gt;">
+    <DisplayString>{m_pchData,s}</DisplayString>
+    <StringView>m_pchData,s</StringView>
+  </Type>
+  <Type Name="Gray::CStringT&lt;wchar_t&gt;">
+    <DisplayString>{m_pchData,su}</DisplayString>
+    <StringView>m_pchData,su</StringView>
+  </Type>
+  <Type Name="Gray::COSHandle">
+    <DisplayString>{{{m_h}}}</DisplayString>
+  </Type>
+</AutoVisualizer>
