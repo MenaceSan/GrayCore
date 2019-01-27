@@ -6,4 +6,4 @@
 //! @copyright 1992 - 2016 Dennis Robinson (http://www.menasoft.com)
 //
 #include "StdAfx.h"
-#include "ReadMe.txt"
+#include "ReadMe.md"	// does nothing but make sure its referenced.
