@@ -2,14 +2,14 @@
 //! @file GrayVersion.h
 //! Can be included in RC file as well! RC_INVOKED
 //! @note version broken out into a separate file for minimal impact on the Version Control System.
-//! @copyright 1992 - 2016 Dennis Robinson (http://www.menasoft.com)
+//! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
 #define GRAY_COMPANY		"Menasoft"
-#define GRAY_COPYRIGHT		"@copyright 1992 - 2017 Dennis Robinson (http:// www.menasoft.com)"
+#define GRAY_COPYRIGHT		"Copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)"
 
 #define GRAY_VERSION_N		1602		//!< numeric version id. used for easy compares.
 #define GRAY_VERSION_RC		1,6,0,2		//!< RC version id. *.rc FILEVERSION wants this format.

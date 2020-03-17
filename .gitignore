@@ -331,3 +331,6 @@ ASALocalRun/
 /x64v141
 /x64v140
 /Win32v141
+*.res
+*.idb
+*.tlog
