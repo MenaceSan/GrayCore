@@ -127,9 +127,9 @@ namespace Gray		//!< The main namespace for all Core functions.
 #endif
 
 #if defined(_MSC_VER) && _MSC_VER <= 1600 // No C++11 features.
-	// Get rid of C++11 features. e.g. "= delete"
+	// Get rid of C++11 features. e.g. "= delete" and override
 	#define noexcept
-	#define override
+	#define override	// tell the compiler this is an intentional override
 	#define IS_DELETE
 #else
 	#define IS_DELETE = delete
@@ -143,18 +143,18 @@ namespace Gray		//!< The main namespace for all Core functions.
 #define IGNORE_WARN_ABSTRACT(c)
 #endif	// __GNUC__
 
-	typedef UINT_PTR	HASHCODE_t;				//!< could hold a pointer converted to a number? 64 or 32 bit ?
+	typedef UINT_PTR	HASHCODE_t;				//!< could hold a pointer converted to a number? maybe 64 or 32 bit ?
 	typedef UINT32		HASHCODE32_t;			//!< always 32 bits.
 	const HASHCODE_t	k_HASHCODE_CLEAR = 0;		//!< not a valid index.
 
 #if (_MFC_VER > 0x0600)
 	typedef INT_PTR ITERATE_t;		//!< MFC 6 uses INT_PTR for array indexes.
 #else
-	typedef int ITERATE_t;
+	typedef int ITERATE_t;		//!< like size_t but
 #endif
 	const ITERATE_t k_ITERATE_BAD = -1;
 
-	typedef size_t COUNT_t;		//!< like size_t but a count of things that might not be bytes. ASSUME unsigned.
+	typedef size_t COUNT_t;		//!< like size_t but a count of things that might NOT be bytes. ASSUME unsigned.
 
 #define IS_INDEX_BAD(i,q)		((COUNT_t)(i)>=(COUNT_t)(q))	//!< cast the (likely) int to unsigned to check for negatives.
 #define IS_INDEX_GOOD(i,q)		((COUNT_t)(i)<(COUNT_t)(q))		//!< cast the (likely) int to unsigned to check for negatives.

@@ -189,7 +189,7 @@ namespace Gray
 			CHeap::FreePtr(m_pData);	// nullptr is OK/Safe here.
 		}
 
-		THIS_t& operator = (const THIS_t& ref) 
+		THIS_t& operator = (const THIS_t& ref)
 		{
 			//! copy assignment operator
 			Alloc(ref.m_pData, ref.get_Size());
@@ -287,8 +287,8 @@ namespace Gray
 		bool Alloc(const void* pData, size_t nSize)
 		{
 			//! Allocate then copy something into it.
-			
-			ASSERT(pData==nullptr||!this->IsValidPtr(pData));	// NOT from myself ! // Check before Alloc
+
+			ASSERT(pData == nullptr || !this->IsValidPtr(pData));	// NOT from myself ! // Check before Alloc
 			if (!Alloc(nSize))
 			{
 				return false;	// FAILED HRESULT_WIN32_C(ERROR_NOT_ENOUGH_MEMORY)

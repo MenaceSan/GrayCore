@@ -2,6 +2,9 @@
 # GrayCore
 C++ core library providing very basic utility functionality without using any STL.
 
+https://www.menasoft.com/graydox/index.html#graycore
+https://github.com/MenaceSan/GrayCore
+
 The Gray libraries are a set of source code modules written mostly in C++ over 10 years or so and used in a variety of projects.
 They are compilable in MSVC and GNU compilers and will run in several flavors of Windows, WinCE, Linux.
 

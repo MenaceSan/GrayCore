@@ -719,7 +719,7 @@
     <None Include="HResults.tbl" />
     <None Include="HResultWin32.tbl" />
     <None Include="CTypes.tbl" />
-    <None Include="ReadMe.txt" />
+    <None Include="ReadMe.md" />
     <None Include="StrCharAscii.tbl" />
     <None Include="StrT.inl" />
     <None Include="StrT.tbl" />
