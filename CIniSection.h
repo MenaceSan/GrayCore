@@ -34,8 +34,8 @@ namespace Gray
 
 	public:
 		CIniWriter(CStreamOutput* pOut)
-		: m_pOut(pOut)
-		, m_bStartedSection(false)
+			: m_pOut(pOut)
+			, m_bStartedSection(false)
 		{
 			ASSERT(pOut != nullptr);
 		}
@@ -131,7 +131,7 @@ namespace Gray
 			//! @return total buffer size allocated.
 			if (m_iLinesUsed <= 0)
 				return 0;
-			return (StrLen_t) m_Buffer.get_Size();
+			return (StrLen_t)m_Buffer.get_Size();
 		}
 
 		ITERATE_t get_LineQty() const
@@ -204,12 +204,12 @@ namespace Gray
 
 	public:
 		CIniSection(bool bStripComments = false)
-		: CIniSectionData(bStripComments)
+			: CIniSectionData(bStripComments)
 		{
 		}
 		CIniSection(CStringI sSectionTitle, bool bStripComments = false)
-		: CIniSectionData(bStripComments)
-		, m_sSectionTitle(sSectionTitle)
+			: CIniSectionData(bStripComments)
+			, m_sSectionTitle(sSectionTitle)
 		{
 		}
 		CIniSection(const CIniSection& rSectionCopy);
@@ -253,13 +253,13 @@ namespace Gray
 
 	public:
 		CIniSectionEntry(CStringI sSectionTitle, bool bStripComments = false, int iLine = 0)
-		: CIniSection(sSectionTitle, bStripComments)
-		, m_FilePos(0,iLine)
+			: CIniSection(sSectionTitle, bStripComments)
+			, m_FilePos(0, iLine)
 		{
 		}
 		CIniSectionEntry(const CIniSectionEntry& rSectionCopy)
-		: CIniSection(rSectionCopy)
-		, m_FilePos(rSectionCopy.m_FilePos)
+			: CIniSection(rSectionCopy)
+			, m_FilePos(rSectionCopy.m_FilePos)
 		{
 		}
 		virtual ~CIniSectionEntry()
@@ -268,7 +268,7 @@ namespace Gray
 
 		int get_HashCode() const
 		{
-			return m_FilePos.get_Line1();
+			return (int)m_FilePos.get_Line1();
 		}
 	};
 	typedef CSmartPtr<CIniSectionEntry> CIniSectionEntryPtr;

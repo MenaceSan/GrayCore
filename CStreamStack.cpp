@@ -54,9 +54,10 @@ namespace Gray
 
 		ITERATE_t iWriteQty = get_WriteQty();	// any room to write into?
 		ASSERT(iWriteQty > 0);
-		if (iWriteQty < nSizeBlockAlign)	// no room.
+		size_t nWriteQty = (size_t)iWriteQty;
+		if (nWriteQty < nSizeBlockAlign)	// no room.
 			return 0;
-		iWriteQty -= iWriteQty % nSizeBlockAlign;	// Remove remainder.
+		nWriteQty -= nWriteQty % nSizeBlockAlign;	// Remove remainder.
 
 		if (m_pStreamInp == nullptr)	// must supply input stream
 		{
@@ -64,7 +65,7 @@ namespace Gray
 		}
 
 		CStreamTransaction trans(m_pStreamInp);
-		HRESULT hRes = m_pStreamInp->ReadX(get_WritePtr(), (size_t)iWriteQty);
+		HRESULT hRes = m_pStreamInp->ReadX(get_WritePtr(), nWriteQty);
 		if (FAILED(hRes))
 		{
 			trans.SetTransactionFailed();
