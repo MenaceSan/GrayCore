@@ -17,7 +17,7 @@ namespace Gray
 	bool GRAYCALL StrA::IsBoolTrue(const char* pszStr, bool bHead) // static
 	{
 		//! convert string to boolean value.
-		const char* k_pszBoolTrue[] = // static
+		static const char* const k_pszBoolTrue[] = // static
 		{
 			"1",
 			"On",
@@ -27,6 +27,7 @@ namespace Gray
 			"Yes",
 			nullptr,
 		};
+
 		if (pszStr == nullptr)
 			return false;
 		ITERATE_t i;
@@ -44,7 +45,7 @@ namespace Gray
 	bool GRAYCALL StrA::IsBoolFalse(const char* pszStr, bool bHead)
 	{
 		//! convert string to boolean value.
-		const char* k_pszBoolFalse[] = // static
+		static const char* const k_pszBoolFalse[] = // static
 		{
 			"0",
 			"F",

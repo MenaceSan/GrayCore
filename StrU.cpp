@@ -1,4 +1,4 @@
-//
+﻿//
 //! @file StrU.cpp
 //! @copyright 1992 - 2016 Dennis Robinson (http://www.menasoft.com)
 //
@@ -331,7 +331,7 @@ namespace Gray
 				iSizeInpBytes,      // number of bytes in string
 				(LPWSTR)pwOut,  // address of wide-character buffer
 				iSizeOutMaxChars        // size of buffer
-			);
+				);
 			if (iOut >= 0)
 			{
 				pwOut[iOut] = '\0';
@@ -343,7 +343,7 @@ namespace Gray
 		// Win95 or __linux__
 		for (StrLen_t iInp = 0; iInp < iSizeInpBytes;)
 		{
-			unsigned char ch = pInp[iInp];
+			const unsigned char ch = pInp[iInp];
 			if (ch == '\0')
 				break;
 			if (iOut >= iSizeOutMaxChars)
@@ -352,7 +352,7 @@ namespace Gray
 			if (ch >= 0x80)	// special UTF8 encoded char.
 			{
 				wchar_t wChar;
-				StrLen_t iInpTmp = StrU::UTF8toUNICODE(wChar, pInp + iInp, iSizeInpBytes - iInp);
+				const StrLen_t iInpTmp = StrU::UTF8toUNICODE(wChar, pInp + iInp, iSizeInpBytes - iInp);
 				if (iInpTmp <= 0)
 				{
 					if (iInpTmp == 0)
@@ -422,7 +422,7 @@ namespace Gray
 				iSizeOutMaxBytes,      // size of buffer in bytes
 				nullptr,  // address of default for un-mappable characters
 				nullptr  // address of flag set when default char. used
-			);
+				);
 			if (iOut >= 0)
 			{
 				pOut[iOut] = 0;	// make sure it's null terminated
@@ -435,14 +435,14 @@ namespace Gray
 		for (StrLen_t iInp = 0; iInp < iSizeInpChars; iInp++)
 		{
 			// Flip all from network order.
-			wchar_t wChar = pwInp[iInp];
+			const wchar_t wChar = pwInp[iInp];
 			if (wChar == '\0')
 				break;
 			if (iOut >= iSizeOutMaxBytes)
 				break;
 			if (wChar >= 0x80)	// needs special UTF8 encoding.
 			{
-				StrLen_t iOutTmp = StrU::UNICODEtoUTF8(pOut + iOut, iSizeOutMaxBytes - iOut, wChar);
+				const StrLen_t iOutTmp = StrU::UNICODEtoUTF8(pOut + iOut, iSizeOutMaxBytes - iOut, wChar);
 				if (iOutTmp <= 0)
 				{
 					DEBUG_CHECK(iOutTmp == 0); // just skip it!
@@ -464,19 +464,47 @@ namespace Gray
 #if defined(USE_UNITTESTS)
 #include "CUnitTest.h"
 
-bool GRAYCALL StrU::UnitTest(const char* pszText, StrLen_t nLen) // static
+bool GRAYCALL StrU::UnitTestU(const wchar_t* pwText, StrLen_t nLen) // static
 {
-	wchar_t wTmpE[1024];
-	if (nLen >= STRMAX(wTmpE))
+	// Does the input Unicode string match its equivalent UTF8 string ?
+	if (nLen <= k_StrLen_UNK)
+		nLen = StrT::Len(pwText);
+
+	char szTmp8[1024];
+	const StrLen_t iLen8 = StrU::UNICODEtoUTF8(szTmp8, STRMAX(szTmp8), pwText, nLen);
+	if (iLen8 <= 0)		// should be same or larger than nLen 
 		return false;
-	StrLen_t iLenE = StrU::UTF8toUNICODE(wTmpE, STRMAX(wTmpE), pszText, nLen);
-	if (iLenE <= 0)
+
+	wchar_t wTmpU[1024];
+	if (iLen8 >= STRMAX(wTmpU))
 		return false;
-	char szTmpD[1024];
-	StrLen_t iLenD = StrU::UNICODEtoUTF8(szTmpD, STRMAX(szTmpD), wTmpE, iLenE);
-	if (iLenD != nLen)
+	const StrLen_t iLenU = StrU::UTF8toUNICODE(wTmpU, STRMAX(wTmpU), szTmp8, iLen8);
+	if (iLenU != nLen)
 		return false;
-	if (StrT::Cmp<char>(szTmpD, pszText))
+	if (StrT::Cmp<wchar_t>(wTmpU, pwText))	// back to original text?
+		return false;
+	return true;
+}
+
+bool GRAYCALL StrU::UnitTest8(const char* pszText, StrLen_t nLen) // static
+{
+	// Does the input UTF8 string match its equivalent Unicode string ?
+
+	if (nLen <= k_StrLen_UNK)
+		nLen = StrT::Len(pszText);
+
+	wchar_t wTmpU[1024];
+	if (nLen >= STRMAX(wTmpU))
+		return false;
+	const StrLen_t iLenU = StrU::UTF8toUNICODE(wTmpU, STRMAX(wTmpU), pszText, nLen);
+	if (iLenU <= 0)	// should be same or smaller than nLen 
+		return false;
+
+	char szTmp8[1024];
+	const StrLen_t iLen8 = StrU::UNICODEtoUTF8(szTmp8, STRMAX(szTmp8), wTmpU, iLenU);
+	if (iLen8 != nLen)
+		return false;
+	if (StrT::Cmp<char>(szTmp8, pszText))	// back to original text?
 		return false;
 	return true;
 }
@@ -485,7 +513,15 @@ UNITTEST_CLASS(StrU)
 {
 	UNITTEST_METHOD(StrU)
 	{
-		UNITTEST_TRUE(StrU::UnitTest(k_sTextBlob, k_TEXTBLOB_LEN));
+		// https://www.cl.cam.ac.uk/~mgk25/ucs/examples/quickbrown.txt
+
+		static const wchar_t* kGreekU = L"Σὲ γνωρίζω ἀπὸ τὴν κόψη";
+		static const char* kGreek8 = "Î£á½² Î³Î½Ï‰Ïá½·Î¶Ï‰ á¼€Ï€á½¸ Ï„á½´Î½ Îºá½¹ÏˆÎ·";
+
+		UNITTEST_TRUE(StrU::UnitTestU(kGreekU, k_StrLen_UNK));
+
+		UNITTEST_TRUE(StrU::UnitTest8(k_sTextBlob, k_TEXTBLOB_LEN));
+		UNITTEST_TRUE(StrU::UnitTest8(kGreek8, k_StrLen_UNK));
 	}
 };
 UNITTEST_REGISTER(StrU, UNITTEST_LEVEL_Core);

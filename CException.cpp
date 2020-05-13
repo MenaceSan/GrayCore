@@ -142,13 +142,22 @@ namespace Gray
 
 UNITTEST_CLASS(cException)
 {
+	class cExceptionTest : public cException
+	{
+	public:
+		cExceptionTest(const char* pszMsg, LOGLEV_TYPE eLogLevel)
+			: cException(pszMsg, eLogLevel)
+		{
+		}
+	};
+
 	UNITTEST_METHOD(cException)
 	{
 #ifdef _CPPUNWIND
 		static const char* k_pszMsg = "Test Exception";
 		GRAY_TRY
 		{
-			GRAY_THROW cException(k_pszMsg, LOGLEV_TRACE);
+			GRAY_THROW cExceptionTest(k_pszMsg, LOGLEV_TRACE);
 		}
 		GRAY_TRY_CATCH(cExceptionBase, ex)
 		{

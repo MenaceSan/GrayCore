@@ -35,7 +35,7 @@ namespace Gray
 		static const LOGCHAR_t* k_szDescriptionDefault;
 
 	public:
-		cException(const LOGCHAR_t* pszDescription, LOGLEV_TYPE eLogLevel = LOGLEV_ERROR) THROW_DEF
+		cException(const LOGCHAR_t* pszDescription, LOGLEV_TYPE eLogLevel = LOGLEV_ERROR) noexcept
 			: m_eSeverity(eLogLevel)
 #if ! defined(_MFC_VER) && defined(_MSC_VER) && ! defined(UNDER_CE) // not using _MFC_VER.
 			, cExceptionBase(pszDescription)

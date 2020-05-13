@@ -53,7 +53,8 @@ namespace Gray
 		static StrLen_t GRAYCALL UNICODEtoUTF8(OUT char* pOut, StrLen_t iSizeOutMaxBytes, const wchar_t* pInp, StrLen_t iSizeInpChars = k_StrLen_UNK);
 
 #if defined(USE_UNITTESTS)
-		static bool GRAYCALL UnitTest(const char* pszText, StrLen_t nLen);
+		static bool GRAYCALL UnitTestU(const wchar_t* pszText, StrLen_t nLen);
+		static bool GRAYCALL UnitTest8(const char* pszText, StrLen_t nLen);
 		UNITTEST_FRIEND(StrU);
 #endif
 	};
