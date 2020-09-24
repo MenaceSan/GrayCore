@@ -1,0 +1,48 @@
+//
+//! @file HResults.tbl
+//! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
+//! add codes NOT FACILITY_WIN32
+
+#if defined(__GNUC__) || ( defined(_MSC_VER) && ( _MSC_VER <= 1200 ))
+HRESULT_ENTRY( EVENT_E_INTERNALEXCEPTION,	FACILITY_ITF,		0x0205L,		"An unexpected exception was raised" )
+HRESULT_ENTRY( SCHED_S_TASK_RUNNING,		FACILITY_ITF,		0x1301L,		"The task is currently running." )
+HRESULT_ENTRY( SCHED_S_TASK_DISABLED,		FACILITY_ITF,		0x1302L,		"The task will not run at the scheduled times because it has been disabled." )
+HRESULT_ENTRY( DISP_E_OVERFLOW,				FACILITY_DISPATCH,	0x000A,			"The operation attempted to access data outside the valid range")
+HRESULT_ENTRY( DISP_E_BUFFERTOOSMALL,		FACILITY_DISPATCH,	0x0013L,		"Buffer too small" )
+HRESULT_ENTRY( FVE_E_FIPS_RNG_CHECK_FAILED, FACILITY_FVE,		0x0036L,		"The random number generator check test failed.")
+HRESULT_ENTRY( SEC_E_CERT_UNKNOWN,			FACILITY_SECURITY,	0x0327L,		"An unknown error occurred while processing the certificate.")
+HRESULT_ENTRY( OSS_BAD_VERSION,				FACILITY_SECURITY,	0x3007L,		"OSS ASN.1 Error: Encode/Decode version mismatch")
+HRESULT_ENTRY( CRYPT_E_ASN1_EXTENDED,		FACILITY_SECURITY,	0x3201L,		"ASN1 skipped unknown extension(s)")
+HRESULT_ENTRY( MSSIPOTF_E_TABLE_PADBYTES,	FACILITY_SECURITY,	0x700AL,		"Too many pad bytes between tables or pad bytes are not 0")
+#endif
+
+#ifdef __linux__
+
+HRESULT_ENTRY( E_NOTIMPL,					FACILITY_NULL,		0x4001L,		"Not implemented" )		// similar to ERROR_CALL_NOT_IMPLEMENTED
+HRESULT_ENTRY( E_NOINTERFACE,				FACILITY_NULL,		0x4002L,		"Trying to use an undefined interface.")
+HRESULT_ENTRY( E_POINTER,					FACILITY_NULL,		0x4003L,		"Invalid pointer" )
+HRESULT_ENTRY( E_ABORT,						FACILITY_NULL,		0x4004L,		"Operation aborted" )	// similar to ERROR_CANCELLED
+HRESULT_ENTRY( E_FAIL,						FACILITY_NULL,		0x4005L,		"Unspecific Failure")
+
+HRESULT_ENTRY( DISP_E_MEMBERNOTFOUND,		FACILITY_DISPATCH,	0x0003L,		"Member not found" )
+HRESULT_ENTRY( DISP_E_DIVBYZERO,			FACILITY_DISPATCH,	0x0012L,		"Division by zero" )
+HRESULT_ENTRY( TYPE_E_OUTOFBOUNDS,			FACILITY_DISPATCH,	0x8CA1L,		"No args or wrong number of args supplied.")
+
+HRESULT_ENTRY( OLE_E_BLANK,                 FACILITY_ITF,		0x0007L,		"Uninitialized object" )
+HRESULT_ENTRY( CONVERT10_E_STG_NO_STD_STREAM, FACILITY_ITF,		0x01C5L,		"Contents of IStorage is missing one of the standard streams")
+HRESULT_ENTRY( MK_E_SYNTAX,					FACILITY_ITF,		0x01E4L,		"Invalid syntax" )
+
+HRESULT_ENTRY( NTE_BAD_LEN,					FACILITY_SECURITY,	0x0004L,		"Bad Length" )
+HRESULT_ENTRY( NTE_BAD_DATA,				FACILITY_SECURITY,	0x0005L,		"Bad Data." )
+HRESULT_ENTRY( CERTSRV_E_PROPERTY_EMPTY,	FACILITY_SECURITY,	0x4004L,		"The requested property value is empty." )
+HRESULT_ENTRY( MSSIPOTF_E_TABLE_PADBYTES,	FACILITY_SECURITY,	0x700AL,		"Too many pad bytes between tables or pad bytes are not 0.")
+
+HRESULT_ENTRY( RPC_E_DISCONNECTED,          FACILITY_RPC,		0x0108L,		"The object invoked has disconnected from its clients." )
+HRESULT_ENTRY( RPC_E_INVALID_HEADER,        FACILITY_RPC,		0x0111L,		"OLE received a packet with an invalid header." )
+
+#endif
+
+#ifdef __GNUC__
+HRESULT_ENTRY( SEC_E_INCOMPLETE_MESSAGE,    FACILITY_SECURITY,	0x0318L,		"The supplied message is incomplete.  The signature was not verified." )
+HRESULT_ENTRY( COMQC_E_UNTRUSTED_ENQUEUER,  FACILITY_COMPLUS,	0x0606L,		"The message was requeued or moved by a user not in the 'QC Trusted User' role" )
+#endif

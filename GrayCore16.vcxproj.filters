@@ -1,0 +1,618 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClInclude Include="include\CAppConsole.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CAppImpl.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CAppState.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CArchive.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CArray.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CArrayIUnk.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CArrayNew.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CArraySmart.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CArraySort.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CArraySortString.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CArrayString.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CAtom.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CBits.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CCodeProfiler.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CDebugAssert.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CException.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CExceptionAssert.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CExceptionBase.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CExceptionSystem.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CFile.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CFileDir.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CFilePath.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CFileStatus.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CFileText.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CFileTextReader.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CFloat.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CFloatDeco.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CHandlePtr.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CHashTable.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CHeap.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CHeapObject.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CIniBase.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CIniFile.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\SysTypes.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\SysDefs.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\StrU.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\StrT.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\StrNum.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\StrFormat.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\StrConst.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\StrCharAscii.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\StrChar.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\StrBuilder.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\StrArg.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\StrA.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\resource.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Ptr.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\pch.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\IUnkObject.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\IUnknown.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\HResult.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\GrayVersion.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\GrayCore.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FileName.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CValT.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CUnitTestDecl.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CUnitTest.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CUInt64.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CTypes.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CTypeInfo.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CTriState.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CTimeZone.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CTimeVal.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CTimeUnits.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CTimeSys.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CTimeInt.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CTimeFile.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CTimeDouble.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CThreadLockRW.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CThreadLock.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CThreadLocalSys.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CThreadArrayString.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CThreadArray.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CTextPos.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CTempPool.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CSystemInfo.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CString.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CStreamStack.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CStreamQueue.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CStreamProgress.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CStream.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CSmartPtr.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CSingletonPtr.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CSingleton.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CRandomDef.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CQueue.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CPtrFacade.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CPairSort.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CPair.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\COSProcess.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\COSModule.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CMime.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CNewPtr.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CNonCopyable.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CObject.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CObjectCreator.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\COSHandle.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\COSHandleSet.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\COSModImpl.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CIniMap.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CIniObject.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CIniSection.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CInterlockedVal.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CIUnkAgg.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CIUnkPtr.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CList.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CListNodeSmart.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CLocker.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CLogAppendConsole.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CLogAppender.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CLogEvent.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CLogLevel.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CLogMgr.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CMem.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="include\SysRes.h">
+      <Filter>include</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ReadMe.md" />
+    <None Include="include\StrT.tbl">
+      <Filter>include</Filter>
+    </None>
+    <None Include="include\StrT.inl">
+      <Filter>include</Filter>
+    </None>
+    <None Include="include\StrCharAscii.tbl">
+      <Filter>include</Filter>
+    </None>
+    <None Include="include\HResultWin32.tbl">
+      <Filter>include</Filter>
+    </None>
+    <None Include="include\HResults.tbl">
+      <Filter>include</Filter>
+    </None>
+    <None Include="include\CTypes.tbl">
+      <Filter>include</Filter>
+    </None>
+    <None Include="include\CMimeExts.tbl">
+      <Filter>include</Filter>
+    </None>
+    <None Include="include\CMimeTypes.tbl">
+      <Filter>include</Filter>
+    </None>
+    <None Include="include\CLogLevel.tbl">
+      <Filter>include</Filter>
+    </None>
+    <None Include="test\CIniFileUnitTest.ini">
+      <Filter>test</Filter>
+    </None>
+    <None Include="LICENSE" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{37694577-cac2-448e-ae4d-8a730f1cdd74}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include">
+      <UniqueIdentifier>{17d5e6aa-3bd2-4aff-85ac-b1d8b35bb64f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="test">
+      <UniqueIdentifier>{03c72c66-c06a-4ddc-8f9f-f6a5aa2e1cb3}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="pch.cpp" />
+    <ClCompile Include="GrayCore.cpp" />
+    <ClCompile Include="src\CAppConsole.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CAppImpl.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CAppState.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CArchive.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CArraySort.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CArrayString.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CAtom.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CBits.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CCodeProfiler.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CDebugAssert.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CException.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CExceptionAssert.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CExceptionSystem.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CFile.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CFileDir.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CFilePath.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CFileStatus.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CFileText.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CFileTextReader.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CFloat.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CFloatDeco.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CHashTable.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CHeap.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CIniFile.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CIniMap.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CIniObject.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CIniSection.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CInterlockedVal.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CList.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CLogAppendConsole.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CLogAppender.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CLogLevel.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CLogMgr.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CMem.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CMime.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CObjectCreator.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\COSHandle.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\COSHandleSet.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\COSModImpl.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\COSModule.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\COSProcess.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CPtrTrace.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CQueue.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CRandomDef.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CSingleton.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CStream.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CStreamStack.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CString.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CSystemInfo.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CTempPool.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CThreadLock.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CThreadLockRW.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CTimeDouble.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CTimeFile.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CTimeInt.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CTimeSys.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CTimeUnits.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CTimeZone.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CTypeInfo.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CUInt64.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CUnitTest.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\HResult.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\StrA.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\StrArg.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\StrChar.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\StrConst.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\StrFormat.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\StrNum.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\StrT.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\StrU.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\StrXUnitTest.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="src\GrayCore.rc">
+      <Filter>src</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>

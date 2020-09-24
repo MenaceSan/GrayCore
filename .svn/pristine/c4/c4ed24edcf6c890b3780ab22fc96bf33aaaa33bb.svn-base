@@ -1,0 +1,33 @@
+Microsoft Visual Studio Solution File, Format Version 8.00
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GrayCore7", "GrayCore7.vcproj", "{ADDA5566-64EA-46A1-B0AF-620638671687}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfiguration) = preSolution
+		DebugDLL = DebugDLL
+		DebugStat = DebugStat
+		DebugMFC = DebugMFC
+		ReleaseDLL = ReleaseDLL
+		ReleaseStat = ReleaseStat
+		ReleaseMFC = ReleaseMFC
+	EndGlobalSection
+	GlobalSection(ProjectConfiguration) = postSolution
+		{ADDA5566-64EA-46A1-B0AF-620638671687}.DebugDLL.ActiveCfg = DebugDLL|Win32
+		{ADDA5566-64EA-46A1-B0AF-620638671687}.DebugDLL.Build.0 = DebugDLL|Win32
+		{ADDA5566-64EA-46A1-B0AF-620638671687}.DebugStat.ActiveCfg = DebugStat|Win32
+		{ADDA5566-64EA-46A1-B0AF-620638671687}.DebugStat.Build.0 = DebugStat|Win32
+		{ADDA5566-64EA-46A1-B0AF-620638671687}.DebugMFC.ActiveCfg = DebugMFC|Win32
+		{ADDA5566-64EA-46A1-B0AF-620638671687}.DebugMFC.Build.0 = DebugMFC|Win32
+		{ADDA5566-64EA-46A1-B0AF-620638671687}.ReleaseDLL.ActiveCfg = ReleaseDLL|Win32
+		{ADDA5566-64EA-46A1-B0AF-620638671687}.ReleaseDLL.Build.0 = ReleaseDLL|Win32
+		{ADDA5566-64EA-46A1-B0AF-620638671687}.ReleaseStat.ActiveCfg = ReleaseStat|Win32
+		{ADDA5566-64EA-46A1-B0AF-620638671687}.ReleaseStat.Build.0 = ReleaseStat|Win32
+		{ADDA5566-64EA-46A1-B0AF-620638671687}.ReleaseMFC.ActiveCfg = ReleaseMFC|Win32
+		{ADDA5566-64EA-46A1-B0AF-620638671687}.ReleaseMFC.Build.0 = ReleaseMFC|Win32
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+	EndGlobalSection
+	GlobalSection(ExtensibilityAddIns) = postSolution
+	EndGlobalSection
+EndGlobal

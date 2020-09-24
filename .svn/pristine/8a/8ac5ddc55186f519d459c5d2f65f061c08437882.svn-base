@@ -1,0 +1,48 @@
+cdt.managedbuild.config.gnu.exe.debug.1552291346/internalBuilder/enabled=false
+cdt.managedbuild.config.gnu.exe.debug.1552291346/internalBuilder/ignoreErr=true
+cdt.managedbuild.config.gnu.exe.debug.1552291346/internalBuilder/parallel=true
+cdt.managedbuild.config.gnu.exe.debug.1552291346/internalBuilder/paralleldef=true
+cdt.managedbuild.config.gnu.exe.debug.1552291346/internalBuilder/parallelnumber=1
+cdt.managedbuild.config.gnu.exe.release.150083558/internalBuilder/enabled=false
+cdt.managedbuild.config.gnu.exe.release.150083558/internalBuilder/ignoreErr=true
+cdt.managedbuild.config.gnu.exe.release.150083558/internalBuilder/parallel=true
+cdt.managedbuild.config.gnu.exe.release.150083558/internalBuilder/paralleldef=true
+cdt.managedbuild.config.gnu.exe.release.150083558/internalBuilder/parallelnumber=1
+eclipse.preferences.version=1
+environment/buildEnvironmentInclude/cdt.managedbuild.config.gnu.exe.debug.1552291346=<?xml version\="1.0" encoding\="UTF-8"?>\n<environment>\n<variable name\="CPATH" operation\="remove"/>\n<variable name\="C_INCLUDE_PATH" operation\="remove"/>\n<variable name\="CPLUS_INCLUDE_PATH" operation\="remove"/>\n</environment>\n
+environment/buildEnvironmentInclude/cdt.managedbuild.config.gnu.exe.release.150083558=<?xml version\="1.0" encoding\="UTF-8"?>\n<environment>\n<variable name\="CPATH" operation\="remove"/>\n<variable name\="C_INCLUDE_PATH" operation\="remove"/>\n<variable name\="CPLUS_INCLUDE_PATH" operation\="remove"/>\n</environment>\n
+environment/buildEnvironmentInclude/cdt.managedbuild.config.gnu.so.debug.2069755420.2072214395/CPATH/delimiter=\:
+environment/buildEnvironmentInclude/cdt.managedbuild.config.gnu.so.debug.2069755420.2072214395/CPATH/operation=remove
+environment/buildEnvironmentInclude/cdt.managedbuild.config.gnu.so.debug.2069755420.2072214395/CPLUS_INCLUDE_PATH/delimiter=\:
+environment/buildEnvironmentInclude/cdt.managedbuild.config.gnu.so.debug.2069755420.2072214395/CPLUS_INCLUDE_PATH/operation=remove
+environment/buildEnvironmentInclude/cdt.managedbuild.config.gnu.so.debug.2069755420.2072214395/C_INCLUDE_PATH/delimiter=\:
+environment/buildEnvironmentInclude/cdt.managedbuild.config.gnu.so.debug.2069755420.2072214395/C_INCLUDE_PATH/operation=remove
+environment/buildEnvironmentInclude/cdt.managedbuild.config.gnu.so.debug.2069755420.2072214395/append=true
+environment/buildEnvironmentInclude/cdt.managedbuild.config.gnu.so.debug.2069755420.2072214395/appendContributed=true
+environment/buildEnvironmentInclude/cdt.managedbuild.config.gnu.so.debug.2069755420/CPATH/delimiter=;
+environment/buildEnvironmentInclude/cdt.managedbuild.config.gnu.so.debug.2069755420/CPATH/operation=remove
+environment/buildEnvironmentInclude/cdt.managedbuild.config.gnu.so.debug.2069755420/CPLUS_INCLUDE_PATH/delimiter=;
+environment/buildEnvironmentInclude/cdt.managedbuild.config.gnu.so.debug.2069755420/CPLUS_INCLUDE_PATH/operation=remove
+environment/buildEnvironmentInclude/cdt.managedbuild.config.gnu.so.debug.2069755420/C_INCLUDE_PATH/delimiter=;
+environment/buildEnvironmentInclude/cdt.managedbuild.config.gnu.so.debug.2069755420/C_INCLUDE_PATH/operation=remove
+environment/buildEnvironmentInclude/cdt.managedbuild.config.gnu.so.debug.2069755420/append=true
+environment/buildEnvironmentInclude/cdt.managedbuild.config.gnu.so.debug.2069755420/appendContributed=true
+environment/buildEnvironmentInclude/org.eclipse.linuxtools.cdt.autotools.core.configuration.build.388505701/CPATH/delimiter=\:
+environment/buildEnvironmentInclude/org.eclipse.linuxtools.cdt.autotools.core.configuration.build.388505701/CPATH/operation=remove
+environment/buildEnvironmentInclude/org.eclipse.linuxtools.cdt.autotools.core.configuration.build.388505701/CPLUS_INCLUDE_PATH/delimiter=\:
+environment/buildEnvironmentInclude/org.eclipse.linuxtools.cdt.autotools.core.configuration.build.388505701/CPLUS_INCLUDE_PATH/operation=remove
+environment/buildEnvironmentInclude/org.eclipse.linuxtools.cdt.autotools.core.configuration.build.388505701/C_INCLUDE_PATH/delimiter=\:
+environment/buildEnvironmentInclude/org.eclipse.linuxtools.cdt.autotools.core.configuration.build.388505701/C_INCLUDE_PATH/operation=remove
+environment/buildEnvironmentInclude/org.eclipse.linuxtools.cdt.autotools.core.configuration.build.388505701/append=true
+environment/buildEnvironmentInclude/org.eclipse.linuxtools.cdt.autotools.core.configuration.build.388505701/appendContributed=true
+environment/buildEnvironmentLibrary/cdt.managedbuild.config.gnu.exe.debug.1552291346=<?xml version\="1.0" encoding\="UTF-8"?>\n<environment>\n<variable name\="LIBRARY_PATH" operation\="remove"/>\n</environment>\n
+environment/buildEnvironmentLibrary/cdt.managedbuild.config.gnu.exe.release.150083558=<?xml version\="1.0" encoding\="UTF-8"?>\n<environment>\n<variable name\="LIBRARY_PATH" operation\="remove"/>\n</environment>\n
+environment/buildEnvironmentLibrary/cdt.managedbuild.config.gnu.so.debug.2069755420.2072214395/LIBRARY_PATH/delimiter=\:
+environment/buildEnvironmentLibrary/cdt.managedbuild.config.gnu.so.debug.2069755420.2072214395/LIBRARY_PATH/operation=remove
+environment/buildEnvironmentLibrary/cdt.managedbuild.config.gnu.so.debug.2069755420.2072214395/append=true
+environment/buildEnvironmentLibrary/cdt.managedbuild.config.gnu.so.debug.2069755420.2072214395/appendContributed=true
+environment/buildEnvironmentLibrary/org.eclipse.linuxtools.cdt.autotools.core.configuration.build.388505701/append=true
+environment/buildEnvironmentLibrary/org.eclipse.linuxtools.cdt.autotools.core.configuration.build.388505701/appendContributed=true
+environment/project=<?xml version\="1.0" encoding\="UTF-8"?>\n<environment/>\n
+environment/project/cdt.managedbuild.config.gnu.exe.debug.1552291346=<?xml version\="1.0" encoding\="UTF-8"?>\n<environment/>\n
+environment/project/cdt.managedbuild.config.gnu.exe.release.150083558=<?xml version\="1.0" encoding\="UTF-8"?>\n<environment/>\n
