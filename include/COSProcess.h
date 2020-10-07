@@ -98,8 +98,26 @@ namespace Gray
 #endif
 		HRESULT CreateProcessX(const FILECHAR_t* pszExeName, const FILECHAR_t* pszArgs = nullptr, SHOWWINDOW_t nShowCmd = SW_SHOWNORMAL, const FILECHAR_t* pszCurrentDir = nullptr, cFile* pFileOutPipe = nullptr);
 
-		static bool GRAYCALL IsSystemPID(PROCESSID_t nProcessID);
-		bool isValidProcess() const;
+		static inline bool GRAYCALL IsSystemPID(PROCESSID_t nProcessID) noexcept
+		{
+			if (nProcessID == 0)	// PROCESSID_BAD
+				return true;
+#ifdef _WIN32
+			if (nProcessID == 4)
+				return true;
+#endif
+			return false;
+		}
+
+		bool isValidProcess() const noexcept
+		{
+			// Is the process in memory/valid/active now ?
+#ifdef _WIN32
+			return m_hProcess.isValidHandle();
+#elif defined(__linux__)
+			return m_nPid != 0;
+#endif
+		}
 
 		PROCESSID_t get_ProcessId() const noexcept
 		{
@@ -171,6 +189,8 @@ namespace Gray
 
 #ifdef _WIN32
 
+		HRESULT CreateRemoteThread(const void* pvFunc, const void* pvArgs);
+
 		HRESULT WriteProcessMemory(void* pBaseAddress, const void* pData, size_t nSize)
 		{
 			//! Write to memory inside some other process address space.
@@ -200,6 +220,14 @@ namespace Gray
 			return (HRESULT)nSizeRead;
 		}
 
+		bool GetExitCodeProcess(OUT APP_EXITCODE_t* pnExitCode)
+		{
+			//! The exit value specified in the ExitProcess or TerminateProcess function.
+			//! @arg pnExitCode = APP_EXITCODE_STILL_ACTIVE = process is running.
+			//! @return false = process handle is bad ?
+			return ::GetExitCodeProcess(m_hProcess.get_Handle(), pnExitCode) ? true : false;
+		}
+
 		static PROCESSID_t GRAYCALL FindProcessIdForWindow(HWND hWnd)
 		{
 			//! Find process Id for the hWnd.
@@ -208,14 +236,6 @@ namespace Gray
 			THREADID_t dwThreadID = ::GetWindowThreadProcessId(hWnd, &dwProcessIDTest);
 			UNREFERENCED_PARAMETER(dwThreadID);
 			return dwProcessIDTest;
-		}
-
-		bool GetExitCodeProcess(OUT APP_EXITCODE_t* pnExitCode)
-		{
-			//! The exit value specified in the ExitProcess or TerminateProcess function.
-			//! @arg pnExitCode = APP_EXITCODE_STILL_ACTIVE = process is running.
-			//! @return false = process handle is bad ?
-			return ::GetExitCodeProcess(m_hProcess.get_Handle(), pnExitCode) ? true : false;
 		}
 
 		// Stats

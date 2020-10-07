@@ -155,7 +155,7 @@ namespace Gray		//!< The main namespace for all Core functions.
 #endif
 	const ITERATE_t k_ITERATE_BAD = -1;
 
-	typedef size_t COUNT_t;		//!< like size_t but a count of things that might NOT be bytes. ASSUME unsigned.
+	typedef size_t COUNT_t;		//!< like size_t but a count of things that might NOT be bytes. ASSUME unsigned. _countof(x)
 
 #define IS_INDEX_BAD(i,q)		((COUNT_t)(i)>=(COUNT_t)(q))	//!< cast the (likely) int to unsigned to check for negatives.
 #define IS_INDEX_GOOD(i,q)		((COUNT_t)(i)<(COUNT_t)(q))		//!< cast the (likely) int to unsigned to check for negatives.

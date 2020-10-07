@@ -19,7 +19,7 @@ namespace Gray
 
 	const HResult::Facility_t HResult::k_Facility[] =
 	{
-		// Known facilities
+		// Names of Known facilities
 		Facility_t(FACILITY_POSIX, _GT("Posix")),
 		Facility_t((FACILITY_TYPE)FACILITY_WIN32, _GT("Win32")),
 		Facility_t((FACILITY_TYPE)FACILITY_INTERNET, _GT("Internet")),
@@ -324,7 +324,7 @@ namespace Gray
 
 		// Not a known error code.
 		FACILITY_TYPE eFacility = GetFacility(hRes);
-		DWORD dwErrorCode = GetCode(hRes);	// LSTATUS
+		DWORD dwErrorCode = GetCode(hRes);	// LSTATUS/error_status_t 
 
 		// Cant find specific text so show some default message.
 		const GChar_t* pszErrorFacility;

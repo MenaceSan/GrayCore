@@ -337,3 +337,5 @@ ASALocalRun/
 x64v142/DebugDLL/GrayCore.exp
 x64v142/DebugDLL/GrayCore.lib
 x64v142/DebugMFC/GrayCore16.vcxproj.FileListAbsolute.txt
+Win32v142
+x64v142

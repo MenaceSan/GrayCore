@@ -106,7 +106,7 @@ namespace Gray
 
 		m_hFile.AttachHandle(::CreateFileW(CFilePath::GetFileNameLongW(sFilePath), dwDesiredAccess,
 			dwShareMode, nullptr, dwCreationDisposition,
-			dwFlagsAndAttributes, nullptr));
+			dwFlagsAndAttributes, HANDLE_NULL));
 
 #elif defined(__linux__)
 		// http://linux.die.net/man/2/open

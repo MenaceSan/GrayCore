@@ -260,7 +260,7 @@ namespace Gray
 #else
 		int Read(void* pData, size_t nDataSize)
 		{
-			// Emulate MFC
+			// Emulate MFC. Try not to call this directly. use ReadX.
 			return ReadX(pData, nDataSize);
 		}
 		void Write(const void* pData, size_t nDataSize)

@@ -16,7 +16,7 @@ UNITTEST_PREDEF(CFilePath)
 
 namespace Gray
 {
-	typedef cStringT< FILECHAR_t > CStringF;	//!< A file name. checks USE_UNICODE_FN.
+	typedef cStringT<FILECHAR_t> CStringF;	//!< A file name. checks USE_UNICODE_FN. related to CFilePath.
 
 	enum FILESYS_TYPE
 	{

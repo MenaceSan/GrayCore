@@ -171,43 +171,21 @@ namespace Gray
 		return S_OK;
 	}
 
-	bool GRAYCALL COSProcess::IsSystemPID(PROCESSID_t nProcessID) // static
-	{
-		if (nProcessID == 0)	// PROCESSID_BAD
-			return true;
-#ifdef _WIN32
-		if (nProcessID == 4)
-			return true;
-#endif
-		return false;
-	}
-
-	bool COSProcess::isValidProcess() const
-	{
-		// Is the process in memory/valid/active now ?
-#ifdef _WIN32
-		return m_hProcess.isValidHandle();
-#elif defined(__linux__)
-		return m_nPid != 0;
-#endif
-	}
-
 	CStringF COSProcess::get_ProcessPath() const // virtual
 	{
-		//! Get the full file path for the process EXE. MUST be loaded by this process for _WIN32.
+		//! Get the full file path for this process EXE. MUST be loaded by this process for _WIN32.
 		//! e.g. "c:\Windows\System32\smss.exe" or "\Device\HarddiskVolume2\Windows\System32\smss.exe"
 		//! _WIN32 must have the PROCESS_QUERY_INFORMATION and PROCESS_VM_READ access rights.
+		FILECHAR_t szProcessName[_MAX_PATH];
 
 #ifdef _WIN32
-		FILECHAR_t szProcessName[_MAX_PATH];
 		DWORD dwRet = _FNF(::GetModuleFileName)((HINSTANCE)m_hProcess.get_Handle(), szProcessName, _countof(szProcessName));
 		if (dwRet <= 0)
 		{
 			return "";
 		}
 		return szProcessName;
-#elif defined(__linux__)
-		// TODO __linux__
+#elif  defined(__linux__)
 		if (m_sPath.IsEmpty())
 		{
 			CStringF sFileName = CStringF::GetFormatf(_FN("/proc/%d/cmdline"), this->get_ProcessId());
@@ -217,11 +195,13 @@ namespace Gray
 			{
 				return _FN("");
 			}
-			// TODO __linux__ read it,.
-			ASSERT(0);
-			return _FN("");
+			hRes = file.ReadX(szProcessName, sizeof(szProcessName));
+			// TODO __linux__  chop args?			 
+			m_sPath = CStringF(szProcessName);
 		}
 		return m_sPath;
+#else
+#error NOOS
 #endif
 	}
 
@@ -240,7 +220,7 @@ namespace Gray
 
 		if (nProcessId == PROCESSID_BAD)
 		{
-			return E_FAIL;
+			return E_INVALIDARG;
 		}
 		if (isValidProcess() && nProcessId == get_ProcessId())
 		{
@@ -276,6 +256,31 @@ namespace Gray
 	}
 
 #ifdef _WIN32
+
+	HRESULT COSProcess::CreateRemoteThread(const void* pvFunc, const void* pvArgs)
+	{
+		// Create a thread (and run it) in the context of some other process
+		// https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-createremotethread
+		// PROCESS_CREATE_THREAD|PROCESS_QUERY_INFORMATION|PROCESS_VM_READ|PROCESS_VM_WRITE|PROCESS_VM_OPERATION
+
+		// Load our DLL 
+		::CreateRemoteThread(m_hProcess, NULL, NULL, (LPTHREAD_START_ROUTINE)pvFunc, (LPVOID)pvArgs, NULL, NULL);
+
+
+		// HANDLE CreateRemoteThread(
+// 			HANDLE                 hProcess,
+			// LPSECURITY_ATTRIBUTES  lpThreadAttributes,
+			// SIZE_T                 dwStackSize,
+			// LPTHREAD_START_ROUTINE lpStartAddress,
+			// LPVOID                 lpParameter,
+			// DWORD                  dwCreationFlags,
+			// LPDWORD                lpThreadId
+		// );
+			
+
+
+		return E_NOTIMPL;
+	}
 
 	HRESULT COSProcess::GetProcessCommandLine(OUT wchar_t* pwText, _Inout_ size_t* pdwTextSize) const
 	{

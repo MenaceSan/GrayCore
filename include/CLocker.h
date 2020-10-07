@@ -25,7 +25,7 @@ namespace Gray
 		LONG m_nLockCount;	//!< count Lock vs Unlock calls. Should NEVER be negative.
 
 	protected:
-		CLockableBase()
+		CLockableBase() noexcept
 		: m_nLockCount(0)
 		{
 		}

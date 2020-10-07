@@ -62,7 +62,7 @@ namespace Gray
 		TYPE* m_p;	//!< Pointer to some object of TYPE.
 
 	public:
-		CPtrFacade(TYPE* p = nullptr)
+		CPtrFacade(TYPE* p = nullptr) noexcept
 			: m_p(p)
 		{
 		}
@@ -72,7 +72,7 @@ namespace Gray
 			this->m_p = ref.m_p; ref.m_p = nullptr;
 		}
 
-		bool isValidPtr() const
+		bool isValidPtr() const noexcept
 		{
 			//! Not nullptr?
 			return m_p != nullptr;
@@ -84,30 +84,30 @@ namespace Gray
 			ASSERT(m_p == nullptr);
 			return &m_p;
 		}
-		TYPE* get_Ptr() const
+		TYPE* get_Ptr() const noexcept
 		{
 			return m_p;
 		}
 
-		void put_Ptr(TYPE* p)
+		void put_Ptr(TYPE* p) noexcept
 		{
 			//! override this to increment a ref count.
 			//! similar to AttachPtr() but can add a ref.
 			m_p = p;
 		}
-		void ReleasePtr()
+		void ReleasePtr() noexcept
 		{
 			//! just set this to nullptr.
 			//! override this to decrement a ref count or free memory.
 			m_p = nullptr;
 		}
 
-		void AttachPtr(TYPE* p)
+		void AttachPtr(TYPE* p) noexcept
 		{
 			//! sets the pointer WITHOUT adding a ref (if overload applicable). like get_PPtr().
 			m_p = p;
 		}
-		TYPE* DetachPtr()
+		TYPE* DetachPtr() noexcept
 		{
 			//! Do not decrement the reference count when this is destroyed.
 			//! Pass the ref outside the smart pointer system. for use with COM interfaces.
@@ -117,13 +117,13 @@ namespace Gray
 			return p;
 		}
 
-		THIS_t& operator = (TYPE* p)
+		THIS_t& operator = (TYPE* p) noexcept
 		{
 			//! assignment operator
 			m_p = p;
 			return *this;
 		}
-		THIS_t& operator = (THIS_t&& ref)
+		THIS_t& operator = (THIS_t&& ref) noexcept
 		{
 			//! move assignment operator
 			this->m_p = ref.m_p; ref.m_p = nullptr;
@@ -132,7 +132,7 @@ namespace Gray
 
 		//! Accessor ops.
 		//! @note These are dangerous ! They don't increment the reference count for use !!!
-		operator TYPE*() const
+		operator TYPE*() const noexcept
 		{
 			return m_p;
 		}
@@ -153,15 +153,15 @@ namespace Gray
 		}
 
 		//! Comparison ops
-		bool operator!() const
+		bool operator!() const noexcept
 		{
 			return(m_p == nullptr);
 		}
-		bool operator != ( /* const*/ TYPE* p2) const
+		bool operator != ( /* const*/ TYPE* p2) const noexcept
 		{
 			return(p2 != m_p);
 		}
-		bool operator == ( /* const*/ TYPE* p2) const
+		bool operator == ( /* const*/ TYPE* p2) const noexcept
 		{
 			return(p2 == m_p);
 		}

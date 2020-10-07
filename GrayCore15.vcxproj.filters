@@ -347,7 +347,6 @@
     <ClInclude Include="include\SysRes.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="include\CHookJump.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.md" />
@@ -610,7 +609,6 @@
     <ClCompile Include="src\StrXUnitTest.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\CHookJump.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="src\GrayCore.rc">

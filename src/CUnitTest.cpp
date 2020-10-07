@@ -301,8 +301,9 @@ do ordain and establish this constitution of the United States of America\n\n");
 		//! Find a test by name.
 		for (ITERATE_t i = 0; i < m_aUnitTests.GetSize(); i++)
 		{
-			if (!StrT::Cmp(m_aUnitTests[i]->m_pszTestName, pszName))
-				return m_aUnitTests[i];
+			CUnitTestRegister* pUt = m_aUnitTests[i];
+			if (!StrT::Cmp(pUt->m_pszTestName, pszName))
+				return pUt;
 		}
 		return nullptr;
 	}

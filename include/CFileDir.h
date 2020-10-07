@@ -26,10 +26,10 @@ enum FOF_TYPE_
 	//! DWORD of flags to control directory listing. FileFlags
 	//! like FILEOP_FLAGS from include <shellapi.h>	
 #ifdef __linux__
-	FOF_ALLOWUNDO = 0x0040,		// 0x0040 in WIN32
-	FOF_FILESONLY = 0x0080,		// 0x0080 in WIN32
+	FOF_ALLOWUNDO = 0x0040,		// 0x0040 in WIN32 <shellapi.h>	
+	FOF_FILESONLY = 0x0080,		// 0x0080 in WIN32 <shellapi.h>	
 	FOF_RENAMEONCOLLISION = 0x0100,	// 8 in WIN32 (FOF_SIMPLEPROGRESS)
-	FOF_NOERRORUI = 0x400,		// 0x0400  in WIN32
+	FOF_NOERRORUI = 0x400,		// 0x0400  in WIN32 <shellapi.h>
 #endif
 	// NON WIN32 standard.
 	FOF_X_FollowLinks = 0x10000,

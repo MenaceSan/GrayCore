@@ -46,7 +46,7 @@ namespace Gray
 		FACILITY_RPC = 1,		//!< Used for RPC_E_DISCONNECTED
 		FACILITY_DISPATCH = 2,
 		FACILITY_ITF = 4,		//!< OLE_E_BLANK ??
-		FACILITY_WIN32 = 7,		//!< Normal windows codes. HRESULT_FROM_WIN32() or HRESULT_WIN32_C()
+		FACILITY_WIN32 = 7,		//!< Normal windows codes. HRESULT_FROM_WIN32() or HRESULT_WIN32_C() error_status_t
 		// FACILITY_DPLAY
 #endif
 		FACILITY_POSIX = 5,		//!< Facility for POSIX _errno in a _WIN32 style code.
@@ -74,12 +74,12 @@ namespace Gray
 	};
 
 #if ! defined(LSTATUS) && ! defined(_WIN32)
-	typedef LONG LSTATUS;	//!< FACILITY_WIN32 codes returned from RegCreateKeyEx() etc. Maybe NOT GetLastError() since it CAN return HRESULT
+	typedef LONG LSTATUS;	//!< AKA error_status_t. FACILITY_WIN32 codes returned from RegCreateKeyEx() etc. Maybe NOT GetLastError() since it CAN sometimes return HRESULT
 #endif
 #ifndef MAKE_HRESULT
 #define MAKE_HRESULT(sev,fac,code)  ((HRESULT) (((unsigned long)(sev)<<31) | ((unsigned long)(fac)<<16) | ((unsigned long)(code))) )
 #endif
-#define HRESULT_WIN32_C(x)	MAKE_HRESULT(1,FACILITY_WIN32,x) //!< a constant with no check, unlike HRESULT_FROM_WIN32()
+#define HRESULT_WIN32_C(x)	MAKE_HRESULT(1,FACILITY_WIN32,x) //!< a constant LSTATUS/error_status_t with no check, unlike HRESULT_FROM_WIN32()
 
 	enum HRESULT_OTHER_TYPE_
 	{
@@ -106,10 +106,10 @@ namespace Gray
 	{
 		//! @class Gray::HResultCode
 		//! Used to define a nullptr terminated table of codes (usually) for a single FACILITY_TYPE.
-		//! ASSUME array is HRESULT sorted.
+		//! ASSUME this array is HRESULT sorted.
 	public:
 		HRESULT m_hRes;			//! error code for a FACILITY_TYPE. might just use WORD?
-		const char* m_pszMsg;	//! associated message. UTF8
+		const char* m_pszMsg;	//! associated error message string. UTF8
 
 	public:
 		int FindCode(HRESULT hRes) const;
@@ -124,83 +124,83 @@ namespace Gray
 		//! https://msdn.microsoft.com/en-us/library/cc231198.aspx
 
 	public:
-		typedef CPair<FACILITY_TYPE, const GChar_t*> Facility_t;
-		static const Facility_t k_Facility[];	//!< names of known FACILITY_TYPE.
+		typedef CPair<FACILITY_TYPE, const GChar_t*> Facility_t;	// name the facilities.
+		static const Facility_t k_Facility[];	//!< names of all known FACILITY_TYPE.
 
 		HRESULT m_hRes;
 
 	public:
-		HResult(HRESULT hRes)
+		HResult(HRESULT hRes) noexcept
 			: m_hRes(hRes)
 		{
 		}
-		HResult(FACILITY_TYPE eFacility, WORD wCode)
+		HResult(FACILITY_TYPE eFacility, WORD wCode) noexcept
 			: m_hRes(MAKE_HRESULT(1, eFacility, wCode))
 		{
 			//! @arg eFacility = FACILITY_TYPE = FACILITY_WIN32
 			//! e.g. HRESULT_WIN32_C(WSAEACCES) = HResult(FACILITY_WIN32,WSAEACCES)
 		}
-		HResult(int eFacility, long wCode)
+		HResult(int eFacility, long wCode) noexcept
 			: m_hRes(MAKE_HRESULT(1, eFacility, wCode))
 		{
 			//! @arg eFacility = FACILITY_TYPE = FACILITY_WIN32
 			//! e.g. HRESULT_WIN32_C(WSAEACCES) = HResult(FACILITY_WIN32,WSAEACCES)
 		}
 
-		operator HRESULT() const
+		operator HRESULT() const noexcept
 		{
 			return m_hRes;
 		}
 
-		static inline DWORD GetCode(HRESULT hRes)
+		static inline DWORD GetCode(HRESULT hRes) noexcept
 		{
-			//! Get just the facility sub code portion of the HRESULT
+			//! Get just the facility sub code portion of the HRESULT. may be LSTATUS/error_status_t
 			//! HRESULT_CODE(hRes) = WORD or LSTATUS
 			return (DWORD)((hRes) & 0xFFFF);
 		}
-		inline DWORD get_Code() const
+		inline DWORD get_Code() const noexcept
 		{
 			return GetCode(m_hRes);
 		}
 
-		static inline FACILITY_TYPE GetFacility(HRESULT hRes)
+		static inline FACILITY_TYPE GetFacility(HRESULT hRes) noexcept
 		{
 			//! HRESULT_FACILITY(hRes)
 			return (FACILITY_TYPE)(((hRes) >> 16) & 0x1fff);
 		}
-		inline FACILITY_TYPE get_Facility() const
+		inline FACILITY_TYPE get_Facility() const noexcept
 		{
 			return GetFacility(m_hRes);
 		}
 
-		static inline bool IsFailure(HRESULT hRes)
+		static inline bool IsFailure(HRESULT hRes) noexcept
 		{
 			//! FAILED(hRes)
 			//! like HRESULT_SEVERITY(hr)  (((hr) >> 31) & 0x1)
 			return hRes < 0;
 		}
-		bool isFailure() const
+		bool isFailure() const noexcept
 		{
 			//! FAILED(hRes)
 			//! like HRESULT_SEVERITY(hr)  (((hr) >> 31) & 0x1)
 			return m_hRes < 0;
 		}
 
-		static inline HRESULT Make(FACILITY_TYPE eFacility, WORD wCode)
+		static inline HRESULT Make(FACILITY_TYPE eFacility, WORD wCode) noexcept
 		{
 			//! Make a HRESULT error code from FACILITY_TYPE + WORD code.
 			return MAKE_HRESULT(1, eFacility, wCode);
 		}
-		static inline HRESULT Make(BYTE bReserved, FACILITY_TYPE eFacility, WORD wCode)
+		static inline HRESULT Make(BYTE bReserved, FACILITY_TYPE eFacility, WORD wCode) noexcept
 		{
 			//! Make a special HRESULT error code from FACILITY_TYPE + WORD code + bReserved.
 			//! bReserved = 4 for a PerfMon Code. 8=app specific error. leave 0 for normal system error code.
 			return MAKE_HRESULT(1, eFacility, wCode) | (((HRESULT)bReserved) << (16 + 11));
 		}
 
-		static inline HRESULT FromWin32(DWORD dwWin32Code)
+		static inline HRESULT FromWin32(DWORD dwWin32Code) noexcept
 		{
-			//! @arg dwWin32Code = maybe LSTATUS or already HRESULT (see GetLastError() docs)
+			//! @arg dwWin32Code = maybe LSTATUS/error_status_t or already HRESULT (see GetLastError() docs)
 			//! like HRESULT_FROM_WIN32(dwWin32Code) NOT HRESULT_WIN32_C(WORD)
 			if ((HRESULT)dwWin32Code <= 0)	// NO_ERROR
 			{
@@ -212,11 +212,11 @@ namespace Gray
 				// This is weird ! NOT a proper error code !?
 				dwWin32Code &= 0xFFFF;
 			}
-			return Make((FACILITY_TYPE)FACILITY_WIN32, (WORD)dwWin32Code);
+			return Make((FACILITY_TYPE)FACILITY_WIN32, (WORD)dwWin32Code);	// HRESULT_WIN32_C()
 		}
 
 #ifdef _WIN32
-		static inline HRESULT FromWaitRet(DWORD dwRet)
+		static inline HRESULT FromWaitRet(DWORD dwRet) noexcept
 		{
 			//! Get HRESULT from return value from _WIN32 WaitForSingleObject(), SleepEx(), WaitForMultipleObjects()
 			if (dwRet == WAIT_FAILED)		// 0xFFFFFFFF
@@ -232,7 +232,7 @@ namespace Gray
 
 		static HRESULT GRAYCALL GetLast();
 
-		static inline HRESULT GetDef(HRESULT hRes, HRESULT hResDef = E_FAIL)
+		static inline HRESULT GetDef(HRESULT hRes, HRESULT hResDef = E_FAIL) noexcept
 		{
 			//! We know there was an error!
 			//! If the hRes isn't an error supply a default error as hResDef.
@@ -242,7 +242,7 @@ namespace Gray
 			}
 			return hRes;
 		}
-		static inline HRESULT GetLastDef(HRESULT hResDef = E_FAIL)
+		static inline HRESULT GetLastDef(HRESULT hResDef = E_FAIL) noexcept
 		{
 			//! Get the last system error recorded for this thread.
 			//! If there isn't one then just use the supplied default. E_FAIL
