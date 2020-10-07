@@ -642,6 +642,7 @@
     <ClInclude Include="include\CHashTable.h" />
     <ClInclude Include="include\CHeap.h" />
     <ClInclude Include="include\CHeapObject.h" />
+    <ClInclude Include="include\CHookJump.h" />
     <ClInclude Include="include\CIniBase.h" />
     <ClInclude Include="include\CIniFile.h" />
     <ClInclude Include="include\CIniMap.h" />
@@ -769,6 +770,7 @@
     <ClCompile Include="src\CFloatDeco.cpp" />
     <ClCompile Include="src\CHashTable.cpp" />
     <ClCompile Include="src\CHeap.cpp" />
+    <ClCompile Include="src\CHookJump.cpp" />
     <ClCompile Include="src\CIniFile.cpp" />
     <ClCompile Include="src\CIniMap.cpp" />
     <ClCompile Include="src\CIniObject.cpp" />
