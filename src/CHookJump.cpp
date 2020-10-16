@@ -144,33 +144,31 @@ namespace Gray
 
 	//*****************************************************
 
-	bool CHookJump::IsChainable() const
+	FARPROC CHookJump::GetChainFunc() const
 	{
-		// The jump i inserted is just on top of another jump. 
-		// I don't need to lock and swap to call the old code. I can just chain.
-
-		ASSERT(isHookInstalled()); 	// MUST be isHookInstalled to know.
- 
-		if (m_OldCode[0] == k_I_JUMP)	// the old code was just a jump as well.
+		if (isChainable())
 		{
-			return true;
+			// Get a callable function from this.
+			int lRelAddr;
+			STATIC_ASSERT(sizeof(lRelAddr) == k_LEN_P, lRelAddr);
+ 			::memcpy(&lRelAddr, m_OldCode + k_LEN_J, k_LEN_P);
+			return (FARPROC)(((UINT_PTR)m_pFuncOrig) + lRelAddr + sizeof(m_OldCode));
 		}
-
-		return false;
+		return m_pFuncOrig;
 	}
 
 	bool CHookJump::InstallHook(FARPROC pFuncOrig, FARPROC pFuncNew)
 	{
 		//! @note X86 ONLY!! 32 or 64 bit.
 
-		ASSERT(pFuncNew != nullptr);
 		CThreadGuardFast guard(m_Lock);
-		if (pFuncOrig == nullptr)
+		if (pFuncOrig == nullptr || pFuncNew == nullptr)
 		{
+			ASSERT(pFuncNew != nullptr);
 			DEBUG_ERR(("InstallHook: nullptr."));
 			return false;
 		}
-		if (isHookInstalled() && !::memcmp((void*)pFuncOrig, m_Jump, sizeof(m_Jump)))
+		if (isHookInstalled())
 		{
 			ASSERT(m_pFuncOrig != nullptr);
 			DEBUG_MSG(("InstallHook: already has JMP-implant."));
@@ -188,21 +186,22 @@ namespace Gray
 		}
 #endif
 
-		// unconditional JMP to relative address is 5 bytes. X86 ONLY!!
-#if defined(_M_IX86) || defined(_M_X64) || defined(_M_AMD64) || defined(_M_IA64) || defined(_AMD64_) || defined(__ia64__) || defined(__x86_64__)
+		m_pFuncOrig = pFuncOrig;		 
+		::memcpy(m_OldCode, (void*)pFuncOrig, sizeof(m_OldCode));		// save old code.
+
+		// create unconditional JMP to relative address is 5 bytes. X86/64 ONLY!!
+#if USE_INTEL
 		m_Jump[0] = k_I_JUMP;
 #else
 #error The CPU type must be defined as _M_IX86 or _M_X64
 #endif
 
-		const INT_PTR lRelAddr = (INT_PTR)((UINT_PTR)pFuncNew - (UINT_PTR)pFuncOrig) - sizeof(m_Jump);
+		const int lRelAddr = (int)((UINT_PTR)pFuncNew - (UINT_PTR)pFuncOrig) - sizeof(m_Jump);
+		STATIC_ASSERT(sizeof(lRelAddr) == k_LEN_P, lRelAddr);
 		DEBUG_TRACE(("InstallHook JMP %08x", lRelAddr));
 		::memcpy(m_Jump + k_LEN_J, &lRelAddr, k_LEN_P);
 
-		::memcpy(m_OldCode, (void*)pFuncOrig, sizeof(m_OldCode));
-		::memcpy((void*)pFuncOrig, m_Jump, sizeof(m_Jump));	// we are armed!
-		m_pFuncOrig = pFuncOrig;
-		ASSERT(m_pFuncOrig != nullptr);
+		::memcpy((void*)pFuncOrig, m_Jump, sizeof(m_Jump));	// inject jump. we are armed!
 
 		DEBUG_MSG(("InstallHook: JMP-hook planted."));
 		return true;
@@ -243,12 +242,12 @@ namespace Gray
 #ifdef _MSC_VER
 #pragma optimize( "", off )
 #endif
-int GRAYCALL CUnitTest_HookJump1() // never inline optimize this
+INT_PTR GRAYCALL CUnitTest_HookJump1() // never inline optimize this
 {
 	CUnitTests::sm_pLog->addDebugInfoF("CUnitTest_HookJump1");
 	return 1;
 }
-int GRAYCALL CUnitTest_HookJump2() // never inline optimize this
+INT_PTR GRAYCALL CUnitTest_HookJump2() // never inline optimize this
 {
 	// replace CUnitTest_HookJump1 with this.
 	CUnitTests::sm_pLog->addDebugInfoF("CUnitTest_HookJump2");
@@ -264,7 +263,9 @@ UNITTEST_CLASS(CHookJump)
 	{
 		//! hook a API function for one call.
 
-		int iRet = CUnitTest_HookJump1();
+		UNITTEST_TRUE(CUnitTests::sm_pLog != nullptr);
+
+		INT_PTR iRet = CUnitTest_HookJump1();
 		UNITTEST_TRUE(iRet == 1);
 
 		CHookJump tester;
@@ -279,11 +280,22 @@ UNITTEST_CLASS(CHookJump)
 
 		{
 			CHookSwapLock lock(tester);
-			iRet = CUnitTest_HookJump1();	// CUnitTest_HookJump1 was restored.
+			iRet = CUnitTest_HookJump1();	// CUnitTest_HookJump1 was restored globally.
 			UNITTEST_TRUE(iRet == 1);
 		}
 
 		iRet = CUnitTest_HookJump1();
+		UNITTEST_TRUE(iRet == 2);
+
+		{
+			CHookSwapChain lock(tester);
+			iRet = CUnitTest_HookJump1();	// CUnitTest_HookJump1 still as CUnitTest_HookJump2.
+			UNITTEST_TRUE(iRet == 2);
+			iRet = lock.m_pFuncChain();	// CUnitTest_HookJump1 was restored just for Chain.
+			UNITTEST_TRUE(iRet == 1);
+		}
+
+		iRet = CUnitTest_HookJump1();	// CUnitTest_HookJump1 as CUnitTest_HookJump2.
 		UNITTEST_TRUE(iRet == 2);
 
 		tester.RemoveHook();
@@ -291,8 +303,8 @@ UNITTEST_CLASS(CHookJump)
 
 		iRet = CUnitTest_HookJump1();
 		UNITTEST_TRUE(iRet == 1);	// was restored.
-		iRet = CUnitTest_HookJump2();
-		UNITTEST_TRUE(iRet == 2);
+		iRet = CUnitTest_HookJump2();	
+		UNITTEST_TRUE(iRet == 2);		// still works as expected.
 	}
 };
 UNITTEST_REGISTER(CHookJump, UNITTEST_LEVEL_Lib);

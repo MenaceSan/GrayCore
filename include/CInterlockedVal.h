@@ -214,7 +214,7 @@ namespace Gray
 		}
 #endif
 		return nValPrev;
-#elif defined(_MSC_VER) && defined(_M_IX86)	// _MSC_VER 32 bit code for 64 bit interlock. ! USE_64BIT
+#elif defined(_MSC_VER) && !defined(USE_64BIT)	// _MSC_VER 32 bit code for 64 bit interlock. ! USE_64BIT
 		__asm
 		{
 			lea esi, nValComp;
@@ -250,7 +250,7 @@ namespace Gray
 		//! most common use of InterlockedCompareExchange
 		//! It's more efficient to use the z flag than to do another compare
 		//! value returned in eax
-#if defined(_MSC_VER) && defined(_M_IX86)	// _MSC_VER 32 bit. ! USE_64BIT
+#if defined(_MSC_VER) && !defined(USE_64BIT)	// _MSC_VER 32 bit. ! USE_64BIT
 		__asm
 		{
 			lea esi, nValComp;

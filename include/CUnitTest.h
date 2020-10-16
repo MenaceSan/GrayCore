@@ -194,6 +194,7 @@ namespace Gray
 
 		bool RegisterUnitTest(CUnitTestRegister* pTest);
 		CUnitTestRegister* FindUnitTest(const char* pszName) const;
+		static void GRAYCALL InitLog();
 
 		//! Run all tests <= this UNITTEST_LEVEL_TYPE
 		bool TestTypes();

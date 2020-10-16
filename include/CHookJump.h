@@ -21,13 +21,15 @@ namespace Gray
 		//! Create/Define a relative jump to hook/replace an existing API call. Jump to new code is injected into old function start.
 		//! @note NOT for use in hooking an interface or a vtable. those don't require a jump instruction.
 		//! @note This ASSUMEs Intel x86 type CPU. 32 or 64 bit instructions
-		
+
 	public:
 		static const BYTE k_I_NULL = 0x00;
+#if USE_INTEL
 		static const BYTE k_I_JUMP = 0xe9;		// X86
+#endif
 		static const int k_LEN_J = 1;	//!< size of the jump instruction. 0xe9 = k_JUMP_I
 
-		static const int k_LEN_P = 4;	//!< size of the relative pointer. NOT same as sizeof(FARPROC)
+		static const int k_LEN_P = 4;	//!< size of the relative pointer. NOT same as sizeof(FARPROC) or INT_PTR
 #ifdef USE_64BIT
 		static const int k_LEN_A = 16;	//!< k_LEN_D aligned to 16 (for 64 bit code)
 #else
@@ -36,9 +38,10 @@ namespace Gray
 		static const int k_LEN_D = k_LEN_J + k_LEN_P;	//!< ( k_LEN_J+k_LEN_P ) = size of actual instruction
 
 		friend class CHookSwapLock;
+		friend class CHookSwapChain;
 
 	protected:
-		FARPROC m_pFuncOrig;			//!< Pointer to the original/old function. The one i will replace.
+		FARPROC m_pFuncOrig;			//!< Pointer to the original/old function. The one i will replace. Inject code here.
 		BYTE m_OldCode[k_LEN_D];		//!< what was at m_pFuncOrig previously. NOTE: What if this uses k_LEN_J the m_Lock isn't needed ?!!!
 		BYTE m_Jump[k_LEN_D];			//!< what do i want to replace m_pFuncOrig with. jump to pFuncNew
 		CThreadLockFast m_Lock;			//!< prevent multiple threads from using this at the same time.
@@ -63,9 +66,10 @@ namespace Gray
 		}
 
 	public:
-		CHookJump()
+		CHookJump() noexcept
 			: m_pFuncOrig(nullptr)
 		{
+			m_OldCode[0] = k_I_NULL;
 			m_Jump[0] = k_I_NULL;
 		}
 		~CHookJump()
@@ -75,7 +79,7 @@ namespace Gray
 
 		bool isHookInstalled() const noexcept
 		{
-			return(m_Jump[0] != k_I_NULL);
+			return m_Jump[0] == k_I_JUMP;
 		}
 		bool isHookValid() const noexcept
 		{
@@ -87,7 +91,14 @@ namespace Gray
 			return true;
 		}
 
-		bool IsChainable() const;
+		bool isChainable() const noexcept
+		{
+			// The jump i inserted is just on top of another jump? 
+			// I don't need to lock and swap to call the old code. I can just chain to it
+			return m_OldCode[0] == k_I_JUMP;	// the old code was just a jump as well.
+		}
+
+		FARPROC GetChainFunc() const;
 
 		bool InstallHook(FARPROC pFuncOrig, FARPROC pFuncNew);
 		void RemoveHook();
@@ -104,15 +115,11 @@ namespace Gray
 		bool m_bSwapOld;	// has Old. Must be locked.
 
 	public:
-		CHookSwapLock(CHookJump& rJump)
-		: CThreadGuardFast(rJump.m_Lock)	// MUST lock while we do this. single thread.
-		, m_rJump(rJump)
+		CHookSwapLock(CHookJump& rJump, bool swap = true)
+			: CThreadGuardFast(rJump.m_Lock)	// MUST lock while we do this. single thread.
+			, m_rJump(rJump)
 		{
-			if (rJump.IsChainable())
-			{
-				m_bSwapOld = false;
-			}
-			else
+			if (swap)
 			{
 				m_bSwapOld = m_rJump.SwapOld();
 			}
@@ -125,6 +132,18 @@ namespace Gray
 			}
 		}
 	};
-};
+
+	class GRAYCORE_LINK CHookSwapChain : public CHookSwapLock
+	{
+	public:
+		FARPROC m_pFuncChain;	// chained version of m_pFuncOrig. or fallback to m_pFuncOrig.
+	public:
+		CHookSwapChain(CHookJump& rJump)
+			: CHookSwapLock(rJump, !rJump.isChainable())
+		{
+			m_pFuncChain = rJump.GetChainFunc();
+		}
+	};
+}
 
 #endif // _INC_CHookJump_H

@@ -425,6 +425,7 @@ UNITTEST_CLASS(CHeap)
 	UNITTEST_METHOD(CHeap)
 	{
 		// test physical memory and the heap.
+		UNITTEST_TRUE(CUnitTests::sm_pLog != nullptr);
 		UNITTEST_TRUE(CHeap::Check());
 
 		UINT64 uPhysTotal = CHeap::get_PhysTotal();

@@ -77,12 +77,6 @@
 
 #endif // _MSC_VER >= 1000
 
-// see CMemT::NtoH() and CMemT::HtoN() for auto conversion to big endian (network)
-// e.g. on little endian (Intel). 0x123456 = 56 34 12 00
-#if defined(_M_IX86) || defined(_M_X64) || defined(_M_AMD64) || defined(_M_IA64) || defined(_AMD64_) || defined(__ia64__) || defined(__x86_64__)
-#define USE_LITTLE_ENDIAN 1		//!< Intel = little endian = high values in high memory. increasing numeric significance with increasing memory addresses
-#endif
-
 // Ignore the system #define UNICODE and _UNICODE. I use my own USE_UNICODE system as default char type. We don't have to use UNICODE just because the system does.
 #if defined(UNICODE) || defined(_UNICODE)
 #define USE_UNICODE				//!< This allows the including of core headers that use conflicting #define UNICODE to still work.

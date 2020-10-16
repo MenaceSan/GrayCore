@@ -41,8 +41,7 @@ namespace Gray
 		CUnitTestLogger()
 		{
 			// Assume we compile in the same environment as we unit test.
-			CUnitTest::sm_pLog = CLogMgr::get_Single();
-			CDebugAssert::sm_pAssertCallback = CUnitTests::UnitTest_AssertCallback;
+			CUnitTests::InitLog();
 		}
 
 		bool CreateLogFile(const FILECHAR_t* pszFileDir)
@@ -442,6 +441,13 @@ do ordain and establish this constitution of the United States of America\n\n");
 		return true;
 	}
 
+	void GRAYCALL CUnitTests::InitLog() // static
+	{
+		// Attach logger.
+ 		sm_pLog = CLogMgr::get_Single();  // route logs here.
+		CDebugAssert::sm_pAssertCallback = UnitTest_AssertCallback;		// route asserts back here.
+	}
+
 	HRESULT CUnitTests::UnitTests(UNITTEST_LEVEL_TYPE nTestLevel, const LOGCHAR_t* pszTestNameMatch)
 	{
 		//! Execute all the registered unit tests at the selected level.
@@ -456,9 +462,8 @@ do ordain and establish this constitution of the United States of America\n\n");
 		sm_bCreatedUnitTests = true;
 
 		// Where to send the test output?
-		CLogMgr& log = CLogMgr::I();	// route logs here.
-		sm_pLog = &log;
-		CDebugAssert::sm_pAssertCallback = UnitTest_AssertCallback;	// route asserts back here.
+		InitLog();	// route logs here.
+		 
 		CTimePerf::InitFreq();
 
 		CTimeSys tStart(CTimeSys::GetTimeNow());
@@ -472,27 +477,27 @@ do ordain and establish this constitution of the United States of America\n\n");
 		CSmartPtr<CUnitTestLogger> pLogFile(new CUnitTestLogger);
 		if (pLogFile->CreateLogFile(sTestOutDir))
 		{
-			log.AddAppender(pLogFile);
+			CLogMgr::I().AddAppender(pLogFile);
 		}
 
-		log.addDebugInfoF("CUnitTests input from '%s'", LOGSTR(sTestInpDir));
-		log.addDebugInfoF("CUnitTests output to '%s'", LOGSTR(sTestOutDir));
+		sm_pLog->addDebugInfoF("CUnitTests input from '%s'", LOGSTR(sTestInpDir));
+		sm_pLog->addDebugInfoF("CUnitTests output to '%s'", LOGSTR(sTestOutDir));
 
 		CArrayString<LOGCHAR_t> aNames;
 		if (pszTestNameMatch == nullptr)
 		{
-			log.addDebugInfoF("CUnitTests STARTING %d TESTS at level %d", m_aUnitTests.GetSize(), nTestLevel);
+			sm_pLog->addDebugInfoF("CUnitTests STARTING %d TESTS at level %d", m_aUnitTests.GetSize(), nTestLevel);
 		}
 		else
 		{
-			log.addDebugInfoF("CUnitTests STARTING '%s' from %d TESTS", LOGSTR(pszTestNameMatch), m_aUnitTests.GetSize());
+			sm_pLog->addDebugInfoF("CUnitTests STARTING '%s' from %d TESTS", LOGSTR(pszTestNameMatch), m_aUnitTests.GetSize());
 			aNames.SetStrSep(pszTestNameMatch, ',');
 		}
 
 		// Display build/compile info. date, compiler, _MFC_VER/_AFXDLL, 64/32 bit.
-		log.addDebugInfoF("Build: '%s' v%d for '%s' on '%s'", GRAY_COMPILER_NAME, GRAY_COMPILER_VER, GRAY_BUILD_NAME, __DATE__);
+		sm_pLog->addDebugInfoF("Build: '%s' v%d for '%s' on '%s'", GRAY_COMPILER_NAME, GRAY_COMPILER_VER, GRAY_BUILD_NAME, __DATE__);
 		// Display current run environment info. OS type, 64/32 bit, OS version, CPU's.
-		log.addDebugInfoF("OS: '%s'", LOGSTR(CSystemInfo::I().get_OSName()));
+		sm_pLog->addDebugInfoF("OS: '%s'", LOGSTR(CSystemInfo::I().get_OSName()));
 
 		// Test presumed behavior of compiler types.
 		TestTypes();
@@ -535,7 +540,7 @@ do ordain and establish this constitution of the United States of America\n\n");
 			UNITTEST_TRUE(iLenName > 0 && iLenName < STRMAX(szDashes));
 			szDashes[_countof(szDashes) - iLenName] = '\0';
 
-			log.addDebugInfoF("CUnitTest '%s' run  %s", LOGSTR(pUnitTest->m_pszTestName), szDashes);
+			sm_pLog->addDebugInfoF("CUnitTest '%s' run  %s", LOGSTR(pUnitTest->m_pszTestName), szDashes);
 			szDashes[_countof(szDashes) - iLenName] = '-';
 
 			CTimePerf tPerfStart(true);		// Time a single test for performance changes.
@@ -547,7 +552,7 @@ do ordain and establish this constitution of the United States of America\n\n");
 			if (sm_iFailures > 0)
 			{
 				// Assume CDebugAssert::Assert_Fail was also called.
-				log.addDebugInfoF("CUnitTest FAILED '%s' Test %d", LOGSTR(pUnitTest->m_pszTestName), iTestsRun);
+				sm_pLog->addDebugInfoF("CUnitTest FAILED '%s' Test %d", LOGSTR(pUnitTest->m_pszTestName), iTestsRun);
 				return E_FAIL;
 			}
 
@@ -558,7 +563,7 @@ do ordain and establish this constitution of the United States of America\n\n");
 			if (!bHeapCheck && !::Gray::CDebugAssert::Assert_Fail("CHeap::Check", DEBUGSOURCELINE))
 			{
 				// Assume CDebugAssert::Assert_Fail was also called.
-				log.addDebugInfoF("CUnitTest FAILED '%s' Heap Corruption.", LOGSTR(pUnitTest->m_pszTestName));
+				sm_pLog->addDebugInfoF("CUnitTest FAILED '%s' Heap Corruption.", LOGSTR(pUnitTest->m_pszTestName));
 				return E_FAIL;
 			}
 
@@ -572,22 +577,22 @@ do ordain and establish this constitution of the United States of America\n\n");
 			if (nLenText > STRMAX(szDashes))
 				nLenText = STRMAX(szDashes);
 			szDashes[_countof(szDashes) - nLenText] = '\0';
-			log.addDebugInfoF("CUnitTest '%s' complete in %s %s", LOGSTR(pUnitTest->m_pszTestName), LOGSTR(sTimeSpan), szDashes);
+			sm_pLog->addDebugInfoF("CUnitTest '%s' complete in %s %s", LOGSTR(pUnitTest->m_pszTestName), LOGSTR(sTimeSpan), szDashes);
 			szDashes[_countof(szDashes) - nLenText] = '-';
 		}
 
-		log.addDebugInfoF("CUnitTests ENDING %d/%d TESTS in %s", iTestsRun, m_aUnitTests.GetSize(),
+		sm_pLog->addDebugInfoF("CUnitTests ENDING %d/%d TESTS in %s", iTestsRun, m_aUnitTests.GetSize(),
 			LOGSTR(CTimeInt::GetTimeSpanStr(tStart.get_AgeSec())));
 
 		if (pszTestNameMatch != nullptr && aNames.GetSize() > 0)
 		{
 			// Didn't find some names !
-			log.addDebugInfoF("CUnitTest FAILED to find test for '%s'", LOGSTR(aNames[0]));
+			sm_pLog->addDebugInfoF("CUnitTest FAILED to find test for '%s'", LOGSTR(aNames[0]));
 		}
 
 
 #ifdef USE_IUNK_TRACE
-		CPtrTrace::TraceDump(log, 0);
+		CPtrTrace::TraceDump(*sm_pLog, 0);
 #endif
 
 		// Clear the temporary directory ? get_TestOutDir()

@@ -80,15 +80,15 @@ namespace Gray
 		//
 	public:
 		explicit CLockerT(TYPE* pLock, bool bLockSuccess)
-		: CPtrFacade<TYPE>(bLockSuccess ? pLock : nullptr)
+			: CPtrFacade<TYPE>(bLockSuccess ? pLock : nullptr)
 		{
-			// The lock may not always work !
+			// The lock may not always work ! this->m_p == nullptr
 		}
 		explicit CLockerT(TYPE& rLock)
-		: CPtrFacade<TYPE>(&rLock)
+			: CPtrFacade<TYPE>(&rLock)
 		{
-			ASSERT(this->m_p != nullptr);
-			this->m_p->Lock();
+			ASSERT(this->m_p == &rLock && this->m_p != nullptr);
+			rLock.Lock();
 		}
 		~CLockerT()
 		{

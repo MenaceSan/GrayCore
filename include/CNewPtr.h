@@ -48,32 +48,32 @@ namespace Gray
 			FreeLast();
 		}
 
-		void AllocArray(size_t nSize = 1)
+		void AllocArray(size_t nSize = 1) noexcept
 		{
 			FreeLast();
 			this->m_p = new TYPE[nSize];
 		}
-		void AllocArray(size_t nSize, const TYPE* p)
+		void AllocArray(size_t nSize, const TYPE* p) noexcept
 		{
 			AllocArray(nSize);
-			if (p != nullptr)
+			if (p != nullptr && this->m_p != nullptr)
 			{
 				::memcpy(this->m_p, p, sizeof(TYPE)*nSize);
 			}
 		}
-		void ReleasePtr()
+		void ReleasePtr() noexcept
 		{
 			FreeLast();
 		}
 
 		// Override operators
 
-		THIS_t& operator = (TYPE* p2)
+		THIS_t& operator = (TYPE* p2) noexcept
 		{
 			AsignPtr(p2);
 			return *this;
 		}
-		THIS_t& operator = (THIS_t& ref)
+		THIS_t& operator = (THIS_t& ref) noexcept
 		{
 			AsignRef(ref);
 			return *this;
@@ -91,19 +91,19 @@ namespace Gray
 		}
 
 		// Comparisons.
-		bool operator != (const TYPE* p2) const
+		bool operator != (const TYPE* p2) const noexcept
 		{
 			return(p2 != this->m_p);
 		}
 #if _MSC_VER < 1300	// VC 7.0 has trouble converting to const
-		bool operator == (const TYPE* p2) const
+		bool operator == (const TYPE* p2) const noexcept
 		{
 			return(p2 == this->m_p);
 		}
 #endif
 
 	protected:
-		void AsignPtr(TYPE* p2)
+		void AsignPtr(TYPE* p2) noexcept
 		{
 			if (p2 != this->m_p)
 			{
@@ -111,7 +111,7 @@ namespace Gray
 				this->m_p = p2;
 			}
 		}
-		void AsignRef(THIS_t& ref)
+		void AsignRef(THIS_t& ref) noexcept
 		{
 			if (&ref != this)
 			{
@@ -120,7 +120,7 @@ namespace Gray
 				ref.m_p = nullptr;	// transferred.
 			}
 		}
-		void FreeLast()
+		void FreeLast() noexcept
 		{
 			if (this->m_p != nullptr)
 			{

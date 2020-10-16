@@ -1010,6 +1010,7 @@ UNITTEST_CLASS(CFileDir)
 	UNITTEST_METHOD(CFileDir)
 	{
 		// enumerate devices in the system.
+		UNITTEST_TRUE(CUnitTests::sm_pLog != nullptr);
 
 		cFileDevice di;
 		TestDevice(di, nullptr, "(default)");

@@ -17,6 +17,13 @@
 // like BZ_NO_STDIO, GZ_NO_STDIO
 // #define USE_STDIO	// Don't define this to remove extra file junk from open source libraries. zlibstat, bzip2, LibOpenJpeg, LibJpeg
 
+// see CMemT::NtoH() and CMemT::HtoN() for auto conversion to big endian (network)
+// e.g. on little endian (Intel). 0x123456 = 56 34 12 00
+#if defined(_M_IX86) || defined(_M_X64) || defined(_M_AMD64) || defined(_M_IA64) || defined(_AMD64_) || defined(__ia64__) || defined(__x86_64__)
+#define USE_INTEL 1		//!< X86 type instructions and _asm.
+#define USE_LITTLE_ENDIAN 1		//!< Intel = little endian = high values in high memory. increasing numeric significance with increasing memory addresses
+#endif
+
 //!< use 64 bit native code/pointers. __linux__ or _WIN32&_WIN64.
 //!< NOT _M_IX86
 #if defined(_WIN64)
