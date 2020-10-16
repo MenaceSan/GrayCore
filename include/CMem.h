@@ -33,7 +33,7 @@ namespace Gray
 		static void __cdecl IsValidFailHandler(int nSig);	// JMP_t
 #endif
 
-		static ptrdiff_t inline Diff(const void* pEnd, const void* pStart)
+		static ptrdiff_t inline Diff(const void* pEnd, const void* pStart) 
 		{
 			//! @return Difference in bytes. Assume it is a reasonable sized block?
 			ptrdiff_t i = ((const BYTE*)pEnd - (const BYTE*)pStart);	// like INT_PTR
@@ -41,7 +41,7 @@ namespace Gray
 			return i;
 		}
 
-		static bool inline IsValidApp(const void* pData)
+		static bool inline IsValidApp(const void* pData) noexcept
 		{
 			//! Is this pointer into App space? Not kernel space. Kernel Space <= 1G or 2G for __linux__
 			//! Does not mean I have write permissions.
