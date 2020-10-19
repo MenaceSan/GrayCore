@@ -372,9 +372,13 @@ namespace Gray
 			//! possibly nullptr.
 			return((BYTE*)get_Data());
 		}
-		char* get_DataChars() const
+		char* get_DataA() const
 		{
 			return((char*)get_Data());
+		}
+		wchar_t* get_DataW() const
+		{
+			return((wchar_t*)get_Data());
 		}
 		operator void* () const
 		{
@@ -386,7 +390,7 @@ namespace Gray
 		}
 		operator char* () const
 		{
-			return get_DataChars();	// for use with []
+			return get_DataA();	// for use with []
 		}
 	};
 }

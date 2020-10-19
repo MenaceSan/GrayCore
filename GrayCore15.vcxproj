@@ -798,6 +798,7 @@
     <ClCompile Include="src\CString.cpp" />
     <ClCompile Include="src\CSystemInfo.cpp" />
     <ClCompile Include="src\CTempPool.cpp" />
+    <ClCompile Include="src\CTextPos.cpp" />
     <ClCompile Include="src\CThreadLock.cpp" />
     <ClCompile Include="src\CThreadLockRW.cpp" />
     <ClCompile Include="src\CTimeDouble.cpp" />

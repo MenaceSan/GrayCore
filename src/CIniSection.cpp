@@ -405,7 +405,7 @@ namespace Gray
 		m_iBufferUsed = 0;
 		if (m_Buffer.IsValidIndex(0))
 		{
-			m_Buffer.get_DataChars()[0] = '\0';
+			m_Buffer.get_DataA()[0] = '\0';
 		}
 	}
 
@@ -423,11 +423,11 @@ namespace Gray
 		{
 			// No change.
 			ASSERT(m_Buffer.isValid() || m_Buffer.get_Size() == 0);
-			return m_Buffer.get_DataChars();
+			return m_Buffer.get_DataA();
 		}
-		const IniChar_t* pszBufferPrev = m_Buffer.get_DataChars();
+		const IniChar_t* pszBufferPrev = m_Buffer.get_DataA();
 		m_Buffer.ReAlloc(nSizeChars * sizeof(IniChar_t));
-		IniChar_t* pszBufferNew = m_Buffer.get_DataChars();
+		IniChar_t* pszBufferNew = m_Buffer.get_DataA();
 		if (!m_Buffer.isValid())
 		{
 			ASSERT(0 == nSizeChars);
@@ -482,7 +482,7 @@ namespace Gray
 		{
 			AllocLines(iLineQty);
 		}
-		return m_Buffer.get_DataChars();
+		return m_Buffer.get_DataA();
 	}
 
 	void CIniSectionData::AllocComplete()
@@ -518,7 +518,7 @@ namespace Gray
 		CMem::Copy(m_ppLines, section.m_ppLines, m_iLinesUsed * sizeof(IniChar_t*));
 		CMem::Copy(m_Buffer.get_Data(), section.m_Buffer.get_Data(), m_Buffer.get_Size());
 
-		MoveLineOffsets(0, StrT::Diff(m_Buffer.get_DataChars(), section.m_Buffer.get_DataChars()));
+		MoveLineOffsets(0, StrT::Diff(m_Buffer.get_DataA(), section.m_Buffer.get_DataA()));
 	}
 
 	ITERATE_t CIniSectionData::FindKeyLine(const IniChar_t* pszKeyName, bool bPrefixOnly) const
@@ -632,9 +632,9 @@ namespace Gray
 			AllocBuffer(iBufferAlloc);
 		}
 
-		IniChar_t* pszLineDest = m_Buffer.get_DataChars() + m_iBufferUsed;
+		IniChar_t* pszLineDest = m_Buffer.get_DataA() + m_iBufferUsed;
 		StrLen_t iLenMax = (iBufferAlloc - m_iBufferUsed);
-		StrLen_t iLen = StrT::CopyLen(m_Buffer.get_DataChars() + m_iBufferUsed, pszLine, iLenMax);
+		StrLen_t iLen = StrT::CopyLen(m_Buffer.get_DataA() + m_iBufferUsed, pszLine, iLenMax);
 		if (iLen >= iLenMax - 1)
 		{
 			// We chopped the line !!
@@ -694,7 +694,7 @@ namespace Gray
 			iLenDiff = iLenNew - iLenOld;
 		}
 
-		StrLen_t iBufferStart = StrT::Diff(pszDst, m_Buffer.get_DataChars());
+		StrLen_t iBufferStart = StrT::Diff(pszDst, m_Buffer.get_DataA());
 		iBufferStart += iLenOld;
 
 		// Move above data to make room.

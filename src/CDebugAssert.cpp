@@ -68,7 +68,7 @@ namespace Gray
 		return false;
 	}
 
-	void GRAYCALL CDebugAssert::Assert_Throw(const char* pszExp, const CDebugSourceLine src)
+	void GRAYCALL CDebugAssert::Assert_Throw(const char* pszExp, const CDebugSourceLine src) // static
 	{
 		//! This assert cannot be ignored. We must throw cExceptionAssert after this. Things will be horribly corrupted if we don't?
 		//! Leave this in release code.

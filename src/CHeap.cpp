@@ -173,7 +173,7 @@ namespace Gray
 			CHeap::sm_nAllocTotalBytes -= CHeap::GetSize(pData);
 #endif
 			CHeap::sm_nAllocs--;
-	}
+		}
 #if defined(_WIN32) && ! USE_CRT
 		void* pData2 = ::LocalReAlloc(pData, iSize, LPTR);
 #else
@@ -192,7 +192,7 @@ namespace Gray
 		CHeap::sm_nAllocTotalBytes += nSizeAllocated;	// alloc size may be different than requested size.
 #endif
 		return pData2;
-}
+	}
 
 	void GRAYCALL CHeap::Init(int nFlags) // static
 	{

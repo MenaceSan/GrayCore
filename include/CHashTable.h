@@ -148,7 +148,7 @@ namespace Gray
 		typedef const TYPE& REF_t;		// How to refer to this? value or ref or pointer?
 
 	public:
-		const TYPE& FindArgForKey(TYPE_HASHCODE rid) const
+		const TYPE* FindArgForKey(TYPE_HASHCODE rid) const
 		{
 			ITERATE_t iBucket = this->GetHashArray(rid);
 			return this->m_aTable[iBucket].FindArgForKey(rid);

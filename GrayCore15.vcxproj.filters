@@ -615,6 +615,9 @@
     <ClCompile Include="src\CHookJump.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\CTextPos.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="src\GrayCore.rc">
