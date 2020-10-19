@@ -53,7 +53,7 @@ namespace Gray
 			//! ASSUME use of CHookSwapLock m_Lock
 			if (!isHookValid())
 				return false;
-			::memcpy((void*)m_pFuncOrig, m_OldCode, sizeof(m_OldCode));
+			CMem::Copy((void*)m_pFuncOrig, m_OldCode, sizeof(m_OldCode));
 			return true;
 		}
 		void SwapReset() noexcept
@@ -62,7 +62,7 @@ namespace Gray
 			//! ASSUME use of CHookSwapLock m_Lock
 			if (!isHookInstalled() || m_pFuncOrig == nullptr)	// hook has since been destroyed!
 				return;
-			::memcpy((void*)m_pFuncOrig, m_Jump, sizeof(m_Jump));
+			CMem::Copy((void*)m_pFuncOrig, m_Jump, sizeof(m_Jump));
 		}
 
 	public:

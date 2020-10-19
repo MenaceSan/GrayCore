@@ -16,8 +16,6 @@
 
 UNITTEST_PREDEF(CIniFile);
 
-#ifdef USE_STDIO
-
 namespace Gray
 {
 	class GRAYCORE_LINK CIniFile
@@ -62,5 +60,5 @@ namespace Gray
 #endif
 	};
 };
-#endif
+
 #endif // _INC_CIniFile_H

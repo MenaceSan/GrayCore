@@ -11,8 +11,8 @@
 
 #include "StrConst.h"
 #include "CPair.h"
-#include "CUnitTestDecl.h"
 #include "FileName.h"		// FILECHAR_t
+#include "CUnitTestDecl.h"
 #ifdef _WIN32
 #include <winerror.h>
 #endif

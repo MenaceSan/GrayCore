@@ -30,6 +30,7 @@ namespace Gray
 		//! HRESULT_WIN32_C(ERROR_WAIT_TIMEOUT) = after dwMilliseconds
 
 #ifdef __linux__
+		// TODO use COSHandleSet
 		CTimeVal timeWait(dwMilliseconds);
 		fd_set fds;
 		FD_ZERO(&fds);

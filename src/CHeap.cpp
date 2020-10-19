@@ -9,7 +9,7 @@
 #include "StrT.h"
 #include "CLogMgr.h"
 
-#ifndef UNDER_CE
+#if ! defined(UNDER_CE) && defined(USE_STDIO)
 #include <malloc.h>		// malloc_usable_size() or _msize()
 #endif
 #ifdef __linux__
@@ -29,12 +29,12 @@ namespace Gray
 		//! UINT64 same as size_t for 64bit
 
 #ifdef UNDER_CE
-		MEMORYSTATUS ms;
+		::MEMORYSTATUS ms;
 		ms.dwLength = sizeof(ms);
 		::GlobalMemoryStatus(&ms);
 		return ms.dwTotalPhys;
 #elif defined(_WIN32)
-		MEMORYSTATUSEX ms;
+		::MEMORYSTATUSEX ms;
 		ms.dwLength = sizeof(ms);
 		if (!::GlobalMemoryStatusEx(&ms))
 		{
@@ -64,7 +64,7 @@ namespace Gray
 		::GlobalMemoryStatus(&ms);
 		return ms.dwAvailPhys;
 #elif defined(_WIN32)
-		MEMORYSTATUSEX ms;
+		::MEMORYSTATUSEX ms;
 		ms.dwLength = sizeof(ms);
 		if (!::GlobalMemoryStatusEx(&ms))
 		{
@@ -115,7 +115,11 @@ namespace Gray
 		size_t nSizeAllocated = CHeap::GetSize(pData);
 		CHeap::sm_nAllocTotalBytes -= nSizeAllocated;
 #endif
+#if defined(_WIN32) && ! defined(USE_STDIO)
+		::LocalFree(pData);
+#else
 		::free(pData);
+#endif
 	}
 
 	void* GRAYCALL CHeap::AllocPtr(size_t iSize) // static
@@ -128,7 +132,11 @@ namespace Gray
 #ifdef _DEBUG
 		DEBUG_ASSERT(iSize < k_ALLOC_MAX, "AllocPtr"); // 256 * 64K - remove/change this if it becomes a problem
 #endif
+#if defined(_WIN32) && ! defined(USE_STDIO)
+		void* pData = ::LocalAlloc(LPTR, iSize);		// nh_malloc_dbg.
+#else
 		void* pData = ::malloc(iSize);		// nh_malloc_dbg.
+#endif
 		if (pData == nullptr)
 		{
 			// I asked for too much!
@@ -144,17 +152,6 @@ namespace Gray
 		ASSERT(nSizeAllocated >= iSize);
 		CHeap::sm_nAllocTotalBytes += nSizeAllocated;	// actual alloc size may be diff from requested size.
 #endif
-		return pData;
-	}
-
-	void* GRAYCALL CHeap::AllocPtr(size_t nSize, const void* pDataInit)
-	{
-		//! Allocate memory then copy stuff into it.
-		void* pData = AllocPtr(nSize);
-		if (pData != nullptr && pDataInit != nullptr)
-		{
-			::memcpy(pData, pDataInit, nSize);
-		}
 		return pData;
 	}
 
@@ -176,8 +173,12 @@ namespace Gray
 			CHeap::sm_nAllocTotalBytes -= CHeap::GetSize(pData);
 #endif
 			CHeap::sm_nAllocs--;
-		}
+	}
+#if defined(_WIN32) && ! defined(USE_STDIO)
+		void* pData2 = ::LocalReAlloc(pData, iSize, LPTR);
+#else
 		void* pData2 = ::realloc(pData, iSize);		// nh_malloc_dbg.
+#endif
 		if (pData2 == nullptr)
 		{
 			// I asked for too much!
@@ -191,7 +192,7 @@ namespace Gray
 		CHeap::sm_nAllocTotalBytes += nSizeAllocated;	// alloc size may be different than requested size.
 #endif
 		return pData2;
-	}
+}
 
 	void GRAYCALL CHeap::Init(int nFlags) // static
 	{
@@ -199,7 +200,7 @@ namespace Gray
 		//! @arg nFlags = _CRTDBG_ALLOC_MEM_DF | _CRTDBG_DELAY_FREE_MEM_DF
 		//!  _CRTDBG_CHECK_ALWAYS_DF = auto call _CrtCheckMemory on every alloc or free.
 		//! _crtDbgFlag
-#if defined(_MSC_VER) && defined(_DEBUG) && ! defined(UNDER_CE)
+#if defined(_MSC_VER) && defined(_DEBUG) && ! defined(UNDER_CE) && defined(USE_STDIO)
 		::_CrtSetDbgFlag(nFlags);
 #else
 		UNREFERENCED_PARAMETER(nFlags);
@@ -213,7 +214,7 @@ namespace Gray
 		//! called automatically every so often if (_CRTDBG_CHECK_ALWAYS_DF,_CRTDBG_CHECK_EVERY_16_DF,_CRTDBG_CHECK_EVERY_128_DF,etc)
 		//! @return false = failure.
 
-#if defined(_MSC_VER) && defined(_DEBUG) && ! defined(UNDER_CE)
+#if defined(_MSC_VER) && defined(_DEBUG) && ! defined(UNDER_CE) && defined(USE_STDIO)
 		bool bRet = ::_CrtCheckMemory();
 		ASSERT(bRet);
 #else
@@ -232,6 +233,8 @@ namespace Gray
 			return 0;
 #if defined(__linux__)
 		return ::malloc_usable_size((void*)pData);
+#elif defined(_WIN32) && ! defined(USE_STDIO)
+		return ::LocalSize((void*)pData);
 #elif defined(_WIN32)
 		return ::_msize((void*)pData);
 #else
@@ -246,8 +249,8 @@ namespace Gray
 		if (pData == nullptr)
 			return false;
 #if defined(_DEBUG)
-#if defined(_WIN32) && ! defined(UNDER_CE) && ! defined(__GNUC__)
-		return(::_CrtIsValidHeapPointer(pData) ? true : false);
+#if defined(_WIN32) && ! defined(UNDER_CE) && ! defined(__GNUC__) && defined(USE_STDIO)
+		return ::_CrtIsValidHeapPointer(pData) ? true : false;
 #else
 		//! @todo validate the heap block vs static memory for __linux__?
 		return CMem::IsValid(pData, 1);
@@ -263,6 +266,7 @@ namespace Gray
 
 	CHeapAlign::CHeader* GRAYCALL CHeapAlign::GetHeader(const void* pData) // static
 	{
+		//! Get the header prefix for the align memory block.
 		//! pData = the pointer returned by CHeapAlign::Alloc
 		//! ASSUME IsAlignedAlloc()
 		if (pData == nullptr)
@@ -338,7 +342,7 @@ namespace Gray
 		}
 #endif
 
-		return(SUPER_t::IsValidHeap(pHdr->m_pMallocHead));
+		return SUPER_t::IsValidHeap(pHdr->m_pMallocHead);
 	}
 
 	size_t GRAYCALL CHeapAlign::GetSize(const void* pData)// static
@@ -368,8 +372,10 @@ namespace Gray
 #endif
 		SUPER_t::sm_nAllocs--;
 
-#if defined(_WIN32) && ! defined(UNDER_CE)
+#if defined(_WIN32) && ! defined(UNDER_CE) && defined(USE_STDIO)
 		::_aligned_free(pData);	// CAN'T just use free() ! we need to undo the padding.
+#elif defined(_WIN32) && ! defined(USE_STDIO)
+		::LocalFree(pData);
 #else
 		::free(pData); // Linux just used free() for memalign() and malloc().
 #endif
@@ -385,11 +391,13 @@ namespace Gray
 
 		// 0 size is allowed for some reason. (returns NON nullptr)
 #if defined(UNDER_CE)
-		void* pData = ::malloc(iSize);
-#elif defined(_WIN32)
-		void* pData = ::_aligned_malloc(iSize, iAlignment);		// nh_malloc_dbg.
+		void* pData = ::malloc(iSize);	// No special call for this in CE.
 #elif defined(__linux__)
 		void* pData = ::memalign(iAlignment, iSize);
+#elif defined(_WIN32) && ! defined(USE_STDIO)
+		void* pData = ::LocalAlloc(LPTR, iSize);
+#elif defined(_WIN32) && defined(USE_STDIO)
+		void* pData = ::_aligned_malloc(iSize, iAlignment);		// nh_malloc_dbg.
 #else
 #error NOOS
 #endif

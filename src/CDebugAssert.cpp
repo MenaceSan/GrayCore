@@ -47,7 +47,7 @@ namespace Gray
 	{
 		//! like _assert() is M$ code.
 		//! Put something in the log after (or before?) doing normal assert processing. is this too dangerous?
-		//! @return false to indicate something failed. (for macro)
+		//! @return false to indicate something failed. stop. (for macro)
 		//! @return true = continue and ignore the assert.
 		// Watch for sm_bAssertTest
 

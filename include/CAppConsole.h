@@ -11,7 +11,7 @@
 
 #include "CSingleton.h"
 
-#if ! defined(UNDER_CE) && defined(USE_STDIO)	// fix this ?)
+#if ! defined(UNDER_CE) && defined(USE_STDIO)	// fix this ? 
 #include "CStream.h"
 #include "CUnitTestDecl.h"
 #include "StrArg.h"

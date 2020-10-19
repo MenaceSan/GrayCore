@@ -58,7 +58,7 @@ namespace Gray
 			AllocArray(nSize);
 			if (p != nullptr && this->m_p != nullptr)
 			{
-				::memcpy(this->m_p, p, sizeof(TYPE)*nSize);
+				CMem::Copy(this->m_p, p, sizeof(TYPE)*nSize);
 			}
 		}
 		void ReleasePtr() noexcept

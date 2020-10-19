@@ -1,6 +1,6 @@
 //
 //! @file COSHandle.h
-//! Wrap the OS kernel handle. for _WIN32 or __linux__.
+//! Wrap the OS kernel handle (scoped auto-close). for _WIN32 or __linux__.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
@@ -11,7 +11,7 @@
 #endif
 
 #include "HResult.h"
-#include "CTimeSys.h"
+#include "CTimeSys.h" // TIMESYSD_t
 #include "CNonCopyable.h"
 #include "CUnitTestDecl.h"
 #include "CDebugAssert.h"
@@ -38,10 +38,10 @@ namespace Gray
 		//! SEEK_SET defined for both __linux__ and _WIN32
 		//! same as enum tagSTREAM_SEEK
 		//! Seek Origin Type flag. SEEK_SET,SEEK_CUR,SEEK_END or FILE_BEGIN,FILE_CURRENT,FILE_END
-		SEEK_Set = SEEK_SET,		//!< FILE_BEGIN, STREAM_SEEK_SET = 0 = relative to the start of the file.
-		SEEK_Cur = SEEK_CUR,		//!< FILE_CURRENT, STREAM_SEEK_CUR = 1 = relative to the current position.
-		SEEK_End = SEEK_END,		//!< FILE_END, STREAM_SEEK_END = 2 = relative to the end of the file.
-		SEEK_MASK = 0x0007,		//!< allow extra bits above SEEK_ORIGIN_TYPE ?
+		SEEK_Set = 0,		//!< SEEK_SET = FILE_BEGIN = STREAM_SEEK_SET = 0 = relative to the start of the file.
+		SEEK_Cur = 1,		//!< SEEK_CUR = FILE_CURRENT = STREAM_SEEK_CUR = 1 = relative to the current position.
+		SEEK_End = 2,		//!< SEEK_END = FILE_END = STREAM_SEEK_END = 2 = relative to the end of the file.
+		SEEK_MASK = 0x0007,		//!< | _BITMASK(SEEK_Set) allow extra bits above SEEK_ORIGIN_TYPE ?
 	};
 
 #if defined(_MFC_VER) && ( _MFC_VER > 0x0600 )

@@ -111,8 +111,8 @@ namespace Gray
 		}
 		static inline void ZeroSecure(void* pData, size_t nSizeBlock)
 		{
-			//! This is for security purposes. Not for initialization. Zero destructed values so they leave no trace.
-			//! like SecureZeroMeory() and RtlSecureZeroMemory()
+			//! This is for security purposes. Not for initialization. Zero destructed values so they leave no trace. 
+			//! like SecureZeroMeory() and RtlSecureZeroMemory(). ensure it doesn't get optimized out.
 			VOLATILE BYTE* p2 = (BYTE*)pData;	// 'volatile' will ensure it doesn't get optimized out.
 			while (nSizeBlock--)
 				*p2++ = 0;

@@ -125,7 +125,7 @@ namespace Gray
 	}
 #endif
 
-	HRESULT GRAYCALL HResult::GetLast()
+	HRESULT GRAYCALL HResult::GetLast()  // static
 	{
 		//! Get the last system error recorded for this thread.
 		//! match against HRESULT_WIN32_C(x)

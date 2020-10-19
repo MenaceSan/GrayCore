@@ -20,7 +20,8 @@ namespace Gray
 	class GRAYCORE_LINK CFileTextReader : public CStreamStackInp
 	{
 		//! @class Gray::CFileTextReader 
-		//! Replace the FILE* streaming file i/o reader. fread() with something more under our control.
+		//! read text lines from a buffer / stream.
+		//! Replace the FILE* streaming file i/o reader fread() with something more under our control.
 		//! Try to use this instead of CFileText.
 		//! Allow control of read buffer size and line length.
 		//! m_nGrowSizeMax = max line size.
@@ -31,6 +32,7 @@ namespace Gray
 	protected:
 		virtual HRESULT ReadX(void* pData, size_t nDataSize) override
 		{
+			// Use ReadStringLine instead.
 			ASSERT(0);
 			UNREFERENCED_PARAMETER(pData);
 			UNREFERENCED_PARAMETER(nDataSize);
@@ -38,6 +40,7 @@ namespace Gray
 		}
 		virtual HRESULT WriteX(const void* pData, size_t nDataSize) override
 		{
+			// Read ONLY.
 			ASSERT(0);
 			UNREFERENCED_PARAMETER(pData);
 			UNREFERENCED_PARAMETER(nDataSize);
@@ -71,7 +74,6 @@ namespace Gray
 
 		UNITTEST_FRIEND(CFileTextReader);
 	};
-
 }
 
 #endif

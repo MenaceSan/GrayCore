@@ -103,12 +103,12 @@ g++ -std=c++0x -D_DEBUG -O2 -g -Wall -c -fmessage-length=0 -fPIC -pthread -o *
 
 @todo
 Build native NuGet package for *Release  and *debug configs and multiple platforms/tool chains/CRT versions
+! USE_STDIO = minimize use of CRT MSVCRTD . remove or wrap -> sprintf, strtod, rand, malloc ?
 Timeunits : span merge duplicated code.
 ThreadLock RW,
 Log message cache for details messages. Released if not needed.
 CreateObject and service locator/creator by type name
 vsprintfN overflow return for Linux and Win32 is not quite right/consistent. -1 or max or new size?
-minimize use of CRT MSVCRTD . remove or wrap -> sprintf,strtod,rand, malloc ?
 Log messages that require response/ack. not duplicated, revokable, UID.
 _CPPRTTI = for dynamic_cast ? not avail in UNDER_CE
 _CPPUNWIND = for exceptions. not avail in UNDER_CE

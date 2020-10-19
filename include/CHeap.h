@@ -69,7 +69,17 @@ namespace Gray
 		static bool GRAYCALL IsValidInside(const void* pData, ptrdiff_t index);
 
 		static void* GRAYCALL AllocPtr(size_t nSize);
-		static void* GRAYCALL AllocPtr(size_t nSize, const void* pDataInit);
+
+		static inline void* AllocPtr(size_t nSize, const void* pDataInit)
+		{
+			//! Allocate memory then copy stuff into it.
+			void* pData = AllocPtr(nSize);
+			if (pData != nullptr && pDataInit != nullptr)
+			{
+				CMem::Copy(pData, pDataInit, nSize);
+			}
+			return pData;
+		}
 		static void GRAYCALL FreePtr(void* pData);
 		static void* GRAYCALL ReAllocPtr(void* pData, size_t nSize);
 
@@ -191,7 +201,7 @@ namespace Gray
 
 		THIS_t& operator = (const THIS_t& ref)
 		{
-			//! copy assignment operator
+			//! copy assignment operator. Allocate a new copy.
 			Alloc(ref.m_pData, ref.get_Size());
 			return *this;
 		}

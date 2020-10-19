@@ -9,9 +9,8 @@
 #include "CString.h"
 #include "CCodeProfiler.h"
 #include "CAppState.h"
-#include "CFileText.h"	// CFileText CFileTextReader
+#include "CFileTextReader.h"	// CFileText or CFileTextReader
 
-#ifdef USE_STDIO
 namespace Gray
 {
 	CIniFile::CIniFile()
@@ -87,7 +86,7 @@ namespace Gray
 			return E_POINTER;
 		}
 
-		CFileText fileReader;
+		CFileTextReader fileReader;
 		HRESULT hRes = fileReader.OpenX(pszFilePath, OF_READ | OF_TEXT | OF_CACHE_SEQ);
 		if (FAILED(hRes))
 		{
@@ -336,4 +335,3 @@ UNITTEST_CLASS(CIniFile)
 UNITTEST_REGISTER(CIniFile, UNITTEST_LEVEL_Core);
 #endif // USE_UNITTESTS
 
-#endif

@@ -78,7 +78,7 @@ namespace Gray
 #ifdef __linux__
 			m_hHandleMax = nss.m_hHandleMax;
 			// FD_COPY(pfds,&m_fds);
-			::memcpy(&m_fds,&nss.m_fds,sizeof(m_fds));
+			CMem::Copy(&m_fds,&nss.m_fds,sizeof(m_fds));
 #else
 			m_fds = nss.m_fds;
 #endif

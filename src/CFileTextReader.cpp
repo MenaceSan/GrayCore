@@ -25,7 +25,7 @@ namespace Gray
 		return m_File.OpenX(pszName, uShareFlags);
 	}
 
-	HRESULT CFileTextReader::ReadStringLine(OUT const char** ppszLine)
+	HRESULT CFileTextReader::ReadStringLine(OUT const char** ppszLine) 
 	{
 		//! Read a line of text. like fgets().
 		//! Read up until (including) newline character = \n = The newline character, if read, is included in the string.
@@ -78,14 +78,14 @@ namespace Gray
 		return i;		// length.
 	}
 
-	HRESULT CFileTextReader::ReadStringLine(OUT char* pszBuffer, StrLen_t iSizeMax) // override
+	HRESULT CFileTextReader::ReadStringLine(OUT char* pszBuffer, StrLen_t iSizeMax) // override // virtual
 	{
 		const char* pszRet;
 		HRESULT hRes = ReadStringLine(&pszRet);
 		if (FAILED(hRes))
 			return hRes;
 		iSizeMax = MIN(hRes, iSizeMax);
-		::memcpy(pszBuffer, pszRet, iSizeMax);
+		CMem::Copy(pszBuffer, pszRet, iSizeMax);
 		return iSizeMax;
 	}
 
