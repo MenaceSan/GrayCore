@@ -10,6 +10,9 @@
 #pragma once
 #endif
 
+// like BZ_NO_STDIO, GZ_NO_STDIO
+// #define USE_STDIO	// Don't define this to remove extra file junk from open source libraries. zlibstat, bzip2, LibOpenJpeg, LibJpeg
+
 // Define your compiler here.
 #ifdef _MSC_VER
 // MSVC 1900
@@ -122,14 +125,17 @@
 #endif // _WIN32
 
 //*******************************************
-// ASSUME these ANSI C standard types are universal.
+// ASSUME these ANSI C standard types are universal. rely on CRT.
 
 #include <stddef.h> // offsetof(), size_t
 #include <stdlib.h> // _MAX_PATH, __max(), __min() if !defined(__OpenBSD__) ?
-#include <stdio.h>	// SEEK_CUR // define printf() function
+#include <string.h>	// memcpy()
 #include <stdarg.h>	// va_list ...
-#include <string.h>	// memcpy
 #include <limits.h> // INT_MAX, (PATH_MAX in Linux)  is std::numeric_limits<T>::max() in <limits> better ?
+
+#ifdef USE_STDIO
+#include <stdio.h>	// define FILE _vsnprintf_s printf() function
+#endif
 
 #ifdef UNDER_CE
 #include <new>

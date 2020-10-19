@@ -12,6 +12,7 @@
 #include "CFile.h"
 #include "CTextPos.h"
 
+#ifdef USE_STDIO
 UNITTEST_PREDEF(CFileText)
 
 namespace Gray
@@ -127,4 +128,5 @@ namespace Gray
 typedef Gray::CFileText CStdioFile;		// emulate  _MFC_VER
 #endif
 
-#endif
+#endif	// USE_STDIO
+#endif	// _INC_CFileText_H

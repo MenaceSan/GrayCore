@@ -11,6 +11,7 @@
 #include "CAppState.h"
 #include "CFileText.h"	// CFileText CFileTextReader
 
+#ifdef USE_STDIO
 namespace Gray
 {
 	CIniFile::CIniFile()
@@ -334,3 +335,5 @@ UNITTEST_CLASS(CIniFile)
 };
 UNITTEST_REGISTER(CIniFile, UNITTEST_LEVEL_Core);
 #endif // USE_UNITTESTS
+
+#endif

@@ -10,7 +10,8 @@
 #include "CFileText.h"
 #include "HResult.h"
 
-#ifndef UNDER_CE
+#if ! defined(UNDER_CE) && defined(USE_STDIO)	// fix this ?)
+
 #ifdef _WIN32
 #include <io.h>
 #include <conio.h>
@@ -44,7 +45,7 @@ namespace Gray
 		// Is m_iAllocConsoleCount = 0 ?
 	}
 
-	void CAppConsole::CheckConsoleMode()
+	void CAppConsole::CheckConsoleMode() noexcept
 	{
 		//! Is the process already running from a console window? _CONSOLE
 		//! Was process started by a console ?
@@ -66,7 +67,7 @@ namespace Gray
 #endif
 		{
 			m_eConsoleType = CAppCon_Proc;	// My parent is build using _CONSOLE
-#if defined(_WIN32) && ! defined(UNDER_CE)
+#if defined(_WIN32) && ! defined(UNDER_CE) && defined(USE_STDIO)
 			AttachConsoleSync();
 #endif
 		}
@@ -76,7 +77,8 @@ namespace Gray
 		}
 	}
 
-#if defined(_WIN32) && ! defined(UNDER_CE)
+#if defined(_WIN32) && ! defined(UNDER_CE) && defined(USE_STDIO)
+
 	bool CAppConsole::AttachConsoleSync()
 	{
 		//! Synchronize the C std* buffers with _WIN32 Console.
@@ -199,12 +201,16 @@ namespace Gray
 #endif		
 
 		m_iAllocConsoleCount = 1;
+
+#if defined(USE_STDIO)
 		if (!AttachConsoleSync())
 		{
 			m_iAllocConsoleCount = 0;
 			m_eConsoleType = CAppCon_NONE;
 			return false;
 		}
+#endif
+
 		return true;
 #else
 		// CAppCon_Proc

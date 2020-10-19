@@ -10,6 +10,7 @@
 #endif
 
 #include "CStreamProgress.h"
+#include "StrT.h"
 
 namespace Gray
 {
@@ -32,66 +33,66 @@ namespace Gray
 		// m_iLineNum = -1 or -2 can be used to indicate errors.
 
 	public:
-		CTextPos(STREAM_POS_t lOffset = (STREAM_POS_t)k_ITERATE_BAD, ITERATE_t iLineNum = k_ITERATE_BAD, StrLen_t iColNum = k_StrLen_UNK)
+		CTextPos(STREAM_POS_t lOffset = (STREAM_POS_t)k_ITERATE_BAD, ITERATE_t iLineNum = k_ITERATE_BAD, StrLen_t iColNum = k_StrLen_UNK) noexcept
 			: m_lOffset(lOffset)
 			, m_iLineNum(iLineNum)
 			, m_iColNum(iColNum)
 		{
 		}
 
-		void InitTop()
+		void InitTop() noexcept
 		{
 			m_lOffset = 0;
 			m_iLineNum = 0;
 			m_iColNum = 0;
 		}
-		bool isTopLine() const
+		bool isTopLine() const noexcept
 		{
 			//! is it on the top line? k_Zero
 			return(m_lOffset == 0 && m_iLineNum == 0);
 		}
 
-		bool isValidPos() const
+		bool isValidPos() const noexcept
 		{
 			//! is invalid values? Not k_Invalid
 			return(m_iLineNum >= 0); // m_lOffset >= 0
 		}
-		STREAM_POS_t get_Offset() const
+		STREAM_POS_t get_Offset() const noexcept
 		{
 			//! Offset in bytes into the stream.
 			return m_lOffset;
 		}
-		ITERATE_t get_LineNum() const		//!< Get 0 based line.
+		ITERATE_t get_LineNum() const noexcept		//!< Get 0 based line.
 		{
 			return this->m_iLineNum;
 		}
-		ITERATE_t get_Line1() const		//!< Get 1 based line.
+		ITERATE_t get_Line1() const	noexcept 	//!< Get 1 based line.
 		{
 			return this->m_iLineNum + 1;
 		}
-		StrLen_t get_Column1() const	//!< Get 1 based column.
+		StrLen_t get_Column1() const noexcept	//!< Get 1 based column.
 		{
 			return this->m_iColNum + 1;
 		}
 
-		void IncOffset(StrLen_t nLenOffsetSrc)
+		void IncOffset(StrLen_t nLenOffsetSrc) noexcept
 		{
 			m_lOffset += nLenOffsetSrc;
 			m_iColNum += nLenOffsetSrc;
 		}
-		void IncOffset(StrLen_t nLenOffsetSrc, StrLen_t nLenCol)
+		void IncOffset(StrLen_t nLenOffsetSrc, StrLen_t nLenCol) noexcept
 		{
 			// nLenCol = 0 = invisible chars don't count.
 			m_lOffset += nLenOffsetSrc;
 			m_iColNum += nLenCol;
 		}
-		void IncChar(StrLen_t nLenChar = 1)
+		void IncChar(StrLen_t nLenChar = 1) noexcept
 		{
 			// Add one single char that is not a newline or tab.
 			m_lOffset += nLenChar;	// UTF8 can span multiple bytes.
 			m_iColNum++;
 		}
-		void IncLine(StrLen_t nLenChar = 1)
+		void IncLine(StrLen_t nLenChar = 1) noexcept
 		{
 			// CRLF or LF
 			m_lOffset += nLenChar;	// UTF8 can span multiple bytes.
@@ -124,31 +125,31 @@ namespace Gray
 		{
 		}
 
-		StrLen_t get_LenMax() const
+		StrLen_t get_LenMax() const noexcept
 		{
 			return m_nLenMax;
 		}
-		StrLen_t get_LenRemaining() const
+		StrLen_t get_LenRemaining() const noexcept
 		{
 			if (m_nLenMax < (StrLen_t)m_lOffset)
 				return 0;
 			return m_nLenMax - (StrLen_t)m_lOffset;
 		}
-		bool isValidIndex() const
+		bool isValidIndex() const noexcept
 		{
 			return ((UINT)m_lOffset) < (UINT)m_nLenMax; // includes m_lOffset >= 0
 		}
-		bool isValidPos() const
+		bool isValidPos() const noexcept
 		{
 			//! is invalid values? Not k_Invalid
 			return m_pszStart != nullptr && isValidIndex(); // includes m_lOffset >= 0
 		}
-		const char* get_CursorPtr() const
+		const char* get_CursorPtr() const noexcept
 		{
 			ASSERT(isValidPos());
 			return m_pszStart + this->m_lOffset;
 		}
-		char get_CursorChar() const
+		char get_CursorChar() const noexcept
 		{
 			ASSERT(m_pszStart != nullptr);
 			if (!isValidIndex())

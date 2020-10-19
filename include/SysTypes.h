@@ -14,8 +14,6 @@
 #include "SysDefs.h"
 
 #ifndef RC_INVOKED
-// like BZ_NO_STDIO, GZ_NO_STDIO
-// #define USE_STDIO	// Don't define this to remove extra file junk from open source libraries. zlibstat, bzip2, LibOpenJpeg, LibJpeg
 
 // see CMemT::NtoH() and CMemT::HtoN() for auto conversion to big endian (network)
 // e.g. on little endian (Intel). 0x123456 = 56 34 12 00

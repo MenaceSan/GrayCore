@@ -187,8 +187,8 @@ namespace Gray
 
 		static UINT GRAYCALL get_LibVersion();			//!< _INC_GrayCore_H
 
-		static StrLen_t GRAYCALL GetEnvironStr(const FILECHAR_t* pszVarName, FILECHAR_t* pszValue, StrLen_t iLenMax);
-		static CStringF GRAYCALL GetEnvironStr(const FILECHAR_t* pszVarName);	//!< environment variable. from (system,user,app)
+		static StrLen_t GRAYCALL GetEnvironStr(const FILECHAR_t* pszVarName, FILECHAR_t* pszValue, StrLen_t iLenMax) noexcept;
+		static CStringF GRAYCALL GetEnvironStr(const FILECHAR_t* pszVarName) noexcept;	//!< environment variable. from (system,user,app)
 		static ITERATE_t GRAYCALL GetEnvironArray(CArrayString<FILECHAR_t>& a);
 		static bool GRAYCALL SetEnvironStr(const FILECHAR_t* pszVarName, const FILECHAR_t* pszVal);
 

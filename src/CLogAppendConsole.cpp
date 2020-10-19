@@ -10,7 +10,8 @@
 #include "CAppState.h"
 #include "COSProcess.h"
 
-#ifndef UNDER_CE
+#if !defined(UNDER_CE) && defined(USE_STDIO)
+
 namespace Gray
 {
 	CLogAppendConsole::CLogAppendConsole()

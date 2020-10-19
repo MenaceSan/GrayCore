@@ -318,7 +318,7 @@ namespace Gray
 		return(eAppState == APPSTATE_Exit);
 	}
 
-	StrLen_t GRAYCALL CAppState::GetEnvironStr(const FILECHAR_t* pszVarName, FILECHAR_t* pszValue, StrLen_t iLenMax)	// static
+	StrLen_t GRAYCALL CAppState::GetEnvironStr(const FILECHAR_t* pszVarName, FILECHAR_t* pszValue, StrLen_t iLenMax) noexcept	// static
 	{
 		//! Get a named environment variable by name.
 		//! @return
@@ -339,7 +339,7 @@ namespace Gray
 #endif
 	}
 
-	CStringF GRAYCALL CAppState::GetEnvironStr(const FILECHAR_t* pszVarName)	// static
+	CStringF GRAYCALL CAppState::GetEnvironStr(const FILECHAR_t* pszVarName) noexcept	// static
 	{
 		//! Get a named environment variable by name.
 		//! @arg pszVarName = nullptr = get a list of all variable names for the process?

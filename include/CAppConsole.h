@@ -11,7 +11,7 @@
 
 #include "CSingleton.h"
 
-#ifndef UNDER_CE
+#if ! defined(UNDER_CE) && defined(USE_STDIO)	// fix this ?)
 #include "CStream.h"
 #include "CUnitTestDecl.h"
 #include "StrArg.h"
@@ -74,24 +74,24 @@ namespace Gray
 		CAppConsole();
 		virtual ~CAppConsole();
 
-		void CheckConsoleMode();
-#if defined(_WIN32) && ! defined(UNDER_CE)
+		void CheckConsoleMode() noexcept;
+#if defined(_WIN32) && ! defined(UNDER_CE) && defined(USE_STDIO)
 		bool AttachConsoleSync();
 #endif
 
 	public:
-		bool HasConsoleParent()
+		bool HasConsoleParent() noexcept
 		{
 			//! started from command line ? Call AllocConsole to start using console.
 			CheckConsoleMode();
 			return m_bConsoleParent;
 		}
-		CAppCon_TYPE get_ConsoleMode()
+		CAppCon_TYPE get_ConsoleMode() noexcept
 		{
 			CheckConsoleMode();
 			return m_eConsoleType;
 		}
-		bool isConsoleMode()
+		bool isConsoleMode() noexcept
 		{
 			//! Is the app already running in console mode? can i use printf() ?
 			//! 1. I am _CONSOLE app, 2. I attached to my parent. 3. I created a console.

@@ -14,6 +14,8 @@
 #include "CArrayString.h"
 #include "CSingletonPtr.h"
 
+#if !defined(UNDER_CE) && defined(USE_STDIO)
+
 namespace Gray
 {
 	class GRAYCORE_LINK CLogAppendConsole : public CLogAppender, public CSingletonSmart<CLogAppendConsole>
@@ -62,4 +64,5 @@ namespace Gray
 		IUNKNOWN_DISAMBIG(CSmartBase);
 	};
 }
+#endif
 #endif // _INC_CLogAppendConsole_H

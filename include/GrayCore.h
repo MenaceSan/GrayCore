@@ -132,11 +132,10 @@ namespace Gray		//!< The main namespace for all Core functions.
 
 #ifdef __GNUC__
 #define IGNORE_WARN_INTERFACE(c)		virtual ~c() {}		// quiet this warning for interfaces. should we do this ?
-#define IGNORE_WARN_ABSTRACT(c)			IGNORE_WARN_INTERFACE(c)
 #else
-#define IGNORE_WARN_INTERFACE(c)
-#define IGNORE_WARN_ABSTRACT(c)
+#define IGNORE_WARN_INTERFACE(c)	 
 #endif	// __GNUC__
+#define IGNORE_WARN_ABSTRACT(c)			virtual ~c() {}		// quiet this warning for abstract base classes
 
 	typedef UINT_PTR	HASHCODE_t;				//!< could hold a pointer converted to a number? maybe 64 or 32 bit ?
 	typedef UINT32		HASHCODE32_t;			//!< always 32 bits.
