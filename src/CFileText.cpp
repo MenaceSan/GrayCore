@@ -8,7 +8,7 @@
 #include "CFileText.h"
 #include "CLogMgr.h"
 
-#if defined(USE_STDIO)
+#if USE_CRT
 #if defined(_WIN32) && ! defined(UNDER_CE)
 #include <io.h>
 #endif

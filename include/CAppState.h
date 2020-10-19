@@ -220,7 +220,7 @@ namespace Gray
 	{
 		//! @class Gray::CAppStateMain
 		//! Define an instance of this at the top of WinMain(), _tmain() or main() to indicate we are in the main body of the application.
-		//! For use with CAppImpl. Isnt this a singleton ?
+		//! For use with CAppState and CAppImpl. this is technically a singleton but its instantiated in main()
 		//! e.g. CAppStateMain inmain();
 	public:
 		CAppState& m_AppState;

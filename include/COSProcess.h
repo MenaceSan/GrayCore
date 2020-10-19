@@ -228,12 +228,12 @@ namespace Gray
 			return ::GetExitCodeProcess(m_hProcess.get_Handle(), pnExitCode) ? true : false;
 		}
 
-		static PROCESSID_t GRAYCALL FindProcessIdForWindow(HWND hWnd)
+		static inline PROCESSID_t FindProcessIdForWindow(HWND hWnd) noexcept
 		{
 			//! Find process Id for the hWnd.
 			//! @return 0 = can't find it. PROCESSID_BAD
 			PROCESSID_t dwProcessIDTest = PROCESSID_BAD;
-			THREADID_t dwThreadID = ::GetWindowThreadProcessId(hWnd, &dwProcessIDTest);
+			const THREADID_t dwThreadID = ::GetWindowThreadProcessId(hWnd, &dwProcessIDTest);
 			UNREFERENCED_PARAMETER(dwThreadID);
 			return dwProcessIDTest;
 		}

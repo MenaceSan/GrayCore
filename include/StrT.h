@@ -578,10 +578,10 @@ namespace Gray
 		//!  size in characters.  negative value if an output error occurs.
 #if defined(__linux__)
 		return ::vsnprintf(pszOut, iLenOutMax, pszFormat, vlist); // C99
-#elif defined(USE_STDIO) && (_MSC_VER >= 1400) && ! defined(UNDER_CE)
+#elif USE_CRT && (_MSC_VER >= 1400) && ! defined(UNDER_CE)
 		// CRT version. act as _TRUNCATE
 		return ::_vsnprintf_s(pszOut, (size_t)(iLenOutMax), (size_t)(iLenOutMax - 1), pszFormat, vlist);	// to shut up the deprecated warnings.
-#elif defined(USE_STDIO)
+#elif USE_CRT
 		// OLD CRT version.
 		return ::_vsnprintf(pszOut, iLenOutMax, pszFormat, vlist);
 #else // _WIN32
@@ -601,10 +601,10 @@ namespace Gray
 		//!  size in characters. -1 = too small.
 #if defined(__linux__)
 		return ::vswprintf(pszOut, iLenOutMax, pszFormat, vlist);  // C99
-#elif defined(USE_STDIO) && (_MSC_VER >= 1400) &&  ! defined(UNDER_CE)
+#elif USE_CRT && (_MSC_VER >= 1400) &&  ! defined(UNDER_CE)
 		// CRT version. act as _TRUNCATE
 		return ::_vsnwprintf_s(pszOut, (size_t)(iLenOutMax), (size_t)(iLenOutMax - 1), pszFormat, vlist);	// to shut up the deprecated warnings.
-#elif defined(USE_STDIO)
+#elif USE_CRT
 		// OLD CRT version.
 		return ::_vsnwprintf(pszOut, iLenOutMax, pszFormat, vlist);
 #else // _WIN32

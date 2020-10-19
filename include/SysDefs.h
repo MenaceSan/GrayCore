@@ -10,8 +10,9 @@
 #pragma once
 #endif
 
-// like BZ_NO_STDIO, GZ_NO_STDIO
-// #define USE_STDIO	// Don't define this to remove extra file junk from open source libraries. zlibstat, bzip2, LibOpenJpeg, LibJpeg
+#ifndef USE_CRT
+#define USE_CRT 1	// 1 = use all normal CRT functions. 0 = attempt to use minimal CRT.
+#endif
 
 // Define your compiler here.
 #ifdef _MSC_VER
@@ -133,7 +134,7 @@
 #include <stdarg.h>	// va_list ...
 #include <limits.h> // INT_MAX, (PATH_MAX in Linux)  is std::numeric_limits<T>::max() in <limits> better ?
 
-#ifdef USE_STDIO
+#if USE_CRT
 #include <stdio.h>	// define FILE _vsnprintf_s printf() function
 #endif
 
@@ -159,7 +160,7 @@
 #include <linux/unistd.h>
 #endif
 
-#if defined(_WIN32) && !defined(UNDER_CE) && ! defined(__GNUC__)
+#if defined(_WIN32) && !defined(UNDER_CE) && ! defined(__GNUC__) && USE_CRT
 #include <crtdbg.h>
 #include <direct.h>	// _chdir
 #endif

@@ -103,7 +103,7 @@ g++ -std=c++0x -D_DEBUG -O2 -g -Wall -c -fmessage-length=0 -fPIC -pthread -o *
 
 @todo
 Build native NuGet package for *Release  and *debug configs and multiple platforms/tool chains/CRT versions
-! USE_STDIO = minimize use of CRT MSVCRTD . remove or wrap -> sprintf, strtod, rand, malloc ?
+USE_CRT = 0 = minimize use of CRT MSVCRTD . remove or wrap -> sprintf, strtod, rand, malloc ?
 Timeunits : span merge duplicated code.
 ThreadLock RW,
 Log message cache for details messages. Released if not needed.

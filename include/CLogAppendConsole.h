@@ -14,7 +14,7 @@
 #include "CArrayString.h"
 #include "CSingletonPtr.h"
 
-#if !defined(UNDER_CE) && defined(USE_STDIO)
+#if !defined(UNDER_CE) && USE_CRT
 
 namespace Gray
 {

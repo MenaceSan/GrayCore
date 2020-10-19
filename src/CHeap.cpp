@@ -9,7 +9,7 @@
 #include "StrT.h"
 #include "CLogMgr.h"
 
-#if ! defined(UNDER_CE) && defined(USE_STDIO)
+#if ! defined(UNDER_CE) && USE_CRT
 #include <malloc.h>		// malloc_usable_size() or _msize()
 #endif
 #ifdef __linux__
@@ -115,7 +115,7 @@ namespace Gray
 		size_t nSizeAllocated = CHeap::GetSize(pData);
 		CHeap::sm_nAllocTotalBytes -= nSizeAllocated;
 #endif
-#if defined(_WIN32) && ! defined(USE_STDIO)
+#if defined(_WIN32) && ! USE_CRT
 		::LocalFree(pData);
 #else
 		::free(pData);
@@ -132,7 +132,7 @@ namespace Gray
 #ifdef _DEBUG
 		DEBUG_ASSERT(iSize < k_ALLOC_MAX, "AllocPtr"); // 256 * 64K - remove/change this if it becomes a problem
 #endif
-#if defined(_WIN32) && ! defined(USE_STDIO)
+#if defined(_WIN32) && ! USE_CRT
 		void* pData = ::LocalAlloc(LPTR, iSize);		// nh_malloc_dbg.
 #else
 		void* pData = ::malloc(iSize);		// nh_malloc_dbg.
@@ -174,7 +174,7 @@ namespace Gray
 #endif
 			CHeap::sm_nAllocs--;
 	}
-#if defined(_WIN32) && ! defined(USE_STDIO)
+#if defined(_WIN32) && ! USE_CRT
 		void* pData2 = ::LocalReAlloc(pData, iSize, LPTR);
 #else
 		void* pData2 = ::realloc(pData, iSize);		// nh_malloc_dbg.
@@ -200,7 +200,7 @@ namespace Gray
 		//! @arg nFlags = _CRTDBG_ALLOC_MEM_DF | _CRTDBG_DELAY_FREE_MEM_DF
 		//!  _CRTDBG_CHECK_ALWAYS_DF = auto call _CrtCheckMemory on every alloc or free.
 		//! _crtDbgFlag
-#if defined(_MSC_VER) && defined(_DEBUG) && ! defined(UNDER_CE) && defined(USE_STDIO)
+#if defined(_MSC_VER) && defined(_DEBUG) && ! defined(UNDER_CE) && USE_CRT
 		::_CrtSetDbgFlag(nFlags);
 #else
 		UNREFERENCED_PARAMETER(nFlags);
@@ -214,7 +214,7 @@ namespace Gray
 		//! called automatically every so often if (_CRTDBG_CHECK_ALWAYS_DF,_CRTDBG_CHECK_EVERY_16_DF,_CRTDBG_CHECK_EVERY_128_DF,etc)
 		//! @return false = failure.
 
-#if defined(_MSC_VER) && defined(_DEBUG) && ! defined(UNDER_CE) && defined(USE_STDIO)
+#if defined(_MSC_VER) && defined(_DEBUG) && ! defined(UNDER_CE) && USE_CRT
 		bool bRet = ::_CrtCheckMemory();
 		ASSERT(bRet);
 #else
@@ -233,7 +233,7 @@ namespace Gray
 			return 0;
 #if defined(__linux__)
 		return ::malloc_usable_size((void*)pData);
-#elif defined(_WIN32) && ! defined(USE_STDIO)
+#elif defined(_WIN32) && ! USE_CRT
 		return ::LocalSize((void*)pData);
 #elif defined(_WIN32)
 		return ::_msize((void*)pData);
@@ -249,7 +249,7 @@ namespace Gray
 		if (pData == nullptr)
 			return false;
 #if defined(_DEBUG)
-#if defined(_WIN32) && ! defined(UNDER_CE) && ! defined(__GNUC__) && defined(USE_STDIO)
+#if defined(_WIN32) && ! defined(UNDER_CE) && ! defined(__GNUC__) && USE_CRT
 		return ::_CrtIsValidHeapPointer(pData) ? true : false;
 #else
 		//! @todo validate the heap block vs static memory for __linux__?
@@ -372,9 +372,9 @@ namespace Gray
 #endif
 		SUPER_t::sm_nAllocs--;
 
-#if defined(_WIN32) && ! defined(UNDER_CE) && defined(USE_STDIO)
+#if defined(_WIN32) && ! defined(UNDER_CE) && USE_CRT
 		::_aligned_free(pData);	// CAN'T just use free() ! we need to undo the padding.
-#elif defined(_WIN32) && ! defined(USE_STDIO)
+#elif defined(_WIN32) && ! USE_CRT
 		::LocalFree(pData);
 #else
 		::free(pData); // Linux just used free() for memalign() and malloc().
@@ -394,9 +394,9 @@ namespace Gray
 		void* pData = ::malloc(iSize);	// No special call for this in CE.
 #elif defined(__linux__)
 		void* pData = ::memalign(iAlignment, iSize);
-#elif defined(_WIN32) && ! defined(USE_STDIO)
+#elif defined(_WIN32) && ! USE_CRT
 		void* pData = ::LocalAlloc(LPTR, iSize);
-#elif defined(_WIN32) && defined(USE_STDIO)
+#elif defined(_WIN32) && USE_CRT
 		void* pData = ::_aligned_malloc(iSize, iAlignment);		// nh_malloc_dbg.
 #else
 #error NOOS

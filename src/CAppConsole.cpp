@@ -10,7 +10,7 @@
 #include "CFileText.h"
 #include "HResult.h"
 
-#if ! defined(UNDER_CE) && defined(USE_STDIO)	// fix this ?)
+#if ! defined(UNDER_CE) && USE_CRT	// fix USE_CRT ?)
 
 #ifdef _WIN32
 #include <io.h>
@@ -67,7 +67,7 @@ namespace Gray
 #endif
 		{
 			m_eConsoleType = CAppCon_Proc;	// My parent is build using _CONSOLE
-#if defined(_WIN32) && ! defined(UNDER_CE) && defined(USE_STDIO)
+#if defined(_WIN32) && ! defined(UNDER_CE) 
 			AttachConsoleSync();
 #endif
 		}
@@ -77,7 +77,7 @@ namespace Gray
 		}
 	}
 
-#if defined(_WIN32) && ! defined(UNDER_CE) && defined(USE_STDIO)
+#if defined(_WIN32) && ! defined(UNDER_CE) && USE_CRT   
 
 	bool CAppConsole::AttachConsoleSync()
 	{
@@ -202,7 +202,7 @@ namespace Gray
 
 		m_iAllocConsoleCount = 1;
 
-#if defined(USE_STDIO)
+#if USE_CRT
 		if (!AttachConsoleSync())
 		{
 			m_iAllocConsoleCount = 0;
