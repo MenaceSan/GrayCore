@@ -6,7 +6,7 @@
 #include "pch.h"
 #include "CHashTable.h"
 
-#if defined(USE_UNITTESTS)
+#if USE_UNITTESTS
 #include "CUnitTest.h"
 #include "CNewPtr.h"
 #include "CLogMgr.h"

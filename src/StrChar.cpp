@@ -108,7 +108,7 @@ namespace Gray
 
 //*****************************************************************
 
-#ifdef USE_UNITTESTS
+#if USE_UNITTESTS
 #include "CUnitTest.h"
 
 UNITTEST_CLASS(StrChar)

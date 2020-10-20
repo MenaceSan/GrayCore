@@ -54,7 +54,7 @@ namespace Gray
 		HRESULT SetKeyLine(const IniChar_t* pszSectionTitle, const IniChar_t* pszKey, const IniChar_t* pszLine);
 		HRESULT SetKeyArg(const IniChar_t* pszSectionTitle, const IniChar_t* pszKey, const IniChar_t* pszArg);
 
-#ifdef USE_UNITTESTS
+#if USE_UNITTESTS
 		static const FILECHAR_t* k_UnitTestFile;
 		UNITTEST_FRIEND(CIniFile);
 #endif

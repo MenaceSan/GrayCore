@@ -399,7 +399,7 @@ namespace Gray
 
 //*****************************************************
 
-#if defined(USE_UNITTESTS)
+#if USE_UNITTESTS
 #include "CUnitTest.h"
 
 UNITTEST_CLASS(HResult)

@@ -20,7 +20,7 @@ int _cdecl main(int argc, APP_ARGS_t argv)
 {
 	// @return APP_EXITCODE_t
 	Gray::CAppStateMain inmain(argc, argv);
-#ifdef USE_UNITTESTS
+#if USE_UNITTESTS
 	Gray::CUnitTests::I().UnitTests(UNITTEST_LEVEL_Common);
 #endif // USE_UNITTESTS
 	return APP_EXITCODE_OK;

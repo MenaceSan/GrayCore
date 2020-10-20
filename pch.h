@@ -11,7 +11,7 @@
 #pragma once
 #endif
 
-#include "SysTypes.h"
+#include "GrayCore.h"
 
 #ifndef GRAYCORE_LINK
 #if defined(_MFC_VER) || defined(GRAY_STATICLIB)	// GRAY_STATICLIB or _MFC_VER can be defined to make Gray* all static lib

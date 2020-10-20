@@ -624,7 +624,7 @@ namespace Gray
 
 		static THIS_t GRAYCALL GetSizeK(UINT64 uVal, UINT nKUnit = 1024, bool bSpace = false);
 
-#ifdef USE_UNITTESTS
+#if USE_UNITTESTS
 		static void GRAYCALL UnitTestT();
 		UNITTEST_FRIEND(cString);
 #endif

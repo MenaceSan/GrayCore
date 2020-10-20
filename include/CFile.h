@@ -353,7 +353,7 @@ namespace Gray
 		static HRESULT GRAYCALL DeletePathX(const FILECHAR_t* pszFilePath, DWORD nFileFlags = 0);
 		static HRESULT GRAYCALL LoadFile(const FILECHAR_t* pszFilePath, OUT CHeapBlock& block, size_t nSizeExtra = 0);
 
-#ifdef USE_UNITTESTS
+#if USE_UNITTESTS
 		static void GRAYCALL UnitTest_Write(CStreamOutput& testfile1);
 		static void GRAYCALL UnitTest_Read(CStreamInput& testfile1, bool bString);
 		static void GRAYCALL UnitTest_CopyTo(IFileCopier* pDst);

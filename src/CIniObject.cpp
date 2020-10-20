@@ -82,7 +82,7 @@ namespace Gray
 }
 
 //*************************************************************************
-#ifdef USE_UNITTESTS
+#if USE_UNITTESTS
 #include "CUnitTest.h"
 #include "CLogMgr.h"
 

@@ -461,7 +461,7 @@ namespace Gray
 	}
 }
 
-#if defined(USE_UNITTESTS)
+#if USE_UNITTESTS
 #include "CUnitTest.h"
 
 bool GRAYCALL StrU::UnitTestU(const wchar_t* pwText, StrLen_t nLen) // static

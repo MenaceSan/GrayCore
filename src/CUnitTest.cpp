@@ -19,6 +19,8 @@
 #include "CTimeDouble.h"
 #include "CAppImpl.h"
 
+#if USE_UNITTESTS
+
 #ifdef USE_UNITTESTS_MS
 // NOTE: This requires runtime path set to find CppUnitTestFramework.dll or CppUnitTestFramework.x64.dll as well. 
 // $(DevEnvDir)\CommonExtensions\Microsoft\TestWindow\Extensions\CppUnitFramework = D:\Programs\Microsoft Visual Studio 12.0\Common7\IDE\CommonExtensions\Microsoft\TestWindow\Extensions\CppUnitFramework
@@ -332,7 +334,6 @@ do ordain and establish this constitution of the United States of America\n\n");
 		//! __GNUC__, 32 bit, sizeof(int)=4, sizeof(long)=?
 		//! __GNUC__, 64 bit, sizeof(int)=4, sizeof(long)=8
 
-
 		// STATIC_ASSERT(sizeof(void) == 0, void);
 		STATIC_ASSERT(sizeof(char) == 1, char);
 		STATIC_ASSERT(sizeof(short) == 2, short);
@@ -601,3 +602,4 @@ do ordain and establish this constitution of the United States of America\n\n");
 	}
 }
 
+#endif

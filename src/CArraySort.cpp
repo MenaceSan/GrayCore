@@ -5,7 +5,7 @@
 #include "pch.h"
 #include "CArraySort.h"
 
-#if defined(USE_UNITTESTS)
+#if USE_UNITTESTS
 #include "CUnitTest.h"
 #include "CLogMgr.h"
 #include "CRandomDef.h"

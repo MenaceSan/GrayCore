@@ -115,7 +115,7 @@ namespace Gray
 		virtual UINT GetRandUX(UINT nScale) override; // k_RAND_MAX is not the same as UINT.
 	};
 
-#ifdef USE_UNITTESTS
+#if USE_UNITTESTS
 	class cRandomUnitTest : public IRandomNoise
 	{
 		//! @class Gray::cRandomUnitTest

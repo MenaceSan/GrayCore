@@ -7,7 +7,7 @@
 #include "CFloat.h"
 #include "CArray.h"
 
-#if defined(USE_UNITTESTS)
+#if USE_UNITTESTS
 #include "CLogMgr.h"
 #include "CUnitTest.h"
 

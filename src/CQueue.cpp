@@ -48,7 +48,7 @@ namespace Gray
 
 //******************************************************************
 
-#ifdef USE_UNITTESTS
+#if USE_UNITTESTS
 UNITTEST_CLASS(cQueueBase)
 {
 	const GChar_t* UnitTest_GetSrc(ITERATE_t i, ITERATE_t& riSrcLenMax)

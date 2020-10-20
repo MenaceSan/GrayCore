@@ -486,7 +486,7 @@ namespace Gray
 			return CStreamInput::SeekToEnd();
 		}
 
-#ifdef USE_UNITTESTS
+#if USE_UNITTESTS
 		UNITTEST_FRIEND(CStream);
 		static void GRAYCALL UnitTest_StreamIntegrity(CStreamOutput& stmOut, CStreamInput& strIn, size_t nSizeTotal);
 #endif

@@ -7,7 +7,7 @@
 #include "pch.h"
 #include "CThreadLockRW.h"
 
-#ifdef USE_UNITTESTS
+#if USE_UNITTESTS
 #include "CUnitTest.h"
 #include "CThreadLocalSys.h"
 #include "CLogMgr.h"

@@ -37,7 +37,7 @@
 #define USE_64BIT
 #endif
 
-#define USE_FLOAT	// Assume we can do float and double types. Some embedded systems can't. probably ieee .
+#define USE_FLOAT	// Assume we can do float and double types. Some embedded systems don't support float types. probably ieee .
 
 // Assume we do native int64 types though we may not be true 64 bit code.
 // What cases don't we do native 64 bit int types ?

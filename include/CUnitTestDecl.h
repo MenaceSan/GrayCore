@@ -11,7 +11,7 @@
 
 #include "GrayCore.h"
 
-#ifdef USE_UNITTESTS
+#if USE_UNITTESTS
 
 namespace Gray
 {

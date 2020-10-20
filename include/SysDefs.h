@@ -1,6 +1,6 @@
 //
 //! @file SysDefs.h
-//! System definitions. Stuff that can and should be put into a precompiled header for most all programs.
+//! Pull in System definitions from system header files. Stuff that can and should be put into a precompiled header for most all programs.
 //! System include files should be stable and not give any warnings. (but this is not true of course)
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 

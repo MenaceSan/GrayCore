@@ -235,7 +235,7 @@ namespace Gray
 
 //*********************************************************************************
 
-#ifdef USE_UNITTESTS
+#if USE_UNITTESTS
 #include "CUnitTest.h"
 
 // Make sure this code is not optimized out !

@@ -76,7 +76,7 @@ namespace Gray
 		static StrLen_t GRAYCALL FormatV(TYPE* pszOut, StrLen_t nLenOutMax, const TYPE* pszFormat, va_list vlist);
 		static StrLen_t _cdecl FormatF(TYPE* pszOut, StrLen_t nLenOutMax, const TYPE* pszFormat, ...);
 
-#ifdef USE_UNITTESTS
+#if USE_UNITTESTS
 		static StrLen_t GRAYCALL UnitTestFormat1(STRFORMAT_t pFormat, TYPE* pszOut, StrLen_t nLenOut, const TYPE* pszFormat, int eArgs);
 		static void GRAYCALL UnitTestFormatX(STRFORMAT_t pFormat, TYPE* pszOut, StrLen_t nLenOut);
 		static void GRAYCALL UnitTestFormat(STRFORMAT_t pFormat);

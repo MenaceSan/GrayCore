@@ -6,7 +6,7 @@
 #include "CArrayString.h"
 #include "CArraySortString.h"
 
-#if defined(USE_UNITTESTS)
+#if USE_UNITTESTS
 #include "CUnitTest.h"
 #include "CLogMgr.h"
 #include "CArraySort.h"

@@ -64,7 +64,7 @@ namespace Gray
 		static StrLen_t GRAYCALL DtoAG2(double dVal, OUT char* pszOut, int iDecPlacesWanted = -1, char chE = -'e');
 		static StrLen_t GRAYCALL DtoAG(double dVal, OUT char* pszOut, StrLen_t iStrMax, int iDecPlacesWanted = -1, char chE = -'e');
 
-#ifdef USE_UNITTESTS
+#if USE_UNITTESTS
 		static StrLen_t GRAYCALL DToATestLegacy(double dVal, OUT char* pszOut, StrLen_t iStrMax, StrLen_t iDecPlaces);
 #endif
 

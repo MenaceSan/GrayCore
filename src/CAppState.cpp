@@ -12,8 +12,7 @@
 #include "CExceptionAssert.h"
 #include "CUnitTest.h"
 #include "CRandomDef.h"
-#include "SysTypes.h"	// _MAX_PATH
-
+ 
 #if defined(_WIN32) && ! defined(UNDER_CE)
 #include <shlobj.h>		// M$ documentation says this nowhere, but this is the header file for SHGetPathFromIDList shfolder.h
 #elif defined(__linux__)
@@ -881,7 +880,7 @@ CAppStateMain::CAppStateMain(int argc, APP_ARGS_t argv)
 
 //*******************************************************************
 
-#ifdef USE_UNITTESTS
+#if USE_UNITTESTS
 #include "CUnitTest.h"
 #include "CString.h"
 

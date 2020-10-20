@@ -15,7 +15,7 @@
 
 namespace Gray
 {
-#ifdef USE_UNITTESTS
+#if USE_UNITTESTS
 	template< typename TYPE>
 	void GRAYCALL StrX<TYPE>::UnitTestT() // static
 	{
@@ -284,7 +284,7 @@ namespace Gray
 
 //***************************************************
 
-#ifdef USE_UNITTESTS
+#if USE_UNITTESTS
 UNITTEST_CLASS(StrX)
 {
 	UNITTEST_METHOD(StrX)

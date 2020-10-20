@@ -6,7 +6,7 @@
 #include "CBits.h"
 #include "CTriState.h"
 
-#ifdef USE_UNITTESTS
+#if USE_UNITTESTS
 #include "CUnitTest.h"
 #include "CLogMgr.h"
 

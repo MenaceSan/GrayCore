@@ -24,14 +24,13 @@
 #include "CAppState.h"
 #include "COSModImpl.h"
 
-#ifdef USE_UNITTESTS
+#if USE_UNITTESTS
 #if ! defined(USE_64BIT) && ! defined(_MFC_VER) && defined(_MSC_VER) && _MSC_VER >= 1800
 // Only seems to work in 32 bit mode.
 #define USE_UNITTESTS_MS	// Use the native M$ unit tests that integrate into VS13. requires inclusion of .lib and Microsoft.VisualStudio.TestTools.CppUnitTestFramework.dll
 #endif
-#if defined(USE_UNITTESTS_MS)
+#ifdef USE_UNITTESTS_MS
 #include <../UnitTest/Include/CppUnitTest.h>	// in System includes.
-#endif
 #endif
 
 namespace Gray
@@ -222,6 +221,7 @@ namespace Gray
 
 };	// namespace
 
-using namespace Gray;
+using namespace Gray;	// Since this header is typically only included right before the unit test.
 
-#endif
+#endif	// USE_UNITTESTS
+#endif	// _INC_CUnitTest_H

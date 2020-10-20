@@ -9,8 +9,6 @@
 #pragma once
 #endif
 
-#include "SysTypes.h"
-
 //! always compiled for __cplusplus
 //! try to compile in several different environments:
 //!
@@ -77,14 +75,16 @@
 
 #endif // _MSC_VER >= 1000
 
+#include "SysTypes.h"
+
 // Ignore the system #define UNICODE and _UNICODE. I use my own USE_UNICODE system as default char type. We don't have to use UNICODE just because the system does.
 #if defined(UNICODE) || defined(_UNICODE)
 #define USE_UNICODE				//!< This allows the including of core headers that use conflicting #define UNICODE to still work.
 #define USE_UNICODE_FN			//!< make file names UNICODE as well.
 #endif
 
-#if defined(_DEBUG) // || defined(GRAY_STATICLIB)
-#define USE_UNITTESTS	//!< Compile in the unit test code. Calling it or not is another matter. in static library case the linker will just remove uncalled code.
+#if ! defined(USE_UNITTESTS) && defined(_DEBUG) 
+#define USE_UNITTESTS 1	//!< Compile in the unit test code. Calling it or not is another matter. in static library case the linker will just remove uncalled code.
 #endif
 
 namespace Gray		//!< The main namespace for all Core functions.
@@ -123,11 +123,11 @@ namespace Gray		//!< The main namespace for all Core functions.
 
 #if defined(_MSC_VER) && _MSC_VER <= 1600 // No C++11 features.
 	// Get rid of C++11 features. e.g. "= delete" and override
-	#define noexcept
-	#define override	// tell the compiler this is an intentional override
-	#define IS_DELETE
+#define noexcept
+#define override	// tell the compiler this is an intentional override
+#define IS_DELETE
 #else
-	#define IS_DELETE = delete
+#define IS_DELETE = delete
 #endif
 
 #ifdef __GNUC__
