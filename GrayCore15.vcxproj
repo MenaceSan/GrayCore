@@ -660,6 +660,7 @@
     <ClInclude Include="include\CLogLevel.h" />
     <ClInclude Include="include\CLogMgr.h" />
     <ClInclude Include="include\CMem.h" />
+    <ClInclude Include="include\CMemPage.h" />
     <ClInclude Include="include\CMime.h" />
     <ClInclude Include="include\CNewPtr.h" />
     <ClInclude Include="include\CNonCopyable.h" />
@@ -782,6 +783,7 @@
     <ClCompile Include="src\CLogLevel.cpp" />
     <ClCompile Include="src\CLogMgr.cpp" />
     <ClCompile Include="src\CMem.cpp" />
+    <ClCompile Include="src\CMemPage.cpp" />
     <ClCompile Include="src\CMime.cpp" />
     <ClCompile Include="src\CObjectCreator.cpp" />
     <ClCompile Include="src\COSHandle.cpp" />

@@ -129,7 +129,10 @@ namespace Gray
 	{
 		//! Allow Early removal of a singleton! This is sort of weird but i should allow it for DLL unload.
 		CThreadGuardFast threadguard(sm_LockSingle);	// thread sync critical section all singletons.
-		CSingletonManager::I().RemoveReg(this);		// remove myself.
+		if (!CSingletonManager::isDestroyed())	// special case. DLL was unloaded.
+		{
+			CSingletonManager::I().RemoveReg(this);		// remove myself.
+		}
 	}
 
 	void GRAYCALL CSingletonRegister::ReleaseModule(HMODULE hMod) // static

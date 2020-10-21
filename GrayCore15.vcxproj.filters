@@ -350,6 +350,9 @@
     <ClInclude Include="include\CHookJump.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="include\CMemPage.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.md" />
@@ -616,6 +619,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\CTextPos.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CMemPage.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

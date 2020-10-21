@@ -602,4 +602,4 @@ do ordain and establish this constitution of the United States of America\n\n");
 	}
 }
 
-#endif
+#endif	// USE_UNITTESTS

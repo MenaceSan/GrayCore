@@ -393,7 +393,7 @@ namespace Gray
 		{}
 		cStringT(const char* pszText, StrLen_t iLenMax) : SUPER_t(pszText, iLenMax)
 		{
-			//! iLenMax = _countof(StrT::k_LEN_MAX)-1 default
+			//! iLenMax = _countof(StrT::k_LEN_MAX)-1 default. not including '\0'
 			//! iLenMax = max chars, not including '\0' ! NOT sizeof() or _countof() like StrT::CopyLen
 		}
 		cStringT(const wchar_t* pwText) : SUPER_t(pwText)

@@ -155,27 +155,36 @@ namespace Gray
 		}
 		const TYPE& GetAtHash(const CHashIterator& i) const
 		{
-			//! Walk hash table.
+			//! get from hash table. i must exist.
 			ASSERT(IS_INDEX_GOOD_ARRAY(i.m_i, this->m_aTable));
 			return(this->m_aTable[i.m_i].ConstElementAt(i.m_j));
 		}
-		ITERATE_t Add(REF_t rNew)
+		CHashIterator FindHash(TYPE_HASHCODE rid) const
 		{
-			return(this->m_aTable[this->GetHashArray(rNew.get_HashCode())].Add(rNew));
+			ITERATE_t iBucket = this->GetHashArray(rid);
+			ITERATE_t index = this->m_aTable[iBucket].FindArgForKey(rid);
+			return CHashIterator(iBucket, index);
 		}
-		CHashIterator AddNew(REF_t rNew)
+		const TYPE& Add(REF_t rNew)
 		{
-			// Add only new hash node. return index if existing hash node.
+			ITERATE_t iBucket = this->GetHashArray(rNew.get_HashCode());
+			ITERATE_t index = this->m_aTable[iBucket].Add(rNew);
+			return this->m_aTable[iBucket].GetAt(index);
+		}
+		TYPE* AddSpecial(REF_t rNew)
+		{
+			// Add only new hash node. return index ONLY if existing hash node.
 			ITERATE_t iBucket = this->GetHashArray(rNew.get_HashCode());
 			COMPARE_t iCompareRes;
 			ITERATE_t index = this->m_aTable[iBucket].FindINear(rNew, iCompareRes);
 			if (iCompareRes == COMPARE_Equal)
 			{
-				// duplicates
-				return(CHashIterator(iBucket, index));
+				return &this->m_aTable[iBucket].GetAt(index);	// special return that says it already was here.
 			}
-			this->m_aTable[iBucket].AddPresorted(index, iCompareRes, rNew);
-			return CHashIterator(iBucket, k_ITERATE_BAD);
+
+			// not duplicate. must add
+			index = this->m_aTable[iBucket].AddPresorted(index, iCompareRes, rNew);
+			return nullptr;	// special return that says i added it.
 		}
 	};
 

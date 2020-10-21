@@ -15,8 +15,7 @@
 #endif
 
 #ifdef _WIN32
-#include <psapi.h>		// GetModuleFileNameEx
-
+ 
 #pragma pack(push,1)
 struct CATTR_PACKED __PEB
 {
@@ -181,13 +180,14 @@ namespace Gray
 		FILECHAR_t szProcessName[_MAX_PATH];
 
 #ifdef _WIN32
-		DWORD dwRet = _FNF(::GetModuleFileNameEx)((HINSTANCE)m_hProcess.get_Handle(), HMODULE_NULL, szProcessName, _countof(szProcessName));
+		// NOTE: GetModuleFileName doesn't work for external processes. GetModuleFileNameEx does but its in psapi.dll
+		DWORD dwRet = _FNF(::GetModuleFileName)((HINSTANCE)m_hProcess.get_Handle(), szProcessName, _countof(szProcessName));
 		if (dwRet <= 0)
 		{			
 			// HRESULT hRes = HResult::GetLast(); // GetLastError is set.
 			return "";		// I don't have PROCESS_QUERY_INFORMATION or PROCESS_VM_READ rights.
 		}
-		return szProcessName;
+		return CStringF(szProcessName, dwRet); 
 #elif  defined(__linux__)
 		if (m_sPath.IsEmpty())
 		{
