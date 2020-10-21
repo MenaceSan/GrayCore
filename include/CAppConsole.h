@@ -11,7 +11,7 @@
 
 #include "CSingleton.h"
 
-#if ! defined(UNDER_CE) && USE_CRT	// fix USE_CRT ? 
+#if ! defined(UNDER_CE) 
 #include "CStream.h"
 #include "CUnitTestDecl.h"
 #include "StrArg.h"
@@ -75,9 +75,7 @@ namespace Gray
 		virtual ~CAppConsole();
 
 		void CheckConsoleMode() noexcept;
-#if defined(_WIN32) && ! defined(UNDER_CE) && USE_CRT  
 		bool AttachConsoleSync();
-#endif
 
 	public:
 		bool HasConsoleParent() noexcept

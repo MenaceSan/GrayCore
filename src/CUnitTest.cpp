@@ -33,7 +33,7 @@ namespace Gray
 	class GRAYCORE_LINK CUnitTestLogger : public CLogAppender, public CSmartBase
 	{
 		//! @class Gray::CUnitTestLogger
-		//! M$ unit tests require linked library. USE_UNITTESTS_MS
+		//! M$ unit tests require linked library CppUnitTestFramework. USE_UNITTESTS_MS
 
 		cFile m_File; // like CLogFileDay
 

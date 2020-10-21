@@ -15,6 +15,8 @@
 #endif
 
 #ifdef _WIN32
+#include <psapi.h>		// GetModuleFileNameEx
+
 #pragma pack(push,1)
 struct CATTR_PACKED __PEB
 {
@@ -175,14 +177,15 @@ namespace Gray
 	{
 		//! Get the full file path for this process EXE. MUST be loaded by this process for _WIN32.
 		//! e.g. "c:\Windows\System32\smss.exe" or "\Device\HarddiskVolume2\Windows\System32\smss.exe"
-		//! _WIN32 must have the PROCESS_QUERY_INFORMATION and PROCESS_VM_READ access rights.
+		//! @note _WIN32 must have the PROCESS_QUERY_INFORMATION and PROCESS_VM_READ access rights.
 		FILECHAR_t szProcessName[_MAX_PATH];
 
 #ifdef _WIN32
-		DWORD dwRet = _FNF(::GetModuleFileName)((HINSTANCE)m_hProcess.get_Handle(), szProcessName, _countof(szProcessName));
+		DWORD dwRet = _FNF(::GetModuleFileNameEx)((HINSTANCE)m_hProcess.get_Handle(), HMODULE_NULL, szProcessName, _countof(szProcessName));
 		if (dwRet <= 0)
-		{
-			return "";
+		{			
+			// HRESULT hRes = HResult::GetLast(); // GetLastError is set.
+			return "";		// I don't have PROCESS_QUERY_INFORMATION or PROCESS_VM_READ rights.
 		}
 		return szProcessName;
 #elif  defined(__linux__)
@@ -262,24 +265,18 @@ namespace Gray
 		// Create a thread (and run it) in the context of some other process
 		// https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-createremotethread
 		// PROCESS_CREATE_THREAD|PROCESS_QUERY_INFORMATION|PROCESS_VM_READ|PROCESS_VM_WRITE|PROCESS_VM_OPERATION
+		// NOTE: ASSUME pvArgs is a valid pointer in the apps context. i.e. VirtualAlloc etc.
+
+		// HANDLE CreateRemoteThread( HANDLE hProcess, LPSECURITY_ATTRIBUTES  lpThreadAttributes, SIZE_T dwStackSize,
+			// LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter, DWORD dwCreationFlags, LPDWORD lpThreadId );
 
 		// Load our DLL 
-		::CreateRemoteThread(m_hProcess, NULL, NULL, (LPTHREAD_START_ROUTINE)pvFunc, (LPVOID)pvArgs, NULL, NULL);
+		DWORD dwThreadId = 0;
+		HANDLE h = ::CreateRemoteThread(m_hProcess, nullptr, 0, (LPTHREAD_START_ROUTINE)pvFunc, (LPVOID)pvArgs, 0, &dwThreadId);
+		if (!COSHandle::IsValidHandle(h))
+			return E_FAIL;
 
-
-		// HANDLE CreateRemoteThread(
-// 			HANDLE                 hProcess,
-			// LPSECURITY_ATTRIBUTES  lpThreadAttributes,
-			// SIZE_T                 dwStackSize,
-			// LPTHREAD_START_ROUTINE lpStartAddress,
-			// LPVOID                 lpParameter,
-			// DWORD                  dwCreationFlags,
-			// LPDWORD                lpThreadId
-		// );
-			
-
-
-		return E_NOTIMPL;
+		return S_OK;
 	}
 
 	HRESULT COSProcess::GetProcessCommandLine(OUT wchar_t* pwText, _Inout_ size_t* pdwTextSize) const

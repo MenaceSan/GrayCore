@@ -670,6 +670,7 @@
     <ClInclude Include="include\CUInt64.h" />
     <ClInclude Include="include\CUnitTest.h" />
     <ClInclude Include="include\CUnitTestDecl.h" />
+    <ClInclude Include="include\CUnitTestMs.h" />
     <ClInclude Include="include\CValT.h" />
     <ClInclude Include="include\FileName.h" />
     <ClInclude Include="include\GrayCore.h" />

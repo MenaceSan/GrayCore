@@ -10,13 +10,13 @@
 #include "CFileText.h"
 #include "HResult.h"
 
-#if ! defined(UNDER_CE) && USE_CRT	// fix USE_CRT ?)
+#if ! defined(UNDER_CE) 
 
-#ifdef _WIN32
+#if defined(_WIN32) && USE_CRT
 #include <io.h>
 #include <conio.h>
 // #include <ios>	// std::ios::sync_with_stdio
-#else
+#elif defined(__linux__)
 #include <termios.h>
 #include <sys/ioctl.h>
 #endif
@@ -67,9 +67,7 @@ namespace Gray
 #endif
 		{
 			m_eConsoleType = CAppCon_Proc;	// My parent is build using _CONSOLE
-#if defined(_WIN32) && ! defined(UNDER_CE) 
 			AttachConsoleSync();
-#endif
 		}
 		else
 		{
@@ -77,16 +75,15 @@ namespace Gray
 		}
 	}
 
-#if defined(_WIN32) && ! defined(UNDER_CE) && USE_CRT   
-
 	bool CAppConsole::AttachConsoleSync()
 	{
-		//! Synchronize the C std* buffers with _WIN32 Console.
+		//! Synchronize the C std* buffers (needs USE_CRT) with _WIN32 Console.
 		//! NOTE: Not sure why this isn't just handled by AllocConsole()
 		//! Similar to std::ios::sync_with_stdio()
 
 		ASSERT(isConsoleMode());
 
+#if defined(_WIN32) && USE_CRT   
 		for (int i = 0; i < CAppStd_QTY; i++)
 		{
 			// redirect un-buffered STDOUT to the console
@@ -147,10 +144,10 @@ namespace Gray
 			std::ios::sync_with_stdio();
 #endif
 		}
+#endif
 
 		return true;
 	}
-#endif
 
 	bool CAppConsole::AttachOrAllocConsole(bool bAttachElseAlloc)
 	{
@@ -169,7 +166,7 @@ namespace Gray
 		ASSERT(m_iAllocConsoleCount == 0);
 		ASSERT(m_eConsoleType == CAppCon_UNKNOWN || m_eConsoleType == CAppCon_NONE);
 
-#if defined(_WIN32) && ! defined(UNDER_CE)
+#if defined(_WIN32) 
 
 		// We must specifically attach to the console.
 		// A process can be associated with only one console,
@@ -244,7 +241,7 @@ namespace Gray
 		}
 		CThreadGuard guard(m_Lock);
 
-#if defined(_WIN32) && ! defined(UNDER_CE)
+#if defined(_WIN32) 
 		// @note we must do this to get the dual windows/console stuff to work.
 		DWORD dwLengthWritten;
 		DWORD dwDataSize = StrT::Len(pszText);
@@ -281,7 +278,7 @@ namespace Gray
 		}
 		CThreadGuard guard(m_Lock);
 
-#if defined(_WIN32) && ! defined(UNDER_CE)
+#if defined(_WIN32) 
 		// @note we must do this to get the dual windows/console stuff to work.
 		DWORD dwLengthWritten;
 		DWORD dwDataSize = StrT::Len(pszText);
@@ -377,8 +374,13 @@ namespace Gray
 		//! see http://www.linuxquestions.org/questions/programming-9/pausing-the-screen-44573/
 		//! or http://cboard.cprogramming.com/c-programming/63166-kbhit-linux.html
 		//! or http://www.control.auc.dk/~jnn/c2000/programs/mm5/keyboardhit/msg02541.html
+
 #ifdef _WIN32
+#if USE_CRT
 		return ::_kbhit() ? 1 : 0;
+#else
+		return false;
+#endif
 #else
 		// NOTE: can i use FIONREAD ?
 		COSHandleSet hs(0);
@@ -397,8 +399,10 @@ namespace Gray
 		{
 			return -1;
 		}
-		// NOTE: _WIN32 fgetc(stdin) will block until the ENTER key is pressed ! then feed chars until it runs out.
+
 #ifdef _WIN32
+		// NOTE: _WIN32 fgetc(stdin) will block until the ENTER key is pressed ! then feed chars until it runs out.
+#if USE_CRT
 		if (!m_bKeyEnterMode)
 		{
 			if (m_bKeyEchoMode)
@@ -407,9 +411,14 @@ namespace Gray
 			}
 			return ::_getch();	// don't wait for ENTER return as we get them.
 		}
+		return ::getchar();	// buffer chars and returns when ENTER is pressed for a whole line.
+#else
+		return -1;
 #endif
+#elif defined(__linux__)
 		// @note NON raw mode always echoes.
 		return ::getchar();	// buffer chars and returns when ENTER is pressed for a whole line.
+#endif
 	}
 
 	int CAppConsole::ReadKey()

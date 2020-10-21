@@ -350,6 +350,9 @@
     <ClInclude Include="include\CHookJump.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="include\CUnitTestMs.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.md" />

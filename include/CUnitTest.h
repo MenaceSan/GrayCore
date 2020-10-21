@@ -1,6 +1,6 @@
 //
 //! @file CUnitTest.h
-//! Included from c++ file to implement unit test. Compatible with M$ unit tests.
+//! Included from c++ file to implement unit test. Compatible with M$ unit tests. USE_UNITTESTS_MS
 //! @note Don't include this from some other header file.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
@@ -27,7 +27,7 @@
 #if USE_UNITTESTS
 #if ! defined(USE_64BIT) && ! defined(_MFC_VER) && defined(_MSC_VER) && _MSC_VER >= 1800
 // Only seems to work in 32 bit mode.
-#define USE_UNITTESTS_MS	// Use the native M$ unit tests that integrate into VS13. requires inclusion of .lib and Microsoft.VisualStudio.TestTools.CppUnitTestFramework.dll
+// #define USE_UNITTESTS_MS	// Use the native M$ unit tests that integrate into VS13. requires inclusion of .lib and Microsoft.VisualStudio.TestTools.CppUnitTestFramework.dll
 #endif
 #ifdef USE_UNITTESTS_MS
 #include <../UnitTest/Include/CppUnitTest.h>	// in System includes.

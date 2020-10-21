@@ -12,7 +12,7 @@
 #include "CExceptionAssert.h"
 #include "CUnitTest.h"
 #include "CRandomDef.h"
- 
+
 #if defined(_WIN32) && ! defined(UNDER_CE)
 #include <shlobj.h>		// M$ documentation says this nowhere, but this is the header file for SHGetPathFromIDList shfolder.h
 #elif defined(__linux__)
@@ -853,29 +853,29 @@ namespace Gray
 			CAppExitCatcher::I().ExitCatch();
 		}
 	}
-}
 
-//*******************************************************************
+	//*******************************************************************
 
 #if defined(_WIN32)
-CAppStateMain::CAppStateMain(HINSTANCE hInstance, const FILECHAR_t* pszCommandArgs)
-	: m_AppState(CAppState::I())
-{
-	//! WinMain()
-	//! Current state should be APPSTATE_Init
-	m_AppState.InitAppState();	// set to APPSTATE_Run
-	m_AppState.InitArgsW(pszCommandArgs);
-	ASSERT(hInstance == CAppState::get_HModule());
-	CAppState::sm_hInstance = hInstance;
-}
+	CAppStateMain::CAppStateMain(HINSTANCE hInstance, const FILECHAR_t* pszCommandArgs)
+		: m_AppState(CAppState::I())
+	{
+		//! WinMain()
+		//! Current state should be APPSTATE_Init
+		m_AppState.InitAppState();	// set to APPSTATE_Run
+		m_AppState.InitArgsW(pszCommandArgs);
+		ASSERT(hInstance == CAppState::get_HModule());
+		CAppState::sm_hInstance = hInstance;
+	}
 #endif
-CAppStateMain::CAppStateMain(int argc, APP_ARGS_t argv)
-	: m_AppState(CAppState::I())
-{
-	//! main() or _tmain()
-	//! Current state should be APPSTATE_Init
-	m_AppState.InitAppState();	// set to APPSTATE_Run
-	m_AppState.InitArgs2(argc, argv);
+	CAppStateMain::CAppStateMain(int argc, APP_ARGS_t argv)
+		: m_AppState(CAppState::I())
+	{
+		//! main() or _tmain()
+		//! Current state should be APPSTATE_Init
+		m_AppState.InitAppState();	// set to APPSTATE_Run
+		m_AppState.InitArgs2(argc, argv);
+	}
 }
 
 //*******************************************************************
