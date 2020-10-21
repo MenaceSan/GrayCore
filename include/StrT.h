@@ -17,6 +17,7 @@
 #include "CHeap.h"
 #include "CUnitTestDecl.h"
 #include "CDebugAssert.h"	// ASSERT
+#include "StrFormat.h"
 
 UNITTEST_PREDEF(StrX)
 
@@ -585,8 +586,8 @@ namespace Gray
 		// OLD CRT version.
 		return ::_vsnprintf(pszOut, iLenOutMax, pszFormat, vlist);
 #else // _WIN32
-		// _WIN32 System version (No floats)
-		return ::FormatMessageA(0, pszFormat, 0, 0, pszOut, iLenOutMax, &vlist);
+		// _WIN32 System version (No floats). return ::FormatMessageA(0, pszFormat, 0, 0, pszOut, iLenOutMax, &vlist);
+		return StrFormat<char>::FormatV(pszOut, iLenOutMax, pszFormat, vlist);
 #endif
 	} 
 
@@ -608,8 +609,8 @@ namespace Gray
 		// OLD CRT version.
 		return ::_vsnwprintf(pszOut, iLenOutMax, pszFormat, vlist);
 #else // _WIN32
-		// _WIN32 System version (No floats)
-		return ::FormatMessageW(0, pszFormat, 0, 0, pszOut, iLenOutMax, &vlist);
+		// _WIN32 System version (No floats)  return ::FormatMessageW(0, pszFormat, 0, 0, pszOut, iLenOutMax, &vlist);
+		return StrFormat<wchar_t>::FormatV(pszOut, iLenOutMax, pszFormat, vlist);
 #endif
 	}
 #endif

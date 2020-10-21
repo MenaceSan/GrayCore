@@ -94,7 +94,7 @@ namespace Gray
 	class GRAYCORE_LINK CRandomDef : public CRandomBase
 	{
 		//! @class Gray::CRandomDef
-		//! Like the default 'C' library seeded pseudo-random number generator srand() and rand()
+		//! Like the default 'C' library seeded pseudo-random number generator ::srand() and ::rand()
 		//! Control a series of pseudo random numbers via a seed. 
 		//! not thread safe. Use CThreadLocal to make thread safe.
 		//! RESOLUTION = k_RAND_MAX

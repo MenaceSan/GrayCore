@@ -232,7 +232,7 @@ namespace Gray
 		size_t get_AllocSize() const
 		{
 			//! Special version of get_Size() to measure the true allocation size.
-			//! @return The actual size of the allocation. May be greater than I requested? get_Size()
+			//! @return The actual size of the allocation in bytes. May be greater than I requested? get_Size()
 			//! @note Not always the size of the allocation request in __linux__ or Lazy.
 			ASSERT(!isCorrupt());
 			return CHeap::GetSize(m_pData);

@@ -9,7 +9,9 @@
 #pragma once
 #endif
 
-#include "StrT.h"
+#include "StrChar.h"
+#include "StrConst.h"
+#include "CDebugAssert.h"
 
 UNITTEST_PREDEF(StrFormat)
 

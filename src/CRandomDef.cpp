@@ -138,7 +138,7 @@ namespace Gray
 		}
 
 #elif defined(_WIN32) && defined(_MSC_VER) && defined(WINCRYPT32API)
-
+		// WinCrypt
 		HCRYPTPROV hProvider;	// NOT a pointer ? CHandlePtr
 		if (_FNF(::CryptAcquireContext)(&hProvider, nullptr, nullptr, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT))
 		{
@@ -212,7 +212,7 @@ namespace Gray
 	CRandomDef::CRandomDef(SEED_t nSeed)
 		: m_nSeed(nSeed)
 	{
-		//! like srand()
+		//! like ::srand()
 		//! http://stackoverflow.com/questions/4768180/rand-implementation
 	}
 	CRandomDef::~CRandomDef()
@@ -222,7 +222,7 @@ namespace Gray
 	void CRandomDef::InitSeed(const void* pData, size_t iSize)	// override
 	{
 		//! Start a repeatable series of pseudo random numbers
-		//! like srand()
+		//! like ::srand()
 		if (iSize > sizeof(m_nSeed))
 			iSize = sizeof(m_nSeed);
 		m_nSeed = 0;	// Clear any under flow.
@@ -231,6 +231,7 @@ namespace Gray
 
 	UINT CRandomDef::GetRandNext()
 	{
+		//! Get next pseudo random number like ::rand();
 		//! k_RAND_MAX assumed to be 32767
 #ifdef __linux__
 		m_nSeed = m_nSeed * 1103515245 + 12345;
@@ -255,7 +256,7 @@ namespace Gray
 			return uRand;
 		}
 
-		// Make additional calls to rand() to get more random bits.
+		// Make additional calls to ::rand() to get more random bits.
 		if (nScale > k_RAND_MAX)
 		{
 			UINT uScaleCur = nScale;

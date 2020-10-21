@@ -14,7 +14,7 @@ namespace Gray
 {
 	bool GRAYCALL StrU::IsUTFLead(const void* pvU) // static ?
 	{
-		//! Skip the stupid Microsoft UTF-8 Byte order marks
+		//! Skip the stupid Microsoft UTF-8 Byte order marks that are put at the start of a file.
 		if (pvU == nullptr)
 			return false;
 		const BYTE* pU = reinterpret_cast<const BYTE*>(pvU);
@@ -60,7 +60,7 @@ namespace Gray
 		return k_StrLen_UNK;	// not valid UNICODE char. stop?
 	}
 
-	StrLen_t GRAYCALL StrU::UTF8Size1(unsigned char chFirst, int& riStartBits)
+	StrLen_t GRAYCALL StrU::UTF8Size1(unsigned char chFirst, int& riStartBits) // static
 	{
 		//! How many more bytes in this UTF8 sequence? estimated from the first byte of a UTF sequence.
 		//! @arg
@@ -117,7 +117,7 @@ namespace Gray
 		return k_StrLen_UNK;	// invalid format !? stop
 	}
 
-	StrLen_t GRAYCALL StrU::UTF8Size(const char* pInp, StrLen_t iSizeInpBytes, int& riStartBits)
+	StrLen_t GRAYCALL StrU::UTF8Size(const char* pInp, StrLen_t iSizeInpBytes, int& riStartBits) // static
 	{
 		//! How much UTF8 data do i need to make the UNICODE char?
 		//! @arg riStartBits = BIT_ENUM_t
@@ -130,7 +130,7 @@ namespace Gray
 		return StrU::UTF8Size1((unsigned char)(*pInp), riStartBits);
 	}
 
-	StrLen_t GRAYCALL StrU::UTF8toUNICODE(wchar_t& wChar, const char* pInp, StrLen_t iSizeInpBytes)
+	StrLen_t GRAYCALL StrU::UTF8toUNICODE(wchar_t& wChar, const char* pInp, StrLen_t iSizeInpBytes) // static
 	{
 		//! Convert a single UTF8 encoded character (multi chars) to a single UNICODE char.
 		//! @return The length used from input string. < iSizeInpBytes, 0=FAILED
@@ -174,7 +174,7 @@ namespace Gray
 		return(iBytes);
 	}
 
-	StrLen_t GRAYCALL StrU::UNICODEtoUTF8(char* pOut, StrLen_t iSizeOutMaxBytes, wchar_t wChar)
+	StrLen_t GRAYCALL StrU::UNICODEtoUTF8(char* pOut, StrLen_t iSizeOutMaxBytes, wchar_t wChar) // static
 	{
 		//! Convert a single UNICODE char to UTF8 encoded char (maybe using multi chars).
 		//! @return The length < iSizeOutMaxBytes, 0=FAILED
@@ -189,11 +189,11 @@ namespace Gray
 		StrLen_t iBytes = StrU::UTF8Size(wChar, iStartBits);
 		if (iBytes <= 0)
 		{
-			return(0);	// FAILED
+			return 0;	// FAILED
 		}
 		if (iBytes > iSizeOutMaxBytes)	// not big enough to hold it!
 		{
-			return(0);	// FAILED
+			return 0;	// FAILED
 		}
 
 		if (iBytes == 1)	// needs NO special UTF8 encoding.
@@ -217,7 +217,7 @@ namespace Gray
 
 	//*********************************************
 
-	StrLen_t GRAYCALL StrU::UTF8toUNICODELen(const char* pInp, StrLen_t iSizeInpBytes)
+	StrLen_t GRAYCALL StrU::UTF8toUNICODELen(const char* pInp, StrLen_t iSizeInpBytes) // static
 	{
 		//! How many UNICODE chars to store this UTF8 string ?
 		//! @note if return size is same as input size then no multi char encoding was used. (isANSI)
@@ -250,7 +250,7 @@ namespace Gray
 		return iOut;
 	}
 
-	StrLen_t GRAYCALL StrU::UNICODEtoUTF8Size(const wchar_t* pwInp, StrLen_t iSizeInpChars)
+	StrLen_t GRAYCALL StrU::UNICODEtoUTF8Size(const wchar_t* pwInp, StrLen_t iSizeInpChars) // static
 	{
 		//! How many UTF8 bytes to store this UNICODE string ?
 		//! @note if return size is same as input size then no multi char encoding is needed. (isANSI)
@@ -281,12 +281,12 @@ namespace Gray
 		return iOut;
 	}
 
-	StrLen_t GRAYCALL StrU::UTF8toUNICODE(OUT wchar_t* pwOut, StrLen_t iSizeOutMaxChars, const char* pInp, StrLen_t iSizeInpBytes)
+	StrLen_t GRAYCALL StrU::UTF8toUNICODE(OUT wchar_t* pwOut, StrLen_t iSizeOutMaxChars, const char* pInp, StrLen_t iSizeInpBytes) // static
 	{
 		//! Convert the CODEPAGE_t CP_UTF8 default text format to UNICODE
 		//! May be network byte order!
 		//! Adds null.
-		//! similar to _WIN32 MultiByteToWideChar().
+		//! similar to _WIN32 ::MultiByteToWideChar().
 		//! @arg
 		//!  iSizeOutMaxChars = max output size in chars (not bytes) (MUST HAVE ROOM FOR '\0')
 		//!  iSizeInpBytes = size of the input string. -1 = '\0' terminated.
@@ -299,7 +299,7 @@ namespace Gray
 		if (iSizeOutMaxChars <= 0)
 		{
 			DEBUG_CHECK(iSizeOutMaxChars > 0);
-			return(k_ITERATE_BAD);
+			return k_ITERATE_BAD;
 		}
 
 		if (iSizeInpBytes <= k_StrLen_UNK)
@@ -309,36 +309,12 @@ namespace Gray
 		if (iSizeInpBytes <= 0 || pInp == nullptr)
 		{
 			pwOut[0] = '\0';
-			return(0);
+			return 0;
 		}
 
 		iSizeOutMaxChars--;
 
 		StrLen_t iOut = 0;
-
-#if 0 // def _WIN32
-		// acts strangely with TAB chars etc.??
-		if (CSystemInfo::I().isOSNTAble())
-		{
-			// Windows 98, 2000 or NT
-			// NOTE: ? UTF8 only works in Windows NT 4.0 and Windows 2000 ?
-			// Convert to proper UNICODE GetCodePage()
-
-			iOut = ::MultiByteToWideChar(
-				CP_UTF8,         // code page CP_ACP
-				0,         // character-type options
-				pInp, // address of string to map
-				iSizeInpBytes,      // number of bytes in string
-				(LPWSTR)pwOut,  // address of wide-character buffer
-				iSizeOutMaxChars        // size of buffer
-				);
-			if (iOut >= 0)
-			{
-				pwOut[iOut] = '\0';
-				return(iOut);
-			}
-		}
-#endif
 
 		// Win95 or __linux__
 		for (StrLen_t iInp = 0; iInp < iSizeInpBytes;)
@@ -364,8 +340,8 @@ namespace Gray
 				{
 					pwOut[iOut] = wChar;
 					iInp += iInpTmp;
-				}
-			}
+	}
+}
 			else
 			{
 				pwOut[iOut] = ch;
@@ -379,10 +355,10 @@ namespace Gray
 		return(iOut);
 	}
 
-	StrLen_t GRAYCALL StrU::UNICODEtoUTF8(OUT char* pOut, StrLen_t iSizeOutMaxBytes, const wchar_t* pwInp, StrLen_t iSizeInpChars)
+	StrLen_t GRAYCALL StrU::UNICODEtoUTF8(OUT char* pOut, StrLen_t iSizeOutMaxBytes, const wchar_t* pwInp, StrLen_t iSizeInpChars)	// static
 	{
 		//! Copy CODEPAGE_t CP_UTF8 to UNICODE.
-		//! similar to _WIN32 WideCharToMultiByte().
+		//! similar to _WIN32 ::WideCharToMultiByte(). 
 		//! @arg
 		//!  iSizeInpChars = limit UNICODE chars incoming. -1 = go to null.
 		//!  iSizeOutMaxBytes = max output size in bytes (MUST HAVE ROOM FOR '\0')
@@ -399,37 +375,12 @@ namespace Gray
 		if (iSizeInpChars <= 0 || pwInp == nullptr)
 		{
 			pOut[0] = '\0';
-			return(0);
+			return 0;
 		}
 
 		iSizeOutMaxBytes--;
 
 		StrLen_t iOut = 0;
-
-#if 0 // def _WIN32
-		if (CSystemInfo::I().isOSNTAble())
-		{
-			// Windows 98, 2000 or NT
-
-			// Flip all from network order.
-			// Convert to proper UTF8 SetCodePage()
-			iOut = ::WideCharToMultiByte(
-				CP_UTF8,         // code page
-				0,         // performance and mapping flags
-				pwInp, // address of wide-character string
-				iSizeInpChars,       // number of characters in string
-				pOut,  // address of buffer for new string
-				iSizeOutMaxBytes,      // size of buffer in bytes
-				nullptr,  // address of default for un-mappable characters
-				nullptr  // address of flag set when default char. used
-				);
-			if (iOut >= 0)
-			{
-				pOut[iOut] = 0;	// make sure it's null terminated
-				return(iOut);
-			}
-		}
-#endif
 
 		// Win95 or __linux__ = just assume its really ASCII
 		for (StrLen_t iInp = 0; iInp < iSizeInpChars; iInp++)
@@ -457,7 +408,7 @@ namespace Gray
 		}
 
 		pOut[iOut] = '\0';	// make sure it's null terminated
-		return(iOut);
+		return iOut;
 	}
 }
 
@@ -484,7 +435,7 @@ bool GRAYCALL StrU::UnitTestU(const wchar_t* pwText, StrLen_t nLen) // static
 	if (StrT::Cmp<wchar_t>(wTmpU, pwText))	// back to original text?
 		return false;
 	return true;
-}
+	}
 
 bool GRAYCALL StrU::UnitTest8(const char* pszText, StrLen_t nLen) // static
 {
@@ -516,7 +467,7 @@ UNITTEST_CLASS(StrU)
 		// https://www.cl.cam.ac.uk/~mgk25/ucs/examples/quickbrown.txt
 
 		static const wchar_t* kGreekU = L"Σὲ γνωρίζω ἀπὸ τὴν κόψη";
-		static const char* kGreek8 = "Î£á½² Î³Î½Ï‰Ïá½·Î¶Ï‰ á¼€Ï€á½¸ Ï„á½´Î½ Îºá½¹ÏˆÎ·";
+		static const char* kGreek8 = "Î£á½² Î³Î½Ï‰Ïá½·Î¶Ï‰ á¼€Ï€á½¸ Ï„á½´Î½ Îºá½¹ÏˆÎ·";	// in UTF8
 
 		UNITTEST_TRUE(StrU::UnitTestU(kGreekU, k_StrLen_UNK));
 

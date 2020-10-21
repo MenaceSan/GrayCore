@@ -7,10 +7,11 @@
 
 #include "pch.h"
 #include "StrFormat.h"
+#include "StrT.h"
 
 namespace Gray
 {
-	const char StrFormatBase::k_Specs[16] = "EFGXcdefgiopsux";	// all legal format types.  // Omit "S" "apnA"
+	const char StrFormatBase::k_Specs[16] = "EFGXcdefgiopsux";	// all legal sprintf format tags.  // Omit "S" "apnA"
 
 	template< typename TYPE>
 	StrLen_t StrFormat<TYPE>::ParseParam(const TYPE* pszFormat)
@@ -424,7 +425,7 @@ namespace Gray
 			TYPE ch = pszFormat[iLenForm++];
 			if (ch == '\0')	// At end.
 			{
-				ASSERT(bHasFormatting);	// MUST be a formatting string. Don't use this as a string copy! its dangerous ans wasteful.
+				// ASSERT(bHasFormatting); Don't use this as a string copy! its dangerous and wasteful.
 				break;
 			}
 
