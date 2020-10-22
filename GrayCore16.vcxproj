@@ -597,6 +597,7 @@
     <ClInclude Include="include\CExceptionBase.h" />
     <ClInclude Include="include\CExceptionSystem.h" />
     <ClInclude Include="include\CFile.h" />
+    <ClInclude Include="include\CFileCopier.h" />
     <ClInclude Include="include\CFileDir.h" />
     <ClInclude Include="include\CFilePath.h" />
     <ClInclude Include="include\CFileStatus.h" />
@@ -728,6 +729,7 @@
     <ClCompile Include="src\CExceptionAssert.cpp" />
     <ClCompile Include="src\CExceptionSystem.cpp" />
     <ClCompile Include="src\CFile.cpp" />
+    <ClCompile Include="src\CFileCopier.cpp" />
     <ClCompile Include="src\CFileDir.cpp" />
     <ClCompile Include="src\CFilePath.cpp" />
     <ClCompile Include="src\CFileStatus.cpp" />

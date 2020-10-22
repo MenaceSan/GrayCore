@@ -179,7 +179,7 @@ namespace Gray
 			ITERATE_t index = this->m_aTable[iBucket].FindINear(rNew, iCompareRes);
 			if (iCompareRes == COMPARE_Equal)
 			{
-				return &this->m_aTable[iBucket].GetAt(index);	// special return that says it already was here.
+				return &this->m_aTable[iBucket].ElementAt(index);	// special return that says it already was here.
 			}
 
 			// not duplicate. must add

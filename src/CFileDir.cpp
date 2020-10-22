@@ -4,6 +4,7 @@
 //
 #include "pch.h"
 #include "CFileDir.h"
+#include "CFileCopier.h"
 #include "CLogMgr.h"
 #include "CAppState.h"
 #include "StrArg.h"
@@ -715,7 +716,7 @@ namespace Gray
 		}
 		else
 		{
-			return cFile::RenamePath(pszPath, CFilePath::CombineFilePathX(sDirTrash, CFilePath::GetFileName(pszPath)), nullptr);
+			return CFileCopier::RenamePath(pszPath, CFilePath::CombineFilePathX(sDirTrash, CFilePath::GetFileName(pszPath)), nullptr);
 		}
 	}
 
@@ -818,10 +819,10 @@ namespace Gray
 				{
 				case FILEOP_MOVE:
 				case FILEOP_RENAME:
-					hRes = cFile::RenamePath(sFilePathSrc, sFilePathDst, pProgress);
+					hRes = CFileCopier::RenamePath(sFilePathSrc, sFilePathDst, pProgress);
 					break;
 				case FILEOP_COPY:
-					hRes = cFile::CopyFileX(sFilePathSrc, sFilePathDst, pProgress);
+					hRes = CFileCopier::CopyFileX(sFilePathSrc, sFilePathDst, pProgress);
 					break;
 				case FILEOP_DELETE:
 					if (nFileFlags & FOF_ALLOWUNDO)
