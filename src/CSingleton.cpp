@@ -121,15 +121,17 @@ namespace Gray
 		}
 
 		// Prevent re-registering of singletons constructed after SingletonManager shutdown (during exit)
-		if (!CSingletonManager::isDestroyed())
+		if (!CSingletonManager::isDestroyed())	// special case. DLL was unloaded.
+		{
 			CSingletonManager::I().AddReg(this);
+		}
 	}
 
 	CSingletonRegister::~CSingletonRegister()
 	{
 		//! Allow Early removal of a singleton! This is sort of weird but i should allow it for DLL unload.
 		CThreadGuardFast threadguard(sm_LockSingle);	// thread sync critical section all singletons.
-		if (!CSingletonManager::isDestroyed())	// special case. DLL was unloaded.
+		if (CSingletonManager::isSingleCreated())	// special case. DLL was unloaded.
 		{
 			CSingletonManager::I().RemoveReg(this);		// remove myself.
 		}

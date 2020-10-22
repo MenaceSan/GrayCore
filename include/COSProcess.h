@@ -153,7 +153,7 @@ namespace Gray
 			if (!isValidProcess())
 				return S_FALSE;
 #ifdef _WIN32
-			if (!::TerminateProcess(m_hProcess.get_Handle(), uExitCode))
+			if (!::TerminateProcess(get_ProcessHandle(), uExitCode))
 #elif defined(__linux__)
 			if (::kill(get_ProcessId(), SIGTERM) != 0) // send a signal(SIGTERM) to the process.
 #endif
@@ -168,7 +168,7 @@ namespace Gray
 		{
 			//! ABOVE_NORMAL_PRIORITY_CLASS
 #if defined(_WIN32) && ! defined(UNDER_CE)
-			return ::GetPriorityClass(m_hProcess.get_Handle());
+			return ::GetPriorityClass(get_ProcessHandle());
 #elif defined(__linux__)
 			ASSERT(0);
 			// TODO __linux__
@@ -179,7 +179,7 @@ namespace Gray
 		{
 			//! @arg dwPriorityClass = ABOVE_NORMAL_PRIORITY_CLASS
 #if defined(_WIN32) && ! defined(UNDER_CE)
-			return ::SetPriorityClass(m_hProcess.get_Handle(), dwPriorityClass) ? true : false;
+			return ::SetPriorityClass(get_ProcessHandle(), dwPriorityClass) ? true : false;
 #elif defined(__linux__)
 			ASSERT(0);
 			// TODO __linux__
@@ -189,7 +189,13 @@ namespace Gray
 
 #ifdef _WIN32
 
-		HRESULT CreateRemoteThread(const void* pvFunc, const void* pvArgs);
+		HRESULT CreateRemoteThread(const void* pvFunc, const void* pvArgs, OUT COSHandle& thread);
+
+		void* AllocMemory(size_t nSize)
+		{
+			// Allocate space in the process memory.
+			return ::VirtualAllocEx(get_ProcessHandle(), NULL, nSize, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+		}
 
 		HRESULT WriteProcessMemory(void* pBaseAddress, const void* pData, size_t nSize)
 		{
@@ -197,7 +203,7 @@ namespace Gray
 			//! ASSUME: PROCESS_QUERY_INFORMATION | PROCESS_VM_WRITE access AND COSUserToken with SE_DEBUG_NAME
 
 			SIZE_T nSizeWrite = nSize;
-			BOOL bSuccess = ::WriteProcessMemory(m_hProcess.get_Handle(), pBaseAddress, pData, nSize, &nSizeWrite);
+			BOOL bSuccess = ::WriteProcessMemory(get_ProcessHandle(), pBaseAddress, pData, nSize, &nSizeWrite);
 			if (!bSuccess)
 			{
 				return HResult::GetLastDef(HRESULT_WIN32_C(ERROR_WRITE_FAULT));
@@ -212,7 +218,7 @@ namespace Gray
 			//! ASSUME: PROCESS_QUERY_INFORMATION | PROCESS_VM_READ access AND COSUserToken with SE_DEBUG_NAME
 
 			SIZE_T nSizeRead = nSize;
-			BOOL bSuccess = ::ReadProcessMemory(m_hProcess.get_Handle(), pBaseAddress, pDataIn, nSize, &nSizeRead);
+			BOOL bSuccess = ::ReadProcessMemory(get_ProcessHandle(), pBaseAddress, pDataIn, nSize, &nSizeRead);
 			if (!bSuccess)
 			{
 				return HResult::GetLastDef(HRESULT_WIN32_C(ERROR_READ_FAULT));
@@ -225,7 +231,7 @@ namespace Gray
 			//! The exit value specified in the ExitProcess or TerminateProcess function.
 			//! @arg pnExitCode = APP_EXITCODE_STILL_ACTIVE = process is running.
 			//! @return false = process handle is bad ?
-			return ::GetExitCodeProcess(m_hProcess.get_Handle(), pnExitCode) ? true : false;
+			return ::GetExitCodeProcess(get_ProcessHandle(), pnExitCode) ? true : false;
 		}
 
 		static inline PROCESSID_t FindProcessIdForWindow(HWND hWnd) noexcept
@@ -243,12 +249,12 @@ namespace Gray
 		bool GetStatTimes(OUT FILETIME* pCreationTime, OUT FILETIME* pExitTime, OUT FILETIME* pKernelTime, OUT FILETIME* pUserTime) const
 		{
 			//! How much time has this process run ?
-			return ::GetProcessTimes(m_hProcess.get_Handle(), pCreationTime, pExitTime, pKernelTime, pUserTime) ? true : false;
+			return ::GetProcessTimes(get_ProcessHandle(), pCreationTime, pExitTime, pKernelTime, pUserTime) ? true : false;
 		}
 
 		bool GetStatIoCounters(OUT IO_COUNTERS* pIoCounters) const
 		{
-			return ::GetProcessIoCounters(m_hProcess.get_Handle(), pIoCounters) ? true : false;
+			return ::GetProcessIoCounters(get_ProcessHandle(), pIoCounters) ? true : false;
 		}
 #endif // UNDER_CE
 
@@ -256,7 +262,7 @@ namespace Gray
 		bool GetStatHandleCount(OUT DWORD* pdwHandleCount) const
 		{
 			//! How many open handles does this process have ?
-			return ::GetProcessHandleCount(m_hProcess.get_Handle(), pdwHandleCount);
+			return ::GetProcessHandleCount(get_ProcessHandle(), pdwHandleCount);
 		}
 #endif
 		static HWND GRAYCALL FindWindowForProcessID(PROCESSID_t nProcessID, DWORD dwStyleFlags, const GChar_t* pszClassName = nullptr); // WS_VISIBLE

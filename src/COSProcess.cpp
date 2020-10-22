@@ -260,21 +260,18 @@ namespace Gray
 
 #ifdef _WIN32
 
-	HRESULT COSProcess::CreateRemoteThread(const void* pvFunc, const void* pvArgs)
+	HRESULT COSProcess::CreateRemoteThread(const void* pvFunc, const void* pvArgs, COSHandle& thread )
 	{
 		// Create a thread (and run it) in the context of some other process
 		// https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-createremotethread
 		// PROCESS_CREATE_THREAD|PROCESS_QUERY_INFORMATION|PROCESS_VM_READ|PROCESS_VM_WRITE|PROCESS_VM_OPERATION
 		// NOTE: ASSUME pvArgs is a valid pointer in the apps context. i.e. VirtualAlloc etc.
-
-		// HANDLE CreateRemoteThread( HANDLE hProcess, LPSECURITY_ATTRIBUTES  lpThreadAttributes, SIZE_T dwStackSize,
-			// LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter, DWORD dwCreationFlags, LPDWORD lpThreadId );
-
+ 
 		// Load our DLL 
 		DWORD dwThreadId = 0;
-		HANDLE h = ::CreateRemoteThread(m_hProcess, nullptr, 0, (LPTHREAD_START_ROUTINE)pvFunc, (LPVOID)pvArgs, 0, &dwThreadId);
-		if (!COSHandle::IsValidHandle(h))
-			return E_FAIL;
+		thread.AttachHandle(::CreateRemoteThread(m_hProcess, nullptr, 0, (LPTHREAD_START_ROUTINE)pvFunc, (LPVOID)pvArgs, 0, &dwThreadId));
+		if (!thread.isValidHandle())
+			return HResult::GetLast();
 
 		return S_OK;
 	}
