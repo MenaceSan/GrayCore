@@ -278,8 +278,8 @@ namespace Gray
 	}
 #endif
 
-	template struct GRAYCORE_LINK StrX<char>;		// Force Instantiation.
-	template struct GRAYCORE_LINK StrX<wchar_t>;	// Force Instantiation.
+	template struct GRAYCORE_LINK StrX<char>;		// Force Instantiation for static libs.
+	template struct GRAYCORE_LINK StrX<wchar_t>;	// Force Instantiation for static libs.
 }
 
 //***************************************************

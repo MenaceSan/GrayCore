@@ -498,6 +498,9 @@ namespace Gray
 		va_end(vargs);
 		return nLenOut;
 	}
+
+	template class GRAYCORE_LINK StrFormat<char>;		// Force Instantiation for static libs.
+	template class GRAYCORE_LINK StrFormat<wchar_t>;	// Force Instantiation for static libs.
 }
 
 //******************************************************************************************************
