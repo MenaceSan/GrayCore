@@ -199,7 +199,7 @@ namespace Gray
 		ITERATE_t Add(ARG_TYPE newElement)
 		{
 			//! Add to the end.
-			ITERATE_t nIndex = m_nSize;
+			const ITERATE_t nIndex = m_nSize;
 			SetAtGrow(nIndex, newElement);
 			return nIndex;
 		}
@@ -232,7 +232,7 @@ namespace Gray
 #ifdef _DEBUG
 		// AssertSize();
 #endif
-		ITERATE_t iSize = m_nSize;
+		const ITERATE_t iSize = m_nSize;
 		m_nSize = 0;
 		if (m_pData != nullptr)
 		{

@@ -25,30 +25,35 @@ namespace Gray
 		//!  this->tv_usec = CTimeUnits::k_nMicroSeconds = 1/1000000
 
 	public:
-		CTimeVal()
+		CTimeVal() noexcept
 		{
 			this->tv_sec = 0;
 			this->tv_usec = 0;
 		}
-		CTimeVal(TIMESYS_t dwMilliseconds)
+		CTimeVal(TIMESYS_t nMilliSeconds) noexcept
 		{
-			put_mSec(dwMilliseconds);
+			put_mSec(nMilliSeconds);
 		}
-		CTimeVal(TIMESECD_t iSecWait, int iMicroSecWait)
+		CTimeVal(TIMESECD_t nSeconds, int iMicroSecWait) noexcept
 		{
-			this->tv_sec = iSecWait;
+			this->tv_sec = nSeconds;
 			this->tv_usec = iMicroSecWait;
 		}
 
-		TIMESYS_t get_mSec() const
+		TIMESYS_t get_mSec() const noexcept
 		{
 			return (this->tv_sec * CTimeSys::k_FREQ) + (this->tv_usec / 1000);
 		}
-		void put_mSec(TIMESYS_t dwMilliseconds)
+		void put_mSec(TIMESYS_t nMilliSeconds) noexcept
 		{
-			this->tv_sec = dwMilliseconds / CTimeSys::k_FREQ;
-			this->tv_usec = (dwMilliseconds % CTimeSys::k_FREQ) * 1000;
+			this->tv_sec = nMilliSeconds / CTimeSys::k_FREQ;
+			this->tv_usec = (nMilliSeconds % CTimeSys::k_FREQ) * 1000;
+		}
+		void put_Sec(int nSeconds) noexcept
+		{
+			this->tv_sec = nSeconds;
+			this->tv_usec = 0;
 		}
 	};
-};
+} 
 #endif

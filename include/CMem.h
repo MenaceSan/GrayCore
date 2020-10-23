@@ -47,7 +47,7 @@ namespace Gray
 			//! Does not mean I have write permissions.
 			//! Used to sanity check pointers. Ensure NOT offset from nullptr?
 
-			if (((INT_PTR)pData) < 16 * 1024)	// ASSUME memory in this range is never valid? Fail quickly. This is Kernel Space. <1G
+			if (((INT_PTR)pData) < 16 * 1024)	// ASSUME memory in this range is never valid? Fail quickly. This is Kernel Space ONLY. <1G
 				return false;
 #ifdef _WIN32
 

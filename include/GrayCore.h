@@ -66,7 +66,7 @@
 #if defined(_MSC_VER) && (_MSC_VER >= 1000)
 // Remove globally annoying warnings.
 #pragma warning(disable:4800)	// "forcing value to bool 'true' or 'false' (performance warning)" (convert BOOL to bool)
-#pragma warning(disable:4251)	// 'CC' needs to have dll - interface to be used by clients of class 'Gray::HResult' (FOR DLLs ONLY)
+#pragma warning(disable:4251)	// 'CC' needs to have DLL - interface to be used by clients of class 'Gray::HResult' (FOR DLLs ONLY)
 
 // Useless MSVC2010 warnings: at /W4 level
 #pragma warning(disable:4510)	// default constructor could not be generated
@@ -83,8 +83,12 @@
 #define USE_UNICODE_FN			//!< make file names UNICODE as well.
 #endif
 
-#if ! defined(USE_UNITTESTS) && defined(_DEBUG) 
-#define USE_UNITTESTS 1	//!< Compile in the unit test code. Calling it or not is another matter. in static library case the linker will just remove uncalled code.
+#ifndef USE_UNITTESTS
+#ifdef _DEBUG 
+#define USE_UNITTESTS 1		//!< Compile in the unit test code. tests will self-register at static init time.
+#else
+#define USE_UNITTESTS 0	
+#endif
 #endif
 
 namespace Gray		//!< The main namespace for all Core functions.
@@ -159,7 +163,7 @@ namespace Gray		//!< The main namespace for all Core functions.
 	template< typename TYPE >
 	static inline INT_PTR GET_INDEX_IN(TYPE a, TYPE b)
 	{
-		//! diff 2 pointers of the same type to get index diff.
+		//! diff 2 pointers of the same type to get index diff. ITERATE_t
 		//! Is b an element in array a?
 		return(b - a);
 	}
@@ -171,7 +175,7 @@ namespace Gray		//!< The main namespace for all Core functions.
 #define CATTR_PACKED	// _MSC_VER and __GNUC__ use #pragma pack(1) to indicate packing required.
 #endif
 
-#define _sizeofm(s,m)	sizeof(((s *)0)->m)	//!< size_t of a structure member (like offsetof()) nullptr
+#define _sizeofm(s,m)	sizeof(((s *)0)->m)	//!< size_t of a structure member/field (like offsetof()) nullptr
 };
 
 #ifdef _MSC_VER

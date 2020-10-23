@@ -19,7 +19,7 @@ namespace Gray
 		//! @class Gray::COSHandleSet
 		//! A collection of COSHandle
 		//! Wait on any of a set of OS handles to be signaled.
-		//! Similar to CNetSocketSet and select() especially for __linux__
+		//! Similar to CNetSocketSet and ::select() especially for __linux__
 		//! Similar to _WIN32 WaitForMultipleObjects(). MAX = MAXIMUM_WAIT_OBJECTS or FD_SETSIZE
 
 	public:
@@ -33,16 +33,16 @@ namespace Gray
 
 	private:
 #ifdef _WIN32
-		CArrayVal<HANDLE> m_fds;	//!< Just an array of OS handles.
+		CArrayVal<HANDLE> m_fds;	//!< Just an array of OS handles. like fd_set. but dynamic.
 #elif defined(__linux__)
 		HANDLE m_hHandleMax;		//!< Largest handle we have. <= FD_SETSIZE
-		fd_set m_fds;				//!< array of FD_SETSIZE possible HANDLE(s). NOTE: sizeof(m_fds) varies with FD_SETSIZE
+		fd_set m_fds;				//!< array of FD_SETSIZE possible HANDLE(s). NOTE: sizeof(m_fds) varies/fixed with FD_SETSIZE
 #else
 #error NOOS
 #endif
 
 	private:
-		void InitHandles()
+		void InitHandles() noexcept
 		{
 #ifdef __linux__
 			m_hHandleMax = 0;
@@ -51,14 +51,21 @@ namespace Gray
 		}
 
 	public:
-		COSHandleSet(void)
+		COSHandleSet(void) noexcept
 		{
 			InitHandles();
 		}
 		COSHandleSet(HANDLE h)
 		{
+			// a handle set with a single handle.
+#ifdef __linux__			 
+			m_hHandleMax = h;
+			FD_ZERO(&fds);
+			FD_SET(h, &m_fds);
+#else
 			InitHandles();
 			AddHandle(h);
+#endif
 		}
 		COSHandleSet(const COSHandleSet& nss)
 		{

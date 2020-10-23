@@ -46,20 +46,20 @@ namespace Gray
 		{
 			// undefined. may use clock_gettime() on it.
 		}
-		CTimeSpec(TIMESYSD_t nMilliSec)
+		CTimeSpec(TIMESYSD_t nMilliSeconds)
 		{
-			put_mSec(nMilliSec);
+			put_mSec(nMilliSeconds);
 		}
-		CTimeSpec(TIMESECD_t iSec, int iNanoSec)
+		CTimeSpec(TIMESECD_t iSeconds, int iNanoSec)
 		{
-			this->tv_sec = iSec;
+			this->tv_sec = iSeconds;
 			this->tv_nsec = iNanoSec;	// nano = billionths of a sec.
 		}
-		void put_mSec(TIMESYSD_t nMilliSec)
+		void put_mSec(TIMESYSD_t nMilliSeconds)
 		{
 			// milliSeconds.
-			this->tv_sec = nMilliSec / 1000;
-			this->tv_nsec = (nMilliSec % 1000) * 1000000;	// mSec to nano = billionths of a sec.
+			this->tv_sec = nMilliSeconds / 1000;
+			this->tv_nsec = (nMilliSeconds % 1000) * 1000000;	// mSec to nano = billionths of a sec.
 		}
 		TIMESYS_t get_mSec() const
 		{

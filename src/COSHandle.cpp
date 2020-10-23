@@ -29,24 +29,13 @@ namespace Gray
 		//! Wait for the handle m_h to be signaled.
 		//! HRESULT_WIN32_C(ERROR_WAIT_TIMEOUT) = after dwMilliseconds
 
-#ifdef __linux__
-		// TODO use COSHandleSet
-		CTimeVal timeWait(dwMilliseconds);
-		fd_set fds;
-		FD_ZERO(&fds);
-		FD_SET(m_h, &fds);
-		int iRet = ::select(m_h + 1, &fds, nullptr, nullptr, &timeWait);
-		if (iRet == 0)
-		{
-			return HRESULT_WIN32_C(ERROR_WAIT_TIMEOUT);
-		}
-		if (iRet < 0)
-		{
-			return HResult::GetLastDef();
-		}
-		return S_OK;	// object is signaled.
+#ifdef __linux__ 
+		COSHandleSet hset(m_h);
+		return hset.WaitForObjects(dwMilliseconds);
 #elif defined(_WIN32)
 		return HResult::FromWaitRet(::WaitForSingleObject(m_h, (DWORD)dwMilliseconds));
+#else
+#error NOOS
 #endif
 	}
 };
