@@ -46,7 +46,7 @@ namespace Gray
 		FACILITY_RPC = 1,		//!< Used for RPC_E_DISCONNECTED
 		FACILITY_DISPATCH = 2,
 		FACILITY_ITF = 4,		//!< OLE_E_BLANK ??
-		FACILITY_WIN32 = 7,		//!< Normal windows codes. HRESULT_FROM_WIN32() or HRESULT_WIN32_C() error_status_t
+		FACILITY_WIN32 = 7,		//!< Normal windows codes. HRESULT_FROM_WIN32() or HRESULT_WIN32_C(LSTATUS/error_status_t) 
 		// FACILITY_DPLAY
 #endif
 		FACILITY_POSIX = 5,		//!< Facility for POSIX _errno in a _WIN32 style code.
@@ -66,7 +66,7 @@ namespace Gray
 	enum HRESULT_WIN32_TYPE_
 	{
 		//! @enum Gray::HRESULT_WIN32_TYPE_
-		//! codes for FACILITY_WIN32. (AKA LSTATUS)
+		//! codes for FACILITY_WIN32. (AKA LSTATUS/error_status_t)
 		//! NO_ERROR = ERROR_SUCCESS = 0
 #define HRESULT_WIN32_DEF(a,b,c)	a=b,
 #include "HResultWin32.tbl"

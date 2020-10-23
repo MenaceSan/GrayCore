@@ -89,7 +89,7 @@ namespace Gray
 	public:
 		COSHandle m_hFile;		//!< OSHandle for the open file.
 	protected:
-		CStringF m_strFileName;		//!< store a copy of the full file path. 
+		CStringF m_strFileName;		//!< store a copy of the full file path. MFC defined name. 
 
 	protected:
 		bool isFileOpen() const
@@ -220,6 +220,7 @@ namespace Gray
 			//! like _MFC_VER CFile::GetFilePath(); but CStringF
 			//! @note Don't use GetFilePath() as it has some weird side effects in MFC.
 			//! like WIN32 GetFinalPathNameByHandle()
+			//! __linux__ readlink on /proc/self/fd/NNN where NNN is the file descriptor
 			return CStringF(m_strFileName);
 		}
 		CStringF get_FileTitleX() const;	// MFC is CString return
