@@ -422,13 +422,13 @@ namespace Gray
 		if (m_Buffer.get_Size() == (size_t)nSizeChars)
 		{
 			// No change.
-			ASSERT(m_Buffer.isValid() || m_Buffer.get_Size() == 0);
+			ASSERT(m_Buffer.isValidPtr() || m_Buffer.get_Size() == 0);
 			return m_Buffer.get_DataA();
 		}
 		const IniChar_t* pszBufferPrev = m_Buffer.get_DataA();
 		m_Buffer.ReAlloc(nSizeChars * sizeof(IniChar_t));
 		IniChar_t* pszBufferNew = m_Buffer.get_DataA();
-		if (!m_Buffer.isValid())
+		if (!m_Buffer.isValidPtr())
 		{
 			ASSERT(0 == nSizeChars);
 		}

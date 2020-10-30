@@ -1,7 +1,7 @@
 //
 //! @file CUnitTest.h
 //! Included from c++ file to implement unit test. Compatible with M$ unit tests. USE_UNITTESTS_MS
-//! @note Don't include this from some other header file.
+//! @note Don't include this from some other header file. Only use in implementation of a test.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 

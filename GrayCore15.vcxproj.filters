@@ -356,6 +356,15 @@
     <ClInclude Include="include\CFileCopier.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="include\COSUser.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CSecurityAttributes.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CWinHeap.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.md" />
@@ -628,6 +637,15 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\CFileCopier.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\COSUser.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CSecurityAttributes.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CWinHeap.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

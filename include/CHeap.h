@@ -240,21 +240,21 @@ namespace Gray
 		size_t GetHeapStats(OUT ITERATE_t& iAllocCount) const
 		{
 			//! sizeof all children alloc(s). not size of *this
-			if (!isValid())
+			if (!isValidPtr())
 				return 0;
 			iAllocCount++;	// count total allocations used.
 			return get_AllocSize();
 		}
 		void Free()
 		{
-			if (!isValid())
+			if (!isValidPtr())
 				return;
 			CHeap::FreePtr(m_pData);
 			SetEmptyBlock();
 		}
 		void FreeSecure()
 		{
-			if (!isValid())
+			if (!isValidPtr())
 				return;
 			CMem::ZeroSecure(m_pData, get_Size());
 			CHeap::FreePtr(m_pData);
@@ -286,7 +286,7 @@ namespace Gray
 			else
 			{
 				m_pData = CHeap::AllocPtr(nSize);
-				if (!isValid())		// nSize = 0 may be nullptr or not?
+				if (!isValidPtr())		// nSize = 0 may be nullptr or not?
 				{
 					return false;	// FAILED HRESULT_WIN32_C(ERROR_NOT_ENOUGH_MEMORY)
 				}
@@ -316,7 +316,7 @@ namespace Gray
 			if (nSize != m_nSize)
 			{
 				m_pData = CHeap::ReAllocPtr(m_pData, nSize);
-				if (nSize > 0 && !isValid())
+				if (nSize > 0 && !isValidPtr())
 				{
 					return false;	// FAILED HRESULT_WIN32_C(ERROR_NOT_ENOUGH_MEMORY)
 				}

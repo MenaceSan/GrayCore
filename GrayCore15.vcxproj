@@ -672,11 +672,13 @@
     <ClInclude Include="include\COSModImpl.h" />
     <ClInclude Include="include\COSModule.h" />
     <ClInclude Include="include\COSProcess.h" />
+    <ClInclude Include="include\COSUser.h" />
     <ClInclude Include="include\CPair.h" />
     <ClInclude Include="include\CPairSort.h" />
     <ClInclude Include="include\CPtrFacade.h" />
     <ClInclude Include="include\CQueue.h" />
     <ClInclude Include="include\CRandomDef.h" />
+    <ClInclude Include="include\CSecurityAttributes.h" />
     <ClInclude Include="include\CSingleton.h" />
     <ClInclude Include="include\CSingletonPtr.h" />
     <ClInclude Include="include\CSmartPtr.h" />
@@ -707,6 +709,7 @@
     <ClInclude Include="include\CUnitTest.h" />
     <ClInclude Include="include\CUnitTestDecl.h" />
     <ClInclude Include="include\CValT.h" />
+    <ClInclude Include="include\CWinHeap.h" />
     <ClInclude Include="include\FileName.h" />
     <ClInclude Include="include\GrayCore.h" />
     <ClInclude Include="include\GrayVersion.h" />
@@ -793,9 +796,11 @@
     <ClCompile Include="src\COSModImpl.cpp" />
     <ClCompile Include="src\COSModule.cpp" />
     <ClCompile Include="src\COSProcess.cpp" />
+    <ClCompile Include="src\COSUser.cpp" />
     <ClCompile Include="src\CPtrTrace.cpp" />
     <ClCompile Include="src\CQueue.cpp" />
     <ClCompile Include="src\CRandomDef.cpp" />
+    <ClCompile Include="src\CSecurityAttributes.cpp" />
     <ClCompile Include="src\CSingleton.cpp" />
     <ClCompile Include="src\CStream.cpp" />
     <ClCompile Include="src\CStreamStack.cpp" />
@@ -814,6 +819,7 @@
     <ClCompile Include="src\CTypeInfo.cpp" />
     <ClCompile Include="src\CUInt64.cpp" />
     <ClCompile Include="src\CUnitTest.cpp" />
+    <ClCompile Include="src\CWinHeap.cpp" />
     <ClCompile Include="src\HResult.cpp" />
     <ClCompile Include="src\StrA.cpp" />
     <ClCompile Include="src\StrArg.cpp" />

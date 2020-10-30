@@ -69,6 +69,12 @@ namespace Gray
 		DEBUG_TRACE(("InstallHook JMP %08x", lRelAddr));
 		::memcpy(m_Jump + k_LEN_J, &lRelAddr, k_LEN_P);
 
+		if (::memcmp(m_Jump, m_OldCode, sizeof(m_OldCode)) == 0)
+		{
+			// We already injected this with some other CHookJump instance! This is bad. We are fighting ourselfs with duplicated code !! why?
+
+		}
+
 		::memcpy((void*)pFuncOrig, m_Jump, sizeof(m_Jump));	// inject jump. we are armed!
 
 		DEBUG_MSG(("InstallHook: JMP-hook planted."));

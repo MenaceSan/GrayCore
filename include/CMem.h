@@ -33,7 +33,7 @@ namespace Gray
 		static void __cdecl IsValidFailHandler(int nSig);	// JMP_t
 #endif
 
-		static ptrdiff_t inline Diff(const void* pEnd, const void* pStart) 
+		static ptrdiff_t inline Diff(const void* pEnd, const void* pStart)
 		{
 			//! @return Difference in bytes. Assume it is a reasonable sized block?
 			ptrdiff_t i = ((const BYTE*)pEnd - (const BYTE*)pStart);	// like INT_PTR
@@ -254,7 +254,7 @@ namespace Gray
 	private:
 		UINT32 m_nSignature;	//!< Hold bytes of known value.
 	public:
-		CMemSignature()
+		CMemSignature() noexcept
 			: m_nSignature(_SIGVALID)
 		{
 			//! @note virtuals don't work in constructors or destructors !
@@ -353,7 +353,13 @@ namespace Gray
 			// Just shared pointers. This may be dangerous!
 		}
 
-		bool isValid() const noexcept
+		void* get_Data() const noexcept
+		{
+			//! Might be nullptr. that's OK.
+			return m_pData;	 
+		}
+
+		bool isValidPtr() const noexcept
 		{
 			//! Is this (probably) valid to use/read/write. not nullptr.
 			//! Use CMem::IsValid to know more.
@@ -380,7 +386,7 @@ namespace Gray
 				return false;
 			return true;
 		}
-		bool IsValidPtr(const void* p) const
+		bool IsValidPtr(const void* p) const noexcept
 		{
 			//! Is p inside the known valid range for the block? Exclusive = Cant be equal to end!
 			if (p < get_Start())
@@ -390,7 +396,7 @@ namespace Gray
 			return true;
 		}
 
-		bool IsZeros() const
+		bool IsZeros() const noexcept
 		{
 			return CMem::IsZeros(m_pData, m_nSize);
 		}
@@ -490,7 +496,7 @@ namespace Gray
 	struct GRAYCORE_LINK CMemT : public CValT	// Value of some type in memory.
 	{
 		//! @struct Gray::CMemT
-		//! An arbitrary value type in memory. heap, const or stack.
+		//! collection of templates to handle An arbitrary value type in memory. CValT in heap, const or stack.
 		//! Deal with it as an array of bytes.
 
 		template <class TYPE>
@@ -701,7 +707,7 @@ namespace Gray
 		p[5] = (BYTE)(nVal >> 16);
 		p[6] = (BYTE)(nVal >> 8);
 		p[7] = (BYTE)(nVal);
-}
+	}
 #endif
 
 };
