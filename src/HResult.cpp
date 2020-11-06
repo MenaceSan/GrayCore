@@ -52,7 +52,7 @@ namespace Gray
 	}
 
 #ifndef UNDER_CE
-	HRESULT GRAYCALL HResult::FromPOSIX(int iErrno)
+	HRESULT GRAYCALL HResult::FromPOSIX(int iErrno) noexcept
 	{
 		//! Translate/Convert a DOS/POSIX error code errno_t to HRESULT type. AKA errno
 		//! POSIX calls like system() return these codes.
@@ -118,14 +118,14 @@ namespace Gray
 		return Make(FACILITY_POSIX, (iErrno) & 0x0000FFFF);
 	}
 
-	HRESULT GRAYCALL HResult::GetPOSIXLast() // static 
+	HRESULT GRAYCALL HResult::GetPOSIXLast() noexcept // static 
 	{
 		//! Get last POSIX error code. 'errno'
 		return FromPOSIX(errno);
 	}
 #endif
 
-	HRESULT GRAYCALL HResult::GetLast()  // static
+	HRESULT GRAYCALL HResult::GetLast() noexcept  // static
 	{
 		//! Get the last system error recorded for this thread.
 		//! match against HRESULT_WIN32_C(x)

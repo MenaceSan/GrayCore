@@ -229,6 +229,7 @@ namespace Gray
 	void CArray<TYPE, ARG_TYPE>::RemoveAll()
 	{
 		//! AKA SetEmpty, Empty
+		//! @note SetSize(0) is slightly more efficient than RemoveAll() if u plan to re-use the array.
 #ifdef _DEBUG
 		// AssertSize();
 #endif

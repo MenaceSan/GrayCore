@@ -53,12 +53,12 @@ namespace Gray
 
 	UINT64 GRAYCALL StrNum::toUL(const char* pszInp, const char** ppszInpEnd, RADIX_t nBaseRadix) // static
 	{
-		//! Similar to strtoul(). skip leading spaces. BUT NOT newlines. We should use StrNum::GetNumberString ?
+		//! Similar to ::strtoul(). skip leading spaces. BUT NOT newlines. We should use StrNum::GetNumberString ?
 		//! May have 0x# prefix to indicate hex
 		//! @arg nBaseRadix = Radix, 0 = default to 10 and allow the string to override this. '0x' prefix will override.
 		//!  ppszInpEnd = the non number digit at the end . might be '\0';
 		//! @note
-		//!  TYPE* ppszInpEnd; return( strtol( pszInp, &ppszInpEnd, nBaseRadix )); 
+		//!  TYPE* ppszInpEnd; return( ::strtol( pszInp, &ppszInpEnd, nBaseRadix )); 
 		//!  > X digits is an overflow ?
 
 		bool bFlexible = false;	// allow hex ?

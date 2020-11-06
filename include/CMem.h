@@ -145,21 +145,26 @@ namespace Gray
 			//! @note: Some older architectures needed versions of this to do 'huge' memory moves.
 			::memmove(pDst, pSrc, nSizeBlock);
 		}
+		static inline void ReverseBytes(void* pDst, size_t nSizeBlock)
+		{
+			register BYTE* pSrcB = (BYTE*)pDst;
+			register BYTE* pDstB = (BYTE*)pDst + nSizeBlock - 1;
+			nSizeBlock /= 2;
+			while (nSizeBlock--)
+			{
+				CValT::Swap(*pSrcB++, *pDstB--);
+			}
+		}
 		static inline void CopyReverse(void* pDst, const void* pSrc, size_t nSizeBlock)
 		{
 			//! Copy a block of memory BYTEs reversed. e.g. {3,2,1} = {1,2,3}, nSizeBlock = 3
-			register BYTE* pDstB = (BYTE*)pDst + nSizeBlock - 1;
 			if (pDst == pSrc)
 			{
-				register BYTE* pSrcB = (BYTE*)pDst;
-				nSizeBlock /= 2;
-				while (nSizeBlock--)
-				{
-					CValT::Swap(*pSrcB++, *pDstB--);
-				}
+				ReverseBytes(pDst, nSizeBlock);
 			}
 			else
 			{
+				register BYTE* pDstB = (BYTE*)pDst + nSizeBlock - 1;
 				register const BYTE* pSrcB = (const BYTE*)pSrc;
 				while (nSizeBlock--)
 				{

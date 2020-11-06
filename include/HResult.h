@@ -79,7 +79,7 @@ namespace Gray
 #ifndef MAKE_HRESULT
 #define MAKE_HRESULT(sev,fac,code)  ((HRESULT) (((unsigned long)(sev)<<31) | ((unsigned long)(fac)<<16) | ((unsigned long)(code))) )
 #endif
-#define HRESULT_WIN32_C(x)	MAKE_HRESULT(1,FACILITY_WIN32,x) //!< a constant LSTATUS/error_status_t with no check, unlike HRESULT_FROM_WIN32()
+#define HRESULT_WIN32_C(x)	MAKE_HRESULT(1,FACILITY_WIN32,(WORD)(x)) //!< a constant LSTATUS/error_status_t with no check, unlike HRESULT_FROM_WIN32()
 
 	enum HRESULT_OTHER_TYPE_
 	{
@@ -204,7 +204,7 @@ namespace Gray
 			//! like HRESULT_FROM_WIN32(dwWin32Code) NOT HRESULT_WIN32_C(WORD)
 			if ((HRESULT)dwWin32Code <= 0)	// NO_ERROR
 			{
-				// <0 shouldn't happen! its unsigned. ASSUME its already a HRESULT code i guess.
+				// <0 shouldn't happen! supposed to be unsigned. ASSUME its already a HRESULT code.
 				return ((HRESULT)dwWin32Code);	// already HRESULT failure. see GetLastError() docs.
 			}
 			if (dwWin32Code > 0xFFFF)
@@ -212,7 +212,7 @@ namespace Gray
 				// This is weird ! NOT a proper error code !?
 				dwWin32Code &= 0xFFFF;
 			}
-			return Make((FACILITY_TYPE)FACILITY_WIN32, (WORD)dwWin32Code);	// HRESULT_WIN32_C()
+			return HRESULT_WIN32_C(dwWin32Code);
 		}
 
 #ifdef _WIN32
@@ -230,7 +230,7 @@ namespace Gray
 		}
 #endif
 
-		static HRESULT GRAYCALL GetLast();
+		static HRESULT GRAYCALL GetLast() noexcept;
 
 		static inline HRESULT GetDef(HRESULT hRes, HRESULT hResDef = E_FAIL) noexcept
 		{
@@ -250,9 +250,9 @@ namespace Gray
 		}
 
 #ifndef UNDER_CE
-		static HRESULT GRAYCALL FromPOSIX(int iErrNo);	// from <errno.h> style
-		static HRESULT GRAYCALL GetPOSIXLast();
-		static HRESULT GRAYCALL GetPOSIXLastDef(HRESULT hResDef = E_FAIL) // static 
+		static HRESULT GRAYCALL FromPOSIX(int iErrNo) noexcept;	// from <errno.h> style
+		static HRESULT GRAYCALL GetPOSIXLast() noexcept;
+		static HRESULT GRAYCALL GetPOSIXLastDef(HRESULT hResDef = E_FAIL) noexcept // static 
 		{
 			return GetDef(GetPOSIXLast(), hResDef);
 		}
