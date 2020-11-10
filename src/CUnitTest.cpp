@@ -391,7 +391,7 @@ do ordain and establish this constitution of the United States of America\n\n");
 		size_t iSizeInt = sizeof(int);		// _MSC_VER 64=4, and _MSC_VER 32=4
 		UNITTEST_TRUE(iSizeInt == 4);
 
-		// USE_LONG_IS_INT64 // 4 or 8 ?
+		// USE_LONG_AS_INT64 // 4 or 8 ?
 		size_t iSizeLong = sizeof(long);		// _MSC_VER 64=4 _MSC_VER 32=4, __GNUC__ 64=?
 		UNITTEST_TRUE(iSizeLong >= 4);
 		UNITTEST_TRUE(iSizeLong == _SIZEOF_LONG);

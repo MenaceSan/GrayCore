@@ -38,7 +38,7 @@ CTYPE_DEF(Int64,	INT64,				CTYPE_FLAG_Numeric|CTYPE_FLAG_NumSigned,	"1",	(-92233
 CTYPE_DEF(QWord,	UINT64,				CTYPE_FLAG_Numeric,							"01",	0, 0xffffffffffffffffULL,								UINT64,	"8 bytes. VT_UI8, UINT64 (same as unsigned long long)")	// _UI64_MAX
 #endif
 
-#ifndef USE_LONG_IS_INT64
+#ifndef USE_LONG_AS_INT64
 // Ambiguous/duplicated types. __GNUC__ defines __int64_t (INT64) as 'signed long int'
 CTYPE_DEF(Long,		long,				CTYPE_FLAG_Numeric|CTYPE_FLAG_NumSigned,	"1",	(-2147483647 - 1), 2147483647,		Long,	"LONG (ASSUME same as signed long)")
 CTYPE_DEF(ULong,	unsigned long,		CTYPE_FLAG_Numeric,							"01",	0, 0xffffffffU,						ULong,	"ULONG")

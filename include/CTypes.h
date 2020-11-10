@@ -12,17 +12,6 @@
 
 namespace Gray
 {
-#define _SIZEOF_INT 4	//! int seems to be 32 bits in all tested configurations. _MSC_VER and __GNUC__, 32 and 64 bit.
-#if defined(USE_64BIT) && defined(__GNUC__)
-#define _SIZEOF_LONG 8	//!< # bytes in long or unsigned long for __DECL_ALIGN macro. Use if we can't do sizeof(x)
-#else
-#define _SIZEOF_LONG 4	//!< # bytes in long or unsigned long for __DECL_ALIGN macro. Use if we can't do sizeof(x)
-#endif
-#ifdef UNDER_CE
-#define VOLATILE
-#else
-#define VOLATILE volatile
-#endif
 
 	enum CTYPE_FLAG_TYPE_
 	{

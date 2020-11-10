@@ -11,7 +11,6 @@
 #endif
 
 #include "Ptr.h"
-#include "CTypes.h"
 #include "StrConst.h"
 #include "CValT.h"
 #include "CUnitTestDecl.h"
@@ -47,7 +46,7 @@ namespace Gray
 			//! Does not mean I have write permissions.
 			//! Used to sanity check pointers. Ensure NOT offset from nullptr?
 
-			if (((INT_PTR)pData) < 16 * 1024)	// ASSUME memory in this range is never valid? Fail quickly. This is Kernel Space ONLY. <1G
+			if (((UINT_PTR)pData) < 16 * 1024)	// ASSUME memory in this range is never valid? Fail quickly. This is Kernel Space ONLY. <1G
 				return false;
 #ifdef _WIN32
 
@@ -657,7 +656,7 @@ namespace Gray
 		return ((nVal & 0xffff0000ffff0000ULL) >> 16) | ((nVal & 0x0000ffff0000ffffULL) << 16);
 	}
 #endif
-#ifndef USE_LONG_IS_INT64
+#ifndef USE_LONG_AS_INT64
 	template <>
 	inline ULONG CMemT::ReverseType(ULONG nVal) // static
 	{

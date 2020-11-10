@@ -152,7 +152,7 @@ namespace Gray
 	class GRAYCORE_LINK CThreadLockBase : public CLockableBase, protected CNonCopyable
 	{
 		//! @class Gray::CThreadLockBase
-		//! ASSUME sizeof(THREADID_t) <= sizeof(INT_PTR) _SIZEOF_PTR for __DECL_ALIGN.
+		//! ASSUME sizeof(THREADID_t) <= sizeof(UINT_PTR) _SIZEOF_PTR for __DECL_ALIGN.
 
 	protected:
 		THREADID_t __DECL_ALIGN(_SIZEOF_THREADID) m_nLockThreadID;	//!< The thread that has the lock. CThreadId:k_NULL is not locked.

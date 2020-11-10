@@ -700,7 +700,6 @@
     <ClInclude Include="include\StrNum.h" />
     <ClInclude Include="include\StrT.h" />
     <ClInclude Include="include\StrU.h" />
-    <ClInclude Include="include\SysDefs.h" />
     <ClInclude Include="include\SysRes.h" />
     <ClInclude Include="include\SysTypes.h" />
     <ClInclude Include="pch.h" />

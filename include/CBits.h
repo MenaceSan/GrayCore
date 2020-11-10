@@ -299,7 +299,7 @@ namespace Gray
 	inline ULONG CBits::Reverse<ULONG>(ULONG nVal) // static
 	{
 		//! ULONG may be equiv to UINT32 or UINT64
-#ifdef USE_LONG_IS_INT64
+#ifdef USE_LONG_AS_INT64
 		return Reverse<UINT64>(nVal);
 #else
 		return Reverse<UINT32>(nVal);

@@ -103,9 +103,6 @@
     <ClInclude Include="include\SysTypes.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="include\SysDefs.h">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="include\StrU.h">
       <Filter>include</Filter>
     </ClInclude>

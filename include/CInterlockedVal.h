@@ -11,7 +11,6 @@
 #pragma once
 #endif
 
-#include "CTypes.h"
 #include "Ptr.h"
 #include "CUnitTestDecl.h"
 
@@ -19,6 +18,12 @@ UNITTEST_PREDEF(CInterlockedVal)
 
 namespace Gray
 {
+#define _SIZEOF_INT 4	//! sizeof(int) seems to be 32 bits in all tested configurations. _MSC_VER and __GNUC__, 32 and 64 bit.
+#if defined(USE_64BIT) && defined(__GNUC__)
+#define _SIZEOF_LONG 8	//!< # bytes in long or unsigned long for __DECL_ALIGN macro. Use if we can't do sizeof(x)
+#else
+#define _SIZEOF_LONG 4	//!< # bytes in long or unsigned long for __DECL_ALIGN macro. Use if we can't do sizeof(x)
+#endif
 
 #if defined(_M_IX86) && (_MSC_VER >= 1000)
 #pragma warning(disable:4035) // disable the no return value warning, because of assembly language
@@ -437,7 +442,7 @@ namespace Gray
 		CInterlockedVal(TYPE nValue = 0) noexcept
 			: m_nValue(nValue)
 		{
-			ASSERT((((INT_PTR)&m_nValue) % sizeof(TYPE)) == 0);	// must be aligned!!
+			ASSERT((((UINT_PTR)&m_nValue) % sizeof(TYPE)) == 0);	// must be aligned!!
 		}
 
 		TYPE Inc()	//! @return post increment. e.g. NEVER 0

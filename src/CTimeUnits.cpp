@@ -623,9 +623,9 @@ namespace Gray
 		//! @return
 		//!  length of string in chars. <= 0 = failed.
 
-		if (((INT_PTR)pszFormat) < TIME_FORMAT_QTY)	// IS_INTRESOURCE()
+		if (((UINT_PTR)pszFormat) < TIME_FORMAT_QTY)	// IS_INTRESOURCE()
 		{
-			pszFormat = k_StrFormats[((INT_PTR)pszFormat)];
+			pszFormat = k_StrFormats[((UINT_PTR)pszFormat)];
 		}
 
 		GChar_t szTmp[2];

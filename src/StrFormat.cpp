@@ -8,6 +8,7 @@
 #include "pch.h"
 #include "StrFormat.h"
 #include "StrT.h"
+#include "CTypes.h"
 
 namespace Gray
 {
