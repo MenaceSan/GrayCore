@@ -1,18 +1,18 @@
 //
-//! @file CBits.h
+//! @file cBits.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CBits_H
-#define _INC_CBits_H
+#ifndef _INC_cBits_H
+#define _INC_cBits_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
 #include "GrayCore.h"
-#include "CUnitTestDecl.h"
+#include "cUnitTestDecl.h"
 
-UNITTEST_PREDEF(CBits)
+UNITTEST_PREDEF(cBits)
 
 namespace Gray
 {
@@ -28,7 +28,7 @@ namespace Gray
 	};
 
 #ifndef _1BITMASK
-#define _1BITMASK(b) 	(((size_t)1)<<(b))	//!< default bitmask type = size_t. Use CBits::Mask1() for other type.
+#define _1BITMASK(b) 	(((size_t)1)<<(b))	//!< default bitmask type = size_t. Use cBits::Mask1() for other type.
 #endif
 
 #ifdef USE_INT64		// native support for literal HEX constant UINT 64 bit.
@@ -38,14 +38,14 @@ namespace Gray
 #define CUINT64(h,l)	0x##h##l##ULL
 #endif
 #elif defined(USE_LITTLE_ENDIAN)
-#define CUINT64(h,l)	{ 0x##l, 0x##h }		// for use with CUInt64
+#define CUINT64(h,l)	{ 0x##l, 0x##h }		// for use with cUInt64
 #else
-#define CUINT64(h,l)	{ 0x##h, 0x##l }		// for use with CUInt64
+#define CUINT64(h,l)	{ 0x##h, 0x##l }		// for use with cUInt64
 #endif
 
-	struct GRAYCORE_LINK CBits	// static
+	struct GRAYCORE_LINK cBits	// static
 	{
-		//! @struct Gray::CBits
+		//! @struct Gray::cBits
 		//! Bit mask type operations of all sorts. on various integral data types.
 
 		static const BYTE k_8 = 8;	//!< represent the 8 bits in a byte. BIT_ENUM_t
@@ -61,7 +61,7 @@ namespace Gray
 		static inline TYPE Mask1(BIT_ENUM_t nBit)
 		{
 			//! Create a 1 bit mask of a given TYPE. Overflow/Underflow is just lost.
-			//! _1BITMASK(nBit) = CBits::Mask1<size_t>(nBit).
+			//! _1BITMASK(nBit) = cBits::Mask1<size_t>(nBit).
 			//! default TYPE = size_t
 			return(((TYPE)1) << nBit);
 		}
@@ -172,19 +172,19 @@ namespace Gray
 			// TODO or,and,xor/not // 
 		}
 #endif
-		UNITTEST_FRIEND(CBits);
+		UNITTEST_FRIEND(cBits);
 	};
 
 	// Override implementations of templates.
 
 #if defined(__GNUC__)
 	template <>
-	inline BIT_ENUM_t CBits::Count1Bits<UINT32>(UINT32 nMask) // static
+	inline BIT_ENUM_t cBits::Count1Bits<UINT32>(UINT32 nMask) // static
 	{
 		return ::__builtin_popcount(nMask);
 	}
 	template <>
-	inline BIT_ENUM_t CBits::Highest1Bit<UINT32>(UINT32 nMask) // static
+	inline BIT_ENUM_t cBits::Highest1Bit<UINT32>(UINT32 nMask) // static
 	{
 		// Use intrinsic function
 		if (nMask == 0)
@@ -194,12 +194,12 @@ namespace Gray
 
 #if defined(USE_INT64)
 	template <>
-	inline BIT_ENUM_t CBits::Count1Bits<UINT64>(UINT64 nMask) // static
+	inline BIT_ENUM_t cBits::Count1Bits<UINT64>(UINT64 nMask) // static
 	{
 		return ::__builtin_popcountll(nMask);
 	}
 	template <>
-	inline BIT_ENUM_t CBits::Highest1Bit<UINT64>(UINT64 nMask) // static
+	inline BIT_ENUM_t cBits::Highest1Bit<UINT64>(UINT64 nMask) // static
 	{
 		// Use intrinsic function
 		if (nMask == 0)
@@ -211,7 +211,7 @@ namespace Gray
 #else
 
 	template <>
-	inline BIT_ENUM_t CBits::Count1Bits<UINT32>(UINT32 nVal)
+	inline BIT_ENUM_t cBits::Count1Bits<UINT32>(UINT32 nVal)
 	{
 		//! A math trick for counting 1 bits in 32 bit numbers.
 		nVal = (nVal & 0x55555555) + ((nVal & 0xAAAAAAAA) >> 1);
@@ -226,19 +226,19 @@ namespace Gray
 
 #ifdef _MSC_VER
 	template <>
-	inline UINT32 CBits::Rotl<UINT32>(UINT32 nVal, BIT_ENUM_t nBits)
+	inline UINT32 cBits::Rotl<UINT32>(UINT32 nVal, BIT_ENUM_t nBits)
 	{
 		return ::_rotl(nVal, (int)nBits);	//!< use the _WIN32 intrinsic _rotl function.
 	}
 	template <>
-	inline UINT32 CBits::Rotr<UINT32>(UINT32 nVal, BIT_ENUM_t nBits)
+	inline UINT32 cBits::Rotr<UINT32>(UINT32 nVal, BIT_ENUM_t nBits)
 	{
 		return ::_rotr(nVal, (int)nBits);	//!< use the _WIN32 intrinsic _rotr function.
 	}
 
 #if !defined(_MANAGED)
 	template <>
-	inline BIT_ENUM_t CBits::Highest1Bit<UINT32>(UINT32 nMask)
+	inline BIT_ENUM_t cBits::Highest1Bit<UINT32>(UINT32 nMask)
 	{
 		// Use intrinsic function
 		DWORD nRet;
@@ -251,7 +251,7 @@ namespace Gray
 #if defined(USE_INT64) && ! defined(UNDER_CE) && defined(_MSC_VER)	// _INTEGRAL_MAX_BITS >= 64
 #ifdef USE_64BIT
 	template <>
-	inline BIT_ENUM_t CBits::Highest1Bit<UINT64>(UINT64 nMask)
+	inline BIT_ENUM_t cBits::Highest1Bit<UINT64>(UINT64 nMask)
 	{
 		// Use intrinsic function
 		DWORD nRet;
@@ -261,12 +261,12 @@ namespace Gray
 	}
 #endif
 	template <>
-	inline UINT64 CBits::Rotl<UINT64>(UINT64 nVal, BIT_ENUM_t nBits)
+	inline UINT64 cBits::Rotl<UINT64>(UINT64 nVal, BIT_ENUM_t nBits)
 	{
 		return ::_rotl64(nVal, (int)nBits);	//!< use the _WIN32 intrinsic _rotl function.
 	}
 	template <>
-	inline UINT64 CBits::Rotr<UINT64>(UINT64 nVal, BIT_ENUM_t nBits)
+	inline UINT64 cBits::Rotr<UINT64>(UINT64 nVal, BIT_ENUM_t nBits)
 	{
 		return ::_rotr64(nVal, (int)nBits);	//!< use the _WIN32 intrinsic _rotr function.
 	}
@@ -274,7 +274,7 @@ namespace Gray
 #endif	// _MSC_VER
 
 	template <>
-	inline BYTE CBits::Reverse<BYTE>(BYTE nVal)
+	inline BYTE cBits::Reverse<BYTE>(BYTE nVal)
 	{
 		//! Reverse the order of the 8 bits. using 32 or 64 bit temporary.
 		//! http://graphics.stanford.edu/~seander/bithacks.html#ReverseByteWith32Bits
@@ -285,7 +285,7 @@ namespace Gray
 #endif
 	}
 	template <>
-	inline UINT32 CBits::Reverse<UINT32>(UINT32 nVal)
+	inline UINT32 cBits::Reverse<UINT32>(UINT32 nVal)
 	{
 		//! Reverse the order of the 32 bits.
 		nVal = (((nVal & 0xaaaaaaaa) >> 1) | ((nVal & 0x55555555) << 1));
@@ -296,7 +296,7 @@ namespace Gray
 	}
 
 	template <>
-	inline ULONG CBits::Reverse<ULONG>(ULONG nVal) // static
+	inline ULONG cBits::Reverse<ULONG>(ULONG nVal) // static
 	{
 		//! ULONG may be equiv to UINT32 or UINT64
 #ifdef USE_LONG_AS_INT64
@@ -307,27 +307,27 @@ namespace Gray
 	}
 
 	template <typename TYPE = UINT32>
-	class GRAYCORE_LINK CBitmask
+	class GRAYCORE_LINK cBitmask
 	{
-		//! @class Gray::CBitmask
+		//! @class Gray::cBitmask
 		//! hold a mask of max TYPE size bits.
 	protected:
 		TYPE m_uVal;
 	public:
-		CBitmask(TYPE uVal = 0) : m_uVal(uVal)
+		cBitmask(TYPE uVal = 0) : m_uVal(uVal)
 		{
 		}
 		void SetBit(BIT_ENUM_t nBit)
 		{
-			m_uVal = CBits::SetBit(m_uVal, nBit);
+			m_uVal = cBits::SetBit(m_uVal, nBit);
 		}
 		void ClearBit(BIT_ENUM_t nBit)
 		{
-			m_uVal = CBits::ClearBit(m_uVal, nBit);
+			m_uVal = cBits::ClearBit(m_uVal, nBit);
 		}
 		bool IsSet(BIT_ENUM_t nBit) const
 		{
-			return CBits::IsSet(m_uVal, nBit);
+			return cBits::IsSet(m_uVal, nBit);
 		}
 		operator TYPE () const
 		{
@@ -336,4 +336,4 @@ namespace Gray
 	};
 }
 
-#endif	// _INC_CBits_H
+#endif	// _INC_cBits_H

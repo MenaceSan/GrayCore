@@ -1,12 +1,12 @@
 //
-//! @file CFileDir.cpp
+//! @file cFileDir.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 #include "pch.h"
-#include "CFileDir.h"
-#include "CFileCopier.h"
-#include "CLogMgr.h"
-#include "CAppState.h"
+#include "cFileDir.h"
+#include "cFileCopier.h"
+#include "cLogMgr.h"
+#include "cAppState.h"
 #include "StrArg.h"
 #include "CFile.h"
 #include "HResult.h"
@@ -38,7 +38,7 @@
 
 namespace Gray
 {
-	const LOGCHAR_t CFileDir::k_szCantMoveFile[] = "Can't Move File ";	//!< MoveDirFiles failed for this.
+	const LOGCHAR_t cFileDir::k_szCantMoveFile[] = "Can't Move File ";	//!< MoveDirFiles failed for this.
 
 	cFileDevice::cFileDevice()
 		: m_eType(FILESYS_DEFAULT)
@@ -150,7 +150,7 @@ namespace Gray
 #elif defined(__linux__)
 		if (pszDeviceId == nullptr)
 		{
-			m_sVolumeName = CAppState::get_CurrentDir();
+			m_sVolumeName = cAppState::get_CurrentDir();
 			pszDeviceId = m_sVolumeName;
 		}
 #ifdef USE_64BIT
@@ -214,10 +214,10 @@ namespace Gray
 		return nFreeBytesAvailableToCaller.QuadPart;
 
 #elif defined(__linux__)
-		CStringF sTmp;
+		cStringF sTmp;
 		if (pszDeviceId == nullptr)
 		{
-			sTmp = CAppState::get_CurrentDir();
+			sTmp = cAppState::get_CurrentDir();
 			pszDeviceId = sTmp;
 		}
 #ifdef USE_64BIT
@@ -236,7 +236,7 @@ namespace Gray
 #endif
 	}
 
-	HRESULT GRAYCALL cFileDevice::GetSystemDeviceList(CArrayString<FILECHAR_t>& a) // static
+	HRESULT GRAYCALL cFileDevice::GetSystemDeviceList(cArrayString<FILECHAR_t>& a) // static
 	{
 		//! list all the devices/volumes available to the system.
 #ifdef UNDER_CE
@@ -256,7 +256,7 @@ namespace Gray
 			pszVol += StrT::Len(pszVol) + 1;
 		}
 #elif defined(__linux__)
-		CFileDir fdr;
+		cFileDir fdr;
 		HRESULT hRes1 = fdr.ReadDir(FILESTR_DirSep "dev" FILESTR_DirSep "disk");
 		if (FAILED(hRes1))
 			return hRes1;
@@ -273,7 +273,7 @@ namespace Gray
 
 	//*******************************************************
 
-	cFileFind::cFileFind(CStringF sDir, DWORD nFileFlags)
+	cFileFind::cFileFind(cStringF sDir, DWORD nFileFlags)
 		: m_sDirPath(sDir)
 		, m_nFileFlags(nFileFlags)
 #ifdef _WIN32
@@ -418,7 +418,7 @@ namespace Gray
 		{
 			m_sDirPath = pszDirPath;	// store this. but may already be set.
 		}
-		CStringF sWildcardFile;	// if it is part of directory?
+		cStringF sWildcardFile;	// if it is part of directory?
 		if (m_sDirPath.IsEmpty())
 		{
 			// full path can be in pszWildcardFile. break it up.
@@ -426,18 +426,18 @@ namespace Gray
 			{
 				return HRESULT_WIN32_C(ERROR_PATH_NOT_FOUND);
 			}
-			m_sDirPath = CFilePath::GetFileDir(pszWildcardFile);
-			pszWildcardFile = CFilePath::GetFileName(pszWildcardFile);	// this specific file. or may have wildcards.
+			m_sDirPath = cFilePath::GetFileDir(pszWildcardFile);
+			pszWildcardFile = cFilePath::GetFileName(pszWildcardFile);	// this specific file. or may have wildcards.
 		}
 		else if (StrT::IsNullOrEmpty(pszWildcardFile))	// NOTE: NT doesn't need this but 98 does ?
 		{
 			// ASSUME m_sDirPath is just a directory path. Find all files in this path.
-			if (CFilePath::HasTitleWildcards(m_sDirPath))
+			if (cFilePath::HasTitleWildcards(m_sDirPath))
 			{
 				// NOTE: we should have put this in pszWildcardFile! This is wrong. avoid ambiguous queries.
-				sWildcardFile = CFilePath::GetFileName(m_sDirPath);
+				sWildcardFile = cFilePath::GetFileName(m_sDirPath);
 				pszWildcardFile = sWildcardFile;
-				m_sDirPath = CFilePath::GetFileDir(m_sDirPath);
+				m_sDirPath = cFilePath::GetFileDir(m_sDirPath);
 			}
 			else
 			{
@@ -447,11 +447,11 @@ namespace Gray
 
 #ifdef _WIN32
 		// in _WIN32 wildcard filter is built in.
-		CMem::Zero(&m_FindInfo, sizeof(m_FindInfo));
+		cMem::Zero(&m_FindInfo, sizeof(m_FindInfo));
 		m_FindInfo.dwFileAttributes = FILE_ATTRIBUTE_NORMAL;	 // docs say this is not needed
 
-		CStringF sFilePath = GetFilePath(pszWildcardFile);
-		m_hContext = ::FindFirstFileW(CFilePath::GetFileNameLongW(sFilePath), &m_FindInfo);
+		cStringF sFilePath = GetFilePath(pszWildcardFile);
+		m_hContext = ::FindFirstFileW(cFilePath::GetFileNameLongW(sFilePath), &m_FindInfo);
 
 #elif defined(__linux__)
 		// in Linux wildcard filter is done later/manually.
@@ -483,12 +483,12 @@ namespace Gray
 
 	//************************************************************
 
-	HRESULT GRAYCALL CFileDir::CreateDirectory1(const FILECHAR_t* pszDirName) // static
+	HRESULT GRAYCALL cFileDir::CreateDirectory1(const FILECHAR_t* pszDirName) // static
 	{
 		//! HRESULT_WIN32_C(ERROR_ALREADY_EXISTS) is OK ?
 		//! use CreateDirectory1 name because might be "#define CreateDirectory CreateDirectoryA" in _WIN32
 #ifdef _WIN32
-		if (!::CreateDirectoryW(CFilePath::GetFileNameLongW(pszDirName), nullptr))
+		if (!::CreateDirectoryW(cFilePath::GetFileNameLongW(pszDirName), nullptr))
 #elif defined(__linux__)
 		if (::mkdir(pszDirName, 0777) != 0)	// mode_t
 #endif
@@ -500,12 +500,12 @@ namespace Gray
 		}
 		return S_OK;
 	}
-	HRESULT GRAYCALL CFileDir::RemoveDirectory1(const FILECHAR_t* pszDirName) // static
+	HRESULT GRAYCALL cFileDir::RemoveDirectory1(const FILECHAR_t* pszDirName) // static
 	{
 		//! @note will fail if directory is not empty.
 		//! use RemoveDirectory1 name because might be "#define RemoveDirectory RemoveDirectoryA" in _WIN32
 #ifdef _WIN32
-		if (!::RemoveDirectoryW(CFilePath::GetFileNameLongW(pszDirName)))
+		if (!::RemoveDirectoryW(cFilePath::GetFileNameLongW(pszDirName)))
 #elif defined(__linux__)
 		if (::rmdir(pszDirName) != 0)	// mode_t
 #endif
@@ -517,7 +517,7 @@ namespace Gray
 
 	//********************************************
 
-	HRESULT CFileDir::ReadDir(const FILECHAR_t* pszDirPath, const FILECHAR_t* pszWildcardFile, ITERATE_t iFilesMax, bool bFollowLink)
+	HRESULT cFileDir::ReadDir(const FILECHAR_t* pszDirPath, const FILECHAR_t* pszWildcardFile, ITERATE_t iFilesMax, bool bFollowLink)
 	{
 		//! calls the virtual AddFileDirEntry()
 		//! @arg
@@ -559,16 +559,16 @@ namespace Gray
 		return (HRESULT) iFiles;		// number of files.
 	}
 
-	HRESULT CFileDir::ReadDirAnyExt(const FILECHAR_t* pszFilePath, ITERATE_t iFilesMax)
+	HRESULT cFileDir::ReadDirAnyExt(const FILECHAR_t* pszFilePath, ITERATE_t iFilesMax)
 	{
 		//! Find this file name but with any extension.
 		//! @return # files found with this file title.
-		return ReadDir(CFilePath::GetFileDir(pszFilePath),
-			CFilePath::GetNameExtStar(pszFilePath),
+		return ReadDir(cFilePath::GetFileDir(pszFilePath),
+			cFilePath::GetNameExtStar(pszFilePath),
 			iFilesMax);
 	}
 
-	HRESULT CFileDir::ReadDirPreferredExt(const FILECHAR_t* pszFilePath, const FILECHAR_t* const* pszExtTable)
+	HRESULT cFileDir::ReadDirPreferredExt(const FILECHAR_t* pszFilePath, const FILECHAR_t* const* pszExtTable)
 	{
 		//! Find just a single file with the preferred extension from a list.
 		//! Ignore any existing extension
@@ -589,10 +589,10 @@ namespace Gray
 		// Filter them.
 		int iFound = 0;
 		cFileFindEntry* aEntries[k_ExtMax]; // sorted by extension.
-		CMem::Zero(aEntries, sizeof(aEntries));
+		cMem::Zero(aEntries, sizeof(aEntries));
 		for (int i = 0; i < (int)hFiles; i++)
 		{
-			const FILECHAR_t* pszExt = CFilePath::GetFileNameExt(GetEnumTitleX(i));
+			const FILECHAR_t* pszExt = cFilePath::GetFileNameExt(GetEnumTitleX(i));
 			if (pszExt == nullptr)
 				continue;
 			ITERATE_t iExt = StrT::TableFind(pszExt, pszExtTable);
@@ -627,7 +627,7 @@ namespace Gray
 
 	//*************************************************
 
-	HRESULT GRAYCALL CFileDir::CreateDirectoryX(const FILECHAR_t* pszDir) // static
+	HRESULT GRAYCALL cFileDir::CreateDirectoryX(const FILECHAR_t* pszDir) // static
 	{
 		//! This is like CreateDirectory1() except will create intermediate directories if needed.
 		//! @note like SHCreateDirectoryExA() but we can't always use since thats only for Win2K+
@@ -653,7 +653,7 @@ namespace Gray
 				if (ch == '\0')
 					break;
 				iLen++;
-				if (CFilePath::IsCharDirSep(ch))
+				if (cFilePath::IsCharDirSep(ch))
 					break;
 			}
 			if (iStart >= iLen)
@@ -675,20 +675,20 @@ namespace Gray
 		return hRes;
 	}
 
-	HRESULT GRAYCALL CFileDir::CreateDirForFileX(const FILECHAR_t* pszFilePath) // static
+	HRESULT GRAYCALL cFileDir::CreateDirForFileX(const FILECHAR_t* pszFilePath) // static
 	{
 		//! CreateDirectoryX() for a file. will create intermediate/parent directories if needed.
-		return CreateDirectoryX(CFilePath::GetFileDir(pszFilePath));
+		return CreateDirectoryX(cFilePath::GetFileDir(pszFilePath));
 	}
 
-	HRESULT GRAYCALL CFileDir::MovePathToTrash(const FILECHAR_t* pszPath, bool bDir)  // static
+	HRESULT GRAYCALL cFileDir::MovePathToTrash(const FILECHAR_t* pszPath, bool bDir)  // static
 	{
 		//! Move file/directory to the trash bin/folder.
 		//! For use with FOF_ALLOWUNDO and FILEOP_DELETE
 		//! like WIN32 SHFileOperation(FOF_ALLOWUNDO);
 
 		UNREFERENCED_PARAMETER(pszPath);
-		CStringF sDirTrash;
+		cStringF sDirTrash;
 #if defined(UNDER_CE)
 #error UNDER_CE
 #elif defined(_WIN32)
@@ -699,10 +699,10 @@ namespace Gray
 		sDirTrash = szPath;
 #elif defined(__linux__)
 		// https://www.freedesktop.org/wiki/Specifications/trash-spec/
-		sDirTrash = CAppState::GetEnvironStr("XDG_DATA_HOME");
+		sDirTrash = cAppState::GetEnvironStr("XDG_DATA_HOME");
 		if (!StrT::IsWhitespace<FILECHAR_t>(sDirTrash))
 		{
-			sDirTrash = CFilePath::CombineFilePathX(sDirTrash, _FN("Trash"));
+			sDirTrash = cFilePath::CombineFilePathX(sDirTrash, _FN("Trash"));
 		}
 #else
 #error NOOS
@@ -716,11 +716,11 @@ namespace Gray
 		}
 		else
 		{
-			return CFileCopier::RenamePath(pszPath, CFilePath::CombineFilePathX(sDirTrash, CFilePath::GetFileName(pszPath)), nullptr);
+			return cFileCopier::RenamePath(pszPath, cFilePath::CombineFilePathX(sDirTrash, cFilePath::GetFileName(pszPath)), nullptr);
 		}
 	}
 
-	HRESULT GRAYCALL CFileDir::DirFileOp(FILEOP_TYPE eOp, const FILECHAR_t* pszDirSrc, const FILECHAR_t* pszDirDest, DWORD nFileFlags, CLogProcessor* pLog, IStreamProgressCallback* pProgress)
+	HRESULT GRAYCALL cFileDir::DirFileOp(FILEOP_TYPE eOp, const FILECHAR_t* pszDirSrc, const FILECHAR_t* pszDirDest, DWORD nFileFlags, cLogProcessor* pLog, IStreamProgressCallback* pProgress)
 	{
 		//! Copy, Delete or Move a directory AND all files in the directory (pszDirSrc) to pszDirDest. with recursive descent.
 		//! @arg pszDirSrc = full path.
@@ -729,11 +729,11 @@ namespace Gray
 		//!  Number of files moved/deleted.
 
 		const FILECHAR_t* pszWildcards = nullptr;
-		CStringF sDirSrc;
-		if (CFilePath::HasTitleWildcards(pszDirSrc))
+		cStringF sDirSrc;
+		if (cFilePath::HasTitleWildcards(pszDirSrc))
 		{
-			pszWildcards = CFilePath::GetFileName(pszDirSrc);
-			sDirSrc = CFilePath::GetFileDir(pszDirSrc);
+			pszWildcards = cFilePath::GetFileName(pszDirSrc);
+			sDirSrc = cFilePath::GetFileDir(pszDirSrc);
 			pszDirSrc = sDirSrc;
 		}
 
@@ -754,7 +754,7 @@ namespace Gray
 			break;
 		}
 
-		CFileDir filedir;
+		cFileDir filedir;
 		HRESULT hResCount = filedir.ReadDir(pszDirSrc, pszWildcards);
 		if (FAILED(hResCount))
 			return hResCount;
@@ -782,12 +782,12 @@ namespace Gray
 					continue;
 			}
 
-			CStringF sFilePathSrc = filedir.GetEnumPath(i);
-			CStringF sFileTitle = filedir.GetEnumTitleX(i);
-			CStringF sFilePathDst;
+			cStringF sFilePathSrc = filedir.GetEnumPath(i);
+			cStringF sFileTitle = filedir.GetEnumTitleX(i);
+			cStringF sFilePathDst;
 			if (eOp == FILEOP_MOVE || eOp == FILEOP_COPY || eOp == FILEOP_RENAME)
 			{
-				sFilePathDst = CFilePath::CombineFilePathX(pszDirDest, sFileTitle);
+				sFilePathDst = cFilePath::CombineFilePathX(pszDirDest, sFileTitle);
 			}
 
 			if (FileEntry.isAttrDir())
@@ -819,10 +819,10 @@ namespace Gray
 				{
 				case FILEOP_MOVE:
 				case FILEOP_RENAME:
-					hRes = CFileCopier::RenamePath(sFilePathSrc, sFilePathDst, pProgress);
+					hRes = cFileCopier::RenamePath(sFilePathSrc, sFilePathDst, pProgress);
 					break;
 				case FILEOP_COPY:
-					hRes = CFileCopier::CopyFileX(sFilePathSrc, sFilePathDst, pProgress);
+					hRes = cFileCopier::CopyFileX(sFilePathSrc, sFilePathDst, pProgress);
 					break;
 				case FILEOP_DELETE:
 					if (nFileFlags & FOF_ALLOWUNDO)
@@ -841,7 +841,7 @@ namespace Gray
 						pLog->addEventF(LOG_ATTR_INIT, LOGLEV_ERROR,
 							"%s\"%s\" ERR=\"%s\". '%s' to '%s'.",
 							LOGSTR(k_szCantMoveFile),
-							LOGSTR(sFileTitle),	// CFilePath::MakeRelativePath( sFilePathDst, pszDirDest )
+							LOGSTR(sFileTitle),	// cFilePath::MakeRelativePath( sFilePathDst, pszDirDest )
 							LOGERR(hRes),
 							LOGSTR(filedir.get_DirPath()), LOGSTR(pszDirDest));
 					}
@@ -857,7 +857,7 @@ namespace Gray
 		return hResCount;
 	}
 
-	HRESULT GRAYCALL CFileDir::DeletePathX(const FILECHAR_t* pszPath, DWORD nFileFlags) // static
+	HRESULT GRAYCALL cFileDir::DeletePathX(const FILECHAR_t* pszPath, DWORD nFileFlags) // static
 	{
 		//! Delete this file or directory. If it's a directory then delete recursively.
 		//! No wildcards.
@@ -891,12 +891,12 @@ namespace Gray
 
 //*************************************************************************
 #if USE_UNITTESTS
-#include "CUnitTest.h"
-#include "CFilePath.h"
+#include "cUnitTest.h"
+#include "cFilePath.h"
 
-UNITTEST_CLASS(CFileDir)
+UNITTEST_CLASS(cFileDir)
 {
-	HRESULT TestDevice(cFileDevice& di, const FILECHAR_t* pszDeviceId, CStringL sNameDisplay)
+	HRESULT TestDevice(cFileDevice& di, const FILECHAR_t* pszDeviceId, cStringL sNameDisplay)
 	{
 		UINT uDeviceType = cFileDevice::GetDeviceType(pszDeviceId);
 		if (uDeviceType <= 0)	// UNKNOWN.
@@ -936,10 +936,10 @@ UNITTEST_CLASS(CFileDir)
 
 	void TestReadDir()
 	{
-		CStringF sTestInpDir = CFilePath::CombineFilePathF(CFilePath::k_DirSep, get_TestInpDir(), _FN(GRAY_NAMES) _FN("Lib/include"), nullptr);
+		cStringF sTestInpDir = cFilePath::CombineFilePathF(cFilePath::k_DirSep, get_TestInpDir(), _FN(GRAY_NAMES) _FN("Lib/include"), nullptr);
 
 		const int s_nMinFiles = 3; // min number of header files assumed to be in this dir.
-		CFileDir fd;
+		cFileDir fd;
 		HRESULT hRes1 = fd.ReadDir(sTestInpDir, _FN("*.h"));
 		UNITTEST_TRUE(SUCCEEDED(hRes1));
 		UNITTEST_TRUE((int)hRes1 >= s_nMinFiles);
@@ -964,9 +964,9 @@ UNITTEST_CLASS(CFileDir)
 		UNITTEST_TRUE(fs.isAttrDir());
 	}
 
-	void TestCreateFileInDir(CStringF sTestFile, FILESYS_TYPE eFileSysType)
+	void TestCreateFileInDir(cStringF sTestFile, FILESYS_TYPE eFileSysType)
 	{
-		HRESULT hRes1 = CFileDir::CreateDirForFileX(sTestFile);
+		HRESULT hRes1 = cFileDir::CreateDirForFileX(sTestFile);
 		UNITTEST_TRUE(hRes1 == S_OK || hRes1 == S_FALSE);
 
 		// Create a file and write some data to it.
@@ -975,23 +975,23 @@ UNITTEST_CLASS(CFileDir)
 			hRes1 = fileTest.OpenX(sTestFile, OF_WRITE | OF_CREATE);
 			UNITTEST_TRUE(hRes1 == S_OK);
 			hRes1 = fileTest.WriteString(k_sTextBlob.get_CPtr());
-			UNITTEST_TRUE(hRes1 == CUnitTestCur::k_TEXTBLOB_LEN);
+			UNITTEST_TRUE(hRes1 == cUnitTestCur::k_TEXTBLOB_LEN);
 			fileTest.Close();
 		}
 
 		// FAIL to read a file as a directory. It should fail.
-		CFileDir filedirFail;
+		cFileDir filedirFail;
 		hRes1 = filedirFail.ReadDir(sTestFile);
 		UNITTEST_TRUE(hRes1 == HRESULT_WIN32_C(ERROR_DIRECTORY));	// The directory name is invalid.
 
 		static const GChar_t* k_pszTimeChange = _GT("2008-07-09 13:47:10 Z");	// TIME_FORMAT_TZ
-		CTimeInt tf;
+		cTimeInt tf;
 		HRESULT hRes = tf.SetTimeStr(k_pszTimeChange);
 		UNITTEST_TRUE(hRes == 0x15);
 		cString sTimeChange2 = tf.GetTimeFormStr(TIME_FORMAT_TZ, TZ_UTC);
 		UNITTEST_TRUE(!sTimeChange2.Compare(k_pszTimeChange));
 
-		CTimeFile tfft = tf.GetAsFileTime();
+		cTimeFile tfft = tf.GetAsFileTime();
 		hRes1 = cFileStatus::WriteFileTimes(sTestFile, &tfft, &tfft);
 		UNITTEST_TRUE(hRes1 == S_OK);
 
@@ -1003,27 +1003,27 @@ UNITTEST_CLASS(CFileDir)
 		// NFS merges create and modified times ? Create Time NOT set.
 		if (eFileSysType != FILESYS_NFS)
 		{
-			cString sTimeChange = CTimeInt(fs2.m_timeCreate).GetTimeFormStr(TIME_FORMAT_TZ, TZ_UTC);
+			cString sTimeChange = cTimeInt(fs2.m_timeCreate).GetTimeFormStr(TIME_FORMAT_TZ, TZ_UTC);
 			UNITTEST_TRUE(!sTimeChange.Compare(k_pszTimeChange));
 		}
 	}
 
-	UNITTEST_METHOD(CFileDir)
+	UNITTEST_METHOD(cFileDir)
 	{
 		// enumerate devices in the system.
-		UNITTEST_TRUE(CUnitTests::sm_pLog != nullptr);
+		UNITTEST_TRUE(cUnitTests::sm_pLog != nullptr);
 
 		cFileDevice di;
 		TestDevice(di, nullptr, "(default)");
 
 		// GetDriveType()
-		CArrayString<FILECHAR_t> aDevices;
+		cArrayString<FILECHAR_t> aDevices;
 		HRESULT hRes1 = cFileDevice::GetSystemDeviceList(aDevices);
 		UNITTEST_TRUE(SUCCEEDED(hRes1));
 
 		for (int i = 0; i < aDevices.GetSize(); i++)
 		{
-			CStringL sNameDisplay = CStringL::GetFormatf("[%d],'%s'", i, LOGSTR(aDevices[i]));
+			cStringL sNameDisplay = cStringL::GetFormatf("[%d],'%s'", i, LOGSTR(aDevices[i]));
 			cFileDevice di2;
 			TestDevice(di2, aDevices[i], sNameDisplay);
 		}
@@ -1032,14 +1032,14 @@ UNITTEST_CLASS(CFileDir)
 		TestReadDir();
 
 		// Create a complex path then destroy it.
-		CStringF sTestDir = CFilePath::CombineFilePathX(get_TestOutDir(), _FN("a1"));
-		CStringF sTestFile = CFilePath::CombineFilePathX(sTestDir, _FN("2/cc3/d4/testfile.txt"));
+		cStringF sTestDir = cFilePath::CombineFilePathX(get_TestOutDir(), _FN("a1"));
+		cStringF sTestFile = cFilePath::CombineFilePathX(sTestDir, _FN("2/cc3/d4/testfile.txt"));
 		TestCreateFileInDir(sTestFile, di.get_FileSysType());
 
 		// Now delete it all.
-		hRes1 = CFileDir::DeleteDirFiles(sTestDir);
+		hRes1 = cFileDir::DeleteDirFiles(sTestDir);
 		UNITTEST_TRUE(hRes1 == S_FALSE);	// 1 dir.
 	}
 };
-UNITTEST_REGISTER(CFileDir, UNITTEST_LEVEL_Core);
+UNITTEST_REGISTER(cFileDir, UNITTEST_LEVEL_Core);
 #endif

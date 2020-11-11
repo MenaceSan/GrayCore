@@ -8,5 +8,5 @@
 
 namespace Gray
 {
-	const CStrConst CStrConst::k_Empty = CStrConst(&CStrConst::k_EmptyA, &CStrConst::k_EmptyW);	// same as CSTRCONST("")
+	const cStrConst cStrConst::k_Empty = cStrConst(&cStrConst::k_EmptyA, &cStrConst::k_EmptyW);	// static same as CSTRCONST("")
 }

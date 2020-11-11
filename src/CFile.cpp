@@ -5,15 +5,15 @@
 
 #include "pch.h"
 #include "CFile.h"
-#include "CHeap.h"
-#include "CString.h"
-#include "CLogMgr.h"
-#include "CFileDir.h"
-#include "CTimeSys.h"
+#include "cHeap.h"
+#include "cString.h"
+#include "cLogMgr.h"
+#include "cFileDir.h"
+#include "cTimeSys.h"
 #include "Ptr.h"
 
 #ifdef __linux__
-#include "CTimeVal.h"
+#include "cTimeVal.h"
 #include <sys/stat.h>
 #include <sys/time.h>
 #else
@@ -27,7 +27,7 @@ namespace Gray
 #ifndef _MFC_VER
 // CFile::hFileNull
 
-	HRESULT CFile::OpenCreate(CStringF sFilePath, OF_FLAGS_t nOpenFlags, _SECURITY_ATTRIBUTES* pSa)
+	HRESULT CFile::OpenCreate(cStringF sFilePath, OF_FLAGS_t nOpenFlags, _SECURITY_ATTRIBUTES* pSa)
 	{
 		//! Open a file handle.
 		//! 1. OF_EXIST = just test if this file exists, don't really open it.
@@ -104,7 +104,7 @@ namespace Gray
 			dwFlagsAndAttributes |= FILE_FLAG_SEQUENTIAL_SCAN;
 		}
 
-		m_hFile.AttachHandle(::CreateFileW(CFilePath::GetFileNameLongW(sFilePath), dwDesiredAccess,
+		m_hFile.AttachHandle(::CreateFileW(cFilePath::GetFileNameLongW(sFilePath), dwDesiredAccess,
 			dwShareMode, nullptr, dwCreationDisposition,
 			dwFlagsAndAttributes, HANDLE_NULL));
 
@@ -240,27 +240,27 @@ namespace Gray
 	//***************************************************************************
 	// -cFile
 
-	CStringF cFile::get_FileTitleX() const
+	cStringF cFile::get_FileTitleX() const
 	{
 		//! Get file name and ext
 		//! Don't use MFC GetFileTitle() since MFC does not include EXT
-		return CFilePath::GetFileName(get_FilePath());
+		return cFilePath::GetFileName(get_FilePath());
 	}
 
-	CStringF cFile::get_FileExt() const
+	cStringF cFile::get_FileExt() const
 	{
 		//! get the EXTension including the .
 		//! Must replace the stupid MFC version of this.
-		return(CFilePath::GetFileNameExt(get_FilePath(), get_FilePath().GetLength()));
+		return(cFilePath::GetFileNameExt(get_FilePath(), get_FilePath().GetLength()));
 	}
 
 	bool cFile::IsFileExt(const FILECHAR_t* pszExt) const
 	{
 		//! is the pszExt a match?
-		return CFilePath::IsFileNameExt(get_FilePath(), pszExt);
+		return cFilePath::IsFileNameExt(get_FilePath(), pszExt);
 	}
 
-	HRESULT cFile::OpenSetup(CStringF sFilePath, OF_FLAGS_t nOpenFlags)
+	HRESULT cFile::OpenSetup(cStringF sFilePath, OF_FLAGS_t nOpenFlags)
 	{
 		//! Internal function to set internal params.
 		//! Similar to SetFilePath() in MFC ?
@@ -292,7 +292,7 @@ namespace Gray
 		return S_OK;
 	}
 
-	HRESULT cFile::OpenCreate(CStringF sFilePath, OF_FLAGS_t nOpenFlags, _SECURITY_ATTRIBUTES* pSa)
+	HRESULT cFile::OpenCreate(cStringF sFilePath, OF_FLAGS_t nOpenFlags, _SECURITY_ATTRIBUTES* pSa)
 	{
 		//! Open a file by name.
 		//! @arg nOpenFlags = OF_READ | OF_WRITE | OF_READWRITE
@@ -324,7 +324,7 @@ namespace Gray
 		if (hRes == HRESULT_WIN32_C(ERROR_PATH_NOT_FOUND) && (nOpenFlags & OF_CREATE))
 		{
 			// must create the stupid path first.
-			hRes = CFileDir::CreateDirForFileX(m_strFileName);
+			hRes = cFileDir::CreateDirForFileX(m_strFileName);
 			if (SUCCEEDED(hRes))
 			{
 #ifdef _MFC_VER
@@ -346,17 +346,17 @@ namespace Gray
 		return S_OK;
 	}
 
-	HRESULT cFile::OpenX(CStringF sFilePath, OF_FLAGS_t nOpenFlags) // virtual
+	HRESULT cFile::OpenX(cStringF sFilePath, OF_FLAGS_t nOpenFlags) // virtual
 	{
 		return OpenCreate(sFilePath, nOpenFlags, nullptr);
 	}
 
-	HRESULT cFile::OpenWait(CStringF sFilePath, OF_FLAGS_t nOpenFlags, TIMESYSD_t nTimeWait)
+	HRESULT cFile::OpenWait(cStringF sFilePath, OF_FLAGS_t nOpenFlags, TIMESYSD_t nTimeWait)
 	{
 		//! Try to open the file. Wait for a bit if it fails to open.
 		//! If the file is locked because 'access is denied' then just wait and keep trying.
 
-		CTimeSys tStart(CTimeSys::GetTimeNow());
+		cTimeSys tStart(cTimeSys::GetTimeNow());
 		for (int iTries = 0;; iTries++)
 		{
 			HRESULT hRes = OpenX(sFilePath, nOpenFlags);	// use OpenX which is the virtual.
@@ -388,7 +388,7 @@ namespace Gray
 
 			// maybe its just being synced by the system? wait a bit.
 			TIMESYSD_t nTimeWaitInt = MIN(100, nTimeWait);
-			CThreadId::SleepCurrent(nTimeWaitInt);
+			cThreadId::SleepCurrent(nTimeWaitInt);
 		}
 		return S_OK;
 	}
@@ -420,7 +420,7 @@ namespace Gray
 		return h;
 	}
 
-	bool cFile::SetFileTime(const CTimeFile* lpCreationTime, const CTimeFile* lpAccessTime, const CTimeFile* lpLastWriteTime)
+	bool cFile::SetFileTime(const cTimeFile* lpCreationTime, const cTimeFile* lpAccessTime, const cTimeFile* lpLastWriteTime)
 	{
 		//! Set the time access for an open file.
 		//! lpAccessTime = can be null.
@@ -440,7 +440,7 @@ namespace Gray
 			lpLastWriteTime);
 #elif defined(__linux__)
 		// NOTE: __linux__ can't set lpCreationTime?
-		CTimeVal tv[2];
+		cTimeVal tv[2];
 		if (lpAccessTime == nullptr || lpLastWriteTime == nullptr)
 		{
 			// must get defaults.
@@ -468,7 +468,7 @@ namespace Gray
 #endif
 	}
 
-	bool cFile::SetFileTime(CTimeInt timeCreation, CTimeInt timeLastWrite)
+	bool cFile::SetFileTime(cTimeInt timeCreation, cTimeInt timeLastWrite)
 	{
 		//! Use HResult::GetLastDef() to find out why this fails.
 		//! @return true = OK;
@@ -476,12 +476,12 @@ namespace Gray
 		{
 			return false;
 		}
-		CTimeFile LastWriteTime = timeLastWrite.GetAsFileTime();
-		CTimeFile CreationTime = timeCreation.GetAsFileTime();
+		cTimeFile LastWriteTime = timeLastWrite.GetAsFileTime();
+		cTimeFile CreationTime = timeCreation.GetAsFileTime();
 #ifdef _DEBUG
 		if (timeLastWrite == timeCreation)
 		{
-			ASSERT(!CMem::Compare(&CreationTime, &LastWriteTime, sizeof(LastWriteTime)));
+			ASSERT(!cMem::Compare(&CreationTime, &LastWriteTime, sizeof(LastWriteTime)));
 		}
 #endif
 		return SetFileTime(&CreationTime, nullptr, &LastWriteTime);
@@ -491,7 +491,7 @@ namespace Gray
 	{
 		//! Get the file status info by its open handle
 		//! Similar to CFile::GetStatus()
-		//! Same as CFileDir::ReadFileStatus()
+		//! Same as cFileDir::ReadFileStatus()
 
 		if (!isFileOpen())
 		{
@@ -614,14 +614,14 @@ namespace Gray
 	{
 		//! Use 'DeletePath' name because windows uses a "#define" macro to overload DeleteFile()!
 		//! Same as MFC CFile::Remove()
-		//! @note This can't be used with wildcards or to delete folders ! use CFileDir::DeleteDirFiles for that.
+		//! @note This can't be used with wildcards or to delete folders ! use cFileDir::DeleteDirFiles for that.
 		//! @return
 		//!  S_OK = 0.
 		//!  S_FALSE = not here, but thats probably OK.
 		//!  <0 = HRESULT failed for some other reason. (ERROR_ACCESS_DENIED,ERROR_PATH_NOT_FOUND)
 		//!  Cant delete a directory this way !
 #ifdef _WIN32
-		if (!::DeleteFileW(CFilePath::GetFileNameLongW(pszFilePath)))
+		if (!::DeleteFileW(cFilePath::GetFileNameLongW(pszFilePath)))
 #else
 	// same as ::unlink(). ENOENT or EACCES
 		if (::remove(pszFilePath) != 0)
@@ -656,7 +656,7 @@ namespace Gray
 		return hRes;
 	}
 
-	HRESULT GRAYCALL cFile::LoadFile(const FILECHAR_t* pszFilePath, OUT CHeapBlock& block, size_t nSizeExtra) // static
+	HRESULT GRAYCALL cFile::LoadFile(const FILECHAR_t* pszFilePath, OUT cHeapBlock& block, size_t nSizeExtra) // static
 	{
 		//! Read file into memory.
 		//! @arg nSizeExtra = allocate some extra space at end.
@@ -681,37 +681,37 @@ namespace Gray
 	//**********************************************************
 
 #if USE_UNITTESTS
-#include "CUnitTest.h"
-#include "CMime.h"
+#include "cUnitTest.h"
+#include "cMime.h"
 
 namespace Gray
 {
-	void GRAYCALL cFile::UnitTest_Write(CStreamOutput& testfile1) // static
+	void GRAYCALL cFile::UnitTest_Write(cStreamOutput& testfile1) // static
 	{
 		//! Write strings to it.
-		for (ITERATE_t i = 0; !CUnitTests::k_asTextLines[i].isNull(); i++)
+		for (ITERATE_t i = 0; !cUnitTests::k_asTextLines[i].isNull(); i++)
 		{
-			HRESULT hRes = testfile1.WriteString(CUnitTests::k_asTextLines[i].get_CPtr());
+			HRESULT hRes = testfile1.WriteString(cUnitTests::k_asTextLines[i].get_CPtr());
 			UNITTEST_TRUE(SUCCEEDED(hRes));
 			testfile1.WriteString(_GT(STR_NL));
 		}
 	}
 
-	void GRAYCALL cFile::UnitTest_Read(CStreamInput& stmIn, bool bString) // static
+	void GRAYCALL cFile::UnitTest_Read(cStreamInput& stmIn, bool bString) // static
 	{
 		//! Other side of UnitTest_Write()
 		//! Read strings from it (as binary).
 		GChar_t szTmp[256];
 
-		for (ITERATE_t j = 0; !CUnitTests::k_asTextLines[j].isNull(); j++)
+		for (ITERATE_t j = 0; !cUnitTests::k_asTextLines[j].isNull(); j++)
 		{
-			const GChar_t* pszLine = CUnitTests::k_asTextLines[j];
+			const GChar_t* pszLine = cUnitTests::k_asTextLines[j];
 			StrLen_t iLenStr = StrT::Len(pszLine);
 			UNITTEST_TRUE(iLenStr < (StrLen_t)STRMAX(szTmp));
 			size_t nSizeBytes = (iLenStr + 1) * sizeof(GChar_t);
 			HRESULT hResRead = bString ? stmIn.ReadStringLine(szTmp, STRMAX(szTmp)) : stmIn.ReadX(szTmp, nSizeBytes);
 			UNITTEST_TRUE(hResRead == (HRESULT)(bString ? (iLenStr + 1) : nSizeBytes));
-			UNITTEST_TRUE(!CMem::Compare(szTmp, pszLine, iLenStr * sizeof(GChar_t)));	// pszLine has no newline.
+			UNITTEST_TRUE(!cMem::Compare(szTmp, pszLine, iLenStr * sizeof(GChar_t)));	// pszLine has no newline.
 			UNITTEST_TRUE(szTmp[iLenStr] == '\n');
 		}
 
@@ -730,7 +730,7 @@ UNITTEST_CLASS(cFile)
 	{
 		//! Create a test file.
 		HRESULT hRes;
-		CStringF sFilePath = CFilePath::CombineFilePathX(get_TestOutDir(), _FN(GRAY_NAMES) _FN("CoreUnitTestFile") _FN(MIME_EXT_txt));
+		cStringF sFilePath = cFilePath::CombineFilePathX(get_TestOutDir(), _FN(GRAY_NAMES) _FN("CoreUnitTestFile") _FN(MIME_EXT_txt));
 
 		{
 			cFile testfile1;

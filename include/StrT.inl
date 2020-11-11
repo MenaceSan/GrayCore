@@ -12,7 +12,7 @@
 
 #include "StrConst.h"
 #include "StrA.h"
-#include "CUnitTestDecl.h"
+#include "cUnitTestDecl.h"
 
 namespace Gray
 {
@@ -117,9 +117,9 @@ namespace Gray
 		//! Look for a prefix. Similar to CmpHeadI
 
 		if (pszStr1 == nullptr)
-			pszStr1 = CStrConst::k_Empty;
+			pszStr1 = cStrConst::k_Empty;
 		if (pszPrefix == nullptr)
-			pszPrefix = CStrConst::k_Empty;
+			pszPrefix = cStrConst::k_Empty;
 
 		for (StrLen_t i = 0;; i++)
 		{
@@ -141,9 +141,9 @@ namespace Gray
 		//! Look for a pszPostfix ignoring case.
 
 		if (pszStr1 == nullptr)
-			pszStr1 = CStrConst::k_Empty;
+			pszStr1 = cStrConst::k_Empty;
 		if (pszPostfix == nullptr)
-			pszPostfix = CStrConst::k_Empty;
+			pszPostfix = cStrConst::k_Empty;
 		if (nLenStr <= k_StrLen_UNK)
 		{
 			nLenStr = Len(pszStr1);
@@ -829,7 +829,7 @@ namespace Gray
 			{
 				if (eBlockType != STR_BLOCK_NONE)
 				{
-#ifdef _INC_CLogMgr_H
+#ifdef _INC_cLogMgr_H
 					DEBUG_ERR(("Unmatched internal %c mark!", ch));
 #endif
 				}
@@ -859,7 +859,7 @@ namespace Gray
 		}
 
 		// Failed to find closing character.
-#ifdef _INC_CLogMgr_H
+#ifdef _INC_cLogMgr_H
 		DEBUG_ERR(("Unmatched ending %c mark!", k_szBlockStart[eBlockType]));
 #endif
 		return const_cast<TYPE*>(pszLine);
@@ -1086,7 +1086,7 @@ namespace Gray
 			{
 				if (iQtyLeft > 8)
 					iQtyLeft = 8;	// keep this from ridiculous.
-				CMem::Zero(&ppCmd[iQty], iQtyLeft * sizeof(TYPE*));
+				cMem::Zero(&ppCmd[iQty], iQtyLeft * sizeof(TYPE*));
 			}
 			return iQty;
 		}

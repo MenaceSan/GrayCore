@@ -1,34 +1,34 @@
 //
-//! @file CHeap.h
+//! @file cHeap.h
 //! wrap a dynamically allocated (un-typed) block of heap memory.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CHeap_H
-#define _INC_CHeap_H
+#ifndef _INC_cHeap_H
+#define _INC_cHeap_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
-#include "CMem.h"
-#include "CDebugAssert.h"
-#include "CUnitTestDecl.h"
+#include "cMem.h"
+#include "cDebugAssert.h"
+#include "cUnitTestDecl.h"
 
 // #define USE_HEAP_STATS		// Debug total allocation stats.
-UNITTEST_PREDEF(CHeap)
+UNITTEST_PREDEF(cHeap)
 
 namespace Gray
 {
-	struct GRAYCORE_LINK CHeap	// static class
+	struct GRAYCORE_LINK cHeap	// static class
 	{
-		//! @struct Gray::CHeap
+		//! @struct Gray::cHeap
 		//! A static name space for applications main heap allocation/free related functions.
 		//! @note Turning on the _DEBUG heap automatically uses _malloc_dbg()
 		//! _DEBUG will put header and footer info on each heap allocation.
 
 		enum FILL_TYPE
 		{
-			//! @enum Gray::CHeap::FILL_TYPE
+			//! @enum Gray::cHeap::FILL_TYPE
 			//! Debug Heap fill bytes.
 			FILL_AllocStack = 0xCC,	//!< allocated on the stack in debug mode.
 			FILL_Alloc = 0xCD,	//!< filled to indicate malloc() memory in debug mode.
@@ -76,24 +76,24 @@ namespace Gray
 			void* pData = AllocPtr(nSize);
 			if (pData != nullptr && pDataInit != nullptr)
 			{
-				CMem::Copy(pData, pDataInit, nSize);
+				cMem::Copy(pData, pDataInit, nSize);
 			}
 			return pData;
 		}
 		static void GRAYCALL FreePtr(void* pData);
 		static void* GRAYCALL ReAllocPtr(void* pData, size_t nSize);
 
-		UNITTEST_FRIEND(CHeap);
+		UNITTEST_FRIEND(cHeap);
 	};
 
-	struct GRAYCORE_LINK CHeapAlign : public CHeap	// static
+	struct GRAYCORE_LINK cHeapAlign : public cHeap	// static
 	{
-		//! @struct Gray::CHeapAlign
+		//! @struct Gray::cHeapAlign
 		//! Allocate a block of memory that starts on a certain alignment. will/may have padded prefix.
 		//! destruct = free memory.
 		//! Linux might use posix_memalign() http://linux.about.com/library/cmd/blcmdl3_posix_memalign.htm
 		//! size align must be a power of two and a multiple of sizeof(void *).
-		typedef CHeap SUPER_t;
+		typedef cHeap SUPER_t;
 
 #if defined(_MSC_VER) && (_MSC_VER >= 1300)
 		static const size_t k_SizeGap = 4;
@@ -101,7 +101,7 @@ namespace Gray
 
 		struct CATTR_PACKED CHeader
 		{
-			//! @struct Gray::CHeapAlign::CHeader
+			//! @struct Gray::cHeapAlign::CHeader
 			//! Aligned block of memory. allocated using _aligned_malloc or malloc.
 			//! FROM MSVC.NET 2003 CRT - MAY NEED CHANGING FOR OTHER COMPILER
 			//! ASSUME: alignment empty memory is here. contains 0x0BADF00D repeated.
@@ -151,16 +151,16 @@ namespace Gray
 #endif // _MSC_VER
 	};
 
-	class GRAYCORE_LINK CHeapBlock : public CMemBlock
+	class GRAYCORE_LINK cHeapBlock : public cMemBlock
 	{
-		//! @class Gray::CHeapBlock
-		//! A CMemBlock allocated using CHeap. Actual heap allocated size might be more than CMemBlock m_nSize in __linux__ or Lazy allocations.
-		//! destruct = call CHeap::FreePtr().
-		typedef CHeapBlock THIS_t;
-		typedef CMemBlock SUPER_t;
+		//! @class Gray::cHeapBlock
+		//! A cMemBlock allocated using cHeap. Actual heap allocated size might be more than cMemBlock m_nSize in __linux__ or Lazy allocations.
+		//! destruct = call cHeap::FreePtr().
+		typedef cHeapBlock THIS_t;
+		typedef cMemBlock SUPER_t;
 
 	private:
-		explicit CHeapBlock(void* pData)
+		explicit cHeapBlock(void* pData)
 		{
 			//! never call this !
 			UNREFERENCED_PARAMETER(pData);
@@ -168,35 +168,35 @@ namespace Gray
 		}
 
 	public:
-		CHeapBlock()
+		cHeapBlock()
 		{
 			ASSERT(m_pData == nullptr);
 			ASSERT(m_nSize == 0);
 		}
-		CHeapBlock(const THIS_t& ref)
+		cHeapBlock(const THIS_t& ref)
 		{
 			//! copy constructor
 			Alloc(ref.m_pData, ref.m_nSize);
 		}
-		CHeapBlock(THIS_t&& ref) noexcept
+		cHeapBlock(THIS_t&& ref) noexcept
 		{
 			//! move constructor.
 			m_pData = ref.m_pData; ref.m_pData = nullptr;
 			m_nSize = ref.m_nSize; ref.m_nSize = 0;
 		}
-		explicit CHeapBlock(size_t nSize)
+		explicit cHeapBlock(size_t nSize)
 		{
 			//! Construct with initial size. uninitialized data.
 			Alloc(nSize);
 		}
-		CHeapBlock(const void* pDataCopy, size_t nSize)
+		cHeapBlock(const void* pDataCopy, size_t nSize)
 		{
 			//! Allocate then Copy pDataCopy data into this.
 			Alloc(pDataCopy, nSize);
 		}
-		~CHeapBlock()
+		~cHeapBlock()
 		{
-			CHeap::FreePtr(m_pData);	// nullptr is OK/Safe here.
+			cHeap::FreePtr(m_pData);	// nullptr is OK/Safe here.
 		}
 
 		THIS_t& operator = (const THIS_t& ref)
@@ -219,14 +219,14 @@ namespace Gray
 			//! Must NOT be nullptr!
 			//! Has the memory been corrupted ?
 			//! @note this should only ever be used in debug code. and only in an ASSERT.
-			return CHeap::IsValidHeap(m_pData);
+			return cHeap::IsValidHeap(m_pData);
 		}
 		bool isCorrupt() const
 		{
 			//! Is this a corrupt heap pointer?
 			//! nullptr is OK.
 			//! @note this should only ever be used in debug code. and only in an ASSERT.
-			return CHeap::IsCorruptHeap(m_pData);
+			return cHeap::IsCorruptHeap(m_pData);
 		}
 
 		size_t get_AllocSize() const
@@ -235,7 +235,7 @@ namespace Gray
 			//! @return The actual size of the allocation in bytes. May be greater than I requested? get_Size()
 			//! @note Not always the size of the allocation request in __linux__ or Lazy.
 			ASSERT(!isCorrupt());
-			return CHeap::GetSize(m_pData);
+			return cHeap::GetSize(m_pData);
 		}
 		size_t GetHeapStats(OUT ITERATE_t& iAllocCount) const
 		{
@@ -249,15 +249,15 @@ namespace Gray
 		{
 			if (!isValidPtr())
 				return;
-			CHeap::FreePtr(m_pData);
+			cHeap::FreePtr(m_pData);
 			SetEmptyBlock();
 		}
 		void FreeSecure()
 		{
 			if (!isValidPtr())
 				return;
-			CMem::ZeroSecure(m_pData, get_Size());
-			CHeap::FreePtr(m_pData);
+			cMem::ZeroSecure(m_pData, get_Size());
+			cHeap::FreePtr(m_pData);
 			SetEmptyBlock();	// m_pData = nullptr
 		}
 
@@ -276,16 +276,16 @@ namespace Gray
 		bool Alloc(size_t nSize)
 		{
 			//! Allocate a memory block of size. assume m_pData points to uninitialized data.
-			//! @note CHeap::AllocPtr(0) != nullptr ! maybe ?
+			//! @note cHeap::AllocPtr(0) != nullptr ! maybe ?
 			//! Some really old/odd code relies on AllocPtr(0) having/returning a real pointer? not well defined.
-			CHeap::FreePtr(m_pData);
+			cHeap::FreePtr(m_pData);
 			if (nSize == 0)
 			{
 				m_pData = nullptr;
 			}
 			else
 			{
-				m_pData = CHeap::AllocPtr(nSize);
+				m_pData = cHeap::AllocPtr(nSize);
 				if (!isValidPtr())		// nSize = 0 may be nullptr or not?
 				{
 					return false;	// FAILED HRESULT_WIN32_C(ERROR_NOT_ENOUGH_MEMORY)
@@ -305,7 +305,7 @@ namespace Gray
 			}
 			if (pData != nullptr)
 			{
-				CMem::Copy(m_pData, pData, nSize);
+				cMem::Copy(m_pData, pData, nSize);
 			}
 			return true;
 		}
@@ -315,7 +315,7 @@ namespace Gray
 			//! copy existing data to new block if move is needed. preserve data.
 			if (nSize != m_nSize)
 			{
-				m_pData = CHeap::ReAllocPtr(m_pData, nSize);
+				m_pData = cHeap::ReAllocPtr(m_pData, nSize);
 				if (nSize > 0 && !isValidPtr())
 				{
 					return false;	// FAILED HRESULT_WIN32_C(ERROR_NOT_ENOUGH_MEMORY)
@@ -333,7 +333,7 @@ namespace Gray
 			}
 			if (pData != nullptr)
 			{
-				CMem::Copy(m_pData, pData, nSize);
+				cMem::Copy(m_pData, pData, nSize);
 			}
 			return true;
 		}
@@ -351,7 +351,7 @@ namespace Gray
 			return true;
 		}
 
-		bool SetCopy(const CHeapBlock& rSrc)
+		bool SetCopy(const cHeapBlock& rSrc)
 		{
 			//! Copy from h into me. 
 			if (&rSrc == this)
@@ -395,4 +395,4 @@ namespace Gray
 	};
 }
 
-#endif	// _INC_CHeap_H
+#endif	// _INC_cHeap_H

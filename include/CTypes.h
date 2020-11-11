@@ -1,9 +1,9 @@
 //
-//! @file CTypes.h
+//! @file cTypes.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
-#ifndef _INC_CTypes_H
-#define _INC_CTypes_H
+#ifndef _INC_cTypes_H
+#define _INC_cTypes_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
@@ -104,7 +104,7 @@ namespace Gray
 		//! @union Gray::CUnion64
 		//! What types can fit inside 64 bits?
 		//! 64 bit union. Assumes alignment if anyone cares. size = 8 bytes
-		//! similar to _WIN32 LARGE_INTEGER union. or CUInt64
+		//! similar to _WIN32 LARGE_INTEGER union. or cUInt64
 		//! 2 * CUnion32
 		//! This depends on USE_LITTLE_ENDIAN of course.
 		//! Warning in __GNUC__ reinterpret_ warning: dereferencing type-punned pointer will break strict-aliasing rules [-Wstrict-aliasing]
@@ -170,15 +170,15 @@ namespace Gray
 
 #ifdef _MSC_VER		// M$ this is not a redundant define.
 #define CTYPE_DEF(a,_TYPE,c,d,e,f,g,h)  template<> const _TYPE CTypeLimit<_TYPE>::k_Min = e; template<> const _TYPE CTypeLimit<_TYPE>::k_Max = f; const BYTE CTypeLimit<_TYPE>::k_TypeFlags = (c);
-#include "CTypes.tbl"
+#include "cTypes.tbl"
 #undef CTYPE_DEF
 #endif	// _MSC_VER
 
-	struct GRAYCORE_LINK CTypeFloat
+	struct GRAYCORE_LINK cTypeFloat
 	{
-		//! @struct Gray::CTypeFloat
+		//! @struct Gray::cTypeFloat
 		//! Basic operations for float/double type. See GrayLib::Calc class for complex operations.
-		//! See GrayLib::CFloat32 or GrayLib::CFloat64
+		//! See GrayLib::cFloat32 or GrayLib::cFloat64
 
 		template< typename TYPE >
 		static inline bool IsFinite(TYPE a) noexcept

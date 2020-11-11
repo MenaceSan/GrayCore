@@ -1,18 +1,18 @@
 //
-//! @file CTimeInt.cpp
+//! @file cTimeInt.cpp
 //! Replace the MFC CTime function. Must be usable with file system.
 //! Accurate Measure whole seconds
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
 #include "pch.h"
-#include "CTimeInt.h"
-#include "CTimeZone.h"
-#include "CTimeDouble.h"
-#include "CString.h"
-#include "CLogMgr.h"
+#include "cTimeInt.h"
+#include "cTimeZone.h"
+#include "cTimeDouble.h"
+#include "cString.h"
+#include "cLogMgr.h"
 #ifdef UNDER_CE
-#include "CTimeFile.h"
+#include "cTimeFile.h"
 #endif
 #ifdef __linux__
 #include <sys/types.h>
@@ -23,54 +23,54 @@ namespace Gray
 {
 
 #ifndef _MFC_VER
-	CTime::CTime(const CTimeFile& fileTime, int nDST)
+	CTime::CTime(const cTimeFile& fileTime, int nDST)
 	{
-		//! CTimeFile = 64-bit 100-nanoseconds since January 1, 1601 GMT
+		//! cTimeFile = 64-bit 100-nanoseconds since January 1, 1601 GMT
 		//! convert to TIMESEC_t (1970) (C-runtime local time)
 		//! nDST = 0=Standard time is in effect. >0 =Daylight savings time is in effect. <0=default. Automatically computes whether standard time or daylight savings time is in effect.
 		UNREFERENCED_PARAMETER(nDST);
 
 		FILETIME_t nTmp = fileTime.get_Val();
-		nTmp /= CTimeFile::k_nFreq;	// convert to seconds.
-		nTmp -= (CTimeFile::k_nDaysDiffTimeInt * (UINT64)CTimeUnits::k_nSecondsPerDay);
+		nTmp /= cTimeFile::k_nFreq;	// convert to seconds.
+		nTmp -= (cTimeFile::k_nDaysDiffTimeInt * (UINT64)cTimeUnits::k_nSecondsPerDay);
 		m_time = (TIMESEC_t)nTmp;
 	}
 #endif // ! _MFC_VER
 
 	//**************************************************************
 
-	TIMESEC_t GRAYCALL CTimeInt::GetTimeFromDays(double dTimeDays) // static
+	TIMESEC_t GRAYCALL cTimeInt::GetTimeFromDays(double dTimeDays) // static
 	{
 		//! Set to time in seconds from time in days.
-		//! Opposite of CTimeDouble::GetTimeFromSec()
-		return (TIMESEC_t)((dTimeDays - CTimeDouble::k_nDaysDiffTimeInt) * CTimeUnits::k_nSecondsPerDay);
+		//! Opposite of cTimeDouble::GetTimeFromSec()
+		return (TIMESEC_t)((dTimeDays - cTimeDouble::k_nDaysDiffTimeInt) * cTimeUnits::k_nSecondsPerDay);
 	}
 
-	CTimeInt GRAYCALL CTimeInt::GetTimeNow()	// static
+	cTimeInt GRAYCALL cTimeInt::GetTimeNow()	// static
 	{
 		//! @return The current time in seconds since Jan 1 1970 GMT (NOT LOCALIZED)
 		//! @note GetCurrentTime() is "#define" by _WIN32 to GetTickCount() so i cant use that name!
 		//! NOT adjusted for local time zone or DST.
 #ifdef UNDER_CE
-		CTimeFile tNow;
+		cTimeFile tNow;
 		tNow.InitTimeNow();
-		return CTimeInt(tNow);
+		return cTimeInt(tNow);
 #else
 		return ::time(nullptr);
 #endif
 	}
 
-	CTimeFile CTimeInt::GetAsFileTime() const
+	cTimeFile cTimeInt::GetAsFileTime() const
 	{
 		//! @return
-		//!  CTimeFile = 64-bit 100-nanosecond since January 1, 1601 GMT
+		//!  cTimeFile = 64-bit 100-nanosecond since January 1, 1601 GMT
 		FILETIME_t nTmp = GetTime();
-		nTmp += CTimeFile::k_nDaysDiffTimeInt * (FILETIME_t)CTimeUnits::k_nSecondsPerDay;
-		nTmp *= CTimeFile::k_nFreq;	// convert to FILETIME.
-		return CTimeFile(nTmp);
+		nTmp += cTimeFile::k_nDaysDiffTimeInt * (FILETIME_t)cTimeUnits::k_nSecondsPerDay;
+		nTmp *= cTimeFile::k_nFreq;	// convert to FILETIME.
+		return cTimeFile(nTmp);
 	}
 
-	void CTimeInt::InitTime(TIMESEC_t itime)
+	void cTimeInt::InitTime(TIMESEC_t itime)
 	{
 		//! @arg itime <= 0 = invalid time.
 #ifdef _MFC_VER
@@ -80,13 +80,13 @@ namespace Gray
 #endif
 	}
 
-	void CTimeInt::InitTimeNow()
+	void cTimeInt::InitTimeNow()
 	{
 		//! Now();
 		InitTime(GetTimeNow().GetTime());
 	}
 
-	void CTimeInt::InitTimeNowPlusSec(TIMESECD_t iOffsetInSeconds)
+	void cTimeInt::InitTimeNowPlusSec(TIMESECD_t iOffsetInSeconds)
 	{
 		//! @note Assume iOffset is in seconds
 		//! @note ASSUME TIMESEC_t is signed.
@@ -101,14 +101,14 @@ namespace Gray
 			return;
 #endif
 		}
-		InitTime(CTimeInt::GetTimeNow().GetTime() + iOffsetInSeconds);
+		InitTime(cTimeInt::GetTimeNow().GetTime() + iOffsetInSeconds);
 	}
 
 	//*************************************************************************
 
-	bool CTimeInt::InitTimeUnits(const CTimeUnits& rTu)
+	bool cTimeInt::InitTimeUnits(const cTimeUnits& rTu)
 	{
-		//! Set time in seconds since Jan 1 1970 GMT from CTimeUnits
+		//! Set time in seconds since Jan 1 1970 GMT from cTimeUnits
 		//! Similar to the MFC CTime::CTime( const FILETIME& ft, int nDST = -1 )
 		//! similar to "::mktime()"
 		//! ASSUME _tzset() has been called and _timezone is set.
@@ -128,12 +128,12 @@ namespace Gray
 		// each elapsed leap year. no danger of overflow because of the range
 		// check (above) on tmptm1.
 		TIMESEC_t nUnits = (rTu.m_wYear - 1970) * 365;
-		nUnits += (CTimeUnits::GetLeapYearsSince2K(rTu.m_wYear) + 7);
+		nUnits += (cTimeUnits::GetLeapYearsSince2K(rTu.m_wYear) + 7);
 
 		// elapsed days to current month (still no possible overflow)
 		// Calculate days elapsed minus one, in the given year, to the given
 		// month. Check for leap year and adjust if necessary.
-		nUnits += CTimeUnits::k_MonthDaySums[CTimeUnits::IsLeapYear(rTu.m_wYear)][rTu.m_wMonth - 1];
+		nUnits += cTimeUnits::k_MonthDaySums[cTimeUnits::IsLeapYear(rTu.m_wYear)][rTu.m_wMonth - 1];
 
 		// elapsed days to current date.
 		nUnits += rTu.m_wDay - 1;
@@ -153,7 +153,7 @@ namespace Gray
 			TIMEUNIT_t nTimeZoneOffset = rTu.m_nTZ;
 			if (nTimeZoneOffset == TZ_LOCAL)
 			{
-				nTimeZoneOffset = (TIMEUNIT_t)CTimeZoneMgr::GetLocalTimeZoneOffset();
+				nTimeZoneOffset = (TIMEUNIT_t)cTimeZoneMgr::GetLocalTimeZoneOffset();
 			}
 			nUnits += nTimeZoneOffset * 60; // seconds
 			if (rTu.isInDST())	// TODO Does the TZ respect DST ?
@@ -166,13 +166,13 @@ namespace Gray
 		return true;
 	}
 
-	bool CTimeInt::GetTimeUnits(OUT CTimeUnits& rTu, TZ_TYPE nTimeZoneOffset) const
+	bool cTimeInt::GetTimeUnits(OUT cTimeUnits& rTu, TZ_TYPE nTimeZoneOffset) const
 	{
-		//! Get CTimeUnits for seconds since Jan 1 1970 GMT
+		//! Get cTimeUnits for seconds since Jan 1 1970 GMT
 		//! nTimeZoneOffset = TZ_UTC, TZ_GMT, TZ_LOCAL (adjust for DST and TZ)
 		//! similar to "::gmtime()" or "::localtime()"
 
-		const int k_YEAR_SEC = (365 * CTimeUnits::k_nSecondsPerDay);    // seconds in a typical year
+		const int k_YEAR_SEC = (365 * cTimeUnits::k_nSecondsPerDay);    // seconds in a typical year
 
 		// Determine the years since 1900. Start by ignoring leap years.
 		TIMESEC_t nSeconds = this->GetTime();
@@ -183,7 +183,7 @@ namespace Gray
 		nYears += 1970;
 
 		// Correct for elapsed leap years
-		nSeconds -= (CTimeUnits::GetLeapYearsSince2K(nYears) + 7) * CTimeUnits::k_nSecondsPerDay;
+		nSeconds -= (cTimeUnits::GetLeapYearsSince2K(nYears) + 7) * cTimeUnits::k_nSecondsPerDay;
 
 		// If we have under-flowed the __time64_t range (i.e., if nSeconds < 0),
 		// back up one year, adjusting the correction if necessary.
@@ -192,15 +192,15 @@ namespace Gray
 		{
 			nSeconds += k_YEAR_SEC;
 			nYears--;
-			islpyr = CTimeUnits::IsLeapYear(nYears);
+			islpyr = cTimeUnits::IsLeapYear(nYears);
 			if (islpyr > 0)
 			{
-				nSeconds += CTimeUnits::k_nSecondsPerDay;
+				nSeconds += cTimeUnits::k_nSecondsPerDay;
 			}
 		}
 		else
 		{
-			islpyr = CTimeUnits::IsLeapYear(nYears);
+			islpyr = cTimeUnits::IsLeapYear(nYears);
 		}
 
 		// nYears now holds the value for tm_year. nSeconds now holds the
@@ -209,16 +209,16 @@ namespace Gray
 
 		// Determine days since January 1 (0 - 365). This is the nDayOfYear value.
 		// Leave nSeconds with number of elapsed seconds in that day.
-		int nDayOfYear = (int)(nSeconds / CTimeUnits::k_nSecondsPerDay);
+		int nDayOfYear = (int)(nSeconds / cTimeUnits::k_nSecondsPerDay);
 		if (nDayOfYear > 366)
 		{
 			ASSERT(0);
 			return false;
 		}
-		nSeconds -= (TIMESEC_t)(nDayOfYear)* CTimeUnits::k_nSecondsPerDay;
+		nSeconds -= (TIMESEC_t)(nDayOfYear)* cTimeUnits::k_nSecondsPerDay;
 
 		// Determine months since January (0 - 11) and day of month (1 - 31)
-		const WORD* pnDays = CTimeUnits::k_MonthDaySums[islpyr];
+		const WORD* pnDays = cTimeUnits::k_MonthDaySums[islpyr];
 		WORD nMonth = 1;
 		for (; pnDays[nMonth] <= nDayOfYear; nMonth++)
 			;
@@ -240,11 +240,11 @@ namespace Gray
 	//**************************************************************************
 	// String formatting
 
-	StrLen_t CTimeInt::GetTimeFormStr(GChar_t* pszOut, StrLen_t iOutSizeMax, const GChar_t* pszFormat, TZ_TYPE nTimeZoneOffset) const
+	StrLen_t cTimeInt::GetTimeFormStr(GChar_t* pszOut, StrLen_t iOutSizeMax, const GChar_t* pszFormat, TZ_TYPE nTimeZoneOffset) const
 	{
 		// TODO look for %z or %Z to preserve timezone.
 		//! MFC just calls this "Format"
-		CTimeUnits Tu;
+		cTimeUnits Tu;
 		if (!GetTimeUnits(Tu, nTimeZoneOffset))
 		{
 			return 0;
@@ -252,7 +252,7 @@ namespace Gray
 		return Tu.GetFormStr(pszOut, iOutSizeMax, pszFormat);
 	}
 
-	cString CTimeInt::GetTimeFormStr(const GChar_t* pszFormat, TZ_TYPE nTimeZoneOffset) const
+	cString cTimeInt::GetTimeFormStr(const GChar_t* pszFormat, TZ_TYPE nTimeZoneOffset) const
 	{
 		//! Get the time as a string formatted using "C" strftime()
 		//! Opposite of SetTimeStr()
@@ -270,10 +270,10 @@ namespace Gray
 		return cString(szTemp, iLenChars);
 	}
 
-	HRESULT CTimeInt::SetTimeStr(const GChar_t* pszDateTime, TZ_TYPE nTimeZoneOffset)
+	HRESULT cTimeInt::SetTimeStr(const GChar_t* pszDateTime, TZ_TYPE nTimeZoneOffset)
 	{
 		//! Read the full date format (from Web pages etc)
-		//! and make it into a CTimeInt value. (local TZ)
+		//! and make it into a cTimeInt value. (local TZ)
 		//! @arg nTimeZoneOffset = (seconds) what TZ was this recorded in (_timezone) (typically TZ_EST)
 		//!    ?? we have no idea is our local offset for DST is the same as encoded!
 		//!	did the creator of pszDateTime adjust for DST ? tm_isdst
@@ -291,7 +291,7 @@ namespace Gray
 			return 3;
 		}
 
-		CTimeUnits Tu;
+		cTimeUnits Tu;
 		HRESULT hRes = Tu.SetTimeStr(pszDateTime, nTimeZoneOffset);
 		if (hRes <= 0)
 		{
@@ -304,20 +304,20 @@ namespace Gray
 
 	//******************************************************************************
 
-	cString GRAYCALL CTimeInt::GetTimeSpanStr(TIMESECD_t nSeconds, TIMEUNIT_TYPE eUnitHigh, int iUnitsDesired, bool bShortText) // static
+	cString GRAYCALL cTimeInt::GetTimeSpanStr(TIMESECD_t nSeconds, TIMEUNIT_TYPE eUnitHigh, int iUnitsDesired, bool bShortText) // static
 	{
 		//! Describe a range of time in text.
 		//! Get a text description of amount of time (delta)
 		//! @arg
 		//!  eUnitHigh = the highest unit, TIMEUNIT_Day, TIMEUNIT_Minute
-		//!  iUnitsDesired = the number of units up the CTimeUnits::k_Units ladder to go. default=2
+		//!  iUnitsDesired = the number of units up the cTimeUnits::k_Units ladder to go. default=2
 
 		if (nSeconds <= 0)
 		{
 			return bShortText ? _GT("0s") : _GT("0 seconds");
 		}
 
-		CTimeUnits Tu;	// 0
+		cTimeUnits Tu;	// 0
 		Tu.AddSeconds(nSeconds);
 
 		GChar_t szMsg[256];
@@ -326,7 +326,7 @@ namespace Gray
 		return szMsg;
 	}
 
-	cString GRAYCALL CTimeInt::GetTimeDeltaBriefStr(TIMESECD_t dwSeconds) // static
+	cString GRAYCALL cTimeInt::GetTimeDeltaBriefStr(TIMESECD_t dwSeconds) // static
 	{
 		//! Describe a range of time in text.
 		//! Get a short text description of amount of time (delta)
@@ -334,7 +334,7 @@ namespace Gray
 		return GetTimeSpanStr(dwSeconds, TIMEUNIT_Day, 4, true);
 	}
 
-	cString GRAYCALL CTimeInt::GetTimeDeltaSecondsStr(TIMESECD_t dwSeconds) // static
+	cString GRAYCALL cTimeInt::GetTimeDeltaSecondsStr(TIMESECD_t dwSeconds) // static
 	{
 		//! Full time description. (up to hours) NOT days
 		//! e.g. "x hours and y minutes and z seconds"
@@ -345,17 +345,17 @@ namespace Gray
 //******************************************************************************
 
 #if USE_UNITTESTS
-#include "CUnitTest.h"
+#include "cUnitTest.h"
 #include "CFile.h"
-#include "CFileDir.h"
-#include "CMime.h"
+#include "cFileDir.h"
+#include "cMime.h"
 
-UNITTEST_CLASS(CTimeInt)
+UNITTEST_CLASS(cTimeInt)
 {
 	void UnitTest2(const GChar_t* pszDateTime, TZ_TYPE nTimeZoneOffset)
 	{
 		// @arg nTimeZoneOffset = TZ_UTC,TZ_GMT
-		CTimeInt testtime1;
+		cTimeInt testtime1;
 		HRESULT hRes = testtime1.SetTimeStr(pszDateTime, nTimeZoneOffset);
 		UNITTEST_TRUE(hRes>0);
 
@@ -367,7 +367,7 @@ UNITTEST_CLASS(CTimeInt)
 			if (i == TIME_FORMAT_ASN)	// we don't read this type.
 				continue;
 
-			CTimeInt testtime2;
+			cTimeInt testtime2;
 			hRes = testtime2.SetTimeStr(sTimeTest1, nTimeZoneOffset);
 			UNITTEST_TRUE(hRes>0);
 			UNITTEST_TRUE(testtime1 == testtime2);
@@ -376,7 +376,7 @@ UNITTEST_CLASS(CTimeInt)
 			UNITTEST_TRUE(!sTimeTest1.CompareNoCase(sTimeTest2));
 		}
 
-		CStringF sFilePath = CFilePath::CombineFilePathX(get_TestOutDir(), _FN(GRAY_NAMES) _FN("TimeUnitTest") _FN(MIME_EXT_txt));
+		cStringF sFilePath = cFilePath::CombineFilePathX(get_TestOutDir(), _FN(GRAY_NAMES) _FN("TimeUnitTest") _FN(MIME_EXT_txt));
 
 		// Get and set the change times on a file ? FILE_WRITE_ATTRIBUTES
 		cFile file;
@@ -395,7 +395,7 @@ UNITTEST_CLASS(CTimeInt)
 		UNITTEST_TRUE(filestatus.IsSameChangeTime(testtime1));
 	}
 
-	UNITTEST_METHOD(CTimeInt)
+	UNITTEST_METHOD(cTimeInt)
 	{
 		// ASSUME _tzset() has been called.
 #if 0 // def _DEBUG
@@ -404,28 +404,28 @@ UNITTEST_CLASS(CTimeInt)
 		UNITTEST_TRUE( tmaxs > tmaxu );	// assumed to be signed
 #endif
 
-		CTimeInt tnow1;
+		cTimeInt tnow1;
 		tnow1.InitTimeNow();
 		UNITTEST_TRUE(tnow1.isTimeValid());
-		CTimeUnits tn;
+		cTimeUnits tn;
 		UNITTEST_TRUE(tnow1.GetTimeUnits(tn,TZ_LOCAL));
 		UNITTEST_TRUE(tn.isReasonableTimeUnits());
 
 		sm_pLog->addDebugInfoF("Current local time is '%s'", LOGSTR(tnow1.GetTimeFormStr(TIME_FORMAT_TZ, TZ_LOCAL)));
 
-		int iLeapYears = CTimeUnits::GetLeapYearsSince2K(1970);
+		int iLeapYears = cTimeUnits::GetLeapYearsSince2K(1970);
 		UNITTEST_TRUE(iLeapYears == -7);
 
-		CTimeInt y2k;
+		cTimeInt y2k;
 		HRESULT hRes = y2k.SetTimeStr(_GT("2000/1/1 00:00:00"), TZ_UTC);
 		UNITTEST_TRUE(hRes>0);
 
 		TIMESEC_t t = y2k.GetTime();
-		UNITTEST_TRUE(t == CTimeInt::k_nY2K);
+		UNITTEST_TRUE(t == cTimeInt::k_nY2K);
 		hRes = y2k.SetTimeStr(_GT("2000/1/1 01:01:01"), TZ_UTC);
 		UNITTEST_TRUE(hRes>0);
 
-		UNITTEST_TRUE(y2k.GetTime() == CTimeInt::k_nY2K + 60 * 60 + 60 + 1);
+		UNITTEST_TRUE(y2k.GetTime() == cTimeInt::k_nY2K + 60 * 60 + 60 + 1);
 
 		UnitTest2(_GT("2004/8/7 01:20:20"), TZ_LOCAL);	// Daylight savings time
 		UnitTest2(_GT("2004/1/14 01:20:20"), TZ_UTC);	// Standard time
@@ -436,13 +436,13 @@ UNITTEST_CLASS(CTimeInt)
 
 		TIMESECD_t uVal1 = 1 * (24 * 60 * 60) + 2 * (60 * 60) + 3 * 60 + 4;
 
-		cString s1 = CTimeInt::GetTimeSpanStr(uVal1, TIMEUNIT_Day, 4);
+		cString s1 = cTimeInt::GetTimeSpanStr(uVal1, TIMEUNIT_Day, 4);
 		UNITTEST_TRUE(!s1.CompareNoCase(_GT("1 day 2 hours 3 minutes 4 seconds")));
-		cString s2 = CTimeInt::GetTimeDeltaBriefStr(uVal1);
+		cString s2 = cTimeInt::GetTimeDeltaBriefStr(uVal1);
 		UNITTEST_TRUE(!s2.CompareNoCase(_GT("1d 2h 3m 4s")));
-		cString s3 = CTimeInt::GetTimeDeltaSecondsStr(uVal1);
+		cString s3 = cTimeInt::GetTimeDeltaSecondsStr(uVal1);
 		UNITTEST_TRUE(!s3.CompareNoCase(_GT("26 hours 3 minutes 4 seconds")));
 	}
 };
-UNITTEST_REGISTER(CTimeInt, UNITTEST_LEVEL_Core);
+UNITTEST_REGISTER(cTimeInt, UNITTEST_LEVEL_Core);
 #endif

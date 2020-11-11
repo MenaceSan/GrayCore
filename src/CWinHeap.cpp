@@ -1,18 +1,18 @@
 //
-//! @file CWinHeap.cpp
+//! @file cWinHeap.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
 #include "pch.h"
-#include "CWinHeap.h"
+#include "cWinHeap.h"
 
 #if defined(_WIN32)
 
 #if USE_UNITTESTS
-#include "CUnitTest.h"
-UNITTEST_CLASS(CWinHeap)
+#include "cUnitTest.h"
+UNITTEST_CLASS(cWinHeap)
 {
-	UNITTEST_METHOD(CWinHeap)
+	UNITTEST_METHOD(cWinHeap)
 	{
 		// Enum all the private heaps for this process.
 
@@ -23,10 +23,10 @@ UNITTEST_CLASS(CWinHeap)
 
 		for (DWORD i = 0; i < dwRet; i++)
 		{
-			CWinHeap heap(aProcessHeaps[i], false);
+			cWinHeap heap(aProcessHeaps[i], false);
 			if (!heap.isValidHeap())
 			{
-				sm_pLog->addInfoF("CWinHeap 0%x Not valid", heap.get_Handle());
+				sm_pLog->addInfoF("cWinHeap 0%x Not valid", heap.get_Handle());
 				continue;
 			}
 
@@ -35,11 +35,11 @@ UNITTEST_CLASS(CWinHeap)
 			// HEAP_INFORMATION_CLASS = 1 = HeapEnableTerminationOnCorruption
 			heap.QueryInformation((HEAP_INFORMATION_CLASS)1, &HeapInformation, &nSizeData);
 
-			sm_pLog->addInfoF("CWinHeap 0%x compact=%d, term=%d", heap.get_Handle(), heap.Compact(), HeapInformation);
+			sm_pLog->addInfoF("cWinHeap 0%x compact=%d, term=%d", heap.get_Handle(), heap.Compact(), HeapInformation);
 		}
 #endif
 	}
 };
-UNITTEST_REGISTER(CWinHeap, UNITTEST_LEVEL_Lib);
+UNITTEST_REGISTER(cWinHeap, UNITTEST_LEVEL_Lib);
 #endif
 #endif

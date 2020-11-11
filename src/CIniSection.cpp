@@ -1,18 +1,18 @@
 //
-//! @file CIniSection.cpp
+//! @file cIniSection.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 #include "pch.h"
-#include "CIniSection.h"
-#include "CCodeProfiler.h"
-#include "CHeap.h"
-#include "CString.h"
-#include "CLogMgr.h"
+#include "cIniSection.h"
+#include "cCodeProfiler.h"
+#include "cHeap.h"
+#include "cString.h"
+#include "cLogMgr.h"
 #include "StrChar.h"
 
 namespace Gray
 {
-	HRESULT CIniWriter::WriteSectionHead0(const IniChar_t* pszSectionTitle)
+	HRESULT cIniWriter::WriteSectionHead0(const IniChar_t* pszSectionTitle)
 	{
 		//! Write Raw section header data.
 		//! Write a section header with no arguments.
@@ -42,7 +42,7 @@ namespace Gray
 		return hRes;
 	}
 
-	HRESULT CIniWriter::WriteSectionHead1(const IniChar_t* pszSectionType, const IniChar_t* pszSectionName)
+	HRESULT cIniWriter::WriteSectionHead1(const IniChar_t* pszSectionType, const IniChar_t* pszSectionName)
 	{
 		//! Write a section header with a raw (NOT quoted) argument.
 
@@ -61,7 +61,7 @@ namespace Gray
 		return WriteSectionHead0(szTmp);
 	}
 
-	HRESULT CIniWriter::WriteSectionHead1Q(const IniChar_t* pszSectionType, const IniChar_t* pszArg)
+	HRESULT cIniWriter::WriteSectionHead1Q(const IniChar_t* pszSectionType, const IniChar_t* pszArg)
 	{
 		//! Write a section header with a quoted/escaped argument.
 		if (StrT::IsNullOrEmpty(pszArg))
@@ -76,7 +76,7 @@ namespace Gray
 		return WriteSectionHead1(pszSectionType, szTmp);
 	}
 
-	HRESULT _cdecl CIniWriter::WriteSectionHeadFormat(const IniChar_t* pszSectionType, const IniChar_t* pszFormat, ...)
+	HRESULT _cdecl cIniWriter::WriteSectionHeadFormat(const IniChar_t* pszSectionType, const IniChar_t* pszFormat, ...)
 	{
 		//! Write out the section header.
 		ASSERT_N(!StrT::IsNullOrEmpty(pszFormat));
@@ -91,7 +91,7 @@ namespace Gray
 		return(WriteSectionHead1(pszSectionType, szTmp));
 	}
 
-	HRESULT CIniWriter::WriteKeyUnk(const IniChar_t* pszKey, const IniChar_t* pszValue)
+	HRESULT cIniWriter::WriteKeyUnk(const IniChar_t* pszKey, const IniChar_t* pszValue)
 	{
 		//! Write raw/naked string value to file.
 		if (StrT::IsNullOrEmpty(pszKey))
@@ -109,7 +109,7 @@ namespace Gray
 		}
 	}
 
-	HRESULT CIniWriter::WriteKeyStrQ(const IniChar_t* pszKey, const IniChar_t* pszValue)
+	HRESULT cIniWriter::WriteKeyStrQ(const IniChar_t* pszKey, const IniChar_t* pszValue)
 	{
 		//! Write a quoted/escaped string.
 		if (pszValue == nullptr)
@@ -124,13 +124,13 @@ namespace Gray
 
 		return(WriteKeyUnk(pszKey, szValTmp));
 	}
-	HRESULT CIniWriter::WriteKeyInt(const IniChar_t* pszKey, int iVal)
+	HRESULT cIniWriter::WriteKeyInt(const IniChar_t* pszKey, int iVal)
 	{
 		IniChar_t szTmp[StrT::k_LEN_MAX_KEY];
 		StrT::ItoA(iVal, szTmp, STRMAX(szTmp));
 		return WriteKeyUnk(pszKey, szTmp);
 	}
-	HRESULT CIniWriter::WriteKeyUInt(const IniChar_t* pszKey, UINT dwVal)
+	HRESULT cIniWriter::WriteKeyUInt(const IniChar_t* pszKey, UINT dwVal)
 	{
 		IniChar_t szTmp[StrT::k_LEN_MAX_KEY];
 		StrLen_t iLenTmp = StrT::UtoA((UINT)dwVal, szTmp, STRMAX(szTmp), 0x10);
@@ -140,7 +140,7 @@ namespace Gray
 
 	//**************************************************************
 
-	bool GRAYCALL CIniReader::IsSectionHeader(const IniChar_t* pszLine) // static
+	bool GRAYCALL cIniReader::IsSectionHeader(const IniChar_t* pszLine) // static
 	{
 		//! is this line a [section header] of some sort ?
 		if (pszLine == nullptr)
@@ -150,7 +150,7 @@ namespace Gray
 		return false;
 	}
 
-	bool GRAYCALL CIniReader::IsLineComment(const IniChar_t* pszLine) // static
+	bool GRAYCALL cIniReader::IsLineComment(const IniChar_t* pszLine) // static
 	{
 		//! Whole line is just a comment?
 		//! DOS Bat files might use REM XXX (NOT supported here)
@@ -180,7 +180,7 @@ namespace Gray
 		return false;
 	}
 
-	IniChar_t* GRAYCALL CIniReader::FindLineArg(const IniChar_t* pszLine, bool bAllowSpace) // static
+	IniChar_t* GRAYCALL cIniReader::FindLineArg(const IniChar_t* pszLine, bool bAllowSpace) // static
 	{
 		//! Find the argument/value portion of a line.
 		//! "TAG=Args", "TAG: Args" (for HTTP) or "Tag Args" (if bAllowSpace)
@@ -215,7 +215,7 @@ namespace Gray
 		return nullptr;
 	}
 
-	StrLen_t GRAYCALL CIniReader::FindScriptLineEnd(const IniChar_t* pszLine)	// static
+	StrLen_t GRAYCALL cIniReader::FindScriptLineEnd(const IniChar_t* pszLine)	// static
 	{
 		//! Now parse the line for comments and trailing whitespace junk
 		//! comments are #; as first char or // comment at end of line
@@ -274,7 +274,7 @@ namespace Gray
 		return StrT::GetWhitespaceEnd(pszLine, iLenChars);
 	}
 
-	CStringI GRAYCALL CIniReader::GetLineParse2(const IniChar_t* pszLine, IniChar_t** ppszArgs) // static
+	CStringI GRAYCALL cIniReader::GetLineParse2(const IniChar_t* pszLine, IniChar_t** ppszArgs) // static
 	{
 		//! Parse the pszLine into 2 parts. "TAG=Args" or "Tag Args"
 		//! @note Does NOT clip // comment from end of line.
@@ -300,7 +300,7 @@ namespace Gray
 		return CStringI(pszLine, iLen);
 	}
 
-	CStringI GRAYCALL CIniReader::GetLineParse3(const IniChar_t* pszLine, OUT CStringI& rsArgs) // static
+	CStringI GRAYCALL cIniReader::GetLineParse3(const IniChar_t* pszLine, OUT CStringI& rsArgs) // static
 	{
 		//! Parse a line in the format of: "TAG=Value // comments."
 		//! Clip comments off the end of the arg.
@@ -317,7 +317,7 @@ namespace Gray
 
 	//**************************************************************
 
-	CIniSectionData::CIniSectionData(bool bStripComments)
+	cIniSectionData::cIniSectionData(bool bStripComments)
 		: m_bStripComments(bStripComments)
 		, m_iBufferUsed(0)
 		, m_ppLines(nullptr)
@@ -327,25 +327,25 @@ namespace Gray
 		CODEPROFILEFUNC();
 	}
 
-	CIniSectionData::~CIniSectionData()
+	cIniSectionData::~cIniSectionData()
 	{
 		CODEPROFILEFUNC();
-		CHeap::FreePtr(m_ppLines);
+		cHeap::FreePtr(m_ppLines);
 	}
 
-	void CIniSectionData::DisposeThis()
+	void cIniSectionData::DisposeThis()
 	{
 		//! Dispose any data. we might reload it when needed. this might just be a stub.
 		m_bStripComments = false;
 		m_Buffer.Free();
 		m_iBufferUsed = 0;
-		CHeap::FreePtr(m_ppLines);
+		cHeap::FreePtr(m_ppLines);
 		m_ppLines = nullptr;
 		m_iLinesAlloc = 0;
 		m_iLinesUsed = 0;	// ClearLineQty()
 	}
 
-	StrLen_t GRAYCALL CIniSectionData::IsLineTrigger(const IniChar_t* pszLine) // static
+	StrLen_t GRAYCALL cIniSectionData::IsLineTrigger(const IniChar_t* pszLine) // static
 	{
 		//! Is this line a script trigger/label in "@NAME" type format?
 		//! Similar to other languages use of labels:
@@ -361,7 +361,7 @@ namespace Gray
 		return 1;	// Not a trigger/label.
 	}
 
-	ITERATE_t CIniSectionData::FindTriggerName(const IniChar_t* pszTrigName) const
+	ITERATE_t cIniSectionData::FindTriggerName(const IniChar_t* pszTrigName) const
 	{
 		//! Find Unique Named trigger/label in block.
 		//! @arg pszTrigName = the script section we want.
@@ -383,7 +383,7 @@ namespace Gray
 		return(-1);	// cant find it.
 	}
 
-	HRESULT CIniSectionData::PropEnum(IPROPIDX_t ePropIdx, OUT CStringI& rsValue, CStringI* psKey) const // virtual
+	HRESULT cIniSectionData::PropEnum(IPROPIDX_t ePropIdx, OUT CStringI& rsValue, CStringI* psKey) const // virtual
 	{
 		//! IIniBaseEnumerator
 		//! @arg = optionally return psKey. nullptr = don't care.
@@ -391,13 +391,13 @@ namespace Gray
 		if (pszLine == nullptr)
 			return HRESULT_WIN32_C(ERROR_UNKNOWN_PROPERTY);
 		// Ignore comment lines ?
-		CStringI sKey = CIniReader::GetLineParse3(pszLine, rsValue);
+		CStringI sKey = cIniReader::GetLineParse3(pszLine, rsValue);
 		if (psKey != nullptr)
 			*psKey = sKey;
 		return S_OK;
 	}
 
-	void CIniSectionData::ClearLineQty()
+	void cIniSectionData::ClearLineQty()
 	{
 		//! don't re-alloc. just clear what is used.
 		CODEPROFILEFUNC();
@@ -409,7 +409,7 @@ namespace Gray
 		}
 	}
 
-	IniChar_t* CIniSectionData::AllocBuffer(StrLen_t nSizeChars)
+	IniChar_t* cIniSectionData::AllocBuffer(StrLen_t nSizeChars)
 	{
 		// nSizeChars = in chars including space for null.
 		CODEPROFILEFUNC();
@@ -441,7 +441,7 @@ namespace Gray
 		return pszBufferNew;
 	}
 
-	bool CIniSectionData::IsValidLines() const
+	bool cIniSectionData::IsValidLines() const
 	{
 		//! All lines MUST be in the m_Buffer.
 
@@ -453,7 +453,7 @@ namespace Gray
 		return true;
 	}
 
-	void CIniSectionData::AllocLines(ITERATE_t iLinesAlloc)
+	void cIniSectionData::AllocLines(ITERATE_t iLinesAlloc)
 	{
 		CODEPROFILEFUNC();
 		ASSERT(iLinesAlloc > m_iLinesUsed);	// + nullptr
@@ -462,12 +462,12 @@ namespace Gray
 			ASSERT(m_ppLines != nullptr || m_iLinesAlloc == 0);
 			return;
 		}
-		m_ppLines = (IniChar_t**)CHeap::ReAllocPtr(m_ppLines, sizeof(IniChar_t*) * iLinesAlloc);
+		m_ppLines = (IniChar_t**)cHeap::ReAllocPtr(m_ppLines, sizeof(IniChar_t*) * iLinesAlloc);
 		ASSERT(m_ppLines != nullptr);
 		m_iLinesAlloc = iLinesAlloc;
 	}
 
-	IniChar_t* CIniSectionData::AllocBeginMin(StrLen_t nSizeChars)
+	IniChar_t* cIniSectionData::AllocBeginMin(StrLen_t nSizeChars)
 	{
 		//! Alloc at least this estimated amount.
 		//! Meant to be used with ProcessBuffer
@@ -485,7 +485,7 @@ namespace Gray
 		return m_Buffer.get_DataA();
 	}
 
-	void CIniSectionData::AllocComplete()
+	void cIniSectionData::AllocComplete()
 	{
 		//! done loading, so trim to its used size.
 		CODEPROFILEFUNC();
@@ -493,7 +493,7 @@ namespace Gray
 		AllocBuffer(m_iBufferUsed + 1);	// include a second null char.
 	}
 
-	void CIniSectionData::MoveLineOffsets(ITERATE_t iLineStart, INT_PTR iDiffChars)
+	void cIniSectionData::MoveLineOffsets(ITERATE_t iLineStart, INT_PTR iDiffChars)
 	{
 		//! adjust all the m_ppLines offsets in the m_Buffer.
 		//! INT_PTR iDiffBytes = can be move from one malloc to a separate malloc.
@@ -507,7 +507,7 @@ namespace Gray
 		}
 	}
 
-	void CIniSectionData::SetLinesCopy(const CIniSectionData& section)
+	void cIniSectionData::SetLinesCopy(const cIniSectionData& section)
 	{
 		CODEPROFILEFUNC();
 		m_iLinesUsed = section.get_LineQty();
@@ -515,13 +515,13 @@ namespace Gray
 		AllocBuffer(section.get_BufferSize());
 		m_iBufferUsed = section.get_BufferUsed();
 
-		CMem::Copy(m_ppLines, section.m_ppLines, m_iLinesUsed * sizeof(IniChar_t*));
-		CMem::Copy(m_Buffer.get_Data(), section.m_Buffer.get_Data(), m_Buffer.get_Size());
+		cMem::Copy(m_ppLines, section.m_ppLines, m_iLinesUsed * sizeof(IniChar_t*));
+		cMem::Copy(m_Buffer.get_Data(), section.m_Buffer.get_Data(), m_Buffer.get_Size());
 
 		MoveLineOffsets(0, StrT::Diff(m_Buffer.get_DataA(), section.m_Buffer.get_DataA()));
 	}
 
-	ITERATE_t CIniSectionData::FindKeyLine(const IniChar_t* pszKeyName, bool bPrefixOnly) const
+	ITERATE_t cIniSectionData::FindKeyLine(const IniChar_t* pszKeyName, bool bPrefixOnly) const
 	{
 		//! Find the first instance of a key in the section (key=args)
 		//! From the top of the section find a specific key.
@@ -543,7 +543,7 @@ namespace Gray
 		StrLen_t iLen = StrT::Len(pszKeyName);
 		if (iLen >= StrT::k_LEN_MAX_KEY)
 		{
-			DEBUG_ERR(("CIniSectionData FindIForKey Bad key name"));
+			DEBUG_ERR(("cIniSectionData FindIForKey Bad key name"));
 			return k_ITERATE_BAD;
 		}
 
@@ -563,7 +563,7 @@ namespace Gray
 		return k_ITERATE_BAD;
 	}
 
-	const IniChar_t* CIniSectionData::FindKeyLinePtr(const IniChar_t* pszKey) const
+	const IniChar_t* cIniSectionData::FindKeyLinePtr(const IniChar_t* pszKey) const
 	{
 		//! Find the line with this key in the section.
 		//! @return Text for the line.
@@ -575,7 +575,7 @@ namespace Gray
 		return GetLineEnum(i);
 	}
 
-	const IniChar_t* CIniSectionData::FindArgForKey(const IniChar_t* pszKey, const IniChar_t* pszDefault) const
+	const IniChar_t* cIniSectionData::FindArgForKey(const IniChar_t* pszKey, const IniChar_t* pszDefault) const
 	{
 		//! Find pszKey in the section.
 		//! @note this does not strip comments from the end of the line !
@@ -584,13 +584,13 @@ namespace Gray
 		const IniChar_t* pszLine = FindKeyLinePtr(pszKey);
 		if (pszLine == nullptr)
 			return pszDefault;
-		pszLine = CIniReader::FindLineArg(pszLine);
+		pszLine = cIniReader::FindLineArg(pszLine);
 		if (pszLine == nullptr)
 			return pszDefault;
 		return pszLine;
 	}
 
-	int CIniSectionData::FindIntForKey(const IniChar_t* pszKey, int iDefault) const
+	int cIniSectionData::FindIntForKey(const IniChar_t* pszKey, int iDefault) const
 	{
 		//! Find pszKey in the section.
 		//! @return the corresponding Args (e.g.Key=Args) for the first instance of pszKey.
@@ -600,7 +600,7 @@ namespace Gray
 		return StrT::toI(pszVal);
 	}
 
-	HRESULT CIniSectionData::PropGet(const IniChar_t* pszPropTag, OUT CStringI& rsValue) const // virtual 
+	HRESULT cIniSectionData::PropGet(const IniChar_t* pszPropTag, OUT CStringI& rsValue) const // virtual 
 	{
 		//! IIniBaseGetter
 		const IniChar_t* pszVal = FindArgForKey(pszPropTag, nullptr);
@@ -609,11 +609,11 @@ namespace Gray
 			rsValue = "";
 			return HRESULT_WIN32_C(ERROR_UNKNOWN_PROPERTY);
 		}
-		rsValue = CStringI(pszVal, CIniReader::FindScriptLineEnd(pszVal));
+		rsValue = CStringI(pszVal, cIniReader::FindScriptLineEnd(pszVal));
 		return S_OK;
 	}
 
-	ITERATE_t CIniSectionData::AddLine(const IniChar_t* pszLine)
+	ITERATE_t cIniSectionData::AddLine(const IniChar_t* pszLine)
 	{
 		//! add a text line to the end of this section.
 		//! ASSUME m_bStripped has already been applied if used.
@@ -661,7 +661,7 @@ namespace Gray
 		return iLine;
 	}
 
-	bool CIniSectionData::SetLine(ITERATE_t iLine, const IniChar_t* pszLine)
+	bool cIniSectionData::SetLine(ITERATE_t iLine, const IniChar_t* pszLine)
 	{
 		//! set the contents of a specific line. (NOT insert a line)
 		//! pszLine = nullptr = delete.
@@ -705,24 +705,24 @@ namespace Gray
 			pszDst = m_ppLines[iLine];
 		}
 
-		CMem::CopyOverlap(pszDst + iLenNew, pszDst + iLenOld, ((m_iBufferUsed - iBufferStart) + 1) * sizeof(IniChar_t));
+		cMem::CopyOverlap(pszDst + iLenNew, pszDst + iLenOld, ((m_iBufferUsed - iBufferStart) + 1) * sizeof(IniChar_t));
 		MoveLineOffsets(iLine + 1, iLenDiff);
 		m_iBufferUsed = iBufferNew;
 
 		if (iLenNew <= 0) // erasing line?
 		{
 			m_iLinesUsed--;
-			CMem::CopyOverlap(m_ppLines + iLine, m_ppLines + iLine + 1, sizeof(m_ppLines[0]) * (m_iLinesUsed - iLine));
+			cMem::CopyOverlap(m_ppLines + iLine, m_ppLines + iLine + 1, sizeof(m_ppLines[0]) * (m_iLinesUsed - iLine));
 		}
 		else
 		{
-			CMem::Copy(pszDst, pszLine, iLenNew * sizeof(IniChar_t));
+			cMem::Copy(pszDst, pszLine, iLenNew * sizeof(IniChar_t));
 		}
 
 		return true;
 	}
 
-	StrLen_t GRAYCALL CIniSectionData::MakeLine(IniChar_t* pszTmp, StrLen_t iSizeMax, const IniChar_t* pszKey, const IniChar_t* pszArg, IniChar_t chSep) // static
+	StrLen_t GRAYCALL cIniSectionData::MakeLine(IniChar_t* pszTmp, StrLen_t iSizeMax, const IniChar_t* pszKey, const IniChar_t* pszArg, IniChar_t chSep) // static
 	{
 		//! Build a line in the form of KEY=ARG
 		//! chSep = ':' or '='
@@ -735,7 +735,7 @@ namespace Gray
 		return iLen;
 	}
 
-	ITERATE_t CIniSectionData::AddKeyArg(const IniChar_t* pszKey, const IniChar_t* pszArg)
+	ITERATE_t cIniSectionData::AddKeyArg(const IniChar_t* pszKey, const IniChar_t* pszArg)
 	{
 		//! Add the line, even if it is duplicated key.
 		if (pszKey == nullptr || pszArg == nullptr)
@@ -745,7 +745,7 @@ namespace Gray
 		return AddLine(szTmp);
 	}
 
-	ITERATE_t CIniSectionData::SetKeyArg(const IniChar_t* pszKey, const IniChar_t* pszArg)
+	ITERATE_t cIniSectionData::SetKeyArg(const IniChar_t* pszKey, const IniChar_t* pszArg)
 	{
 		//! Replace a line with an existing key. else just add to the end.
 		//! @return the line we changed.
@@ -765,7 +765,7 @@ namespace Gray
 		}
 	}
 
-	HRESULT CIniSectionData::PropSet(const IniChar_t* pszPropTag, const IniChar_t* pszValue) // override 
+	HRESULT cIniSectionData::PropSet(const IniChar_t* pszPropTag, const IniChar_t* pszValue) // override 
 	{
 		//! IIniBaseSetter
 		//! @return E_INVALIDARG,  HRESULT_WIN32_C(ERROR_UNKNOWN_PROPERTY)
@@ -773,7 +773,7 @@ namespace Gray
 		return (HRESULT)iLine;
 	}
 
-	StrLen_t CIniSectionData::SetLinesParse(const IniChar_t* pszData, StrLen_t iLen, const IniChar_t* pszSep, STRP_MASK_t uFlags)
+	StrLen_t cIniSectionData::SetLinesParse(const IniChar_t* pszData, StrLen_t iLen, const IniChar_t* pszSep, STRP_MASK_t uFlags)
 	{
 		//! Set the section from a big data/text blob. Parse lines.
 		//! @arg
@@ -791,7 +791,7 @@ namespace Gray
 
 		ClearLineQty();	// no lines yet.
 		IniChar_t* pDataNew = AllocBeginMin(iLen + 2);	// alloc 2 '\0's at the end.
-		CMem::Copy(pDataNew, pszData, iLen);
+		cMem::Copy(pDataNew, pszData, iLen);
 		pDataNew[iLen] = '\0';
 		pDataNew[iLen + 1] = '\0';
 
@@ -823,7 +823,7 @@ namespace Gray
 		return m_iBufferUsed;
 	}
 
-	cStringA CIniSectionData::GetStringAll(const IniChar_t* pszSep) const
+	cStringA cIniSectionData::GetStringAll(const IniChar_t* pszSep) const
 	{
 		//! Build a single string with all the section lines.
 		if (pszSep == nullptr)
@@ -842,9 +842,9 @@ namespace Gray
 		return sArgs;
 	}
 
-	HRESULT CIniSectionData::ReadSectionData(cStringA& rsSectionNext, CStreamInput& stmIn, bool bStripComments)
+	HRESULT cIniSectionData::ReadSectionData(cStringA& rsSectionNext, cStreamInput& stmIn, bool bStripComments)
 	{
-		//! Read the CIniSectionData from a CStreamInput. Up to EOF or [next section]
+		//! Read the cIniSectionData from a cStreamInput. Up to EOF or [next section]
 		//! Might be first section (with no [Section header] text in rsSectionNext)
 		//! @arg
 		//!  rsSectionNext = the name of this section. without [].
@@ -893,7 +893,7 @@ namespace Gray
 				break;
 			}
 			iLines++;
-			if (CIniReader::IsSectionHeader(pszLine))
+			if (cIniReader::IsSectionHeader(pszLine))
 			{
 				pszLine = StrT::GetNonWhitespace(pszLine + 1);
 				IniChar_t* pszBlockEnd = StrT::FindBlockEnd(STR_BLOCK_SQUARE, pszLine);
@@ -914,9 +914,9 @@ namespace Gray
 			if (bStripComments)	// strip it.
 			{
 				const char* pszLineStart = pszLine;
-				pszLine = StrT::GetNonWhitespace(pszLine);	// TODO Actually CMem::CopyOverlap the leading spaces out!
+				pszLine = StrT::GetNonWhitespace(pszLine);	// TODO Actually cMem::CopyOverlap the leading spaces out!
 				i += StrT::Diff(pszLine, pszLineStart);
-				iLen = CIniReader::FindScriptLineEnd(pszLine);	// kill comments. try not to strip http://xx ?
+				iLen = cIniReader::FindScriptLineEnd(pszLine);	// kill comments. try not to strip http://xx ?
 				pszLine[iLen] = '\0';
 				// leave blank lines to keep the line count consistent.
 			}
@@ -935,7 +935,7 @@ namespace Gray
 		return hRes;
 	}
 
-	HRESULT CIniSectionData::WriteSectionData(CStreamOutput& file)
+	HRESULT cIniSectionData::WriteSectionData(cStreamOutput& file)
 	{
 		ASSERT(IsValidLines());
 
@@ -954,15 +954,15 @@ namespace Gray
 
 	//******************************************************************
 
-	CIniSection::CIniSection(const CIniSection& rSectionCopy)
-		: CIniSectionData(rSectionCopy.isStripped())
+	cIniSection::cIniSection(const cIniSection& rSectionCopy)
+		: cIniSectionData(rSectionCopy.isStripped())
 		, m_sSectionTitle(rSectionCopy.get_SectionTitle())
 	{
 		//! copy constructor.
 		SetLinesCopy(rSectionCopy);
 	}
 
-	bool GRAYCALL CIniSection::IsSectionTypeMatch(const IniChar_t* pszSection1, const IniChar_t* pszSection2) // static
+	bool GRAYCALL cIniSection::IsSectionTypeMatch(const IniChar_t* pszSection1, const IniChar_t* pszSection2) // static
 	{
 		bool bRoot1 = IsSectionTypeRoot(pszSection1);
 		bool bRoot2 = IsSectionTypeRoot(pszSection2);
@@ -977,11 +977,11 @@ namespace Gray
 		return(!StrT::CmpHeadI(pszSection1, pszSection2));
 	}
 
-	HRESULT CIniSection::WriteSection(CStreamOutput& file)
+	HRESULT cIniSection::WriteSection(cStreamOutput& file)
 	{
-		if (!CIniSection::IsSectionTypeRoot(this->m_sSectionTitle))
+		if (!cIniSection::IsSectionTypeRoot(this->m_sSectionTitle))
 		{
-			CIniWriter writer(&file);
+			cIniWriter writer(&file);
 			HRESULT hRes = writer.WriteSectionHead0(this->m_sSectionTitle);
 			if (FAILED(hRes))
 				return hRes;
@@ -989,7 +989,7 @@ namespace Gray
 		return SUPER_t::WriteSectionData(file);
 	}
 
-	CStringI GRAYCALL CIniSection::GetSectionTitleParse(CStringI sSectionTitle, CStringI* psPropTag) // static
+	CStringI GRAYCALL cIniSection::GetSectionTitleParse(CStringI sSectionTitle, CStringI* psPropTag) // static
 	{
 		//! Parse [SectionTitle]. similar to GetLineParse2()
 		if (psPropTag == nullptr)
@@ -1012,15 +1012,15 @@ namespace Gray
 //**************************************************************
 
 #if USE_UNITTESTS
-#include "CUnitTest.h"
+#include "cUnitTest.h"
 
-UNITTEST_CLASS(CIniSection)
+UNITTEST_CLASS(cIniSection)
 {
-	UNITTEST_METHOD(CIniSection)
+	UNITTEST_METHOD(cIniSection)
 	{
 		// Test read a blob of data as a section.
 
-		CIniSectionData section;
+		cIniSectionData section;
 
 		static const IniChar_t k_SectionData[] =
 			"DATA1\r\n" // 7
@@ -1036,11 +1036,11 @@ UNITTEST_CLASS(CIniSection)
 		UNITTEST_TRUE(section.get_LineQty() == 5);
 
 		static const IniChar_t* k_tSent = "This is a sentence. And another. // comment";
-		iRead = CIniReader::FindScriptLineEnd(k_tSent);	// k_tSent
+		iRead = cIniReader::FindScriptLineEnd(k_tSent);	// k_tSent
 		UNITTEST_TRUE(iRead == 32);
 
 	}
 };
-UNITTEST_REGISTER(CIniSection, UNITTEST_LEVEL_Core);
+UNITTEST_REGISTER(cIniSection, UNITTEST_LEVEL_Core);
 
 #endif // USE_UNITTESTS

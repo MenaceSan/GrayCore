@@ -1,15 +1,15 @@
 //
-//! @file CUInt64.cpp
+//! @file cUInt64.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 #include "pch.h"
-#include "CUInt64.h"
-#include "CRandomDef.h"
-#include "CLogMgr.h"
+#include "cUInt64.h"
+#include "cRandomDef.h"
+#include "cLogMgr.h"
 
 namespace Gray
 {
-	StrLen_t CUInt64::GetStr(char* pszOut, StrLen_t iOutMax, RADIX_t uRadixBase) const
+	StrLen_t cUInt64::GetStr(char* pszOut, StrLen_t iOutMax, RADIX_t uRadixBase) const
 	{
 #ifdef USE_INT64
 		return StrT::ULtoA(m_u, pszOut, iOutMax, uRadixBase);
@@ -19,7 +19,7 @@ namespace Gray
 #endif
 	}
 
-	cString CUInt64::GetStr(RADIX_t uRadixBase) const
+	cString cUInt64::GetStr(RADIX_t uRadixBase) const
 	{
 		//! @note We can estimate the string size via get_Highest1Bit()
 		char szTmp[StrT::k_LEN_MAX];
@@ -27,7 +27,7 @@ namespace Gray
 		return szTmp;
 	}
 
-	bool CUInt64::SetStr(const char* pszVal, RADIX_t uRadixBase, const char** ppszEnd)
+	bool cUInt64::SetStr(const char* pszVal, RADIX_t uRadixBase, const char** ppszEnd)
 	{
 #ifdef USE_INT64
 		m_u = StrT::toUL(pszVal, ppszEnd, uRadixBase);
@@ -37,18 +37,18 @@ namespace Gray
 		return true;
 	}
 
-	BIT_ENUM_t CUInt64::get_Highest1Bit() const
+	BIT_ENUM_t cUInt64::get_Highest1Bit() const
 	{
 #ifdef USE_INT64
-		return CBits::Highest1Bit(m_u);
+		return cBits::Highest1Bit(m_u);
 #else
 		if (m_uHi)
-			return CBits::Highest1Bit(m_uHi) + k_UNIT_BITS;
-		return CBits::Highest1Bit(m_uLo);
+			return cBits::Highest1Bit(m_uHi) + k_UNIT_BITS;
+		return cBits::Highest1Bit(m_uLo);
 #endif
 	}
 
-	HRESULT CUInt64::SetRandomBits(BIT_ENUM_t nBits)
+	HRESULT cUInt64::SetRandomBits(BIT_ENUM_t nBits)
 	{
 		ASSERT(nBits <= 64);
 #ifdef USE_INT64
@@ -69,7 +69,7 @@ namespace Gray
 		return S_OK;
 	}
 
-	void CUInt64::SetPowerMod(const CUInt64& base, const CUInt64& exponent, const CUInt64& modulus)
+	void cUInt64::SetPowerMod(const cUInt64& base, const cUInt64& exponent, const cUInt64& modulus)
 	{
 		//! Set *this to 'base' to the power of 'exponent' then modulus.
 		//! *this = ((base^exponent)%modulus)
@@ -82,7 +82,7 @@ namespace Gray
 		{
 			if (!bOne)
 			{
-				CUInt64 n(*this);
+				cUInt64 n(*this);
 				*this *= n;
 				*this %= modulus;
 			}
@@ -99,7 +99,7 @@ namespace Gray
 #endif
 	}
 
-	bool CUInt64::isPrime() const
+	bool cUInt64::isPrime() const
 	{
 		//! This function uses Fermat's (little) Theorem 100 times to test the primeness of a
 		//! (large) positive integer.
@@ -114,7 +114,7 @@ namespace Gray
 		}
 		ASSERT(!isZero());	// zero is not a valid test.
 
-		CUInt64 pminus1(*this);
+		cUInt64 pminus1(*this);
 		pminus1 -= 1;
 		if (pminus1.isZero())	// 1 is not prime.
 			return false;
@@ -128,12 +128,12 @@ namespace Gray
 
 		while (--nTries != 0)
 		{
-			CUInt64 x;
+			cUInt64 x;
 			x.SetRandomBits(nBits);	// random test number less than the prime. since it is not div 2, >= div 3
 			ASSERT(x < *this);
 			if (x.isZero())	// not a useful test.
 				continue;
-			CUInt64 r;
+			cUInt64 r;
 			r.SetPowerMod(x, pminus1, *this);
 			if (r != 1)
 				return false;	// Not prime.
@@ -142,7 +142,7 @@ namespace Gray
 		return true;	// Seems to be prime.
 	}
 
-	int CUInt64::SetRandomPrime(BIT_ENUM_t nBits, CThreadState* pCancel)
+	int cUInt64::SetRandomPrime(BIT_ENUM_t nBits, cThreadState* pCancel)
 	{
 		//! This function generates/finds/guesses a random prime.
 		//! @return Number of tries to get a prime.
@@ -178,7 +178,7 @@ namespace Gray
 		return iTries;
 	}
 
-	void CUInt64::OpBitShiftLeft1(UNIT_t nBitMask)
+	void cUInt64::OpBitShiftLeft1(UNIT_t nBitMask)
 	{
 #ifdef USE_INT64
 		UNIT_t nTmp = m_u;
@@ -191,7 +191,7 @@ namespace Gray
 #endif
 	}
 
-	void GRAYCALL CUInt64::Divide(const CUInt64& dividend, const CUInt64& divisor, OUT CUInt64& quotient, OUT CUInt64& remainder)
+	void GRAYCALL cUInt64::Divide(const cUInt64& dividend, const cUInt64& divisor, OUT cUInt64& quotient, OUT cUInt64& remainder)
 	{
 		//! Division with remainder
 		//! get quotient,remainder for dividend/divisor.
@@ -201,12 +201,12 @@ namespace Gray
 			&divisor == &quotient ||
 			&divisor == &remainder)
 		{
-			// ThrowUserException( "CUInt64 Divide Cannot write quotient and remainder into the same variable." );
+			// ThrowUserException( "cUInt64 Divide Cannot write quotient and remainder into the same variable." );
 			return;
 		}
 		if (divisor.isZero())
 		{
-			// ThrowUserException( "CUInt64 Divide by zero." );
+			// ThrowUserException( "cUInt64 Divide by zero." );
 			return;
 		}
 		if (dividend.isZero())
@@ -252,7 +252,7 @@ namespace Gray
 		ASSERT((quotient * divisor + remainder) == dividend);	// test reverse operation.
 	}
 
-	void GRAYCALL CUInt64::EuclideanAlgorithm(const CUInt64& x, const CUInt64& y, OUT CUInt64& a, OUT CUInt64& b, OUT CUInt64& g) // static
+	void GRAYCALL cUInt64::EuclideanAlgorithm(const cUInt64& x, const cUInt64& y, OUT cUInt64& a, OUT cUInt64& b, OUT cUInt64& g) // static
 	{
 		//! This function uses the Euclidean algorithm to find the greatest common divisor
 		//! g of the positive integers x and y and also two integers a and b such that
@@ -262,8 +262,8 @@ namespace Gray
 #ifdef USE_INT64
 		if (x <= y)
 		{
-			CUInt64 q;
-			CUInt64 r;
+			cUInt64 q;
+			cUInt64 r;
 			Divide(y, x, q, r);
 			if (r == 0)
 			{
@@ -273,7 +273,7 @@ namespace Gray
 			}
 			else
 			{
-				CUInt64 ap;
+				cUInt64 ap;
 				EuclideanAlgorithm(x, r, ap, b, g);
 				// a = ap + b * q;
 				a = b;
@@ -283,8 +283,8 @@ namespace Gray
 		}
 		else
 		{
-			CUInt64 ap;
-			CUInt64 bp;
+			cUInt64 ap;
+			cUInt64 bp;
 			EuclideanAlgorithm(y, x, bp, ap, g);
 			// a = y - ap;
 			a = y;
@@ -302,63 +302,63 @@ namespace Gray
 //********************************************************************************
 
 #if USE_UNITTESTS
-#include "CUnitTest.h"
-UNITTEST_CLASS(CUInt64)
+#include "cUnitTest.h"
+UNITTEST_CLASS(cUInt64)
 {
-	void UnitTestStr(const CUInt64& d1, RADIX_t r)
+	void UnitTestStr(const cUInt64& d1, RADIX_t r)
 	{
 		char szTmp1[1024];
 		d1.GetStr(szTmp1, STRMAX(szTmp1), r);
 
-		CUInt64 d2(szTmp1, r);
+		cUInt64 d2(szTmp1, r);
 		UNITTEST_TRUE(d1 == d2);
 		char szTmp2[1024];
 		d2.GetStr(szTmp2, STRMAX(szTmp2), r);
 		UNITTEST_TRUE(!StrT::Cmp(szTmp2, szTmp1));
 
-		CUInt64 d3;
+		cUInt64 d3;
 		d3.SetStr(szTmp2, r);
 		UNITTEST_TRUE(d1 == d3);
 		UNITTEST_TRUE(d1 == d2);
 	}
 	void UnitTestStr(RADIX_t r)
 	{
-		CUInt64 d1;
+		cUInt64 d1;
 		d1.SetRandomBits(64);
 		UnitTestStr(d1, r);
 	}
 
 	void UnitTestPrimes()
 	{
-		for (CUInt64::UNIT_t i = 2; i < 200; i++)
+		for (cUInt64::UNIT_t i = 2; i < 200; i++)
 		{
-			CUInt64 n(i);
+			cUInt64 n(i);
 			if (n.isPrime())
 			{
-				CUnitTests::sm_pLog->addDebugInfoF("Prime=%d", i);
+				cUnitTests::sm_pLog->addDebugInfoF("Prime=%d", i);
 			}
 		}
 	}
 
-	UNITTEST_METHOD(CUInt64)
+	UNITTEST_METHOD(cUInt64)
 	{
 		//! Hold numbers. simple assignment
-		const CUInt64 nu1(1);
-		const CUInt64 nu2(2);
-		const CUInt64 nu19(19);
-		const CUInt64 nu25(25);
+		const cUInt64 nu1(1);
+		const cUInt64 nu2(2);
+		const cUInt64 nu19(19);
+		const cUInt64 nu25(25);
 
 		UNITTEST_TRUE(nu19 == 19);
 
-		CUInt64 nux1(1234567890);
+		cUInt64 nux1(1234567890);
 		UNITTEST_TRUE(nux1.get_Val<UINT32>() == 1234567890);
-		CUInt64 nux2(nux1);
+		cUInt64 nux2(nux1);
 		UNITTEST_TRUE(nux1 == nux2);
 		UNITTEST_TRUE(nux2.get_Val<UINT32>() == 1234567890);
 		nux2 = nu25;
 		UNITTEST_TRUE(nux2 == nu25);
 		UNITTEST_TRUE(nux2 == 25);
-		CUInt64 nux3;
+		cUInt64 nux3;
 
 		UnitTestPrimes();
 
@@ -383,10 +383,10 @@ UNITTEST_CLASS(CUInt64)
 		UNITTEST_TRUE(nu25.isOdd());
 		nux1.SetStr(k_Tmp16, 0x10);	// hex.
 
-		UNITTEST_TRUE(CUInt64((CUInt64::UNIT_t)0).get_Highest1Bit() == 0);
-		UNITTEST_TRUE(CUInt64(1).get_Highest1Bit() == 1);
-		UNITTEST_TRUE(CUInt64(4095).get_Highest1Bit() == 12);
-		UNITTEST_TRUE(CUInt64(4096).get_Highest1Bit() == 13);
+		UNITTEST_TRUE(cUInt64((cUInt64::UNIT_t)0).get_Highest1Bit() == 0);
+		UNITTEST_TRUE(cUInt64(1).get_Highest1Bit() == 1);
+		UNITTEST_TRUE(cUInt64(4095).get_Highest1Bit() == 12);
+		UNITTEST_TRUE(cUInt64(4096).get_Highest1Bit() == 13);
 
 		// Primitives.
 		UINT32 u32 = nu19.get_Val<UINT32>();
@@ -417,7 +417,7 @@ UNITTEST_CLASS(CUInt64)
 		UNITTEST_TRUE(nux1.IsSet(iBit + 32)); // 1
 		nux1 >>= iBit;
 
-		UNITTEST_TRUE(nux1 == CUInt64("4294967321")); // 4294967321
+		UNITTEST_TRUE(nux1 == cUInt64("4294967321")); // 4294967321
 		nux1.ModBit(31, true);
 		nux1.ModBit(32, false);
 		UNITTEST_TRUE(nux1.get_Val<UINT>() == 2147483673U); // 2147483673
@@ -432,7 +432,7 @@ UNITTEST_CLASS(CUInt64)
 		// iLen = nux2.GetStr( szTmp, STRMAX(szTmp));
 
 		nux3 = nux1;
-		nux3 *= CUInt64(1UL << 31);
+		nux3 *= cUInt64(1UL << 31);
 		// iLen = nux3.GetStr( szTmp, STRMAX(szTmp));
 
 		UNITTEST_TRUE(nux2 == nux3);
@@ -455,43 +455,43 @@ UNITTEST_CLASS(CUInt64)
 		nux1.SetStr(k_Tmp9s);
 		nux1.OpAdd1(1);
 		UNITTEST_TRUE(!nux1.isOdd());
-		UNITTEST_TRUE(nux1 == CUInt64(k_Tmp32));
+		UNITTEST_TRUE(nux1 == cUInt64(k_Tmp32));
 
 		nux2 = k_Tmp16;
 		nux3 = nux1 + nux2;
 		nux3 += nux1;
 		iLen = nux3.GetStr(szTmp, STRMAX(szTmp));
-		UNITTEST_TRUE(nux3 == CUInt64("200000000000000010000000000000000"));
+		UNITTEST_TRUE(nux3 == cUInt64("200000000000000010000000000000000"));
 
 		// Subtract
 		nux1.SetStr(k_Tmp32);
 		nux1.OpSubtract1(1);
 		UNITTEST_TRUE(nux1.isOdd());
-		UNITTEST_TRUE(nux1 == CUInt64(k_Tmp9s));
+		UNITTEST_TRUE(nux1 == cUInt64(k_Tmp9s));
 
 		nux2 = k_Tmp16;
 		nux1++;
 		nux3 = nux1 - nux2;
 		nux3 -= nux2;
-		UNITTEST_TRUE(nux3 == CUInt64("99999999999999980000000000000000"));
+		UNITTEST_TRUE(nux3 == cUInt64("99999999999999980000000000000000"));
 
 		// Multiply()
 		nux1.SetStr(k_Tmp32);
 		nux1.OpMultiply(2);
 		// iLen = nux1.GetStr( szTmp, STRMAX(szTmp));
-		UNITTEST_TRUE(nux1 == CUInt64("200000000000000000000000000000000"));
+		UNITTEST_TRUE(nux1 == cUInt64("200000000000000000000000000000000"));
 
 		nux2 = k_Tmp16;
 		nux3 = nux2 * nux2;
-		UNITTEST_TRUE(nux3 == CUInt64(k_Tmp32));
+		UNITTEST_TRUE(nux3 == cUInt64(k_Tmp32));
 		nux3 *= nux1;
 		// iLen = nux3.GetStr( szTmp, STRMAX(szTmp));
-		UNITTEST_TRUE(nux3 == CUInt64("20000000000000000000000000000000000000000000000000000000000000000"));
+		UNITTEST_TRUE(nux3 == cUInt64("20000000000000000000000000000000000000000000000000000000000000000"));
 
 		// Divide.
 		nux1.SetStr(k_Tmp32);
 		nux1.OpDivide(2);
-		UNITTEST_TRUE(nux1 == CUInt64("50000000000000000000000000000000"));
+		UNITTEST_TRUE(nux1 == cUInt64("50000000000000000000000000000000"));
 
 		nux1.SetStr(k_Tmp32);
 		nux2.SetStr(k_Tmp16);
@@ -509,36 +509,36 @@ UNITTEST_CLASS(CUInt64)
 		// Div/Mod combined.
 		nux1.SetStr(k_TmpX);
 		nux2.SetStr(k_Tmp16);
-		CUInt64 quotient, remainder;
-		CUInt64::Divide(nux1, nux2, quotient, remainder);
+		cUInt64 quotient, remainder;
+		cUInt64::Divide(nux1, nux2, quotient, remainder);
 		nux3 = (quotient * nux2) + remainder;	// test reverse Divide operation.
 		UNITTEST_TRUE(nux3 == nux1);
 
 		// power math
-		nux3.SetPower(CUInt64(k_Tmp16), nu2);
-		UNITTEST_TRUE(nux3 == CUInt64(k_Tmp32));
+		nux3.SetPower(cUInt64(k_Tmp16), nu2);
+		UNITTEST_TRUE(nux3 == cUInt64(k_Tmp32));
 
 		UNITTEST_TRUE(nu19.isPrime());
 		UNITTEST_TRUE(!nu25.isPrime());
-		UNITTEST_TRUE(CUInt64("689572171629632424814677540353").isPrime());
+		UNITTEST_TRUE(cUInt64("689572171629632424814677540353").isPrime());
 
-		if (CUnitTestCur::IsTestInteractive())
+		if (cUnitTestCur::IsTestInteractive())
 		{
 			// This can take a long time.
 			// 2^1024 - 2^960 - 1 + 2^64 * { [2^894 pi] + 129093 }
 
 			log.addDebugInfoF("Calculating big prime");
 
-			CUInt64 p;
+			cUInt64 p;
 			p.SetRandomPrime(128);
 			UnitTestStr(p, 10);
 
 			static const char* k_Prime = "7";
-			CUInt64 p1024(k_Prime);
+			cUInt64 p1024(k_Prime);
 			UNITTEST_TRUE(p1024.isPrime());
 		}
 #endif
 	}
 };
-UNITTEST_REGISTER(CUInt64, UNITTEST_LEVEL_Core);
+UNITTEST_REGISTER(cUInt64, UNITTEST_LEVEL_Core);
 #endif

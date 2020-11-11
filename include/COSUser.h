@@ -1,15 +1,15 @@
 //
-//! @file COSUser.h
+//! @file cOSUser.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_COSUser_H
-#define _INC_COSUser_H
+#ifndef _INC_cOSUser_H
+#define _INC_cOSUser_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
-#include "COSHandle.h"
+#include "cOSHandle.h"
 #include "FileName.h"
 
 //! Integrity levels added to WinSDK v6.1 (Vista)
@@ -28,17 +28,17 @@ struct _TOKEN_STATISTICS;
 namespace Gray 
 {
 #if defined(_WIN32) && ! defined(UNDER_CE)
-	class CSecurityId;
+	class cSecurityId;
 
-	class GRAYCORE_LINK COSUserToken : public COSHandle
+	class GRAYCORE_LINK cOSUserToken : public cOSHandle
 	{
-		//! @class GrayLib::COSUserToken
+		//! @class GrayLib::cOSUserToken
 		//! _WIN32 User access token for secure access to some system object.
-		//! SetPrivilege( SE_DEBUG_NAME ) to get debug type info like COSProcess.get_CommandLine().
+		//! SetPrivilege( SE_DEBUG_NAME ) to get debug type info like cOSProcess.get_CommandLine().
 		//! like ATL CAccessToken
 	public:
-		COSUserToken();
-		COSUserToken(DWORD dwDesiredAccess, HANDLE hProcess = INVALID_HANDLE_VALUE);
+		cOSUserToken();
+		cOSUserToken(DWORD dwDesiredAccess, HANDLE hProcess = INVALID_HANDLE_VALUE);
 
 		HRESULT OpenProcessToken(DWORD dwDesiredAccess, HANDLE hProcess = INVALID_HANDLE_VALUE);
 		HRESULT LogonUserX(const char* pszName, const char* pszPass);
@@ -50,7 +50,7 @@ namespace Gray
 		HRESULT GetIntegrityLevel();
 		int get_IntegrityLevel();
 
-		HRESULT GetSID(CSecurityId& sid);
+		HRESULT GetSID(cSecurityId& sid);
 		HRESULT GetStatistics(struct _TOKEN_STATISTICS* pStats);
 	};
 #endif

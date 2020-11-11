@@ -1,27 +1,27 @@
 //
-//! @file CFloat.h
+//! @file cFloat.h
 //! info for float/double types.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CFloat_H
-#define _INC_CFloat_H
+#ifndef _INC_cFloat_H
+#define _INC_cFloat_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
-#include "CTypes.h"
-#include "CBits.h"
-#include "CUnitTestDecl.h"
-#include "CDebugAssert.h"
+#include "cTypes.h"
+#include "cBits.h"
+#include "cUnitTestDecl.h"
+#include "cDebugAssert.h"
 
-UNITTEST_PREDEF(CFloat32)
+UNITTEST_PREDEF(cFloat32)
 
 namespace Gray
 {
-	class GRAYCORE_LINK CFloat32
+	class GRAYCORE_LINK cFloat32
 	{
-		//! @class Gray::CFloat32
+		//! @class Gray::cFloat32
 		//! pack/unpack IEEE float32/float http://en.wikipedia.org/wiki/IEEE_754-1985
 		//! Use FLT_MAX
 	public:
@@ -38,11 +38,11 @@ namespace Gray
 		static const UINT32 k_MANT_BITS = 23;			//!< 23 bits = fractional mantissa = FLT_MANT_DIG
 
 	public:
-		CFloat32()
+		cFloat32()
 		{
 			// undefined.
 		}
-		CFloat32(float f)
+		cFloat32(float f)
 		{
 			m_v.u_f = f;
 		}
@@ -78,12 +78,12 @@ namespace Gray
 			return (m_v.u_dw & k_MANT_MASK);
 		}
 
-		UNITTEST_FRIEND(CFloat32);
+		UNITTEST_FRIEND(cFloat32);
 	};
 
-	class GRAYCORE_LINK CFloat64
+	class GRAYCORE_LINK cFloat64
 	{
-		//! @class Gray::CFloat64
+		//! @class Gray::cFloat64
 		//! pack/unpack IEEE float64/double http://en.wikipedia.org/wiki/IEEE_754-1985
 		//! Use DBL_MAX
 
@@ -98,11 +98,11 @@ namespace Gray
 		static const UINT32 k_MANT_BITS = 52;								//!< 52 bits = fractional mantissa
 
 	public:
-		CFloat64()
+		cFloat64()
 		{
 			// undefined.
 		}
-		CFloat64(double d)
+		cFloat64(double d)
 		{
 			m_v.u_d = d;
 		}
@@ -145,7 +145,7 @@ namespace Gray
 		}
 	};
 
-	// class CFloat80 // long double or "double double" NOT M$?
+	// class cFloat80 // long double or "double double" NOT M$?
 };
 
-#endif // _INC_CFloat_H
+#endif // _INC_cFloat_H

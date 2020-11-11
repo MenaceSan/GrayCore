@@ -9,9 +9,9 @@
 #include "StrChar.h"
 #include "StrFormat.h"
 #include "StrConst.h"
-#include "CLogMgr.h"
-#include "CDebugAssert.h"
-#include "CUnitTest.h"
+#include "cLogMgr.h"
+#include "cDebugAssert.h"
+#include "cUnitTest.h"
 
 namespace Gray
 {
@@ -21,8 +21,8 @@ namespace Gray
 	{
 		//! @note In a static lib, there is no good way to force a template function to instantiate. other than calling it!
 
-		static const CStrConst k_t1 = CSTRCONST("sdfsdf1");
-		static const CStrConst k_t2 = CSTRCONST("sdfsdF23 5");	// lower case = higher number ASCII.
+		static const cStrConst k_t1 = CSTRCONST("sdfsdf1");
+		static const cStrConst k_t2 = CSTRCONST("sdfsdF23 5");	// lower case = higher number ASCII.
 		TYPE szTmp[StrT::k_LEN_MAX];
 
 		STATIC_ASSERT('\n' == 0x0a, Check_NL);	// StrChar::k_NL
@@ -64,7 +64,7 @@ namespace Gray
 		pRetChar = FindCharRev<TYPE>(k_t1, (TYPE) 'f');
 		UNITTEST_TRUE(pRetChar != nullptr && *pRetChar == 'f');	// f1
 
-		static CStrConst k_tSent = CSTRCONST("This is a sentence. And another. // comment");
+		static cStrConst k_tSent = CSTRCONST("This is a sentence. And another. // comment");
 
 		nLen = FindWord<TYPE>(k_tSent, CSTRCONST("sentence"));
 		UNITTEST_TRUE(nLen == 18);
@@ -203,7 +203,7 @@ namespace Gray
 		UNITTEST_TRUE(bIsWhitespace);
 		bIsWhitespace = StrT::IsWhitespace<TYPE>(nullptr);
 		UNITTEST_TRUE(bIsWhitespace);
-		bIsWhitespace = StrT::IsWhitespace<TYPE>(CStrConst::k_Empty);
+		bIsWhitespace = StrT::IsWhitespace<TYPE>(cStrConst::k_Empty);
 		UNITTEST_TRUE(bIsWhitespace);
 
 		//**********************
@@ -227,7 +227,7 @@ namespace Gray
 		UNITTEST_TRUE(!StrT::Cmp<TYPE>(szTmp, CSTRCONST("this is a string")));
 
 		//***************************
-		static CStrConst k_tEsc = CSTRCONST("sd\nf\tsd\tf2\n");
+		static cStrConst k_tEsc = CSTRCONST("sd\nf\tsd\tf2\n");
 		const StrLen_t iLenStr = StrT::Len<TYPE>(k_tEsc);
 		UNITTEST_TRUE(iLenStr == 11);
 
@@ -250,7 +250,7 @@ namespace Gray
 		UNITTEST_TRUE(iLenD == iLenStr);
 		UNITTEST_TRUE(!StrT::Cmp<TYPE>(szTmpD1, k_tEsc));
 
-		static CStrConst k_Q = CSTRCONST("\"abcdefgh\"");
+		static cStrConst k_Q = CSTRCONST("\"abcdefgh\"");
 		const TYPE* pszQ = k_Q;
 		iLenD = StrT::EscSeqRemoveQ<TYPE>(szTmpD1, pszQ, STRMAX(szTmpD1), StrT::k_LEN_MAX);
 		UNITTEST_TRUE(iLenD == 10);

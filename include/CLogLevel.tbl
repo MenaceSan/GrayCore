@@ -1,5 +1,5 @@
 //
-//! @file CLogLevel.tbl
+//! @file cLogLevel.tbl
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 LOGLEVELDEF(ANY,	0,	"",				"Anything. All. Very minor detail.")

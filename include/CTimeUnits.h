@@ -1,27 +1,27 @@
 //
-//! @file CTimeUnits.h
-//! common for CTimeInt, CTimeDouble, CTimeSys
+//! @file cTimeUnits.h
+//! common for cTimeInt, cTimeDouble, cTimeSys
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CTimeUnits_H
-#define _INC_CTimeUnits_H
+#ifndef _INC_cTimeUnits_H
+#define _INC_cTimeUnits_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
 #include "StrConst.h"
 #include "StrArg.h"
-#include "CUnitTestDecl.h"
-#include "CDebugAssert.h"
+#include "cUnitTestDecl.h"
+#include "cDebugAssert.h"
 #include "HResult.h"
 #include <time.h>	// system time_t for count of seconds. int32 or int64.
 
-UNITTEST_PREDEF(CTimeUnits);
+UNITTEST_PREDEF(cTimeUnits);
 
 namespace Gray
 {
-	// Base type used for CTimeInt Might be 64 bits ?? or _USE_32BIT_TIME_T
+	// Base type used for cTimeInt Might be 64 bits ?? or _USE_32BIT_TIME_T
 	typedef time_t TIMESEC_t;	//!< absolute seconds since January 1, 1970. (signed) NOTE: Changing to __time64_t just adds more range with same values. (>2038)
 	typedef int TIMESECD_t;		//!< signed delta seconds from some epoch.
 
@@ -42,7 +42,7 @@ namespace Gray
 		TZ_CST = (6 * 60),
 		TZ_MST = (7 * 60),
 		TZ_PST = (8 * 60),		//!< Pacific Standard Time Zone. Default for Windows.
-		TZ_MAX = (24 * 60),		//!< Max offset. over this is special mapped CTimeZone.
+		TZ_MAX = (24 * 60),		//!< Max offset. over this is special mapped cTimeZone.
 		TZ_LOCAL = 0x7FFF,		//!< just use local time zone. might include DST ??
 	};
 
@@ -111,7 +111,7 @@ namespace Gray
 	struct CTimeUnit
 	{
 		//! @struct Gray::CTimeUnit
-		//! metadata describing ratios between relative time units in CTimeUnits.
+		//! metadata describing ratios between relative time units in cTimeUnits.
 		//! per TIMEUNIT_TYPE Unit
 		const GChar_t* m_pszUnitNameL;	//!< long unit name
 		const GChar_t* m_pszUnitNameS;	//!< short abbreviated unit name
@@ -125,7 +125,7 @@ namespace Gray
 	enum TIMEUNIT_TYPE
 	{
 		//! @enum Gray::TIMEUNIT_TYPE
-		//! Enumerate TIMEUNIT_t (16 bit max) elements of CTimeUnits and CTimeParser
+		//! Enumerate TIMEUNIT_t (16 bit max) elements of cTimeUnits and cTimeParser
 		TIMEUNIT_UNUSED = -1,	//!< Marks end.
 		TIMEUNIT_Year = 0,		//!< e.g. 2008. (1<=x<=3000)
 		TIMEUNIT_Month,			//!< base 1, NOT Base 0 like = TIMEMONTH_Jan. (1<=x<=12)
@@ -136,17 +136,17 @@ namespace Gray
 		TIMEUNIT_Millisecond,	//!< 1/1000 = thousandth of a second. (0<=x<=999)
 		TIMEUNIT_Microsecond,	//!< millionth of a second. (0<=x<=999)
 		TIMEUNIT_TZ,			//!< TZ + DST
-		TIMEUNIT_QTY,			//!< END of CTimeUnits
+		TIMEUNIT_QTY,			//!< END of cTimeUnits
 		// used for parsing only.
 		TIMEUNIT_DOW,			//!< Ignore this for units storage. its redundant.
 		TIMEUNIT_Ignore,		//!< Just ignore this duplicate. We have already dealt with it.
 		TIMEUNIT_Numeric,		//!< A numeric value of unknown type (parsing).
-		TIMEUNIT_QTY2,			//!< END of CTimeParser
+		TIMEUNIT_QTY2,			//!< END of cTimeParser
 	};
 
-	class GRAYCORE_LINK CTimeUnits
+	class GRAYCORE_LINK cTimeUnits
 	{
-		//! @class Gray::CTimeUnits
+		//! @class Gray::cTimeUnits
 		//! Decompose/Break time into units in order of size.
 		//! like: struct tm for POSIX time_t.
 		//! like: SYSTEMTIME for _WIN32
@@ -192,14 +192,14 @@ namespace Gray
 
 	public:
 #ifdef _WIN32
-		CTimeUnits(const SYSTEMTIME& sysTime);
+		cTimeUnits(const SYSTEMTIME& sysTime);
 		bool GetSys(SYSTEMTIME& sysTime) const;
 		void SetSys(const SYSTEMTIME& sysTime);
 #endif
 		void SetZeros();
 		bool InitTimeNow(TZ_TYPE nTimeZoneOffset = TZ_LOCAL);
 
-		COMPARE_TYPE Compare(CTimeUnits& b) const;
+		COMPARE_TYPE Compare(cTimeUnits& b) const;
 		bool isTimeFuture() const;
 		bool isTimePast() const
 		{
@@ -244,7 +244,7 @@ namespace Gray
 			(&m_wYear)[i] = wVal;
 		}
 
-		bool operator == (const CTimeUnits& rTu) const
+		bool operator == (const cTimeUnits& rTu) const
 		{
 			return(!::memcmp(this, &rTu, sizeof(rTu)));	// All of it ?
 		}
@@ -300,11 +300,11 @@ namespace Gray
 			return (IsLeapYear(m_wYear) == 0) ? 365 : 366;
 		}
 
-		CTimeUnits(void)
+		cTimeUnits(void)
 		{
 			SetZeros();	// a valid time?
 		}
-		CTimeUnits(TIMEUNIT_t wYear, TIMEUNIT_t wMonth, TIMEUNIT_t wDay, TIMEUNIT_t wHour = 0, TIMEUNIT_t wMinute = 0, TIMEUNIT_t wSecond = 0, TIMEUNIT_t wMilliseconds = 0, TIMEUNIT_t wMicroseconds = 0, TZ_TYPE nTZ = TZ_UTC)
+		cTimeUnits(TIMEUNIT_t wYear, TIMEUNIT_t wMonth, TIMEUNIT_t wDay, TIMEUNIT_t wHour = 0, TIMEUNIT_t wMinute = 0, TIMEUNIT_t wSecond = 0, TIMEUNIT_t wMilliseconds = 0, TIMEUNIT_t wMicroseconds = 0, TZ_TYPE nTZ = TZ_UTC)
 			: m_wYear(wYear)
 			, m_wMonth(wMonth)
 			, m_wDay(wDay)
@@ -317,13 +317,13 @@ namespace Gray
 		{
 		}
 
-		UNITTEST_FRIEND(CTimeUnits);
+		UNITTEST_FRIEND(cTimeUnits);
 	};
 
 	//*******************************************************
-	struct CTimeParserUnit
+	struct cTimeParserUnit
 	{
-		//! @struct Gray::CTimeParserUnit
+		//! @struct Gray::cTimeParserUnit
 		//! Helper for parsing time units from string.
 
 		TIMEUNIT_TYPE m_Type;	//!< What type of field does this look like. best guess. TIMEUNIT_Sec
@@ -348,19 +348,19 @@ namespace Gray
 		}
 	};
 
-	class GRAYCORE_LINK CTimeParser
+	class GRAYCORE_LINK cTimeParser
 	{
-		//! @class Gray::CTimeParser
+		//! @class Gray::cTimeParser
 		//! Try to interpret/parse a string as a date/time.
-		//! Hold result of the first parsing pass to (perhaps) process the time string as CTimeUnits.
+		//! Hold result of the first parsing pass to (perhaps) process the time string as cTimeUnits.
 
 	public:
-		CTimeParserUnit m_Unit[TIMEUNIT_QTY2];		//!< space for parsed results.
+		cTimeParserUnit m_Unit[TIMEUNIT_QTY2];		//!< space for parsed results.
 		int m_iUnitsParsed;		//!< m_Unit used. <TIMEUNIT_QTY2
 		int m_iUnitsMatched;	//!< m_iUnitsMatched <= m_iUnitsParsed and all m_Type are set. No use of TIMEUNIT_Numeric
 
 	public:
-		static bool GRAYCALL TestMatchUnit(const CTimeParserUnit& u, TIMEUNIT_TYPE t);
+		static bool GRAYCALL TestMatchUnit(const cTimeParserUnit& u, TIMEUNIT_TYPE t);
 		static TIMEUNIT_TYPE GRAYCALL GetTypeFromFormatCode(GChar_t ch);
 		int FindType(TIMEUNIT_TYPE t) const;
 		void SetUnitFormats(const GChar_t* pszFormat);
@@ -382,25 +382,25 @@ namespace Gray
 			return m_Unit[i].m_iOffsetSep;
 		}
 
-		bool TestMatchFormat(const CTimeParser& parserFormat, bool bTrimJunk = false);
+		bool TestMatchFormat(const cTimeParser& parserFormat, bool bTrimJunk = false);
 		bool TestMatch(const GChar_t* pszFormat);
 		bool TestMatches(const GChar_t** ppStrFormats = nullptr);
 
-		HRESULT GetTimeUnits(OUT CTimeUnits& tu) const;
+		HRESULT GetTimeUnits(OUT cTimeUnits& tu) const;
 
-		CTimeParser()
+		cTimeParser()
 			: m_iUnitsParsed(0)
 			, m_iUnitsMatched(0)
 		{
 			m_Unit[0].Init();
 		}
-		CTimeParser(const GChar_t* pszTimeString)
+		cTimeParser(const GChar_t* pszTimeString)
 			: m_iUnitsParsed(0)
 			, m_iUnitsMatched(0)
 		{
 			ParseString(pszTimeString);
 		}
-		CTimeParser(const GChar_t* pszTimeString, const GChar_t** ppStrFormats)
+		cTimeParser(const GChar_t* pszTimeString, const GChar_t** ppStrFormats)
 			: m_iUnitsParsed(0)
 			, m_iUnitsMatched(0)
 		{

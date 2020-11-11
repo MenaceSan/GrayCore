@@ -1,54 +1,54 @@
 //
-//! @file CLogAppendConsole.h
+//! @file cLogAppendConsole.h
 //! specific log destinations/appenders
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CLogAppendConsole_H
-#define _INC_CLogAppendConsole_H
+#ifndef _INC_cLogAppendConsole_H
+#define _INC_cLogAppendConsole_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
-#include "CLogAppender.h"
-#include "CArrayString.h"
-#include "CSingletonPtr.h"
+#include "cLogAppender.h"
+#include "cArrayString.h"
+#include "cSingletonPtr.h"
 
 #if !defined(UNDER_CE) && USE_CRT
 
 namespace Gray
 {
-	class GRAYCORE_LINK CLogAppendConsole : public CLogAppender, public CSingletonSmart<CLogAppendConsole>
+	class GRAYCORE_LINK cLogAppendConsole : public cLogAppender, public cSingletonSmart<cLogAppendConsole>
 	{
-		//! @class Gray::CLogAppendConsole
-		//! Forward debug statements to the console (CAppConsole) (if i have one)
+		//! @class Gray::cLogAppendConsole
+		//! Forward debug statements to the console (cAppConsole) (if i have one)
 		//! No filter and take default formatted string
 	public:
-		CLogAppendConsole();
-		virtual ~CLogAppendConsole();
+		cLogAppendConsole();
+		virtual ~cLogAppendConsole();
 
 		virtual HRESULT WriteString(const LOGCHAR_t* pszMsg) override;
 
-		static HRESULT GRAYCALL AddAppenderCheck(CLogNexus* pLogger = nullptr, bool bAttachElseAlloc = false);
-		static bool GRAYCALL RemoveAppenderCheck(CLogNexus* pLogger, bool bOnlyIfParent);
+		static HRESULT GRAYCALL AddAppenderCheck(cLogNexus* pLogger = nullptr, bool bAttachElseAlloc = false);
+		static bool GRAYCALL RemoveAppenderCheck(cLogNexus* pLogger, bool bOnlyIfParent);
 
 		static HRESULT GRAYCALL ShowMessageBox(cString sMsg, UINT uFlags = 1);	// 1= MB_OKCANCEL
 		static HRESULT GRAYCALL WaitForDebugger();
 
 		CHEAPOBJECT_IMPL;
-		IUNKNOWN_DISAMBIG(CSingletonSmart<CLogAppendConsole>);
+		IUNKNOWN_DISAMBIG(cSingletonSmart<cLogAppendConsole>);
 	};
 
-	class GRAYCORE_LINK CLogAppendTextArray : public CLogAppender, public CSmartBase
+	class GRAYCORE_LINK cLogAppendTextArray : public cLogAppender, public cRefBase
 	{
-		//! @class Gray::CLogAppendTextArray
+		//! @class Gray::cLogAppendTextArray
 		//! Just put the log messages in an array of strings in memory.
 	public:
-		CArrayString<LOGCHAR_t> m_aMsgs;
+		cArrayString<LOGCHAR_t> m_aMsgs;
 		const ITERATE_t m_iMax;				//!< Store this many messages.
 
 	public:
-		CLogAppendTextArray(ITERATE_t iMax = SHRT_MAX)
+		cLogAppendTextArray(ITERATE_t iMax = SHRT_MAX)
 			: m_iMax(iMax)
 		{
 		}
@@ -61,8 +61,8 @@ namespace Gray
 			m_aMsgs.Add(pszMsg);
 			return 1;
 		}
-		IUNKNOWN_DISAMBIG(CSmartBase);
+		IUNKNOWN_DISAMBIG(cRefBase);
 	};
 }
 #endif
-#endif // _INC_CLogAppendConsole_H
+#endif // _INC_cLogAppendConsole_H

@@ -1,16 +1,16 @@
 //
-//! @file CStreamStack.cpp
+//! @file cStreamStack.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
 #include "pch.h"
-#include "CStreamStack.h"
+#include "cStreamStack.h"
 
 namespace Gray
 {
-	HRESULT CStreamStackInp::ReadFill()
+	HRESULT cStreamStackInp::ReadFill()
 	{
-		//! Fill to a CStreamQueue / cQueueBytes / cQueueRW from an upstream input source. m_pStreamInp
+		//! Fill to a cStreamQueue / cQueueBytes / cQueueRW from an upstream input source. m_pStreamInp
 		//! called by ReadX()
 		//! @return how much i got.
 
@@ -36,9 +36,9 @@ namespace Gray
 		return hRes;
 	}
 
-	HRESULT CStreamStackInp::ReadFillAligned(size_t nSizeBlockAlign)
+	HRESULT cStreamStackInp::ReadFillAligned(size_t nSizeBlockAlign)
 	{
-		//! Fill to a CStreamQueue / cQueueBytes / cQueueRW from an upstream input source. m_pStreamInp
+		//! Fill to a cStreamQueue / cQueueBytes / cQueueRW from an upstream input source. m_pStreamInp
 		//! @arg nSizeBlockAlign = I must get at least this amount. else get nothing.
 		//! called by ReadX()
 		//! @return how much i got.
@@ -63,7 +63,7 @@ namespace Gray
 			return E_HANDLE;
 		}
 
-		CStreamTransaction trans(m_pStreamInp);
+		cStreamTransaction trans(m_pStreamInp);
 		HRESULT hRes = m_pStreamInp->ReadX(get_WritePtr(), nWriteQty);
 		if (FAILED(hRes))
 		{
@@ -100,7 +100,7 @@ namespace Gray
 
 	//***********************************
 
-	HRESULT CStreamStackOut::WriteFlush() // virtual
+	HRESULT cStreamStackOut::WriteFlush() // virtual
 	{
 		//! Push the compressed data from m_buffer cQueueRW out to a down stream/file. m_pStreamOut
 		//! called by WriteX()
@@ -121,7 +121,7 @@ namespace Gray
 		return hRes;
 	}
 
-	HRESULT CStreamStackPackets::WriteX(const void* pData, size_t nDataSize) // virtual
+	HRESULT cStreamStackPackets::WriteX(const void* pData, size_t nDataSize) // virtual
 	{
 		//! Take all pData written to me and store in m_buffer.
 		//! @arg pData = nullptr = just test if it has enough room.

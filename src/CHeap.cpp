@@ -1,13 +1,13 @@
 //
-//! @file CHeap.cpp
+//! @file cHeap.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
 #include "pch.h"
-#include "CHeap.h"
-#include "CCodeProfiler.h"
+#include "cHeap.h"
+#include "cCodeProfiler.h"
 #include "StrT.h"
-#include "CLogMgr.h"
+#include "cLogMgr.h"
 
 #if ! defined(UNDER_CE) && USE_CRT
 #include <malloc.h>		// malloc_usable_size() or _msize()
@@ -18,12 +18,12 @@
 
 namespace Gray
 {
-	ITERATE_t CHeap::sm_nAllocs = 0;
+	ITERATE_t cHeap::sm_nAllocs = 0;
 #ifdef USE_HEAP_STATS
-	size_t CHeap::sm_nAllocTotalBytes = 0;
+	size_t cHeap::sm_nAllocTotalBytes = 0;
 #endif
 
-	UINT64 GRAYCALL CHeap::get_PhysTotal() // static
+	UINT64 GRAYCALL cHeap::get_PhysTotal() // static
 	{
 		//! @return total physical memory for this system.
 		//! UINT64 same as size_t for 64bit
@@ -54,7 +54,7 @@ namespace Gray
 		return ms.totalram * (UINT64)ms.mem_unit;
 #endif
 	}
-	UINT64 GRAYCALL CHeap::get_PhysAvail() // static
+	UINT64 GRAYCALL cHeap::get_PhysAvail() // static
 	{
 		//! get total physical memory that might be avail to this process.
 		//! UINT64 same as size_t for 64bit
@@ -85,22 +85,22 @@ namespace Gray
 #endif
 	}
 
-	bool GRAYCALL CHeap::IsValidInside(const void* pData, ptrdiff_t iOffset)// static
+	bool GRAYCALL cHeap::IsValidInside(const void* pData, ptrdiff_t iOffset)// static
 	{
 		//! Is this offset inside the valid heap block.
 		//! @note this should only ever be used in debug code. and only in an ASSERT.
 		CODEPROFILEFUNC();
 		if (iOffset < 0)
 			return false;
-		if (!CHeap::IsValidHeap(pData))
+		if (!cHeap::IsValidHeap(pData))
 			return false;
-		size_t nSize = CHeap::GetSize(pData);
+		size_t nSize = cHeap::GetSize(pData);
 		if ((size_t)iOffset >= nSize)
 			return false;
 		return true;
 	}
 
-	void GRAYCALL CHeap::FreePtr(void* pData) // static
+	void GRAYCALL cHeap::FreePtr(void* pData) // static
 	{
 		//! free a pointer to a block allocated on the heap.
 		//! Same footprint as C free()
@@ -108,12 +108,12 @@ namespace Gray
 		if (pData == nullptr)
 			return;
 #if defined(_DEBUG)
-		ASSERT(CHeap::IsValidHeap(pData));
+		ASSERT(cHeap::IsValidHeap(pData));
 #endif
-		CHeap::sm_nAllocs--;
+		cHeap::sm_nAllocs--;
 #ifdef USE_HEAP_STATS
-		size_t nSizeAllocated = CHeap::GetSize(pData);
-		CHeap::sm_nAllocTotalBytes -= nSizeAllocated;
+		size_t nSizeAllocated = cHeap::GetSize(pData);
+		cHeap::sm_nAllocTotalBytes -= nSizeAllocated;
 #endif
 #if defined(_WIN32) && ! USE_CRT
 		::LocalFree(pData);
@@ -122,7 +122,7 @@ namespace Gray
 #endif
 	}
 
-	void* GRAYCALL CHeap::AllocPtr(size_t iSize) // static
+	void* GRAYCALL cHeap::AllocPtr(size_t iSize) // static
 	{
 		//! Allocate a block of memory on the application heap. assume nothing about its current contents. uninitialized.
 		//! Same footprint as C malloc()
@@ -144,18 +144,18 @@ namespace Gray
 			return nullptr;	// E_OUTOFMEMORY
 		}
 #if defined(_DEBUG)
-		ASSERT(CHeap::IsValidHeap(pData));
+		ASSERT(cHeap::IsValidHeap(pData));
 #endif
-		CHeap::sm_nAllocs++;
+		cHeap::sm_nAllocs++;
 #ifdef USE_HEAP_STATS
-		size_t nSizeAllocated = CHeap::GetSize(pData); // the actual size.
+		size_t nSizeAllocated = cHeap::GetSize(pData); // the actual size.
 		ASSERT(nSizeAllocated >= iSize);
-		CHeap::sm_nAllocTotalBytes += nSizeAllocated;	// actual alloc size may be diff from requested size.
+		cHeap::sm_nAllocTotalBytes += nSizeAllocated;	// actual alloc size may be diff from requested size.
 #endif
 		return pData;
 	}
 
-	void* GRAYCALL CHeap::ReAllocPtr(void* pData, size_t iSize) // static
+	void* GRAYCALL cHeap::ReAllocPtr(void* pData, size_t iSize) // static
 	{
 		//! allocate a different sized block but preserve existing content.
 		//! Same footprint as C realloc()
@@ -170,9 +170,9 @@ namespace Gray
 		else
 		{
 #ifdef USE_HEAP_STATS
-			CHeap::sm_nAllocTotalBytes -= CHeap::GetSize(pData);
+			cHeap::sm_nAllocTotalBytes -= cHeap::GetSize(pData);
 #endif
-			CHeap::sm_nAllocs--;
+			cHeap::sm_nAllocs--;
 		}
 #if defined(_WIN32) && ! USE_CRT
 		void* pData2 = ::LocalReAlloc(pData, iSize, LPTR);
@@ -185,16 +185,16 @@ namespace Gray
 			DEBUG_ASSERT(iSize == 0, "realloc");	// 0 sized malloc may or may not return nullptr ? not sure why.
 			return nullptr;
 		}
-		CHeap::sm_nAllocs++;
+		cHeap::sm_nAllocs++;
 #ifdef USE_HEAP_STATS
-		size_t nSizeAllocated = CHeap::GetSize(pData2);
+		size_t nSizeAllocated = cHeap::GetSize(pData2);
 		ASSERT(nSizeAllocated >= 0 && nSizeAllocated >= iSize);
-		CHeap::sm_nAllocTotalBytes += nSizeAllocated;	// alloc size may be different than requested size.
+		cHeap::sm_nAllocTotalBytes += nSizeAllocated;	// alloc size may be different than requested size.
 #endif
 		return pData2;
 	}
 
-	void GRAYCALL CHeap::Init(int nFlags) // static
+	void GRAYCALL cHeap::Init(int nFlags) // static
 	{
 		//! Initialize the heap to debug if desired.
 		//! @arg nFlags = _CRTDBG_ALLOC_MEM_DF | _CRTDBG_DELAY_FREE_MEM_DF
@@ -207,7 +207,7 @@ namespace Gray
 #endif
 	}
 
-	bool GRAYCALL CHeap::Check() // static
+	bool GRAYCALL cHeap::Check() // static
 	{
 		//! Explicitly check the heap for consistency, validity.
 		//! Assert if the memory check fails.
@@ -223,7 +223,7 @@ namespace Gray
 		return bRet;
 	}
 
-	size_t GRAYCALL CHeap::GetSize(const void* pData) // static
+	size_t GRAYCALL cHeap::GetSize(const void* pData) // static
 	{
 		//! get the actual allocated size of a memory block in bytes.
 		//! @note __linux__ = Not always the size of the allocation request. maybe greater.
@@ -242,7 +242,7 @@ namespace Gray
 #endif
 	}
 
-	bool GRAYCALL CHeap::IsValidHeap(const void* pData) // static
+	bool GRAYCALL cHeap::IsValidHeap(const void* pData) // static
 	{
 		//! is this a valid malloc() heap pointer?
 		//! @note this should only ever be used in debug code. and only in an ASSERT.
@@ -253,10 +253,10 @@ namespace Gray
 		return ::_CrtIsValidHeapPointer(pData) ? true : false;
 #else
 		//! @todo validate the heap block vs static memory for __linux__?
-		return CMem::IsValid(pData, 1);
+		return cMem::IsValid(pData, 1);
 #endif
 #else
-		return CMem::IsValid(pData, 1);
+		return cMem::IsValid(pData, 1);
 #endif
 	}
 
@@ -264,10 +264,10 @@ namespace Gray
 
 #if defined(_MSC_VER) && (_MSC_VER >= 1300)
 
-	CHeapAlign::CHeader* GRAYCALL CHeapAlign::GetHeader(const void* pData) // static
+	cHeapAlign::CHeader* GRAYCALL cHeapAlign::GetHeader(const void* pData) // static
 	{
 		//! Get the header prefix for the align memory block.
-		//! pData = the pointer returned by CHeapAlign::Alloc
+		//! pData = the pointer returned by cHeapAlign::Alloc
 		//! ASSUME IsAlignedAlloc()
 		if (pData == nullptr)
 			return nullptr;
@@ -276,15 +276,15 @@ namespace Gray
 		return((CHeader*)(uDataPtr - sizeof(CHeader)));
 	}
 
-	bool GRAYCALL CHeapAlign::IsAlignedAlloc(const void* pData, size_t iAligned) // static
+	bool GRAYCALL cHeapAlign::IsAlignedAlloc(const void* pData, size_t iAligned) // static
 	{
-		//! Was pData created using CHeapAlign::Alloc() ?
+		//! Was pData created using cHeapAlign::Alloc() ?
 		//! @note _DEBUG heap is VERY different from release heap structure.
 		if (pData == nullptr)
 			return false;
 		UNREFERENCED_PARAMETER(iAligned);
 #ifdef _DEBUG
-		return CValArray::IsFilledSize<BYTE>(((BYTE*)pData) - k_SizeGap, k_SizeGap, FILL_AlignTail);
+		return cValArray::IsFilledSize<BYTE>(((BYTE*)pData) - k_SizeGap, k_SizeGap, FILL_AlignTail);
 #else
 		CHeader* pAlign = GetHeader(pData);
 		BYTE* pAlloc = (BYTE*)(pAlign->m_pMallocHead);
@@ -296,7 +296,7 @@ namespace Gray
 #endif
 	}
 
-	bool GRAYCALL CHeapAlign::IsValidInside(const void* pData, INT_PTR iOffset)// static
+	bool GRAYCALL cHeapAlign::IsValidInside(const void* pData, INT_PTR iOffset)// static
 	{
 		CODEPROFILEFUNC();
 		if (!IsAlignedAlloc(pData, sizeof(void*)))
@@ -307,7 +307,7 @@ namespace Gray
 		CHeader* pHdr = GetHeader(pData);
 
 #ifdef _DEBUG
-		if (!CValArray::IsFilledSize<BYTE>(pHdr->m_TailGap, sizeof(pHdr->m_TailGap), FILL_AlignTail)) //  seem to be aligned block
+		if (!cValArray::IsFilledSize<BYTE>(pHdr->m_TailGap, sizeof(pHdr->m_TailGap), FILL_AlignTail)) //  seem to be aligned block
 			return false;
 #endif
 
@@ -319,7 +319,7 @@ namespace Gray
 		return((size_t)iOffset < nSize);
 	}
 
-	bool GRAYCALL CHeapAlign::IsValidHeap(const void* pData)// static
+	bool GRAYCALL cHeapAlign::IsValidHeap(const void* pData)// static
 	{
 		//! is this a valid malloc() or _aligned_malloc() pointer?
 		//! May or may not be aligned.
@@ -336,7 +336,7 @@ namespace Gray
 		CHeader* pHdr = GetHeader(pData);
 
 #ifdef _DEBUG
-		if (!CValArray::IsFilledSize<BYTE>(pHdr->m_TailGap, sizeof(pHdr->m_TailGap), FILL_AlignTail)) //  seem to be aligned block
+		if (!cValArray::IsFilledSize<BYTE>(pHdr->m_TailGap, sizeof(pHdr->m_TailGap), FILL_AlignTail)) //  seem to be aligned block
 		{
 			return false;
 		}
@@ -345,7 +345,7 @@ namespace Gray
 		return SUPER_t::IsValidHeap(pHdr->m_pMallocHead);
 	}
 
-	size_t GRAYCALL CHeapAlign::GetSize(const void* pData)// static
+	size_t GRAYCALL cHeapAlign::GetSize(const void* pData)// static
 	{
 		CODEPROFILEFUNC();
 		if (!IsAlignedAlloc(pData, sizeof(void*)))
@@ -359,7 +359,7 @@ namespace Gray
 		return SUPER_t::GetSize(pHdr->m_pMallocHead);
 	}
 
-	void GRAYCALL CHeapAlign::FreePtr(void* pData)// static
+	void GRAYCALL cHeapAlign::FreePtr(void* pData)// static
 	{
 		//! NOTE: Will work if ! IsAlignedAlloc
 		CODEPROFILEFUNC();
@@ -381,7 +381,7 @@ namespace Gray
 #endif
 	}
 
-	void* GRAYCALL CHeapAlign::AllocPtr(size_t iSize, size_t iAlignment)// static
+	void* GRAYCALL cHeapAlign::AllocPtr(size_t iSize, size_t iAlignment)// static
 	{
 		//! @note _aligned_malloc is based on malloc(); see malloc for more information on using _aligned_malloc
 		//! @arg
@@ -426,24 +426,24 @@ namespace Gray
 //***************************************************************************
 
 #if USE_UNITTESTS
-#include "CUnitTest.h"
+#include "cUnitTest.h"
 
-UNITTEST_CLASS(CHeap)
+UNITTEST_CLASS(cHeap)
 {
-	UNITTEST_METHOD(CHeap)
+	UNITTEST_METHOD(cHeap)
 	{
 		// test physical memory and the heap.
-		UNITTEST_TRUE(CUnitTests::sm_pLog != nullptr);
-		UNITTEST_TRUE(CHeap::Check());
+		UNITTEST_TRUE(cUnitTests::sm_pLog != nullptr);
+		UNITTEST_TRUE(cHeap::Check());
 
-		UINT64 uPhysTotal = CHeap::get_PhysTotal();
+		UINT64 uPhysTotal = cHeap::get_PhysTotal();
 		UNITTEST_TRUE(uPhysTotal);
-		UINT64 uPhysAvail = CHeap::get_PhysAvail();
+		UINT64 uPhysAvail = cHeap::get_PhysAvail();
 		UNITTEST_TRUE(uPhysAvail);
 		sm_pLog->addInfoF("Heap %s free of %s total", LOGSTR(cString::GetSizeK(uPhysAvail)), LOGSTR(cString::GetSizeK(uPhysTotal)));
 
 		// Allocate a bunch of blocks and make sure they stay put til freed
-		CHeapBlock test[32];
+		cHeapBlock test[32];
 		for (ITERATE_t i = 0; i < (ITERATE_t)_countof(test) && !k_asTextLines[i].isNull(); i++)
 		{
 			const GChar_t* pszLine = k_asTextLines[i];
@@ -456,16 +456,16 @@ UNITTEST_CLASS(CHeap)
 			UNITTEST_TRUE(test[j].isValidRead());
 			const GChar_t* pszLine = k_asTextLines[j];
 			StrLen_t iLen = StrT::Len(pszLine);
-			UNITTEST_TRUE(!CMem::Compare(pszLine, test[j].get_DataBytes(), iLen));
+			UNITTEST_TRUE(!cMem::Compare(pszLine, test[j].get_DataBytes(), iLen));
 			test[j].Free();
 		}
 
-		UNITTEST_TRUE(CHeap::Check());
+		UNITTEST_TRUE(cHeap::Check());
 
 		// Test GetSize. NOTE: _MSC_VER always returns the exact size of alloc requested.
 		for (size_t nSizeAlloc = 0; nSizeAlloc < 1024; nSizeAlloc++)
 		{
-			CHeapBlock heapblock(nSizeAlloc);
+			cHeapBlock heapblock(nSizeAlloc);
 			size_t nSizeTest = heapblock.get_AllocSize();
 			if (nSizeAlloc == 0)
 			{
@@ -476,21 +476,21 @@ UNITTEST_CLASS(CHeap)
 		}
 
 		// NOT Aligned allocate.
-		void* pData1N = CHeap::AllocPtr(100);
-		CValArray::FillSize<BYTE>(pData1N, 100, 0x11);
-		UNITTEST_TRUE(!CHeapAlign::IsAlignedAlloc(pData1N, 16)); // Should NOT report it is aligned.
-		CHeap::FreePtr(pData1N);
+		void* pData1N = cHeap::AllocPtr(100);
+		cValArray::FillSize<BYTE>(pData1N, 100, 0x11);
+		UNITTEST_TRUE(!cHeapAlign::IsAlignedAlloc(pData1N, 16)); // Should NOT report it is aligned.
+		cHeap::FreePtr(pData1N);
 
 		// Aligned allocate.
 #if defined(_MSC_VER) && (_MSC_VER >= 1300)
-		void* pData1A = CHeapAlign::AllocPtr(100, 16);
-		CValArray::FillSize<BYTE>(pData1A, 100, 0x22);
-		UNITTEST_TRUE(CHeapAlign::IsAlignedAlloc(pData1A, 16)); // Should report it is aligned.
-		CHeapAlign::FreePtr(pData1A);
+		void* pData1A = cHeapAlign::AllocPtr(100, 16);
+		cValArray::FillSize<BYTE>(pData1A, 100, 0x22);
+		UNITTEST_TRUE(cHeapAlign::IsAlignedAlloc(pData1A, 16)); // Should report it is aligned.
+		cHeapAlign::FreePtr(pData1A);
 #endif
 
-		UNITTEST_TRUE(CHeap::Check());
+		UNITTEST_TRUE(cHeap::Check());
 	}
 };
-UNITTEST_REGISTER(CHeap, UNITTEST_LEVEL_Core);
+UNITTEST_REGISTER(cHeap, UNITTEST_LEVEL_Core);
 #endif

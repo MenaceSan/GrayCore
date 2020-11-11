@@ -1,19 +1,19 @@
 //
-//! @file CFileDir.h
+//! @file cFileDir.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CFileDir_H
-#define _INC_CFileDir_H
+#ifndef _INC_cFileDir_H
+#define _INC_cFileDir_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
-#include "CArrayString.h"
-#include "CFile.h"
-#include "CFileStatus.h"
-#include "CTimeInt.h"
-#include "CString.h"
+#include "cArrayString.h"
+#include "cFile.h"
+#include "cFileStatus.h"
+#include "cTimeInt.h"
+#include "cString.h"
 #include "HResult.h"
 
 #ifdef __linux__
@@ -39,7 +39,7 @@ enum FOF_TYPE_
 #endif
 };
 
-UNITTEST_PREDEF(CFileDir)
+UNITTEST_PREDEF(cFileDir)
 
 namespace Gray
 {
@@ -58,8 +58,8 @@ namespace Gray
 		static const char* k_FileSysName[FILESYS_QTY];		//!< File system types i might support.
 
 		// _WIN32 Info from GetVolumeInformation();
-		CStringF m_sVolumeName;		//!< can be empty.
-		CStringF m_sTypeName;		//!< File system format/type e.g. "NTFS", "FAT"
+		cStringF m_sVolumeName;		//!< can be empty.
+		cStringF m_sTypeName;		//!< File system format/type e.g. "NTFS", "FAT"
 		FILESYS_TYPE m_eType;		//!< Enumerate known types for m_sTypeName (file system type)
 		UINT64 m_nSerialNumber;		//!< Volume serial number (time stamp of last format) e.g. 0x0ca0e613 for _WIN32.
 		DWORD m_dwMaximumComponentLength;	//!< block size? e.g. 255 bytes
@@ -79,7 +79,7 @@ namespace Gray
 
 		static UINT GRAYCALL GetDeviceType(const FILECHAR_t* pszDeviceId);
 		static FILE_SIZE_t GRAYCALL GetDeviceFreeSpace(const FILECHAR_t* pszDeviceId = nullptr);
-		static HRESULT GRAYCALL GetSystemDeviceList(CArrayString<FILECHAR_t>& a);
+		static HRESULT GRAYCALL GetSystemDeviceList(cArrayString<FILECHAR_t>& a);
 	};
 
 	class GRAYCORE_LINK cFileFindEntry
@@ -92,7 +92,7 @@ namespace Gray
 		typedef cFileFindEntry THIS_t;
 
 	public:
-		CStringF m_sFileName;	//!< relative file title. (NOT FULL PATH) checks USE_UNICODE_FN and FILECHAR_t.
+		cStringF m_sFileName;	//!< relative file title. (NOT FULL PATH) checks USE_UNICODE_FN and FILECHAR_t.
 
 	public:
 		cFileFindEntry()
@@ -152,7 +152,7 @@ namespace Gray
 				return true;
 			return false;
 		}
-		CStringF get_Name() const
+		cStringF get_Name() const
 		{
 			return m_sFileName;
 		}
@@ -163,19 +163,19 @@ namespace Gray
 		//! @class Gray::cFileFind
 		//! Read/Browse/Enumerate directory in ongoing/serial state. use FindFileNext() to get next file.
 		//! Similar to MFC CFileFind.
-		//! @note Don't delete files while reading here. no idea what effect that has. Use CFileDir.
+		//! @note Don't delete files while reading here. no idea what effect that has. Use cFileDir.
 
 	public:
 		cFileFindEntry m_FileEntry;	//!< The current entry. by calls to FindFile() and FindFileNext()
 
 	private:
-		CStringF m_sDirPath;			//!< Assume it ends with k_DirSep
+		cStringF m_sDirPath;			//!< Assume it ends with k_DirSep
 		DWORD m_nFileFlags;				//!< Options such as follow the links in the directory. Act as though these are regular files.
 #ifdef _WIN32
 		WIN32_FIND_DATAW m_FindInfo;	//!< Always USE_UNICODE as base.
 		HANDLE m_hContext;				//!< Handle for my search. NOT OSHandle, uses FindClose()
 #elif defined(__linux__)
-		CStringF m_sWildcardFilter;		//!< Need to perform wildcard (strip out the *.EXT part) later/manually in Linux.
+		cStringF m_sWildcardFilter;		//!< Need to perform wildcard (strip out the *.EXT part) later/manually in Linux.
 	public:
 		bool m_bReadStats;				//!< e.g. "/proc" directory has no extra stats. don't read them.
 	private:
@@ -185,26 +185,26 @@ namespace Gray
 #endif
 
 	public:
-		explicit cFileFind(CStringF sDirPath = "", DWORD nFileFlags = 0);
+		explicit cFileFind(cStringF sDirPath = "", DWORD nFileFlags = 0);
 		~cFileFind()
 		{
 			CloseContext();
 		}
 
-		CStringF get_DirPath() const
+		cStringF get_DirPath() const
 		{
 			return m_sDirPath;
 		}
-		CStringF GetFilePath(const FILECHAR_t* pszFileTitle) const
+		cStringF GetFilePath(const FILECHAR_t* pszFileTitle) const
 		{
 			//! Create a full file path with directory and file name/title.
-			return CFilePath::CombineFilePathX(m_sDirPath, pszFileTitle);
+			return cFilePath::CombineFilePathX(m_sDirPath, pszFileTitle);
 		}
-		CStringF get_FilePath() const
+		cStringF get_FilePath() const
 		{
 			//! Get Full file path.
 			//! like MFC CFileFind::GetFilePath()
-			return CFilePath::CombineFilePathX(m_sDirPath, m_FileEntry.m_sFileName);
+			return cFilePath::CombineFilePathX(m_sDirPath, m_FileEntry.m_sFileName);
 		}
 		bool isDots() const
 		{
@@ -219,9 +219,9 @@ namespace Gray
 		void CloseContext();
 	};
 
-	class GRAYCORE_LINK CFileDir
+	class GRAYCORE_LINK cFileDir
 	{
-		//! @class Gray::CFileDir
+		//! @class Gray::cFileDir
 		//! A file folder or directory. read/cached as a single action.
 		//! Stores a list of the files as a single action.
 		//! @note i CAN delete files without harming the list. (unlike cFileFind)
@@ -229,10 +229,10 @@ namespace Gray
 		static const int k_FilesMax = 64 * 1024;
 		static const LOGCHAR_t k_szCantMoveFile[];	//!< if MoveDirFiles failed for this.
 
-		CArrayVal2<cFileFindEntry> m_aFiles;	//!< Array of the files we found matching the ReadDir criteria.
+		cArrayVal2<cFileFindEntry> m_aFiles;	//!< Array of the files we found matching the ReadDir criteria.
 
 	protected:
-		CStringF m_sDirPath;	//!< Does NOT include the wild card.
+		cStringF m_sDirPath;	//!< Does NOT include the wild card.
 
 	protected:
 		virtual HRESULT AddFileDirEntry(cFileFindEntry& FileEntry)
@@ -246,11 +246,11 @@ namespace Gray
 		}
 
 	public:
-		explicit CFileDir(CStringF sDirPath = _FN(""))
+		explicit cFileDir(cStringF sDirPath = _FN(""))
 			: m_sDirPath(sDirPath)
 		{
 		}
-		virtual ~CFileDir()
+		virtual ~cFileDir()
 		{
 		}
 
@@ -260,13 +260,13 @@ namespace Gray
 		static HRESULT GRAYCALL CreateDirForFileX(const FILECHAR_t* pszFilePath);
 		static HRESULT GRAYCALL MovePathToTrash(const FILECHAR_t* pszPath, bool bDir);
 
-		static HRESULT GRAYCALL DirFileOp(FILEOP_TYPE eOp, const FILECHAR_t* pszDirSrc, const FILECHAR_t* pszDirDest, DWORD nFileFlags, CLogProcessor* pLog, IStreamProgressCallback* pProgress);
-		static HRESULT GRAYCALL MoveDirFiles(const FILECHAR_t* pszDirSrc, const FILECHAR_t* pszDirDest, CLogProcessor* pLog = nullptr, IStreamProgressCallback* pProgress = nullptr)
+		static HRESULT GRAYCALL DirFileOp(FILEOP_TYPE eOp, const FILECHAR_t* pszDirSrc, const FILECHAR_t* pszDirDest, DWORD nFileFlags, cLogProcessor* pLog, IStreamProgressCallback* pProgress);
+		static HRESULT GRAYCALL MoveDirFiles(const FILECHAR_t* pszDirSrc, const FILECHAR_t* pszDirDest, cLogProcessor* pLog = nullptr, IStreamProgressCallback* pProgress = nullptr)
 		{
 			//! Move this directory and all its files.
 			return DirFileOp(FILEOP_MOVE, pszDirSrc, pszDirDest, 0, pLog, pProgress);
 		}
-		static HRESULT GRAYCALL CopyDirFiles(const FILECHAR_t* pszDirSrc, const FILECHAR_t* pszDirDest, CLogProcessor* pLog = nullptr, IStreamProgressCallback* pProgress = nullptr)
+		static HRESULT GRAYCALL CopyDirFiles(const FILECHAR_t* pszDirSrc, const FILECHAR_t* pszDirDest, cLogProcessor* pLog = nullptr, IStreamProgressCallback* pProgress = nullptr)
 		{
 			//! Copy this directory and all its files.
 			return DirFileOp(FILEOP_COPY, pszDirSrc, pszDirDest, 0, pLog, pProgress);
@@ -275,18 +275,18 @@ namespace Gray
 		{
 			//! Delete this directory and all its files.
 			//! similar to CFileDirDlg::DeleteDirFiles( FOF_NOCONFIRMATION | FOF_SILENT | FOF_NOERRORUI )
-			//! e.g. CFileDir::DeleteDirFiles( pszDirPath ); = delete directory and all its sub stuff.
-			//! e.g. CFileDir::DeleteDirFiles( pszDirPath, "*.h" ); = delete contents of directory and all its wild carded children. leaves directory.
+			//! e.g. cFileDir::DeleteDirFiles( pszDirPath ); = delete directory and all its sub stuff.
+			//! e.g. cFileDir::DeleteDirFiles( pszDirPath, "*.h" ); = delete contents of directory and all its wild carded children. leaves directory.
 			return DirFileOp(FILEOP_DELETE, pszDirName, pszWildcardFile, nFileFlags, nullptr, nullptr);
 		}
 
 		static HRESULT GRAYCALL DeletePathX(const FILECHAR_t* pszPath, DWORD nFileFlags);
 
-		CStringF get_DirPath() const
+		cStringF get_DirPath() const
 		{
 			return m_sDirPath;
 		}
-		void put_DirPath(CStringF sDirPath)
+		void put_DirPath(cStringF sDirPath)
 		{
 			m_sDirPath = sDirPath;
 			// clear list only if changed?
@@ -304,23 +304,23 @@ namespace Gray
 		{
 			return m_aFiles.ElementAt(i);
 		}
-		CStringF GetEnumTitleX(ITERATE_t i) const
+		cStringF GetEnumTitleX(ITERATE_t i) const
 		{
 			//! Get the file title + ext.
 			ASSERT(m_aFiles.IsValidIndex(i));
 			const cFileFindEntry& rFileEntry = m_aFiles.ConstElementAt(i);
 			return rFileEntry.m_sFileName;
 		}
-		CStringF GetEnumPath(ITERATE_t i) const
+		cStringF GetEnumPath(ITERATE_t i) const
 		{
 			//! Get the full path for the file i.
 			return GetFilePath(GetEnumTitleX(i));
 		}
 
-		CStringF GetFilePath(const FILECHAR_t* pszTitle) const
+		cStringF GetFilePath(const FILECHAR_t* pszTitle) const
 		{
 			//! @return full path.
-			return CFilePath::CombineFilePathX(m_sDirPath, pszTitle);
+			return cFilePath::CombineFilePathX(m_sDirPath, pszTitle);
 		}
 		void RemoveAll()
 		{
@@ -333,15 +333,15 @@ namespace Gray
 		HRESULT ReadDirAnyExt(const FILECHAR_t* pszFilePath, ITERATE_t iFilesMax = k_FilesMax);
 		HRESULT ReadDirPreferredExt(const FILECHAR_t* pszFilePath, const FILECHAR_t* const* pszExtTable);
 
-		UNITTEST_FRIEND(CFileDir);
+		UNITTEST_FRIEND(cFileDir);
 	};
 
 #ifdef GRAY_DLL // force implementation/instantiate for DLL/SO.
 	template class GRAYCORE_LINK CArray < cFileFindEntry, const cFileFindEntry& >;
-	template class GRAYCORE_LINK CArrayTyped < cFileFindEntry, const cFileFindEntry& >;
-	template class GRAYCORE_LINK CArrayVal2 < cFileFindEntry >;
+	template class GRAYCORE_LINK cArrayTyped < cFileFindEntry, const cFileFindEntry& >;
+	template class GRAYCORE_LINK cArrayVal2 < cFileFindEntry >;
 #endif
 
 }
 
-#endif	// _INC_CFileDir_H
+#endif	// _INC_cFileDir_H

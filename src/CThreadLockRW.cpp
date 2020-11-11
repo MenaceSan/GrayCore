@@ -1,25 +1,25 @@
 //
-//! @file CThreadLockRW.cpp
+//! @file cThreadLockRW.cpp
 //! http://www.codeproject.com/KB/threads/ReadWriteLock.aspx?msg=1772196
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//! @todo CThreadLockRW
+//! @todo cThreadLockRW
 
 #include "pch.h"
-#include "CThreadLockRW.h"
+#include "cThreadLockRW.h"
 
 #if USE_UNITTESTS
-#include "CUnitTest.h"
-#include "CThreadLocalSys.h"
-#include "CLogMgr.h"
+#include "cUnitTest.h"
+#include "cThreadLocalSys.h"
+#include "cLogMgr.h"
 
-UNITTEST_CLASS(CThreadLockRW)
+UNITTEST_CLASS(cThreadLockRW)
 {
-	UNITTEST_METHOD(CThreadLockRW)
+	UNITTEST_METHOD(cThreadLockRW)
 	{
-		//! TODO CThreadLockRW
+		//! TODO cThreadLockRW
 		//! Test reentrant and upgrade features.
 
-		CThreadLockRW lockRW;
+		cThreadLockRW lockRW;
 #if 0
 		lockRW.IncReadLockCount();
 		lockRW.Lock();
@@ -32,5 +32,5 @@ UNITTEST_CLASS(CThreadLockRW)
 #endif
 	}
 };
-UNITTEST_REGISTER(CThreadLockRW, UNITTEST_LEVEL_Core);
+UNITTEST_REGISTER(cThreadLockRW, UNITTEST_LEVEL_Core);
 #endif

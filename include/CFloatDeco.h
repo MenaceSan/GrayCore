@@ -1,27 +1,27 @@
 //
-//! @file CFloatDeco.h
+//! @file cFloatDeco.h
 //! convert numbers to/from string.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
-#ifndef _INC_CFloatDeco_H
-#define _INC_CFloatDeco_H
+#ifndef _INC_cFloatDeco_H
+#define _INC_cFloatDeco_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
-#include "CFloat.h"
+#include "cFloat.h"
 #include "StrConst.h"
-#include "CDebugAssert.h"	// ASSERT
+#include "cDebugAssert.h"	// ASSERT
 
 namespace Gray
 {
 	// _umul128 TODO MulDiv ?
 
-	class GRAYCORE_LINK CFloatDeco
+	class GRAYCORE_LINK cFloatDeco
 	{
-		//! @class Gray::CFloatDeco
+		//! @class Gray::cFloatDeco
 		//! holds a decomposed double/float value. ignore sign.
-		//! Support class for conversion of double/float to string. Used with CFloat64
+		//! Support class for conversion of double/float to string. Used with cFloat64
 
 	public:
 		static const double k_powersOf10[9];	//!< Table giving binary powers of 10
@@ -34,22 +34,22 @@ namespace Gray
 		int m_iExp2;		//!< Hold base 2 Biased Exponent
 
 	public:
-		CFloatDeco()
+		cFloatDeco()
 			: m_uMant(0), m_iExp2(0)
 		{}
 
-		CFloatDeco(UINT64 uMan, int iExp2)
+		cFloatDeco(UINT64 uMan, int iExp2)
 			: m_uMant(uMan), m_iExp2(iExp2)
 		{}
 
-		CFloatDeco(double d)
+		cFloatDeco(double d)
 		{
 			//! Decompose d.
-			static const int k_DpExponentBias = 0x3FF + CFloat64::k_MANT_BITS;
+			static const int k_DpExponentBias = 0x3FF + cFloat64::k_MANT_BITS;
 
-			CFloat64 u(d);
+			cFloat64 u(d);
 
-			int iExpBiased = (u.m_v.u_qw & CFloat64::k_EXP_MASK) >> CFloat64::k_MANT_BITS;
+			int iExpBiased = (u.m_v.u_qw & cFloat64::k_EXP_MASK) >> cFloat64::k_MANT_BITS;
 			UINT64 nMantSig = u.get_Mantissa();
 			if (iExpBiased != 0)
 			{
@@ -63,16 +63,16 @@ namespace Gray
 			}
 		}
 
-		CFloatDeco operator-(const CFloatDeco& rhs) const
+		cFloatDeco operator-(const cFloatDeco& rhs) const
 		{
 			//! Do math on decomposed number.
 			//! ASSUME same m_iExp2
 			ASSERT(m_iExp2 == rhs.m_iExp2);
 			ASSERT(m_uMant >= rhs.m_uMant);
-			return CFloatDeco(m_uMant - rhs.m_uMant, m_iExp2);
+			return cFloatDeco(m_uMant - rhs.m_uMant, m_iExp2);
 		}
 
-		CFloatDeco operator*(const CFloatDeco& rhs) const
+		cFloatDeco operator*(const cFloatDeco& rhs) const
 		{
 			//! Do math on decomposed numbers.
 
@@ -101,22 +101,22 @@ namespace Gray
 			tmp += 1U << 31;  /// mult_round
 			h = ac + (ad >> 32) + (bc >> 32) + (tmp >> 32);
 #endif
-			return CFloatDeco(h, m_iExp2 + rhs.m_iExp2 + 64);
+			return cFloatDeco(h, m_iExp2 + rhs.m_iExp2 + 64);
 		}
 
-		CFloatDeco Normalize() const
+		cFloatDeco Normalize() const
 		{
 			//! Fix m_iExp2 by making m_uMant as large as possible.
-			//! CBits::Highest1Bit<>
+			//! cBits::Highest1Bit<>
 			ASSERT(m_uMant != 0);
-			BIT_ENUM_t nBit = 64 - CBits::Highest1Bit(m_uMant);
-			return CFloatDeco(m_uMant << nBit, m_iExp2 - nBit);
+			BIT_ENUM_t nBit = 64 - cBits::Highest1Bit(m_uMant);
+			return cFloatDeco(m_uMant << nBit, m_iExp2 - nBit);
 		}
 
-		void NormalizedBoundaries(CFloatDeco* minus, CFloatDeco* plus) const
+		void NormalizedBoundaries(cFloatDeco* minus, cFloatDeco* plus) const
 		{
-			CFloatDeco pl = CFloatDeco((m_uMant << 1) + 1, m_iExp2 - 1).Normalize();
-			CFloatDeco mi = (m_uMant == k_MANT_MASK_X) ? CFloatDeco((m_uMant << 2) - 1, m_iExp2 - 2) : CFloatDeco((m_uMant << 1) - 1, m_iExp2 - 1);
+			cFloatDeco pl = cFloatDeco((m_uMant << 1) + 1, m_iExp2 - 1).Normalize();
+			cFloatDeco mi = (m_uMant == k_MANT_MASK_X) ? cFloatDeco((m_uMant << 2) - 1, m_iExp2 - 2) : cFloatDeco((m_uMant << 1) - 1, m_iExp2 - 1);
 			mi.m_uMant <<= mi.m_iExp2 - pl.m_iExp2;
 			mi.m_iExp2 = pl.m_iExp2;
 			*plus = pl;
@@ -127,7 +127,7 @@ namespace Gray
 		double get_Double() const
 		{
 			//! re-compose double. Convert back to a double. for testing.
-			CFloat64 f(sdfsdf);
+			cFloat64 f(sdfsdf);
 			return f.m_v.u_d;
 		}
 #endif
@@ -149,7 +149,7 @@ namespace Gray
 			return 10;
 		}
 
-		static CFloatDeco GRAYCALL GetCachedPower(int nExp2, OUT int* pnExp10);
+		static cFloatDeco GRAYCALL GetCachedPower(int nExp2, OUT int* pnExp10);
 		static double GRAYCALL toDouble(UINT32 frac1, UINT32 frac2, int nExp10);
 
 		static void GRAYCALL GrisuRound(char* pszOut, StrLen_t len, UINT64 delta, UINT64 rest, UINT64 ten_kappa, UINT64 wp_w);

@@ -1,20 +1,20 @@
 //
-//! @file CTimeSys.h
+//! @file cTimeSys.h
 //! Highest precision timer we can get on this system.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CTimeSys_H
-#define _INC_CTimeSys_H
+#ifndef _INC_cTimeSys_H
+#define _INC_cTimeSys_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
-#include "CUnitTestDecl.h"
-#include "CDebugAssert.h"
+#include "cUnitTestDecl.h"
+#include "cDebugAssert.h"
 #include <time.h> // timespec
 
-UNITTEST_PREDEF(CTimeSys)
+UNITTEST_PREDEF(cTimeSys)
 
 namespace Gray
 {
@@ -24,33 +24,33 @@ namespace Gray
 	//! TIMESYS_t = The normal system tick timer. milli-seconds since start of system/app ?
 #if 0 // def USE_64BIT
 	typedef UINT64	TIMESYS_t;		//!< The absolute system milli-Second tick. (NOT the same as a time range!)
-	typedef INT64	TIMESYSD_t;		//!< Time delta. signed milli-Seconds Span. CTimeSys::k_INF = MAILSLOT_WAIT_FOREVER
+	typedef INT64	TIMESYSD_t;		//!< Time delta. signed milli-Seconds Span. cTimeSys::k_INF = MAILSLOT_WAIT_FOREVER
 #else
 	typedef UINT32	TIMESYS_t;		//!< The absolute system milli-Second tick. (NOT the same as a time range!)
-	typedef INT32	TIMESYSD_t;		//!< Time delta. signed milli-Seconds Span. CTimeSys::k_DMAX, CTimeSys::k_INF = MAILSLOT_WAIT_FOREVER
+	typedef INT32	TIMESYSD_t;		//!< Time delta. signed milli-Seconds Span. cTimeSys::k_DMAX, cTimeSys::k_INF = MAILSLOT_WAIT_FOREVER
 #endif
 
 #if defined(__linux__)
-	class CTimeSpec : public /* struct*/ timespec
+	class cTimeSpec : public /* struct*/ timespec
 	{
-		//! @class Gray::CTimeSpec
+		//! @class Gray::cTimeSpec
 		//! POSIX CLOCK_MONOTONIC time. (Realtime is from 1970-01-01 UTC)
-		//! similar to struct timeval/CTimeVal used for select() but use nanoseconds not microseconds.
+		//! similar to struct timeval/cTimeVal used for select() but use nanoseconds not microseconds.
 		//! No need to USE clock_getres( clockid_t __clock_id, struct timespec *__res) ?
 		//! @note link with 'rt' for this.
 
 	public:
 		static const UINT k_FREQ = 1000000000;	// billionths of a sec.
 
-		CTimeSpec()
+		cTimeSpec()
 		{
 			// undefined. may use clock_gettime() on it.
 		}
-		CTimeSpec(TIMESYSD_t nMilliSeconds)
+		cTimeSpec(TIMESYSD_t nMilliSeconds)
 		{
 			put_mSec(nMilliSeconds);
 		}
-		CTimeSpec(TIMESECD_t iSeconds, int iNanoSec)
+		cTimeSpec(TIMESECD_t iSeconds, int iNanoSec)
 		{
 			this->tv_sec = iSeconds;
 			this->tv_nsec = iNanoSec;	// nano = billionths of a sec.
@@ -71,7 +71,7 @@ namespace Gray
 		UINT64 get_nSec() const
 		{
 			//! Get the time as UINT64 value in nanoseconds (billionths)
-			return (((UINT64)this->tv_sec)*CTimeSpec::k_FREQ) + this->tv_nsec;
+			return (((UINT64)this->tv_sec)*cTimeSpec::k_FREQ) + this->tv_nsec;
 		}
 		void InitTimeNow()
 		{
@@ -91,9 +91,9 @@ namespace Gray
 
 	//****************************************************************************
 
-	class GRAYCORE_LINK CTimeSys
+	class GRAYCORE_LINK cTimeSys
 	{
-		//! @class Gray::CTimeSys
+		//! @class Gray::cTimeSys
 		//! Time in milliseconds from arbitrary/unknown start time.
 		//! Unsigned 32 bits will roll every 49.7 days.
 		//! _WIN32 = start time = when system was last rebooted.
@@ -107,15 +107,15 @@ namespace Gray
 		TIMESYS_t m_TimeSys;
 
 	public:
-		CTimeSys()
+		cTimeSys()
 			: m_TimeSys(k_CLEAR)
 		{
 		}
-		CTimeSys(const CTimeSys& t)
+		cTimeSys(const cTimeSys& t)
 			: m_TimeSys(t.m_TimeSys)
 		{
 		}
-		CTimeSys(TIMESYS_t t)
+		cTimeSys(TIMESYS_t t)
 			: m_TimeSys(t)
 		{
 		}
@@ -132,7 +132,7 @@ namespace Gray
 			return ::GetTickCount();
 #endif
 #elif defined(__linux__)
-			CTimeSpec tNow;
+			cTimeSpec tNow;
 			tNow.InitTimeNow();
 			return tNow.get_mSec();
 #else
@@ -142,16 +142,16 @@ namespace Gray
 
 		static unsigned long GRAYCALL WaitSpin(TIMESYSD_t t);
 
-		bool isTimeValid() const
+		bool isTimeValid() const noexcept
 		{
 			return(m_TimeSys > k_CLEAR);
 		}
-		TIMESYS_t get_TimeSys() const
+		TIMESYS_t get_TimeSys() const noexcept
 		{
 			return m_TimeSys;
 		}
 
-		void InitTime(TIMESYS_t t = k_CLEAR)
+		void InitTime(TIMESYS_t t = k_CLEAR) noexcept
 		{
 			m_TimeSys = t;
 		}
@@ -211,7 +211,7 @@ namespace Gray
 			//! current time - this time.
 			return(get_AgeSys() / k_FREQ);
 		}
-		UNITTEST_FRIEND(CTimeSys);
+		UNITTEST_FRIEND(cTimeSys);
 	};
 
 	//****************************************************************************
@@ -219,12 +219,12 @@ namespace Gray
 #ifdef _WIN32
 	typedef LONGLONG TIMEPERF_t;	//!< INT64 == LONGLONG  The system very high precision performance timer.
 #else
-	typedef UINT64 TIMEPERF_t;		//!< The system very high precision performance timer. CTimeSpec
+	typedef UINT64 TIMEPERF_t;		//!< The system very high precision performance timer. cTimeSpec
 #endif
 
-	class GRAYCORE_LINK CTimePerf
+	class GRAYCORE_LINK cTimePerf
 	{
-		//! @class Gray::CTimePerf
+		//! @class Gray::cTimePerf
 		//! Very high rate timer. 64 bit. like the X86 'rdtsc' instruction.
 		//! TIMEPERF_t = The system very high precision performance timer. Maybe nSec ?
 
@@ -233,21 +233,21 @@ namespace Gray
 #ifdef _WIN32
 		static TIMEPERF_t k_nFreq;		//!< The frequency might change depending on the machine. Must call InitFreq()
 #else // __linux__
-		static const TIMEPERF_t k_nFreq = CTimeSpec::k_FREQ;	//!< nanosecond accurate. for __linux__ using CTimeSpec
+		static const TIMEPERF_t k_nFreq = cTimeSpec::k_FREQ;	//!< nanosecond accurate. for __linux__ using cTimeSpec
 #endif
 
 	public:
-		CTimePerf(TIMEPERF_t nTime = 0)
+		cTimePerf(TIMEPERF_t nTime = 0)
 			: m_nTime(nTime)
 		{
 			//! default = init to 0.
 		}
-		CTimePerf(int nTime)
+		cTimePerf(int nTime)
 			: m_nTime(nTime)
 		{
 			//! default = init to 0. Allow constants to not have a convert.
 		}
-		CTimePerf(bool bTrue)
+		cTimePerf(bool bTrue)
 		{
 			// Indicate I want the current time.
 			if (bTrue)
@@ -269,7 +269,7 @@ namespace Gray
 			//! Get the time stamp.
 			return m_nTime;
 		}
-		TIMEPERF_t GetAgeDiff(CTimePerf tStop) const
+		TIMEPERF_t GetAgeDiff(cTimePerf tStop) const
 		{
 			//! how long ago was this ?
 			return tStop.m_nTime - this->m_nTime;
@@ -277,7 +277,7 @@ namespace Gray
 		TIMEPERF_t get_AgePerf() const
 		{
 			//! how long ago was this ?
-			CTimePerf tStop(true);
+			cTimePerf tStop(true);
 			return GetAgeDiff(tStop);
 		}
 
@@ -302,10 +302,10 @@ namespace Gray
 		static double GRAYCALL ToDays(TIMEPERF_t t);
 		double get_Days() const
 		{
-			//! Convert CTimePerf to double days (from arbitrary start time).
+			//! Convert cTimePerf to double days (from arbitrary start time).
 			//! @return time in days since some unknown/arbitrary starting point
 			return ToDays(m_nTime);
 		}
 	};
 };
-#endif // _INC_CTimeSys_H
+#endif // _INC_cTimeSys_H

@@ -1,36 +1,36 @@
 //
-//! @file CArraySortString.h
+//! @file cArraySortString.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CArraySortString_H
-#define _INC_CArraySortString_H
+#ifndef _INC_cArraySortString_H
+#define _INC_cArraySortString_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
-#include "CArraySort.h"
-#include "CArrayString.h"
-#include "CUnitTestDecl.h"
+#include "cArraySort.h"
+#include "cArrayString.h"
+#include "cUnitTestDecl.h"
 
-UNITTEST_PREDEF(CArraySortString)
+UNITTEST_PREDEF(cArraySortString)
 
 namespace Gray
 {
 	template< typename _TYPE_CH = TCHAR >
-	class GRAYCORE_LINK CArraySortString : public CArraySorted < cStringT<_TYPE_CH>, cStringT<_TYPE_CH>, const _TYPE_CH* >
+	class GRAYCORE_LINK cArraySortString : public cArraySorted < cStringT<_TYPE_CH>, cStringT<_TYPE_CH>, const _TYPE_CH* >
 	{
-		//! @class Gray::CArraySortString
+		//! @class Gray::cArraySortString
 		//! Alpha Sorted array of strings. Case Ignored. duplicates are lost.
 
 	public:
-		typedef CArraySorted< cStringT<_TYPE_CH>, cStringT<_TYPE_CH>, const _TYPE_CH*> SUPER_t;
+		typedef cArraySorted< cStringT<_TYPE_CH>, cStringT<_TYPE_CH>, const _TYPE_CH*> SUPER_t;
 		typedef cStringT<_TYPE_CH> STR_t;	// alias for container
 		typedef typename SUPER_t::REF_t REF_t;
 		typedef typename SUPER_t::KEY_t KEY_t;
 
 	public:
-		virtual ~CArraySortString()
+		virtual ~cArraySortString()
 		{
 		}
 		virtual COMPARE_t CompareKey(KEY_t pszID1, REF_t sID2) const override
@@ -52,7 +52,7 @@ namespace Gray
 		{
 			//! pszRoot is a root of one of the listed paths ? opposite of FindKeyDerived
 			//! e.g. pszRoot = a, element[x] = abc
-			//! like CFilePath::IsRelativeRoot
+			//! like cFilePath::IsRelativeRoot
 			//! @return -1 = found nothing that would be derived from pszRoot.
 
 			StrLen_t iStrLen = StrT::Len(pszRoot);
@@ -81,7 +81,7 @@ namespace Gray
 		{
 			//! one of the listed paths is a root of pszDerived ? pszDerived is a child. opposite of FindKeyRoot
 			//! e.g. pszDerived = abc, element[x] = a
-			//! like CFilePath::IsRelativeRoot
+			//! like cFilePath::IsRelativeRoot
 			//! @return -1 = found nothing that would be root of pszDerived.
 
 			ITERATE_t iHigh = this->GetSize() - 1;
@@ -105,17 +105,17 @@ namespace Gray
 			return k_ITERATE_BAD;
 		}
 
-		UNITTEST_FRIEND(CArraySortString);
+		UNITTEST_FRIEND(cArraySortString);
 	};
 
-	typedef CArraySortString<char> CArraySortStringA;
-	typedef CArraySortString<wchar_t> CArraySortStringW;
+	typedef cArraySortString<char> cArraySortStringA;
+	typedef cArraySortString<wchar_t> cArraySortStringW;
 
 #ifdef GRAY_DLL // force implementation/instantiate for DLL/SO.
-	template class GRAYCORE_LINK CArraySortString < char >;
-	template class GRAYCORE_LINK CArraySortString < wchar_t >;
-	template class GRAYCORE_LINK CArraySorted < cStringT<char>, const char*, const char* >;
-	template class GRAYCORE_LINK CArraySorted < cStringT<wchar_t>, const wchar_t*, const wchar_t* >;
+	template class GRAYCORE_LINK cArraySortString < char >;
+	template class GRAYCORE_LINK cArraySortString < wchar_t >;
+	template class GRAYCORE_LINK cArraySorted < cStringT<char>, const char*, const char* >;
+	template class GRAYCORE_LINK cArraySorted < cStringT<wchar_t>, const wchar_t*, const wchar_t* >;
 #endif
 
 }

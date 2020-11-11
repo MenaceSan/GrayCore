@@ -1,5 +1,5 @@
 //
-//! @file CSingleton.cpp
+//! @file cSingleton.cpp
 //! Register singletons for proper destruction.
 //! @note Yes i know that the C run time will sort of do this for me using the { static construction } technique.
 //! But i want more visibility and control of the destructors and guaranteed dynamic construction and memory allocation.
@@ -7,30 +7,30 @@
 //
 
 #include "pch.h"
-#include "CSingleton.h"
-#include "CArray.h"
-#include "COSModImpl.h"
-#include "CLogMgr.h"
+#include "cSingleton.h"
+#include "cArray.h"
+#include "cOSModImpl.h"
+#include "cLogMgr.h"
 
 namespace Gray
 {
-	class GRAYCORE_LINK CSingletonManager : public CSingletonStatic < CSingletonManager > 
+	class GRAYCORE_LINK cSingletonManager : public cSingletonStatic < cSingletonManager > 
 	{
-		//! @class Gray::CSingletonManager
-		//! Register all CSingleton(s) here, so they may be destroyed in proper order at C runtime destruct.
+		//! @class Gray::cSingletonManager
+		//! Register all cSingleton(s) here, so they may be destroyed in proper order at C runtime destruct.
 		//! @note Yes i know the C runtime would mostly do this for me using localized statics.
 		//!  but 1. i can't manually control order. 2. not thread safe. 3. can dynamic allocate (lazy load) not static allocate.
 
 	private:
-		CArrayPtr<CSingletonRegister> m_aSingletons;	//!< my list of registered singletons. In proper order.
-		static bool sm_bIsDestroyed;	//!< safety catch for threads that are running past the exit code. CAppState::().isInCExit()
+		cArrayPtr<cSingletonRegister> m_aSingletons;	//!< my list of registered singletons. In proper order.
+		static bool sm_bIsDestroyed;	//!< safety catch for threads that are running past the exit code. cAppState::().isInCExit()
 
 	public:
-		CSingletonManager()
-			: CSingletonStatic<CSingletonManager>(this)
+		cSingletonManager()
+			: cSingletonStatic<cSingletonManager>(this)
 		{
 		}
-		~CSingletonManager()
+		~cSingletonManager()
 		{
 			//! clean up all singletons in a predictable order/manor.
 			//! This is called by the C static runtime
@@ -44,7 +44,7 @@ namespace Gray
 					ASSERT(iCount < SHRT_MAX);
 					break;
 				}
-				CSingletonRegister* pReg = m_aSingletons.PopTail();
+				cSingletonRegister* pReg = m_aSingletons.PopTail();
 				delete pReg;	// should remove itself from m_aSingletons
 			}
 			sm_bIsDestroyed = true;
@@ -59,7 +59,7 @@ namespace Gray
 			ITERATE_t iCount = 0;
 			for (ITERATE_t i = m_aSingletons.GetSize() - 1; i >= 0; i--)
 			{
-				CSingletonRegister* pReg = m_aSingletons[i];
+				cSingletonRegister* pReg = m_aSingletons[i];
 #ifndef UNDER_CE
 				if (hMod != HMODULE_NULL && pReg->m_hModuleLoaded != hMod)
 					continue;
@@ -76,7 +76,7 @@ namespace Gray
 			return iCount;
 		}
 
-		ITERATE_t AddReg(CSingletonRegister* pReg)
+		ITERATE_t AddReg(cSingletonRegister* pReg)
 		{
 			//! Add to the end. so they are destructed in reverse order of creation.
 			ASSERT(isSingleCreated());
@@ -84,7 +84,7 @@ namespace Gray
 			ASSERT(m_aSingletons.FindIFor(pReg) < 0); // not already here.
 			return m_aSingletons.AddTail(pReg);
 		}
-		bool RemoveReg(CSingletonRegister* pReg)
+		bool RemoveReg(cSingletonRegister* pReg)
 		{
 			//! May have already been removed if we are destructing app. but thats OK.
 			ASSERT(isSingleCreated());
@@ -96,81 +96,81 @@ namespace Gray
 		}
 	};
 
-	bool CSingletonManager::sm_bIsDestroyed = false;
+	bool cSingletonManager::sm_bIsDestroyed = false;
 
-	CThreadLockFast CSingletonRegister::sm_LockSingle; // common lock for all CSingleton.
+	cThreadLockFast cSingletonRegister::sm_LockSingle; // common lock for all cSingleton.
 
-	CSingletonRegister::CSingletonRegister(const TYPEINFO_t& rAddrCode)
+	cSingletonRegister::cSingletonRegister(const TYPEINFO_t& rAddrCode)
 	{
 #ifndef UNDER_CE
 		// Track the module that created the singleton. Maybe in a DLL ?
-		m_hModuleLoaded = COSModule::GetModuleHandleForAddr(&rAddrCode);
+		m_hModuleLoaded = cOSModule::GetModuleHandleForAddr(&rAddrCode);
 #endif
 	}
 
-	void CSingletonRegister::RegisterSingleton()
+	void cSingletonRegister::RegisterSingleton()
 	{
-		//! register with CSingletonManager
+		//! register with cSingletonManager
 		//! Only register this if we know its NOT static. We called new.
-		CThreadGuardFast threadguard(sm_LockSingle);	// thread sync critical section all singletons.
-		if (!CSingletonManager::isSingleCreated())
+		cThreadGuardFast threadguard(sm_LockSingle);	// thread sync critical section all singletons.
+		if (!cSingletonManager::isSingleCreated())
 		{
 			// Static init will get created / destroyed in the order it was first used.
-			static CSingletonManager sm_The;
-			ASSERT(CSingletonManager::isSingleCreated());
+			static cSingletonManager sm_The;
+			ASSERT(cSingletonManager::isSingleCreated());
 		}
 
 		// Prevent re-registering of singletons constructed after SingletonManager shutdown (during exit)
-		if (!CSingletonManager::isDestroyed())	// special case. DLL was unloaded.
+		if (!cSingletonManager::isDestroyed())	// special case. DLL was unloaded.
 		{
-			CSingletonManager::I().AddReg(this);
+			cSingletonManager::I().AddReg(this);
 		}
 	}
 
-	CSingletonRegister::~CSingletonRegister()
+	cSingletonRegister::~cSingletonRegister()
 	{
 		//! Allow Early removal of a singleton! This is sort of weird but i should allow it for DLL unload.
-		CThreadGuardFast threadguard(sm_LockSingle);	// thread sync critical section all singletons.
-		if (CSingletonManager::isSingleCreated())	// special case. DLL was unloaded.
+		cThreadGuardFast threadguard(sm_LockSingle);	// thread sync critical section all singletons.
+		if (cSingletonManager::isSingleCreated())	// special case. DLL was unloaded.
 		{
-			CSingletonManager::I().RemoveReg(this);		// remove myself.
+			cSingletonManager::I().RemoveReg(this);		// remove myself.
 		}
 	}
 
-	void GRAYCALL CSingletonRegister::ReleaseModule(HMODULE hMod) // static
+	void GRAYCALL cSingletonRegister::ReleaseModule(HMODULE hMod) // static
 	{
-		CSingletonManager::I().ReleaseModule(hMod);
+		cSingletonManager::I().ReleaseModule(hMod);
 	}
 }
 
 //*************************************************************************
 #if USE_UNITTESTS
-#include "CUnitTest.h"
-#include "CLogMgr.h"
+#include "cUnitTest.h"
+#include "cLogMgr.h"
 
 namespace Gray
 {
-	class CUnitTestSing : public CSingleton < CUnitTestSing >
+	class cUnitTestSing : public cSingleton < cUnitTestSing >
 	{
 	public:
-		CUnitTestSing() : CSingleton<CUnitTestSing>(this, typeid(CUnitTestSing))
+		cUnitTestSing() : cSingleton<cUnitTestSing>(this, typeid(cUnitTestSing))
 		{
 		}
 		CHEAPOBJECT_IMPL;
 	};
 };
-UNITTEST_CLASS(CSingletonRegister)
+UNITTEST_CLASS(cSingletonRegister)
 {
-	UNITTEST_METHOD(CSingletonRegister)
+	UNITTEST_METHOD(cSingletonRegister)
 	{
-		UNITTEST_TRUE(!CUnitTestSing::isSingleCreated());
+		UNITTEST_TRUE(!cUnitTestSing::isSingleCreated());
 		{
-			CUnitTestSing inst;
-			UNITTEST_TRUE(CUnitTestSing::isSingleCreated());
+			cUnitTestSing inst;
+			UNITTEST_TRUE(cUnitTestSing::isSingleCreated());
 			// Will be destructed at app close.
 		}
-		UNITTEST_TRUE(!CUnitTestSing::isSingleCreated());
+		UNITTEST_TRUE(!cUnitTestSing::isSingleCreated());
 	}
 };
-UNITTEST_REGISTER(CSingletonRegister, UNITTEST_LEVEL_Core);
+UNITTEST_REGISTER(cSingletonRegister, UNITTEST_LEVEL_Core);
 #endif

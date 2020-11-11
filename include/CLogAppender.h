@@ -1,23 +1,23 @@
 //
-//! @file CLogAppender.h
+//! @file cLogAppender.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CLogAppender_H
-#define _INC_CLogAppender_H
+#ifndef _INC_cLogAppender_H
+#define _INC_cLogAppender_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
-#include "CLogLevel.h"
-#include "CSmartPtr.h"
-#include "CString.h"
-#include "CStream.h"
-#include "CThreadLock.h"
+#include "cLogLevel.h"
+#include "cRefPtr.h"
+#include "cString.h"
+#include "cStream.h"
+#include "cThreadLock.h"
 
 namespace Gray
 {
-	class CLogEvent;
+	class cLogEvent;
 
 	enum LOG_ATTR_TYPE_
 	{
@@ -28,7 +28,7 @@ namespace Gray
 		LOG_ATTR_0 = 0,
 
 		//! Adding new attributes (low values) here can be used to add more categories.
-		//!  but use CLogSubject for that for much more flexibility.
+		//!  but use cLogSubject for that for much more flexibility.
 
 		LOG_ATTR_INIT = 0x00100000,	//!< startup/exit stuff. category.
 		LOG_ATTR_SCRIPT = 0x00200000,	//!< from some sort of scripted code exec. category.
@@ -44,7 +44,7 @@ namespace Gray
 		LOG_ATTR_NOCRLF = 0x40000000,	//!< Don't add a FILE_EOL (CR NL) to the end of this string. this is a partial message.
 		LOG_ATTR_FILTERED = 0x80000000,	//!< Filter already checked so don't check it again.
 
-		// LOG_ATTR_QUESTION = 0x123123,	//!< This is a question that we hope will get an answer through some async callback. CLogAppendConsole
+		// LOG_ATTR_QUESTION = 0x123123,	//!< This is a question that we hope will get an answer through some async callback. cLogAppendConsole
 
 		LOG_ATTR_CUST_MASK = 0x000FFFFF,
 		LOG_ATTR_BASE_MASK = 0xFFF00000,
@@ -65,9 +65,9 @@ namespace Gray
 
 	//***********************************************************************************
 
-	class GRAYCORE_LINK CLogEventParams
+	class GRAYCORE_LINK cLogEventParams
 	{
-		//! @class Gray::CLogEventParams
+		//! @class Gray::cLogEventParams
 		//! Filterable Parameters associated with a particular log event instance.
 
 	protected:
@@ -75,7 +75,7 @@ namespace Gray
 		LOGLEV_TYPE m_eLogLevel;			//!< Min Importance level to see. 0 = LOGLEV_ANY = not important.
 
 	public:
-		CLogEventParams(LOG_ATTR_MASK_t uAttrMask = LOG_ATTR_0, LOGLEV_TYPE eLogLevel = LOGLEV_TRACE)
+		cLogEventParams(LOG_ATTR_MASK_t uAttrMask = LOG_ATTR_0, LOGLEV_TYPE eLogLevel = LOGLEV_TRACE)
 			: m_uAttrMask(uAttrMask)		// Level of log detail messages. IsLogMsg()
 			, m_eLogLevel(eLogLevel)		// Importance level.
 		{
@@ -122,9 +122,9 @@ namespace Gray
 		}
 	};
 
-	class GRAYCORE_LINK CLogThrottle
+	class GRAYCORE_LINK cLogThrottle
 	{
-		//! @class Gray::CLogThrottle
+		//! @class Gray::cLogThrottle
 		//! Parameters for time throttle of log messages. Queue messages up if they are coming too fast.
 
 	public:
@@ -134,8 +134,8 @@ namespace Gray
 		mutable UINT m_nQtyLogLast;			//!< Qty of messages since m_TimeLogLast.
 
 	public:
-		CLogThrottle();
-		~CLogThrottle();
+		cLogThrottle();
+		~cLogThrottle();
 
 		float get_LogThrottle() const
 		{
@@ -144,7 +144,7 @@ namespace Gray
 		}
 	};
 
-	// CLogFormat = what should each event line contain from CLogEvent?
+	// CLogFormat = what should each event line contain from cLogEvent?
 
 	//***********************************************************************
 
@@ -154,25 +154,25 @@ namespace Gray
 		//! All events funnel through addEvent().
 		IGNORE_WARN_INTERFACE(ILogProcessor);
 		virtual bool IsLogged(LOG_ATTR_MASK_t uAttrMask, LOGLEV_TYPE eLogLevel) const = 0; // fast pre-check. can call before building message.
-		virtual HRESULT addEvent(CLogEvent* pEvent) = 0;
+		virtual HRESULT addEvent(cLogEvent* pEvent) = 0;
 	};
 
-	class CLogNexus;
+	class cLogNexus;
 
-	class GRAYCORE_LINK CLogProcessor
+	class GRAYCORE_LINK cLogProcessor
 		: public ILogProcessor
-		, public CStreamOutput	// for WriteString raw dump messages into the system.
+		, public cStreamOutput	// for WriteString raw dump messages into the system.
 	{
-		//! @class Gray::CLogProcessor
+		//! @class Gray::cLogProcessor
 		//! Build/submit a log message to be submitted to the log system.
 
 	public:
-		virtual ~CLogProcessor()
+		virtual ~cLogProcessor()
 		{
 		}
-		virtual const CLogNexus* get_ThisLogNexus() const
+		virtual const cLogNexus* get_ThisLogNexus() const
 		{
-			//! Is this a CLogNexus or just a CLogProcessor?
+			//! Is this a cLogNexus or just a cLogProcessor?
 			return nullptr;
 		}
 		virtual bool IsLogged(LOG_ATTR_MASK_t uAttrMask, LOGLEV_TYPE eLogLevel) const override // fast pre-check.
@@ -189,7 +189,7 @@ namespace Gray
 		}
 
 		// Helpers.
-		HRESULT addEventS(LOG_ATTR_MASK_t uAttrMask, LOGLEV_TYPE eLogLevel, CStringL sMsg, CStringL sContext="");
+		HRESULT addEventS(LOG_ATTR_MASK_t uAttrMask, LOGLEV_TYPE eLogLevel, cStringL sMsg, cStringL sContext="");
 		HRESULT addEventV(LOG_ATTR_MASK_t uAttrMask, LOGLEV_TYPE eLogLevel, const LOGCHAR_t* pszFormat, va_list vargs);
 
 		HRESULT _cdecl addEventF(LOG_ATTR_MASK_t uAttrMask, LOGLEV_TYPE eLogLevel, const LOGCHAR_t* pszFormat, ...)
@@ -250,13 +250,13 @@ namespace Gray
 		}
 	};
 
-	class GRAYCORE_LINK CLogAppender : public IUnknown, public CLogProcessor
+	class GRAYCORE_LINK cLogAppender : public IUnknown, public cLogProcessor
 	{
-		//! @class Gray::CLogAppender
+		//! @class Gray::cLogAppender
 		//! Base class for the destination for a log message.
 		//! Messages can be routed to several different places depending on filtering, app config, etc.
 		//! overload these to implement which messages go here.
-		friend class CLogNexus;
+		friend class cLogNexus;
 	protected:
 		virtual HRESULT WriteString(const LOGCHAR_t* pszMsg) override
 		{
@@ -270,13 +270,13 @@ namespace Gray
 		virtual HRESULT WriteString(const wchar_t* pszMsg) override;
 
 	public:
-		CLogAppender();
-		virtual ~CLogAppender();
+		cLogAppender();
+		virtual ~cLogAppender();
 
 		//! Remove myself from the list of valid appenders.
 		bool RemoveAppenderThis();
 
-		virtual HRESULT addEvent(CLogEvent* pEvent) override
+		virtual HRESULT addEvent(cLogEvent* pEvent) override
 		{
 			//! Push the message where it is supposed to go.
 			//! ILogProcessor
@@ -289,25 +289,25 @@ namespace Gray
 		}
 	};
 
-	class GRAYCORE_LINK CLogAppendDebug : public CLogAppender, public CSmartBase
+	class GRAYCORE_LINK cLogAppendDebug : public cLogAppender, public cRefBase
 	{
-		//! @class Gray::CLogAppendDebug
+		//! @class Gray::cLogAppendDebug
 		//! Send logged messages out to the debug system. OutputDebugString()
 		//! No filter and take default formatted string
 
 	private:
-		mutable CThreadLockCount m_Lock;	// prevent multi thread mixing of messages.
+		mutable cThreadLockCount m_Lock;	// prevent multi thread mixing of messages.
 	public:
-		CLogAppendDebug();
-		virtual ~CLogAppendDebug();
+		cLogAppendDebug();
+		virtual ~cLogAppendDebug();
 
-		static HRESULT GRAYCALL AddAppenderCheck(CLogNexus* pLogger = nullptr);
+		static HRESULT GRAYCALL AddAppenderCheck(cLogNexus* pLogger = nullptr);
 		virtual HRESULT WriteString(const LOGCHAR_t* pszMsg) override;
 
-		IUNKNOWN_DISAMBIG(CSmartBase);
+		IUNKNOWN_DISAMBIG(cRefBase);
 	};
 
-	class GRAYCORE_LINK CLogAppendCache : public CLogAppender, public CSmartBase
+	class GRAYCORE_LINK cLogAppendCache : public cLogAppender, public cRefBase
 	{
 		//! @class Gray::CLogAppendCache
 		//! @todo Append (or cache) detailed messages here and hold them until some error triggers them.

@@ -1,37 +1,37 @@
 //
-//! @file CIniFile.cpp
+//! @file cIniFile.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 #include "pch.h"
-#include "CIniFile.h"
-#include "CLogMgr.h"
-#include "CHeap.h"
-#include "CString.h"
-#include "CCodeProfiler.h"
-#include "CAppState.h"
-#include "CFileTextReader.h"	// CFileText or CFileTextReader
+#include "cIniFile.h"
+#include "cLogMgr.h"
+#include "cHeap.h"
+#include "cString.h"
+#include "cCodeProfiler.h"
+#include "cAppState.h"
+#include "cFileTextReader.h"	// cFileText or cFileTextReader
 
 namespace Gray
 {
-	CIniFile::CIniFile()
+	cIniFile::cIniFile()
 	{
 	}
 
-	CIniFile::~CIniFile()
+	cIniFile::~cIniFile()
 	{
 	}
 
-	HRESULT CIniFile::ReadIniStream(CStreamInput& s, bool bStripComments)
+	HRESULT cIniFile::ReadIniStream(cStreamInput& s, bool bStripComments)
 	{
 		//! Read in all the sections in the file.
 		//! @arg bStripComments = strip comments and whitespace. else preserve them.
-		//! @todo USE CIniSectionData::ReadSectionData() ??
+		//! @todo USE cIniSectionData::ReadSectionData() ??
 
- 		CIniSectionEntryPtr pSection;
+ 		cIniSectionEntryPtr pSection;
 		int iLine = 0;
 		for (;;)
 		{
-			IniChar_t szBuffer[CIniSection::k_LINE_LEN_MAX];
+			IniChar_t szBuffer[cIniSection::k_LINE_LEN_MAX];
 			// read string strips new lines.
 			HRESULT hRes = s.ReadStringLine(szBuffer, STRMAX(szBuffer));
 			if (FAILED(hRes) || hRes == 0)
@@ -40,7 +40,7 @@ namespace Gray
 			}
 			iLine++;
 			// is [Section header]?
-			if (CIniReader::IsSectionHeader(szBuffer))
+			if (cIniReader::IsSectionHeader(szBuffer))
 			{
 				if (pSection != nullptr)
 				{
@@ -65,7 +65,7 @@ namespace Gray
 				if (bStripComments)
 				{
 					pszLine = StrT::GetNonWhitespace(pszLine);	// skip starting whitespace.
-					StrLen_t iLen = CIniReader::FindScriptLineEnd(pszLine);
+					StrLen_t iLen = cIniReader::FindScriptLineEnd(pszLine);
 					pszLine[iLen] = '\0';
 				}
 				pSection->AddLine(pszLine);
@@ -74,7 +74,7 @@ namespace Gray
 		return HRESULT_WIN32_C(ERROR_BAD_FORMAT);	// error. bad line format. terminate read.
 	}
 
-	HRESULT CIniFile::ReadIniFile(const FILECHAR_t* pszFilePath, bool bStripComments)
+	HRESULT cIniFile::ReadIniFile(const FILECHAR_t* pszFilePath, bool bStripComments)
 	{
 		//! Open and read a whole INI file.
 		//! @arg bStripComments = strip comments from the file.
@@ -86,7 +86,7 @@ namespace Gray
 			return E_POINTER;
 		}
 
-		CFileTextReader fileReader;
+		cFileTextReader fileReader;
 		HRESULT hRes = fileReader.OpenX(pszFilePath, OF_READ | OF_TEXT | OF_CACHE_SEQ);
 		if (FAILED(hRes))
 		{
@@ -96,7 +96,7 @@ namespace Gray
 		return ReadIniStream(fileReader, bStripComments);
 	}
 
-	HRESULT CIniFile::WriteIniFile(const FILECHAR_t* pszFilePath) const
+	HRESULT cIniFile::WriteIniFile(const FILECHAR_t* pszFilePath) const
 	{
 		//! Write the whole INI file. preserve line comments (if the didn't get stripped via bStripComments).
 		CODEPROFILEFUNC();
@@ -112,7 +112,7 @@ namespace Gray
 			return hRes;
 		}
 
-		GRAY_FOREACH_S(CIniSectionEntry, pSection, m_aSections)
+		GRAY_FOREACH_S(cIniSectionEntry, pSection, m_aSections)
 		{
 			ASSERT(pSection != nullptr);
 			hRes = pSection->WriteSection(file);
@@ -123,19 +123,19 @@ namespace Gray
 		return S_OK;
 	}
 
-	HRESULT CIniFile::PropEnum(IPROPIDX_t ePropIdx, OUT CStringI& rsValue, CStringI* psPropTag) const // virtual
+	HRESULT cIniFile::PropEnum(IPROPIDX_t ePropIdx, OUT CStringI& rsValue, CStringI* psPropTag) const // virtual
 	{
 		//! IIniBaseEnumerator
 		//! Enumerate the sections.
 		if (!m_aSections.IsValidIndex(ePropIdx))
 			return HRESULT_WIN32_C(ERROR_UNKNOWN_PROPERTY);
 
-		const CIniSectionEntry* pSec = m_aSections.GetAt(ePropIdx);
-		rsValue = CIniSection::GetSectionTitleParse(pSec->get_SectionTitle(), psPropTag);
+		const cIniSectionEntry* pSec = m_aSections.GetAt(ePropIdx);
+		rsValue = cIniSection::GetSectionTitleParse(pSec->get_SectionTitle(), psPropTag);
 		return (HRESULT)ePropIdx;
 	}
 
-	CIniSectionEntryPtr CIniFile::FindSection(const IniChar_t* pszSectionTitle, bool bPrefixOnly) const
+	cIniSectionEntryPtr cIniFile::FindSection(const IniChar_t* pszSectionTitle, bool bPrefixOnly) const
 	{
 		//! Assume file has been read into memory already.
 		CODEPROFILEFUNC();
@@ -150,7 +150,7 @@ namespace Gray
 		}
 		for (ITERATE_t i = 0; i < m_aSections.GetSize(); i++)
 		{
-			CIniSectionEntryPtr pSection(const_cast<CIniSectionEntry*>(m_aSections.GetAt(i)));
+			cIniSectionEntryPtr pSection(const_cast<cIniSectionEntry*>(m_aSections.GetAt(i)));
 			const IniChar_t* pszLine = pSection->get_SectionTitle();
 			if (StrT::CmpIN(pszLine, pszSectionTitle, iLen)) // NO match ?
 				continue;
@@ -164,7 +164,7 @@ namespace Gray
 		return nullptr;
 	}
 
-	CIniSectionEntryPtr CIniFile::AddSection(const IniChar_t* pszSectionTitle, bool bStripComments, int iLine) // virtual
+	cIniSectionEntryPtr cIniFile::AddSection(const IniChar_t* pszSectionTitle, bool bStripComments, int iLine) // virtual
 	{
 		//! Create a new section in the file.
 		//! don't care if the key exists or not. dupes are OK.
@@ -174,16 +174,16 @@ namespace Gray
 		{
 			pszSectionTitle = "";
 		}
-		CIniSectionEntryPtr pSection = new CIniSectionEntry(pszSectionTitle, bStripComments, iLine);
+		cIniSectionEntryPtr pSection = new cIniSectionEntry(pszSectionTitle, bStripComments, iLine);
 		m_aSections.Add(pSection);
 		return pSection;
 	}
 
-	const IniChar_t* CIniFile::FindKeyLinePtr(const IniChar_t* pszSectionTitle, const IniChar_t* pszKey) const
+	const IniChar_t* cIniFile::FindKeyLinePtr(const IniChar_t* pszSectionTitle, const IniChar_t* pszKey) const
 	{
 		//! Find a line in the [pszSectionTitle] with a key looking like pszKey=
 
-		CIniSectionEntryPtr pSection = FindSection(pszSectionTitle, false);
+		cIniSectionEntryPtr pSection = FindSection(pszSectionTitle, false);
 		if (pSection == nullptr)
 		{
 			return nullptr;
@@ -191,12 +191,12 @@ namespace Gray
 		return pSection->FindKeyLinePtr(pszKey);
 	}
 
-	HRESULT CIniFile::SetKeyLine(const IniChar_t* pszSectionTitle, const IniChar_t* pszKey, const IniChar_t* pszLine)
+	HRESULT cIniFile::SetKeyLine(const IniChar_t* pszSectionTitle, const IniChar_t* pszKey, const IniChar_t* pszLine)
 	{
 		//! @arg pszSectionTitle = OK for nullptr
 		//! @arg pszLine = nullptr = delete;
 		ITERATE_t iLine;
-		CIniSectionEntryPtr pSection = FindSection(pszSectionTitle);
+		cIniSectionEntryPtr pSection = FindSection(pszSectionTitle);
 		if (pSection == nullptr)
 		{
 			// add a new section if it doesn't exist.
@@ -223,13 +223,13 @@ namespace Gray
 		return S_OK;
 	}
 
-	HRESULT CIniFile::SetKeyArg(const IniChar_t* pszSectionTitle, const IniChar_t* pszKey, const IniChar_t* pszArg)
+	HRESULT cIniFile::SetKeyArg(const IniChar_t* pszSectionTitle, const IniChar_t* pszKey, const IniChar_t* pszArg)
 	{
 		//! OK for pszSectionTitle == nullptr
 		if (pszKey == nullptr || pszArg == nullptr)
 			return 0;
 		IniChar_t szTmp[_MAX_PATH + _MAX_PATH];
-		CIniSectionData::MakeLine(szTmp, STRMAX(szTmp), pszKey, pszArg);
+		cIniSectionData::MakeLine(szTmp, STRMAX(szTmp), pszKey, pszArg);
 		return SetKeyLine(pszSectionTitle, pszKey, szTmp);
 	}
 }
@@ -237,15 +237,15 @@ namespace Gray
 //******************************************************************
 
 #if USE_UNITTESTS
-#include "CUnitTest.h"
-#include "CFilePath.h"
-#include "CMime.h"
+#include "cUnitTest.h"
+#include "cFilePath.h"
+#include "cMime.h"
 
-const FILECHAR_t* CIniFile::k_UnitTestFile = _FN(GRAY_NAMES) _FN("Core/test/CIniFileUnitTest") _FN(MIME_EXT_ini); // static
+const FILECHAR_t* cIniFile::k_UnitTestFile = _FN(GRAY_NAMES) _FN("Core/test/cIniFileUnitTest") _FN(MIME_EXT_ini); // static
 
-UNITTEST_CLASS(CIniFile)
+UNITTEST_CLASS(cIniFile)
 {
-	HRESULT UnitTest_Section(const CIniSection* pSection)
+	HRESULT UnitTest_Section(const cIniSection* pSection)
 	{
 		//! k_asTextLines
 		//! dump contexts of a section.
@@ -260,19 +260,19 @@ UNITTEST_CLASS(CIniFile)
 		return (HRESULT)iLines;
 	}
 
-	UNITTEST_METHOD(CIniFile)
+	UNITTEST_METHOD(cIniFile)
 	{
 		//! read and write tests.
 		//! open some INI file.
 
-		CStringF sTestInpFile = CFilePath::CombineFilePathX(get_TestInpDir(), CIniFile::k_UnitTestFile);
+		cStringF sTestInpFile = cFilePath::CombineFilePathX(get_TestInpDir(), cIniFile::k_UnitTestFile);
 
-		CIniFile file;
+		cIniFile file;
 		HRESULT hRes = file.ReadIniFile(sTestInpFile);
 		UNITTEST_TRUE(SUCCEEDED(hRes));
 
 		// read headless section first. has no [SECTION] header.
-		CIniSectionEntryPtr pSection = file.FindSection(nullptr);
+		cIniSectionEntryPtr pSection = file.FindSection(nullptr);
 		if (pSection != nullptr)
 		{
 			UnitTest_Section(pSection);
@@ -295,12 +295,12 @@ UNITTEST_CLASS(CIniFile)
 		file.SetKeyLine(pszTestSection, pszTestKey, pszTestLine);
 
 		// now write it back out.
-		CStringF sIniWriteFile = CFilePath::CombineFilePathX(get_TestOutDir(), _FN(GRAY_NAMES) _FN("IniFileUnitTest") _FN(MIME_EXT_ini));
+		cStringF sIniWriteFile = cFilePath::CombineFilePathX(get_TestOutDir(), _FN(GRAY_NAMES) _FN("IniFileUnitTest") _FN(MIME_EXT_ini));
 		hRes = file.WriteIniFile(sIniWriteFile);
 		UNITTEST_TRUE(SUCCEEDED(hRes));
 
 		// read it back again to make sure its correct ?
-		CIniFile file2;
+		cIniFile file2;
 		hRes = file2.ReadIniFile(sIniWriteFile);
 		UNITTEST_TRUE(SUCCEEDED(hRes));
 
@@ -332,6 +332,6 @@ UNITTEST_CLASS(CIniFile)
 
 	}
 };
-UNITTEST_REGISTER(CIniFile, UNITTEST_LEVEL_Core);
+UNITTEST_REGISTER(cIniFile, UNITTEST_LEVEL_Core);
 #endif // USE_UNITTESTS
 

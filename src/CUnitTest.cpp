@@ -1,23 +1,23 @@
 //
-//! @file CUnitTest.cpp
+//! @file cUnitTest.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
 #include "pch.h"
-#include "CUnitTest.h"
-#include "CDebugAssert.h"
-#include "CFilePath.h"
-#include "CLogMgr.h"
-#include "CArray.h"
-#include "CAppState.h"
-#include "CAppConsole.h"
-#include "CSingletonPtr.h"
-#include "CFileDir.h"
-#include "CNewPtr.h"
-#include "CSystemInfo.h"
-#include "CTypes.h"
-#include "CTimeDouble.h"
-#include "CAppImpl.h"
+#include "cUnitTest.h"
+#include "cDebugAssert.h"
+#include "cFilePath.h"
+#include "cLogMgr.h"
+#include "cArray.h"
+#include "cAppState.h"
+#include "cAppConsole.h"
+#include "cSingletonPtr.h"
+#include "cFileDir.h"
+#include "cNewPtr.h"
+#include "cSystemInfo.h"
+#include "cTypes.h"
+#include "cTimeDouble.h"
+#include "cAppImpl.h"
 
 #if USE_UNITTESTS
 
@@ -30,30 +30,30 @@ using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 namespace Gray
 {
-	class GRAYCORE_LINK CUnitTestLogger : public CLogAppender, public CSmartBase
+	class GRAYCORE_LINK cUnitTestLogger : public cLogAppender, public cRefBase
 	{
-		//! @class Gray::CUnitTestLogger
+		//! @class Gray::cUnitTestLogger
 		//! M$ unit tests require linked library CppUnitTestFramework. USE_UNITTESTS_MS
 
 		cFile m_File; // like CLogFileDay
 
 	public:
-		IUNKNOWN_DISAMBIG(CSmartBase);
+		IUNKNOWN_DISAMBIG(cRefBase);
 
-		CUnitTestLogger()
+		cUnitTestLogger()
 		{
 			// Assume we compile in the same environment as we unit test.
-			CUnitTests::InitLog();
+			cUnitTests::InitLog();
 		}
 
 		bool CreateLogFile(const FILECHAR_t* pszFileDir)
 		{
-			CTimeUnits tStart;
+			cTimeUnits tStart;
 			tStart.InitTimeNow();
-			CStringF sLogFileName;
+			cStringF sLogFileName;
 			sLogFileName.Format(_FN("UnitTestResults%04d%02d%02d_") _FN(GRAY_COMPILER_NAME) _FN("_") _FN(GRAY_BUILD_NAME) _FN(MIME_EXT_log),
 				tStart.m_wYear, tStart.m_wMonth, tStart.m_wDay);
-			HRESULT hRes = m_File.OpenX(CFilePath::CombineFilePathX(pszFileDir, sLogFileName),
+			HRESULT hRes = m_File.OpenX(cFilePath::CombineFilePathX(pszFileDir, sLogFileName),
 				OF_CREATE | OF_SHARE_DENY_NONE | OF_READWRITE | OF_TEXT);
 			if (FAILED(hRes))
 				return false;
@@ -64,7 +64,7 @@ namespace Gray
 		{
 			//! Pass messages to M$
 #ifdef USE_UNITTESTS_MS
-			if (CUnitTestCur::IsInMSTest())
+			if (cUnitTestCur::IsInMSTest())
 			{
 				::Microsoft::VisualStudio::CppUnitTestFramework::Logger::WriteMessage(pszMsg);
 			}
@@ -77,17 +77,17 @@ namespace Gray
 		}
 	};
 
-	UNITTEST_LEVEL_TYPE CUnitTestCur::sm_nTestLevel = UNITTEST_LEVEL_Common;	// UNITTEST_LEVEL_Common
-	CLogProcessor* CUnitTestCur::sm_pLog = nullptr;	// CLogMgr::I()
-	int CUnitTestCur::sm_iFailures = 0;
+	UNITTEST_LEVEL_TYPE cUnitTestCur::sm_nTestLevel = UNITTEST_LEVEL_Common;	// UNITTEST_LEVEL_Common
+	cLogProcessor* cUnitTestCur::sm_pLog = nullptr;	// cLogMgr::I()
+	int cUnitTestCur::sm_iFailures = 0;
 
-	CStringF CUnitTestCur::sm_sTestInpDir;
-	CStringF CUnitTestCur::sm_sTestOutDir;
+	cStringF cUnitTestCur::sm_sTestInpDir;
+	cStringF cUnitTestCur::sm_sTestOutDir;
 
-	bool CUnitTestCur::sm_bCreatedUnitTests = false;
-	int	CUnitTestCur::sm_nCreatedUnitTests = 0;
+	bool cUnitTestCur::sm_bCreatedUnitTests = false;
+	int	cUnitTestCur::sm_nCreatedUnitTests = 0;
 
-	const CStrConst CUnitTestCur::k_asTextLines[] =	// sample test data
+	const cStrConst cUnitTestCur::k_asTextLines[] =	// sample test data
 	{
 		CSTRCONST("four"),
 		CSTRCONST("one"),
@@ -107,10 +107,10 @@ namespace Gray
 		CSTRCONST("shoe"),
 		CSTRCONST("buckle"),
 		CSTRCONST("my"),
-		CStrConst(nullptr,nullptr),
+		cStrConst(nullptr,nullptr),
 	};
 
-	const CStrConst CUnitTestCur::k_sTextBlob = CSTRCONST( // [ CUnitTestCur::k_TEXTBLOB_LEN+1 ]
+	const cStrConst cUnitTestCur::k_sTextBlob = CSTRCONST( // [ cUnitTestCur::k_TEXTBLOB_LEN+1 ]
 		"This is a line of test data's\n\n\
 \tFour score and seven years ago\n\
 Our forefathers brought upon this continent a new nation.\n\
@@ -123,18 +123,18 @@ promote the general welfare and\n\
 ensure the blessings of liberty, To ourselves and our posterity\n\
 do ordain and establish this constitution of the United States of America\n\n");
 
-	const FILECHAR_t* GRAYCALL CUnitTestCur::get_TestOutDir() // static
+	const FILECHAR_t* GRAYCALL cUnitTestCur::get_TestOutDir() // static
 	{
 		//! Get a temporary directory for use by UnitTests
 		if (sm_sTestOutDir.IsEmpty())
 		{
-			sm_sTestOutDir = CAppState::I().GetTempDir(_FN(GRAY_NAMES));
+			sm_sTestOutDir = cAppState::I().GetTempDir(_FN(GRAY_NAMES));
 			ASSERT(!sm_sTestOutDir.IsEmpty());
 		}
 		return sm_sTestOutDir.get_CPtr();
 	}
 
-	const FILECHAR_t* GRAYCALL CUnitTestCur::get_TestInpDir() // static
+	const FILECHAR_t* GRAYCALL cUnitTestCur::get_TestInpDir() // static
 	{
 		//! Get source of input files for tests.
 		//! e.g. "C:\Dennis\Source\Gray\"
@@ -144,12 +144,12 @@ do ordain and establish this constitution of the United States of America\n\n");
 #ifdef USE_UNITTESTS_MS
 			if (IsInMSTest())
 			{
-				sm_sTestInpDir = CFilePath::GetFilePathUpDir1(CFilePath::GetFileDir(_GT(__FILE__)), k_StrLen_UNK, 2);
+				sm_sTestInpDir = cFilePath::GetFilePathUpDir1(cFilePath::GetFileDir(_GT(__FILE__)), k_StrLen_UNK, 2);
 			}
 			else
 #endif
 			{
-				sm_sTestInpDir = CFilePath::GetFilePathUpDir1(CAppState::get_CurrentDir());
+				sm_sTestInpDir = cFilePath::GetFilePathUpDir1(cAppState::get_CurrentDir());
 
 				// Move this path if the sources have moved.
 #ifdef __linux__
@@ -163,13 +163,13 @@ do ordain and establish this constitution of the United States of America\n\n");
 		return sm_sTestInpDir.get_CPtr();
 	}
 
-	void GRAYCALL CUnitTestCur::SetTestLevel(UNITTEST_LEVEL_TYPE nTestLevel) // static
+	void GRAYCALL cUnitTestCur::SetTestLevel(UNITTEST_LEVEL_TYPE nTestLevel) // static
 	{
 		sm_nTestLevel = nTestLevel;
 		sm_iFailures = 0;
 	}
 
-	bool GRAYCALL CUnitTestCur::IsTestInteractive() noexcept // static
+	bool GRAYCALL cUnitTestCur::IsTestInteractive() noexcept // static
 	{
 		//! is a user expected to interact with or verify the output of the tests ?
 		if (sm_nTestLevel <= UNITTEST_LEVEL_Crit)
@@ -178,21 +178,21 @@ do ordain and establish this constitution of the United States of America\n\n");
 			return true;
 #if 0 // def _DEBUG
 		// Is debugger attached?
-		if (CAppState::isDebuggerPresent())
+		if (cAppState::isDebuggerPresent())
 			return true;
 #endif
 		return false;
 	}
 
 #if defined(USE_UNITTESTS_MS)
-	bool GRAYCALL CUnitTestCur::IsInMSTest() noexcept // static 
+	bool GRAYCALL cUnitTestCur::IsInMSTest() noexcept // static 
 	{
 		//! Is running as unit test ? Just because it was compiled for M$ Test doesn't mean I am running it that way.
 		return !sm_bCreatedUnitTests && sm_nCreatedUnitTests > 0;
 	}
 #endif
 
-	bool GRAYCALL CUnitTestCur::TestInteractivePrompt(const char* pszMsg) noexcept // static
+	bool GRAYCALL cUnitTestCur::TestInteractivePrompt(const char* pszMsg) noexcept // static
 	{
 		//! prompt the user to manually check some output from the test.
 		//! require user to press key or button.
@@ -202,11 +202,11 @@ do ordain and establish this constitution of the United States of America\n\n");
 			return false;
 		bool bRet = false;
 #ifdef _WIN32
-		const int iRet = _GTN(::MessageBox)(WINHANDLE_NULL, StrArg<GChar_t>(pszMsg), _GT("Gray CUnitTest"), MB_OKCANCEL);
+		const int iRet = _GTN(::MessageBox)(WINHANDLE_NULL, StrArg<GChar_t>(pszMsg), _GT("Gray cUnitTest"), MB_OKCANCEL);
 		bRet = (iRet == IDOK);
 #else	// __linux__
 		// console.
-		CAppConsole& console = CAppConsole::I();
+		cAppConsole& console = cAppConsole::I();
 		console.WriteString(pszMsg);
 		int iRet = console.ReadKeyWait();
 		bRet = (iRet == 'y');
@@ -217,37 +217,37 @@ do ordain and establish this constitution of the United States of America\n\n");
 
 	//****************************************************************************
 
-	CUnitTest::CUnitTest()
+	cUnitTest::cUnitTest()
 	{
 		sm_nCreatedUnitTests++;
 #ifdef USE_UNITTESTS_MS
-		if (CUnitTestCur::IsInMSTest())
+		if (cUnitTestCur::IsInMSTest())
 		{
-			// add special log appender. Logger. CUnitTestLogger
-			// M$ can create CUnitTest outside of the CUnitTests
-			CLogMgr& log = CLogMgr::I();
-			if (log.FindAppenderType(typeid(CUnitTestLogger), true) == nullptr)
+			// add special log appender. Logger. cUnitTestLogger
+			// M$ can create cUnitTest outside of the cUnitTests
+			cLogMgr& log = cLogMgr::I();
+			if (log.FindAppenderType(typeid(cUnitTestLogger), true) == nullptr)
 			{
-				log.AddAppender(new CUnitTestLogger());	// route logs here.
+				log.AddAppender(new cUnitTestLogger());	// route logs here.
 			}
 		}
 #endif
 	}
 #ifdef USE_UNITTESTS_MS
-	CUnitTest::~CUnitTest()	noexcept(false)// virtual
+	cUnitTest::~cUnitTest()	noexcept(false)// virtual
 #else
-	CUnitTest::~CUnitTest()	// virtual
+	cUnitTest::~cUnitTest()	// virtual
 #endif
 	{
 #ifdef USE_UNITTESTS_MS
 		// remove log appender.
-		if (CUnitTestCur::IsInMSTest() && sm_nCreatedUnitTests == 1)
+		if (cUnitTestCur::IsInMSTest() && sm_nCreatedUnitTests == 1)
 		{
-			CLogMgr& log = CLogMgr::I();
-			if (log.FindAppenderType(typeid(CUnitTestLogger), true) != nullptr)
+			cLogMgr& log = cLogMgr::I();
+			if (log.FindAppenderType(typeid(cUnitTestLogger), true) != nullptr)
 			{
-				CLogMgr::I().RemoveAppenderType(typeid(CUnitTestLogger), true);
-				CDebugAssert::sm_pAssertCallback = nullptr;
+				cLogMgr::I().RemoveAppenderType(typeid(cUnitTestLogger), true);
+				cDebugAssert::sm_pAssertCallback = nullptr;
 				// sm_sTestInpDir.Empty();
 			}
 		}
@@ -257,39 +257,39 @@ do ordain and establish this constitution of the United States of America\n\n");
 
 	//****************************************************************************
 
-	CUnitTestRegister::CUnitTestRegister(const LOGCHAR_t* pszTestName, UNITTEST_LEVEL_TYPE nTestLevel)
+	cUnitTestRegister::cUnitTestRegister(const LOGCHAR_t* pszTestName, UNITTEST_LEVEL_TYPE nTestLevel)
 		: m_pszTestName(pszTestName)
 		, m_nTestLevel(nTestLevel)
 	{
 		//! May be constructed in 'C' static init code.
 		//! register myself in the unit test list.
-		CUnitTests& ut = CUnitTests::I();
+		cUnitTests& ut = cUnitTests::I();
 		ut.m_aUnitTests.Add(this);
 	}
 
-	CUnitTestRegister::~CUnitTestRegister() // virtual
+	cUnitTestRegister::~cUnitTestRegister() // virtual
 	{
 		//! When a module is released, all its unit tests MUST be destroyed.
-		CUnitTests& ut = CUnitTests::I();
+		cUnitTests& ut = cUnitTests::I();
 		ut.m_aUnitTests.RemoveArg(this);
 	}
 
-	void CUnitTestRegister::UnitTest()
+	void cUnitTestRegister::UnitTest()
 	{
-		//! Create the CUnitTest object and run the CUnitTest.
+		//! Create the cUnitTest object and run the cUnitTest.
 		ASSERT(this != nullptr);
-		CNewPtr<CUnitTest> pUnitTest(CreateUnitTest());
+		cNewPtr<cUnitTest> pUnitTest(CreateUnitTest());
 		pUnitTest->UnitTest();
 	}
 
 	//****************************************************************************
 
-	CUnitTests::CUnitTests()
-		: CSingleton<CUnitTests>(this, typeid(CUnitTests))
+	cUnitTests::cUnitTests()
+		: cSingleton<cUnitTests>(this, typeid(cUnitTests))
 	{
 	}
 
-	bool CUnitTests::RegisterUnitTest(CUnitTestRegister* pTest)
+	bool cUnitTests::RegisterUnitTest(cUnitTestRegister* pTest)
 	{
 		if (m_aUnitTests.HasArg(pTest))
 			return false;
@@ -297,23 +297,23 @@ do ordain and establish this constitution of the United States of America\n\n");
 		return true;
 	}
 
-	CUnitTestRegister* CUnitTests::FindUnitTest(const char* pszName) const
+	cUnitTestRegister* cUnitTests::FindUnitTest(const char* pszName) const
 	{
 		//! Find a test by name.
 		for (ITERATE_t i = 0; i < m_aUnitTests.GetSize(); i++)
 		{
-			CUnitTestRegister* pUt = m_aUnitTests[i];
+			cUnitTestRegister* pUt = m_aUnitTests[i];
 			if (!StrT::Cmp(pUt->m_pszTestName, pszName))
 				return pUt;
 		}
 		return nullptr;
 	}
 
-	bool CALLBACK CUnitTests::UnitTest_AssertCallback(const char* pszExp, const CDebugSourceLine& src) // static AssertCallback_t
+	bool CALLBACK cUnitTests::UnitTest_AssertCallback(const char* pszExp, const cDebugSourceLine& src) // static AssertCallback_t
 	{
 		//! Assert was called during a unit test.
-		//! AssertCallback_t sm_pAssertCallback = CDebugAssert::Assert_Fail was called in UnitTest. GRAYCALL
-		CUnitTestCur::sm_iFailures++;
+		//! AssertCallback_t sm_pAssertCallback = cDebugAssert::Assert_Fail was called in UnitTest. GRAYCALL
+		cUnitTestCur::sm_iFailures++;
 #ifdef USE_UNITTESTS_MS
 		__LineInfo lineInfo(cStringW(src.m_pszFile), src.m_pszFunction, src.m_uLine);	// StrArg
 		Assert::IsTrue(false, cStringW(pszExp), &lineInfo);
@@ -321,11 +321,11 @@ do ordain and establish this constitution of the United States of America\n\n");
 #else
 		UNREFERENCED_PARAMETER(pszExp);
 		UNREFERENCED_REFERENCE(src);
-		return true;	// fall through to log and continue.	NOT CDebugAssert::Assert_System()
+		return true;	// fall through to log and continue.	NOT cDebugAssert::Assert_System()
 #endif
 	}
 
-	bool CUnitTests::TestTypes()
+	bool cUnitTests::TestTypes()
 	{
 		//! Check some basic compiler assumptions.
 		//! Called early in unit tests
@@ -426,30 +426,30 @@ do ordain and establish this constitution of the United States of America\n\n");
 		UNITTEST_TRUE(iOffset > 8);	// check offsetof().
 #endif
 
-	// Test some size assumptions. CPtrFacade
-		CNewPtr<int> pNewObj;
-		UNITTEST_TRUE(sizeof(CNewPtr<int>) == sizeof(int*));
-		CSmartBasePtr pRefObj;
-		UNITTEST_TRUE(sizeof(CSmartBasePtr) == sizeof(CSmartBase*));
-		CIUnkBasePtr pIRefObj;
-		// UNITTEST_TRUE( sizeof(CIUnkBasePtr) == sizeof(IUnknown*));
+	// Test some size assumptions. cPtrFacade
+		cNewPtr<int> pNewObj;
+		UNITTEST_TRUE(sizeof(cNewPtr<int>) == sizeof(int*));
+		cRefBasePtr pRefObj;
+		UNITTEST_TRUE(sizeof(cRefBasePtr) == sizeof(cRefBase*));
+		cIUnkBasePtr pIRefObj;
+		// UNITTEST_TRUE( sizeof(cIUnkBasePtr) == sizeof(IUnknown*));
 
 		// Test CHECKPTR_CAST(TYPE2, get_Single());
-		CAppState* pTest1 = CAppState::get_Single();
-		CAppState* pTest2 = CHECKPTR_CAST(CAppState, pTest1);
+		cAppState* pTest1 = cAppState::get_Single();
+		cAppState* pTest2 = CHECKPTR_CAST(cAppState, pTest1);
 		UNITTEST_TRUE(pTest1 == pTest2);
 
 		return true;
 	}
 
-	void GRAYCALL CUnitTests::InitLog() // static
+	void GRAYCALL cUnitTests::InitLog() // static
 	{
 		// Attach logger.
- 		sm_pLog = CLogMgr::get_Single();  // route logs here.
-		CDebugAssert::sm_pAssertCallback = UnitTest_AssertCallback;		// route asserts back here.
+ 		sm_pLog = cLogMgr::get_Single();  // route logs here.
+		cDebugAssert::sm_pAssertCallback = UnitTest_AssertCallback;		// route asserts back here.
 	}
 
-	HRESULT CUnitTests::UnitTests(UNITTEST_LEVEL_TYPE nTestLevel, const LOGCHAR_t* pszTestNameMatch)
+	HRESULT cUnitTests::UnitTests(UNITTEST_LEVEL_TYPE nTestLevel, const LOGCHAR_t* pszTestNameMatch)
 	{
 		//! Execute all the registered unit tests at the selected level.
 		//! @note assume each test is responsible for its own resources.
@@ -465,60 +465,60 @@ do ordain and establish this constitution of the United States of America\n\n");
 		// Where to send the test output?
 		InitLog();	// route logs here.
 		 
-		CTimePerf::InitFreq();
+		cTimePerf::InitFreq();
 
-		CTimeSys tStart(CTimeSys::GetTimeNow());
+		cTimeSys tStart(cTimeSys::GetTimeNow());
 
 		// Make sure get_CurrentDir() is set correctly
 
-		CStringF sTestInpDir = get_TestInpDir();
-		CStringF sTestOutDir = get_TestOutDir();
+		cStringF sTestInpDir = get_TestInpDir();
+		cStringF sTestOutDir = get_TestOutDir();
 
 		// Create a results log file with the date stamped on it + Build config. x86 vs x64 etc.
-		CSmartPtr<CUnitTestLogger> pLogFile(new CUnitTestLogger);
+		cRefPtr<cUnitTestLogger> pLogFile(new cUnitTestLogger);
 		if (pLogFile->CreateLogFile(sTestOutDir))
 		{
-			CLogMgr::I().AddAppender(pLogFile);
+			cLogMgr::I().AddAppender(pLogFile);
 		}
 
-		sm_pLog->addDebugInfoF("CUnitTests input from '%s'", LOGSTR(sTestInpDir));
-		sm_pLog->addDebugInfoF("CUnitTests output to '%s'", LOGSTR(sTestOutDir));
+		sm_pLog->addDebugInfoF("cUnitTests input from '%s'", LOGSTR(sTestInpDir));
+		sm_pLog->addDebugInfoF("cUnitTests output to '%s'", LOGSTR(sTestOutDir));
 
-		CArrayString<LOGCHAR_t> aNames;
+		cArrayString<LOGCHAR_t> aNames;
 		if (pszTestNameMatch == nullptr)
 		{
-			sm_pLog->addDebugInfoF("CUnitTests STARTING %d TESTS at level %d", m_aUnitTests.GetSize(), nTestLevel);
+			sm_pLog->addDebugInfoF("cUnitTests STARTING %d TESTS at level %d", m_aUnitTests.GetSize(), nTestLevel);
 		}
 		else
 		{
-			sm_pLog->addDebugInfoF("CUnitTests STARTING '%s' from %d TESTS", LOGSTR(pszTestNameMatch), m_aUnitTests.GetSize());
+			sm_pLog->addDebugInfoF("cUnitTests STARTING '%s' from %d TESTS", LOGSTR(pszTestNameMatch), m_aUnitTests.GetSize());
 			aNames.SetStrSep(pszTestNameMatch, ',');
 		}
 
 		// Display build/compile info. date, compiler, _MFC_VER/_AFXDLL, 64/32 bit.
 		sm_pLog->addDebugInfoF("Build: '%s' v%d for '%s' on '%s'", GRAY_COMPILER_NAME, GRAY_COMPILER_VER, GRAY_BUILD_NAME, __DATE__);
 		// Display current run environment info. OS type, 64/32 bit, OS version, CPU's.
-		sm_pLog->addDebugInfoF("OS: '%s'", LOGSTR(CSystemInfo::I().get_OSName()));
+		sm_pLog->addDebugInfoF("OS: '%s'", LOGSTR(cSystemInfo::I().get_OSName()));
 
 		// Test presumed behavior of compiler types.
 		TestTypes();
 
 		// Run all s_aUnitTests registered tests at sm_nTestLevel
 		char szDashes[64];
-		CValArray::FillSize<BYTE>(szDashes, STRMAX(szDashes), '-');
+		cValArray::FillSize<BYTE>(szDashes, STRMAX(szDashes), '-');
 		szDashes[STRMAX(szDashes)] = '\0';
-		UNITTEST_TRUE(CMem::IsValid(szDashes, sizeof(szDashes)));
+		UNITTEST_TRUE(cMem::IsValid(szDashes, sizeof(szDashes)));
 
-		CLogAppendDebug::AddAppenderCheck(nullptr);	// push log to OutputDebugString()
+		cLogAppendDebug::AddAppenderCheck(nullptr);	// push log to OutputDebugString()
 
 #if defined(_MSC_VER) && defined(_DEBUG) && ! defined(UNDER_CE)
-		CHeap::Init(_CRTDBG_ALLOC_MEM_DF);
+		cHeap::Init(_CRTDBG_ALLOC_MEM_DF);
 #endif
 
 		ITERATE_t iTestsRun = 0;
 		for (ITERATE_t i = 0; i < m_aUnitTests.GetSize(); i++)
 		{
-			CUnitTestRegister* pUnitTest = m_aUnitTests[i];
+			cUnitTestRegister* pUnitTest = m_aUnitTests[i];
 			if (pszTestNameMatch == nullptr)
 			{
 				if (pUnitTest->m_nTestLevel > sm_nTestLevel)
@@ -541,59 +541,59 @@ do ordain and establish this constitution of the United States of America\n\n");
 			UNITTEST_TRUE(iLenName > 0 && iLenName < STRMAX(szDashes));
 			szDashes[_countof(szDashes) - iLenName] = '\0';
 
-			sm_pLog->addDebugInfoF("CUnitTest '%s' run  %s", LOGSTR(pUnitTest->m_pszTestName), szDashes);
+			sm_pLog->addDebugInfoF("cUnitTest '%s' run  %s", LOGSTR(pUnitTest->m_pszTestName), szDashes);
 			szDashes[_countof(szDashes) - iLenName] = '-';
 
-			CTimePerf tPerfStart(true);		// Time a single test for performance changes.
+			cTimePerf tPerfStart(true);		// Time a single test for performance changes.
 
 			pUnitTest->UnitTest();
 
-			CTimePerf tPerfStop(true);		// Time a single test for performance changes.
+			cTimePerf tPerfStop(true);		// Time a single test for performance changes.
 
 			if (sm_iFailures > 0)
 			{
-				// Assume CDebugAssert::Assert_Fail was also called.
-				sm_pLog->addDebugInfoF("CUnitTest FAILED '%s' Test %d", LOGSTR(pUnitTest->m_pszTestName), iTestsRun);
+				// Assume cDebugAssert::Assert_Fail was also called.
+				sm_pLog->addDebugInfoF("cUnitTest FAILED '%s' Test %d", LOGSTR(pUnitTest->m_pszTestName), iTestsRun);
 				return E_FAIL;
 			}
 
 			iTestsRun++;
 
 			// Do a heap integrity test between unit tests. just in case.
-			bool bHeapCheck = CHeap::Check();
-			if (!bHeapCheck && !::Gray::CDebugAssert::Assert_Fail("CHeap::Check", DEBUGSOURCELINE))
+			bool bHeapCheck = cHeap::Check();
+			if (!bHeapCheck && !::Gray::cDebugAssert::Assert_Fail("cHeap::Check", DEBUGSOURCELINE))
 			{
-				// Assume CDebugAssert::Assert_Fail was also called.
-				sm_pLog->addDebugInfoF("CUnitTest FAILED '%s' Heap Corruption.", LOGSTR(pUnitTest->m_pszTestName));
+				// Assume cDebugAssert::Assert_Fail was also called.
+				sm_pLog->addDebugInfoF("cUnitTest FAILED '%s' Heap Corruption.", LOGSTR(pUnitTest->m_pszTestName));
 				return E_FAIL;
 			}
 
 			// How long did it take?
 			ASSERT(tPerfStop.get_Perf() >= tPerfStart.get_Perf());
 			TIMEPERF_t iPerfDiff = tPerfStop.get_Perf() - tPerfStart.get_Perf();
-			double dDaysDiff = CTimePerf::ToDays(iPerfDiff);
+			double dDaysDiff = cTimePerf::ToDays(iPerfDiff);
 			ASSERT(dDaysDiff >= 0 && dDaysDiff < 1);
-			cString sTimeSpan = CTimeDouble::GetTimeSpanStr(dDaysDiff);
+			cString sTimeSpan = cTimeDouble::GetTimeSpanStr(dDaysDiff);
 			StrLen_t nLenText = sTimeSpan.GetLength() + iLenName + 8;
 			if (nLenText > STRMAX(szDashes))
 				nLenText = STRMAX(szDashes);
 			szDashes[_countof(szDashes) - nLenText] = '\0';
-			sm_pLog->addDebugInfoF("CUnitTest '%s' complete in %s %s", LOGSTR(pUnitTest->m_pszTestName), LOGSTR(sTimeSpan), szDashes);
+			sm_pLog->addDebugInfoF("cUnitTest '%s' complete in %s %s", LOGSTR(pUnitTest->m_pszTestName), LOGSTR(sTimeSpan), szDashes);
 			szDashes[_countof(szDashes) - nLenText] = '-';
 		}
 
-		sm_pLog->addDebugInfoF("CUnitTests ENDING %d/%d TESTS in %s", iTestsRun, m_aUnitTests.GetSize(),
-			LOGSTR(CTimeInt::GetTimeSpanStr(tStart.get_AgeSec())));
+		sm_pLog->addDebugInfoF("cUnitTests ENDING %d/%d TESTS in %s", iTestsRun, m_aUnitTests.GetSize(),
+			LOGSTR(cTimeInt::GetTimeSpanStr(tStart.get_AgeSec())));
 
 		if (pszTestNameMatch != nullptr && aNames.GetSize() > 0)
 		{
 			// Didn't find some names !
-			sm_pLog->addDebugInfoF("CUnitTest FAILED to find test for '%s'", LOGSTR(aNames[0]));
+			sm_pLog->addDebugInfoF("cUnitTest FAILED to find test for '%s'", LOGSTR(aNames[0]));
 		}
 
 
 #ifdef USE_IUNK_TRACE
-		CPtrTrace::TraceDump(*sm_pLog, 0);
+		cPtrTrace::TraceDump(*sm_pLog, 0);
 #endif
 
 		// Clear the temporary directory ? get_TestOutDir()

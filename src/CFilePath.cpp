@@ -1,13 +1,13 @@
 //
-//! @file CFilePath.cpp
+//! @file cFilePath.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
 #include "pch.h"
-#include "CFilePath.h"
-#include "CLogMgr.h"
-#include "CAppState.h"
-#include "CFileDir.h"
+#include "cFilePath.h"
+#include "cLogMgr.h"
+#include "cAppState.h"
+#include "cFileDir.h"
 #include "StrChar.h"
 #include "StrConst.h"
 
@@ -21,10 +21,10 @@ namespace Gray
 {
 
 #ifdef _WIN32
-	const FILECHAR_t CFilePath::k_NamePrefix[5] = _FN("\\\\?\\");	//!< pre-pend "\\?\" to the path to extend this limit to 32,767 on NTFS.
+	const FILECHAR_t cFilePath::k_NamePrefix[5] = _FN("\\\\?\\");	//!< pre-pend "\\?\" to the path to extend this limit to 32,767 on NTFS.
 #endif
 
-	FILECHR_TYPE_ GRAYCALL CFilePath::GetFileCharType(wchar_t ch, FILESYS_TYPE eSys) // static
+	FILECHR_TYPE_ GRAYCALL cFilePath::GetFileCharType(wchar_t ch, FILESYS_TYPE eSys) // static
 	{
 		//! Is the char valid for a filename on FILECHR_TYPE_?
 		//! The valid characters for a filename in DOS manual (DOS 5: page 72)
@@ -100,7 +100,7 @@ namespace Gray
 		return FILECHR_Name3;	// some other sort of char like foreign char. but allowed.
 	}
 
-	bool GRAYCALL CFilePath::IsFileNameValid(const FILECHAR_t* pszName, FILECHR_MASK_t uCharMask, FILESYS_TYPE eSys) // static
+	bool GRAYCALL cFilePath::IsFileNameValid(const FILECHAR_t* pszName, FILECHR_MASK_t uCharMask, FILESYS_TYPE eSys) // static
 	{
 		//! Is this a valid file name? Maybe UTF8.
 		//! Do not end a file or directory name with a space or a period.
@@ -127,7 +127,7 @@ namespace Gray
 		return true;
 	}
 
-	bool GRAYCALL CFilePath::IsFilePathTitle(const FILECHAR_t* pszName) // static
+	bool GRAYCALL cFilePath::IsFilePathTitle(const FILECHAR_t* pszName) // static
 	{
 		//! Does this NOT have path/dir indicators?
 		if (pszName == nullptr)
@@ -147,7 +147,7 @@ namespace Gray
 		return false;;
 	}
 
-	bool GRAYCALL CFilePath::HasFilePathRelatives(const FILECHAR_t* pszName, bool bOrDevices) // static
+	bool GRAYCALL cFilePath::HasFilePathRelatives(const FILECHAR_t* pszName, bool bOrDevices) // static
 	{
 		//! Does the file have any relative components. like ..
 		//! Get rid of them with MakeProperPath()
@@ -174,7 +174,7 @@ namespace Gray
 		return true;
 	}
 
-	StrLen_t GRAYCALL CFilePath::GetFilePathDeviceLen(const FILECHAR_t* pszName) // static
+	StrLen_t GRAYCALL cFilePath::GetFilePathDeviceLen(const FILECHAR_t* pszName) // static
 	{
 		//! Skip the device info at the start of the path.
 		//! have a device name in it ? e.g. "COM1:" or "C:"
@@ -206,7 +206,7 @@ namespace Gray
 		return 0;
 	}
 
-	bool GRAYCALL CFilePath::IsFileDeviceRemote(const FILECHAR_t* pszPath) // static
+	bool GRAYCALL cFilePath::IsFileDeviceRemote(const FILECHAR_t* pszPath) // static
 	{
 		//! Is the file based on some remote device/service? e.g. HTTP, HTTPS, FTP, RTP, RTMP etc.
 		//! GetFilePathDeviceLen
@@ -220,7 +220,7 @@ namespace Gray
 		return true;	// must be a remote protocol.
 	}
 
-	bool GRAYCALL CFilePath::IsFilePathRooted(const FILECHAR_t* pszName) // static
+	bool GRAYCALL cFilePath::IsFilePathRooted(const FILECHAR_t* pszName) // static
 	{
 		//! Is the file path absolute ? (not relative path to current directory for process)
 		//! Based on drive, device or root ? not have .. in it.
@@ -239,7 +239,7 @@ namespace Gray
 		return false;
 	}
 
-	bool GRAYCALL CFilePath::IsFilePathRoot(const FILECHAR_t* pszName) // static
+	bool GRAYCALL cFilePath::IsFilePathRoot(const FILECHAR_t* pszName) // static
 	{
 		//! is this the root of a device?
 		//! @note Includes the DOT !
@@ -255,7 +255,7 @@ namespace Gray
 		return false;
 	}
 
-	FILECHAR_t* GRAYCALL CFilePath::GetFileNameExt(const FILECHAR_t* pszName, StrLen_t iLen, bool bMultiDot)	// static
+	FILECHAR_t* GRAYCALL cFilePath::GetFileNameExt(const FILECHAR_t* pszName, StrLen_t iLen, bool bMultiDot)	// static
 	{
 		//! Get a pointer to the extension of the file.
 		//! @note Includes the DOT !
@@ -293,7 +293,7 @@ namespace Gray
 		return pszExt;
 	}
 
-	StrLen_t GRAYCALL CFilePath::StripFileExt(FILECHAR_t* pszFile, StrLen_t iLen, bool bMultiDot) // static
+	StrLen_t GRAYCALL cFilePath::StripFileExt(FILECHAR_t* pszFile, StrLen_t iLen, bool bMultiDot) // static
 	{
 		//! strip the ext off the file name (or path).
 		//! @arg
@@ -319,7 +319,7 @@ namespace Gray
 		return StrT::Diff(pszExt, pszFile);
 	}
 
-	CStringF GRAYCALL CFilePath::ReplaceFileExt(const FILECHAR_t* pszFilePath, const FILECHAR_t* pszExtNew)
+	cStringF GRAYCALL cFilePath::ReplaceFileExt(const FILECHAR_t* pszFilePath, const FILECHAR_t* pszExtNew)
 	{
 		//! Replace the existing Ext with this new one. If it didn't have one then just add this.
 		//! @arg pszExtNew = ".EXT" (with dot)
@@ -339,7 +339,7 @@ namespace Gray
 		return szTemp;
 	}
 
-	FILECHAR_t* GRAYCALL CFilePath::GetFileName(const FILECHAR_t* pszPath, StrLen_t iLen)	// static
+	FILECHAR_t* GRAYCALL cFilePath::GetFileName(const FILECHAR_t* pszPath, StrLen_t iLen)	// static
 	{
 		//! Get file name and ext. (not path or drive) (File title)
 		//! using iLen we might back up to the directory under any other directory.
@@ -365,10 +365,10 @@ namespace Gray
 		return(const_cast<FILECHAR_t*>(pszPath));
 	}
 
-	bool GRAYCALL CFilePath::HasTitleWildcards(const FILECHAR_t* pszPath) // static
+	bool GRAYCALL cFilePath::HasTitleWildcards(const FILECHAR_t* pszPath) // static
 	{
 		//! Any wildcards ?* in this title ?
-		//! Use StrT::MatchRegEx and CFileDir to evaluate these.
+		//! Use StrT::MatchRegEx and cFileDir to evaluate these.
 
 		if (pszPath == nullptr)
 			return false;
@@ -383,7 +383,7 @@ namespace Gray
 		return false;
 	}
 
-	CStringF GRAYCALL CFilePath::GetFileNameNE(const FILECHAR_t* pszPath, StrLen_t iLenPath, bool bMultiDot)	// static
+	cStringF GRAYCALL cFilePath::GetFileNameNE(const FILECHAR_t* pszPath, StrLen_t iLenPath, bool bMultiDot)	// static
 	{
 		//! Get the file name title with NO extension and NO path.
 		FILECHAR_t szTmp[_MAX_PATH];
@@ -392,7 +392,7 @@ namespace Gray
 		return szTmp;
 	}
 
-	StrLen_t GRAYCALL CFilePath::MakeFileSymbolicName(ATOMCHAR_t* pszOut, const FILECHAR_t* pszPath, const ATOMCHAR_t* pszPrefix, ATOMCHAR_t chSub, bool bAllowLeadingNumber) // static
+	StrLen_t GRAYCALL cFilePath::MakeFileSymbolicName(ATOMCHAR_t* pszOut, const FILECHAR_t* pszPath, const ATOMCHAR_t* pszPrefix, ATOMCHAR_t chSub, bool bAllowLeadingNumber) // static
 	{
 		//! make a symbolic name from a file name. replace directory separators with _ chSub
 		//! @note pszPrefix = nullptr is allowed.
@@ -473,7 +473,7 @@ namespace Gray
 		return iLen;
 	}
 
-	cStringA GRAYCALL CFilePath::GetFileSymbolicName(const FILECHAR_t* pszPath, const ATOMCHAR_t* pszPrefix, ATOMCHAR_t chSub, bool bAllowLeadingNumber) // static
+	cStringA GRAYCALL cFilePath::GetFileSymbolicName(const FILECHAR_t* pszPath, const ATOMCHAR_t* pszPrefix, ATOMCHAR_t chSub, bool bAllowLeadingNumber) // static
 	{
 		//! convert the file name into a useful symbolic name. (SYMNAME)
 		//! remove the directory and extension name.
@@ -482,16 +482,16 @@ namespace Gray
 		return cStringA(szTmp, iLen);
 	}
 
-	StrLen_t GRAYCALL CFilePath::MakeFullPath2(FILECHAR_t* pszFileOut, const FILECHAR_t* pszFileInp, StrLen_t iLenMax, FILECHAR_t chSep) // static
+	StrLen_t GRAYCALL cFilePath::MakeFullPath2(FILECHAR_t* pszFileOut, const FILECHAR_t* pszFileInp, StrLen_t iLenMax, FILECHAR_t chSep) // static
 	{
 		//! ASSERT(!IsFilePathRooted(pszFileInp))
 		//! @note UNDER_CE has no concept of application current directory. All paths are rooted.
 		//! @return Length
-		StrLen_t iLen = CAppState::GetCurrentDir(pszFileOut, iLenMax);
+		StrLen_t iLen = cAppState::GetCurrentDir(pszFileOut, iLenMax);
 		return CombineFilePathA(pszFileOut, iLenMax, iLen, pszFileInp, chSep);
 	}
 
-	StrLen_t GRAYCALL CFilePath::MakeFullPath(FILECHAR_t* pszFileOut, const FILECHAR_t* pszFileInp, StrLen_t iLenMax, FILECHAR_t chSep) // static
+	StrLen_t GRAYCALL cFilePath::MakeFullPath(FILECHAR_t* pszFileOut, const FILECHAR_t* pszFileInp, StrLen_t iLenMax, FILECHAR_t chSep) // static
 	{
 		//! If this is a relative path (to app current dir) make this an absolute (rooted) path
 		//! @return Length
@@ -506,7 +506,7 @@ namespace Gray
 		return MakeFullPath2(pszFileOut, pszFileInp, iLenMax, chSep);
 	}
 
-	CStringF GRAYCALL CFilePath::MakeFullPathX(const FILECHAR_t* pszFileInp, FILECHAR_t chSep) // static
+	cStringF GRAYCALL cFilePath::MakeFullPathX(const FILECHAR_t* pszFileInp, FILECHAR_t chSep) // static
 	{
 		//! If this is a relative path (to app current dir) make this an absolute (rooted) path
 
@@ -523,7 +523,7 @@ namespace Gray
 		return szTmp;
 	}
 
-	StrLen_t GRAYCALL CFilePath::AddFileDirSep(FILECHAR_t* pszOut, StrLen_t iLen, FILECHAR_t chSep)
+	StrLen_t GRAYCALL cFilePath::AddFileDirSep(FILECHAR_t* pszOut, StrLen_t iLen, FILECHAR_t chSep)
 	{
 		//! Add the / or \ to the end to make this a directory.
 		//! ASSUME pszOut >= _MAX_PATH
@@ -549,7 +549,7 @@ namespace Gray
 		return iLen;
 	}
 
-	StrLen_t GRAYCALL CFilePath::CombineFilePathA(FILECHAR_t* pszOut, StrLen_t iLenMax, StrLen_t iLen, const FILECHAR_t* pszName, FILECHAR_t chSep) // static
+	StrLen_t GRAYCALL cFilePath::CombineFilePathA(FILECHAR_t* pszOut, StrLen_t iLenMax, StrLen_t iLen, const FILECHAR_t* pszName, FILECHAR_t chSep) // static
 	{
 		//! Append file/subdir pszName to existing pszOut path.
 		//! @arg chSep = k_DirSep default.
@@ -575,7 +575,7 @@ namespace Gray
 		return iLen + StrT::CopyLen(pszOut + iLen, SkipRelativePrefix(pszName), iLenMax - iLen);
 	}
 
-	StrLen_t GRAYCALL CFilePath::CombineFilePath(FILECHAR_t* pszOut, StrLen_t iLenMax, const FILECHAR_t* pszDir, const FILECHAR_t* pszName, FILECHAR_t chSep) // static
+	StrLen_t GRAYCALL cFilePath::CombineFilePath(FILECHAR_t* pszOut, StrLen_t iLenMax, const FILECHAR_t* pszDir, const FILECHAR_t* pszName, FILECHAR_t chSep) // static
 	{
 		//! combine pszDir and pszName to make a single path. MakeProperPath.
 		//! Similar to Shell PathAppend()
@@ -593,7 +593,7 @@ namespace Gray
 		return MakeProperPath(pszOut, iLenMax, pszOut, chSep);
 	}
 
-	CStringF GRAYCALL CFilePath::CombineFilePathX(const FILECHAR_t* pszDir, const FILECHAR_t* pszName, FILECHAR_t chSep) // static
+	cStringF GRAYCALL cFilePath::CombineFilePathX(const FILECHAR_t* pszDir, const FILECHAR_t* pszName, FILECHAR_t chSep) // static
 	{
 		//! Merge path and file name. MakeProperPath.
 		//! Similar to Shell PathAppend()
@@ -604,7 +604,7 @@ namespace Gray
 		return szFilePath;
 	}
 
-	CStringF _cdecl CFilePath::CombineFilePathF(FILECHAR_t chSep, const FILECHAR_t* pszBase, ...) // static
+	cStringF _cdecl cFilePath::CombineFilePathF(FILECHAR_t chSep, const FILECHAR_t* pszBase, ...) // static
 	{
 		//! Combine a list of file name parts together. MUST be nullptr terminated list.
 		//! @arg chSep = k_DirSep
@@ -627,7 +627,7 @@ namespace Gray
 		return szFilePath;
 	}
 
-	bool GRAYCALL CFilePath::IsRelativeRoot(const FILECHAR_t* pszFullPath, const FILECHAR_t* pszRootDir, StrLen_t iLenRootDir) // static
+	bool GRAYCALL cFilePath::IsRelativeRoot(const FILECHAR_t* pszFullPath, const FILECHAR_t* pszRootDir, StrLen_t iLenRootDir) // static
 	{
 		//! is the pszRootDir inside pszFullPath?
 		//! e.g. pszFullPath="a\b\c", pszRootDir="a" = true
@@ -642,7 +642,7 @@ namespace Gray
 		return false;
 	}
 
-	bool GRAYCALL CFilePath::IsRelativePath(const FILECHAR_t* pszFullPath, const FILECHAR_t* pszRelativePath) // static
+	bool GRAYCALL cFilePath::IsRelativePath(const FILECHAR_t* pszFullPath, const FILECHAR_t* pszRelativePath) // static
 	{
 		//! a reverse compare of 2 paths. is pszRelativePath the same as pszFullPath assuming a root.
 		//! e.g. pszFullPath="a\b\c", pszRelativePath="b\c" = true
@@ -656,7 +656,7 @@ namespace Gray
 		return false;
 	}
 
-	CStringF GRAYCALL CFilePath::MakeRelativePath(const FILECHAR_t* pszFullPath, const FILECHAR_t* pszRootDir) // static
+	cStringF GRAYCALL cFilePath::MakeRelativePath(const FILECHAR_t* pszFullPath, const FILECHAR_t* pszRootDir) // static
 	{
 		//! given a pszFullPath, subtract pszRootDir out to make a relative path.
 		//! If pszFullPath is not relative to pszRootDir just return the pszFullPath.
@@ -711,7 +711,7 @@ namespace Gray
 		return pszFullPath;
 	}
 
-	COMPARE_t GRAYCALL CFilePath::ComparePath(const FILECHAR_t* pszName1, const FILECHAR_t* pszName2, StrLen_t iLenMax) // static
+	COMPARE_t GRAYCALL cFilePath::ComparePath(const FILECHAR_t* pszName1, const FILECHAR_t* pszName2, StrLen_t iLenMax) // static
 	{
 		//! Compare 2 paths. equate \ and //
 		//! @note file Path/Name may or may not be case sensitive! Linux = sensitive , Windows/Dos = not case sensitive.
@@ -762,7 +762,7 @@ namespace Gray
 		return COMPARE_Equal;	// they are the same.
 	}
 
-	FILECHAR_t* GRAYCALL CFilePath::SkipRelativePrefix(const FILECHAR_t* pszName) // static
+	FILECHAR_t* GRAYCALL cFilePath::SkipRelativePrefix(const FILECHAR_t* pszName) // static
 	{
 		//! if it has a relative prefix (.\) then skip it. it means nothing.
 		while (pszName[0] == '.' && IsCharDirSep(pszName[1]))
@@ -772,7 +772,7 @@ namespace Gray
 		return const_cast<FILECHAR_t*>(pszName);
 	}
 
-	FILECHAR_t* GRAYCALL CFilePath::GetFilePathUpDir2(const FILECHAR_t* pszName, StrLen_t iLen /*= k_StrLen_UNK*/, int iQtyDirs /*= 1*/) // static
+	FILECHAR_t* GRAYCALL cFilePath::GetFilePathUpDir2(const FILECHAR_t* pszName, StrLen_t iLen /*= k_StrLen_UNK*/, int iQtyDirs /*= 1*/) // static
 	{
 		//! go up this many folders if possible.
 		//! iQtyDirs = 1 = the folder for "sdf:/dir1/dir2/dir3/dir4" = "/dir4"
@@ -846,17 +846,17 @@ namespace Gray
 		return const_cast<FILECHAR_t*>(pszName);
 	}
 
-	CStringF GRAYCALL CFilePath::GetFilePathUpDir1(const FILECHAR_t* pszName, StrLen_t iLen /*= k_StrLen_UNK*/, int iQtyDirs /*= 1*/) // static
+	cStringF GRAYCALL cFilePath::GetFilePathUpDir1(const FILECHAR_t* pszName, StrLen_t iLen /*= k_StrLen_UNK*/, int iQtyDirs /*= 1*/) // static
 	{
 		//! Go up a single dir.
 		//! @arg iQtyDirs = -1 = for "sdf:/dir1/dir2/dir3/dir4" = "sdf:/dir1/dir2/dir3"
 		const FILECHAR_t* pszAct = GetFilePathUpDir2(pszName, iLen, iQtyDirs);
 		if (pszAct == nullptr)
 			return "";
-		return CStringF(pszName, StrT::Diff(pszAct, pszName) - 1);
+		return cStringF(pszName, StrT::Diff(pszAct, pszName) - 1);
 	}
 
-	bool GRAYCALL CFilePath::MakeFilePathUpDir(FILECHAR_t* pszName)	// static
+	bool GRAYCALL cFilePath::MakeFilePathUpDir(FILECHAR_t* pszName)	// static
 	{
 		//! Get the file path if the file were up one directory. in its parent dir.
 		//! Like using ExtractDir()
@@ -867,11 +867,11 @@ namespace Gray
 		FILECHAR_t* pszAct = GetFilePathUpDir2(pszName, StrT::Diff(pszTitle, pszName), 2);
 		if (pszAct == nullptr)
 			return false;
-		CMem::CopyOverlap(pszAct, pszTitle, (StrT::Len(pszTitle) + 1) * sizeof(FILECHAR_t));	// restore file name/title + '\0'
+		cMem::CopyOverlap(pszAct, pszTitle, (StrT::Len(pszTitle) + 1) * sizeof(FILECHAR_t));	// restore file name/title + '\0'
 		return true;
 	}
 
-	StrLen_t GRAYCALL CFilePath::MakeProperPath(FILECHAR_t* pszFileOut, StrLen_t iLenMax, const FILECHAR_t* pszFileInp, FILECHAR_t chSep) // static
+	StrLen_t GRAYCALL cFilePath::MakeProperPath(FILECHAR_t* pszFileOut, StrLen_t iLenMax, const FILECHAR_t* pszFileInp, FILECHAR_t chSep) // static
 	{
 		//! Make sure all forward/back slashes are chSep.
 		//! Remove/resolve relatives like ../ or ./ except if relativism would make us lower than root, then just leave it. like _WIN32 PathCanonicalize()
@@ -947,7 +947,7 @@ namespace Gray
 		return iOut;
 	}
 
-	CStringF GRAYCALL CFilePath::MakeProperPathX(const FILECHAR_t* pszFileInp, FILECHAR_t chSep) // static
+	cStringF GRAYCALL cFilePath::MakeProperPathX(const FILECHAR_t* pszFileInp, FILECHAR_t chSep) // static
 	{
 		//! Make sure all forward/back slashes are chSep.
 		FILECHAR_t szFilePath[_MAX_PATH];
@@ -955,7 +955,7 @@ namespace Gray
 		return szFilePath;
 	}
 
-	StrLen_t GRAYCALL CFilePath::ExtractDir(FILECHAR_t* pszFilePath, StrLen_t iLen, bool bTrailingSep) // static
+	StrLen_t GRAYCALL cFilePath::ExtractDir(FILECHAR_t* pszFilePath, StrLen_t iLen, bool bTrailingSep) // static
 	{
 		//! Remove the file name from this and just leave the path.
 		//! bTrailingSep = leave the trailing /
@@ -983,7 +983,7 @@ namespace Gray
 		return StrT::Diff(pszTitle, pszFilePath);
 	}
 
-	StrLen_t GRAYCALL CFilePath::ExtractDirCopy(FILECHAR_t* pszDirPath, StrLen_t iLenMax, const FILECHAR_t* pszFilePathSrc, bool bTrailingSep) // static
+	StrLen_t GRAYCALL cFilePath::ExtractDirCopy(FILECHAR_t* pszDirPath, StrLen_t iLenMax, const FILECHAR_t* pszFilePathSrc, bool bTrailingSep) // static
 	{
 		//! Remove the file name from this and just leave the path. (was ExtractDir)
 		//! @arg bTrailingSep = leave the trailing /
@@ -993,7 +993,7 @@ namespace Gray
 		return ExtractDir(pszDirPath, iLen, bTrailingSep);
 	}
 
-	CStringF GRAYCALL CFilePath::GetFileDir(const FILECHAR_t* pszPath, bool bTrailingSep) // static
+	cStringF GRAYCALL cFilePath::GetFileDir(const FILECHAR_t* pszPath, bool bTrailingSep) // static
 	{
 		//! Extract the directory from a file path. include the trailing / k_DirSep if bTrailingSep is set.
 		//! @arg bTrailingSep = leave the trailing /
@@ -1003,7 +1003,7 @@ namespace Gray
 		return szPath;
 	}
 
-	bool GRAYCALL CFilePath::IsFileNameExt(const FILECHAR_t* pszFileName, const FILECHAR_t* pszExt) // static
+	bool GRAYCALL cFilePath::IsFileNameExt(const FILECHAR_t* pszFileName, const FILECHAR_t* pszExt) // static
 	{
 		//! Is this the extension for the file name ? with or without dot.
 		if (pszExt == nullptr)
@@ -1017,7 +1017,7 @@ namespace Gray
 		return !StrT::CmpIN(pszFileName + (iLenName - iLenExt), pszExt, iLenExt);
 	}
 
-	CStringF GRAYCALL CFilePath::GetNameExtStar(const FILECHAR_t* pszFilePath) // static
+	cStringF GRAYCALL cFilePath::GetNameExtStar(const FILECHAR_t* pszFilePath) // static
 	{
 		//! Convert a name possibly with a full path to a name and extension wildcard.
 		//!  "dir/Name.ext"
@@ -1028,23 +1028,23 @@ namespace Gray
 	}
 
 #ifdef _WIN32
-	const wchar_t* GRAYCALL CFilePath::MakeFileNameLongW(const FILECHAR_t* pszFilePath) // static 
+	const wchar_t* GRAYCALL cFilePath::MakeFileNameLongW(const FILECHAR_t* pszFilePath) // static 
 	{
 		//! Add _WIN32 k_NamePrefix if the filename is too long for the system call.
 		if (StrT::StartsWithI<FILECHAR_t>(pszFilePath, k_NamePrefix))	// already prefixed.
 			return StrArg<wchar_t>(pszFilePath);
-		CStringF sPathNew = k_NamePrefix;
+		cStringF sPathNew = k_NamePrefix;
 		sPathNew += pszFilePath;
 		return  StrArg<wchar_t>(sPathNew);
 	}
-	const wchar_t* GRAYCALL CFilePath::GetFileNameLongW(CStringF sFilePath) // static 
+	const wchar_t* GRAYCALL cFilePath::GetFileNameLongW(cStringF sFilePath) // static 
 	{
 		//! Add _WIN32 k_NamePrefix if the filename is too long for the system call.
 		if (sFilePath.GetLength() <= _MAX_PATH)	// short names don't need this.
 			return StrArg<wchar_t>(sFilePath.get_CPtr());
 		return MakeFileNameLongW(sFilePath);
 	}
-	const wchar_t* GRAYCALL CFilePath::GetFileNameLongW(const FILECHAR_t* pszFilePath) // static 
+	const wchar_t* GRAYCALL cFilePath::GetFileNameLongW(const FILECHAR_t* pszFilePath) // static 
 	{
 		//! Add _WIN32 k_NamePrefix if the filename is too long for the system call.
 		if (StrT::Len(pszFilePath) <= _MAX_PATH)	// short names don't need this.
@@ -1057,11 +1057,11 @@ namespace Gray
 //*******************************************************************
 
 #if USE_UNITTESTS
-#include "CUnitTest.h"
+#include "cUnitTest.h"
 
-UNITTEST_CLASS(CFilePath)
+UNITTEST_CLASS(cFilePath)
 {
-	UNITTEST_METHOD(CFilePath)
+	UNITTEST_METHOD(cFilePath)
 	{
 		static const FILECHAR_t* k_UnitTest_FilePaths[] =
 		{
@@ -1096,34 +1096,34 @@ UNITTEST_CLASS(CFilePath)
 			const FILECHAR_t* pszTest = k_UnitTest_FilePaths[i];
 
 			// GetFileSymbolicName
-			cStringA sSymbolicName(CFilePath::GetFileSymbolicName(pszTest, nullptr));
+			cStringA sSymbolicName(cFilePath::GetFileSymbolicName(pszTest, nullptr));
 			sm_pLog->addDebugInfoF("File='%s', Symbol='%s'", LOGSTR(pszTest), LOGSTR(sSymbolicName));
 
-			sSymbolicName = CFilePath::GetFileSymbolicName(pszTest, "PREFIX");
+			sSymbolicName = cFilePath::GetFileSymbolicName(pszTest, "PREFIX");
 			UNITTEST_TRUE(sSymbolicName.GetLength());
 
 			// MakeProperPath
 			FILECHAR_t szOut[_MAX_PATH];
-			StrLen_t nLen2 = CFilePath::MakeProperPath(szOut, STRMAX(szOut), pszTest);
+			StrLen_t nLen2 = cFilePath::MakeProperPath(szOut, STRMAX(szOut), pszTest);
 			StrLen_t nLen1 = StrT::CopyLen(szOut, pszTest, STRMAX(szOut));
-			StrLen_t nLen3 = CFilePath::MakeProperPath(szOut);
+			StrLen_t nLen3 = cFilePath::MakeProperPath(szOut);
 
 			UNITTEST_TRUE(nLen1 >= nLen2);
 			UNITTEST_TRUE(nLen2 == nLen3);
 		}
 
-		FILECHAR_t* pszUpDir2 = CFilePath::GetFilePathUpDir2(_FN("/a/b/c/d/ef.ext"), k_StrLen_UNK, 2);
+		FILECHAR_t* pszUpDir2 = cFilePath::GetFilePathUpDir2(_FN("/a/b/c/d/ef.ext"), k_StrLen_UNK, 2);
 		UNITTEST_TRUE(!StrT::CmpI(pszUpDir2, _FN("d/ef.ext")));
-		pszUpDir2 = CFilePath::GetFilePathUpDir2(_FN("/a/b/c/d/ef.ext"), k_StrLen_UNK, -2);
+		pszUpDir2 = cFilePath::GetFilePathUpDir2(_FN("/a/b/c/d/ef.ext"), k_StrLen_UNK, -2);
 		UNITTEST_TRUE(!StrT::CmpI(pszUpDir2, _FN("b/c/d/ef.ext")));
 
-		CStringF sUpDir1 = CFilePath::GetFilePathUpDir1(_FN("sdf:/dir1/dir2/dir3/dir4"), k_StrLen_UNK, 1);
+		cStringF sUpDir1 = cFilePath::GetFilePathUpDir1(_FN("sdf:/dir1/dir2/dir3/dir4"), k_StrLen_UNK, 1);
 		UNITTEST_TRUE(!sUpDir1.Compare(_FN("sdf:/dir1/dir2/dir3")));
 
 		// combine and make proper.
-		CStringF strFilePath = CFilePath::CombineFilePathF('/', _FN("a"), _FN("b\\c"), _FN("d/ef.ext"), nullptr);
+		cStringF strFilePath = cFilePath::CombineFilePathF('/', _FN("a"), _FN("b\\c"), _FN("d/ef.ext"), nullptr);
 		UNITTEST_TRUE(!strFilePath.Compare(_FN("a/b/c/d/ef.ext")));
 	}
 };
-UNITTEST_REGISTER(CFilePath, UNITTEST_LEVEL_Core);
+UNITTEST_REGISTER(cFilePath, UNITTEST_LEVEL_Core);
 #endif

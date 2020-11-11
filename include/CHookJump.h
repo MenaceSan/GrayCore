@@ -1,23 +1,23 @@
 //
-//! @file CHookJump.h
+//! @file cHookJump.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CHookJump_H
-#define _INC_CHookJump_H
+#ifndef _INC_cHookJump_H
+#define _INC_cHookJump_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
-#include "CThreadLock.h"
-#include "CUnitTestDecl.h"
-UNITTEST_PREDEF(CHookJump)
+#include "cThreadLock.h"
+#include "cUnitTestDecl.h"
+UNITTEST_PREDEF(cHookJump)
 
 namespace Gray
 {
-	class GRAYCORE_LINK CHookJump
+	class GRAYCORE_LINK cHookJump
 	{
-		//! @class GrayLib::CHookJump
+		//! @class GrayLib::cHookJump
 		//! Create/Define a relative jump to hook/replace an existing API call. Jump to new code is injected into old function start.
 		//! @note NOT for use in hooking an interface or a vtable. those don't require a jump instruction.
 		//! @note This ASSUMEs Intel x86 type CPU. 32 or 64 bit instructions
@@ -37,42 +37,42 @@ namespace Gray
 #endif
 		static const int k_LEN_D = k_LEN_J + k_LEN_P;	//!< ( k_LEN_J+k_LEN_P ) = size of actual instruction
 
-		friend class CHookSwapLock;
-		friend class CHookSwapChain;
+		friend class cHookSwapLock;
+		friend class cHookSwapChain;
 
 	protected:
 		FARPROC m_pFuncOrig;			//!< Pointer to the original/old function. The one i will replace. Inject code here.
 		BYTE m_OldCode[k_LEN_D];		//!< what was at m_pFuncOrig previously. NOTE: What if this uses k_LEN_J the m_Lock isn't needed ?!!!
 		BYTE m_Jump[k_LEN_D];			//!< what do i want to replace m_pFuncOrig with. jump to pFuncNew
-		CThreadLockFast m_Lock;			//!< prevent multiple threads from using this at the same time.
+		cThreadLockFast m_Lock;			//!< prevent multiple threads from using this at the same time.
 
 	protected:
 		bool SwapOld() noexcept
 		{
 			//! put back saved code fragment. temporary to call previous version of the function.
-			//! ASSUME use of CHookSwapLock m_Lock
+			//! ASSUME use of cHookSwapLock m_Lock
 			if (!isHookValid())
 				return false;
-			CMem::Copy((void*)m_pFuncOrig, m_OldCode, sizeof(m_OldCode));
+			cMem::Copy((void*)m_pFuncOrig, m_OldCode, sizeof(m_OldCode));
 			return true;
 		}
 		void SwapReset() noexcept
 		{
 			//! put back original JMP instruction again
-			//! ASSUME use of CHookSwapLock m_Lock
+			//! ASSUME use of cHookSwapLock m_Lock
 			if (!isHookInstalled() || m_pFuncOrig == nullptr)	// hook has since been destroyed!
 				return;
-			CMem::Copy((void*)m_pFuncOrig, m_Jump, sizeof(m_Jump));
+			cMem::Copy((void*)m_pFuncOrig, m_Jump, sizeof(m_Jump));
 		}
 
 	public:
-		CHookJump() noexcept
+		cHookJump() noexcept
 			: m_pFuncOrig(nullptr)
 		{
 			m_OldCode[0] = k_I_NULL;
 			m_Jump[0] = k_I_NULL;
 		}
-		~CHookJump()
+		~cHookJump()
 		{
 			RemoveHook();
 		}
@@ -103,20 +103,20 @@ namespace Gray
 		bool InstallHook(FARPROC pFuncOrig, FARPROC pFuncNew);
 		void RemoveHook();
 
-		UNITTEST_FRIEND(CHookJump);
+		UNITTEST_FRIEND(cHookJump);
 	};
 
-	class GRAYCORE_LINK CHookSwapLock : public CThreadGuardFast
+	class GRAYCORE_LINK cHookSwapLock : public cThreadGuardFast
 	{
-		//! @class GrayLib::CHookSwapLock
-		//! Stack based temporary lock for CHookJump. swap original call back so it may be used inside hook.
+		//! @class GrayLib::cHookSwapLock
+		//! Stack based temporary lock for cHookJump. swap original call back so it may be used inside hook.
 	public:
-		CHookJump& m_rJump;	//!< The code we are locking for use.
+		cHookJump& m_rJump;	//!< The code we are locking for use.
 		bool m_bSwapOld;	// has Old. Must be locked.
 
 	public:
-		CHookSwapLock(CHookJump& rJump, bool swap = true)
-			: CThreadGuardFast(rJump.m_Lock)	// MUST lock while we do this. single thread.
+		cHookSwapLock(cHookJump& rJump, bool swap = true)
+			: cThreadGuardFast(rJump.m_Lock)	// MUST lock while we do this. single thread.
 			, m_rJump(rJump)
 		{
 			if (swap)
@@ -124,7 +124,7 @@ namespace Gray
 				m_bSwapOld = m_rJump.SwapOld();
 			}
 		}
-		~CHookSwapLock() noexcept
+		~cHookSwapLock() noexcept
 		{
 			if (m_bSwapOld)
 			{
@@ -133,17 +133,17 @@ namespace Gray
 		}
 	};
 
-	class GRAYCORE_LINK CHookSwapChain : public CHookSwapLock
+	class GRAYCORE_LINK cHookSwapChain : public cHookSwapLock
 	{
 	public:
 		FARPROC m_pFuncChain;	// chained version of m_pFuncOrig. or fallback to m_pFuncOrig.
 	public:
-		CHookSwapChain(CHookJump& rJump)
-			: CHookSwapLock(rJump, !rJump.isChainable())
+		cHookSwapChain(cHookJump& rJump)
+			: cHookSwapLock(rJump, !rJump.isChainable())
 		{
 			m_pFuncChain = rJump.GetChainFunc();
 		}
 	};
 }
 
-#endif // _INC_CHookJump_H
+#endif // _INC_cHookJump_H

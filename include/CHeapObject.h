@@ -1,15 +1,15 @@
 //
-//! @file CHeapObject.h
+//! @file cHeapObject.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CHeapObject_H
-#define _INC_CHeapObject_H
+#ifndef _INC_cHeapObject_H
+#define _INC_cHeapObject_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
-#include "CHeap.h" // CHeap
+#include "cHeap.h" // cHeap
 
 #if defined(_DEBUG) || defined(_DEBUG_FAST)
 #define USE_HEAPSIG
@@ -22,7 +22,7 @@ namespace Gray
 		//! @interface Gray::IHeapObject
 		//! This is a base interface supported by objects/classes that are ALWAYS assumed allocated on the heap.
 		//! Use this because multiple inheritance can hide my top heap (freeable) pointer.
-		//! Top should implement some version of CHeapObject. e.g. "x = new CXObject"
+		//! Top should implement some version of cHeapObject. e.g. "x = new CXObject"
 
 		IGNORE_WARN_INTERFACE(IHeapObject);
 
@@ -34,9 +34,9 @@ namespace Gray
 
 	//*************************************************
 
-	class GRAYCORE_LINK CHeapObject : public IHeapObject
+	class GRAYCORE_LINK cHeapObject : public IHeapObject
 	{
-		//! @class Gray::CHeapObject
+		//! @class Gray::cHeapObject
 		//! The base of some class/struct object that is ALWAYS heap allocated.
 		//! This item MUST always be dynamically allocated with new/delete!
 		//! Never stack (auto) or data segment (static) based.
@@ -47,15 +47,15 @@ namespace Gray
 		// Get the top level malloc() pointer in the case of multiple inheritance.
 		CHEAPOBJECT_IMPL;
 #ifdef USE_HEAPSIG
-		CMemSignature<> m_Sig;	//!< may want to have multiple of these ?
+		cMemSignature<> m_Sig;	//!< may want to have multiple of these ?
 #endif
 
 	public:
-		CHeapObject()
+		cHeapObject()
 		{
 			//! @note virtuals don't work in constructors or destructors !
 		}
-		virtual ~CHeapObject()
+		virtual ~cHeapObject()
 		{
 			//! @note virtuals do not work in destructors ! get_HeapPtr?
 			//! so isValidCheck() not possible here !
@@ -68,7 +68,7 @@ namespace Gray
 				return false;
 #endif
 			const void* pBase = get_HeapPtr();
-			return CHeapAlign::IsValidInside(pBase, index);
+			return cHeapAlign::IsValidInside(pBase, index);
 		}
 		bool IsValidInsidePtr(void const* pTest) const
 		{
@@ -80,7 +80,7 @@ namespace Gray
 				return false;
 #endif
 			const void* pBase = get_HeapPtr();
-			return CHeapAlign::IsValidInside(pBase, CMem::Diff(pTest, pBase));
+			return cHeapAlign::IsValidInside(pBase, cMem::Diff(pTest, pBase));
 		}
 		virtual size_t GetHeapStatsThis(OUT ITERATE_t& iAllocCount) const
 		{
@@ -89,18 +89,18 @@ namespace Gray
 			ASSERT(m_Sig.isValidSignature());
 #endif
 			iAllocCount++;
-			return CHeapAlign::GetSize(get_HeapPtr());
+			return cHeapAlign::GetSize(get_HeapPtr());
 		}
 		virtual bool isValidCheck() const
 		{
 			//! @note can't call this in a destructor since get_HeapPtr() is virtual.
-			if (!CMem::IsValidApp(this))	// NOT be based on nullptr ? sanity check.
+			if (!cMem::IsValidApp(this))	// NOT be based on nullptr ? sanity check.
 				return false;
 #ifdef USE_HEAPSIG
 			if (!m_Sig.isValidSignature())
 				return false;
 #endif
-			if (!CHeapAlign::IsValidHeap(get_HeapPtr()))	// might be aligned.
+			if (!cHeapAlign::IsValidHeap(get_HeapPtr()))	// might be aligned.
 				return false;
 			return true;
 		}
@@ -109,11 +109,11 @@ namespace Gray
 	// Create an ^2 aligned pool for allocation of these objects.
 #define DECLARE_HEAP_ALIGNED_ALLOCN(_CLASS,_IALIGN) public: \
 	static void* operator new( size_t nCount) \
-	{ return CHeapAlign::AllocPtr( nCount, _IALIGN ); } \
+	{ return cHeapAlign::AllocPtr( nCount, _IALIGN ); } \
 	static void operator delete(void* pData) \
-	{ CHeapAlign::FreePtr(pData); }
+	{ cHeapAlign::FreePtr(pData); }
 
 #define DECLARE_HEAP_ALIGNED_ALLOC(_CLASS) DECLARE_HEAP_ALIGNED_ALLOCN(_CLASS,__alignof( _CLASS ))
 };
 
-#endif // _INC_CHeapObject_H
+#endif // _INC_cHeapObject_H

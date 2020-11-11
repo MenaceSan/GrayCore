@@ -6,9 +6,9 @@
 #include "pch.h"
 #include "StrU.h"
 #include "StrT.h"
-#include "CLogMgr.h"
-#include "CSystemInfo.h"
-#include "CBits.h"
+#include "cLogMgr.h"
+#include "cSystemInfo.h"
+#include "cBits.h"
 
 namespace Gray
 {
@@ -413,7 +413,7 @@ namespace Gray
 }
 
 #if USE_UNITTESTS
-#include "CUnitTest.h"
+#include "cUnitTest.h"
 
 bool GRAYCALL StrU::UnitTestU(const wchar_t* pwText, StrLen_t nLen) // static
 {

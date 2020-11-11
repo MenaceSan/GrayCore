@@ -1,5 +1,5 @@
 //
-//! @file CMimeTypes.tbl
+//! @file cMimeTypes.tbl
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 // MIME_TYPE - Similar to FOURCC
@@ -8,61 +8,61 @@
 // http://www.w3schools.com/media/media_mimeref.asp
 // http://mimetypes.info/text.htm
 
-CMimeType(UNKNOWN,	"*/*",								"","",						"Unknown format")
+cMimeType(UNKNOWN,	"*/*",								"","",						"Unknown format")
 
-CMimeType(BIN,		"application/octet-stream",			MIME_EXT_bin,MIME_EXT_unk,	"Unknown format = binary blob")
-CMimeType(DLL,		"application/x-ms-dos-executable",	MIME_EXT_dll,MIME_EXT_ocx,	"application/x-msdownload. DLL for Windows" )
-CMimeType(EXE,		"application/x-executable",			MIME_EXT_exe,MIME_EXT_unk,	"application/x-msdownload. EXE for Windows" )
-CMimeType(SO,		"application/x-sharedlib",			MIME_EXT_so,MIME_EXT_unk,	"Shared object for Linux. Like DLL" )
-CMimeType(HTMLFORM, "application/x-www-form-urlencoded", "","",	"alternate for 'multipart/form-data'")
+cMimeType(BIN,		"application/octet-stream",			MIME_EXT_bin,MIME_EXT_unk,	"Unknown format = binary blob")
+cMimeType(DLL,		"application/x-ms-dos-executable",	MIME_EXT_dll,MIME_EXT_ocx,	"application/x-msdownload. DLL for Windows" )
+cMimeType(EXE,		"application/x-executable",			MIME_EXT_exe,MIME_EXT_unk,	"application/x-msdownload. EXE for Windows" )
+cMimeType(SO,		"application/x-sharedlib",			MIME_EXT_so,MIME_EXT_unk,	"Shared object for Linux. Like DLL" )
+cMimeType(HTMLFORM, "application/x-www-form-urlencoded", "","",	"alternate for 'multipart/form-data'")
 
-CMimeType(ZIP,		"application/zip",					MIME_EXT_zip,MIME_EXT_jar,	"Zip compressed file format" )
-CMimeType(RTF,		"application/rtf",					MIME_EXT_rtf,MIME_EXT_unk,	"Rich Text Format document (MS)" )
-CMimeType(PDF,		"application/pdf",					MIME_EXT_pdf,MIME_EXT_unk,	"Portable Document Format (Adobe)" )
-CMimeType(DOC,		"application/msword",				MIME_EXT_doc,MIME_EXT_docx,	"MS Word document" )
-CMimeType(XLS,		"application/vnd.ms-excel",			MIME_EXT_xls,MIME_EXT_xlsx,	"MS Excel spreadsheet document" )
-CMimeType(PPT,		"application/vnd.ms-powerpoint",	MIME_EXT_ppt,MIME_EXT_pptx,	"MS PowerPoint presentation document" )
-CMimeType(SWF,		"application/x-shockwave-flash",	MIME_EXT_swf,MIME_EXT_unk,	"Adobe Flash/Shockwave App" )
-CMimeType(FLV,		"application/x-flash-video",		MIME_EXT_flv,MIME_EXT_unk,	"Adobe Flash Video" )
-CMimeType(7Z,		"application/x-7z-compressed",		MIME_EXT_7z,MIME_EXT_unk,	"7zip compressed file" )
-CMimeType(TTF,		"application/x-font-ttf",			MIME_EXT_ttf,MIME_EXT_unk,	"True Type Font" )
-CMimeType(PEM,		"application/x-x509-ca-cert",		MIME_EXT_pem,MIME_EXT_unk,	"X.509 RSA certificate/keys." )
+cMimeType(ZIP,		"application/zip",					MIME_EXT_zip,MIME_EXT_jar,	"Zip compressed file format" )
+cMimeType(RTF,		"application/rtf",					MIME_EXT_rtf,MIME_EXT_unk,	"Rich Text Format document (MS)" )
+cMimeType(PDF,		"application/pdf",					MIME_EXT_pdf,MIME_EXT_unk,	"Portable Document Format (Adobe)" )
+cMimeType(DOC,		"application/msword",				MIME_EXT_doc,MIME_EXT_docx,	"MS Word document" )
+cMimeType(XLS,		"application/vnd.ms-excel",			MIME_EXT_xls,MIME_EXT_xlsx,	"MS Excel spreadsheet document" )
+cMimeType(PPT,		"application/vnd.ms-powerpoint",	MIME_EXT_ppt,MIME_EXT_pptx,	"MS PowerPoint presentation document" )
+cMimeType(SWF,		"application/x-shockwave-flash",	MIME_EXT_swf,MIME_EXT_unk,	"Adobe Flash/Shockwave App" )
+cMimeType(FLV,		"application/x-flash-video",		MIME_EXT_flv,MIME_EXT_unk,	"Adobe Flash Video" )
+cMimeType(7Z,		"application/x-7z-compressed",		MIME_EXT_7z,MIME_EXT_unk,	"7zip compressed file" )
+cMimeType(TTF,		"application/x-font-ttf",			MIME_EXT_ttf,MIME_EXT_unk,	"True Type Font" )
+cMimeType(PEM,		"application/x-x509-ca-cert",		MIME_EXT_pem,MIME_EXT_unk,	"X.509 RSA certificate/keys." )
 
-CMimeType(JS,		"application/javascript",			MIME_EXT_js,MIME_EXT_unk,	"'application/ecmascript' was 'text/javascript'" )
-CMimeType(SCP,		"application/x-extension-script",	MIME_EXT_scp,MIME_EXT_unk,	"simple script." )
-// CMimeType(JAR	"application/java-archive",			MIME_EXT_jar,MIME_EXT_unk,	"java-archive. Is a ZIP file." )
-CMimeType(JSON,		"application/json",					MIME_EXT_json,MIME_EXT_unk,	"JSON script data." )
+cMimeType(JS,		"application/javascript",			MIME_EXT_js,MIME_EXT_unk,	"'application/ecmascript' was 'text/javascript'" )
+cMimeType(SCP,		"application/x-extension-script",	MIME_EXT_scp,MIME_EXT_unk,	"simple script." )
+// cMimeType(JAR	"application/java-archive",			MIME_EXT_jar,MIME_EXT_unk,	"java-archive. Is a ZIP file." )
+cMimeType(JSON,		"application/json",					MIME_EXT_json,MIME_EXT_unk,	"JSON script data." )
 
-CMimeType(MP3,		"audio/mpeg",						MIME_EXT_mp3,MIME_EXT_unk,	"Audio MP3 compressed container" )
-CMimeType(WAV,		"audio/x-wav",						MIME_EXT_wav,MIME_EXT_unk,	"Audio in Windows WAVE file FOURCC/riff container" )
+cMimeType(MP3,		"audio/mpeg",						MIME_EXT_mp3,MIME_EXT_unk,	"Audio MP3 compressed container" )
+cMimeType(WAV,		"audio/x-wav",						MIME_EXT_wav,MIME_EXT_unk,	"Audio in Windows WAVE file FOURCC/riff container" )
 
-CMimeType(MPG,		"video/mpeg",						MIME_EXT_mpg,MIME_EXT_mpeg,	"Video MPG container" )
-CMimeType(MP4,		"video/mp4",						MIME_EXT_mp4,MIME_EXT_unk,	"Video MP4 container" )
-CMimeType(AVI,		"video/x-msvideo",					MIME_EXT_avi,MIME_EXT_unk,	"Video AVI container" )
+cMimeType(MPG,		"video/mpeg",						MIME_EXT_mpg,MIME_EXT_mpeg,	"Video MPG container" )
+cMimeType(MP4,		"video/mp4",						MIME_EXT_mp4,MIME_EXT_unk,	"Video MP4 container" )
+cMimeType(AVI,		"video/x-msvideo",					MIME_EXT_avi,MIME_EXT_unk,	"Video AVI container" )
 
-CMimeType(BMP,		"image/bmp",						MIME_EXT_bmp,MIME_EXT_unk,	"image was 'image/x-xbitmap'")
-CMimeType(GIF,		"image/gif",						MIME_EXT_gif,MIME_EXT_unk,	"image GIF format")
-CMimeType(JPG,		"image/jpeg",						MIME_EXT_jpg,MIME_EXT_jpeg,	"image JPEG")
-CMimeType(PNG,		"image/png",						MIME_EXT_png,MIME_EXT_unk,	"image PNG format")
-CMimeType(JP2,		"image/jp2",						MIME_EXT_jp2,MIME_EXT_unk,	"image JPEG 2000" )
-CMimeType(TIF,		"image/tiff",						MIME_EXT_tif,MIME_EXT_tiff,	"image" )
-CMimeType(TGA,		"image/x-tga",						MIME_EXT_tga,MIME_EXT_unk,	"image" )
-CMimeType(ICO,		"image/x-ico",						MIME_EXT_ico,MIME_EXT_unk,	"image icon 'image/vnd.microsoft.icon' or 'com.microsoft.ico' http://en.wikipedia.org/wiki/ICO_%28file_format%29" )
-CMimeType(DDS,		"image/x-dds",						MIME_EXT_dds,MIME_EXT_unk,	"DDS image for DirectX" )
+cMimeType(BMP,		"image/bmp",						MIME_EXT_bmp,MIME_EXT_unk,	"image was 'image/x-xbitmap'")
+cMimeType(GIF,		"image/gif",						MIME_EXT_gif,MIME_EXT_unk,	"image GIF format")
+cMimeType(JPG,		"image/jpeg",						MIME_EXT_jpg,MIME_EXT_jpeg,	"image JPEG")
+cMimeType(PNG,		"image/png",						MIME_EXT_png,MIME_EXT_unk,	"image PNG format")
+cMimeType(JP2,		"image/jp2",						MIME_EXT_jp2,MIME_EXT_unk,	"image JPEG 2000" )
+cMimeType(TIF,		"image/tiff",						MIME_EXT_tif,MIME_EXT_tiff,	"image" )
+cMimeType(TGA,		"image/x-tga",						MIME_EXT_tga,MIME_EXT_unk,	"image" )
+cMimeType(ICO,		"image/x-ico",						MIME_EXT_ico,MIME_EXT_unk,	"image icon 'image/vnd.microsoft.icon' or 'com.microsoft.ico' http://en.wikipedia.org/wiki/ICO_%28file_format%29" )
+cMimeType(DDS,		"image/x-dds",						MIME_EXT_dds,MIME_EXT_unk,	"DDS image for DirectX" )
 
-CMimeType(3DS,		"image/x-3ds",						MIME_EXT_3ds,MIME_EXT_unk,	"3d studio Max model Old Format." )
-CMimeType(DAE,		"model/vnd.collada+xml",			MIME_EXT_dae,MIME_EXT_unk,	"Collada XML 3d Model file format" )
+cMimeType(3DS,		"image/x-3ds",						MIME_EXT_3ds,MIME_EXT_unk,	"3d studio Max model Old Format." )
+cMimeType(DAE,		"model/vnd.collada+xml",			MIME_EXT_dae,MIME_EXT_unk,	"Collada XML 3d Model file format" )
 // MIME_EXT_fbx
 
-CMimeType(HTML,		"text/html",						MIME_EXT_htm,MIME_EXT_html,	"static HTML page." )	// "application/x-mozilla-bookmarks"
-CMimeType(CSS,		"text/css",							MIME_EXT_css,MIME_EXT_unk,	"CSS for HTML page." )
-CMimeType(CSV,		"text/csv",							MIME_EXT_csv,MIME_EXT_unk,	"Comma separated text values" )
+cMimeType(HTML,		"text/html",						MIME_EXT_htm,MIME_EXT_html,	"static HTML page." )	// "application/x-mozilla-bookmarks"
+cMimeType(CSS,		"text/css",							MIME_EXT_css,MIME_EXT_unk,	"CSS for HTML page." )
+cMimeType(CSV,		"text/csv",							MIME_EXT_csv,MIME_EXT_unk,	"Comma separated text values" )
 
-CMimeType(TEXT,		"text/plain",						MIME_EXT_txt,MIME_EXT_ini,	"plain text" )
-CMimeType(TEMPLATE, "text/webviewhtml",					MIME_EXT_htt,MIME_EXT_unk,	"server side HTML template" )
-CMimeType(XML,		"text/xml",							MIME_EXT_xml,MIME_EXT_unk,	"XML text" )
-CMimeType(LOG,		"text/x-log",						MIME_EXT_log,MIME_EXT_unk,	"text log file" )
-// CMimeType(LUA,		"text/x-lua",						MIME_EXT_lua,MIME_EXT_unk,	"Lua script" )
+cMimeType(TEXT,		"text/plain",						MIME_EXT_txt,MIME_EXT_ini,	"plain text" )
+cMimeType(TEMPLATE, "text/webviewhtml",					MIME_EXT_htt,MIME_EXT_unk,	"server side HTML template" )
+cMimeType(XML,		"text/xml",							MIME_EXT_xml,MIME_EXT_unk,	"XML text" )
+cMimeType(LOG,		"text/x-log",						MIME_EXT_log,MIME_EXT_unk,	"text log file" )
+// cMimeType(LUA,		"text/x-lua",						MIME_EXT_lua,MIME_EXT_unk,	"Lua script" )
 
 // Others:
  

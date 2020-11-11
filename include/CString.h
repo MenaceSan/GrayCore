@@ -1,19 +1,19 @@
 //
-//! @file CString.h
+//! @file cString.h
 //! Create a UTF8/UNICODE interchangeable string.
 //! ref counted string class.
 //! STL C string emulating.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CString_H
-#define _INC_CString_H
+#ifndef _INC_cString_H
+#define _INC_cString_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
-#include "CHeapObject.h"
-#include "CSmartPtr.h"
+#include "cHeapObject.h"
+#include "cRefPtr.h"
 #include "StrT.h"
 
 #if defined(_MFC_VER) // Only need minimal sub-set if using MFC. __ATLSTR_H__
@@ -23,16 +23,16 @@ UNITTEST_PREDEF(cString)
 
 namespace Gray
 {
-	class GRAYCORE_LINK CStreamInput;
-	class GRAYCORE_LINK CStreamOutput;
+	class GRAYCORE_LINK cStreamInput;
+	class GRAYCORE_LINK cStreamOutput;
 	class GRAYCORE_LINK cArchive;
 
 #if defined(_MFC_VER) // Only need minimal sub-set if using MFC. __ATLSTR_H__
-#define CStringT_DEF(_TYPE_CH) ATL::CStringT< _TYPE_CH, StrTraitMFC_DLL< _TYPE_CH > >
+#define cStringT_DEF(_TYPE_CH) ATL::CStringT< _TYPE_CH, StrTraitMFC_DLL< _TYPE_CH > >
 
 #else
 
-	class GRAYCORE_LINK CStringData : public CSmartBase, public CHeapObject	// ref count
+	class GRAYCORE_LINK CStringData : public cRefBase, public cHeapObject	// ref count
 	{
 		//! @class Gray::CStringData
 		//! Equiv to the MFC ATL:CStringData. Variable size allocation for this.
@@ -58,17 +58,17 @@ namespace Gray
 			//! iStringLengthBytes = length in bytes includes space for '\0'.
 			ASSERT(iStringLengthBytes >= 2);	// X + '\0'
 			ASSERT(stAllocateBlock == sizeof(CStringData));
-			return CHeap::AllocPtr(stAllocateBlock + iStringLengthBytes);
+			return cHeap::AllocPtr(stAllocateBlock + iStringLengthBytes);
 		}
 
 		void operator delete(void* pObj, StrLen_t iStringLengthBytes)
 		{
 			UNREFERENCED_PARAMETER(iStringLengthBytes);
-			CHeap::FreePtr(pObj);
+			cHeap::FreePtr(pObj);
 		}
 		void operator delete(void* pObj)
 		{
-			CHeap::FreePtr(pObj);
+			cHeap::FreePtr(pObj);
 		}
 		StrLen_t get_CharCount() const
 		{
@@ -83,7 +83,7 @@ namespace Gray
 	};
 
 	// make sure the new length of the string is set correctly on destruct !
-	typedef CSmartPtr<CStringData> CStringDataPtr;	//!< Pointer to hold a ref to the string data so i can thread lock it.
+	typedef cRefPtr<CStringData> CStringDataPtr;	//!< Pointer to hold a ref to the string data so i can thread lock it.
 
 	template< typename _TYPE_CH = char >
 	class GRAYCORE_LINK CStringT
@@ -95,7 +95,7 @@ namespace Gray
 
 	protected:
 		_TYPE_CH* m_pchData;	// points into CStringData[1]
-		static const _TYPE_CH m_Nil;		// Use this instead of nullptr. ala MFC. also like _afxDataNil. AKA CStrConst::k_Empty ?
+		static const _TYPE_CH m_Nil;		// Use this instead of nullptr. ala MFC. also like _afxDataNil. AKA cStrConst::k_Empty ?
 
 	public:
 		CStringT()
@@ -365,7 +365,7 @@ namespace Gray
 		void CopyBeforeWrite();
 	};
 
-#define CStringT_DEF(t) CStringT<t>
+#define cStringT_DEF(t) CStringT<t>
 
 #endif // ! _MFC_VER
 
@@ -373,13 +373,13 @@ namespace Gray
 
 	template< typename _TYPE_CH = char >
 	class GRAYCORE_LINK cStringT
-		: public CStringT_DEF(_TYPE_CH)
+		: public cStringT_DEF(_TYPE_CH)
 	{
 		//! @class Gray::cStringT
 		//! A string with added functions over the MFC CString core set.
 		//! Use this for best string functionality.
 
-		typedef CStringT_DEF(_TYPE_CH) SUPER_t;
+		typedef cStringT_DEF(_TYPE_CH) SUPER_t;
 		typedef cStringT<_TYPE_CH> THIS_t;
 
 	public:
@@ -451,8 +451,8 @@ namespace Gray
 			return StrT::IsWhitespace(this->get_CPtr(), this->length());
 		}
 
-		HRESULT ReadZ(CStreamInput & File, StrLen_t iLenMax);
-		bool WriteZ(CStreamOutput & File) const;
+		HRESULT ReadZ(cStreamInput & File, StrLen_t iLenMax);
+		bool WriteZ(cStreamOutput & File) const;
 
 		HASHCODE_t get_HashCode() const
 		{
@@ -467,7 +467,7 @@ namespace Gray
 				return 0;
 #if defined(_MFC_VER)	// Only need minimal sub-set if using MFC.
 			iAllocCount++;
-			return CHeap::GetSize(GetData());
+			return cHeap::GetSize(GetData());
 #else
 			return this->GetData()->GetHeapStatsThis(iAllocCount);
 #endif
@@ -496,15 +496,15 @@ namespace Gray
 #ifdef _MFC_VER
 		void Assign(const SUPER_t & str)
 		{
-			// For use with MFC and CAtomRef
+			// For use with MFC and cAtomRef
 			*static_cast<SUPER_t*>(this) = str;
 		}
 #endif
 
 		THIS_t GetTrimWhitespace() const;
 
-		HRESULT SerializeInput(CStreamInput & File, StrLen_t iLenMax = StrT::k_LEN_MAX);
-		HRESULT SerializeOutput(CStreamOutput & File) const;
+		HRESULT SerializeInput(cStreamInput & File, StrLen_t iLenMax = StrT::k_LEN_MAX);
+		HRESULT SerializeOutput(cStreamOutput & File) const;
 		HRESULT SerializeOutput(cArchive & a) const;
 		HRESULT Serialize(cArchive & a);
 
@@ -679,7 +679,7 @@ namespace Gray
 	void inline operator << (cArchive& ar, const cStringT< _TYPE_CH >& pOb) { pOb.SerializeOutput(ar); }
 #endif
 
-#undef CStringT_DEF
+#undef cStringT_DEF
 };
 
-#endif // _INC_CString_H
+#endif // _INC_cString_H

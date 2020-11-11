@@ -1,16 +1,16 @@
 //
-//! @file CTimeFile.cpp
+//! @file cTimeFile.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
 #include "pch.h"
-#include "CTimeFile.h"   // class implemented
-#include "CTimeUnits.h"
-#include "CTimeDouble.h"
+#include "cTimeFile.h"   // class implemented
+#include "cTimeUnits.h"
+#include "cTimeDouble.h"
 
 namespace Gray
 {
-	void CTimeFile::InitTimeNow()
+	void cTimeFile::InitTimeNow()
 	{
 		//! Get current UTC time
 #ifdef UNDER_CE
@@ -18,33 +18,33 @@ namespace Gray
 #elif defined(_WIN32)
 		::GetSystemTimeAsFileTime(static_cast<FILETIME*>(this));
 #else	// __linux__
-		CTimeSpec tNow;
+		cTimeSpec tNow;
 		tNow.InitTimeNow1();
 		ref_Val() = CvtFileTime(tNow);
 #endif
 	}
 
-	CTimeFile GRAYCALL CTimeFile::GetTimeNow()	// static
+	cTimeFile GRAYCALL cTimeFile::GetTimeNow()	// static
 	{
 		//! Get the current time with highest possible accuracy.
 		//!  FILETIME_t = 64-bit 100-nanosecond since January 1, 1601 GMT
-		CTimeFile tNow;
+		cTimeFile tNow;
 		tNow.InitTimeNow();
 		return tNow;
 	}
 
-	void CTimeFile::InitTimeUnits(const CTimeUnits& rTu)
+	void cTimeFile::InitTimeUnits(const cTimeUnits& rTu)
 	{
 #ifdef _WIN32
 		SYSTEMTIME st;
 		rTu.GetSys(st);
 		SetSys(st, (TZ_TYPE)rTu.m_nTZ);
 #else
-		CTimeDouble ti(rTu);
+		cTimeDouble ti(rTu);
 		*this = ti.GetAsFileTime();
 #endif
 	}
-	bool CTimeFile::GetTimeUnits(OUT CTimeUnits& rTu, TZ_TYPE nTimeZoneOffset) const
+	bool cTimeFile::GetTimeUnits(OUT cTimeUnits& rTu, TZ_TYPE nTimeZoneOffset) const
 	{
 #ifdef _WIN32
 		SYSTEMTIME st;
@@ -53,17 +53,17 @@ namespace Gray
 		rTu.m_nTZ = (TIMEUNIT_t)nTimeZoneOffset;
 		return bRet;
 #else
-		CTimeDouble ti(*this);
+		cTimeDouble ti(*this);
 		return ti.GetTimeUnits(rTu, nTimeZoneOffset);
 #endif
 	}
 
-	cString CTimeFile::GetTimeFormStr(const GChar_t* pszFormat, TZ_TYPE nTimeZoneOffset) const
+	cString cTimeFile::GetTimeFormStr(const GChar_t* pszFormat, TZ_TYPE nTimeZoneOffset) const
 	{
 		//! Get the time as a string formatted using "C" strftime()
 		//! MFC just calls this "Format"
 
-		CTimeUnits Tu;
+		cTimeUnits Tu;
 		if (!GetTimeUnits(Tu, nTimeZoneOffset))
 		{
 			return "";
@@ -77,32 +77,32 @@ namespace Gray
 		return cString(szBuffer, iLenChars);
 	}
 
-	TIMESECD_t CTimeFile::get_AgeSec() const
+	TIMESECD_t cTimeFile::get_AgeSec() const
 	{
 		//! @return age in seconds.
-		CTimeFile tNow;
+		cTimeFile tNow;
 		tNow.InitTimeNow();
-		return (TIMESECD_t)((tNow.get_Val() - this->get_Val()) / CTimeFile::k_nFreq);
+		return (TIMESECD_t)((tNow.get_Val() - this->get_Val()) / cTimeFile::k_nFreq);
 	}
 }
 
 //*****************************************************************
 
 #if USE_UNITTESTS
-#include "CUnitTest.h"
+#include "cUnitTest.h"
 
-UNITTEST_CLASS(CTimeFile)
+UNITTEST_CLASS(cTimeFile)
 {
-	UNITTEST_METHOD(CTimeFile)
+	UNITTEST_METHOD(cTimeFile)
 	{
 
 		UINT64 uVal = 0xFFFFFFFFFFFFFFFFULL;
-		uVal /= CTimeFile::k_nFreq;	// seconds.
+		uVal /= cTimeFile::k_nFreq;	// seconds.
 		uVal /= 60 * 60 * 24;		// days.
 		uVal /= 365;	// years
 
 		UNITTEST_TRUE(uVal == 58494 );
 	}
 };
-UNITTEST_REGISTER(CTimeFile, UNITTEST_LEVEL_Core);	// UNITTEST_LEVEL_Core
+UNITTEST_REGISTER(cTimeFile, UNITTEST_LEVEL_Core);	// UNITTEST_LEVEL_Core
 #endif

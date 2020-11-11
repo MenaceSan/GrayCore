@@ -1,13 +1,13 @@
 //
-//! @file CAppConsole.cpp
+//! @file cAppConsole.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 #include "pch.h"
-#include "CAppConsole.h"
-#include "CLogMgr.h"
-#include "COSHandleSet.h"
-#include "CAppState.h"
-#include "CFileText.h"
+#include "cAppConsole.h"
+#include "cLogMgr.h"
+#include "cOSHandleSet.h"
+#include "cAppState.h"
+#include "cFileText.h"
 #include "HResult.h"
 
 #if ! defined(UNDER_CE) 
@@ -24,28 +24,28 @@
 
 namespace Gray
 {
-	CAppConsole::CAppConsole()
-		: CSingleton<CAppConsole>(this, typeid(CAppConsole))
+	cAppConsole::cAppConsole()
+		: cSingleton<cAppConsole>(this, typeid(cAppConsole))
 		, m_bKeyEchoMode(true)
 		, m_bKeyEnterMode(true)
-		, m_eConsoleType(CAppCon_UNKNOWN)
+		, m_eConsoleType(AppCon_UNKNOWN)
 		, m_bConsoleParent(false)
 		, m_iAllocConsoleCount(0)
 	{
 #ifdef _WIN32
-		for (int i = 0; i < CAppStd_QTY; i++)
+		for (int i = 0; i < AppStd_QTY; i++)
 		{
 			m_hStd[i] = INVALID_HANDLE_VALUE;
 		}
 #endif
 	}
 
-	CAppConsole::~CAppConsole()
+	cAppConsole::~cAppConsole()
 	{
 		// Is m_iAllocConsoleCount = 0 ?
 	}
 
-	void CAppConsole::CheckConsoleMode() noexcept
+	void cAppConsole::CheckConsoleMode() noexcept
 	{
 		//! Is the process already running from a console window? _CONSOLE
 		//! Was process started by a console ?
@@ -53,10 +53,10 @@ namespace Gray
 		//! @note printf() might not work until i call RedirectIOToConsole()
 		//! @note "GetConsoleWindow();" returns null if Windows 10 and i was a windows app started in console.
 
-		if (m_eConsoleType != CAppCon_UNKNOWN)
+		if (m_eConsoleType != AppCon_UNKNOWN)
 			return;
 
-		CStringF sPrompt = CAppState::GetEnvironStr(_FN("PROMPT"));	// Good for Linux and Windows.
+		cStringF sPrompt = cAppState::GetEnvironStr(_FN("PROMPT"));	// Good for Linux and Windows.
 		m_bConsoleParent = !sPrompt.IsEmpty();
 
 #if defined(_WIN32)
@@ -66,16 +66,16 @@ namespace Gray
 		if (stdout != nullptr) // TODO: detect if Linux app is in a console!?
 #endif
 		{
-			m_eConsoleType = CAppCon_Proc;	// My parent is build using _CONSOLE
+			m_eConsoleType = AppCon_Proc;	// My parent is build using _CONSOLE
 			AttachConsoleSync();
 		}
 		else
 		{
-			m_eConsoleType = CAppCon_NONE;	// i have no console. Assume I'm a GUI app or headless service.
+			m_eConsoleType = AppCon_NONE;	// i have no console. Assume I'm a GUI app or headless service.
 		}
 	}
 
-	bool CAppConsole::AttachConsoleSync()
+	bool cAppConsole::AttachConsoleSync()
 	{
 		//! Synchronize the C std* buffers (needs USE_CRT) with _WIN32 Console.
 		//! NOTE: Not sure why this isn't just handled by AllocConsole()
@@ -84,7 +84,7 @@ namespace Gray
 		ASSERT(isConsoleMode());
 
 #if defined(_WIN32) && USE_CRT   
-		for (int i = 0; i < CAppStd_QTY; i++)
+		for (int i = 0; i < AppStd_QTY; i++)
 		{
 			// redirect un-buffered STDOUT to the console
 			DWORD nStdHandle;
@@ -92,16 +92,16 @@ namespace Gray
 			OF_FLAGS_t nFileFlags = OF_WRITE | OF_TEXT;
 			switch (i)
 			{
-			case CAppStd_stdin:
+			case AppStd_stdin:
 				nStdHandle = STD_INPUT_HANDLE;	// CONIN$
 				pFileDest = stdin;
 				nFileFlags = OF_READ | OF_TEXT;
 				break;
-			case CAppStd_stdout:
+			case AppStd_stdout:
 				nStdHandle = STD_OUTPUT_HANDLE;	// CONOUT$
 				pFileDest = stdout;
 				break;
-			case CAppStd_stderr:
+			case AppStd_stderr:
 				nStdHandle = STD_ERROR_HANDLE;
 				pFileDest = stderr;
 				break;
@@ -112,10 +112,10 @@ namespace Gray
 
 			m_hStd[i] = ::GetStdHandle(nStdHandle);
 
-			if (m_eConsoleType != CAppCon_Proc)
+			if (m_eConsoleType != AppCon_Proc)
 			{
 				// Now attach it to the appropriate std FILE*, 
-				CFileText fileStd;
+				cFileText fileStd;
 				HRESULT hRes = fileStd.OpenFileHandle(m_hStd[i], nFileFlags);
 				if (FAILED(hRes))
 				{
@@ -125,17 +125,17 @@ namespace Gray
 			}
 		}
 
-		if (m_eConsoleType != CAppCon_Proc)
+		if (m_eConsoleType != AppCon_Proc)
 		{
 			// set the screen buffer to be big enough to let us scroll text
 			CONSOLE_SCREEN_BUFFER_INFO coninfo;
-			if (!::GetConsoleScreenBufferInfo(m_hStd[CAppStd_stdout], &coninfo))
+			if (!::GetConsoleScreenBufferInfo(m_hStd[AppStd_stdout], &coninfo))
 			{
 				return false;
 			}
 
 			coninfo.dwSize.Y = k_MAX_CONSOLE_LINES;
-			if (!::SetConsoleScreenBufferSize(m_hStd[CAppStd_stdout], coninfo.dwSize))
+			if (!::SetConsoleScreenBufferSize(m_hStd[AppStd_stdout], coninfo.dwSize))
 			{
 				return false;
 			}
@@ -149,7 +149,7 @@ namespace Gray
 		return true;
 	}
 
-	bool CAppConsole::AttachOrAllocConsole(bool bAttachElseAlloc)
+	bool cAppConsole::AttachOrAllocConsole(bool bAttachElseAlloc)
 	{
 		//! 1. Do i already have a console. use it. if _CONSOLE app.
 		//! 2. Attach to my parents console if there is one.
@@ -164,7 +164,7 @@ namespace Gray
 		}
 
 		ASSERT(m_iAllocConsoleCount == 0);
-		ASSERT(m_eConsoleType == CAppCon_UNKNOWN || m_eConsoleType == CAppCon_NONE);
+		ASSERT(m_eConsoleType == AppCon_UNKNOWN || m_eConsoleType == AppCon_NONE);
 
 #if defined(_WIN32) 
 
@@ -175,7 +175,7 @@ namespace Gray
 		// HasConsoleParent()
 		if (::AttachConsole(ATTACH_PARENT_PROCESS)) // try to use my parents console.
 		{
-			m_eConsoleType = CAppCon_Attach;
+			m_eConsoleType = AppCon_Attach;
 		}
 		else
 		{
@@ -186,7 +186,7 @@ namespace Gray
 				// Failed to get or create a console. i probably already have one?
 				return false;
 			}
-			m_eConsoleType = CAppCon_Create;
+			m_eConsoleType = AppCon_Create;
 		}
 
 #ifdef _DEBUG
@@ -203,34 +203,34 @@ namespace Gray
 		if (!AttachConsoleSync())
 		{
 			m_iAllocConsoleCount = 0;
-			m_eConsoleType = CAppCon_NONE;
+			m_eConsoleType = AppCon_NONE;
 			return false;
 		}
 #endif
 
 		return true;
 #else
-		// CAppCon_Proc
+		// AppCon_Proc
 		ASSERT(0);
 		return false;		// this should NEVER be called.
 #endif
 	}
 
-	void CAppConsole::ReleaseConsole()
+	void cAppConsole::ReleaseConsole()
 	{
 		// Release my console. free it if i created it.
 		m_iAllocConsoleCount--;
 #if defined(_WIN32)
-		if (m_iAllocConsoleCount <= 0 && m_eConsoleType > CAppCon_Proc)
+		if (m_iAllocConsoleCount <= 0 && m_eConsoleType > AppCon_Proc)
 		{
 			// I called AllocConsole
 			::FreeConsole();
-			m_eConsoleType = CAppCon_NONE;
+			m_eConsoleType = AppCon_NONE;
 		}
 #endif
 	}
 
-	HRESULT CAppConsole::WriteStrErr(const char* pszText)
+	HRESULT cAppConsole::WriteStrErr(const char* pszText)
 	{
 		//! Does not support UNICODE ?
 		//! @return EOF = (-1) error
@@ -239,13 +239,13 @@ namespace Gray
 		{
 			return true;
 		}
-		CThreadGuard guard(m_Lock);
+		cThreadGuard guard(m_Lock);
 
 #if defined(_WIN32) 
 		// @note we must do this to get the dual windows/console stuff to work.
 		DWORD dwLengthWritten;
 		DWORD dwDataSize = StrT::Len(pszText);
-		bool bRet = ::WriteFile(m_hStd[CAppStd_stderr], pszText, dwDataSize, &dwLengthWritten, nullptr); // CAppStd_stdout
+		bool bRet = ::WriteFile(m_hStd[AppStd_stderr], pszText, dwDataSize, &dwLengthWritten, nullptr); // AppStd_stdout
 		if (!bRet)
 		{
 			// GetLastError code ERROR_IO_PENDING is not a failure. Async complete.
@@ -265,7 +265,7 @@ namespace Gray
 		return S_OK;	// we are good.
 	}
 
-	HRESULT CAppConsole::WriteStrOut(const char* pszText)
+	HRESULT cAppConsole::WriteStrOut(const char* pszText)
 	{
 		//! Write to console. Does not support UNICODE ?
 		//! @return HRESULT_WIN32_C(ERROR_HANDLE_DISK_FULL)
@@ -276,13 +276,13 @@ namespace Gray
 		{
 			return S_OK;
 		}
-		CThreadGuard guard(m_Lock);
+		cThreadGuard guard(m_Lock);
 
 #if defined(_WIN32) 
 		// @note we must do this to get the dual windows/console stuff to work.
 		DWORD dwLengthWritten;
 		DWORD dwDataSize = StrT::Len(pszText);
-		bool bRet = ::WriteFile(m_hStd[CAppStd_stdout], pszText, dwDataSize, &dwLengthWritten, nullptr); // CAppStd_stdout
+		bool bRet = ::WriteFile(m_hStd[AppStd_stdout], pszText, dwDataSize, &dwLengthWritten, nullptr); // AppStd_stdout
 		if (!bRet)
 		{
 			HRESULT hRes = HResult::GetLastDef(HRESULT_WIN32_C(ERROR_WRITE_FAULT));
@@ -301,7 +301,7 @@ namespace Gray
 		return S_OK;	// we are good.
 	}
 
-	HRESULT CAppConsole::SetKeyModes(bool bEchoMode, bool bEnterMode)
+	HRESULT cAppConsole::SetKeyModes(bool bEchoMode, bool bEnterMode)
 	{
 		//! @arg bEchoMode = default true = auto echo for input keys input on/off
 		//! @arg bEnterMode = default true = Wait for a enter to be pressed first ? false = get all keys as they come in.
@@ -318,14 +318,14 @@ namespace Gray
 
 #ifdef __linux__
 		char buf[256];
-		CMem::Zero(buf, sizeof(buf));
+		cMem::Zero(buf, sizeof(buf));
 		int iRet = ::readlink("/proc/self/fd/0", buf, sizeof(buf)); // Is this needed or just use stdin=0 ?
 		if (iRet == -1)
 		{
 			return HResult::GetLastDef();
 		}
 
-		COSHandle fdin;
+		cOSHandle fdin;
 		fdin.OpenHandle(buf, O_RDWR);	// NOTE: fdin should be 0 instead? stdin = iobuf[0]
 		if (!fdin.isValidHandle())
 		{
@@ -368,7 +368,7 @@ namespace Gray
 		return S_OK;
 	}
 
-	int CAppConsole::get_KeyReadQty() const
+	int cAppConsole::get_KeyReadQty() const
 	{
 		//! Are there keys to be read ?
 		//! see http://www.linuxquestions.org/questions/programming-9/pausing-the-screen-44573/
@@ -383,14 +383,14 @@ namespace Gray
 #endif
 #else
 		// NOTE: can i use FIONREAD ?
-		COSHandleSet hs(0);
+		cOSHandleSet hs(0);
 		if (hs.WaitForObjects(0) == S_OK)
 			return 1;
 		return 0;
 #endif
 	}
 
-	int CAppConsole::ReadKeyWait()
+	int cAppConsole::ReadKeyWait()
 	{
 		//! Read a single key from conio stdin. block/wait for char.
 		//! Arrows and escape key are sometimes special purpose here.
@@ -421,7 +421,7 @@ namespace Gray
 #endif
 	}
 
-	int CAppConsole::ReadKey()
+	int cAppConsole::ReadKey()
 	{
 		//! Get ASCII_TYPE Key char produced by possibly multiple keys pressed (shift). Don't wait. 
 		//! similar to INPUTKEY_TYPE and VK_TYPE -> VK_ESCAPE = INPUTKEY_ESCAPE
@@ -434,27 +434,27 @@ namespace Gray
 
 //*************************************************************************
 #if USE_UNITTESTS
-#include "CUnitTest.h"
+#include "cUnitTest.h"
 #include "StrCharAscii.h"
 
-UNITTEST_CLASS(CAppConsole)
+UNITTEST_CLASS(cAppConsole)
 {
-	UNITTEST_METHOD(CAppConsole)
+	UNITTEST_METHOD(cAppConsole)
 	{
-		CAppConsole& console = CAppConsole::I();
+		cAppConsole& console = cAppConsole::I();
 		if (!console.isConsoleMode())
 		{
 			if (sm_pLog != nullptr)
 			{
-				sm_pLog->addDebugInfoF("CAppConsole is NOT in CONSOLE MODE");
+				sm_pLog->addDebugInfoF("cAppConsole is NOT in CONSOLE MODE");
 			}
 			// try to create or attach a console using AllocConsole() ??
 			console.AttachOrAllocConsole();
 		}
 
-		console.WriteString(_GT("CAppConsole in CONSOLE MODE" STR_NL));
+		console.WriteString(_GT("cAppConsole in CONSOLE MODE" STR_NL));
 
-		if (CUnitTestCur::IsTestInteractive())
+		if (cUnitTestCur::IsTestInteractive())
 		{
 			console.WriteString(_GT("Press ESC to continue." STR_NL));
 
@@ -465,14 +465,14 @@ UNITTEST_CLASS(CAppConsole)
 				if (iKey == ASCII_ESC)	// ESC = 27
 					break;
 				console.Printf(_GT("Got Key %d='%c'." STR_NL), iKey, iKey);
-				CThreadId::SleepCurrent(1);
+				cThreadId::SleepCurrent(1);
 			}
 			console.SetKeyModes();	// restore modes to default.
 		}
 		console.ReleaseConsole();
 	}
 };
-UNITTEST_REGISTER(CAppConsole, UNITTEST_LEVEL_Core);
+UNITTEST_REGISTER(cAppConsole, UNITTEST_LEVEL_Core);
 #endif
 
 #endif	// UNDER_CE

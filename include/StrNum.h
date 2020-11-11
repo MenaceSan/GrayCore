@@ -11,7 +11,7 @@
 
 #include "StrChar.h"
 #include "StrConst.h"
-#include "CUnitTestDecl.h"
+#include "cUnitTestDecl.h"
 
 UNITTEST_PREDEF(StrNum)
 
@@ -138,7 +138,7 @@ namespace Gray
 	template < typename _TYPE >
 	size_t GRAYCALL StrNum::ToValArray(OUT _TYPE* pOut, size_t iQtyMax, const char* pszInp) // static
 	{
-		//! @todo Merge with CMem::ReadFromString
+		//! @todo Merge with cMem::ReadFromString
 		//! Similar to StrT::ParseCmds()
 
 		if (pszInp == nullptr)
@@ -168,10 +168,10 @@ namespace Gray
 	template < typename _TYPE >
 	StrLen_t GRAYCALL StrNum::ValArrayToA(OUT char* pszDst, StrLen_t iSizeDstMax, const _TYPE* pSrc, size_t nSrcQty) // static
 	{
-		//! @todo Merge with CMem::ConvertToString
+		//! @todo Merge with cMem::ConvertToString
 		//! Write bytes out to a string as comma separated base 10 number values. 
 		//! Try to use SetHexDigest() instead.
-		//! opposite of CMem::ReadFromString().
+		//! opposite of cMem::ReadFromString().
 		//! @return the actual size of the string.
 		//! @note using Base64 would be better.
 

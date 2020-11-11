@@ -1,14 +1,14 @@
 //
-//! @file CObjectCreator.cpp
+//! @file cObjectCreator.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 #include "pch.h"
-#include "CObjectCreator.h"
-#include "CArchive.h"
+#include "cObjectCreator.h"
+#include "cArchive.h"
 
 namespace Gray
 {
-	// CObjectCreationMgr : public CSingleton<>
+	// CObjectCreationMgr : public cSingleton<>
 	// Use something like the Singleton register.
 
 #ifndef _MFC_VER

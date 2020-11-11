@@ -1,49 +1,49 @@
 //
-//! @file CArrayString.h
+//! @file cArrayString.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CArrayString_H
-#define _INC_CArrayString_H
+#ifndef _INC_cArrayString_H
+#define _INC_cArrayString_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
-#include "CArray.h"
-#include "CString.h"
+#include "cArray.h"
+#include "cString.h"
 
 namespace Gray
 {
 	template< typename _TYPE_CH = TCHAR >
-	class GRAYCORE_LINK CArrayString : public CArrayTyped < cStringT<_TYPE_CH>, const _TYPE_CH* >
+	class GRAYCORE_LINK cArrayString : public cArrayTyped < cStringT<_TYPE_CH>, const _TYPE_CH* >
 	{
-		//! @class Gray::CArrayString
+		//! @class Gray::cArrayString
 		//! Non-sorted array of strings.
 		typedef cStringT<_TYPE_CH> STR_t;
-		typedef CArrayTyped< cStringT<_TYPE_CH>, const _TYPE_CH* > SUPER_t;
-		typedef CArrayString<_TYPE_CH> THIS_t;
+		typedef cArrayTyped< cStringT<_TYPE_CH>, const _TYPE_CH* > SUPER_t;
+		typedef cArrayString<_TYPE_CH> THIS_t;
 	public:
 		static const ITERATE_t k_MaxDefault = 32;	//!< default max for AddUniqueMax.
 		static const ITERATE_t k_MaxElements = 64 * 1024;	//!< Max elements. reasonable arbitrary limit.
 	public:
-		CArrayString()
+		cArrayString()
 		{
 		}
-		CArrayString(const _TYPE_CH** ppStr, ITERATE_t iCount)
+		cArrayString(const _TYPE_CH** ppStr, ITERATE_t iCount)
 		{
 			SetStrings(ppStr, iCount);
 		}
-		explicit CArrayString(const CArrayString& a)
+		explicit cArrayString(const cArrayString& a)
 		{
 			this->SetCopy(a);
 		}
-		CArrayString(THIS_t&& ref) noexcept
+		cArrayString(THIS_t&& ref) noexcept
 			: SUPER_t(ref)
 		{
 			//! move constructor.
 		}
 
-		inline ~CArrayString()
+		inline ~cArrayString()
 		{
 		}
 		void SetStrings(const _TYPE_CH** ppStr, ITERATE_t iCount)
@@ -171,18 +171,18 @@ namespace Gray
 		}
 	};
 
-	typedef CArrayString<char> CArrayStringA;
-	typedef CArrayString<wchar_t> CArrayStringW;
+	typedef cArrayString<char> cArrayStringA;
+	typedef cArrayString<wchar_t> cArrayStringW;
 
 #ifdef GRAY_DLL // force implementation/instantiate for DLL/SO.
 	template class GRAYCORE_LINK CArray < cStringT<char>, const char* >;
-	template class GRAYCORE_LINK CArrayTyped < cStringT<char>, const char* >;
+	template class GRAYCORE_LINK cArrayTyped < cStringT<char>, const char* >;
 
-	template class GRAYCORE_LINK CArrayString < char >;
-	template class GRAYCORE_LINK CArrayString < wchar_t >;
+	template class GRAYCORE_LINK cArrayString < char >;
+	template class GRAYCORE_LINK cArrayString < wchar_t >;
 
 #endif
 
 }
 
-#endif	// _INC_CArrayString_H
+#endif	// _INC_cArrayString_H

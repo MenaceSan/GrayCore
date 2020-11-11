@@ -13,17 +13,17 @@
 #include "StrConst.h"
 #include "StrNum.h"
 #include "StrU.h"
-#include "CValT.h"
-#include "CHeap.h"
-#include "CUnitTestDecl.h"
-#include "CDebugAssert.h"	// ASSERT
 #include "StrFormat.h"
+#include "cValT.h"
+#include "cHeap.h"
+#include "cUnitTestDecl.h"
+#include "cDebugAssert.h"	// ASSERT
 
 UNITTEST_PREDEF(StrX)
 
 namespace Gray
 {
-	class CLogProcessor;
+	class cLogProcessor;
 
 	enum STR_BLOCK_TYPE	//!< quotes/brackets and parenthesis must be matched.
 	{
@@ -96,7 +96,7 @@ namespace Gray
 		{
 			//! a template based caster is useful for templates. rather than (const TYPE*)
 			//! because it isn't really a cast. (so is safer) Its just a rule for type conversion and will fail if type is not provided.
-			//! Can use with CStrConst
+			//! Can use with cStrConst
 			return pszStr;
 		}
 
@@ -143,7 +143,7 @@ namespace Gray
 			ASSERT(pszEnd != nullptr);
 			ASSERT(pszStart != nullptr);
 			INT_PTR i = (pszEnd - pszStart);	// ptrdiff_t
-			ASSERT(i > -(INT_PTR)(CHeap::k_ALLOC_MAX) && i < (INT_PTR)(CHeap::k_ALLOC_MAX));	// k_ALLOC_MAX
+			ASSERT(i > -(INT_PTR)(cHeap::k_ALLOC_MAX) && i < (INT_PTR)(cHeap::k_ALLOC_MAX));	// k_ALLOC_MAX
 			return (StrLen_t)i;
 		}
 

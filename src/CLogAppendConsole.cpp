@@ -1,57 +1,57 @@
 //
-//! @file CLogAppendConsole.cpp
+//! @file cLogAppendConsole.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
 #include "pch.h"
-#include "CLogMgr.h"
-#include "CLogAppendConsole.h"
-#include "CAppConsole.h"
-#include "CAppState.h"
-#include "COSProcess.h"
+#include "cLogMgr.h"
+#include "cLogAppendConsole.h"
+#include "cAppConsole.h"
+#include "cAppState.h"
+#include "cOSProcess.h"
 
 #if !defined(UNDER_CE) && USE_CRT
 
 namespace Gray
 {
-	CLogAppendConsole::CLogAppendConsole()
-		: CSingletonSmart<CLogAppendConsole>(this, typeid(CLogAppendConsole))
+	cLogAppendConsole::cLogAppendConsole()
+		: cSingletonSmart<cLogAppendConsole>(this, typeid(cLogAppendConsole))
 	{
-		// CLogAppendConsole::AddAppenderCheck()
+		// cLogAppendConsole::AddAppenderCheck()
 	}
 
-	CLogAppendConsole::~CLogAppendConsole() // virtual 
+	cLogAppendConsole::~cLogAppendConsole() // virtual 
 	{
 	}
 
-	HRESULT CLogAppendConsole::WriteString(const LOGCHAR_t* pszText) // virtual
+	HRESULT cLogAppendConsole::WriteString(const LOGCHAR_t* pszText) // virtual
 	{
 		//! write log/debug string to the console stderr. but maybe stdout ??
 		//! http://www.jstorimer.com/blogs/workingwithcode/7766119-when-to-use-stderr-instead-of-stdout
 		//! @return StrLen_t
 
 		// LOG_ATTR_PRINT? // WriteStrErr or WriteStrOut?
-		HRESULT hRes = CAppConsole::I().WriteStrOut(pszText);
+		HRESULT hRes = cAppConsole::I().WriteStrOut(pszText);
 		if (FAILED(hRes))
 			return hRes;
 		return(1);	// something was written.
 	}
 
-	HRESULT GRAYCALL CLogAppendConsole::AddAppenderCheck(CLogNexus* pLogger, bool bAttachElseAlloc) // static
+	HRESULT GRAYCALL cLogAppendConsole::AddAppenderCheck(cLogNexus* pLogger, bool bAttachElseAlloc) // static
 	{
-		//! Make sure CLogAppendConsole singleton is attached to CLogMgr
+		//! Make sure cLogAppendConsole singleton is attached to cLogMgr
 		//! Push log messages to the console (or my parent console) if there is one.
-		//! Add this console appender to CLogMgr/pLogger if not already added.
+		//! Add this console appender to cLogMgr/pLogger if not already added.
 		//! @arg bAttachOrCreate = create my own console if there is no parent to attach to. 
 
 		if (pLogger == nullptr)
 		{
-			pLogger = CLogMgr::get_Single();
+			pLogger = cLogMgr::get_Single();
 		}
-		if (pLogger->FindAppenderType(typeid(CLogAppendConsole)) != nullptr) // already has this appender.
+		if (pLogger->FindAppenderType(typeid(cLogAppendConsole)) != nullptr) // already has this appender.
 			return S_FALSE;
 
-		CAppConsole& ac = CAppConsole::I();
+		cAppConsole& ac = cAppConsole::I();
 		if (!ac.isConsoleMode())	// no console ?
 		{
 			// Attach to parent console or create my own.
@@ -60,28 +60,28 @@ namespace Gray
 		}
 
 		// attach new console appender to logging system.
-		pLogger->AddAppender(new CLogAppendConsole);
+		pLogger->AddAppender(new cLogAppendConsole);
 		return S_OK;
 	}
 
-	bool GRAYCALL CLogAppendConsole::RemoveAppenderCheck(CLogNexus* pLogger, bool bOnlyIfParent) // static
+	bool GRAYCALL cLogAppendConsole::RemoveAppenderCheck(cLogNexus* pLogger, bool bOnlyIfParent) // static
 	{
 		//! remove this appender if there is a parent console. leave it if i created the console.
 		//! We only created it for start up status and errors.
 		//! @arg bOnlyIfParent = only remove the console appender if its my parent process console. NOT if I'm _CONSOLE or I created the console.
 		if (pLogger == nullptr)
 		{
-			pLogger = CLogMgr::get_Single();
+			pLogger = cLogMgr::get_Single();
 		}
 
-		CLogAppender* pAppender = pLogger->FindAppenderType(typeid(CLogAppendConsole));
+		cLogAppender* pAppender = pLogger->FindAppenderType(typeid(cLogAppendConsole));
 		if (pAppender == nullptr) 
 			return false;
 		if (bOnlyIfParent)
 		{
 			// Detach from parent console.
-			CAppConsole& ac = CAppConsole::I();
-			if (ac.get_ConsoleMode() != CAppCon_Attach)
+			cAppConsole& ac = cAppConsole::I();
+			if (ac.get_ConsoleMode() != AppCon_Attach)
 			{
 				return false;
 			}
@@ -90,7 +90,7 @@ namespace Gray
 		return pLogger->RemoveAppender(pAppender, true);
 	}
 
-	HRESULT GRAYCALL CLogAppendConsole::ShowMessageBox(cString sMsg, UINT uFlags) // static
+	HRESULT GRAYCALL cLogAppendConsole::ShowMessageBox(cString sMsg, UINT uFlags) // static
 	{
 		//! Display a message that needs user feedback. This is something very important that the user should see.
 		//! Use the console if it exists else put up a dialog if i can.
@@ -100,7 +100,7 @@ namespace Gray
 		//! http://unix.stackexchange.com/questions/144924/creating-a-messagebox-using-commandline
 		//! @return 1 = IDOK, 2=IDCANCEL
 
-		CAppConsole& ac = CAppConsole::I();
+		cAppConsole& ac = cAppConsole::I();
 		if (ac.isConsoleMode())
 		{
 			// Show prompt message.
@@ -115,12 +115,12 @@ namespace Gray
 		// NOT in console. So we must use a pop up.
 
 #ifdef _WIN32
-		int iRet = _GTN(MessageBox)(HWND_DESKTOP, sMsg, CAppState::get_AppFileTitle(), uFlags);		// wait to attach debug.
+		int iRet = _GTN(MessageBox)(HWND_DESKTOP, sMsg, cAppState::get_AppFileTitle(), uFlags);		// wait to attach debug.
 
 #elif defined( __linux__)
-		COSProcess proc;
+		cOSProcess proc;
 		int iRet = 1;
-		// TODO launch sub COSProcess to create message box.
+		// TODO launch sub cOSProcess to create message box.
 		// notify-send "My name is bash and I rock da house"
 		// notify-send -t 0 'hi there!' // does not expire.
 		//
@@ -129,11 +129,11 @@ namespace Gray
 		return iRet;	// IDOK = 1
 	}
 
-	HRESULT GRAYCALL CLogAppendConsole::WaitForDebugger() // static
+	HRESULT GRAYCALL cLogAppendConsole::WaitForDebugger() // static
 	{
 		// Wait for the debugger to attach. -debugger command line arg.
 
-		// CAppState::isDebuggerPresent()
+		// cAppState::isDebuggerPresent()
 		ShowMessageBox("Waiting for debugger", 0);
 		return S_OK;
 	}

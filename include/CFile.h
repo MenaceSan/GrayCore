@@ -1,21 +1,21 @@
 //
-//! @file CFile.h
+//! @file cFile.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CFile_H
-#define _INC_CFile_H
+#ifndef _INC_cFile_H
+#define _INC_cFile_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
-#include "CObject.h"
-#include "CStream.h"
-#include "CTimeInt.h"
-#include "CFilePath.h"
-#include "CFileStatus.h"
-#include "COSHandle.h"
-#include "CException.h"
+#include "cObject.h"
+#include "cStream.h"
+#include "cTimeInt.h"
+#include "cFilePath.h"
+#include "cFileStatus.h"
+#include "cOSHandle.h"
+#include "cException.h"
 
 #if defined(__linux__)
 //#include <sys/types.h>
@@ -87,9 +87,9 @@ namespace Gray
 		//! @note Don't use this directly. Use cFile.
 
 	public:
-		COSHandle m_hFile;		//!< OSHandle for the open file.
+		cOSHandle m_hFile;		//!< OSHandle for the open file.
 	protected:
-		CStringF m_strFileName;		//!< store a copy of the full file path. MFC defined name. 
+		cStringF m_strFileName;		//!< store a copy of the full file path. MFC defined name. 
 
 	protected:
 		bool isFileOpen() const
@@ -98,7 +98,7 @@ namespace Gray
 		}
 
 		// virtual BOOL Open( const TCHAR* lpszFileName, UINT nOpenFlags, CFileException* pError = nullptr ) = 0; // MFC def.
-		HRESULT OpenCreate(CStringF sFilePath = "", OF_FLAGS_t nOpenFlags = OF_CREATE | OF_WRITE, _SECURITY_ATTRIBUTES* pSa = nullptr);
+		HRESULT OpenCreate(cStringF sFilePath = "", OF_FLAGS_t nOpenFlags = OF_CREATE | OF_WRITE, _SECURITY_ATTRIBUTES* pSa = nullptr);
 	public:
 		virtual ~CFile()
 		{
@@ -133,7 +133,7 @@ namespace Gray
 	{
 		//! @class Gray::cFile
 		//! General OS file access interface. Extends MFC functionality
-		//! @note Any file can be a CStreamOutput of text as well.
+		//! @note Any file can be a cStreamOutput of text as well.
 		//! Dupe the MFC functionality we need from CFile. Similar to IStream and CAtlFile
 
 		typedef CFile SUPER_t;
@@ -143,14 +143,14 @@ namespace Gray
 		OF_FLAGS_t m_nOpenFlags;		//!< MMSYSTEM uses high bits of 32 bit flags. OF_FLAGS_TYPE_ OF_READ etc
 
 	protected:
-		HRESULT OpenSetup(CStringF sFilePath, OF_FLAGS_t uModeFlags);
+		HRESULT OpenSetup(cStringF sFilePath, OF_FLAGS_t uModeFlags);
 
 	public:
 		cFile()
 			: m_nOpenFlags(0)
 		{
 		}
-		cFile(CStringF sFilePath, OF_FLAGS_t nOpenFlags)
+		cFile(cStringF sFilePath, OF_FLAGS_t nOpenFlags)
 		{
 			OpenX(sFilePath, nOpenFlags);
 		}
@@ -215,16 +215,16 @@ namespace Gray
 		}
 #endif
 
-		CStringF get_FilePath() const
+		cStringF get_FilePath() const
 		{
-			//! like _MFC_VER CFile::GetFilePath(); but CStringF
+			//! like _MFC_VER CFile::GetFilePath(); but cStringF
 			//! @note Don't use GetFilePath() as it has some weird side effects in MFC.
 			//! like WIN32 GetFinalPathNameByHandle()
 			//! __linux__ readlink on /proc/self/fd/NNN where NNN is the file descriptor
-			return CStringF(m_strFileName);
+			return cStringF(m_strFileName);
 		}
-		CStringF get_FileTitleX() const;	// MFC is CString return
-		CStringF get_FileExt() const;
+		cStringF get_FileTitleX() const;	// MFC is CString return
+		cStringF get_FileExt() const;
 		bool IsFileExt(const FILECHAR_t* pszExt) const;
 
 		// File Mode stuff.
@@ -262,17 +262,17 @@ namespace Gray
 		}
 
 		// MFC Open is BOOL return type.
-		virtual HRESULT OpenX(CStringF sFilePath = "", OF_FLAGS_t nOpenFlags = OF_READ | OF_SHARE_DENY_NONE);
+		virtual HRESULT OpenX(cStringF sFilePath = "", OF_FLAGS_t nOpenFlags = OF_READ | OF_SHARE_DENY_NONE);
 		virtual void Close(void) override;
 
 		HANDLE DetachFileHandle();
 
-		HRESULT OpenWait(CStringF sFilePath = "", OF_FLAGS_t nOpenFlags = OF_READ | OF_SHARE_DENY_NONE, TIMESYSD_t nWaitTime = 100);
-		HRESULT OpenCreate(CStringF sFilePath = "", OF_FLAGS_t nOpenFlags = OF_CREATE | OF_WRITE, _SECURITY_ATTRIBUTES* pSa = nullptr);
+		HRESULT OpenWait(cStringF sFilePath = "", OF_FLAGS_t nOpenFlags = OF_READ | OF_SHARE_DENY_NONE, TIMESYSD_t nWaitTime = 100);
+		HRESULT OpenCreate(cStringF sFilePath = "", OF_FLAGS_t nOpenFlags = OF_CREATE | OF_WRITE, _SECURITY_ATTRIBUTES* pSa = nullptr);
 
 		// File Access
-		bool SetFileTime(const CTimeFile* lpCreationTime, const CTimeFile* lpAccessTime, const CTimeFile* lpLastWriteTime);
-		bool SetFileTime(CTimeInt timeCreation, CTimeInt timeLastWrite);
+		bool SetFileTime(const cTimeFile* lpCreationTime, const cTimeFile* lpAccessTime, const cTimeFile* lpLastWriteTime);
+		bool SetFileTime(cTimeInt timeCreation, cTimeInt timeLastWrite);
 		HRESULT GetFileStatus(cFileStatus& attr) const;
 
 		// CStream
@@ -282,11 +282,11 @@ namespace Gray
 
 		static HRESULT GRAYCALL DeletePath(const FILECHAR_t* pszFileName);	// NOTE: MFC Remove() returns void
 		static HRESULT GRAYCALL DeletePathX(const FILECHAR_t* pszFilePath, DWORD nFileFlags = 0);
-		static HRESULT GRAYCALL LoadFile(const FILECHAR_t* pszFilePath, OUT CHeapBlock& block, size_t nSizeExtra = 0);
+		static HRESULT GRAYCALL LoadFile(const FILECHAR_t* pszFilePath, OUT cHeapBlock& block, size_t nSizeExtra = 0);
 
 #if USE_UNITTESTS
-		static void GRAYCALL UnitTest_Write(CStreamOutput& testfile1);
-		static void GRAYCALL UnitTest_Read(CStreamInput& testfile1, bool bString);
+		static void GRAYCALL UnitTest_Write(cStreamOutput& testfile1);
+		static void GRAYCALL UnitTest_Read(cStreamInput& testfile1, bool bString);
 		UNITTEST_FRIEND(cFile);
 #endif
 	};	

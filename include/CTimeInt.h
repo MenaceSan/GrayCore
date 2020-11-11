@@ -1,5 +1,5 @@
 //
-//! @file CTimeInt.h
+//! @file cTimeInt.h
 //! Elapsed seconds since midnight (00:00:00), January 1, 1970, coordinated universal time (UTC), according to the system clock.
 //! Real Time, 32 bit (or 64 bit) SIGNED seconds in old UNIX format.
 //! Replace the MFC CTime function. Must be usable with file system.
@@ -9,16 +9,16 @@
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CTimeInt_H
-#define _INC_CTimeInt_H
+#ifndef _INC_cTimeInt_H
+#define _INC_cTimeInt_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
-#include "CString.h"
-#include "CTimeFile.h"
+#include "cString.h"
+#include "cTimeFile.h"
 
-UNITTEST_PREDEF(CTimeInt)
+UNITTEST_PREDEF(cTimeInt)
 
 namespace Gray
 {
@@ -41,7 +41,7 @@ namespace Gray
 		: m_time(nTime)
 		{
 		}
-		CTime(const CTimeFile& fileTime, int nDST = -1);
+		CTime(const cTimeFile& fileTime, int nDST = -1);
 
 		const CTime& operator=(const CTime& timeSrc)
 		{
@@ -85,23 +85,23 @@ namespace Gray
 		}
 	};
 
-	class GRAYCORE_LINK CTimeSpan
+	class GRAYCORE_LINK cTimeSpan
 	{
-		//! @class Gray::CTimeSpan
+		//! @class Gray::cTimeSpan
 		//! Emulate the MFC CTime functionality
 	public:
 		int m_nDiffSeconds;
 	public:
-		CTimeSpan()
+		cTimeSpan()
 		{
 		}
 	};
 #endif
 
-	class GRAYCORE_LINK CTimeInt	//!< similar to the MFC CTime and CTimeSpan, not as accurate or large ranged as COleDateTime
+	class GRAYCORE_LINK cTimeInt	//!< similar to the MFC CTime and cTimeSpan, not as accurate or large ranged as COleDateTime
 	: public CTime		//!< no need to dupe MFC function.
 	{
-		//! @class Gray::CTimeInt
+		//! @class Gray::cTimeInt
 		//! the number of seconds elapsed since midnight (00:00:00), January 1, 1970, coordinated universal time (UTC), according to the system clock
 		//! ASSUME __time64_t is signed! MFC uses __time64_t
 		//! Same as UNIX_TIMESTAMP() for MySQL
@@ -114,30 +114,30 @@ namespace Gray
 		static const TIMESEC_t k_nY2K = ((TIMESEC_t)0x386d4380);	//!< The static value for Y2K = January 1, 2000 in UTC/GMT from k_nZero in seconds.
 
 	protected:
-		bool InitTimeUnits(const CTimeUnits& rTu);
+		bool InitTimeUnits(const cTimeUnits& rTu);
 
 	public:
-		CTimeInt()	// init to zero
+		cTimeInt()	// init to zero
 		{}
-		CTimeInt(TIMESEC_t time) : CTime(time)
+		cTimeInt(TIMESEC_t time) : CTime(time)
 		{}
-		CTimeInt(const CTimeFile& fileTime) : CTime(fileTime, -1)
+		cTimeInt(const cTimeFile& fileTime) : CTime(fileTime, -1)
 		{
 			//! @note both are UTC so nDST makes no sense. What is MFC thinking ??
 		}
-		CTimeInt(const CTimeUnits& rTu)
+		cTimeInt(const cTimeUnits& rTu)
 		{
 			InitTimeUnits(rTu);
 		}
 		static TIMESEC_t GRAYCALL GetTimeFromDays(double dTimeDays);
-		CTimeInt(double dTimeDays) : CTime(GetTimeFromDays(dTimeDays))
+		cTimeInt(double dTimeDays) : CTime(GetTimeFromDays(dTimeDays))
 		{
 		}
 
-		static CTimeInt GRAYCALL GetTimeFromStr(const GChar_t* pszDateTime, TZ_TYPE nTimeZoneOffset)
+		static cTimeInt GRAYCALL GetTimeFromStr(const GChar_t* pszDateTime, TZ_TYPE nTimeZoneOffset)
 		{
 			// Ignore HRESULT.
-			CTimeInt t;
+			cTimeInt t;
 			t.SetTimeStr(pszDateTime, nTimeZoneOffset);
 			return t;
 		}
@@ -147,9 +147,9 @@ namespace Gray
 		{ return (TIMESEC_t) SUPER_t::GetTime(); } // convert 64 bit time to old 32 bit form?
 #endif
 
-		static CTimeInt GRAYCALL GetTimeNow();
+		static cTimeInt GRAYCALL GetTimeNow();
 
-		static CTimeInt GRAYCALL GetCurrentTime()
+		static cTimeInt GRAYCALL GetCurrentTime()
 		{
 			//! Alternate name for MFC.
 			//! @note GetCurrentTime() is "#define" by _WIN32 to GetTickCount() so i cant use that name!
@@ -160,11 +160,11 @@ namespace Gray
 		void InitTimeNowPlusSec(TIMESECD_t iOffsetInSeconds);
 		void InitTime(TIMESEC_t nTime = k_nZero);
 
-		CTimeFile GetAsFileTime() const;
-		bool GetTimeUnits(OUT CTimeUnits& rTu, TZ_TYPE nTimeZoneOffset= TZ_UTC) const;
+		cTimeFile GetAsFileTime() const;
+		bool GetTimeUnits(OUT cTimeUnits& rTu, TZ_TYPE nTimeZoneOffset= TZ_UTC) const;
 
 		// non MFC CTime operations.
-		TIMESECD_t GetSecondsSince(const CTimeInt& time) const
+		TIMESECD_t GetSecondsSince(const cTimeInt& time) const
 		{
 			//! difference in seconds,
 			//! - = this is in the past. (time in future)
@@ -176,7 +176,7 @@ namespace Gray
 			//! difference in seconds
 			//! - = this is in the past.
 			//! + = this is in the future.
-			CTimeInt timeNow;
+			cTimeInt timeNow;
 			timeNow.InitTimeNow();
 			return((TIMESECD_t)(GetTime() - timeNow.GetTime()));
 		}
@@ -204,7 +204,7 @@ namespace Gray
 		{
 			//! Needs to be more consistent than accurate. just for compares.
 			//! Should turn over at midnight.
-			return((int)(GetTime() / CTimeUnits::k_nSecondsPerDay));
+			return((int)(GetTime() / cTimeUnits::k_nSecondsPerDay));
 		}
 
 		// to/from strings.
@@ -220,9 +220,9 @@ namespace Gray
 		static cString GRAYCALL GetTimeDeltaBriefStr(TIMESECD_t dwSeconds);
 		static cString GRAYCALL GetTimeDeltaSecondsStr(TIMESECD_t dwSeconds);
 
-		UNITTEST_FRIEND(CTimeInt);
+		UNITTEST_FRIEND(cTimeInt);
 	};
 
 };
 
-#endif // _INC_CTimeInt_H
+#endif // _INC_cTimeInt_H

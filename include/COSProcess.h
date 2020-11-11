@@ -1,20 +1,20 @@
 //
-//! @file COSProcess.h
+//! @file cOSProcess.h
 //! @note Launching processes is a common basic feature for __linux__
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_COSProcess_H
-#define _INC_COSProcess_H
+#ifndef _INC_cOSProcess_H
+#define _INC_cOSProcess_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
-#include "COSHandle.h"
-#include "CFilePath.h"
-#include "CThreadLock.h"
+#include "cOSHandle.h"
+#include "cFilePath.h"
+#include "cThreadLock.h"
 
-UNITTEST_PREDEF(COSProcess)
+UNITTEST_PREDEF(cOSProcess)
 
 namespace Gray
 {
@@ -66,28 +66,28 @@ namespace Gray
 		APP_EXITCODE_UNK = SHRT_MAX,		//!< handle not valid ?
 	};
 
-	class GRAYCORE_LINK COSProcess 
+	class GRAYCORE_LINK cOSProcess 
 	{
-		//! @class Gray::COSProcess
+		//! @class Gray::cOSProcess
 		//! A running process in the system. May or may not be the current process. 
 		//! handle to some active process I started (me or my child).
-		//! Related to MIME_EXT_exe PROCESSID_t. Related to COSModule.
+		//! Related to MIME_EXT_exe PROCESSID_t. Related to cOSModule.
 
 	protected:
 		PROCESSID_t m_nPid;		//!< Process ID, 0 = PROCESSID_BAD = un-init.
 
 #ifdef _WIN32
-		COSHandle m_hProcess;	//!< open handle to the process. COSModule
+		cOSHandle m_hProcess;	//!< open handle to the process. cOSModule
 	public:
-		COSHandle m_hThread;	//!< may have this or not. Only if i launched this myself.
+		cOSHandle m_hThread;	//!< may have this or not. Only if i launched this myself.
 #elif defined(__linux__)
 	protected:
-		CStringF m_sPath;		//!< cached file path for the EXE/ELF/etc file.
+		cStringF m_sPath;		//!< cached file path for the EXE/ELF/etc file.
 #endif
 
 	public:
-		COSProcess();
-		virtual ~COSProcess();
+		cOSProcess();
+		virtual ~cOSProcess();
 
 #ifdef _WIN32
 		HANDLE get_ProcessHandle() const noexcept
@@ -123,14 +123,14 @@ namespace Gray
 		{
 			return m_nPid;
 		}
-		virtual CStringF get_ProcessPath() const;
+		virtual cStringF get_ProcessPath() const;
 		cString get_ProcessName() const;
 		HRESULT OpenProcessId(PROCESSID_t dwProcessID, DWORD dwDesiredAccess = 0, bool bInheritHandle = false);
 
 #ifdef _WIN32
 		HRESULT GetProcessCommandLine( OUT wchar_t* pwText, _Inout_ size_t* pdwTextSize) const;
 #endif
-		CStringF get_CommandLine() const;
+		cStringF get_CommandLine() const;
 
 		HRESULT WaitForProcessExit(TIMESYSD_t nTimeWait, APP_EXITCODE_t* pnExitCode = nullptr);
 
@@ -189,7 +189,7 @@ namespace Gray
 
 #ifdef _WIN32
 
-		HRESULT CreateRemoteThread(const void* pvFunc, const void* pvArgs, OUT COSHandle& thread);
+		HRESULT CreateRemoteThread(const void* pvFunc, const void* pvArgs, OUT cOSHandle& thread);
 
 		void* AllocMemory(size_t nSize)
 		{
@@ -200,7 +200,7 @@ namespace Gray
 		HRESULT WriteProcessMemory(void* pBaseAddress, const void* pData, size_t nSize)
 		{
 			//! Write to memory inside some other process address space.
-			//! ASSUME: PROCESS_QUERY_INFORMATION | PROCESS_VM_WRITE access AND COSUserToken with SE_DEBUG_NAME
+			//! ASSUME: PROCESS_QUERY_INFORMATION | PROCESS_VM_WRITE access AND cOSUserToken with SE_DEBUG_NAME
 
 			SIZE_T nSizeWrite = nSize;
 			BOOL bSuccess = ::WriteProcessMemory(get_ProcessHandle(), pBaseAddress, pData, nSize, &nSizeWrite);
@@ -215,7 +215,7 @@ namespace Gray
 		{
 			//! Read memory from inside some other process address space.
 			//! Need permissions to do this.
-			//! ASSUME: PROCESS_QUERY_INFORMATION | PROCESS_VM_READ access AND COSUserToken with SE_DEBUG_NAME
+			//! ASSUME: PROCESS_QUERY_INFORMATION | PROCESS_VM_READ access AND cOSUserToken with SE_DEBUG_NAME
 
 			SIZE_T nSizeRead = nSize;
 			BOOL bSuccess = ::ReadProcessMemory(get_ProcessHandle(), pBaseAddress, pDataIn, nSize, &nSizeRead);
@@ -268,9 +268,9 @@ namespace Gray
 		static HWND GRAYCALL FindWindowForProcessID(PROCESSID_t nProcessID, DWORD dwStyleFlags, const GChar_t* pszClassName = nullptr); // WS_VISIBLE
 #endif // _WIN32
 
-		UNITTEST_FRIEND(COSProcess);
+		UNITTEST_FRIEND(cOSProcess);
 	};
 }
 
-#endif // _INC_COSProcess_H
+#endif // _INC_cOSProcess_H
 

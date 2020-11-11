@@ -10,9 +10,9 @@
 #endif
 
 #include "StrConst.h"
-#include "CPair.h"
+#include "cPair.h"
 #include "FileName.h"		// FILECHAR_t
-#include "CUnitTestDecl.h"
+#include "cUnitTestDecl.h"
 #ifdef _WIN32
 #include <winerror.h>
 #endif
@@ -124,7 +124,7 @@ namespace Gray
 		//! https://msdn.microsoft.com/en-us/library/cc231198.aspx
 
 	public:
-		typedef CPair<FACILITY_TYPE, const GChar_t*> Facility_t;	// name the facilities.
+		typedef cPair<FACILITY_TYPE, const GChar_t*> Facility_t;	// name the facilities.
 		static const Facility_t k_Facility[];	//!< names of all known FACILITY_TYPE.
 
 		HRESULT m_hRes;

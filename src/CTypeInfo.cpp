@@ -1,22 +1,22 @@
 //
-//! @file CTypeInfo.cpp
+//! @file cTypeInfo.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
 #include "pch.h"
-#include "CTypeInfo.h"
-#include "CTypes.h"
+#include "cTypeInfo.h"
+#include "cTypes.h"
 
 namespace Gray
 {
 
 #ifndef _MSC_VER	// __GNUC__
 #define CTYPE_DEF(a,_TYPE,c,d,e,f,g,h)  template<> const _TYPE CTypeLimit<_TYPE>::k_Min = e; template<> const _TYPE CTypeLimit<_TYPE>::k_Max = f; 
-#include "CTypes.tbl"
+#include "cTypes.tbl"
 #undef CTYPE_DEF
 #endif
 
-	const char* CTypeInfo::GetMemberName(int i) const
+	const char* cTypeInfo::GetMemberName(int i) const
 	{
 		//! read the vptr/vtable to get a list of names of the virtual exposed members.
 		//! @todo Get List of members.
@@ -36,8 +36,8 @@ namespace Gray
 //*************************************************************
 
 #if USE_UNITTESTS
-#include "CUnitTest.h"
-#include "CLogMgr.h"
+#include "cUnitTest.h"
+#include "cLogMgr.h"
 
 DECLARE_INTERFACE(ITestClass0)
 {
@@ -45,7 +45,7 @@ DECLARE_INTERFACE(ITestClass0)
 	virtual void f1() = 0;
 };
 
-UNITTEST_CLASS(CTypeInfo)
+UNITTEST_CLASS(cTypeInfo)
 {
 	class cTestClass1 : public ITestClass0
 	{
@@ -69,7 +69,7 @@ UNITTEST_CLASS(CTypeInfo)
 		}
 	};
 
-	UNITTEST_METHOD(CTypeInfo)
+	UNITTEST_METHOD(cTypeInfo)
 	{
 		// Enumerate methods from the vtable. __vfptr
 
@@ -81,9 +81,9 @@ UNITTEST_CLASS(CTypeInfo)
 		// UNITTEST_TRUE(tInt0 == tInt2);
 		UNITTEST_TRUE(nInt == 0);	// just for a ref.
 
-		const CTypeInfo& tSmart0 = (const CTypeInfo&) typeid(CSmartBase);
-		CSmartBase oSmart;
-		const CTypeInfo& tSmart1 = (const CTypeInfo&) typeid(oSmart);
+		const cTypeInfo& tSmart0 = (const cTypeInfo&) typeid(cRefBase);
+		cRefBase oSmart;
+		const cTypeInfo& tSmart1 = (const cTypeInfo&) typeid(oSmart);
 
 		size_t h0 = tSmart0.get_HashCode();
 		size_t h1 = tSmart1.get_HashCode();
@@ -91,25 +91,25 @@ UNITTEST_CLASS(CTypeInfo)
 		UNITTEST_TRUE(h0 == h1);
 
 		cTestClass3 oTC3;
-		const CTypeInfo& tTC3 = (const CTypeInfo&) typeid(oTC3);
-		const CTypeInfo& tTC1 = (const CTypeInfo&) typeid(cTestClass1);
-		const CTypeInfo& tTC2 = (const CTypeInfo&) typeid(cTestClass2);
+		const cTypeInfo& tTC3 = (const cTypeInfo&) typeid(oTC3);
+		const cTypeInfo& tTC1 = (const cTypeInfo&) typeid(cTestClass1);
+		const cTypeInfo& tTC2 = (const cTypeInfo&) typeid(cTestClass2);
 		UNITTEST_TRUE(h0 != tTC3.get_HashCode());
 
 #ifdef _MSC_VER
-		const char* pszRawName1 = tSmart1.raw_name();	// Get M$ Mangled/Raw name ".?AVCSmartBase@Gray@@"
+		const char* pszRawName1 = tSmart1.raw_name();	// Get M$ Mangled/Raw name ".?AVcRefBase@Gray@@"
 		UNITTEST_TRUE(pszRawName1 != nullptr);
 #endif
 
-		const char* pszName1 = tSmart1.get_Name();		// "class Gray::CSmartBase"
+		const char* pszName1 = tSmart1.get_Name();		// "class Gray::cRefBase"
 		UNITTEST_TRUE(pszName1 != nullptr);
 
-		const char* pszName2 = tTC3.get_Name();		// "class CUnitTest_CTypeInfo::cTestClass3"
+		const char* pszName2 = tTC3.get_Name();		// "class cUnitTest_cTypeInfo::cTestClass3"
 		UNITTEST_TRUE(pszName2 != nullptr);
 
-		const CTypeInfo* ptTC1 = &tTC1;
+		const cTypeInfo* ptTC1 = &tTC1;
 		UNITTEST_TRUE(ptTC1 != nullptr);
-		const CTypeInfo* ptTC2 = &tTC2;
+		const cTypeInfo* ptTC2 = &tTC2;
 		UNITTEST_TRUE(ptTC2 != nullptr);
 
 		cTestClass3* pTC3 = &oTC3;
@@ -124,5 +124,5 @@ UNITTEST_CLASS(CTypeInfo)
 		// void* pVTable = pTC3->_vptr;
 	}
 };
-UNITTEST_REGISTER(CTypeInfo, UNITTEST_LEVEL_Core);
+UNITTEST_REGISTER(cTypeInfo, UNITTEST_LEVEL_Core);
 #endif

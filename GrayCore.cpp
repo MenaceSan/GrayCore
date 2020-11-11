@@ -5,13 +5,13 @@
 
 #include "pch.h"
 #include "GrayCore.h"
-#include "CLogMgr.h"
-#include "CUnitTest.h"
-#include "COSModImpl.h"
+#include "cLogMgr.h"
+#include "cUnitTest.h"
+#include "cOSModImpl.h"
 
 namespace Gray
 {
-	COSModImpl g_Module(GRAY_NAMES "Core");
+	cOSModImpl g_Module(GRAY_NAMES "Core");
 }
 
 #if defined(_CONSOLE)
@@ -19,9 +19,9 @@ namespace Gray
 int _cdecl main(int argc, APP_ARGS_t argv)
 {
 	// @return APP_EXITCODE_t
-	Gray::CAppStateMain inmain(argc, argv);
+	Gray::cAppStateMain inmain(argc, argv);
 #if USE_UNITTESTS
-	Gray::CUnitTests::I().UnitTests(UNITTEST_LEVEL_Common);
+	Gray::cUnitTests::I().UnitTests(UNITTEST_LEVEL_Common);
 #endif // USE_UNITTESTS
 	return APP_EXITCODE_OK;
 }

@@ -1,17 +1,17 @@
 //
-//! @file CWinHeap2.h
+//! @file cWinHeap2.h
 //! define inline headers.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CWinHeap2_H
-#define _INC_CWinHeap2_H
+#ifndef _INC_cWinHeap2_H
+#define _INC_cWinHeap2_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
-#include "CWinHeap.h"
-#include "CLogMgr.h"
+#include "cWinHeap.h"
+#include "cLogMgr.h"
 
 #ifdef _WIN32
 	// CWinGlobalHandle CWinGlobalV, CWinGlobalT<> use GMEM_*
@@ -23,7 +23,7 @@
 #else
 #define WINHEAPF(x)	::Global##x
 #endif
-#include "CWinHeap.inl"
+#include "cWinHeap.inl"
 #undef WINHEAPN
 #undef WINHEAPM
 #undef WINHEAPH
@@ -34,11 +34,11 @@
 #define WINHEAPM(n)	LMEM_##n
 #define WINHEAPH	HLOCAL
 #define WINHEAPF(x)	::Local##x
-#include "CWinHeap.inl"
+#include "cWinHeap.inl"
 #undef WINHEAPN
 #undef WINHEAPM
 #undef WINHEAPH
 #undef WINHEAPF
  
 #endif
-#endif // _INC_CWinHeap2_H
+#endif // _INC_cWinHeap2_H

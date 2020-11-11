@@ -1,28 +1,28 @@
 //
-//! @file CPair.h
+//! @file cPair.h
 //! Associate 2 arbitrary typed values.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CPair_H
-#define _INC_CPair_H
+#ifndef _INC_cPair_H
+#define _INC_cPair_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
-#include "CMem.h"
-#include "CDebugAssert.h"
+#include "cMem.h"
+#include "cDebugAssert.h"
 
 namespace Gray
 {
 	template<typename TYPE>
-	class CRangeT
+	class cRangeT
 	{
 		//! @class Gray::RangeT
-		//! Simple linearity range from m_Lo to m_Hi. Similar to CStreamProgressT<>
+		//! Simple linearity range from m_Lo to m_Hi. Similar to cStreamProgressT<>
 		//! @note assume Normalized Hi>=Lo.
 		//! POD class should allow static init
-		typedef CRangeT<TYPE> THIS_t;
+		typedef cRangeT<TYPE> THIS_t;
 
 	public:
 		TYPE m_Lo;		//!< low range value.
@@ -121,7 +121,7 @@ namespace Gray
 		{
 			if (m_Lo > m_Hi)
 			{
-				CValT::Swap<TYPE>(m_Lo, m_Hi);
+				cValT::Swap<TYPE>(m_Lo, m_Hi);
 			}
 		}
 		void UnionValue(TYPE nVal)
@@ -157,9 +157,9 @@ namespace Gray
 	};
 
 	template< class _TYPE_A, class _TYPE_B >
-	class CPairT
+	class cPairT
 	{
-		//! @class Gray::CPairA
+		//! @class Gray::cPairA
 		//! The aggregate/simple type for simple static const init. AKA Tuple.
 		//! similar to "std::pair" or "std::tuple<>" or "System.Collections.Generic.KeyValuePair<>"
 		//! not the same as CValueRange (same type)
@@ -195,22 +195,22 @@ namespace Gray
 	};
 
 	template< class _TYPE_A, class _TYPE_ARG_A, class _TYPE_B, class _TYPE_ARG_B >
-	class CPairX : public CPairT < _TYPE_A, _TYPE_B >
+	class cPairX : public cPairT < _TYPE_A, _TYPE_B >
 	{
-		//! @class Gray::CPairX
+		//! @class Gray::cPairX
 		//! Template to associate a complex something with another something.
 		//! _TYPE_ARG_A = Allow an alternate argument type for _TYPE_A. Usually a reference for _TYPE_A if complex.
 		//! typically sorted by _TYPE_A. but not assumed/enforced.
 		//! typically in a static table!
 		//! typically LAST ENTRY in static table = { 0  or nullptr }, in either place.
-		//! Like CArrayVal2<> is to CArrayVal<>
+		//! Like cArrayVal2<> is to cArrayVal<>
 
-		typedef CPairT<_TYPE_A, _TYPE_B> SUPER_t;
+		typedef cPairT<_TYPE_A, _TYPE_B> SUPER_t;
 
 	public:
-		CPairX()	// Undefined values for dynamic arrays.
+		cPairX()	// Undefined values for dynamic arrays.
 		{}
-		CPairX(_TYPE_ARG_A a, _TYPE_ARG_B b)
+		cPairX(_TYPE_ARG_A a, _TYPE_ARG_B b)
 		{
 			this->m_a = a;
 			this->m_b = b;
@@ -245,17 +245,17 @@ namespace Gray
 	};
 
 	template< class _TYPE_A, class _TYPE_B >
-	class CPair : public CPairT < _TYPE_A, _TYPE_B >
+	class cPair : public cPairT < _TYPE_A, _TYPE_B >
 	{
-		//! @class Gray::CPair
-		//! Associated pair of simple things. Like CArrayVal<> is to CArrayVal2<>
+		//! @class Gray::cPair
+		//! Associated pair of simple things. Like cArrayVal<> is to cArrayVal2<>
 
-		typedef CPairT<_TYPE_A, _TYPE_B> SUPER_t;
+		typedef cPairT<_TYPE_A, _TYPE_B> SUPER_t;
 
 	public:
-		CPair()	// Undefined values for dynamic arrays.
+		cPair()	// Undefined values for dynamic arrays.
 		{}
-		CPair(_TYPE_A a, _TYPE_B b)
+		cPair(_TYPE_A a, _TYPE_B b)
 		{
 			this->m_a = a;
 			this->m_b = b;
@@ -337,4 +337,4 @@ namespace Gray
 		}
 	};
 };
-#endif // _INC_CPair_H
+#endif // _INC_cPair_H

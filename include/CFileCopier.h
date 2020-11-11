@@ -1,10 +1,10 @@
 //
-//! @file CFileCopier.h
+//! @file cFileCopier.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CFileCopier_H
-#define _INC_CFileCopier_H
+#ifndef _INC_cFileCopier_H
+#define _INC_cFileCopier_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
@@ -58,7 +58,7 @@ namespace Gray
 			UNREFERENCED_PARAMETER(nSize);
 			return E_NOTIMPL;
 		}
-		virtual HRESULT SendAttr(const FILECHAR_t* pszDestName, CTimeFile timeChanged)
+		virtual HRESULT SendAttr(const FILECHAR_t* pszDestName, cTimeFile timeChanged)
 		{
 			//! Optionally set the remote side time stamp for a file.
 			//! ASSUME blocking call.
@@ -68,18 +68,18 @@ namespace Gray
 		}
 	};
 
-	class GRAYCORE_LINK CFileCopier : public IFileCopier
+	class GRAYCORE_LINK cFileCopier : public IFileCopier
 	{
-		//! @class Gray::CFileCopier
+		//! @class Gray::cFileCopier
 		//! Implement the IFileCopier for the local file system. Copy single files.
 
 	public:
-		CStringF m_sServerRoot;	//!< Prefix all server side paths with this.
+		cStringF m_sServerRoot;	//!< Prefix all server side paths with this.
 
 	protected:
-		CStringF makeFilePath(const FILECHAR_t* pszFileName) const
+		cStringF makeFilePath(const FILECHAR_t* pszFileName) const
 		{
-			return CFilePath::CombineFilePathX(m_sServerRoot, pszFileName);
+			return cFilePath::CombineFilePathX(m_sServerRoot, pszFileName);
 		}
 
 	public:
@@ -96,7 +96,7 @@ namespace Gray
 		}
 		virtual HRESULT RequestFile(const FILECHAR_t* pszSrcName, const FILECHAR_t* pszDestPath, IStreamProgressCallback* pProgress, FILE_SIZE_t nOffsetStart, FILE_SIZE_t* pnRequestSizeEst) override;
 		virtual HRESULT SendFile(const FILECHAR_t* pszSrcPath, const FILECHAR_t* pszDestName, IStreamProgressCallback* pProgress, FILE_SIZE_t nOffsetStart, FILE_SIZE_t nSize) override;
-		virtual HRESULT SendAttr(const FILECHAR_t* pszDestName, CTimeFile timeChanged) override;
+		virtual HRESULT SendAttr(const FILECHAR_t* pszDestName, cTimeFile timeChanged) override;
 
 
 #if defined(_WIN32) && ! defined(UNDER_CE)
@@ -111,7 +111,7 @@ namespace Gray
 			void* lpData);
 #endif
 
-		static HRESULT GRAYCALL CopyFileStream(CStreamInput& stmIn, const FILECHAR_t* pszDstFileName, bool bFailIfExists = false, IStreamProgressCallback* pProgress = nullptr);
+		static HRESULT GRAYCALL CopyFileStream(cStreamInput& stmIn, const FILECHAR_t* pszDstFileName, bool bFailIfExists = false, IStreamProgressCallback* pProgress = nullptr);
 
 		static HRESULT GRAYCALL CopyFileX(const FILECHAR_t* pszExistingName, const FILECHAR_t* pszNewName, IStreamProgressCallback* pProgress = nullptr, bool bFailIfExists = false);
 		static HRESULT GRAYCALL RenamePath(const FILECHAR_t* pszOldName, const FILECHAR_t* pszNewName, IStreamProgressCallback* pProgress = nullptr);

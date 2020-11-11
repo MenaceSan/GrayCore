@@ -1,13 +1,13 @@
 //
-//! @file CMem.cpp
+//! @file cMem.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 #include "pch.h"
-#include "CMem.h"
+#include "cMem.h"
 #include "StrT.h"
 #include "HResult.h"
-#include "CDebugAssert.h"
-#include "CExceptionSystem.h"
+#include "cDebugAssert.h"
+#include "cExceptionSystem.h"
 
 namespace Gray
 {
@@ -19,7 +19,7 @@ namespace Gray
 	static jmp_buf s_CMem_IsValidFailJmpBuf;
 	typedef void(__cdecl * JMP_t)(int);
 
-	void __cdecl CMem::IsValidFailHandler(int nSig)	// JMP_t static
+	void __cdecl cMem::IsValidFailHandler(int nSig)	// JMP_t static
 	{
 		//! @todo make s_CMem_IsValidFailJmpBuf thread safe.
 		UNREFERENCED_PARAMETER(nSig);
@@ -27,10 +27,10 @@ namespace Gray
 	}
 #endif
 
-	uintptr_t VOLATILE CMem::sm_bDontOptimizeOut0 = 0;	//!< used to trick the optimizer. Always 0.
-	uintptr_t VOLATILE CMem::sm_bDontOptimizeOutX = 1;	//!< used to trick the optimizer. Unknown value.
+	uintptr_t VOLATILE cMem::sm_bDontOptimizeOut0 = 0;	//!< used to trick the optimizer. Always 0.
+	uintptr_t VOLATILE cMem::sm_bDontOptimizeOutX = 1;	//!< used to trick the optimizer. Unknown value.
 
-	bool GRAYCALL CMem::IsValid(const void* pData, size_t nLen, bool bWriteAccess) // static
+	bool GRAYCALL cMem::IsValid(const void* pData, size_t nLen, bool bWriteAccess) // static
 	{
 		//! Is this pointer valid to read/write to ? On heap, stack or static const data space.
 		//! similar to _MFC_VER AfxIsValidAddress(), AtlIsValidAddress() 
@@ -108,7 +108,7 @@ namespace Gray
 #endif
 	}
 
-	size_t GRAYCALL CMem::CompareIndex(const void* p1, const void* p2, size_t nSizeBlock) // static 
+	size_t GRAYCALL cMem::CompareIndex(const void* p1, const void* p2, size_t nSizeBlock) // static 
 	{
 		//! Compare two buffers and return at what point they differ.
 		//! Does not assume memory alignment for uintptr_t block compares.
@@ -151,11 +151,11 @@ namespace Gray
 		return nSizeBlock;
 	}
 
-	StrLen_t GRAYCALL CMem::ConvertToString(char* pszDst, StrLen_t iSizeDstMax, const BYTE* pSrc, size_t nSrcQty) // static
+	StrLen_t GRAYCALL cMem::ConvertToString(char* pszDst, StrLen_t iSizeDstMax, const BYTE* pSrc, size_t nSrcQty) // static
 	{
 		//! Write bytes out to a string as comma separated base 10 number values. 
 		//! Try to use SetHexDigest() instead.
-		//! opposite of CMem::ReadFromString().
+		//! opposite of cMem::ReadFromString().
 		//! @return the actual size of the string.
 		//! @note using Base64 would be better.
 
@@ -178,9 +178,9 @@ namespace Gray
 		return iLenOut;
 	}
 
-	size_t GRAYCALL CMem::ReadFromString(BYTE* pOut, size_t iDstMax, const char* pszSrc)
+	size_t GRAYCALL cMem::ReadFromString(BYTE* pOut, size_t iDstMax, const char* pszSrc)
 	{
-		//! Read/Parse bytes in from string as comma separated base 10 number values. opposite of CMem::ConvertToString().
+		//! Read/Parse bytes in from string as comma separated base 10 number values. opposite of cMem::ConvertToString().
 		//! @return the number of bytes read.
 		//! @note using Base64 would be better.
 
@@ -202,9 +202,9 @@ namespace Gray
 		return i;
 	}
 
-	StrLen_t GRAYCALL CMem::GetHexDigest(OUT char* pszHexString, const BYTE* pData, size_t nSizeData) // static 
+	StrLen_t GRAYCALL cMem::GetHexDigest(OUT char* pszHexString, const BYTE* pData, size_t nSizeData) // static 
 	{
-		//! Get the final hash as a pre-formatted string of hex digits. opposite of CMem::SetHexDigest
+		//! Get the final hash as a pre-formatted string of hex digits. opposite of cMem::SetHexDigest
 		//! ASSUME sizeof(pszHexString) >= SizeHexDigest
 		//! @note using Base64 would be better.
 		StrLen_t iLen = 0;
@@ -218,10 +218,10 @@ namespace Gray
 		return iLen;
 	}
 
-	HRESULT GRAYCALL CMem::SetHexDigest(const char* pszHexString, OUT BYTE* pData, size_t nSizeData) // static 
+	HRESULT GRAYCALL cMem::SetHexDigest(const char* pszHexString, OUT BYTE* pData, size_t nSizeData) // static 
 	{
 		//! Set binary pDigest from string pszHexString
-		//! opposite of CMem::GetHexDigest
+		//! opposite of cMem::GetHexDigest
 		//! @arg nSizeData = The number of expected output digits.
 		//! @note using Base64 would be better.
 		//! @return S_FALSE = was zero value.
@@ -253,19 +253,19 @@ namespace Gray
 
 	//**********************************************************
 
-	COMPARE_t GRAYCALL CMemBlock::Compare(const void* pData1, size_t iLen1, const void* pData2, size_t iLen2) // static
+	COMPARE_t GRAYCALL cMemBlock::Compare(const void* pData1, size_t iLen1, const void* pData2, size_t iLen2) // static
 	{
 		//! @return COMPARE_Equal
 		size_t iLenMin = MIN(iLen1, iLen2);
-		COMPARE_t iRet = CMem::Compare(pData1, pData2, iLenMin);
+		COMPARE_t iRet = cMem::Compare(pData1, pData2, iLenMin);
 		if (iRet != COMPARE_Equal)
 			return iRet;
-		return CValT::Compare(iLen1, iLen2);	// longer wins. if otherwise equal. (but not same length)
+		return cValT::Compare(iLen1, iLen2);	// longer wins. if otherwise equal. (but not same length)
 	}
 
 	//**********************************************************
 
-	void GRAYCALL CValArray::ReverseArrayBlocks(void* pArray, size_t nArraySizeBytes, size_t nBlockSize)
+	void GRAYCALL cValArray::ReverseArrayBlocks(void* pArray, size_t nArraySizeBytes, size_t nBlockSize)
 	{
 		//! reverse the order of an array of blocks/objects.
 		//! similar to ReverseArray() but without the TYPE. where nBlockSize == sizeof(TYPE)
@@ -300,78 +300,78 @@ namespace Gray
 
 		for (; pMemBS < pMemBE; pMemBS += nBlockSize, pMemBE -= nBlockSize)
 		{
-			CMem::Swap(pMemBS, pMemBE, nBlockSize);
+			cMem::Swap(pMemBS, pMemBE, nBlockSize);
 		}
 	}
 }
 
 //*************************************************************************
 #if USE_UNITTESTS
-#include "CUnitTest.h"
-#include "CLogMgr.h"
+#include "cUnitTest.h"
+#include "cLogMgr.h"
 
-UNITTEST_CLASS(CMem)
+UNITTEST_CLASS(cMem)
 {
 	template <class TYPE>
 	void UnitTest2(const TYPE nValH)
 	{
 		TYPE nValRev = nValH;
-		CValArray::ReverseArrayBlocks(&nValRev, sizeof(nValRev), 1);
+		cValArray::ReverseArrayBlocks(&nValRev, sizeof(nValRev), 1);
 
 		TYPE nValRev2 = nValH;
-		CValArray::ReverseArray<BYTE>((BYTE*)&nValRev2, sizeof(nValRev2));
+		cValArray::ReverseArray<BYTE>((BYTE*)&nValRev2, sizeof(nValRev2));
 		UNITTEST_TRUE(nValRev2 == nValRev);
 
-		TYPE nValRev3 = CMemT::ReverseType(nValH);
+		TYPE nValRev3 = cMemT::ReverseType(nValH);
 		UNITTEST_TRUE(nValRev3 == nValRev);
 
-		TYPE nValN = CMemT::HtoN(nValH);
+		TYPE nValN = cMemT::HtoN(nValH);
 #ifdef USE_LITTLE_ENDIAN
 		// Bytes must be reversed.
 		UNITTEST_TRUE(nValN == nValRev);
 #else
 		UNITTEST_TRUE(nValN == nValH);	// no change
 #endif
-		UNITTEST_TRUE(CMemT::NtoH(nValN) == nValH);	// back to original value.
+		UNITTEST_TRUE(cMemT::NtoH(nValN) == nValH);	// back to original value.
 	}
 
-	UNITTEST_METHOD(CMem)
+	UNITTEST_METHOD(cMem)
 	{
 		// IsValid
 		static const int k_Val = 123;	// i should not be able to write to this !?
-		UNITTEST_TRUE(CMem::IsValid(&k_Val, 1, false));	// read static/const memory is valid.
+		UNITTEST_TRUE(cMem::IsValid(&k_Val, 1, false));	// read static/const memory is valid.
 
 		// Write to nullptr and low memory?
-		UNITTEST_TRUE(!CMem::IsValid(nullptr, 1));
-		UNITTEST_TRUE(!CMem::IsValid((void*)12, 1, true));
+		UNITTEST_TRUE(!cMem::IsValid(nullptr, 1));
+		UNITTEST_TRUE(!cMem::IsValid((void*)12, 1, true));
 
 #if 0 // This doesn't work well in VS2015 in x64 for some reason. Does not continue from exception.
 		// Write to const/ROM space?
-		bool bCanWriteToROM = CMem::IsValid(&k_Val, 1, true);
+		bool bCanWriteToROM = cMem::IsValid(&k_Val, 1, true);
 		UNITTEST_TRUE(!bCanWriteToROM);	// writing to const should NOT be valid !?
 
 		// Write to Code?
-		bool bCanWriteToCode = CMem::IsValid((void*)&CMem::CompareIndex, 1, true);
+		bool bCanWriteToCode = cMem::IsValid((void*)&cMem::CompareIndex, 1, true);
 		UNITTEST_TRUE(!bCanWriteToCode);
 #endif
 
 		// CompareIndex
 		BYTE szTmp1[32];
 		BYTE szTmp2[32];
-		CMem::Fill(szTmp1, sizeof(szTmp1), 1);
-		CMem::Fill(szTmp2, sizeof(szTmp2), 2);
-		size_t nRet = CMem::CompareIndex(szTmp1, szTmp2, 4);
+		cMem::Fill(szTmp1, sizeof(szTmp1), 1);
+		cMem::Fill(szTmp2, sizeof(szTmp2), 2);
+		size_t nRet = cMem::CompareIndex(szTmp1, szTmp2, 4);
 		UNITTEST_TRUE(nRet == 0);
 
 		szTmp1[0] = 2;
-		nRet = CMem::CompareIndex(szTmp1, szTmp2, 8);
+		nRet = cMem::CompareIndex(szTmp1, szTmp2, 8);
 		UNITTEST_TRUE(nRet == 1);
 
-		nRet = CMem::CompareIndex(szTmp1, szTmp2, 9);
+		nRet = cMem::CompareIndex(szTmp1, szTmp2, 9);
 		UNITTEST_TRUE(nRet == 1);
 
-		CMem::Copy(szTmp1, szTmp2, sizeof(szTmp2));
-		nRet = CMem::CompareIndex(szTmp1, szTmp2, 9);
+		cMem::Copy(szTmp1, szTmp2, sizeof(szTmp2));
+		nRet = cMem::CompareIndex(szTmp1, szTmp2, 9);
 		UNITTEST_TRUE(nRet == 9);
 
 		// Host order test data.
@@ -381,17 +381,17 @@ UNITTEST_CLASS(CMem)
 		UnitTest2<ULONG>(0x12345678);	// Maybe 32 or 64 bit ?
 
 		char szTmp[k_TEXTBLOB_LEN * 4 + 10];
-		StrLen_t nLen = CMem::ConvertToString(szTmp, STRMAX(szTmp), (const BYTE*)(const char*)k_sTextBlob.m_A, k_TEXTBLOB_LEN);
+		StrLen_t nLen = cMem::ConvertToString(szTmp, STRMAX(szTmp), (const BYTE*)(const char*)k_sTextBlob.m_A, k_TEXTBLOB_LEN);
 		UNITTEST_TRUE(nLen >= k_TEXTBLOB_LEN);
 
 		BYTE bTmp[k_TEXTBLOB_LEN + 10];
-		size_t nSizeRet = CMem::ReadFromString(bTmp, STRMAX(bTmp), szTmp);
+		size_t nSizeRet = cMem::ReadFromString(bTmp, STRMAX(bTmp), szTmp);
 		UNITTEST_TRUE(nSizeRet == (size_t)k_TEXTBLOB_LEN);
-		UNITTEST_TRUE(!CMem::Compare(bTmp, (const char*)k_sTextBlob.m_A, nSizeRet));
-		UNITTEST_TRUE(CMem::IsValid(szTmp));
-		UNITTEST_TRUE(CMem::IsValid(bTmp));
+		UNITTEST_TRUE(!cMem::Compare(bTmp, (const char*)k_sTextBlob.m_A, nSizeRet));
+		UNITTEST_TRUE(cMem::IsValid(szTmp));
+		UNITTEST_TRUE(cMem::IsValid(bTmp));
 
 	}
 };
-UNITTEST_REGISTER(CMem, UNITTEST_LEVEL_Core);
+UNITTEST_REGISTER(cMem, UNITTEST_LEVEL_Core);
 #endif

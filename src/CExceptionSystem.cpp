@@ -1,12 +1,12 @@
 //
-//! @file CExceptionSystem.cpp
+//! @file cExceptionSystem.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
 #include "pch.h"
-#include "CExceptionSystem.h"
-#include "CLogMgr.h"
-#include "CAppState.h"
+#include "cExceptionSystem.h"
+#include "cLogMgr.h"
+#include "cAppState.h"
 
 #if defined(_CPPUNWIND)
 
@@ -111,9 +111,9 @@ namespace Gray
 		//! A handler can not be found for a thrown exception,
 		//! or for some other exceptional circumstance that makes impossible to continue the handling process.
 		//! http://www.cplusplus.com/reference/std/exception/set_terminate/
-		//! passes along to CAppExitCatcher
+		//! passes along to cAppExitCatcher
 		DEBUG_ERR(("cExceptionSystem::CatchTerminate no exception handler found!"));
-		CAppState::AbortApp();
+		cAppState::AbortApp();
 		UNREACHABLE_CODE(__noop);
 	}
 #else
@@ -151,7 +151,7 @@ namespace Gray
 //***************************************************************************
 
 #if USE_UNITTESTS
-#include "CUnitTest.h"
+#include "cUnitTest.h"
 
 UNITTEST_CLASS(cExceptionSystem)
 {

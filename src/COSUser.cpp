@@ -1,15 +1,15 @@
 //
-//! @file COSUser.cpp
+//! @file cOSUser.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
 #include "pch.h"
-#include "COSUser.h"
+#include "cOSUser.h"
 
 #if defined(_WIN32) && ! defined(UNDER_CE)
 #include <WinNT.h>	// TokenIntegrityLevel
-#include "CSecurityAttributes.h"
-#include "CAppState.h"
+#include "cSecurityAttributes.h"
+#include "cAppState.h"
 
 #ifndef SE_PRIVILEGE_REMOVED
 #define SE_PRIVILEGE_REMOVED            (0X00000004L)
@@ -47,22 +47,22 @@ WINADVAPI BOOL WINAPI LogonUserW (
 
 namespace Gray
 {
-	COSUserToken::COSUserToken()
+	cOSUserToken::cOSUserToken()
 	{
 		//! use call LoginUser or OpenProcessToken
 	}
-	COSUserToken::COSUserToken(DWORD dwDesiredAccess, HANDLE hProcess)
+	cOSUserToken::cOSUserToken(DWORD dwDesiredAccess, HANDLE hProcess)
 	{
 		OpenProcessToken(dwDesiredAccess, hProcess);
 	}
 
-	HRESULT COSUserToken::OpenProcessToken(DWORD dwDesiredAccess, HANDLE hProcess)
+	HRESULT cOSUserToken::OpenProcessToken(DWORD dwDesiredAccess, HANDLE hProcess)
 	{
 		//! Open the current process token for the current process user.
 		//! dwDesiredAccess = TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY | TOKEN_QUERY_SOURCE
 		if (this->isValidHandle())	// already open with dwDesiredAccess ??
 			return S_FALSE;
-		if (!COSHandle::IsValidHandle(hProcess))
+		if (!cOSHandle::IsValidHandle(hProcess))
 		{
 			hProcess = ::GetCurrentProcess();
 		}
@@ -73,7 +73,7 @@ namespace Gray
 		return S_OK;
 	}
 
-	HRESULT COSUserToken::LogonUserX(const char* pszName, const char* pszPass)
+	HRESULT cOSUserToken::LogonUserX(const char* pszName, const char* pszPass)
 	{
 		//! Try to authenticate a specific user
 
@@ -87,7 +87,7 @@ namespace Gray
 		return S_OK;
 	}
 
-	bool COSUserToken::SetPrivilege(const GChar_t* pszToken, DWORD dwAttr)
+	bool cOSUserToken::SetPrivilege(const GChar_t* pszToken, DWORD dwAttr)
 	{
 		//! @arg pszToken = SE_DEBUG_NAME, SE_RESTORE_NAME, SE_BACKUP_NAME
 		//! @arg dwAttr = SE_PRIVILEGE_ENABLED or SE_PRIVILEGE_REMOVED
@@ -118,17 +118,17 @@ namespace Gray
 		return true;
 	}
 
-	bool COSUserToken::SetPrivilege(const FILECHAR_t* pszToken)
+	bool cOSUserToken::SetPrivilege(const FILECHAR_t* pszToken)
 	{
 		return SetPrivilege(pszToken, SE_PRIVILEGE_ENABLED);
 	}
 
-	bool COSUserToken::RemovePrivilege(const FILECHAR_t* pszToken)
+	bool cOSUserToken::RemovePrivilege(const FILECHAR_t* pszToken)
 	{
 		return SetPrivilege(pszToken, SE_PRIVILEGE_REMOVED);
 	}
 
-	HRESULT COSUserToken::GetSID(CSecurityId& sid)
+	HRESULT cOSUserToken::GetSID(cSecurityId& sid)
 	{
 		//! Open the current process token if not already open.
 		if (!this->isValidHandle())
@@ -157,10 +157,10 @@ namespace Gray
 		return S_OK;
 	}
 
-	HRESULT COSUserToken::GetIntegrityLevel()
+	HRESULT cOSUserToken::GetIntegrityLevel()
 	{
 		//! Get the IntegrityLevel of the current process and user.
-		//! WINE and XP fails this call. so use CAppState::isUserAdmin() ??
+		//! WINE and XP fails this call. so use cAppState::isUserAdmin() ??
 		//! @note WINE fails this call differently than XP. 0x80070001 = ERROR_INVALID_FUNCTION
 		//! @return
 		//!  <= SECURITY_MANDATORY_MEDIUM_RID = Low
@@ -193,7 +193,7 @@ namespace Gray
 			return hRes;
 		}
 
-		CHeapBlock til((size_t)dwLengthNeeded);
+		cHeapBlock til((size_t)dwLengthNeeded);
 		TOKEN_MANDATORY_LABEL* pTIL = (TOKEN_MANDATORY_LABEL*)til.get_Data();
 		if (pTIL == nullptr)
 		{
@@ -224,7 +224,7 @@ namespace Gray
 		return dwIntegrityLevel;
 	}
 
-	int COSUserToken::get_IntegrityLevel()
+	int cOSUserToken::get_IntegrityLevel()
 	{
 		//! Get the IntegrityLevel of the current process user.
 		//! @return
@@ -240,13 +240,13 @@ namespace Gray
 		case E_NOTIMPL:		// weird.
 		case HRESULT_WIN32_C(ERROR_INVALID_PARAMETER):	// XP
 		case HRESULT_WIN32_C(ERROR_INVALID_FUNCTION):	// WINE
-			return CAppState::isCurrentUserAdmin() ? SECURITY_MANDATORY_HIGH_RID : SECURITY_MANDATORY_MEDIUM_RID;
+			return cAppState::isCurrentUserAdmin() ? SECURITY_MANDATORY_HIGH_RID : SECURITY_MANDATORY_MEDIUM_RID;
 		}
 
 		return SECURITY_MANDATORY_UNTRUSTED_RID;	// no idea.
 	}
 
-	HRESULT COSUserToken::GetStatistics(struct _TOKEN_STATISTICS* pStats)
+	HRESULT cOSUserToken::GetStatistics(struct _TOKEN_STATISTICS* pStats)
 	{
 		//! get TokenStatistics for the user.
 

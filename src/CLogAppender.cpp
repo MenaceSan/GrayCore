@@ -1,14 +1,14 @@
 //
-//! @file CLogAppender.cpp
+//! @file cLogAppender.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
 #include "pch.h"
-#include "CLogAppender.h"
-#include "CLogMgr.h"
-#include "CLogEvent.h"
-#include "CBits.h"
-#include "CCodeProfiler.h"
+#include "cLogAppender.h"
+#include "cLogMgr.h"
+#include "cLogEvent.h"
+#include "cBits.h"
+#include "cCodeProfiler.h"
 #include "StrBuilder.h"
 
 #ifdef UNDER_CE
@@ -17,7 +17,7 @@
 
 namespace Gray
 {
-	CStringL CLogEvent::get_FormattedDefault() const
+	cStringL cLogEvent::get_FormattedDefault() const
 	{
 		//! Format the text for the event in the default way. adds FILE_EOL.
 
@@ -26,7 +26,7 @@ namespace Gray
 
 		if (get_LogLevel() >= LOGLEV_WARN)
 		{
-			s.AddStr(CLogLevel::GetPrefixStr(get_LogLevel()));
+			s.AddStr(cLogLevel::GetPrefixStr(get_LogLevel()));
 		}
 #ifdef _DEBUG
 		if (get_LogLevel() >= LOGLEV_ERROR)
@@ -44,7 +44,7 @@ namespace Gray
 		ASSERT(iLen > 0);
 
 		bool bHasCRLF = (m_sMsg[iLen - 1] == '\r' || m_sMsg[iLen - 1] == '\n');
-		if (!CBits::HasMask(get_LogAttrMask(), (LOG_ATTR_MASK_t)LOG_ATTR_NOCRLF) && !bHasCRLF)
+		if (!cBits::HasMask(get_LogAttrMask(), (LOG_ATTR_MASK_t)LOG_ATTR_NOCRLF) && !bHasCRLF)
 		{
 			s.AddStr(FILE_EOL);
 		}
@@ -53,20 +53,20 @@ namespace Gray
 
 	//**************************************************************
 
-	CLogThrottle::CLogThrottle()
+	cLogThrottle::cLogThrottle()
 		: m_fLogThrottle(2000.0f)
-		, m_TimeLogLast(CTimeSys::k_CLEAR)
+		, m_TimeLogLast(cTimeSys::k_CLEAR)
 		, m_nQtyLogLast(0)
 	{
 	}
 
-	CLogThrottle::~CLogThrottle()
+	cLogThrottle::~cLogThrottle()
 	{
 	}
 
 	//************************************************************************
 
-	HRESULT CLogProcessor::addEventS(LOG_ATTR_MASK_t uAttrMask, LOGLEV_TYPE eLogLevel, CStringL sMsg, CStringL sContext /* = "" */) //
+	HRESULT cLogProcessor::addEventS(LOG_ATTR_MASK_t uAttrMask, LOGLEV_TYPE eLogLevel, cStringL sMsg, cStringL sContext /* = "" */) //
 	{
 		//! Dispatch the event to all matching appenders.
 		//! ASSUME new line.
@@ -76,15 +76,15 @@ namespace Gray
 
 		if (!IsLogged(uAttrMask, eLogLevel))
 		{
-			// Pre-Check if anyone cares before creating CLogEvent
+			// Pre-Check if anyone cares before creating cLogEvent
 			return HRESULT_WIN32_C(ERROR_EMPTY); // no appenders care about this.
 		}
 
-		CLogEventPtr pEvent(new CLogEvent(uAttrMask, eLogLevel, sMsg, sContext));
+		cLogEventPtr pEvent(new cLogEvent(uAttrMask, eLogLevel, sMsg, sContext));
 		return addEvent(pEvent);
 	}
 
-	HRESULT CLogProcessor::addEventV(LOG_ATTR_MASK_t uAttrMask, LOGLEV_TYPE eLogLevel, const LOGCHAR_t* pszFormat, va_list vargs)	// , CStringL sContext /* = "" */
+	HRESULT cLogProcessor::addEventV(LOG_ATTR_MASK_t uAttrMask, LOGLEV_TYPE eLogLevel, const LOGCHAR_t* pszFormat, va_list vargs)	// , cStringL sContext /* = "" */
 	{
 		//! Add a log message (line) to the system in the sprintf() format (with arguments)
 		//! ASSUME new line.
@@ -107,49 +107,49 @@ namespace Gray
 
 	//************************************************************************
 
-	CLogAppender::CLogAppender()
+	cLogAppender::cLogAppender()
 	{
 	}
 
-	CLogAppender::~CLogAppender()
+	cLogAppender::~cLogAppender()
 	{
 		RemoveAppenderThis();
 	}
 
-	HRESULT CLogAppender::WriteString(const wchar_t* pszMsg) // virtual 
+	HRESULT cLogAppender::WriteString(const wchar_t* pszMsg) // virtual 
 	{
 		//! Support loggers that want to write unicode to the log.
 		return WriteString(StrArg<LOGCHAR_t>(pszMsg));
 	}
 
-	bool CLogAppender::RemoveAppenderThis()
+	bool cLogAppender::RemoveAppenderThis()
 	{
-		//! Remove myself from the list of valid appenders in CLogMgr.
-		//! will descend into child CLogNexus as well.
-		if (!CLogMgr::isSingleCreated())
+		//! Remove myself from the list of valid appenders in cLogMgr.
+		//! will descend into child cLogNexus as well.
+		if (!cLogMgr::isSingleCreated())
 		{
 			return false;
 		}
-		return CLogMgr::I().RemoveAppender(this, true);
+		return cLogMgr::I().RemoveAppender(this, true);
 	}
 
 	//************************************************************************
 
-	CLogAppendDebug::CLogAppendDebug()
+	cLogAppendDebug::cLogAppendDebug()
 	{
 	}
-	CLogAppendDebug::~CLogAppendDebug() // virtual
+	cLogAppendDebug::~cLogAppendDebug() // virtual
 	{
 	}
 
-	HRESULT CLogAppendDebug::WriteString(const LOGCHAR_t* pszText) // virtual
+	HRESULT cLogAppendDebug::WriteString(const LOGCHAR_t* pszText) // virtual
 	{
 		//! Do NOT assume new line.
 		//! default OutputDebugString event if no other handler. (this == nullptr)
 #ifdef _WIN32
-		CThreadGuard threadguard(m_Lock);
+		cThreadGuard threadguard(m_Lock);
 #if 0 // def _DEBUG
-		if (m_Lock.get_ThreadLockOwner() != CAppState::I().get_MainThreadId())
+		if (m_Lock.get_ThreadLockOwner() != cAppState::I().get_MainThreadId())
 		{
 			ASSERT(0);
 		}
@@ -163,17 +163,17 @@ namespace Gray
 		return S_OK;
 	}
 
-	HRESULT GRAYCALL CLogAppendDebug::AddAppenderCheck(CLogNexus* pLogger) // static
+	HRESULT GRAYCALL cLogAppendDebug::AddAppenderCheck(cLogNexus* pLogger) // static
 	{
 		//! Apps should call this in main() or in some static init.
-		//! default logger = CLogMgr
+		//! default logger = cLogMgr
 		if (pLogger == nullptr)
 		{
-			pLogger = CLogMgr::get_Single();
+			pLogger = cLogMgr::get_Single();
 		}
-		if (pLogger->FindAppenderType(typeid(CLogAppendDebug)) != nullptr)
+		if (pLogger->FindAppenderType(typeid(cLogAppendDebug)) != nullptr)
 			return S_FALSE;
-		pLogger->AddAppender(new CLogAppendDebug);
+		pLogger->AddAppender(new cLogAppendDebug);
 		return S_OK;
 	}
 }

@@ -1,16 +1,16 @@
 //
-//! @file CIUnkPtr.h
+//! @file cIUnkPtr.h
 //! Template for a type specific smart pointer to a IUnknown based object.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CIUnkPtr_H
-#define _INC_CIUnkPtr_H
+#ifndef _INC_cIUnkPtr_H
+#define _INC_cIUnkPtr_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
-#include "CPtrFacade.h"
+#include "cPtrFacade.h"
 #include "IUnknown.h"
 
 #if defined(_DEBUG) && ! defined(UNDER_CE)
@@ -19,27 +19,27 @@
 
 namespace Gray
 {
-	template<class TYPE = IUnknown>	class CIUnkTraceOpaque;
-	class CLogProcessor;
+	template<class TYPE = IUnknown>	class cIUnkTraceOpaque;
+	class cLogProcessor;
 
 	template<class TYPE = IUnknown>
-	class CIUnkPtr
-		: public CPtrFacade < TYPE >
+	class cIUnkPtr
+		: public cPtrFacade < TYPE >
 #ifdef USE_IUNK_TRACE
-		, public CPtrTrace
+		, public cPtrTrace
 #endif
 	{
-		//! @class Gray::CIUnkPtr
+		//! @class Gray::cIUnkPtr
 		//! Smart pointer to an IUnknown based object.
 		//! like _WIN32 ATL CComPtr<> or "com_ptr_t"
 		//! TYPE must be based on IUnknown
 
 #ifdef USE_IUNK_TRACE
-		friend class CIUnkTraceOpaque < TYPE >;
-		friend class CIUnkTraceOpaque < IUnknown >;
+		friend class cIUnkTraceOpaque < TYPE >;
+		friend class cIUnkTraceOpaque < IUnknown >;
 #endif
-		typedef CIUnkPtr<TYPE> THIS_t;
-		typedef CPtrFacade<TYPE> SUPER_t;
+		typedef cIUnkPtr<TYPE> THIS_t;
+		typedef cPtrFacade<TYPE> SUPER_t;
 
 	protected:
 #ifdef _DEBUG
@@ -75,22 +75,22 @@ namespace Gray
 
 	public:
 		//! Construct and destruction
-		CIUnkPtr()
+		cIUnkPtr()
 #ifdef USE_IUNK_TRACE
-			: CPtrTrace(typeid(TYPE))
+			: cPtrTrace(typeid(TYPE))
 #endif
 		{
 		}
-		CIUnkPtr(const TYPE* p2)
+		cIUnkPtr(const TYPE* p2)
 #ifdef USE_IUNK_TRACE
-			: CPtrTrace(typeid(TYPE))
+			: cPtrTrace(typeid(TYPE))
 #endif
 		{
 			SetFirstIUnk(const_cast<TYPE*>(p2));
 		}
-		CIUnkPtr(const THIS_t& ref)
+		cIUnkPtr(const THIS_t& ref)
 #ifdef USE_IUNK_TRACE
-			: CPtrTrace(typeid(TYPE))
+			: cPtrTrace(typeid(TYPE))
 #endif
 		{
 			//! using the assignment auto constructor is not working so use this.
@@ -98,18 +98,18 @@ namespace Gray
 		}
 
 #if 1
-		CIUnkPtr(THIS_t&& ref) // noexcept
+		cIUnkPtr(THIS_t&& ref) // noexcept
 #ifdef USE_IUNK_TRACE
-			: CPtrTrace(ref)
+			: cPtrTrace(ref)
 #endif
 		{
 			//! move constructor.
-			//! would ': CPtrFacade<TYPE>(ref)' deal with CPtrTrace correctly? 			
+			//! would ': cPtrFacade<TYPE>(ref)' deal with cPtrTrace correctly? 			
 			this->m_p = ref.m_p; ref.m_p = nullptr;
 		}
 #endif
 
-		~CIUnkPtr()
+		~cIUnkPtr()
 		{
 			ReleasePtr();
 		}
@@ -253,27 +253,27 @@ namespace Gray
 	};
 
 	// The lowest (un-type checked) smart pointer.
-	typedef GRAYCORE_LINK CIUnkPtr<> CIUnkBasePtr;
+	typedef GRAYCORE_LINK cIUnkPtr<> cIUnkBasePtr;
 
 #ifdef USE_IUNK_TRACE
 	template<class TYPE>
-	class CIUnkTraceOpaque
+	class cIUnkTraceOpaque
 	{
-		//! @class Gray::CIUnkTraceOpaque
-		//! This represents an "open" handle instance to a CIUnkPtr<IUnknown> as passed into an opaque function that might return a pointer with an AddRef().
+		//! @class Gray::cIUnkTraceOpaque
+		//! This represents an "open" handle instance to a cIUnkPtr<IUnknown> as passed into an opaque function that might return a pointer with an AddRef().
 		//! Use this and the corresponding IUNK_GETPPTR macros to insulate against COM (e.g. DirectX) calls that return interfaces with an implied AddRef().
 		//! a single reference to an IUnknown
 		//! auto stack based only.
 	private:
-		CIUnkPtr<TYPE>& m_rpIObj;	//!< track the open IUnk
+		cIUnkPtr<TYPE>& m_rpIObj;	//!< track the open IUnk
 	public:
-		CIUnkTraceOpaque(CIUnkPtr<TYPE>& rpObj, const CDebugSourceLine& src)
+		cIUnkTraceOpaque(cIUnkPtr<TYPE>& rpObj, const cDebugSourceLine& src)
 			: m_rpIObj(rpObj)
 		{
 			ASSERT(rpObj.get_Ptr() == nullptr);
 			rpObj.m_Src = src;	// last open on this handle.
 		}
-		~CIUnkTraceOpaque()
+		~cIUnkTraceOpaque()
 		{
 			//! We allowed something to place a pointer here, so check it.
 			TYPE* p = m_rpIObj.get_Ptr();
@@ -297,8 +297,8 @@ namespace Gray
 		}
 	};
 
-#define IUNK_GETPPTR(p,TYPE)	CIUnkTraceOpaque<TYPE>(p,DEBUGSOURCELINE)
-#define IUNK_GETPPTRV(p,TYPE)	CIUnkTraceOpaque<TYPE>(p,DEBUGSOURCELINE)
+#define IUNK_GETPPTR(p,TYPE)	cIUnkTraceOpaque<TYPE>(p,DEBUGSOURCELINE)
+#define IUNK_GETPPTRV(p,TYPE)	cIUnkTraceOpaque<TYPE>(p,DEBUGSOURCELINE)
 #define IUNK_ATTACH(p)			ASSERT((p).get_Ptr()!=nullptr); (p).m_Src = DEBUGSOURCELINE; (p).TraceOpen((p).get_Ptr());	// attach trace.
 #else
 #define IUNK_GETPPTR(p,TYPE)	(p).get_PPtr()
@@ -307,7 +307,7 @@ namespace Gray
 #endif	// USE_IUNK_TRACE
 
 #ifdef GRAY_DLL // force implementation/instantiate for DLL/SO.
-	template class GRAYCORE_LINK CIUnkPtr < IUnknown >;
+	template class GRAYCORE_LINK cIUnkPtr < IUnknown >;
 #endif
 
 }

@@ -1,35 +1,36 @@
 //
-//! @file CThreadLockRW.h
+//! @file cThreadLockRW.h
 //! Read/Write declarative thread locking. similar to __linux__ pthread_rwlock_t
-//! more flexible/efficient than CThreadLock as most lockers are just readers.
+//! more flexible/efficient than cThreadLock as most lockers are just readers.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//! @todo CThreadLockRW
+//! @todo cThreadLockRW
 
-#ifndef _INC_CThreadLockRW_H
-#define _INC_CThreadLockRW_H
+#ifndef _INC_cThreadLockRW_H
+#define _INC_cThreadLockRW_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
-#include "CThreadLock.h"
-#include "CInterlockedVal.h"
-#include "CNonCopyable.h"
+#include "cThreadLock.h"
+#include "cInterlockedVal.h"
+#include "cNonCopyable.h"
+#include "cThreadLockRef.h"
 
-UNITTEST_PREDEF(CThreadLockRW)
+UNITTEST_PREDEF(cThreadLockRW)
 
 namespace Gray
 {
-	class GRAYCORE_LINK CThreadLockRWS : protected CNonCopyable
+	class GRAYCORE_LINK cThreadLockRWS : protected cNonCopyable
 	{
-		//! @class Gray::CThreadLockRWS
+		//! @class Gray::cThreadLockRWS
 		//! Simple NON recursive, NON upgradeable, read / write locking.
 		//! from: http://www.viksoe.dk/code/rwmonitor.htm
-		//! @todo CThreadLockRW NOT complete
+		//! @todo cThreadLockRW NOT complete
 		//! similar to https://msdn.microsoft.com/en-us/library/windows/desktop/aa904937(v=vs.85).aspx e.g. InitializeSRWLock()
 
 	private:
-		CInterlockedInt m_nReaders;
-		CInterlockedInt m_nWriters;
+		cInterlockedInt m_nReaders;
+		cInterlockedInt m_nWriters;
 
 	public:
 		void IncReadLockCount()
@@ -40,7 +41,7 @@ namespace Gray
 				if (m_nWriters == 0)
 					break;
 				m_nReaders.DecV();
-				CThreadId::SleepCurrent(0);
+				cThreadId::SleepCurrent(0);
 			}
 		}
 		void DecReadLockCount()
@@ -55,12 +56,12 @@ namespace Gray
 			{
 				if (m_nWriters.Exchange(1) == 1)
 				{
-					CThreadId::SleepCurrent(0);
+					cThreadId::SleepCurrent(0);
 				}
 				else
 				{
 					while (m_nReaders != 0)
-						CThreadId::SleepCurrent(0);
+						cThreadId::SleepCurrent(0);
 					break;
 				}
 			}
@@ -73,10 +74,10 @@ namespace Gray
 		}
 	};
 
-	class GRAYCORE_LINK CThreadLockRW : public CThreadLockFast
+	class GRAYCORE_LINK cThreadLockRW : public cThreadLockFast
 	{
-		//! @class Gray::CThreadLockRW
-		//! @todo CThreadLockRW
+		//! @class Gray::cThreadLockRW
+		//! @todo cThreadLockRW
 		//! cheap RW declaring thread locking mechanism.
 		//! Recursive and upgradeable (i.e. i can start with read and upgrade to write permissions on the same thread)
 		//! Only one thread may write lock something.
@@ -91,21 +92,21 @@ namespace Gray
 		//!  if the first locker is write, FR=go, FW=go, OR=wait, OW=wait
 		//!  if the first locker is reader, FR=go, FW=go, OR=go, OW=wait.
 
-		typedef CThreadLockFast SUPER_t;
+		typedef cThreadLockFast SUPER_t;
 
 	public:
-		// CThreadLock::m_nLockThreadID;		// First reader or writers .
-		// CThreadLock::m_nLockCount;			// How many write locks (for orig m_nLockThreadID)
-		CInterlockedInt m_nReadLockCount;		//!< How many readers (for orig m_nLockThreadID)
-		CInterlockedInt m_nOtherReadLockCount;	//!< How many outside (not on orig thread) readers
+		// cThreadLock::m_nLockThreadID;		// First reader or writers .
+		// cThreadLock::m_nLockCount;			// How many write locks (for orig m_nLockThreadID)
+		cInterlockedInt m_nReadLockCount;		//!< How many readers (for orig m_nLockThreadID)
+		cInterlockedInt m_nOtherReadLockCount;	//!< How many outside (not on orig thread) readers
 		bool m_bLostOrder;	//!< can't figure who is thread.
 
 	public:
-		CThreadLockRW()
+		cThreadLockRW()
 		: m_bLostOrder(false)
 		{
 		}
-		~CThreadLockRW()
+		~cThreadLockRW()
 		{
 			ASSERT(m_nReadLockCount == 0);
 			ASSERT(m_nOtherReadLockCount == 0);
@@ -132,40 +133,40 @@ namespace Gray
 		inline void DecReadLockCount()
 		{
 		}
-		UNITTEST_FRIEND(CThreadLockRW);
+		UNITTEST_FRIEND(cThreadLockRW);
 	};
 
-	class CThreadGuardRead : public CLockerT < CThreadLockRW >
+	class cThreadGuardRead : public cLockerT < cThreadLockRW >
 	{
-		//! @class Gray::CThreadGuardRead
+		//! @class Gray::cThreadGuardRead
 		//! I only want to read from this.
 
 	public:
-		CThreadGuardRead(CThreadLockRW& rLock)
-		: CLockerT<CThreadLockRW>(rLock)
+		cThreadGuardRead(cThreadLockRW& rLock)
+		: cLockerT<cThreadLockRW>(rLock)
 		{
 		}
 		// TODO: call IncReadLockCount
 	};
 
-	typedef CLockerT<CThreadLockRW> CThreadGuardWrite;	// I only want to write to this.
+	typedef cLockerT<cThreadLockRW> cThreadGuardWrite;	// I only want to write to this.
 
 	//******************************************************
 
-	class GRAYCORE_LINK CThreadLockableRW
-	: public CSmartBase
-	, public CThreadLockRW
+	class GRAYCORE_LINK cThreadLockableRW
+	: public cRefBase
+	, public cThreadLockRW
 	{
-		//! @class Gray::CThreadLockableRW
+		//! @class Gray::cThreadLockableRW
 		//! An smart pointer referenced object that can be read/write locked.
-		//! similar to CThreadLockableObj
+		//! similar to cThreadLockableRef
 	};
 
 	template<class TYPE>
-	class CSmartReadPtr : public CSmartPtr<TYPE>, public CThreadGuardRead
+	class CSmartReadPtr : public cRefPtr<TYPE>, public cThreadGuardRead
 	{
 		//! @class Gray::CSmartReadPtr
-		//! I promise to only read from the CThreadLockableRW based object.
+		//! I promise to only read from the cThreadLockableRW based object.
 		//! If another thread is open writing then we must wait.
 		//! If any thread has other read opens then it's OK.
 		//! No need to lock an object if 2 threads are just reading it!
@@ -173,8 +174,8 @@ namespace Gray
 		//! @note this only returns 'const' pointers of course.
 
 		CSmartReadPtr(TYPE* pObj)
-		: CSmartPtr<TYPE>(pObj)
-		, CThreadGuardRead(*pObj)
+		: cRefPtr<TYPE>(pObj)
+		, cThreadGuardRead(*pObj)
 		{
 		}
 
@@ -184,16 +185,16 @@ namespace Gray
 		}
 	};
 	template<class TYPE>
-	class CSmartWritePtr : public CSmartPtr<TYPE>, public CThreadGuardWrite
+	class CSmartWritePtr : public cRefPtr<TYPE>, public cThreadGuardWrite
 	{
 		//! @class Gray::CSmartWritePtr
-		//! we would like to write to the CThreadLockableRW based object.
+		//! we would like to write to the cThreadLockableRW based object.
 		//! If another thread has it open (read or write) then we must wait.
 		CSmartWritePtr(TYPE* pObj)
-		: CSmartPtr<TYPE>(pObj)
-		, CThreadGuardWrite(*pObj)
+		: cRefPtr<TYPE>(pObj)
+		, cThreadGuardWrite(*pObj)
 		{
 		}
 	};
 };
-#endif // _INC_CThreadLockRW_H
+#endif // _INC_cThreadLockRW_H

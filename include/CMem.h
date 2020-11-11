@@ -1,29 +1,29 @@
 //
-//! @file CMem.h
+//! @file cMem.h
 //! Move memory blocks and bytes around.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CMem_H
-#define _INC_CMem_H
+#ifndef _INC_cMem_H
+#define _INC_cMem_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
 #include "Ptr.h"
 #include "StrConst.h"
-#include "CValT.h"
-#include "CUnitTestDecl.h"
+#include "cValT.h"
+#include "cUnitTestDecl.h"
 
-UNITTEST_PREDEF(CMem)
+UNITTEST_PREDEF(cMem)
 
 namespace Gray
 {
-	struct GRAYCORE_LINK CMem	// static CSingleton
+	struct GRAYCORE_LINK cMem	// static cSingleton
 	{
-		//! @struct Gray::CMem
+		//! @struct Gray::cMem
 		//! a void type memory block. test bytes, Move memory bytes around.
-		//! May be on heap, const memory space or static in stack. do NOT assume. use CHeap.
+		//! May be on heap, const memory space or static in stack. do NOT assume. use cHeap.
 
 		static VOLATILE uintptr_t sm_bDontOptimizeOut0;	// static global byte to fool the optimizer into preserving this data.
 		static VOLATILE uintptr_t sm_bDontOptimizeOutX;	// static global byte to fool the optimizer into preserving this data.
@@ -36,7 +36,7 @@ namespace Gray
 		{
 			//! @return Difference in bytes. Assume it is a reasonable sized block?
 			ptrdiff_t i = ((const BYTE*)pEnd - (const BYTE*)pStart);	// like INT_PTR
-			// ASSERT(i > -(INT_PTR)(CHeap::k_ALLOC_MAX) && i < (INT_PTR)(CHeap::k_ALLOC_MAX));	// k_ALLOC_MAX
+			// ASSERT(i > -(INT_PTR)(cHeap::k_ALLOC_MAX) && i < (INT_PTR)(cHeap::k_ALLOC_MAX));	// k_ALLOC_MAX
 			return i;
 		}
 
@@ -151,7 +151,7 @@ namespace Gray
 			nSizeBlock /= 2;
 			while (nSizeBlock--)
 			{
-				CValT::Swap(*pSrcB++, *pDstB--);
+				cValT::Swap(*pSrcB++, *pDstB--);
 			}
 		}
 		static inline void CopyReverse(void* pDst, const void* pSrc, size_t nSizeBlock)
@@ -196,29 +196,29 @@ namespace Gray
 		{
 			//! Copy from Host (Local Native) Order into Network Order (Big Endian)
 #ifdef USE_LITTLE_ENDIAN
-			CMem::CopyReverse(pDst, pSrc, nSizeBlock);
+			cMem::CopyReverse(pDst, pSrc, nSizeBlock);
 #else
-			CMem::Copy(pDst, pSrc, nSizeBlock);
+			cMem::Copy(pDst, pSrc, nSizeBlock);
 #endif
 		}
 		static inline void CopyNtoH(void* pDst, const BYTE* pSrc, size_t nSizeBlock)
 		{
 			//! Copy from Network Order (Big Endian) to Host Order (Local Native)
 #ifdef USE_LITTLE_ENDIAN
-			CMem::CopyReverse(pDst, pSrc, nSizeBlock);
+			cMem::CopyReverse(pDst, pSrc, nSizeBlock);
 #else
-			CMem::Copy(pDst, pSrc, nSizeBlock);
+			cMem::Copy(pDst, pSrc, nSizeBlock);
 #endif
 		}
 
 		static inline void Swap(void* pvMem1, void* pvMem2, size_t nBlockSize)
 		{
-			//! swap copy 2 blocks of memory by bytes. like CMemT::Swap() but for 2 arbitrary sized blocks.
+			//! swap copy 2 blocks of memory by bytes. like cMemT::Swap() but for 2 arbitrary sized blocks.
 			//! swap them byte by byte.
-			//! use CMemT::Swap<> instead if possible for intrinsic types.
+			//! use cMemT::Swap<> instead if possible for intrinsic types.
 			//! @arg nBlockSize = size in bytes.
 			//! @note
-			//!  DO NOT Use this for complex types that need special copiers. have pointers and such. use CMemT::Swap()
+			//!  DO NOT Use this for complex types that need special copiers. have pointers and such. use cMemT::Swap()
 
 			if (pvMem1 == pvMem2)	// no change.
 				return;
@@ -226,7 +226,7 @@ namespace Gray
 			BYTE* pMem2 = (BYTE*)pvMem2;
 			for (; nBlockSize--; pMem1++, pMem2++)
 			{
-				CValT::Swap(*pMem1, *pMem2);
+				cValT::Swap(*pMem1, *pMem2);
 			}
 		}
 
@@ -242,13 +242,13 @@ namespace Gray
 		static StrLen_t GRAYCALL GetHexDigest(OUT char* pszHexString, const BYTE* pData, size_t nSizeData);
 		static HRESULT GRAYCALL SetHexDigest(const char* pszHexString, OUT BYTE* pData, size_t nSizeData);
 
-		UNITTEST_FRIEND(CMem);
+		UNITTEST_FRIEND(cMem);
 	};
 
 	template <UINT32 _SIGVALID = 0xCA11AB1E>
-	class DECLSPEC_NOVTABLE CMemSignature
+	class DECLSPEC_NOVTABLE cMemSignature
 	{
-		//! @class Gray::CMemSignature
+		//! @class Gray::cMemSignature
 		//! An unlikely pattern of debug data for validating the heap/memory. These may be scattered about any place.
 		//! @note May not be allocated on the system heap.
 		//! @note This is somewhat redundant with some built in _MSC_VER _DEBUG heap code. heap has its own mechanism to do this.
@@ -258,12 +258,12 @@ namespace Gray
 	private:
 		UINT32 m_nSignature;	//!< Hold bytes of known value.
 	public:
-		CMemSignature() noexcept
+		cMemSignature() noexcept
 			: m_nSignature(_SIGVALID)
 		{
 			//! @note virtuals don't work in constructors or destructors !
 		}
-		~CMemSignature()
+		~cMemSignature()
 		{
 			//! @note virtuals don't work in constructors or destructors !
 			//! so ASSERT( isValidCheck()); not possible here !
@@ -272,7 +272,7 @@ namespace Gray
 		}
 		bool inline isValidSignature() const
 		{
-			if (!CMem::IsValidApp(this))
+			if (!cMem::IsValidApp(this))
 				return false;
 			if (m_nSignature != _SIGVALID)
 				return false;
@@ -281,9 +281,9 @@ namespace Gray
 	};
 
 	template<size_t TYPE_SIZE>
-	class CMemStatic
+	class cMemStatic
 	{
-		//! @class Gray::CMemStatic
+		//! @class Gray::cMemStatic
 		//! Store an inline/static allocated blob of a specific known size/type. TYPE_SIZE in bytes.
 
 	public:
@@ -308,9 +308,9 @@ namespace Gray
 		}
 	};
 
-	class GRAYCORE_LINK CMemBlock
+	class GRAYCORE_LINK cMemBlock
 	{
-		//! @class Gray::CMemBlock
+		//! @class Gray::cMemBlock
 		//! A pointer to memory block/blob in heap, stack or const. Unknown ownership. don't free on destruct.
 		//! May be static init?
 
@@ -319,38 +319,38 @@ namespace Gray
 		void* m_pData;
 
 	public:
-		CMemBlock() noexcept
+		cMemBlock() noexcept
 			: m_nSize(0)
 			, m_pData(nullptr)
 		{
 		}
-		CMemBlock(size_t nSize, void* pData) noexcept
+		cMemBlock(size_t nSize, void* pData) noexcept
 			: m_nSize(nSize)
 			, m_pData(pData)
 		{
 		}
-		CMemBlock(size_t nSize, const void* pData) noexcept
+		cMemBlock(size_t nSize, const void* pData) noexcept
 			: m_nSize(nSize)
 			, m_pData(const_cast<void*>(pData))	// just assume we don't modify it?
 		{
 		}
-		CMemBlock(void* pData, size_t nSize) noexcept
+		cMemBlock(void* pData, size_t nSize) noexcept
 			: m_nSize(nSize)
 			, m_pData(pData)
 		{
 		}
-		CMemBlock(const void* pData, size_t nSize) noexcept
+		cMemBlock(const void* pData, size_t nSize) noexcept
 			: m_nSize(nSize)
 			, m_pData(const_cast<void*>(pData))	// just assume we don't modify it?
 		{
 		}
-		CMemBlock(const CMemBlock& block) noexcept
+		cMemBlock(const cMemBlock& block) noexcept
 			: m_nSize(block.m_nSize)
 			, m_pData(block.m_pData)
 		{
 			// Just shared pointers. This may be dangerous!
 		}
-		CMemBlock(const CMemBlock* pBlock) noexcept
+		cMemBlock(const cMemBlock* pBlock) noexcept
 			: m_nSize((pBlock == nullptr) ? 0 : pBlock->m_nSize)
 			, m_pData((pBlock == nullptr) ? nullptr : pBlock->m_pData)
 		{
@@ -366,7 +366,7 @@ namespace Gray
 		bool isValidPtr() const noexcept
 		{
 			//! Is this (probably) valid to use/read/write. not nullptr.
-			//! Use CMem::IsValid to know more.
+			//! Use cMem::IsValid to know more.
 			return m_pData != nullptr;
 		}
 		bool IsValidIndex(size_t i) const noexcept
@@ -402,7 +402,7 @@ namespace Gray
 
 		bool IsZeros() const noexcept
 		{
-			return CMem::IsZeros(m_pData, m_nSize);
+			return cMem::IsZeros(m_pData, m_nSize);
 		}
 
 		bool IsEqualData(const void* pData, size_t nSize) const
@@ -410,20 +410,20 @@ namespace Gray
 			//! compare blocks of data.
 			return m_nSize == nSize && !::memcmp(m_pData, pData, nSize);
 		}
-		bool IsEqualData(const CMemBlock* pData) const
+		bool IsEqualData(const cMemBlock* pData) const
 		{
 			//! compare blocks of data.
 			if (pData == nullptr)
 				return false;
 			return IsEqualData(pData->m_pData, pData->m_nSize);
 		}
-		bool IsEqualData(const CMemBlock& data) const
+		bool IsEqualData(const cMemBlock& data) const
 		{
 			//! compare blocks of data.
 			return IsEqualData(data.m_pData, data.m_nSize);
 		}
 
-		//! Compares an static string to a value in CMemBlock
+		//! Compares an static string to a value in cMemBlock
 		//! @note ONLY works for literal "static string", or BYTE[123] you cannot use a 'BYTE* x' here!
 #define IsEqualLiteral(x) IsEqualData( STRLIT2(x))
 
@@ -487,20 +487,20 @@ namespace Gray
 
 		void InitZeros()
 		{
-			CMem::ZeroSecure(m_pData, m_nSize);
+			cMem::ZeroSecure(m_pData, m_nSize);
 		}
 		StrLen_t ConvertToString(char* pszDst, StrLen_t iDstSizeMax) const
 		{
-			return CMem::ConvertToString(pszDst, iDstSizeMax, get_Start(), m_nSize);
+			return cMem::ConvertToString(pszDst, iDstSizeMax, get_Start(), m_nSize);
 		}
 
 		static COMPARE_t GRAYCALL Compare(const void* pData1, size_t iLen1, const void* pData2, size_t iLen2);
 	};
 
-	struct GRAYCORE_LINK CMemT : public CValT	// Value of some type in memory.
+	struct GRAYCORE_LINK cMemT : public cValT	// Value of some type in memory.
 	{
-		//! @struct Gray::CMemT
-		//! collection of templates to handle An arbitrary value type in memory. CValT in heap, const or stack.
+		//! @struct Gray::cMemT
+		//! collection of templates to handle An arbitrary value type in memory. cValT in heap, const or stack.
 		//! Deal with it as an array of bytes.
 
 		template <class TYPE>
@@ -510,7 +510,7 @@ namespace Gray
 			//! Like __GNUC__ __builtin_bswap16(), __builtin_bswap32, etc
 			//! Similar to: ntohl(), htonl(), ntohs(), htons().
 
-			CMem::CopyReverse(&nVal, &nVal, sizeof(nVal));
+			cMem::CopyReverse(&nVal, &nVal, sizeof(nVal));
 			return nVal;
 		}
 		template <typename TYPE>
@@ -631,14 +631,14 @@ namespace Gray
 	};
 
 	template <>
-	inline WORD CMemT::ReverseType(WORD nVal) // static
+	inline WORD cMemT::ReverseType(WORD nVal) // static
 	{
 		//! Reverse the bytes in an intrinsic 16 bit type WORD. e.g. 0x1234 = 0x3412
 		//! like ntohs(),htons(), MAKEWORD()
 		return (WORD)((nVal >> 8) | (nVal << 8));
 	}
 	template <>
-	inline UINT32 CMemT::ReverseType(UINT32 nVal) // static
+	inline UINT32 cMemT::ReverseType(UINT32 nVal) // static
 	{
 		//! Reverse the bytes in an intrinsic 32 bit type UINT32.
 		//! like ntohl(),htonl()
@@ -648,7 +648,7 @@ namespace Gray
 
 #ifdef USE_INT64
 	template <>
-	inline UINT64 CMemT::ReverseType(UINT64 nVal) // static
+	inline UINT64 cMemT::ReverseType(UINT64 nVal) // static
 	{
 		//! Reverse the bytes in an intrinsic 64 bit type UINT64.
 		nVal = (nVal >> 32) | (nVal << 32);
@@ -658,7 +658,7 @@ namespace Gray
 #endif
 #ifndef USE_LONG_AS_INT64
 	template <>
-	inline ULONG CMemT::ReverseType(ULONG nVal) // static
+	inline ULONG cMemT::ReverseType(ULONG nVal) // static
 	{
 		//! ULONG may be equiv to UINT32 or UINT64
 		// return ReverseType<UINT64>(nVal);
@@ -668,7 +668,7 @@ namespace Gray
 
 #if 0 // USE_LITTLE_ENDIAN
 	template <>
-	inline UINT32 CMemT::GetNtoH(const void* pData)
+	inline UINT32 cMemT::GetNtoH(const void* pData)
 	{
 		const BYTE* p = (const BYTE*)pData;
 		return ((UINT32)p[0] << 24)
@@ -677,7 +677,7 @@ namespace Gray
 			| ((UINT32)p[3]);
 	}
 	template <>
-	inline void CMemT::SetHtoN(void* pData, UINT32 nVal)
+	inline void cMemT::SetHtoN(void* pData, UINT32 nVal)
 	{
 		BYTE* p = (BYTE*)pData;
 		p[0] = (BYTE)(nVal >> 24);
@@ -687,7 +687,7 @@ namespace Gray
 	}
 
 	template <>
-	inline UINT64 CMemT::GetNtoH(const void* pData)
+	inline UINT64 cMemT::GetNtoH(const void* pData)
 	{
 		const BYTE* p = (const BYTE*)pData;
 		return ((UINT64)p[0] << 56)
@@ -700,7 +700,7 @@ namespace Gray
 			| ((UINT64)p[7]);
 	}
 	template <>
-	inline void CMemT::SetHtoN(void* pData, UINT64 nVal)
+	inline void cMemT::SetHtoN(void* pData, UINT64 nVal)
 	{
 		BYTE* p = (BYTE*)pData;
 		p[0] = (BYTE)(nVal >> 56);

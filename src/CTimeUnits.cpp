@@ -1,25 +1,25 @@
 //
-//! @file CTimeUnits.cpp
+//! @file cTimeUnits.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
 #include "pch.h"
-#include "CTimeUnits.h"
-#include "CTimeInt.h"
-#include "CTimeZone.h"
+#include "cTimeUnits.h"
+#include "cTimeInt.h"
+#include "cTimeZone.h"
 #include "StrChar.h"
 #include "StrT.h"
-#include "CBits.h"
+#include "cBits.h"
 #ifdef __linux__
-#include "CTimeVal.h"
+#include "cTimeVal.h"
 #endif
 
 namespace Gray
 {
 	// Stock date time string formats.
-	const GChar_t CTimeUnits::k_SepsAll[8] = _GT("/ :T.,-");		// All/Any separator that might occur in k_StrFormats.
+	const GChar_t cTimeUnits::k_SepsAll[8] = _GT("/ :T.,-");		// All/Any separator that might occur in k_StrFormats.
 
-	const GChar_t* CTimeUnits::k_StrFormats[TIME_FORMAT_QTY + 1] =
+	const GChar_t* cTimeUnits::k_StrFormats[TIME_FORMAT_QTY + 1] =
 	{
 		//! strftime() type string formats.
 		//! @todo USE k_TimeSeparator
@@ -39,7 +39,7 @@ namespace Gray
 		nullptr,
 	};
 
-	const CTimeUnit CTimeUnits::k_Units[TIMEUNIT_QTY] =
+	const CTimeUnit cTimeUnits::k_Units[TIMEUNIT_QTY] =
 	{	//								m_uSubRatio
 		{ _GT("year"),		_GT("Y"),	1, 3000,	12, 365 * 24 * 60 * 60, 365.25 },	// approximate, depends on leap year.
 		{ _GT("month"),		_GT("M"),	1, 12,		30, 30 * 24 * 60 * 60, 30.43 },	// approximate, depends on month
@@ -52,54 +52,54 @@ namespace Gray
 		{ _GT("TZ"),		_GT("TZ"),	-24 * 60, 24 * 60,	0, 0, 1.0 },	// TIMEUNIT_TZ
 	};
 
-	const BYTE CTimeUnits::k_MonthDays[2][TIMEMONTH_QTY] = // Jan=0
+	const BYTE cTimeUnits::k_MonthDays[2][TIMEMONTH_QTY] = // Jan=0
 	{
 		{ 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 },		// normal year
 		{ 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }		// leap year
 	};
 
-	const WORD CTimeUnits::k_MonthDaySums[2][TIMEMONTH_QTY + 1] = // Jan=0
+	const WORD cTimeUnits::k_MonthDaySums[2][TIMEMONTH_QTY + 1] = // Jan=0
 	{
 		{ 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365 }, // normal year
 		{ 0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335, 366 } // leap year
 	};
 
-	const GChar_t* const CTimeUnits::k_MonthName[TIMEMONTH_QTY + 1] = // Jan=0
+	const GChar_t* const cTimeUnits::k_MonthName[TIMEMONTH_QTY + 1] = // Jan=0
 	{
 		_GT("January"), _GT("February"), _GT("March"), _GT("April"), _GT("May"), _GT("June"),
 		_GT("July"), _GT("August"), _GT("September"), _GT("October"), _GT("November"), _GT("December"),
 		nullptr
 	};
 
-	const GChar_t* const CTimeUnits::k_MonthAbbrev[TIMEMONTH_QTY + 1] = // Jan=0
+	const GChar_t* const cTimeUnits::k_MonthAbbrev[TIMEMONTH_QTY + 1] = // Jan=0
 	{
 		_GT("Jan"), _GT("Feb"), _GT("Mar"), _GT("Apr"), _GT("May"), _GT("Jun"),
 		_GT("Jul"), _GT("Aug"), _GT("Sep"), _GT("Oct"), _GT("Nov"), _GT("Dec"),
 		nullptr,
 	};
 
-	const GChar_t* const CTimeUnits::k_DayName[TIMEDOW_QTY + 1] =	// Sun=0
+	const GChar_t* const cTimeUnits::k_DayName[TIMEDOW_QTY + 1] =	// Sun=0
 	{
 		_GT("Sunday"), _GT("Monday"), _GT("Tuesday"), _GT("Wednesday"),
 		_GT("Thursday"), _GT("Friday"), _GT("Saturday"),
 		nullptr
 	};
 
-	const GChar_t* const CTimeUnits::k_DayAbbrev[TIMEDOW_QTY + 1] =	// Sun=0
+	const GChar_t* const cTimeUnits::k_DayAbbrev[TIMEDOW_QTY + 1] =	// Sun=0
 	{
 		_GT("Sun"), _GT("Mon"), _GT("Tue"), _GT("Wed"), _GT("Thu"), _GT("Fri"), _GT("Sat"),
 		nullptr
 	};
 
-	const GChar_t CTimeUnits::k_Seps[3] = _GT("/:");	// Normal date string separators. "/:"
+	const GChar_t cTimeUnits::k_Seps[3] = _GT("/:");	// Normal date string separators. "/:"
 
-	GChar_t CTimeUnits::sm_DateSeparator = '/';		//!< might be . for Germans,
-	bool CTimeUnits::sm_time24Mode = false;
+	GChar_t cTimeUnits::sm_DateSeparator = '/';		//!< might be . for Germans,
+	bool cTimeUnits::sm_time24Mode = false;
 
 	//******************************************************************************************
 
 #ifdef _WIN32
-	CTimeUnits::CTimeUnits(const SYSTEMTIME& sysTime)
+	cTimeUnits::cTimeUnits(const SYSTEMTIME& sysTime)
 		: m_wYear(sysTime.wYear)
 		, m_wMonth(sysTime.wMonth) // 1 based.
 		, m_wDay(sysTime.wDay)
@@ -113,7 +113,7 @@ namespace Gray
 		ASSERT(isValidTimeUnits());
 	}
 
-	bool CTimeUnits::GetSys(SYSTEMTIME& sysTime) const
+	bool cTimeUnits::GetSys(SYSTEMTIME& sysTime) const
 	{
 		sysTime.wYear = m_wYear;
 		sysTime.wMonth = m_wMonth;		// 1 based.
@@ -125,7 +125,7 @@ namespace Gray
 		sysTime.wMilliseconds = m_wMillisecond;
 		return true;
 	}
-	void CTimeUnits::SetSys(const SYSTEMTIME& sysTime)
+	void cTimeUnits::SetSys(const SYSTEMTIME& sysTime)
 	{
 		m_wYear = sysTime.wYear;
 		m_wMonth = sysTime.wMonth; // 1 based.
@@ -139,24 +139,24 @@ namespace Gray
 	}
 #endif
 
-	void CTimeUnits::SetZeros()
+	void cTimeUnits::SetZeros()
 	{
-		CMem::Zero(&m_wYear, TIMEUNIT_QTY * sizeof(m_wYear));
+		cMem::Zero(&m_wYear, TIMEUNIT_QTY * sizeof(m_wYear));
 		m_wYear = 1; // m_uMin
 		m_wMonth = 1;
 		m_wDay = 1;
 	}
 
-	bool CTimeUnits::InitTimeNow(TZ_TYPE nTimeZoneOffset)
+	bool cTimeUnits::InitTimeNow(TZ_TYPE nTimeZoneOffset)
 	{
 		//! Get the current time, and adjust units for timezone. nDST ??
 		//! like _WIN32 GetLocalTime(st), GetSystemTime(st)
-		CTimeInt t;
+		cTimeInt t;
 		t.InitTimeNow();
 		return t.GetTimeUnits(*this, nTimeZoneOffset);
 	}
 
-	COMPARE_TYPE CTimeUnits::Compare(CTimeUnits& b) const
+	COMPARE_TYPE cTimeUnits::Compare(cTimeUnits& b) const
 	{
 		//! Compare relevant parts of 2 times.
 
@@ -177,14 +177,14 @@ namespace Gray
 		return COMPARE_Equal;
 	}
 
-	bool CTimeUnits::isTimeFuture() const
+	bool cTimeUnits::isTimeFuture() const
 	{
-		CTimeUnits tNow;
+		cTimeUnits tNow;
 		tNow.InitTimeNow((TZ_TYPE)m_nTZ);
 		return Compare(tNow) >= COMPARE_Greater;
 	}
 
-	bool CTimeUnits::IsValidUnit(TIMEUNIT_TYPE i) const
+	bool cTimeUnits::IsValidUnit(TIMEUNIT_TYPE i) const
 	{
 		TIMEUNIT_t iUnit = GetUnit(i);
 		if (iUnit < k_Units[i].m_uMin)
@@ -194,7 +194,7 @@ namespace Gray
 		return true;
 	}
 
-	bool CTimeUnits::isValidTimeUnits() const
+	bool cTimeUnits::isValidTimeUnits() const
 	{
 		//! Are the values in valid range ?
 		//! @note If we are just using this for time math values may go out of range ?
@@ -212,7 +212,7 @@ namespace Gray
 		return true;
 	}
 
-	bool CTimeUnits::isReasonableTimeUnits() const
+	bool cTimeUnits::isReasonableTimeUnits() const
 	{
 		//! Is this data reasonable for most purposes?
 		if (m_wYear < 1900)
@@ -222,7 +222,7 @@ namespace Gray
 		return isValidTimeUnits();
 	}
 
-	int GRAYCALL CTimeUnits::IsLeapYear(TIMEUNIT_t wYear)	// static
+	int GRAYCALL cTimeUnits::IsLeapYear(TIMEUNIT_t wYear)	// static
 	{
 		//! 0 or 1 NOT Boolean - for array access.
 		//! Every year divisible by 4 is a leap year.
@@ -240,7 +240,7 @@ namespace Gray
 		return 1;
 	}
 
-	int GRAYCALL CTimeUnits::GetLeapYearsSince2K(TIMEUNIT_t wYear) // static
+	int GRAYCALL cTimeUnits::GetLeapYearsSince2K(TIMEUNIT_t wYear) // static
 	{
 		//! calculate the number of leap days/years since Jan 1 of a year to Jan 1 2000.
 		//! (Jan 1 2000 = TIMEDOW_Sat) to Jan 1 wYear
@@ -254,7 +254,7 @@ namespace Gray
 		return iDays;
 	}
 
-	TIMEDOW_TYPE GRAYCALL CTimeUnits::GetDOW(TIMEUNIT_t wYear, TIMEUNIT_t wMonth, TIMEUNIT_t wDay) // static
+	TIMEDOW_TYPE GRAYCALL cTimeUnits::GetDOW(TIMEUNIT_t wYear, TIMEUNIT_t wMonth, TIMEUNIT_t wDay) // static
 	{
 		//! @return day of week for a particular date.  TIMEDOW_TYPE
 		//! wMonth = 1 based
@@ -273,7 +273,7 @@ namespace Gray
 		return (TIMEDOW_TYPE)iDays;
 	}
 
-	int GRAYCALL CTimeUnits::GetDOY(TIMEUNIT_t wYear, TIMEUNIT_t wMonth, TIMEUNIT_t wDay) // static
+	int GRAYCALL cTimeUnits::GetDOY(TIMEUNIT_t wYear, TIMEUNIT_t wMonth, TIMEUNIT_t wDay) // static
 	{
 		//! Day of the year. 0 to 365
 		//! wMonth = 1 based
@@ -282,7 +282,7 @@ namespace Gray
 		return k_MonthDaySums[IsLeapYear(wYear)][wMonth - 1] + wDay - 1;
 	}
 
-	bool CTimeUnits::isInDST() const
+	bool cTimeUnits::isInDST() const
 	{
 		//! Is this Date DST? Assuming local time zone honors DST.
 		//! http://www.worldtimezone.com/daylight.html
@@ -372,7 +372,7 @@ namespace Gray
 
 	//******************************************************************
 
-	void CTimeUnits::put_DosDate(UINT32 ulDosDate)
+	void cTimeUnits::put_DosDate(UINT32 ulDosDate)
 	{
 		//! unpack 32 bit DosDate format. for ZIP files and old FAT file system.
 		//! we could use DosDateTimeToFileTime and LocalFileTimeToFileTime for _WIN32
@@ -395,7 +395,7 @@ namespace Gray
 		this->m_wYear = (TIMEUNIT_t)(1980 + (wFatDate >> 9));	// up to 2043
 	}
 
-	UINT32 CTimeUnits::get_DosDate() const
+	UINT32 cTimeUnits::get_DosDate() const
 	{
 		//! get/pack a 32 bit DOS date format. for ZIP files. and old FAT file system.
 		//! ASSUME isValidTimeUnits().
@@ -408,7 +408,7 @@ namespace Gray
 			((this->m_wSecond / 2) + (32 * this->m_wMinute) + (2048 * (UINT32)this->m_wHour));
 	}
 
-	void CTimeUnits::AddMonths(int iMonths)
+	void cTimeUnits::AddMonths(int iMonths)
 	{
 		//! Add months to this structure. months are not exact time measures, but there are always 12 per year.
 		//! @arg iMonths = 0 based. Can be <0
@@ -417,7 +417,7 @@ namespace Gray
 		m_wYear = (TIMEUNIT_t)(m_wYear + (iMonths / 12));	// adjust years.
 	}
 
-	void CTimeUnits::AddDays(int iDays)
+	void cTimeUnits::AddDays(int iDays)
 	{
 		//! Add Days. Adjust for the fact that months and years are not all the same number of days.
 		//! @arg iDays can be negative.
@@ -475,7 +475,7 @@ namespace Gray
 		}
 	}
 
-	void CTimeUnits::AddSeconds(TIMESECD_t nSeconds)
+	void cTimeUnits::AddSeconds(TIMESECD_t nSeconds)
 	{
 		//! Add TimeUnits with seconds. handles very large values of seconds.
 		//! Used to adjust for TZ and DST.
@@ -515,13 +515,13 @@ namespace Gray
 		}
 	}
 
-	void CTimeUnits::AddTZ(TZ_TYPE nTimeZoneOffset)
+	void cTimeUnits::AddTZ(TZ_TYPE nTimeZoneOffset)
 	{
 		//! add TZ Offset in minutes.
 
 		if (nTimeZoneOffset == TZ_LOCAL)
 		{
-			nTimeZoneOffset = CTimeZoneMgr::GetLocalTimeZoneOffset();
+			nTimeZoneOffset = cTimeZoneMgr::GetLocalTimeZoneOffset();
 		}
 
 		m_nTZ = (TIMEUNIT_t)nTimeZoneOffset;
@@ -540,13 +540,13 @@ namespace Gray
 
 	//******************************************************************
 
-	StrLen_t CTimeUnits::GetTimeSpanStr(GChar_t* pszOut, StrLen_t iOutSizeMax, TIMEUNIT_TYPE eUnitHigh, int iUnitsDesired, bool bShortText) const
+	StrLen_t cTimeUnits::GetTimeSpanStr(GChar_t* pszOut, StrLen_t iOutSizeMax, TIMEUNIT_TYPE eUnitHigh, int iUnitsDesired, bool bShortText) const
 	{
 		//! A delta/span time string. from years to milliseconds.
 		//! Get a text description of amount of time span (delta)
 		//! @arg
 		//!  eUnitHigh = the highest unit, TIMEUNIT_Day, TIMEUNIT_Minute
-		//!  iUnitsDesired = the number of units up the CTimeUnits::k_Units ladder to go. default=2
+		//!  iUnitsDesired = the number of units up the cTimeUnits::k_Units ladder to go. default=2
 		//! @return
 		//!  length of string in chars
 
@@ -554,7 +554,7 @@ namespace Gray
 		{
 			iUnitsDesired = 1;	// must have at least 1.
 		}
-		if (IS_INDEX_BAD_ARRAY(eUnitHigh, CTimeUnits::k_Units))
+		if (IS_INDEX_BAD_ARRAY(eUnitHigh, cTimeUnits::k_Units))
 		{
 			eUnitHigh = TIMEUNIT_Day;	// days is highest unit by default. months is not accurate!
 		}
@@ -584,19 +584,19 @@ namespace Gray
 				iOutLen += StrT::sprintfN(pszOut + iOutLen, iOutSizeMax - iOutLen,
 					_GT("%u%s"),
 					(int)nUnits,
-					StrArg<GChar_t>(CTimeUnits::k_Units[i].m_pszUnitNameS));
+					StrArg<GChar_t>(cTimeUnits::k_Units[i].m_pszUnitNameS));
 			}
 			else if (nUnits == 1)
 			{
 				iOutLen += StrT::CopyLen(pszOut + iOutLen, _GT("1 "), iOutSizeMax - iOutLen);
-				iOutLen += StrT::CopyLen(pszOut + iOutLen, CTimeUnits::k_Units[i].m_pszUnitNameL, iOutSizeMax - iOutLen);
+				iOutLen += StrT::CopyLen(pszOut + iOutLen, cTimeUnits::k_Units[i].m_pszUnitNameL, iOutSizeMax - iOutLen);
 			}
 			else
 			{
 				iOutLen += StrT::sprintfN(pszOut + iOutLen, iOutSizeMax - iOutLen,
 					_GT("%u %ss"),
 					(int)nUnits,
-					CTimeUnits::k_Units[i].m_pszUnitNameL);
+					cTimeUnits::k_Units[i].m_pszUnitNameL);
 			}
 
 			if (++iUnitsPrinted >= iUnitsDesired)		// only print iUnitsDesired most significant units of time
@@ -613,13 +613,13 @@ namespace Gray
 		return iOutLen;
 	}
 
-	StrLen_t CTimeUnits::GetFormStr(GChar_t* pszOut, StrLen_t iOutSizeMax, const GChar_t* pszFormat) const
+	StrLen_t cTimeUnits::GetFormStr(GChar_t* pszOut, StrLen_t iOutSizeMax, const GChar_t* pszFormat) const
 	{
 		//! Get the time as a formatted string using "C" strftime()
-		//!  build formatted string from CTimeUnits.
+		//!  build formatted string from cTimeUnits.
 		//!  similar to C stdlib strftime() http://linux.die.net/man/3/strftime
 		//!  add TZ as postfix if desired??
-		//!  used by CTimeDouble::GetTimeFormStr and CTimeInt::GetTimeFormStr
+		//!  used by cTimeDouble::GetTimeFormStr and cTimeInt::GetTimeFormStr
 		//! @return
 		//!  length of string in chars. <= 0 = failed.
 
@@ -738,7 +738,7 @@ namespace Gray
 
 			case 'Z':	// Either the time-zone name or time zone abbreviation, depending on registry settings; no characters if time zone is unknown
 			{
-				const CTimeZone* pTZ = CTimeZoneMgr::FindTimeZone((TZ_TYPE)m_nTZ);
+				const cTimeZone* pTZ = cTimeZoneMgr::FindTimeZone((TZ_TYPE)m_nTZ);
 				if (pTZ != nullptr)
 				{
 					pszVal = pTZ->m_pszTimeZoneName;
@@ -752,7 +752,7 @@ namespace Gray
 
 			case 'z':
 			{
-				const CTimeZone* pTZ = CTimeZoneMgr::FindTimeZone((TZ_TYPE)m_nTZ);
+				const cTimeZone* pTZ = cTimeZoneMgr::FindTimeZone((TZ_TYPE)m_nTZ);
 				if (pTZ != nullptr)
 				{
 					pszVal = pTZ->m_pszTimeZoneName;
@@ -806,9 +806,9 @@ namespace Gray
 
 	//******************************************************************
 
-	HRESULT CTimeUnits::SetTimeStr(const GChar_t* pszDateTime, TZ_TYPE nTimeZoneOffset)
+	HRESULT cTimeUnits::SetTimeStr(const GChar_t* pszDateTime, TZ_TYPE nTimeZoneOffset)
 	{
-		//! set CTimeUnits from a string.
+		//! set cTimeUnits from a string.
 		//! @arg
 		//!  pszDateTime = "2008/10/23 12:0:0 PM GMT"
 		//!  rnTimeZoneOffset = if found a time zone indicator in the string. do not set if nothing found.
@@ -820,57 +820,57 @@ namespace Gray
 		//! toJSON method: "2012-04-23T18:25:43.511Z" is sortable.
 
 		SetZeros();
-		CTimeParser parser;
+		cTimeParser parser;
 		HRESULT hRes = parser.ParseString(pszDateTime, nullptr);
 		if (FAILED(hRes))
 			return hRes;
 		if (!parser.TestMatches())	// try all formats i know.
 			return MK_E_SYNTAX;
-		m_nTZ = (TIMEUNIT_t)nTimeZoneOffset;	// allowed to be overridden by CTimeParser.GetTimeUnits
+		m_nTZ = (TIMEUNIT_t)nTimeZoneOffset;	// allowed to be overridden by cTimeParser.GetTimeUnits
 		hRes = parser.GetTimeUnits(*this);
 		if (m_nTZ == TZ_LOCAL)
 		{
-			m_nTZ = (TIMEUNIT_t)CTimeZoneMgr::GetLocalTimeZoneOffset();
+			m_nTZ = (TIMEUNIT_t)cTimeZoneMgr::GetLocalTimeZoneOffset();
 		}
 		return hRes;
 	}
 
 	//******************************************************************************************
 
-	StrLen_t CTimeParser::ParseNamedUnit(const GChar_t* pszName)
+	StrLen_t cTimeParser::ParseNamedUnit(const GChar_t* pszName)
 	{
 		// Get values for named units. TIMEUNIT_Month, TIMEUNIT_TZ or TIMEUNIT_QTY (for DOW)
-		ITERATE_t iStart = STR_TABLEFIND_NH(pszName, CTimeUnits::k_MonthName);
+		ITERATE_t iStart = STR_TABLEFIND_NH(pszName, cTimeUnits::k_MonthName);
 		if (iStart >= 0)
 		{
 			m_Unit[m_iUnitsParsed].m_Type = TIMEUNIT_Month;
 			m_Unit[m_iUnitsParsed].m_nValue = (TIMEUNIT_t)(iStart + 1);
-			return StrT::Len(CTimeUnits::k_MonthName[iStart]);
+			return StrT::Len(cTimeUnits::k_MonthName[iStart]);
 		}
-		iStart = STR_TABLEFIND_NH(pszName, CTimeUnits::k_MonthAbbrev);
+		iStart = STR_TABLEFIND_NH(pszName, cTimeUnits::k_MonthAbbrev);
 		if (iStart >= 0)
 		{
 			m_Unit[m_iUnitsParsed].m_Type = TIMEUNIT_Month;
 			m_Unit[m_iUnitsParsed].m_nValue = (TIMEUNIT_t)(iStart + 1);
-			return StrT::Len(CTimeUnits::k_MonthAbbrev[iStart]);
+			return StrT::Len(cTimeUnits::k_MonthAbbrev[iStart]);
 		}
 
-		iStart = STR_TABLEFIND_NH(pszName, CTimeUnits::k_DayName);
+		iStart = STR_TABLEFIND_NH(pszName, cTimeUnits::k_DayName);
 		if (iStart >= 0)
 		{
 			m_Unit[m_iUnitsParsed].m_Type = TIMEUNIT_DOW;	// Temporary for DOW
 			m_Unit[m_iUnitsParsed].m_nValue = (TIMEUNIT_t)iStart;
-			return StrT::Len(CTimeUnits::k_DayName[iStart]);
+			return StrT::Len(cTimeUnits::k_DayName[iStart]);
 		}
-		iStart = STR_TABLEFIND_NH(pszName, CTimeUnits::k_DayAbbrev);
+		iStart = STR_TABLEFIND_NH(pszName, cTimeUnits::k_DayAbbrev);
 		if (iStart >= 0)
 		{
 			m_Unit[m_iUnitsParsed].m_Type = TIMEUNIT_DOW;	// Temporary for DOW
 			m_Unit[m_iUnitsParsed].m_nValue = (TIMEUNIT_t)iStart;
-			return StrT::Len(CTimeUnits::k_DayAbbrev[iStart]);
+			return StrT::Len(cTimeUnits::k_DayAbbrev[iStart]);
 		}
 
-		const CTimeZone* pTZ = CTimeZoneMgr::FindTimeZoneHead(pszName);
+		const cTimeZone* pTZ = cTimeZoneMgr::FindTimeZoneHead(pszName);
 		if (pTZ != nullptr)
 		{
 			m_Unit[m_iUnitsParsed].m_Type = TIMEUNIT_TZ;
@@ -897,7 +897,7 @@ namespace Gray
 		return 0;
 	}
 
-	HRESULT CTimeParser::ParseString(const GChar_t* pszTimeString, const GChar_t* pszSeparators)
+	HRESULT cTimeParser::ParseString(const GChar_t* pszTimeString, const GChar_t* pszSeparators)
 	{
 		//! parse the pszTimeString to look for things that look like a date time.
 		//! parse 3 types of things: Separators, numbers and unit names (e.g. Sunday).
@@ -912,7 +912,7 @@ namespace Gray
 		m_iUnitsParsed = 0;
 
 		if (pszSeparators == nullptr)
-			pszSeparators = CTimeUnits::k_SepsAll;
+			pszSeparators = cTimeUnits::k_SepsAll;
 
 		int i = 0;
 		for (;;)
@@ -953,7 +953,7 @@ namespace Gray
 					//! @todo parse odd time zone storage .  (-03:00)
 
 					// Check for terminating TZ with no separator.
-					const CTimeZone* pTZ = CTimeZoneMgr::FindTimeZoneHead(pszTimeString + i);
+					const cTimeZone* pTZ = cTimeZoneMgr::FindTimeZoneHead(pszTimeString + i);
 					if (pTZ != nullptr)
 					{
 						// Insert fake separator.
@@ -1057,7 +1057,7 @@ namespace Gray
 		return m_iUnitsParsed;
 	}
 
-	TIMEUNIT_TYPE GRAYCALL CTimeParser::GetTypeFromFormatCode(GChar_t ch)	// static
+	TIMEUNIT_TYPE GRAYCALL cTimeParser::GetTypeFromFormatCode(GChar_t ch)	// static
 	{
 		switch (ch)
 		{
@@ -1096,7 +1096,7 @@ namespace Gray
 		return TIMEUNIT_UNUSED;	// bad
 	}
 
-	int CTimeParser::FindType(TIMEUNIT_TYPE t) const
+	int cTimeParser::FindType(TIMEUNIT_TYPE t) const
 	{
 		// is this TIMEUNIT_TYPE already used ?
 		for (int i = 0; i < m_iUnitsParsed; i++)
@@ -1107,7 +1107,7 @@ namespace Gray
 		return -1;	// TIMEUNIT_TYPE not used.
 	}
 
-	void CTimeParser::SetUnitFormats(const GChar_t* pszFormat)
+	void cTimeParser::SetUnitFormats(const GChar_t* pszFormat)
 	{
 		//! Similar to ParseString but assumes we just want to set units from a format string.
 		m_iUnitsParsed = 0;
@@ -1135,17 +1135,17 @@ namespace Gray
 		}
 	}
 
-	bool GRAYCALL CTimeParser::TestMatchUnit(const CTimeParserUnit& u, TIMEUNIT_TYPE t) // static
+	bool GRAYCALL cTimeParser::TestMatchUnit(const cTimeParserUnit& u, TIMEUNIT_TYPE t) // static
 	{
-		// is the value and type in CTimeParserUnit compatible with type t;
+		// is the value and type in cTimeParserUnit compatible with type t;
 		ASSERT(IS_INDEX_GOOD(u.m_Type, TIMEUNIT_QTY2));
 		ASSERT(IS_INDEX_GOOD(t, TIMEUNIT_Numeric));
 
-		if (IS_INDEX_GOOD_ARRAY(t, CTimeUnits::k_Units))
+		if (IS_INDEX_GOOD_ARRAY(t, cTimeUnits::k_Units))
 		{
-			if (u.m_nValue < CTimeUnits::k_Units[t].m_uMin)
+			if (u.m_nValue < cTimeUnits::k_Units[t].m_uMin)
 				return false;
-			if (u.m_nValue > CTimeUnits::k_Units[t].m_uMax)
+			if (u.m_nValue > cTimeUnits::k_Units[t].m_uMax)
 				return false;
 		}
 		if (t == u.m_Type)	// exact match is good.
@@ -1156,7 +1156,7 @@ namespace Gray
 		return false;	// not a match.
 	}
 
-	bool CTimeParser::TestMatchFormat(const CTimeParser& parserFormat, bool bTrimJunk)
+	bool cTimeParser::TestMatchFormat(const cTimeParser& parserFormat, bool bTrimJunk)
 	{
 		//! Does parserFormat fit with data in m_Units ?
 		//! Does this contain compatible units with parserFormat? if so fix m_Unit types!
@@ -1214,26 +1214,26 @@ namespace Gray
 		return true;	// its compatible!
 	}
 
-	bool CTimeParser::TestMatch(const GChar_t* pszFormat)
+	bool cTimeParser::TestMatch(const GChar_t* pszFormat)
 	{
 		//! Does pszFormat fit with data in m_Units ?
 		if (pszFormat == nullptr)
 			return false;
 		if (m_iUnitsParsed <= 1)
 			return false;
-		CTimeParser t1;
+		cTimeParser t1;
 		t1.SetUnitFormats(pszFormat);
 		return TestMatchFormat(t1);
 	}
 
-	bool CTimeParser::TestMatches(const GChar_t** ppStrFormats)
+	bool cTimeParser::TestMatches(const GChar_t** ppStrFormats)
 	{
 		//! Try standard k_StrFormats to match.
 		if (m_iUnitsParsed <= 1)
 			return false;
 		if (ppStrFormats == nullptr)
 		{
-			ppStrFormats = CTimeUnits::k_StrFormats;
+			ppStrFormats = cTimeUnits::k_StrFormats;
 		}
 		for (int i = 0; ppStrFormats[i] != nullptr; i++)
 		{
@@ -1245,9 +1245,9 @@ namespace Gray
 		return false;
 	}
 
-	HRESULT CTimeParser::GetTimeUnits(OUT CTimeUnits& tu) const
+	HRESULT cTimeParser::GetTimeUnits(OUT cTimeUnits& tu) const
 	{
-		//! Make a valid CTimeUnits class from what we already parsed. If i can.
+		//! Make a valid cTimeUnits class from what we already parsed. If i can.
 		if (!isMatched())
 			return MK_E_SYNTAX;
 		for (int i = 0; i < m_iUnitsMatched; i++)	// <TIMEUNIT_QTY2
@@ -1265,60 +1265,60 @@ namespace Gray
 //******************************************************************
 
 #if USE_UNITTESTS
-#include "CUnitTest.h"
-#include "CLogMgr.h"
+#include "cUnitTest.h"
+#include "cLogMgr.h"
 
 namespace Gray
 {
-	struct CUnitTestTime
+	struct cUnitTestTime
 	{
-		CTimeUnits m_tu;	// a test date.
+		cTimeUnits m_tu;	// a test date.
 		// expected results of tests.
 		TIMEDOW_TYPE m_eDOW;
 		bool m_bInDST;			// is this in DST ?
 		int m_iLeapDays;		// how many leap days should we use ?
 
-		static const CUnitTestTime k_Tests[];
+		static const cUnitTestTime k_Tests[];
 	};
 };
-const CUnitTestTime CUnitTestTime::k_Tests[] = // static
+const cUnitTestTime cUnitTestTime::k_Tests[] = // static
 {
 	// a sampling of test dates.
-	{ CTimeUnits(1970, 1, 1), TIMEDOW_Thu, false, -7 },	// start of CTimeInt
-	{ CTimeUnits(1980, 12, 1), TIMEDOW_Mon, false, -5 },
-	{ CTimeUnits(2000, 1, 1), TIMEDOW_Sat, false, 0 },
+	{ cTimeUnits(1970, 1, 1), TIMEDOW_Thu, false, -7 },	// start of cTimeInt
+	{ cTimeUnits(1980, 12, 1), TIMEDOW_Mon, false, -5 },
+	{ cTimeUnits(2000, 1, 1), TIMEDOW_Sat, false, 0 },
 
-	{ CTimeUnits(2000, 1, 15), TIMEDOW_Sat, false, 0 },
-	{ CTimeUnits(2001, 1, 15), TIMEDOW_Mon, false, 1 },
-	{ CTimeUnits(2000, 2, 15), TIMEDOW_Tue, false, 0 },
-	{ CTimeUnits(2007, 9, 15), TIMEDOW_Sat, true, 2 },
+	{ cTimeUnits(2000, 1, 15), TIMEDOW_Sat, false, 0 },
+	{ cTimeUnits(2001, 1, 15), TIMEDOW_Mon, false, 1 },
+	{ cTimeUnits(2000, 2, 15), TIMEDOW_Tue, false, 0 },
+	{ cTimeUnits(2007, 9, 15), TIMEDOW_Sat, true, 2 },
 
-	{ CTimeUnits(1999, 1, 15), TIMEDOW_Fri, false, 0 },	// 6
-	{ CTimeUnits(2006, 3, 15), TIMEDOW_Wed, false, 2 },
-	{ CTimeUnits(2010, 4, 15), TIMEDOW_Thu, true, 3 },
-	{ CTimeUnits(2020, 5, 15), TIMEDOW_Fri, true, 5 },
+	{ cTimeUnits(1999, 1, 15), TIMEDOW_Fri, false, 0 },	// 6
+	{ cTimeUnits(2006, 3, 15), TIMEDOW_Wed, false, 2 },
+	{ cTimeUnits(2010, 4, 15), TIMEDOW_Thu, true, 3 },
+	{ cTimeUnits(2020, 5, 15), TIMEDOW_Fri, true, 5 },
 
-	{ CTimeUnits(1999, 4, 3, 4, 1), TIMEDOW_Sat, false, 0 }, // 10
-	{ CTimeUnits(1999, 4, 29, 4, 1), TIMEDOW_Thu, true, 0 },
-	{ CTimeUnits(1999, 10, 3, 4, 1), TIMEDOW_Sun, true, 0 },
-	{ CTimeUnits(1999, 10, 31, 4, 1), TIMEDOW_Sun, false, 0 },
+	{ cTimeUnits(1999, 4, 3, 4, 1), TIMEDOW_Sat, false, 0 }, // 10
+	{ cTimeUnits(1999, 4, 29, 4, 1), TIMEDOW_Thu, true, 0 },
+	{ cTimeUnits(1999, 10, 3, 4, 1), TIMEDOW_Sun, true, 0 },
+	{ cTimeUnits(1999, 10, 31, 4, 1), TIMEDOW_Sun, false, 0 },
 
-	{ CTimeUnits(2007, 3, 7, 4, 1), TIMEDOW_Wed, false, 2 }, // 14
-	{ CTimeUnits(2007, 3, 15, 4, 1), TIMEDOW_Thu, true, 2 },
-	{ CTimeUnits(2007, 11, 1, 0, 1), TIMEDOW_Thu, true, 2 },
-	{ CTimeUnits(2007, 11, 8, 4, 1), TIMEDOW_Thu, false, 2 },
+	{ cTimeUnits(2007, 3, 7, 4, 1), TIMEDOW_Wed, false, 2 }, // 14
+	{ cTimeUnits(2007, 3, 15, 4, 1), TIMEDOW_Thu, true, 2 },
+	{ cTimeUnits(2007, 11, 1, 0, 1), TIMEDOW_Thu, true, 2 },
+	{ cTimeUnits(2007, 11, 8, 4, 1), TIMEDOW_Thu, false, 2 },
 };
 
-UNITTEST_CLASS(CTimeUnits)
+UNITTEST_CLASS(cTimeUnits)
 {
-	UNITTEST_METHOD(CTimeUnits)
+	UNITTEST_METHOD(cTimeUnits)
 	{
-		UNITTEST_TRUE(CTimeUnits::k_Units[TIMEUNIT_Day].m_nUnitSeconds == (24 * 60 * 60));
-		UNITTEST_TRUE(CTimeUnits::k_Units[TIMEUNIT_Hour].m_nUnitSeconds == (60 * 60));
-		UNITTEST_TRUE(CTimeUnits::k_Units[TIMEUNIT_Minute].m_nUnitSeconds == (60));
-		UNITTEST_TRUE(CTimeUnits::k_Units[TIMEUNIT_Second].m_nUnitSeconds == 1);
+		UNITTEST_TRUE(cTimeUnits::k_Units[TIMEUNIT_Day].m_nUnitSeconds == (24 * 60 * 60));
+		UNITTEST_TRUE(cTimeUnits::k_Units[TIMEUNIT_Hour].m_nUnitSeconds == (60 * 60));
+		UNITTEST_TRUE(cTimeUnits::k_Units[TIMEUNIT_Minute].m_nUnitSeconds == (60));
+		UNITTEST_TRUE(cTimeUnits::k_Units[TIMEUNIT_Second].m_nUnitSeconds == 1);
 
-		TZ_TYPE nTimeZoneOffset = CTimeZoneMgr::GetLocalTimeZoneOffset();
+		TZ_TYPE nTimeZoneOffset = cTimeZoneMgr::GetLocalTimeZoneOffset();
 		int iTimeZoneHours = nTimeZoneOffset / 60; // EST = -5 hours.
 		UNITTEST_TRUE(iTimeZoneHours < 24);
 
@@ -1330,32 +1330,32 @@ UNITTEST_CLASS(CTimeUnits)
 		_get_tzname(&nTZSize, szTZName, STRMAX(szTZName), 0);
 #endif
 
-		for (size_t i = 0; i < _countof(CUnitTestTime::k_Tests); i++)
+		for (size_t i = 0; i < _countof(cUnitTestTime::k_Tests); i++)
 		{
-			const CUnitTestTime& t = CUnitTestTime::k_Tests[i];
-			const CTimeUnits& Tu = t.m_tu;
-			TIMEDOW_TYPE eDOW = CTimeUnits::GetDOW(Tu.m_wYear, Tu.m_wMonth, Tu.m_wDay);
+			const cUnitTestTime& t = cUnitTestTime::k_Tests[i];
+			const cTimeUnits& Tu = t.m_tu;
+			TIMEDOW_TYPE eDOW = cTimeUnits::GetDOW(Tu.m_wYear, Tu.m_wMonth, Tu.m_wDay);
 			UNITTEST_TRUE(eDOW == t.m_eDOW);
 			bool bInDST = t.m_tu.isInDST();
 			UNITTEST_TRUE(bInDST == t.m_bInDST);
 
 			UINT32 dwDosDate1 = t.m_tu.get_DosDate();
-			CTimeUnits Tu2;
+			cTimeUnits Tu2;
 			Tu2.put_DosDate(dwDosDate1);
 			UNITTEST_TRUE(Tu2.get_DosDate() == dwDosDate1);	// reciprocal
 
-			int iLeapDays = CTimeUnits::GetLeapYearsSince2K(Tu.m_wYear);
+			int iLeapDays = cTimeUnits::GetLeapYearsSince2K(Tu.m_wYear);
 			UNITTEST_TRUE(iLeapDays == t.m_iLeapDays);
 		}
 
 		//**********************
 		// Time spans
 
-		CTimeUnits Tu2;
+		cTimeUnits Tu2;
 		UNITTEST_TRUE(Tu2.isValidMonth());
 		UNITTEST_TRUE(Tu2.isValidTimeUnits());
 
-		Tu2.AddSeconds((2 * CTimeUnits::k_nSecondsPerDay) + (1 * 60 * 60) + 5);	// "2 days 1 hour 5 seconds"
+		Tu2.AddSeconds((2 * cTimeUnits::k_nSecondsPerDay) + (1 * 60 * 60) + 5);	// "2 days 1 hour 5 seconds"
 
 		GChar_t szTmp[256];
 		StrLen_t iLen = Tu2.GetTimeSpanStr(szTmp, STRMAX(szTmp), TIMEUNIT_Day, 2);
@@ -1365,22 +1365,22 @@ UNITTEST_CLASS(CTimeUnits)
 		iLen = Tu2.GetTimeSpanStr(szTmp, STRMAX(szTmp), TIMEUNIT_Day, 3);
 		UNITTEST_TRUE(iLen == 23);	// "2 days 1 hour 5 seconds"
 
-		Tu2 = CTimeUnits(2015, 1, 1, 12, 30, 55); // need start time for month lengths.
-		Tu2.AddSeconds((52 * CTimeUnits::k_nSecondsPerDay) + (1 * 60 * 60) + 5);	// "52 days 1 hour 5 seconds"
+		Tu2 = cTimeUnits(2015, 1, 1, 12, 30, 55); // need start time for month lengths.
+		Tu2.AddSeconds((52 * cTimeUnits::k_nSecondsPerDay) + (1 * 60 * 60) + 5);	// "52 days 1 hour 5 seconds"
 		iLen = Tu2.GetFormStr(szTmp, STRMAX(szTmp), TIME_FORMAT_TZ);
 		UNITTEST_TRUE(iLen == 21);	//
 		UNITTEST_TRUE(StrT::Cmp<GChar_t>(szTmp, _GT("2015-02-22 13:31:00 Z")) == 0);
 
 		//**********************
 
-		CTimeParser p1(_GT("2015/01/02T14:03:03EST"), nullptr);
+		cTimeParser p1(_GT("2015/01/02T14:03:03EST"), nullptr);
 		HRESULT hRes = p1.GetTimeUnits(Tu2);
 		UNITTEST_TRUE(hRes == 22);
 		iLen = Tu2.GetFormStr(szTmp, STRMAX(szTmp), TIME_FORMAT_ISO_TZ);
 		UNITTEST_TRUE(iLen == 22);	//
 		UNITTEST_TRUE(StrT::Cmp<GChar_t>(szTmp, _GT("2015/01/02T14:03:03EST")) == 0);
 
-		CTimeParser p2(_GT("2015/01/02 11:03:03.001 PM EST"), nullptr);
+		cTimeParser p2(_GT("2015/01/02 11:03:03.001 PM EST"), nullptr);
 		hRes = p2.GetTimeUnits(Tu2);
 		UNITTEST_TRUE(hRes == 30);
 		iLen = Tu2.GetFormStr(szTmp, STRMAX(szTmp), TIME_FORMAT_ISO_TZ);
@@ -1388,7 +1388,7 @@ UNITTEST_CLASS(CTimeUnits)
 		UNITTEST_TRUE(StrT::Cmp<GChar_t>(szTmp, _GT("2015/01/02T23:03:03EST")) == 0);
 
 		//@todo parse odd time zone storage .  (-03:00)
-		// CTimeParser p3("2008-04-10T06:30:00.0000000-07:00", nullptr);
+		// cTimeParser p3("2008-04-10T06:30:00.0000000-07:00", nullptr);
 		// hRes = p3.GetTimeUnits(Tu2);
 		// UNITTEST_TRUE(hRes == 30);
 
@@ -1425,5 +1425,5 @@ UNITTEST_CLASS(CTimeUnits)
 		// "April 2008"
 	}
 };
-UNITTEST_REGISTER(CTimeUnits, UNITTEST_LEVEL_Core);
+UNITTEST_REGISTER(cTimeUnits, UNITTEST_LEVEL_Core);
 #endif	// USE_UNITTESTS

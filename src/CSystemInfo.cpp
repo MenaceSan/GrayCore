@@ -1,15 +1,15 @@
 //
-//! @file CSystemInfo.cpp
+//! @file cSystemInfo.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
 #include "pch.h"
-#include "CSystemInfo.h"   // class implemented
-#include "CAppState.h"
+#include "cSystemInfo.h"   // class implemented
+#include "cAppState.h"
 #include "StrT.h"
 #include "StrConst.h"
 #include "StrArg.h"
-#include "COSModule.h"
+#include "cOSModule.h"
 
 #ifdef __linux__
 #include <sys/utsname.h>
@@ -30,18 +30,18 @@
 
 namespace Gray
 {
-	CSystemInfo::CSystemInfo()
-		: CSingleton<CSystemInfo>(this, typeid(CSystemInfo))
+	cSystemInfo::cSystemInfo()
+		: cSingleton<cSystemInfo>(this, typeid(cSystemInfo))
 	{
 #ifdef _WIN32
 		// Windows 10 nerfs GetVersionEx(). must call RtlGetVersion(). M$ A*holes.
 		// http://www.codeproject.com/Articles/678606/Part-Overcoming-Windows-s-deprecation-of-GetVe?msg=5080848#xx5080848xx
 		// GetVersionEx was declared deprecated ?? M$ is crazy. recommended alternatives don't really do what we want.
 
-		CMem::Zero(&m_OsInfo, sizeof(m_OsInfo));
+		cMem::Zero(&m_OsInfo, sizeof(m_OsInfo));
 		m_OsInfo.dwOSVersionInfoSize = sizeof(m_OsInfo);
 
-		COSModule modNT;
+		cOSModule modNT;
 		if (modNT.AttachModuleName(_FN("ntdll.dll")))
 		{
 			typedef LONG(WINAPI* tRtlGetVersion)(OSVERSIONINFOEXW*);
@@ -72,7 +72,7 @@ namespace Gray
 		if (iRet < 0)
 		{
 			// invalid !
-			CMem::Zero(&m_utsname, sizeof(m_utsname));
+			cMem::Zero(&m_utsname, sizeof(m_utsname));
 		}
 
 		// m_utsname.release = "4.4.3-201.fc22.x86_64"
@@ -107,11 +107,11 @@ namespace Gray
 #endif
 	}
 
-	CSystemInfo::~CSystemInfo()
+	cSystemInfo::~cSystemInfo()
 	{
 	}
 
-	UINT CSystemInfo::get_NumberOfProcessors() const
+	UINT cSystemInfo::get_NumberOfProcessors() const
 	{
 		//! Is SMP an issue? Do i need to worry about multiple processors ?
 		//! Creating more worker threads than CPU's might not help you if its a CPU heavy task.
@@ -122,7 +122,7 @@ namespace Gray
 #endif
 	}
 
-	bool CSystemInfo::isOS64Bit() const
+	bool cSystemInfo::isOS64Bit() const
 	{
 		//! can both the OS and CPU handle 64 bit apps.
 #ifdef USE_64BIT
@@ -132,7 +132,7 @@ namespace Gray
 #endif
 	}
 
-	cString CSystemInfo::get_OSName() const
+	cString cSystemInfo::get_OSName() const
 	{
 		//! More detailed info about the actual OS we are running on.
 		//! like GRAY_BUILD_NAME but dynamic.
@@ -256,7 +256,7 @@ namespace Gray
 		return sTmp;
 	}
 
-	UINT CSystemInfo::get_OSVer() const
+	UINT cSystemInfo::get_OSVer() const
 	{
 		//! from http://msdn.microsoft.com/en-us/library/ms724429(VS.85).aspx
 		//! @return
@@ -277,7 +277,7 @@ namespace Gray
 	}
 
 #ifdef _WIN32
-	bool CSystemInfo::isOSNTAble() const
+	bool cSystemInfo::isOSNTAble() const
 	{
 		//! Does this OS support NT services ? _WIN32 only of course.
 		if (m_OsInfo.dwPlatformId < VER_PLATFORM_WIN32_NT)
@@ -285,7 +285,7 @@ namespace Gray
 		return(this->get_OSVer() >= 0x400);
 	}
 
-	bool CSystemInfo::isOSXPAble() const
+	bool cSystemInfo::isOSXPAble() const
 	{
 		//! Does this OS have XP Dll's. _WIN32 only of course.
 		if (m_OsInfo.dwPlatformId < VER_PLATFORM_WIN32_NT)
@@ -295,14 +295,14 @@ namespace Gray
 #endif
 
 #ifdef __linux__
-	bool CSystemInfo::isVer3_17_plus() const
+	bool cSystemInfo::isVer3_17_plus() const
 	{
 		//! is version at least 3.17.0 or greater.
 		return(this->get_OSVer() >= 0x0311);
 	}
 #endif
 
-	CStringF CSystemInfo::get_SystemName()
+	cStringF cSystemInfo::get_SystemName()
 	{
 		//! Get this computers station name.
 		//! UNDER_CE -> "HKLM\Ident\Name"
@@ -331,7 +331,7 @@ namespace Gray
 		return m_sSystemName;
 	}
 
-	StrLen_t GRAYCALL CSystemInfo::GetSystemDir(FILECHAR_t* pszDir, StrLen_t iLenMax) // static
+	StrLen_t GRAYCALL cSystemInfo::GetSystemDir(FILECHAR_t* pszDir, StrLen_t iLenMax) // static
 	{
 		//! Where does the OS keep its files. CSIDL_SYSTEM
 		//! HRESULT hRes = _FNF(::SHGetFolderPath)( g_MainFrame.GetSafeHwnd(), CSIDL_SYSTEM, nullptr, 0, szPath );
@@ -350,7 +350,7 @@ namespace Gray
 #endif
 	}
 
-	CStringF GRAYCALL CSystemInfo::get_SystemDir() // static
+	cStringF GRAYCALL cSystemInfo::get_SystemDir() // static
 	{
 		//! Where does the OS keep its files. CSIDL_SYSTEM
 		//! GetSystemDirectory() == "C:\Windows\System32" or "C:\Windows\SysWOW64" for 32 bit app on 64 bit OS.
@@ -359,7 +359,7 @@ namespace Gray
 		return szTmp;
 	}
 
-	bool GRAYCALL CSystemInfo::SystemShutdown(bool bReboot) // static
+	bool GRAYCALL cSystemInfo::SystemShutdown(bool bReboot) // static
 	{
 		//! Shut down or reboot the whole system. not just log off the user or close the app.
 
@@ -369,14 +369,14 @@ namespace Gray
 #ifdef _MSC_VER
 		return _GTN(::InitiateSystemShutdownEx)(nullptr,	// lpMachineName
 			_GT("App requested shutdown"),
-			CTimeSys::k_INF,	// timeout
+			cTimeSys::k_INF,	// timeout
 			true,	// __in bool bForceAppsClosed
 			bReboot,	// bRebootAfterShutdown
 			SHTDN_REASON_FLAG_PLANNED);
 #else
 		return _GTN(::InitiateSystemShutdown)(nullptr,	// lpMachineName
 			(LPSTR)_GT("App requested shutdown"),
-			CTimeSys::k_INF,	// timeout
+			cTimeSys::k_INF,	// timeout
 			true,	// __in bool bForceAppsClosed
 			bReboot);
 #endif
@@ -391,7 +391,7 @@ namespace Gray
 #endif
 	}
 
-	void GRAYCALL CSystemInfo::SystemBeep() // static
+	void GRAYCALL cSystemInfo::SystemBeep() // static
 	{
 		// like _WIN32 MessageBeep(), not Beep() (which can get redirected if RDP)
 #if defined(UNDER_CE)
@@ -415,7 +415,7 @@ namespace Gray
 
 		bool bReturn = ::DefineDosDeviceA(DDD_RAW_TARGET_PATH, "DosBeep", "\\Device\\Beep");	// _FNF ?
 
-		COSHandle hBeep(::CreateFileW(__TOW(FILEDEVICE_PREFIX) __TOW("DosBeep"), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
+		cOSHandle hBeep(::CreateFileW(__TOW(FILEDEVICE_PREFIX) __TOW("DosBeep"), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
 			OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, INVALID_HANDLE_VALUE));
 		if (!hBeep.isValidHandle())
 		{
@@ -441,7 +441,7 @@ namespace Gray
 		const int k_nFrequency = 2000; // freq in hz
 		const int k_nDuration = 1000; // len in ms =  TIMESYS_t
 
-		COSHandle hBeep;
+		cOSHandle hBeep;
 		hBeep.OpenHandle("/dev/console", O_WRONLY);
 		hBeep.IOCtl(KIOCSOUND, (int)(1193180 / k_nFrequency));
 		::usleep(1000 * k_nDuration);
@@ -455,16 +455,16 @@ namespace Gray
 //******************************************************************
 
 #if USE_UNITTESTS
-#include "CUnitTest.h"
-#include "CLogMgr.h"
+#include "cUnitTest.h"
+#include "cLogMgr.h"
 
-UNITTEST_CLASS(CSystemInfo)
+UNITTEST_CLASS(cSystemInfo)
 {
-	UNITTEST_METHOD(CSystemInfo)
+	UNITTEST_METHOD(cSystemInfo)
 	{
-		CSystemInfo& i = CSystemInfo::I();
+		cSystemInfo& i = cSystemInfo::I();
 
-		CStringF sSysName = i.get_SystemName();
+		cStringF sSysName = i.get_SystemName();
 		UNITTEST_TRUE(!sSysName.IsEmpty());
 
 		cString sOsName = i.get_OSName();
@@ -477,8 +477,8 @@ UNITTEST_CLASS(CSystemInfo)
 #ifdef __linux__
 		UNITTEST_TRUE(uOSVer > 0);	// For __linux__.
 #endif
-		CSystemInfo::SystemBeep();
+		cSystemInfo::SystemBeep();
 	}
 };
-UNITTEST_REGISTER(CSystemInfo, UNITTEST_LEVEL_Core);
+UNITTEST_REGISTER(cSystemInfo, UNITTEST_LEVEL_Core);
 #endif

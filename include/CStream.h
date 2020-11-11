@@ -1,20 +1,20 @@
 //
-//! @file CStream.h
+//! @file cStream.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CStream_H
-#define _INC_CStream_H
+#ifndef _INC_cStream_H
+#define _INC_cStream_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
 #include "StrT.h"
-#include "CStreamProgress.h"
-#include "CTimeSys.h"
-#include "CMem.h"
-#include "CUnitTestDecl.h"
-#include "CHeap.h"
+#include "cStreamProgress.h"
+#include "cTimeSys.h"
+#include "cMem.h"
+#include "cUnitTestDecl.h"
+#include "cHeap.h"
 #include "HResult.h"
 
 UNITTEST_PREDEF(CStream)
@@ -27,21 +27,21 @@ namespace Gray
 #define FILE_EOL	STR_NL		//!< __linux__ format new line. (10)
 #endif
 
-	class CStreamInput;
+	class cStreamInput;
 
-	class GRAYCORE_LINK CStreamStat
+	class GRAYCORE_LINK cStreamStat
 	{
-		//! @class Gray::CStreamStat
+		//! @class Gray::cStreamStat
 		//! track how much data is read or written and when.
 
 	public:
 		STREAM_POS_t m_nCount;		//!< Keep arbitrary stats on how much i move (bytes).
-		CTimeSys m_tLast;		//!< When did i last move data?
+		cTimeSys m_tLast;		//!< When did i last move data?
 
 	public:
-		CStreamStat()
+		cStreamStat() noexcept
 			: m_nCount(0)
-			, m_tLast(CTimeSys::k_CLEAR)
+			, m_tLast(cTimeSys::k_CLEAR)
 		{
 		}
 		void ResetStat()
@@ -54,7 +54,7 @@ namespace Gray
 			m_nCount += n;
 			m_tLast.InitTimeNow();
 		}
-		void Add(const CStreamStat& n)
+		void Add(const cStreamStat& n)
 		{
 			m_nCount += n.m_nCount;
 			if (n.m_tLast.get_TimeSys() > m_tLast.get_TimeSys())
@@ -64,34 +64,34 @@ namespace Gray
 		}
 	};
 
-	class GRAYCORE_LINK CStreamStats
+	class GRAYCORE_LINK cStreamStats
 	{
-		//! @class Gray::CStreamStats
+		//! @class Gray::cStreamStats
 		//! track how much data is read and written and when.
 
 	public:
-		CStreamStat m_StatOut;
-		CStreamStat m_StatInp;
+		cStreamStat m_StatOut;
+		cStreamStat m_StatInp;
 
 	public:
-		void Add(const CStreamStats& n)
+		void Add(const cStreamStats& n)
 		{
 			m_StatOut.Add(n.m_StatOut);
 			m_StatInp.Add(n.m_StatInp);
 		}
 	};
 
-	class GRAYCORE_LINK CStreamBase
+	class GRAYCORE_LINK cStreamBase
 	{
-		//! @class Gray::CStreamBase
-		//! base class for CStreamOutput or CStreamInput.
+		//! @class Gray::cStreamBase
+		//! base class for cStreamOutput or cStreamInput.
 
 	public:
 		static const BYTE k_SIZE_MASK = 0x80;		//!< Used for WriteSize()
 		static const size_t k_FILE_BLOCK_SIZE = (32 * 1024);	//!< default arbitrary transfer block size. more than this is NOT more efficient.
 
 	public:
-		virtual ~CStreamBase()
+		virtual ~cStreamBase()
 		{
 		}
 		virtual STREAM_SEEKRET_t Seek(STREAM_OFFSET_t iOffset, SEEK_ORIGIN_TYPE eSeekOrigin = SEEK_Set)
@@ -124,19 +124,19 @@ namespace Gray
 		virtual STREAM_POS_t GetLength() const;
 	};
 
-	class GRAYCORE_LINK CStreamOutput : public CStreamBase
+	class GRAYCORE_LINK cStreamOutput : public cStreamBase
 	{
-		//! @class Gray::CStreamOutput
+		//! @class Gray::cStreamOutput
 		//! Write a stream of data/text out to some arbitrary destination.
 		//! i.e. console, file, socket, telnet, game client, web page client, etc..
 		//! May be no Seek() method available / implemented.
 		//! similar to STL std::ostream, and IWriteStream
 
 	public:
-		CStreamOutput()
+		cStreamOutput()
 		{
 		}
-		virtual ~CStreamOutput()
+		virtual ~cStreamOutput()
 		{
 		}
 
@@ -289,8 +289,8 @@ namespace Gray
 			return iLenRet;
 		}
 
-		//! Copy CStreamInput to this stream.
-		HRESULT WriteStream(CStreamInput& sInp, STREAM_POS_t nSizeMax = k_FILE_BLOCK_SIZE, IStreamProgressCallback* pProgress = nullptr, TIMESYSD_t nTimeout = 0);
+		//! Copy cStreamInput to this stream.
+		HRESULT WriteStream(cStreamInput& sInp, STREAM_POS_t nSizeMax = k_FILE_BLOCK_SIZE, IStreamProgressCallback* pProgress = nullptr, TIMESYSD_t nTimeout = 0);
 
 		virtual HRESULT FlushX()
 		{
@@ -300,26 +300,26 @@ namespace Gray
 	};
 
 	// Write all my types bool, char, int, float, double, _int64. (short, long, signed, unsigned)
-#define CTYPE_DEF(a,_TYPE,c,d,e,f,g,h) template<> inline HRESULT CStreamOutput::WriteT<_TYPE>( _TYPE val ) { return WriteT(&val,sizeof(val)); }
-#include "CTypes.tbl"
+#define CTYPE_DEF(a,_TYPE,c,d,e,f,g,h) template<> inline HRESULT cStreamOutput::WriteT<_TYPE>( _TYPE val ) { return WriteT(&val,sizeof(val)); }
+#include "cTypes.tbl"
 #undef CTYPE_DEF
 
-	class GRAYCORE_LINK CStreamInput : public CStreamBase
+	class GRAYCORE_LINK cStreamInput : public cStreamBase
 	{
-		//! @class Gray::CStreamInput
+		//! @class Gray::cStreamInput
 		//! Generic input stream of data.
 		//! @note Seek() not always available from this interface. ReadX(nullptr) = skip over but not true seek.
 	public:
-		CStreamInput()
+		cStreamInput()
 		{
 		}
-		virtual ~CStreamInput()
+		virtual ~cStreamInput()
 		{
 		}
 
 		virtual size_t SetSeekSizeMin(size_t nSizeMin = k_FILE_BLOCK_SIZE)
 		{
-			//! similar to ReadCommit (put_AutoReadCommitSize) size. Used by CStreamTransaction.
+			//! similar to ReadCommit (put_AutoReadCommitSize) size. Used by cStreamTransaction.
 			//! Leave a certain amount of data (max message size for current protocol)
 			//! such that we could Seek() back for incomplete messages.
 			//! @arg nSizeMin = 0 = don't commit/lost any data until we have a complete message/block.
@@ -344,7 +344,7 @@ namespace Gray
 			return 0;
 		}
 
-		HRESULT ReadAll(OUT CHeapBlock& block, size_t nSizeExtra = 0)
+		HRESULT ReadAll(OUT cHeapBlock& block, size_t nSizeExtra = 0)
 		{
 			//! Read the whole stream as a single allocated block in memory.
 			//! @arg nSizeExtra = extra memory allocation.
@@ -383,7 +383,7 @@ namespace Gray
 			HRESULT hRes = ReadT(val);
 			if (FAILED(hRes))
 				return hRes;
-			val = CMemT::NtoH(val);
+			val = cMemT::NtoH(val);
 			return hRes;
 		}
 
@@ -448,57 +448,57 @@ namespace Gray
 	};
 
 	// Read all my types bool, char, int, float, double, _int64. (short, long, signed, unsigned)
-#define CTYPE_DEF(a,_TYPE,c,d,e,f,g,h) template<> inline HRESULT CStreamInput::ReadT<_TYPE>( OUT _TYPE& rval ) { return ReadT(&rval,sizeof(rval)); }
-#include "CTypes.tbl"
+#define CTYPE_DEF(a,_TYPE,c,d,e,f,g,h) template<> inline HRESULT cStreamInput::ReadT<_TYPE>( OUT _TYPE& rval ) { return ReadT(&rval,sizeof(rval)); }
+#include "cTypes.tbl"
 #undef CTYPE_DEF
 
 	class GRAYCORE_LINK CStream
-		: public CStreamInput
-		, public CStreamOutput
+		: public cStreamInput
+		, public cStreamOutput
 	{
 		//! @class Gray::CStream
 		//! This is a bi-directional stream. RX and TX
 		//! Sequential = seek May not be avail from this interface. or only partial support.
-		//! Similar to MFC CArchive, COM ISequentialStream, std::basic_streambuf ?
+		//! Similar to MFC cArchive, COM ISequentialStream, std::basic_streambuf ?
 		//! ASSUME this overrides ReadX() and WriteX()
 		//! GetLength() optionally avail for this stream. I can move to any place in the stream.
 
 	public:
-		//! Disambiguate Seek for CStreamBase to CStreamInput for stupid compiler.
+		//! Disambiguate Seek for cStreamBase to cStreamInput for stupid compiler.
 		virtual STREAM_SEEKRET_t Seek(STREAM_OFFSET_t iOffset, SEEK_ORIGIN_TYPE eSeekOrigin = SEEK_Set) override
 		{
-			return CStreamInput::Seek(iOffset, eSeekOrigin);
+			return cStreamInput::Seek(iOffset, eSeekOrigin);
 		}
 		virtual STREAM_POS_t GetPosition() const override
 		{
-			return CStreamInput::GetPosition();
+			return cStreamInput::GetPosition();
 		}
 		virtual STREAM_POS_t GetLength() const override
 		{
-			return CStreamInput::GetLength();
+			return cStreamInput::GetLength();
 		}
 		void SeekToBegin()
 		{
-			CStreamInput::SeekToBegin();
+			cStreamInput::SeekToBegin();
 		}
 		STREAM_POS_t SeekToEnd()
 		{
-			return CStreamInput::SeekToEnd();
+			return cStreamInput::SeekToEnd();
 		}
 
 #if USE_UNITTESTS
 		UNITTEST_FRIEND(CStream);
-		static void GRAYCALL UnitTest_StreamIntegrity(CStreamOutput& stmOut, CStreamInput& strIn, size_t nSizeTotal);
+		static void GRAYCALL UnitTest_StreamIntegrity(cStreamOutput& stmOut, cStreamInput& strIn, size_t nSizeTotal);
 #endif
 	};
 
-	class GRAYCORE_LINK CStreamTransaction
+	class GRAYCORE_LINK cStreamTransaction
 	{
-		//! @class Gray::CStreamTransaction
+		//! @class Gray::cStreamTransaction
 		//! we are reading a single message / Transaction from the stream. We need to read all of it or roll back.
 
 	public:
-		CStreamInput* m_pInp;		//!< Pull transaction data from this stream.
+		cStreamInput* m_pInp;		//!< Pull transaction data from this stream.
 		STREAM_SEEKRET_t m_lPosStart;
 		size_t m_nSeekSizeMinPrev;	//!< Previous value. Maybe nested transactions !
 
@@ -515,17 +515,17 @@ namespace Gray
 		}
 
 	public:
-		CStreamTransaction(CStreamInput* pInp)
+		cStreamTransaction(cStreamInput* pInp)
 			: m_pInp(pInp)
 		{
 			ASSERT(m_pInp != nullptr);
 			m_lPosStart = m_pInp->GetPosition();
-			ASSERT(m_lPosStart >= 0 && m_lPosStart <= (STREAM_SEEKRET_t)CHeap::k_ALLOC_MAX);
-			m_nSeekSizeMinPrev = m_pInp->SetSeekSizeMin(0);	// Don't use AutoReadCommit inside CStreamTransaction.
-			ASSERT(m_nSeekSizeMinPrev >= 0 && m_nSeekSizeMinPrev <= CHeap::k_ALLOC_MAX);
+			ASSERT(m_lPosStart >= 0 && m_lPosStart <= (STREAM_SEEKRET_t)cHeap::k_ALLOC_MAX);
+			m_nSeekSizeMinPrev = m_pInp->SetSeekSizeMin(0);	// Don't use AutoReadCommit inside cStreamTransaction.
+			ASSERT(m_nSeekSizeMinPrev >= 0 && m_nSeekSizeMinPrev <= cHeap::k_ALLOC_MAX);
 			ASSERT(isTransactionActive());
 		}
-		~CStreamTransaction()
+		~cStreamTransaction()
 		{
 			//! if we didn't say it was a success, do a rollback on destruct.
 			if (m_pInp == nullptr)
@@ -572,9 +572,9 @@ namespace Gray
 		}
 	};
 
-	class GRAYCORE_LINK CStreamNull : public CStream
+	class GRAYCORE_LINK cStreamNull : public CStream
 	{
-		//! @class Gray::CStreamNull
+		//! @class Gray::cStreamNull
 		//! A junk/null CStream that just tosses write data and has no read data.
 
 	public:

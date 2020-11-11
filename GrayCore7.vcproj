@@ -451,49 +451,49 @@ copy $(TargetDir)\$(TargetName).pdb ..\..\bin\$(OutDir)
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
 			<File
-				RelativePath=".\CAppConsole.cpp">
+				RelativePath=".\cAppConsole.cpp">
 			</File>
 			<File
-				RelativePath=".\CAppConsole.h">
+				RelativePath=".\cAppConsole.h">
 			</File>
 			<File
-				RelativePath=".\CAppState.cpp">
+				RelativePath=".\cAppState.cpp">
 			</File>
 			<File
-				RelativePath=".\CAppState.h">
+				RelativePath=".\cAppState.h">
 			</File>
 			<File
-				RelativePath=".\CArchive.cpp">
+				RelativePath=".\cArchive.cpp">
 			</File>
 			<File
-				RelativePath=".\CArchive.h">
+				RelativePath=".\cArchive.h">
 			</File>
 			<File
-				RelativePath=".\CArray.h">
+				RelativePath=".\cArray.h">
 			</File>
 			<File
 				RelativePath=".\CArrayIRef.h">
 			</File>
 			<File
-				RelativePath=".\CArrayNew.h">
+				RelativePath=".\cArrayNew.h">
 			</File>
 			<File
-				RelativePath=".\CArraySmart.h">
+				RelativePath=".\cArrayRef.h">
 			</File>
 			<File
-				RelativePath=".\CArraySort.cpp">
+				RelativePath=".\cArraySort.cpp">
 			</File>
 			<File
-				RelativePath=".\CArraySort.h">
+				RelativePath=".\cArraySort.h">
 			</File>
 			<File
-				RelativePath=".\CArrayString.h">
+				RelativePath=".\cArrayString.h">
 			</File>
 			<File
-				RelativePath=".\CAtom.cpp">
+				RelativePath=".\cAtom.cpp">
 			</File>
 			<File
-				RelativePath=".\CAtom.h">
+				RelativePath=".\cAtom.h">
 			</File>
 			<File
 				RelativePath=".\CCodedPtr.h">
@@ -505,19 +505,19 @@ copy $(TargetDir)\$(TargetName).pdb ..\..\bin\$(OutDir)
 				RelativePath=".\CException.cpp">
 			</File>
 			<File
-				RelativePath=".\CException.h">
+				RelativePath=".\cException.h">
 			</File>
 			<File
-				RelativePath=".\CExceptionAssert.cpp">
+				RelativePath=".\cExceptionAssert.cpp">
 			</File>
 			<File
-				RelativePath=".\CExceptionAssert.h">
+				RelativePath=".\cExceptionAssert.h">
 			</File>
 			<File
-				RelativePath=".\CExceptionSystem.cpp">
+				RelativePath=".\cExceptionSystem.cpp">
 			</File>
 			<File
-				RelativePath=".\CExceptionSystem.h">
+				RelativePath=".\cExceptionSystem.h">
 			</File>
 			<File
 				RelativePath=".\CFile.cpp">
@@ -526,82 +526,82 @@ copy $(TargetDir)\$(TargetName).pdb ..\..\bin\$(OutDir)
 				RelativePath=".\CFile.h">
 			</File>
 			<File
-				RelativePath=".\CFileDir.cpp">
+				RelativePath=".\cFileDir.cpp">
 			</File>
 			<File
-				RelativePath=".\CFileDir.h">
+				RelativePath=".\cFileDir.h">
 			</File>
 			<File
-				RelativePath=".\CFilePath.cpp">
+				RelativePath=".\cFilePath.cpp">
 			</File>
 			<File
-				RelativePath=".\CFilePath.h">
+				RelativePath=".\cFilePath.h">
 			</File>
 			<File
-				RelativePath=".\CFileText.cpp">
+				RelativePath=".\cFileText.cpp">
 			</File>
 			<File
-				RelativePath=".\CFileText.h">
+				RelativePath=".\cFileText.h">
 			</File>
 			<File
-				RelativePath=".\CHeap.cpp">
+				RelativePath=".\cHeap.cpp">
 			</File>
 			<File
-				RelativePath=".\CHeap.h">
+				RelativePath=".\cHeap.h">
 			</File>
 			<File
-				RelativePath=".\CHeapObject.h">
+				RelativePath=".\cHeapObject.h">
 			</File>
 			<File
-				RelativePath=".\CIniFile.cpp">
+				RelativePath=".\cIniFile.cpp">
 			</File>
 			<File
-				RelativePath=".\CIniFile.h">
+				RelativePath=".\cIniFile.h">
 			</File>
 			<File
-				RelativePath=".\CIniFileUnitTest.ini">
+				RelativePath=".\cIniFileUnitTest.ini">
 			</File>
 			<File
-				RelativePath=".\CIniObject.cpp">
+				RelativePath=".\cIniObject.cpp">
 			</File>
 			<File
-				RelativePath=".\CIniObject.h">
+				RelativePath=".\cIniObject.h">
 			</File>
 			<File
-				RelativePath=".\CInterlockedVal.cpp">
+				RelativePath=".\cInterlockedVal.cpp">
 			</File>
 			<File
-				RelativePath=".\CInterlockedVal.h">
+				RelativePath=".\cInterlockedVal.h">
 			</File>
 			<File
-				RelativePath=".\CLogAppenders.cpp">
+				RelativePath=".\cLogAppenders.cpp">
 			</File>
 			<File
-				RelativePath=".\CLogAppenders.h">
+				RelativePath=".\cLogAppenders.h">
 			</File>
 			<File
-				RelativePath=".\CLogMgr.cpp">
+				RelativePath=".\cLogMgr.cpp">
 			</File>
 			<File
-				RelativePath=".\CLogMgr.h">
+				RelativePath=".\cLogMgr.h">
 			</File>
 			<File
-				RelativePath=".\CNewPtr.h">
+				RelativePath=".\cNewPtr.h">
 			</File>
 			<File
-				RelativePath=".\CNonCopyable.h">
+				RelativePath=".\cNonCopyable.h">
 			</File>
 			<File
-				RelativePath=".\CObject.h">
+				RelativePath=".\cObject.h">
 			</File>
 			<File
-				RelativePath=".\COSHandle.h">
+				RelativePath=".\cOSHandle.h">
 			</File>
 			<File
-				RelativePath=".\COSModule.cpp">
+				RelativePath=".\cOSModule.cpp">
 			</File>
 			<File
-				RelativePath=".\COSModule.h">
+				RelativePath=".\cOSModule.h">
 			</File>
 			<File
 				RelativePath=".\CProfileFunc.cpp">
@@ -613,37 +613,37 @@ copy $(TargetDir)\$(TargetName).pdb ..\..\bin\$(OutDir)
 				RelativePath=".\CQueue.cpp">
 			</File>
 			<File
-				RelativePath=".\CQueue.h">
+				RelativePath=".\cQueue.h">
 			</File>
 			<File
-				RelativePath=".\CSingleton.cpp">
+				RelativePath=".\cSingleton.cpp">
 			</File>
 			<File
-				RelativePath=".\CSingleton.h">
+				RelativePath=".\cSingleton.h">
 			</File>
 			<File
-				RelativePath=".\CSmartPtr.h">
+				RelativePath=".\cRefPtr.h">
 			</File>
 			<File
 				RelativePath=".\CStream.cpp">
 			</File>
 			<File
-				RelativePath=".\CStream.h">
+				RelativePath=".\cStream.h">
 			</File>
 			<File
-				RelativePath=".\CStreamQueue.h">
+				RelativePath=".\cStreamQueue.h">
 			</File>
 			<File
 				RelativePath=".\CString.cpp">
 			</File>
 			<File
-				RelativePath=".\CString.h">
+				RelativePath=".\cString.h">
 			</File>
 			<File
-				RelativePath=".\CSystemInfo.cpp">
+				RelativePath=".\cSystemInfo.cpp">
 			</File>
 			<File
-				RelativePath=".\CSystemInfo.h">
+				RelativePath=".\cSystemInfo.h">
 			</File>
 			<File
 				RelativePath=".\CThreadArray.h">
@@ -652,46 +652,46 @@ copy $(TargetDir)\$(TargetName).pdb ..\..\bin\$(OutDir)
 				RelativePath=".\CThreadArrayString.h">
 			</File>
 			<File
-				RelativePath=".\CThreadLock.cpp">
+				RelativePath=".\cThreadLock.cpp">
 			</File>
 			<File
-				RelativePath=".\CThreadLock.h">
+				RelativePath=".\cThreadLock.h">
 			</File>
 			<File
-				RelativePath=".\CThreadLockRW.cpp">
+				RelativePath=".\cThreadLockRW.cpp">
 			</File>
 			<File
-				RelativePath=".\CThreadLockRW.h">
+				RelativePath=".\cThreadLockRW.h">
 			</File>
 			<File
-				RelativePath=".\CTimeDouble.cpp">
+				RelativePath=".\cTimeDouble.cpp">
 			</File>
 			<File
-				RelativePath=".\CTimeDouble.h">
+				RelativePath=".\cTimeDouble.h">
 			</File>
 			<File
-				RelativePath=".\CTimeFile.cpp">
+				RelativePath=".\cTimeFile.cpp">
 			</File>
 			<File
-				RelativePath=".\CTimeFile.h">
+				RelativePath=".\cTimeFile.h">
 			</File>
 			<File
-				RelativePath=".\CTimeInt.cpp">
+				RelativePath=".\cTimeInt.cpp">
 			</File>
 			<File
-				RelativePath=".\CTimeInt.h">
+				RelativePath=".\cTimeInt.h">
 			</File>
 			<File
-				RelativePath=".\CTimeSys.cpp">
+				RelativePath=".\cTimeSys.cpp">
 			</File>
 			<File
-				RelativePath=".\CTimeSys.h">
+				RelativePath=".\cTimeSys.h">
 			</File>
 			<File
-				RelativePath=".\CTimeUnits.cpp">
+				RelativePath=".\cTimeUnits.cpp">
 			</File>
 			<File
-				RelativePath=".\CTimeUnits.h">
+				RelativePath=".\cTimeUnits.h">
 			</File>
 			<File
 				RelativePath=".\CWinString.cpp">

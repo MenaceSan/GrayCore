@@ -10,29 +10,30 @@
 #pragma once
 #endif
 
-#include "CThreadLock.h"
-#include "CArraySort.h"
+#include "cThreadLock.h"
+#include "cArraySortRef.h"
+#include "cArrayRef.h"
 
 namespace Gray
 {
 	template <class TYPE>
-	class CThreadLockArrayPtr
-	: protected CArrayPtr < TYPE >
+	class cThreadLockArrayPtr
+	: protected cArrayPtr < TYPE >
 	{
-		//! @class Gray::CThreadLockArrayPtr
+		//! @class Gray::cThreadLockArrayPtr
 		//! Thread safe array of pointers.
 
 	public:
-		typedef CArrayPtr<TYPE> SUPER_t;
+		typedef cArrayPtr<TYPE> SUPER_t;
 		typedef typename SUPER_t::REF_t REF_t;
 		typedef typename SUPER_t::ELEM_t ELEM_t;
 	public:
-		mutable CThreadLockCount m_Lock;
+		mutable cThreadLockCount m_Lock;
 	public:
-		CThreadLockArrayPtr()
+		cThreadLockArrayPtr()
 		{
 		}
-		~CThreadLockArrayPtr()
+		~cThreadLockArrayPtr()
 		{
 		}
 		ITERATE_t GetSize() const
@@ -42,38 +43,38 @@ namespace Gray
 		}
 		void SetSize(ITERATE_t nNewSize)
 		{
-			CThreadGuard threadguard(m_Lock);	// thread sync critical section.
+			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			SUPER_t::SetSize(nNewSize);	// just for stats purposes.
 		}
 		ITERATE_t Add(REF_t pObj)
 		{
-			CThreadGuard threadguard(m_Lock);	// thread sync critical section.
+			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			return SUPER_t::Add(pObj); // add to tail
 		}
 		REF_t GetAtCheck(ITERATE_t nIndex) const
 		{
-			CThreadGuard threadguard(m_Lock);	// thread sync critical section.
+			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			return SUPER_t::GetAtCheck(nIndex);
 		}
 		bool HasArg(TYPE* pObj) const
 		{
 			//! Find the index of a specified entry.
-			CThreadGuard threadguard(m_Lock);	// thread sync critical section.
+			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			return(SUPER_t::FindIFor(pObj) >= 0);
 		}
 		ELEM_t PopHead()
 		{
-			CThreadGuard threadguard(m_Lock);	// thread sync critical section.
+			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			return SUPER_t::PopHead();
 		}
 		ELEM_t PopTail()
 		{
-			CThreadGuard threadguard(m_Lock);	// thread sync critical section.
+			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			return SUPER_t::PopTail();
 		}
 		void DeleteAll()
 		{
-			CThreadGuard threadguard(m_Lock);	// thread sync critical section.
+			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			for (int i = 0; i < this->GetSize(); i++)
 			{
 				delete this->GetAt(i);
@@ -83,25 +84,25 @@ namespace Gray
 		bool RemoveArg(TYPE* pObj)
 		{
 			//! @return true = removed. false = was not here.
-			CThreadGuard threadguard(m_Lock);	// thread sync critical section.
+			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			return SUPER_t::RemoveArg(pObj);
 		}
 	};
 
 	template<class TYPE>
-	class CThreadLockArraySmart
-	: protected CArraySmart < TYPE >
+	class cThreadLockArraySmart
+	: protected cArrayRef < TYPE >
 	{
-		//! @class Gray::CThreadLockArraySmart
+		//! @class Gray::cThreadLockArraySmart
 		//! Thread safe array of smart pointers. NON sorted.
-		typedef CArraySmart<TYPE> SUPER_t;
+		typedef cArrayRef<TYPE> SUPER_t;
 	public:
-		mutable CThreadLockCount m_Lock;
+		mutable cThreadLockCount m_Lock;
 	public:
-		CThreadLockArraySmart()
+		cThreadLockArraySmart()
 		{
 		}
-		~CThreadLockArraySmart()
+		~cThreadLockArraySmart()
 		{
 		}
 
@@ -112,56 +113,56 @@ namespace Gray
 		}
 
 		// Locking helpers
-		CSmartPtr<TYPE> GetAtCheck(ITERATE_t nIndex) const
+		cRefPtr<TYPE> GetAtCheck(ITERATE_t nIndex) const
 		{
 			//! @note Its slightly dangerous to enum a thread used list.
 			//!  We could read the same entry 2 times !
 			//! @note NEVER NEVER lock the list and the object at the same time!
 			//!  This could create a permanent deadlock!
-			CThreadGuard threadguard(m_Lock);	// thread sync critical section.
+			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			return SUPER_t::GetAtCheck(nIndex);
 		}
-		CSmartPtr<TYPE> PopHead()
+		cRefPtr<TYPE> PopHead()
 		{
-			CThreadGuard threadguard(m_Lock);	// thread sync critical section.
+			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			return SUPER_t::PopHead();	// pull off tail
 		}
-		CSmartPtr<TYPE> PopTail()
+		cRefPtr<TYPE> PopTail()
 		{
-			CThreadGuard threadguard(m_Lock);	// thread sync critical section.
+			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			return SUPER_t::PopTail();	// pull off tail
 		}
 		bool HasArg(TYPE* pObj) const
 		{
 			//! Find a specified entry.
-			CThreadGuard threadguard(m_Lock);	// thread sync critical section.
+			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			return(SUPER_t::FindIFor(pObj) >= 0);
 		}
 		ITERATE_t Add(TYPE* pObj)
 		{
-			CThreadGuard threadguard(m_Lock);	// thread sync critical section.
+			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			return SUPER_t::Add(pObj); // add to tail
 		}
 		ITERATE_t AddTail(TYPE* pObj)
 		{
-			CThreadGuard threadguard(m_Lock);	// thread sync critical section.
+			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			return SUPER_t::AddTail(pObj); // add to tail
 		}
 		bool RemoveArg(TYPE* pObj)
 		{
 			//! @return true = removed. false = was not here.
-			CThreadGuard threadguard(m_Lock);	// thread sync critical section.
+			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			return SUPER_t::RemoveArg(pObj);
 		}
 		void RemoveAll()
 		{
-			CThreadGuard threadguard(m_Lock);	// thread sync critical section.
+			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			SUPER_t::RemoveAll();
 		}
 		void DisposeAll()
 		{
 			//! ASSUME TYPE supports DisposeThis(); like CXObject
-			CThreadGuard threadguard(m_Lock);	// thread sync critical section.
+			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			SUPER_t::DisposeAll();
 		}
 		// FindIForKey, RemoveAt must use a lock outside as well ! (for index to be meaningful)
@@ -170,49 +171,49 @@ namespace Gray
 	//*************************************************
 
 	template<class TYPE, typename _TYPECH = TCHAR >
-	class CThreadLockArrayName
-	: protected CArraySortName < TYPE, _TYPECH >
+	class cThreadLockArrayName
+	: protected cArraySortName < TYPE, _TYPECH >
 	{
-		//! @class Gray::CThreadLockArrayName
+		//! @class Gray::cThreadLockArrayName
 		//! Thread Lockable, name sorted resource array.
 		//! Must be locked before use of other methods!
-		//! TYPE must support get_Name() and be CSmartBase
+		//! TYPE must support get_Name() and be cRefBase
 		//! does  NOT allow dupe names !
 
-		typedef CArraySortName<TYPE, _TYPECH> SUPER_t;
+		typedef cArraySortName<TYPE, _TYPECH> SUPER_t;
 	public:
-		mutable CThreadLockCount m_Lock;
+		mutable cThreadLockCount m_Lock;
 	public:
-		CThreadLockArrayName()
+		cThreadLockArrayName()
 		{
 		}
-		~CThreadLockArrayName()
+		~cThreadLockArrayName()
 		{
 		}
 
 		// Locking helpers
-		CSmartPtr<TYPE> GetAtCheck(ITERATE_t nIndex) const
+		cRefPtr<TYPE> GetAtCheck(ITERATE_t nIndex) const
 		{
 			//! @note Its slightly dangerous to enum a thread used list.
 			//!  We could read the same entry 2 times !
 			//! @note NEVER NEVER lock the list and the object at the same time!
 			//!  This could create a permanent deadlock!
-			CThreadGuard threadguard(m_Lock);	// thread sync critical section.
+			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			return SUPER_t::GetAtCheck(nIndex);
 		}
-		CSmartPtr<TYPE> FindArgForKey(const _TYPECH* pszKey) const
+		cRefPtr<TYPE> FindArgForKey(const _TYPECH* pszKey) const
 		{
-			CThreadGuard threadguard(m_Lock);	// thread sync critical section.
+			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			return(SUPER_t::FindArgForKey(pszKey));
 		}
 		ITERATE_t Add(TYPE* pObj)
 		{
-			CThreadGuard threadguard(m_Lock);	// thread sync critical section.
+			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			return(SUPER_t::Add(pObj));
 		}
 		bool RemoveArgKey(TYPE* pObj)
 		{
-			CThreadGuard threadguard(m_Lock);	// thread sync critical section.
+			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			return SUPER_t::RemoveArgKey(pObj);
 		}
 		ITERATE_t GetSize() const
@@ -222,30 +223,30 @@ namespace Gray
 		}
 		void RemoveAll()
 		{
-			CThreadGuard threadguard(m_Lock);	// thread sync critical section.
+			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			SUPER_t::RemoveAll();
 		}
 		// FindIForKey, RemoveAt must use a lock outside as well ! (for index to be meaningful)
 	};
 
 	template<class TYPE, typename _TYPE_HASH = HASHCODE_t>
-	class CThreadLockArrayHash
-	: protected CArraySortHash < TYPE, _TYPE_HASH >
+	class cThreadLockArrayHash
+	: protected cArraySortHash < TYPE, _TYPE_HASH >
 	{
-		//! @class Gray::CThreadLockArrayHash
+		//! @class Gray::cThreadLockArrayHash
 		//! Thread safe hash.
-		//! TYPE must support get_HashCode() and be CSmartBase.
+		//! TYPE must support get_HashCode() and be cRefBase.
 		//! Does NOT allow dupe hash codes !
 
-		// friend class CPtrTraceMgr;
-		typedef CArraySortHash<TYPE, _TYPE_HASH> SUPER_t;
+		// friend class cPtrTraceMgr;
+		typedef cArraySortHash<TYPE, _TYPE_HASH> SUPER_t;
 	public:
-		mutable CThreadLockCount m_Lock;
+		mutable cThreadLockCount m_Lock;
 	public:
-		CThreadLockArrayHash()
+		cThreadLockArrayHash()
 		{
 		}
-		~CThreadLockArrayHash()
+		~cThreadLockArrayHash()
 		{
 		}
 
@@ -259,50 +260,50 @@ namespace Gray
 			//! Used for statistical purposes. This may change of course.
 			return SUPER_t::GetSize();
 		}
-		CSmartPtr<TYPE> GetAtCheck(ITERATE_t nIndex) const
+		cRefPtr<TYPE> GetAtCheck(ITERATE_t nIndex) const
 		{
 			//! return a reference counted pointer. NOT a bare pointer.
 			//! @note Its slightly dangerous to enum a thread used list.
 			//!  We could read the same entry 2 times !
 			//! @note NEVER NEVER lock the list and the object at the same time!
 			//!  This could create a deadlock!
-			CThreadGuard threadguard(m_Lock);	// thread sync critical section.
+			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			return SUPER_t::GetAtCheck(nIndex);
 		}
 		ITERATE_t Add(TYPE* pObj)
 		{
-			CThreadGuard threadguard(m_Lock);	// thread sync critical section.
+			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			return SUPER_t::Add(pObj);	// AddTail
 		}
-		CSmartPtr<TYPE> PopHead()
+		cRefPtr<TYPE> PopHead()
 		{
-			CThreadGuard threadguard(m_Lock);	// thread sync critical section.
+			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			return SUPER_t::PopHead();	// pull off head
 		}
-		CSmartPtr<TYPE> PopTail()
+		cRefPtr<TYPE> PopTail()
 		{
-			CThreadGuard threadguard(m_Lock);	// thread sync critical section.
+			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			return SUPER_t::PopTail();
 		}
 		bool RemoveArgKey(TYPE* pObj)
 		{
-			CThreadGuard threadguard(m_Lock);	// thread sync critical section.
+			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			return SUPER_t::RemoveArgKey(pObj);
 		}
 		void RemoveAll()
 		{
-			CThreadGuard threadguard(m_Lock);	// thread sync critical section.
+			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			SUPER_t::RemoveAll();
 		}
 		void DisposeAll()
 		{
 			//! ASSUME TYPE supports DisposeThis(); like CXObject
-			CThreadGuard threadguard(m_Lock);	// thread sync critical section.
+			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			SUPER_t::DisposeAll();
 		}
-		CSmartPtr<TYPE> FindArgForKey(_TYPE_HASH hashcode) const
+		cRefPtr<TYPE> FindArgForKey(_TYPE_HASH hashcode) const
 		{
-			CThreadGuard threadguard(m_Lock);	// thread sync critical section.
+			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			return SUPER_t::FindArgForKey(hashcode);
 		}
 
@@ -310,7 +311,7 @@ namespace Gray
 		ITERATE_t FindIForAK(const TYPE* pBase) const
 		{
 			// NOTE: Index must be considered invalid immediately!!
-			CThreadGuard threadguard(m_Lock);	// thread sync critical section.
+			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			return SUPER_t::FindIForAK(pBase);
 		}
 #endif
@@ -319,21 +320,21 @@ namespace Gray
 	};
 
 	template<class TYPE, class _TYPE_KEY = ITERATE_t>
-	class CThreadLockArrayValue
-	: protected CArraySortValue < TYPE, _TYPE_KEY >
+	class cThreadLockArrayValue
+	: protected cArraySortValue < TYPE, _TYPE_KEY >
 	{
-		//! @class Gray::CThreadLockArrayValue
+		//! @class Gray::cThreadLockArrayValue
 		//! Thread safe array
-		//! TYPE must support get_SortValue() and be CSmartBase
+		//! TYPE must support get_SortValue() and be cRefBase
 		//! does allow dupe get_SortValue but not dupe objects
-		typedef CArraySortValue<TYPE, _TYPE_KEY> SUPER_t;
+		typedef cArraySortValue<TYPE, _TYPE_KEY> SUPER_t;
 	public:
-		mutable CThreadLockCount m_Lock;
+		mutable cThreadLockCount m_Lock;
 	public:
-		CThreadLockArrayValue()
+		cThreadLockArrayValue()
 		{
 		}
-		~CThreadLockArrayValue()
+		~cThreadLockArrayValue()
 		{
 		}
 
@@ -342,64 +343,64 @@ namespace Gray
 			//! Used for statistical purposes. This may change of course.
 			return SUPER_t::GetSize();
 		}
-		CSmartPtr<TYPE> GetAtCheck(ITERATE_t nIndex) const
+		cRefPtr<TYPE> GetAtCheck(ITERATE_t nIndex) const
 		{
 			//! @note Its slightly dangerous to enum a thread used list.
 			//!  We could read the same entry 2 times !
 			//! @note NEVER NEVER lock the list and the object at the same time!
 			//!  This could create a permanent deadlock!
-			CThreadGuard threadguard(m_Lock);	// thread sync critical section.
+			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			return SUPER_t::GetAtCheck(nIndex);
 		}
 		ITERATE_t Add(TYPE* pObj)
 		{
-			CThreadGuard threadguard(m_Lock);	// thread sync critical section.
+			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			return(SUPER_t::Add(pObj));	// AddTail
 		}
 		ITERATE_t AddAfter(TYPE* pObj)
 		{
-			CThreadGuard threadguard(m_Lock);	// thread sync critical section.
+			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			return SUPER_t::AddAfter(pObj);	// AddAfter
 		}
-		CSmartPtr<TYPE> PopHead()
+		cRefPtr<TYPE> PopHead()
 		{
-			CThreadGuard threadguard(m_Lock);	// thread sync critical section.
+			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			return SUPER_t::PopHead();	// pull off tail
 		}
-		CSmartPtr<TYPE> PopTail()
+		cRefPtr<TYPE> PopTail()
 		{
-			CThreadGuard threadguard(m_Lock);	// thread sync critical section.
+			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			return SUPER_t::PopTail();
 		}
 		bool RemoveArg(TYPE* pObj)
 		{
 			//! Since this can have dupes we should not use RemoveArgKey()
 			//! @return true = removed. false = was not here.
-			CThreadGuard threadguard(m_Lock);	// thread sync critical section.
+			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			return SUPER_t::RemoveArg(pObj);
 		}
 		void RemoveAll()
 		{
-			CThreadGuard threadguard(m_Lock);	// thread sync critical section.
+			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			SUPER_t::RemoveAll();
 		}
 		void DisposeAll()
 		{
 			//! ASSUME TYPE supports DisposeThis(); like CXObject
-			CThreadGuard threadguard(m_Lock);	// thread sync critical section.
+			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			SUPER_t::DisposeAll();
 		}
 #if 0
 		ITERATE_t FindIForAK(const TYPE* pBase) const
 		{
 			// NOTE: Index must be considered invalid immediately!!
-			CThreadGuard threadguard(m_Lock);	// thread sync critical section.
+			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			return(SUPER_t::FindIForAK(pBase));
 		}
 #endif
-		CSmartPtr<TYPE> FindArgForKey(_TYPE_KEY index) const
+		cRefPtr<TYPE> FindArgForKey(_TYPE_KEY index) const
 		{
-			CThreadGuard threadguard(m_Lock);	// thread sync critical section.
+			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			return SUPER_t::FindArgForKey(index);
 		}
 
@@ -408,10 +409,10 @@ namespace Gray
 
 #if 0
 	template<class TYPE>
-	class CThreadLockArrayWait
-	: protected CArraySmart < TYPE >
+	class cThreadLockArrayWait
+	: protected cArrayRef < TYPE >
 	{
-		//! @class Gray::CThreadLockArrayWait
+		//! @class Gray::cThreadLockArrayWait
 		//! Thread safe array
 		//! @todo Create an array where i can just wait for new stuff to be added to it.
 		//! Used as a job queue.

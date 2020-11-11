@@ -1,26 +1,26 @@
 //
-//! @file CThreadLock.h
+//! @file cThreadLock.h
 //! Locking of objects for access by multiple threads
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CThreadLock_H
-#define _INC_CThreadLock_H
+#ifndef _INC_cThreadLock_H
+#define _INC_cThreadLock_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
-#include "CNonCopyable.h"
-#include "CTimeSys.h"
-#include "CSmartPtr.h"
-#include "COSHandle.h"
-#include "CLocker.h"
+#include "cNonCopyable.h"
+#include "cTimeSys.h"
+#include "cInterlockedVal.h"
+#include "cOSHandle.h"
+#include "cLocker.h"
 #include "FileName.h"
 
 #if defined(__linux__)
 #include <pthread.h>
 #endif
-UNITTEST_PREDEF(CThreadId)
+UNITTEST_PREDEF(cThreadId)
 
 namespace Gray
 {
@@ -32,9 +32,9 @@ namespace Gray
 #define _SIZEOF_THREADID _SIZEOF_PTR
 #endif
 
-	class GRAYCORE_LINK CThreadId
+	class GRAYCORE_LINK cThreadId
 	{
-		//! @class Gray::CThreadId
+		//! @class Gray::cThreadId
 		//! base static namespace for common thread functions.
 		//! ASSUME all code wants defined(_MT) ?
 
@@ -45,7 +45,7 @@ namespace Gray
 		static const THREADID_t k_NULL = 0;	//!< Not a valid thread Id.
 
 	public:
-		CThreadId(THREADID_t nThreadId = k_NULL) noexcept
+		cThreadId(THREADID_t nThreadId = k_NULL) noexcept
 			: m_dwThreadId(nThreadId)
 		{
 		}
@@ -88,7 +88,7 @@ namespace Gray
 		static inline bool IsValidId(THREADID_t id) noexcept
 		{
 			//! @todo actually check for the system thread.
-			return (id != CThreadId::k_NULL);
+			return (id != cThreadId::k_NULL);
 		}
 		static inline bool IsEqualId(THREADID_t a, THREADID_t b) noexcept
 		{
@@ -99,9 +99,9 @@ namespace Gray
 			return ::pthread_equal(a, b);
 #endif
 		}
-		static inline void SleepCurrent(TIMESYS_t uMs = CTimeSys::k_FREQ) noexcept
+		static inline void SleepCurrent(TIMESYS_t uMs = cTimeSys::k_FREQ) noexcept
 		{
-			//! Sleep current thread for n Milliseconds. CTimeSys::k_FREQ
+			//! Sleep current thread for n Milliseconds. cTimeSys::k_FREQ
 			//! Let the OS schedule something else during this time.
 #ifdef _WIN32
 			::Sleep(uMs);
@@ -110,12 +110,12 @@ namespace Gray
 #endif
 		};
 
-		UNITTEST_FRIEND(CThreadId);
+		UNITTEST_FRIEND(cThreadId);
 	};
 
-	class GRAYCORE_LINK CThreadState
+	class GRAYCORE_LINK cThreadState
 	{
-		//! @class Gray::CThreadState
+		//! @class Gray::cThreadState
 		//! Query the status/state of a thread/job and possibly attempt to cancel it.
 		//! Similar to ICancellable and useful with IStreamProgressCallback
 
@@ -124,7 +124,7 @@ namespace Gray
 		VOLATILE bool m_bThreadStopping;		//!< trying to stop the thread nicely. Do this before TerminateThread()
 
 	public:
-		CThreadState() noexcept
+		cThreadState() noexcept
 			: m_bThreadRunning(false)
 			, m_bThreadStopping(false)
 		{
@@ -149,57 +149,57 @@ namespace Gray
 		}
 	};
 
-	class GRAYCORE_LINK CThreadLockBase : public CLockableBase, protected CNonCopyable
+	class GRAYCORE_LINK cThreadLockBase : public cLockableBase, protected cNonCopyable
 	{
-		//! @class Gray::CThreadLockBase
+		//! @class Gray::cThreadLockBase
 		//! ASSUME sizeof(THREADID_t) <= sizeof(UINT_PTR) _SIZEOF_PTR for __DECL_ALIGN.
 
 	protected:
-		THREADID_t __DECL_ALIGN(_SIZEOF_THREADID) m_nLockThreadID;	//!< The thread that has the lock. CThreadId:k_NULL is not locked.
+		THREADID_t __DECL_ALIGN(_SIZEOF_THREADID) m_nLockThreadID;	//!< The thread that has the lock. cThreadId:k_NULL is not locked.
 	public:
-		CThreadLockBase() noexcept
-			: m_nLockThreadID(CThreadId::k_NULL)
+		cThreadLockBase() noexcept
+			: m_nLockThreadID(cThreadId::k_NULL)
 		{
 		}
 		inline bool isLocked() const noexcept
 		{
 			//! Only thread safe way to test this is to look at m_nLockThreadID, NOT m_nLockCount
-			return m_nLockThreadID != CThreadId::k_NULL;
+			return m_nLockThreadID != cThreadId::k_NULL;
 		}
 		inline THREADID_t get_ThreadLockOwner() const
 		{
-			//! @return CThreadId::k_NULL = not locked.
+			//! @return cThreadId::k_NULL = not locked.
 			THREADID_t nTid1 = m_nLockThreadID;
-			ASSERT(nTid1 == CThreadId::k_NULL || CThreadId::IsValidId(nTid1));
+			ASSERT(nTid1 == cThreadId::k_NULL || cThreadId::IsValidId(nTid1));
 			return(nTid1);
 		}
 		inline bool isThreadLockedByCurrent() const noexcept
 		{
 			THREADID_t nTid1 = m_nLockThreadID;
-			THREADID_t nTid2 = CThreadId::GetCurrentId();
-			return(CThreadId::IsEqualId(nTid1, nTid2));
+			THREADID_t nTid2 = cThreadId::GetCurrentId();
+			return(cThreadId::IsEqualId(nTid1, nTid2));
 		}
 	};
 
-	class GRAYCORE_LINK CThreadLockFast : public CThreadLockBase
+	class GRAYCORE_LINK cThreadLockFast : public cThreadLockBase
 	{
-		//! @class Gray::CThreadLockFast
+		//! @class Gray::cThreadLockFast
 		//! used with any data structure that may be locked for multi threaded access.
 		//! These are fairly cheap and fast. Slow on actual collision. (but collide assumed to be infrequent)
 		//! @note reentrant, multi locks on a single thread are allowed and counted.
-		typedef CThreadLockBase SUPER_t;
+		typedef cThreadLockBase SUPER_t;
 	public:
-		CThreadLockFast() noexcept
+		cThreadLockFast() noexcept
 		{
 		}
-		CThreadLockFast(const CThreadLockFast& a) noexcept
+		cThreadLockFast(const cThreadLockFast& a) noexcept
 		{
 			//! Copy constructor should never actually be called!
 			//! but if it is, just make a new copy that is not locked!
 			//! pretend we copied stuff?
 			UNREFERENCED_REFERENCE(a);
 		}
-		~CThreadLockFast() noexcept
+		~cThreadLockFast() noexcept
 		{
 		}
 
@@ -207,8 +207,8 @@ namespace Gray
 		{
 			//! Special case if a thread is hard terminated.
 			//! Only clear if nTid is the current owner.
-			THREADID_t nTidowner = InterlockedN::CompareExchange(&m_nLockThreadID, CThreadId::k_NULL, nTid);
-			return CThreadId::IsEqualId(nTidowner, nTid);
+			THREADID_t nTidowner = InterlockedN::CompareExchange(&m_nLockThreadID, cThreadId::k_NULL, nTid);
+			return cThreadId::IsEqualId(nTidowner, nTid);
 		}
 
 		void Lock();
@@ -221,16 +221,16 @@ namespace Gray
 			ASSERT(isThreadLockedByCurrent());
 			if (SUPER_t::DecLockCount() == 0)
 			{
-				InterlockedN::Exchange(&m_nLockThreadID, CThreadId::k_NULL);
+				InterlockedN::Exchange(&m_nLockThreadID, cThreadId::k_NULL);
 			}
 		}
 	};
 
-	typedef CLockerT<CThreadLockFast> CThreadGuardFast;
+	typedef cLockerT<cThreadLockFast> cThreadGuardFast;
 
-	class GRAYCORE_LINK CThreadLockMutex : public CThreadLockBase
+	class GRAYCORE_LINK cThreadLockMutex : public cThreadLockBase
 	{
-		//! @class Gray::CThreadLockMutex
+		//! @class Gray::cThreadLockMutex
 		//! Base class for data structure that may be locked for multi threaded/process access.
 		//! These are expensive size wise but fast.
 		//! lock something and wait for it to be freed.
@@ -240,10 +240,10 @@ namespace Gray
 		//! m_nLockThreadID = API wont tell me if it is locked. i have to track this myself.
 		//! @note I've seen use of this in Windows Service on W10 cause app exit !? 2015
 
-		typedef CThreadLockBase SUPER_t;
+		typedef cThreadLockBase SUPER_t;
 	public:
 #ifdef _WIN32
-		COSHandle m_Mutex;
+		cOSHandle m_Mutex;
 #else // __linux__
 		pthread_mutex_t m_Mutex;	// PTHREAD_MUTEX_INITIALIZER
 		static const pthread_mutex_t k_MutexInit;	// PTHREAD_MUTEX_INITIALIZER
@@ -252,7 +252,7 @@ namespace Gray
 		bool m_bInitialOwner;		//!< I also lock this myself.
 
 	public:
-		CThreadLockMutex(const CThreadLockMutex& a) noexcept
+		cThreadLockMutex(const cThreadLockMutex& a) noexcept
 			: m_bInitialOwner(false)
 		{
 			//! Copy constructor should never actually be used.
@@ -261,12 +261,12 @@ namespace Gray
 			UNREFERENCED_REFERENCE(a);
 			InitLockMutex(nullptr, false);
 		}
-		CThreadLockMutex(const FILECHAR_t* pszMutexName = nullptr, bool bInitialOwner = false) noexcept
+		cThreadLockMutex(const FILECHAR_t* pszMutexName = nullptr, bool bInitialOwner = false) noexcept
 			: m_bInitialOwner(bInitialOwner)
 		{
 			InitLockMutex(pszMutexName, bInitialOwner);
 		}
-		inline ~CThreadLockMutex() noexcept
+		inline ~cThreadLockMutex() noexcept
 		{
 			// DEBUG_CHECK( ! IsLocked());
 			if (m_bInitialOwner && isLocked())	 // m_nLockCount == 1
@@ -302,7 +302,7 @@ namespace Gray
 		inline void LockInternal()
 		{
 			//! i was able to acquire this Mutex. some other way like WaitForMultipleObjects() ?
-			m_nLockThreadID = CThreadId::GetCurrentId();
+			m_nLockThreadID = cThreadId::GetCurrentId();
 			SUPER_t::IncLockCount();
 			ASSERT(isThreadLockedByCurrent()); // may have several locks on the same thread.
 		}
@@ -314,7 +314,7 @@ namespace Gray
 			//! This will wait forever for the resource to be free !
 			//! @note It should NOT wait if it is in the same thread.
 #ifdef _WIN32
-			HRESULT hRes = m_Mutex.WaitForSingleObject(CTimeSys::k_INF);
+			HRESULT hRes = m_Mutex.WaitForSingleObject(cTimeSys::k_INF);
 			if (hRes != S_OK)
 			{
 				return false;
@@ -337,7 +337,7 @@ namespace Gray
 			ASSERT(isThreadLockedByCurrent()); // may have several locks on the same thread.
 			if (SUPER_t::DecLockCount() <= 0)
 			{
-				m_nLockThreadID = CThreadId::k_NULL;
+				m_nLockThreadID = cThreadId::k_NULL;
 			}
 #ifdef _WIN32
 			return ::ReleaseMutex(m_Mutex) ? true : false;
@@ -358,7 +358,7 @@ namespace Gray
 				return false;
 			}
 #elif defined(__USE_XOPEN2K)	// __linux__
-			CTimeSpec tSpec(dwDelayMS);
+			cTimeSpec tSpec(dwDelayMS);
 			int iRet = ::pthread_mutex_timedlock(&m_Mutex, &tSpec);
 			if (iRet != 0)
 			{
@@ -375,7 +375,7 @@ namespace Gray
 				{
 					return false; // FAILED to lock
 				}
-				CThreadId::SleepCurrent(dwWaitTimeMS); // wait for a tick.
+				cThreadId::SleepCurrent(dwWaitTimeMS); // wait for a tick.
 				if (dwWaitTimeMS == 0)
 				{
 					dwWaitTimeMS = 1;
@@ -391,15 +391,15 @@ namespace Gray
 		}
 	};
 
-	typedef CLockerT<CThreadLockMutex> CThreadGuardMutex;
+	typedef cLockerT<cThreadLockMutex> cThreadGuardMutex;
 
 #ifdef _WIN32
-	class GRAYCORE_LINK CThreadLockCrit : public CThreadLockBase
+	class GRAYCORE_LINK cThreadLockCrit : public cThreadLockBase
 	{
-		//! @class Gray::CThreadLockCrit
+		//! @class Gray::cThreadLockCrit
 		//! Base class for data structure that may be locked for multi threaded access.
 		//! These are fairly expensive size wise but fast.
-		//! Use a cheaper CThreadLockFast for normal data that wont collide often.
+		//! Use a cheaper cThreadLockFast for normal data that wont collide often.
 		//! Same as MFC CComCriticalSection
 		//! @note This is essentially the same as a mutex. CPU burn during collision.
 		//! @note reentrant, multi locks on a single thread are allowed and counted.
@@ -411,7 +411,7 @@ namespace Gray
 	private:
 		void LockInternal()
 		{
-			m_nLockThreadID = CThreadId::GetCurrentId();
+			m_nLockThreadID = cThreadId::GetCurrentId();
 			IncLockCount();
 			ASSERT(isThreadLockedByCurrent()); // may have several locks on the same thread.
 		}
@@ -422,7 +422,7 @@ namespace Gray
 		}
 
 	public:
-		CThreadLockCrit(const CThreadLockCrit& a)
+		cThreadLockCrit(const cThreadLockCrit& a)
 		{
 			//! Copy constructor should never actually be used.
 			//! but if it is  just make a new copy that is not locked!
@@ -430,11 +430,11 @@ namespace Gray
 			UNREFERENCED_REFERENCE(a);
 			InitLockCrit();
 		}
-		CThreadLockCrit()
+		cThreadLockCrit()
 		{
 			InitLockCrit();
 		}
-		inline ~CThreadLockCrit()
+		inline ~cThreadLockCrit()
 		{
 			//! DEBUG_CHECK( ! IsLocked());
 			::DeleteCriticalSection(&m_CritSection);
@@ -454,7 +454,7 @@ namespace Gray
 			ASSERT(isThreadLockedByCurrent()); // may have several locks on the same thread.
 			if (DecLockCount() <= 0)
 			{
-				m_nLockThreadID = CThreadId::k_NULL;
+				m_nLockThreadID = cThreadId::k_NULL;
 			}
 			::LeaveCriticalSection(&m_CritSection);
 		}
@@ -471,17 +471,17 @@ namespace Gray
 #endif
 	};
 #else
-	typedef CThreadLockMutex CThreadLockCrit;	// just substitute it if not _WIN32.
+	typedef cThreadLockMutex cThreadLockCrit;	// just substitute it if not _WIN32.
 #endif // _WIN32
 
-	class CThreadLockStub : public CLockableBase
+	class cThreadLockStub : public cLockableBase
 	{
-		//! @class Gray::CThreadLockStub
+		//! @class Gray::cThreadLockStub
 		//! Stub that does nothing. For stub out in single thread environments or debug usage.
 	public:
 		inline THREADID_t get_ThreadLockOwner() const
 		{
-			//! @return CThreadId::k_NULL = not locked.
+			//! @return cThreadId::k_NULL = not locked.
 			return (THREADID_t)isLocked() ? 1 : 0;
 		}
 	};
@@ -489,181 +489,11 @@ namespace Gray
 	//****************************************************************************
 
 #if defined(_MT) || defined(__linux__)
-	typedef CThreadLockFast CThreadLockCount;
+	typedef cThreadLockFast cThreadLockCount;
 #else
-	typedef CThreadLockStub CThreadLockCount;
+	typedef cThreadLockStub cThreadLockCount;
 #endif
-	typedef CLockerT<CThreadLockCount> CThreadGuard;	// instantiated locker.
-
-	//*********************************************
-
-	class GRAYCORE_LINK CThreadLockableObj
-		: public CSmartBase
-		, public CThreadLockCount
-	{
-		//! @class Gray::CThreadLockableObj
-		//! Base class for a dynamic data structure that may be locked for multi threaded access (CThreadLockCount)
-		//!  and locked for delete/usage (CSmartBase).
-		//! These are fairly cheap and fast.
-	public:
-		CThreadLockableObj(int iStaticRefCount = 0) noexcept
-			: CSmartBase(iStaticRefCount)
-		{
-		}
-		virtual ~CThreadLockableObj()
-		{
-		}
-		virtual void onThreadLockFail(TIMESYSD_t dwWaitMS)
-		{
-			//! a DEBUG trap for locks failing.
-			UNREFERENCED_PARAMETER(dwWaitMS);
-		}
-	};
-
-	//****************************************************************************
-
-	template<class TYPE = CThreadLockableObj >
-	class CThreadLockPtr : public CSmartPtr < TYPE >
-	{
-		//! @class Gray::CThreadLockPtr
-		//! a CSmartPtr (inc ref count for delete protection) that also thread locks the object. (like CLockerT)
-		//! Similar to the MFC CMultiLock or CSingleLock and CSmartPtr
-		//! @note TYPE we are referring to MUST be based on CThreadLockableObj
-		//! Thread Lock an object for as long as 'this' object persists.
-		//! May wait if some other thread has the object locked.
-		//! @note there must also be a non thread locking smart pointer ref to the object.
-		//!	always thread locking an object for its whole life makes no sense.
-
-		typedef CThreadLockPtr<TYPE> THIS_t;
-
-#if defined(_MT) || defined(__linux__)
-		//! NON _MT Stub does nothing really.
-
-	private:
-		void SetFirstLockObj(TYPE* p2)
-		{
-			//! @note Lock can throw !
-			if (p2 != nullptr)
-			{
-#ifdef _DEBUG
-				ASSERT(DYNPTR_CAST(CThreadLockableObj, p2) != nullptr);
-				ASSERT(DYNPTR_CAST(TYPE, p2) != nullptr);
-#endif
-				p2->IncRefCount();
-				p2->Lock();
-			}
-			this->m_p = p2;
-		}
-		bool SetFirstLockObjTry(TYPE* p2, TIMESYSD_t dwWaitMS)
-		{
-			//! @note Lock can throw !
-			//! dwWaitMS = 0 = don't wait.
-			if (p2 != nullptr)
-			{
-#ifdef _DEBUG
-				ASSERT(DYNPTR_CAST(CThreadLockableObj, p2) != nullptr);
-				ASSERT(DYNPTR_CAST(TYPE, p2) != nullptr);
-#endif
-				p2->IncRefCount();
-				if (!p2->LockTry(dwWaitMS))
-				{
-					if (dwWaitMS)
-					{
-						p2->onThreadLockFail(dwWaitMS);
-					}
-					p2->DecRefCount();
-					this->m_p = nullptr;
-					return false;
-				}
-			}
-			this->m_p = p2;
-			return true;
-		}
-
-	public:
-		// Construct and destruct
-		CThreadLockPtr()
-		{
-		}
-		CThreadLockPtr(TYPE* p2)
-		{
-			//! @note = assignment will auto destroy previous and use this constructor.
-			SetFirstLockObj(p2);
-		}
-		CThreadLockPtr(TYPE* p2, TIMESYSD_t dwWaitMS)
-		{
-			//! @note = assignment will auto destroy previous and use this constructor.
-			//! dwWaitMS = 0 = don't wait.
-			SetFirstLockObjTry(p2, dwWaitMS);
-		}
-		CThreadLockPtr(const THIS_t& ref)
-		{
-			//! using the assignment auto constructor is not working so use this.
-			SetFirstLockObj(ref.get_Ptr());
-		}
-		~CThreadLockPtr()
-		{
-			ReleasePtr();
-		}
-
-		void ReleasePtr()
-		{
-			TYPE* p2 = this->m_p;	// make local copy
-			if (p2 != nullptr)
-			{
-				this->m_p = nullptr;
-#ifdef _DEBUG
-				ASSERT(DYNPTR_CAST(TYPE, p2) != nullptr);
-#endif
-				p2->Unlock();
-				p2->DecRefCount();
-			}
-		}
-
-		operator TYPE*() const
-		{
-			return(this->m_p);
-		}
-		TYPE& operator * () const
-		{
-			ASSERT(this->m_p != nullptr); return *(this->m_p);
-		}
-		TYPE* operator -> () const
-		{
-			ASSERT(this->m_p != nullptr); return(this->m_p);
-		}
-
-		void put_Ptr(TYPE* p2)
-		{
-			//! override CSmartPtr put_Ptr
-			if (p2 == this->m_p)
-				return;
-			ReleasePtr();
-			SetFirstLockObj(p2);
-		}
-		bool SetLockObjTry(TYPE* p2, TIMESYSD_t dwWaitMS)
-		{
-			if (p2 == this->m_p)
-				return true;
-			ReleasePtr();
-			return SetFirstLockObjTry(p2, dwWaitMS);
-		}
-
-		// Assignment
-		const THIS_t& operator = (TYPE* p2)
-		{
-			put_Ptr(p2);
-			return *this;
-		}
-		const THIS_t& operator = (const THIS_t& ref)
-		{
-			put_Ptr(ref.m_p);
-			return *this;
-		}
-#endif // defined(_MT) || __linux__
-	};
-
-	typedef CThreadLockPtr<CThreadLockableObj> CThreadLockPtrX;
+	typedef cLockerT<cThreadLockCount> cThreadGuard;	// instantiated locker.
 };
 
-#endif // _INC_CThreadLock_H
+#endif // _INC_cThreadLock_H

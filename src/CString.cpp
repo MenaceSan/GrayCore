@@ -6,13 +6,13 @@
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 
 #include "pch.h"
-#include "CString.h"
-#include "CStream.h"
+#include "cString.h"
+#include "cStream.h"
 #include "StrU.h"
 #include "StrChar.h"
 #include "StrConst.h"
 #include "HResult.h"
-#include "CArchive.h"
+#include "cArchive.h"
 #include "StrArg.h"
 
 namespace Gray
@@ -21,12 +21,12 @@ namespace Gray
 #ifndef _MFC_VER
 
 	//***************************************************************************
-	// -cString, cStringT<>, CStringT
+	// -cString, cStringT<>, cStringT
 
 	template<>
-	const char CStringT<char>::m_Nil = '\0';		// Use this instead of nullptr. AKA CStrConst::k_Empty ?
+	const char CStringT<char>::m_Nil = '\0';		// Use this instead of nullptr. AKA cStrConst::k_Empty ?
 	template<>
-	const wchar_t CStringT<wchar_t>::m_Nil = '\0';	// Use this instead of nullptr. AKA CStrConst::k_Empty ?
+	const wchar_t CStringT<wchar_t>::m_Nil = '\0';	// Use this instead of nullptr. AKA cStrConst::k_Empty ?
 
 	template< typename _TYPE_CH>
 	void CStringT<_TYPE_CH>::AllocBuffer(StrLen_t iNewLength)
@@ -59,7 +59,7 @@ namespace Gray
 			if (iRefCounts == 1)
 			{
 				// just change the existing ref. or it may be the same size.
-				pData = (CStringData*)CHeap::ReAllocPtr(pData, sizeof(CStringData) + iStringLengthBytes);
+				pData = (CStringData*)cHeap::ReAllocPtr(pData, sizeof(CStringData) + iStringLengthBytes);
 				ASSERT_N(pData != nullptr);
 			}
 			else
@@ -76,7 +76,7 @@ namespace Gray
 			}
 		}
 
-		ASSERT(CHeap::GetSize(pData) >= (sizeof(CStringData) + iStringLengthBytes));
+		ASSERT(cHeap::GetSize(pData) >= (sizeof(CStringData) + iStringLengthBytes));
 		pData->put_CharCount(iNewLength);
 
 		m_pchData = reinterpret_cast<_TYPE_CH*>(pData->GetString());
@@ -280,7 +280,7 @@ namespace Gray
 		if (i > iLen)
 			i = iLen;
 		AllocBuffer(iLen + 1);
-		CMem::CopyOverlap(m_pchData + i + 1, m_pchData + i, iLen - i);
+		cMem::CopyOverlap(m_pchData + i + 1, m_pchData + i, iLen - i);
 		m_pchData[i] = ch;
 		return(GetLength());
 	}
@@ -308,7 +308,7 @@ namespace Gray
 				return k_ITERATE_BAD;
 			}
 			AllocBuffer(iLen + iLenCat);
-			CMem::CopyOverlap(m_pchData + i + iLenCat, m_pchData + i, (iLen - i) * sizeof(_TYPE_CH));
+			cMem::CopyOverlap(m_pchData + i + iLenCat, m_pchData + i, (iLen - i) * sizeof(_TYPE_CH));
 			::memcpy(m_pchData + i, pszStr, iLenCat * sizeof(_TYPE_CH));
 		}
 		return(GetLength());
@@ -416,7 +416,7 @@ namespace Gray
 	//***********************************************************************************************
 
 	template< typename _TYPE_CH>
-	HRESULT cStringT<_TYPE_CH>::ReadZ(CStreamInput& stmIn, StrLen_t iLenMax)
+	HRESULT cStringT<_TYPE_CH>::ReadZ(cStreamInput& stmIn, StrLen_t iLenMax)
 	{
 		//! Read in a new string from an open binary file. No length prefix.
 		//! @arg
@@ -440,7 +440,7 @@ namespace Gray
 	}
 
 	template< typename _TYPE_CH>
-	bool cStringT<_TYPE_CH>::WriteZ(CStreamOutput& File) const
+	bool cStringT<_TYPE_CH>::WriteZ(cStreamOutput& File) const
 	{
 		//! Write a string AND '\0' out to the file. No length prefix.
 		//! @arg
@@ -579,9 +579,9 @@ namespace Gray
 	}
 
 	template< typename _TYPE_CH>
-	HRESULT cStringT<_TYPE_CH>::SerializeInput(CStreamInput& File, StrLen_t iLenMax)
+	HRESULT cStringT<_TYPE_CH>::SerializeInput(cStreamInput& File, StrLen_t iLenMax)
 	{
-		//! Read in a new string from an open CStreamInput. CString
+		//! Read in a new string from an open cStreamInput. CString
 		//! Assume a size prefix. (in bytes not chars)
 		//! @arg
 		//!  File = the open file.
@@ -616,7 +616,7 @@ namespace Gray
 	}
 
 	template< typename _TYPE_CH>
-	HRESULT cStringT<_TYPE_CH>::SerializeOutput(CStreamOutput& File) const
+	HRESULT cStringT<_TYPE_CH>::SerializeOutput(cStreamOutput& File) const
 	{
 		//!  Write a string AND length (in bytes not chars) out to the file.
 		//! @arg
@@ -657,8 +657,8 @@ namespace Gray
 //****************************************************************
 
 #if USE_UNITTESTS
-#include "CUnitTest.h"
-#include "CLogMgr.h"
+#include "cUnitTest.h"
+#include "cLogMgr.h"
 
 namespace Gray
 {

@@ -1,12 +1,12 @@
 //
-//! @file CDebugAssert.cpp
+//! @file cDebugAssert.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 #include "pch.h"
-#include "CDebugAssert.h"
-#include "CLogMgr.h"
-#include "CString.h"
-#include "CExceptionAssert.h"
+#include "cDebugAssert.h"
+#include "cLogMgr.h"
+#include "cString.h"
+#include "cExceptionAssert.h"
 
 #ifdef UNDER_CE
 #include <dbgapi.h>
@@ -16,17 +16,17 @@
 
 namespace Gray
 {
-	AssertCallback_t* CDebugAssert::sm_pAssertCallback = CDebugAssert::Assert_System;	// default = pass to assert.
-	bool CDebugAssert::sm_bAssertTest = false;
+	AssertCallback_t* cDebugAssert::sm_pAssertCallback = cDebugAssert::Assert_System;	// default = pass to assert.
+	bool cDebugAssert::sm_bAssertTest = false;
 
 	//*************************************************************************
 
-	bool CALLBACK CDebugAssert::Assert_System(const char* pszExp, const CDebugSourceLine& src) // static
+	bool CALLBACK cDebugAssert::Assert_System(const char* pszExp, const cDebugSourceLine& src) // static
 	{
 		//! AssertCallback_t to use the system assert dialog. Use with sm_pAssertCallback.
 		//! @return true = continue and ignore the assert.
 
-		// if (sm_pAssertCallback == CDebugAssert::Assert_System && !CAppState::isDebuggerPresent()) return;	// Ignore it if no debugger present ?
+		// if (sm_pAssertCallback == cDebugAssert::Assert_System && !cAppState::isDebuggerPresent()) return;	// Ignore it if no debugger present ?
 
 #if defined(__linux__)
 		__assert_fail(pszExp, src.m_pszFile, src.m_uLine, "");
@@ -43,7 +43,7 @@ namespace Gray
 		return true;
 	}
 
-	bool GRAYCALL CDebugAssert::Assert_Fail(const char* pszExp, const CDebugSourceLine src)	// static
+	bool GRAYCALL cDebugAssert::Assert_Fail(const char* pszExp, const cDebugSourceLine src)	// static
 	{
 		//! like _assert() is M$ code.
 		//! Put something in the log after (or before?) doing normal assert processing. is this too dangerous?
@@ -59,7 +59,7 @@ namespace Gray
 		}
 
 		// Just log it and try to continue.
-		CLogMgr::I().addEventF(LOG_ATTR_DEBUG | LOG_ATTR_INTERNAL, LOGLEV_CRIT,
+		cLogMgr::I().addEventF(LOG_ATTR_DEBUG | LOG_ATTR_INTERNAL, LOGLEV_CRIT,
 			"Assert Fail:'%s' file '%s', line %d",
 			LOGSTR(pszExp), LOGSTR(src.m_pszFile), src.m_uLine);
 		// Flush logs.
@@ -68,7 +68,7 @@ namespace Gray
 		return false;
 	}
 
-	void GRAYCALL CDebugAssert::Assert_Throw(const char* pszExp, const CDebugSourceLine src) // static
+	void GRAYCALL cDebugAssert::Assert_Throw(const char* pszExp, const cDebugSourceLine src) // static
 	{
 		//! This assert cannot be ignored. We must throw cExceptionAssert after this. Things will be horribly corrupted if we don't?
 		//! Leave this in release code.
@@ -80,7 +80,7 @@ namespace Gray
 		}
 		else
 		{
-			CLogMgr::I().addEventF(LOG_ATTR_DEBUG | LOG_ATTR_INTERNAL, LOGLEV_CRIT,
+			cLogMgr::I().addEventF(LOG_ATTR_DEBUG | LOG_ATTR_INTERNAL, LOGLEV_CRIT,
 				"Assert Throw:'%s' file '%s', line %d",
 				LOGSTR(pszExp), LOGSTR(src.m_pszFile), src.m_uLine);
 		}
@@ -92,13 +92,13 @@ namespace Gray
 #endif
 	}
 
-	bool GRAYCALL CDebugAssert::Debug_Fail(const char* pszExp, const CDebugSourceLine src) // static
+	bool GRAYCALL cDebugAssert::Debug_Fail(const char* pszExp, const cDebugSourceLine src) // static
 	{
 		//! A 'softer' version of assert. non-fatal checks. for use in constructors, etc.
 		//! @note: always return false to indicate something failed. (for macro)
 		// CODEPROFILEFUNC();
 #ifdef _DEBUG
-		CLogMgr::I().addEventF(LOG_ATTR_DEBUG | LOG_ATTR_INTERNAL, LOGLEV_ERROR,
+		cLogMgr::I().addEventF(LOG_ATTR_DEBUG | LOG_ATTR_INTERNAL, LOGLEV_ERROR,
 			"Check Fail:'%s' file '%s', line %d",
 			LOGSTR(pszExp), LOGSTR(src.m_pszFile), src.m_uLine);
 #endif

@@ -1,18 +1,18 @@
 //
-//! @file COSModImpl.h
+//! @file cOSModImpl.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_COSModImpl_H
-#define _INC_COSModImpl_H
+#ifndef _INC_cOSModImpl_H
+#define _INC_cOSModImpl_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
-#include "COSModule.h"
-#include "CAtom.h"
-#include "CArraySort.h"
-#include "CSingleton.h"
+#include "cOSModule.h"
+#include "cAtom.h"
+#include "cArraySort.h"
+#include "cSingleton.h"
 
 #ifdef _MFC_VER
 #include "SysRes.h"
@@ -21,16 +21,16 @@
 
 namespace Gray
 {
-	class GRAYCORE_LINK COSModImpl
+	class GRAYCORE_LINK cOSModImpl
 	{
-		//! @class Gray::COSModImpl
+		//! @class Gray::cOSModImpl
 		//! My implementation of a DLL/SO. _WINDLL
-		//! Must be only one of these in a single link space for DLL/SO. So it is not a true CSingleton. Always static allocated. NEVER heap or Stack allocated.
-		//! Assume g_Module gets defined for the DLL/SO. On some derived class based on COSModImpl named g_Module.
-		//! e.g. COSModImpl g_Module("ModuleName");
+		//! Must be only one of these in a single link space for DLL/SO. So it is not a true cSingleton. Always static allocated. NEVER heap or Stack allocated.
+		//! Assume g_Module gets defined for the DLL/SO. On some derived class based on cOSModImpl named g_Module.
+		//! e.g. cOSModImpl g_Module("ModuleName");
 		//! @todo Support _WIN32 DLL_THREAD_ATTACH and DLL_THREAD_DETACH ?
 		//! Similar to MFC AFX_EXTENSION_MODULE DLLModule or CAtlDllModuleT
-		//! This might have a corresponding CXObjModulePtr. CIUnkPtr can be used alternatively.
+		//! This might have a corresponding CXObjModulePtr. cIUnkPtr can be used alternatively.
 
 	public:
 		const char* m_pszModuleName;	//!< Just derive this from the file name ?
@@ -44,8 +44,8 @@ namespace Gray
 		bool OnProcessAttach2();
 
 	public:
-		COSModImpl(const char* pszModuleName) noexcept;
-		virtual ~COSModImpl();
+		cOSModImpl(const char* pszModuleName) noexcept;
+		virtual ~cOSModImpl();
 
 		bool IsLoaded() const noexcept
 		{

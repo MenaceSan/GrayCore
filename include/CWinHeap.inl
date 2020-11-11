@@ -1,5 +1,5 @@
 //
-//! @file CWinHeap.inl
+//! @file cWinHeap.inl
 //! macro template for CWinLocalHandle, CWinLocalV, CWinLocalT<> etc
 //! @note requires proper #define set up. DON'T include this directly!
 //! "#define WINHEAPN(), WINHEAPM(), WINHEAPH, WINHEAPF()"
@@ -7,7 +7,7 @@
 
 namespace Gray
 {
-	class WINHEAPN(Handle) : public CMemBlock
+	class WINHEAPN(Handle) : public cMemBlock
 	{
 		//! CWinLocalHandle or CWinGlobalHandle
 		//! Wrap the HANDLE_t heap/memory object for lock/unlock of an instance. (HLOCAL or HGLOBAL)
@@ -17,7 +17,7 @@ namespace Gray
 		typedef WINHEAPH HANDLE_t;
 		WINHEAPN(Handle)(HANDLE_t hData = HANDLE_NULL, void* pData = nullptr, size_t nSize = 0)
 			: m_hData(hData)
-			, CMemBlock(pData, nSize)	// size may not be known?
+			, cMemBlock(pData, nSize)	// size may not be known?
 		{
 			//! Attach existing handle to this class.
 		}
@@ -170,7 +170,7 @@ namespace Gray
 		//! CWinLocalV or CWinGlobalV
 		//! Wrap the HANDLE_t heap/memory allocation object.
 		//! Similar to MFC CGlobalHeap or CWin32Heap
-		//! Similar to CHeapBlock
+		//! Similar to cHeapBlock
 		//! Free on destruct
 
 		typedef WINHEAPN(Handle) SUPER_t;
@@ -236,7 +236,7 @@ namespace Gray
 	template <class _TYPE>
 	struct WINHEAPN(T) : public WINHEAPN(V)
 	{
-		//! A type cast windows heap pointer/handle pair. like CMemBlockT<>
+		//! A type cast windows heap pointer/handle pair. like cMemBlockT<>
 		//! CWinGlobalT<> or CWinLocalT<>
 		typedef WINHEAPN(V) SUPER_t;
 

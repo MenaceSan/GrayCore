@@ -1,15 +1,15 @@
 //
-//! @file CExceptionAssert.h
+//! @file cExceptionAssert.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CExceptionAssert_H
-#define _INC_CExceptionAssert_H
+#ifndef _INC_cExceptionAssert_H
+#define _INC_cExceptionAssert_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
-#include "CException.h"
+#include "cException.h"
 
 namespace Gray
 {
@@ -19,12 +19,12 @@ namespace Gray
 		//! Asserts can be seen as exceptions. details from coded ASSERT stuff.
 	protected:
 		const LOGCHAR_t* const m_pExp;
-		const CDebugSourceLine m_Src;	// DEBUGSOURCELINE __FILE__ __LINE__
+		const cDebugSourceLine m_Src;	// DEBUGSOURCELINE __FILE__ __LINE__
 	public:
-		cExceptionAssert(const LOGCHAR_t* pExp, LOGLEV_TYPE eSeverity, const CDebugSourceLine& src);
+		cExceptionAssert(const LOGCHAR_t* pExp, LOGLEV_TYPE eSeverity, const cDebugSourceLine& src);
 		virtual ~cExceptionAssert() THROW_DEF;
 		virtual BOOL GetErrorMessage(GChar_t* lpszError, UINT nMaxError, UINT* pnHelpContext) override;
-		static void GRAYCALL Throw(const LOGCHAR_t* pExp, const CDebugSourceLine& src);
+		static void GRAYCALL Throw(const LOGCHAR_t* pExp, const cDebugSourceLine& src);
 	};
 };
 

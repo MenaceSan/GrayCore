@@ -1,30 +1,30 @@
 //
-//! @file CArraySmart.h
+//! @file cArrayRef.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CArraySmart_H
-#define _INC_CArraySmart_H
+#ifndef _INC_cArrayRef_H
+#define _INC_cArrayRef_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
-#include "CArray.h"
-#include "CSmartPtr.h"
+#include "cArray.h"
+#include "cRefPtr.h"
 
 namespace Gray
 {
-#define GRAY_FOREACH_S(a,b,c) GRAY_FOREACH( CSmartPtr<a>, b, c )
+#define GRAY_FOREACH_S(a,b,c) GRAY_FOREACH( cRefPtr<a>, b, c )
 
 	template<class TYPE>
-	class CArraySmart : public CArrayFacade < CSmartPtr<TYPE>, TYPE* >
+	class cArrayRef : public cArrayFacade < cRefPtr<TYPE>, TYPE* >
 	{
-		//! @class Gray::CArraySmart
-		//! All items in this array are base on CSmartBase. NON sorted.
-		//! The array owns a reference to the object like CSmartPtr.
+		//! @class Gray::cArrayRef
+		//! All items in this array are base on cRefBase. NON sorted.
+		//! The array owns a reference to the object like cRefPtr.
 		//! Element will get deleted when all references are gone.
 
-		typedef CArrayFacade< CSmartPtr<TYPE>, TYPE* > SUPER_t;
+		typedef cArrayFacade< cRefPtr<TYPE>, TYPE* > SUPER_t;
 
 	public:
 		void DisposeAll()

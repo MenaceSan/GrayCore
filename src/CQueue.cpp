@@ -1,12 +1,12 @@
 //
-//! @file CQueue.cpp
+//! @file cQueue.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
 #include "pch.h"
-#include "CQueue.h"
-#include "CUnitTest.h"
-#include "CLogMgr.h"
+#include "cQueue.h"
+#include "cUnitTest.h"
+#include "cLogMgr.h"
 
 namespace Gray
 {
@@ -53,17 +53,17 @@ UNITTEST_CLASS(cQueueBase)
 {
 	const GChar_t* UnitTest_GetSrc(ITERATE_t i, ITERATE_t& riSrcLenMax)
 	{
-		//! k_sTextBlob = CUnitTests::k_TEXTBLOB_LEN
-		i %= CUnitTests::k_TEXTBLOB_LEN;
-		riSrcLenMax = CUnitTests::k_TEXTBLOB_LEN - i;
+		//! k_sTextBlob = cUnitTests::k_TEXTBLOB_LEN
+		i %= cUnitTests::k_TEXTBLOB_LEN;
+		riSrcLenMax = cUnitTests::k_TEXTBLOB_LEN - i;
 		return static_cast<const GChar_t*>(k_sTextBlob) + i;
 	}
 	UNITTEST_METHOD(cQueueBase)
 	{
 		// Read test cQueueRead
-		cQueueRead<GChar_t> qr(k_sTextBlob, 0, CUnitTests::k_TEXTBLOB_LEN);
+		cQueueRead<GChar_t> qr(k_sTextBlob, 0, cUnitTests::k_TEXTBLOB_LEN);
 
-		for (StrLen_t i = 0; i < CUnitTests::k_TEXTBLOB_LEN; i++)
+		for (StrLen_t i = 0; i < cUnitTests::k_TEXTBLOB_LEN; i++)
 		{
 			GChar_t szTmp[2];
 			qr.ReadQty(szTmp, _countof(szTmp)); // STRMAX
@@ -71,7 +71,7 @@ UNITTEST_CLASS(cQueueBase)
 
 		// Read/Write test. cQueueBytes
 		cQueueBytes qb;
-		for (StrLen_t i = 0; i < CUnitTests::k_TEXTBLOB_LEN; i++)
+		for (StrLen_t i = 0; i < cUnitTests::k_TEXTBLOB_LEN; i++)
 		{
 		}
 

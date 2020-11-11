@@ -1,10 +1,10 @@
 //
-//! @file CNonCopyable.h
+//! @file cNonCopyable.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CNonCopyable_H
-#define _INC_CNonCopyable_H
+#ifndef _INC_cNonCopyable_H
+#define _INC_cNonCopyable_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
@@ -13,9 +13,9 @@
 
 namespace Gray
 {
-	class GRAYCORE_LINK CNonCopyable // 
+	class GRAYCORE_LINK cNonCopyable // 
 	{
-		//! @class Gray::CNonCopyable
+		//! @class Gray::cNonCopyable
 		//! Block C++ usage of default copy constructor. base a class on this with protected type.
 		//! http://stackoverflow.com/questions/4172722/what-is-the-rule-of-three
 		//! @note don't use inheritance for templates defined in DLL/SO that might have statics. Use the NonCopyable_IMPL instead. 
@@ -23,9 +23,9 @@ namespace Gray
 
 	protected:
 		//! Force the use of Factory creation via protected constructor.
-		CNonCopyable()
+		cNonCopyable() noexcept
 		{}
-		~CNonCopyable()
+		~cNonCopyable() noexcept
 		{}
 	
 		//! Restrict the copy constructor and assignment operator
@@ -33,7 +33,7 @@ namespace Gray
 		//! Make this a macro to avoid linkage inconsistency with use in DLL/SO and templates.
 #define NonCopyable_IMPL(_TYPE) private: _TYPE(const _TYPE&) IS_DELETE; const _TYPE& operator=(const _TYPE&) IS_DELETE;
 
-		NonCopyable_IMPL(CNonCopyable);
+		NonCopyable_IMPL(cNonCopyable);
 	};
 };
-#endif // CNonCopyable
+#endif // cNonCopyable

@@ -75,7 +75,7 @@
 // Useless MSVC2010 warnings: at /W4 level
 #pragma warning(disable:4510)	// default constructor could not be generated
 #pragma warning(disable:4512)	// assignment operator could not be generated
-#pragma warning(disable:4610)	// class 'Gray::CTypeInfo' can never be instantiated - user defined constructor required
+#pragma warning(disable:4610)	// class 'Gray::cTypeInfo' can never be instantiated - user defined constructor required
 
 #endif // _MSC_VER >= 1000
 
@@ -236,7 +236,7 @@
 
 #ifndef RC_INVOKED
 
-// see CMemT::NtoH() and CMemT::HtoN() for auto conversion to big endian (network)
+// see cMemT::NtoH() and cMemT::HtoN() for auto conversion to big endian (network)
 // e.g. on little endian (Intel). 0x123456 = 56 34 12 00
 #if defined(_M_IX86) || defined(_M_X64) || defined(_M_AMD64) || defined(_M_IA64) || defined(_AMD64_) || defined(__ia64__) || defined(__x86_64__)
 #define USE_INTEL 1				//!< X86 type instructions and _asm.

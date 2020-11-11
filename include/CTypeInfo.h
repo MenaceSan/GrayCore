@@ -1,22 +1,22 @@
 //
-//! @file CTypeInfo.h
+//! @file cTypeInfo.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//! @todo CTypeInfo
+//! @todo cTypeInfo
 //
-#ifndef _INC_CTypeInfo_H
-#define _INC_CTypeInfo_H
+#ifndef _INC_cTypeInfo_H
+#define _INC_cTypeInfo_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
 #include "GrayCore.h"
-#include "CUnitTestDecl.h"
+#include "cUnitTestDecl.h"
 
 #ifndef UNDER_CE
 #include <typeinfo>		// type_info& typeid(class type) std::
 #endif
 
-UNITTEST_PREDEF(CTypeInfo)
+UNITTEST_PREDEF(cTypeInfo)
 
 namespace Gray
 {
@@ -30,13 +30,13 @@ namespace Gray
 	typedef std::type_info TYPEINFO_t;	// Info from typeid()
 #endif
 
-	class GRAYCORE_LINK CTypeInfo : public TYPEINFO_t
+	class GRAYCORE_LINK cTypeInfo : public TYPEINFO_t
 	{
-		//! @class Gray::CTypeInfo
+		//! @class Gray::cTypeInfo
 		//! Get reflection info about a C++ class that has virtuals and RTTI. Read its vtable. (_CPPRTTI)
 		//! Supplement/helper for built in TYPEINFO_t via typeid()
 		//! @note ASSUME TYPEINFO_t/type_info Always supports name(), hashcode() ?
-		//! @todo CTypeInfo List of virtual members from vtable.
+		//! @todo cTypeInfo List of virtual members from vtable.
 
 	public:
 		size_t get_HashCode() const
@@ -55,7 +55,7 @@ namespace Gray
 
 		const char* GetMemberName(int i) const;
 
-		UNITTEST_FRIEND(CTypeInfo);
+		UNITTEST_FRIEND(cTypeInfo);
 	};
 }
 #endif

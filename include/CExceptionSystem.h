@@ -1,16 +1,16 @@
 //
-//! @file CExceptionSystem.h
+//! @file cExceptionSystem.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CExceptionSystem_H
-#define _INC_CExceptionSystem_H
+#ifndef _INC_cExceptionSystem_H
+#define _INC_cExceptionSystem_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
-#include "CException.h"
-#include "CUnitTestDecl.h"
+#include "cException.h"
+#include "cUnitTestDecl.h"
 
 #if defined(_CPPUNWIND)
 

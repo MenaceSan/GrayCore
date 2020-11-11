@@ -1,11 +1,11 @@
 //
-//! @file CSecurityAttributes.cpp
+//! @file cSecurityAttributes.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
 #include "pch.h"
-#include "CSecurityAttributes.h"
-#include "CLogMgr.h"
+#include "cSecurityAttributes.h"
+#include "cLogMgr.h"
 
 #if defined(_WIN32) && ! defined(UNDER_CE)
 #include <sddl.h>
@@ -58,12 +58,12 @@ WINADVAPI BOOL WINAPI ConvertStringSidToSidW( IN LPCWSTR   StringSid, OUT PSID  
 
 namespace Gray
 {
-	CSecurityId::CSecurityId()
+	cSecurityId::cSecurityId()
 	{
 		// Empty SID
 	}
 
-	CSecurityId::CSecurityId(WELL_KNOWN_SID_TYPE eWellKnownSidType)
+	cSecurityId::cSecurityId(WELL_KNOWN_SID_TYPE eWellKnownSidType)
 	{
 		// Variable Sized. samples use LocalAlloc() except for AllocateAndInitializeSid()
 		DWORD dwSize = SECURITY_MAX_SID_SIZE;
@@ -71,19 +71,19 @@ namespace Gray
 		if (!::CreateWellKnownSid(eWellKnownSidType, nullptr, get_SID(), &dwSize))
 		{
 			this->Free();
-			DEBUG_ERR(("CSecurityId CreateWellKnownSid"));
+			DEBUG_ERR(("cSecurityId CreateWellKnownSid"));
 		}
 		else
 		{
 			this->ReAlloc(dwSize);	// trim buffer to used size.
 		}
 	}
-	CSecurityId::~CSecurityId()
+	cSecurityId::~cSecurityId()
 	{
 	}
 
 #if 0
-	CSecurityId::CSecurityId(DWORD dwSecondSubAuth)
+	cSecurityId::cSecurityId(DWORD dwSecondSubAuth)
 	{
 		// a SID with 2 sub authorities
 		SecureZeroMemory(IdentifierAuthority.Value, sizeof(IdentifierAuthority.Value));
@@ -95,7 +95,7 @@ namespace Gray
 	}
 #endif
 
-	bool CSecurityId::SetSID(SID* pSID)
+	bool cSecurityId::SetSID(SID* pSID)
 	{
 		//! Copy SID.
 		if (pSID == nullptr)
@@ -117,7 +117,7 @@ namespace Gray
 		return true;
 	}
 
-	cString CSecurityId::GetStringSID() const
+	cString cSecurityId::GetStringSID() const
 	{
 		//! e.g. S-1-5-21-3686267286-921206174-156832652-1000
 		LPTSTR pStringSid = nullptr;
@@ -130,7 +130,7 @@ namespace Gray
 		return sSID;
 	}
 
-	bool CSecurityId::SetStringSID(const GChar_t* pszSID)
+	bool cSecurityId::SetStringSID(const GChar_t* pszSID)
 	{
 		//! e.g. S-1-5-21-3686267286-921206174-156832652-1000
 		//! _GT("S-1-1-0") = share to all users.
@@ -142,7 +142,7 @@ namespace Gray
 		return true;
 	}
 
-	HRESULT CSecurityId::SetByUserName(const GChar_t* pszUserName)
+	HRESULT cSecurityId::SetByUserName(const GChar_t* pszUserName)
 	{
 		//! Find a user by name. set to SID for this user.
 		//! @return SID_NAME_USE (the user account type)
@@ -180,7 +180,7 @@ namespace Gray
 
 	//****************************************
 
-	CSecurityACL::CSecurityACL(SID* pSidFirst, DWORD dwAccessMask)
+	cSecurityACL::cSecurityACL(SID* pSidFirst, DWORD dwAccessMask)
 	{
 		//! declared access list.
 		//! Variable Sized. samples use LocalAlloc()
@@ -192,7 +192,7 @@ namespace Gray
 		if (!::InitializeAcl(get_ACL(), nACLSizeEst, ACL_REVISION))
 		{
 			this->Free();
-			DEBUG_ERR(("CSecurityACL InitializeAcl"));
+			DEBUG_ERR(("cSecurityACL InitializeAcl"));
 		}
 		ASSERT(isValid());
 		if (pSidFirst)
@@ -201,11 +201,11 @@ namespace Gray
 		}
 	}
 
-	CSecurityACL::~CSecurityACL()
+	cSecurityACL::~cSecurityACL()
 	{
 	}
 
-	bool CSecurityACL::AddAllowedAce(SID* pSid, DWORD dwAccessMask)
+	bool cSecurityACL::AddAllowedAce(SID* pSid, DWORD dwAccessMask)
 	{
 		//! same as ATL CDacl::AddAllowedAce
 		//! do not use the EX version - ACE inheritance is not required.
@@ -215,7 +215,7 @@ namespace Gray
 		if (!::AddAccessAllowedAce(get_ACL(), ACL_REVISION, dwAccessMask, pSid))
 		{
 			this->Free();	// kill it.
-			DEBUG_ERR(("CSecurityACL AddAccessAllowedAce"));
+			DEBUG_ERR(("cSecurityACL AddAccessAllowedAce"));
 			return false;
 		}
 
@@ -224,9 +224,9 @@ namespace Gray
 
 	//****************************************
 
-	const FILECHAR_t* CSecurityDesc::k_szLowIntegrity = _FN("S:(ML;;NW;;;LW)");
+	const FILECHAR_t* cSecurityDesc::k_szLowIntegrity = _FN("S:(ML;;NW;;;LW)");
 
-	CSecurityDesc::CSecurityDesc(ACL* pDacl)
+	cSecurityDesc::cSecurityDesc(ACL* pDacl)
 	{
 		//! @note pDacl can be nullptr
 		Alloc(sizeof(SECURITY_DESCRIPTOR));
@@ -234,7 +234,7 @@ namespace Gray
 		if (!::InitializeSecurityDescriptor(get_Data(), SECURITY_DESCRIPTOR_REVISION))
 		{
 			Free();
-			DEBUG_ERR(("CSecurityDesc InitializeSecurityDescriptor "));
+			DEBUG_ERR(("cSecurityDesc InitializeSecurityDescriptor "));
 			return;
 		}
 
@@ -242,23 +242,23 @@ namespace Gray
 		if (!SetDacl(pDacl, true, false))
 		{
 			Free();
-			DEBUG_ERR(("CSecurityDesc SetSecurityDescriptorDacl "));
+			DEBUG_ERR(("cSecurityDesc SetSecurityDescriptorDacl "));
 			return;
 		}
 
 		ASSERT(isValid());
 	}
 
-	CSecurityDesc::CSecurityDesc(const FILECHAR_t* pszSaclName)
+	cSecurityDesc::cSecurityDesc(const FILECHAR_t* pszSaclName)
 	{
 		InitSecurityDesc(pszSaclName);
 	}
 
-	CSecurityDesc::~CSecurityDesc()
+	cSecurityDesc::~cSecurityDesc()
 	{
 	}
 
-	bool CSecurityDesc::InitSecurityDesc(const FILECHAR_t* pszSaclName)
+	bool cSecurityDesc::InitSecurityDesc(const FILECHAR_t* pszSaclName)
 	{
 		//! Create a _WIN32 security descriptor from a string.
 		//! pwStr = L"S:(ML;;NW;;;LW)" = k_szLowIntegrity.
@@ -279,7 +279,7 @@ namespace Gray
 		return true;
 	}
 
-	bool CSecurityDesc::InitLowIntegrity()
+	bool cSecurityDesc::InitLowIntegrity()
 	{
 		//! set to "low integrity". k_szLowIntegrity.
 		//! LOW_INTEGRITY_SDDL_SACL_W = L"S:(ML;;NW;;;LW)";
@@ -287,7 +287,7 @@ namespace Gray
 		return InitSecurityDesc(k_szLowIntegrity);
 	}
 
-	bool CSecurityDesc::AttachToObject(HANDLE hObject, SE_OBJECT_TYPE eType) const
+	bool cSecurityDesc::AttachToObject(HANDLE hObject, SE_OBJECT_TYPE eType) const
 	{
 		//! Attach this security descriptor to some system hObject.
 		//! eType = SE_KERNEL_OBJECT
@@ -311,36 +311,36 @@ namespace Gray
 
 	//*******************************
 
-	CSecurityAttributes::CSecurityAttributes(bool bInheritHandle, ACL* pDacl)
+	cSecurityAttributes::cSecurityAttributes(bool bInheritHandle, ACL* pDacl)
 		: m_sd(pDacl)
 	{
-		CMem::Zero(static_cast<SECURITY_ATTRIBUTES*>(this), sizeof(SECURITY_ATTRIBUTES));
+		cMem::Zero(static_cast<SECURITY_ATTRIBUTES*>(this), sizeof(SECURITY_ATTRIBUTES));
 		this->nLength = sizeof(SECURITY_ATTRIBUTES);
 		this->bInheritHandle = bInheritHandle;
 		UpdateSecurityDescriptor();
 	}
 
-	CSecurityAttributes::CSecurityAttributes(bool bInheritHandle, const FILECHAR_t* pszSaclName)
+	cSecurityAttributes::cSecurityAttributes(bool bInheritHandle, const FILECHAR_t* pszSaclName)
 		: m_sd(pszSaclName)
 	{
-		CMem::Zero(static_cast<SECURITY_ATTRIBUTES*>(this), sizeof(SECURITY_ATTRIBUTES));
+		cMem::Zero(static_cast<SECURITY_ATTRIBUTES*>(this), sizeof(SECURITY_ATTRIBUTES));
 		this->nLength = sizeof(SECURITY_ATTRIBUTES);
 		this->bInheritHandle = bInheritHandle;
 		UpdateSecurityDescriptor();
 	}
 
-	CSecurityAttributes::~CSecurityAttributes(void)
+	cSecurityAttributes::~cSecurityAttributes(void)
 	{
 	}
 
-	bool CSecurityAttributes::isValid() const
+	bool cSecurityAttributes::isValid() const
 	{
 		if (this->nLength <= 0)
 			return false;
-		return CSecurityDesc::IsValid((SECURITY_DESCRIPTOR*)(this->lpSecurityDescriptor));
+		return cSecurityDesc::IsValid((SECURITY_DESCRIPTOR*)(this->lpSecurityDescriptor));
 	}
 
-	void CSecurityAttributes::UpdateSecurityDescriptor()
+	void cSecurityAttributes::UpdateSecurityDescriptor()
 	{
 		// update
 		SECURITY_DESCRIPTOR* pSD = m_sd.get_Data();
@@ -351,34 +351,34 @@ namespace Gray
 //****************************************************************************
 
 #if USE_UNITTESTS
-#include "COSUser.h"
+#include "cOSUser.h"
 #include "CFile.h"
-#include "CUnitTest.h"
+#include "cUnitTest.h"
 
-UNITTEST_CLASS(CSecurityAttributes)
+UNITTEST_CLASS(cSecurityAttributes)
 {
-	UNITTEST_METHOD(CSecurityAttributes)
+	UNITTEST_METHOD(cSecurityAttributes)
 	{
-		// CSecurityId sidUsers(DOMAIN_ALIAS_RID_USERS);
-		// CSecurityId sidAdmins(DOMAIN_ALIAS_RID_ADMINS);
+		// cSecurityId sidUsers(DOMAIN_ALIAS_RID_USERS);
+		// cSecurityId sidAdmins(DOMAIN_ALIAS_RID_ADMINS);
 
-		CSecurityId sidUser;
-		COSUserToken token;
+		cSecurityId sidUser;
+		cOSUserToken token;
 		HRESULT hRes = token.GetSID(sidUser);
 		UNITTEST_TRUE(SUCCEEDED(hRes));
 		sm_pLog->addInfoF("sidUser='%s'", LOGSTR(sidUser.GetStringSID()));
 
-		CSecurityId sidEveryone(WinLocalSid);
+		cSecurityId sidEveryone(WinLocalSid);
 		sm_pLog->addInfoF("WinLocalSid='%s'", LOGSTR(sidEveryone.GetStringSID()));
 
-		CSecurityACL dacl1(sidEveryone, GENERIC_ALL);
-		CSecurityAttributes sa1(false, dacl1);
+		cSecurityACL dacl1(sidEveryone, GENERIC_ALL);
+		cSecurityAttributes sa1(false, dacl1);
 
-		CSecurityAttribsWKS saNull(WinNullSid);	// anyone.
-		CSecurityAttribsWKS sa2(WinBuiltinUsersSid);	// WinBuiltinPowerUsersSid
+		cSecurityAttribsWKS saNull(WinNullSid);	// anyone.
+		cSecurityAttribsWKS sa2(WinBuiltinUsersSid);	// WinBuiltinPowerUsersSid
 
 		// TODO: Create a file and assign it this privilege.
-		CStringF sPathOut = CFilePath::CombineFilePathX(get_TestOutDir(), _FN(GRAY_NAMES) _FN("CSecurityAttributes") _FN(MIME_EXT_txt));
+		cStringF sPathOut = cFilePath::CombineFilePathX(get_TestOutDir(), _FN(GRAY_NAMES) _FN("cSecurityAttributes") _FN(MIME_EXT_txt));
 		hRes = cFile::DeletePath(sPathOut);
 
 		cFile fileTest;
@@ -387,10 +387,10 @@ UNITTEST_CLASS(CSecurityAttributes)
 		hRes = fileTest.WriteX("WinLocalSid\n", 5);
 		UNITTEST_TRUE(SUCCEEDED(hRes));
 
-		CSecurityAttributes sa3;
+		cSecurityAttributes sa3;
 	}
 };
-UNITTEST_REGISTER(CSecurityAttributes, UNITTEST_LEVEL_Lib);
+UNITTEST_REGISTER(cSecurityAttributes, UNITTEST_LEVEL_Lib);
 #endif
 
 #endif // _WIN32

@@ -4,7 +4,7 @@
 //
 #include "pch.h"
 #include "StrChar.h"
-#include "CLogMgr.h"
+#include "cLogMgr.h"
 #include "StrA.h"
 #include "StrU.h"
 
@@ -109,7 +109,7 @@ namespace Gray
 //*****************************************************************
 
 #if USE_UNITTESTS
-#include "CUnitTest.h"
+#include "cUnitTest.h"
 
 UNITTEST_CLASS(StrChar)
 {

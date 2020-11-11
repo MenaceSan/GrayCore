@@ -1,16 +1,16 @@
 //
-//! @file CException.cpp
+//! @file cException.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
 #include "pch.h"
-#include "CException.h"
-#include "CString.h"
-#include "CTimeSys.h"
-#include "CCodeProfiler.h"
-#include "CLogMgr.h"
+#include "cException.h"
+#include "cString.h"
+#include "cTimeSys.h"
+#include "cCodeProfiler.h"
+#include "cLogMgr.h"
 #include "StrU.h"
-#include "CObjectCreator.h"
+#include "cObjectCreator.h"
 
 namespace Gray
 {
@@ -51,7 +51,7 @@ namespace Gray
 		return pEx->GetErrorMessage(lpszError, nLenMaxError, nullptr);
 #endif
 	}
-	CStringL cExceptionHolder::get_ErrorStr() const
+	cStringL cExceptionHolder::get_ErrorStr() const
 	{
 		if (m_p == nullptr)
 		{
@@ -95,12 +95,12 @@ namespace Gray
 		UNREFERENCED_PARAMETER(pnHelpContext);
 		StrLen_t iLen = StrT::sprintfN(lpszError, nLenMaxError - 1,
 			_GT("%s'%s'"),
-			StrArg<GChar_t>(CLogLevel::GetPrefixStr(m_eSeverity)), StrArg<GChar_t>(m_pszDescription));
+			StrArg<GChar_t>(cLogLevel::GetPrefixStr(m_eSeverity)), StrArg<GChar_t>(m_pszDescription));
 		UNREFERENCED_PARAMETER(iLen);
 		return true;
 	}
 
-	GRAYCORE_LINK CStringL cException::get_ErrorStr() // similar to STL what()
+	GRAYCORE_LINK cStringL cException::get_ErrorStr() // similar to STL what()
 	{
 		// Get error in UTF8.
 		GChar_t szTmp[cExceptionHolder::k_MSG_MAX_SIZE];
@@ -138,7 +138,7 @@ namespace Gray
 //***************************************************************************
 
 #if USE_UNITTESTS
-#include "CUnitTest.h"
+#include "cUnitTest.h"
 
 UNITTEST_CLASS(cException)
 {
@@ -164,7 +164,7 @@ UNITTEST_CLASS(cException)
 			// We should get here.
 			cExceptionHolder exh(ex);	// kill it.
 			UNITTEST_TRUE(exh.get_Severity() == LOGLEV_TRACE);
-			CStringL sMsg = exh.get_ErrorStr();	// may have prefix.
+			cStringL sMsg = exh.get_ErrorStr();	// may have prefix.
 			UNITTEST_TRUE(sMsg.Contains(k_pszMsg));
 			return;	// done.
 		}

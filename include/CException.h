@@ -1,5 +1,5 @@
 //
-//! @file CException.h
+//! @file cException.h
 //! Custom exception classes.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 
@@ -9,10 +9,10 @@
 #pragma once
 #endif
 
-#include "CExceptionBase.h"
+#include "cExceptionBase.h"
 #include "HResult.h"
-#include "CUnitTestDecl.h"
-#include "CObjectCreator.h"		// DECLARE_DYNAMIC
+#include "cUnitTestDecl.h"
+#include "cObjectCreator.h"		// DECLARE_DYNAMIC
 
 UNITTEST_PREDEF(cException)
 
@@ -56,7 +56,7 @@ namespace Gray
 		//! overloaded to provide context specific error messages.
 		//! @note stupid BOOL return is for MFC compatibility.
 		virtual BOOL GetErrorMessage(GChar_t* lpszError, UINT nLenMaxError = cExceptionHolder::k_MSG_MAX_SIZE, UINT* pnHelpContext = nullptr);
-		CStringL get_ErrorStr(); // similar to STL what()
+		cStringL get_ErrorStr(); // similar to STL what()
 
 #ifndef _MFC_VER	// using _MFC_VER.
 		virtual const char* what() const THROW_DEF

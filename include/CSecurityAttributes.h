@@ -1,15 +1,15 @@
 //
-//! @file CSecurityAttributes.h
+//! @file cSecurityAttributes.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CSecurityAttributes_H
-#define _INC_CSecurityAttributes_H
+#ifndef _INC_cSecurityAttributes_H
+#define _INC_cSecurityAttributes_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
-#include "CWinHeap2.h"
+#include "cWinHeap2.h"
 
 #if defined(_WIN32) && ! defined(UNDER_CE)
 #include <accctrl.h>
@@ -25,13 +25,13 @@ enum WELL_KNOWN_SID_TYPE
 #define SID_MAX_SUB_AUTHORITIES 15
 #define SECURITY_MAX_SID_SIZE  (sizeof(SID) - sizeof(DWORD) + (SID_MAX_SUB_AUTHORITIES * sizeof(DWORD)))
 #endif
-UNITTEST_PREDEF(CSecurityAttributes)
+UNITTEST_PREDEF(cSecurityAttributes)
 
 namespace Gray
 {
-	class GRAYCORE_LINK CSecurityId : private CWinLocalT < SID >
+	class GRAYCORE_LINK cSecurityId : private CWinLocalT < SID >
 	{
-		//! @class GrayLib::CSecurityId
+		//! @class GrayLib::cSecurityId
 		//! A users id; or id group. http://msdn.microsoft.com/en-us/library/aa379594%28v=VS.85%29.aspx
 		//! ATL calls this CSid
 		//! Variable Sized.
@@ -45,9 +45,9 @@ namespace Gray
 
 		typedef CWinLocalT<SID> SUPER_t;
 	public:
-		CSecurityId();
-		CSecurityId(WELL_KNOWN_SID_TYPE eWellKnownSidType);
-		~CSecurityId();
+		cSecurityId();
+		cSecurityId(WELL_KNOWN_SID_TYPE eWellKnownSidType);
+		~cSecurityId();
 
 		SID* get_SID() const
 		{
@@ -77,9 +77,9 @@ namespace Gray
 		HRESULT SetByUserName(const GChar_t* pszUserName);
 	};
 
-	class GRAYCORE_LINK CSecurityACL : private CWinLocalT < ACL >
+	class GRAYCORE_LINK cSecurityACL : private CWinLocalT < ACL >
 	{
-		//! @class GrayLib::CSecurityACL
+		//! @class GrayLib::cSecurityACL
 		//! "Discretionary access-control list" (Dacl) or (Sacl)
 		//! ATL calls this CAcl, CDacl and CSacl
 		//! Variable Sized array of ACE. No real need to use  LocalAlloc(), LocalFree()
@@ -87,8 +87,8 @@ namespace Gray
 
 		typedef CWinLocalT<ACL> SUPER_t;
 	public:
-		CSecurityACL(SID* pSidFirst = nullptr, DWORD dwAccessMask = GENERIC_ALL);
-		~CSecurityACL();
+		cSecurityACL(SID* pSidFirst = nullptr, DWORD dwAccessMask = GENERIC_ALL);
+		~cSecurityACL();
 
 		ACL* get_ACL() const
 		{
@@ -114,20 +114,20 @@ namespace Gray
 		bool AddAllowedAce(SID* pSid, DWORD dwAccessMask = GENERIC_ALL);
 	};
 
-	class GRAYCORE_LINK CSecurityDesc : public CWinLocalT < SECURITY_DESCRIPTOR >
+	class GRAYCORE_LINK cSecurityDesc : public CWinLocalT < SECURITY_DESCRIPTOR >
 	{
-		//! @class GrayLib::CSecurityDesc
+		//! @class GrayLib::cSecurityDesc
 		//! Windows security descriptor is added to SECURITY_ATTRIBUTES
-		//! Same as ATL CSecurityDesc
+		//! Same as ATL cSecurityDesc
 		//! some _WIN32 calls expect LocalFree() to be called for pointer returned.
 
 	public:
 		static const FILECHAR_t* k_szLowIntegrity;	// L"S:(ML;;NW;;;LW)";
 
 	public:
-		CSecurityDesc(ACL* pDacl = nullptr);
-		CSecurityDesc(const FILECHAR_t* pszSaclName);
-		~CSecurityDesc();
+		cSecurityDesc(ACL* pDacl = nullptr);
+		cSecurityDesc(const FILECHAR_t* pszSaclName);
+		~cSecurityDesc();
 
 		bool InitSecurityDesc(const FILECHAR_t* pszSaclName);
 		bool InitLowIntegrity();
@@ -148,7 +148,7 @@ namespace Gray
 		}
 		ACL* GetSacl(BOOL* pbSaclPresent = nullptr, BOOL* pbSaclDefaulted = nullptr) const
 		{
-			//! Get attached CSecurityACL. No need to free this pointer.
+			//! Get attached cSecurityACL. No need to free this pointer.
 			ACL* pSacl = nullptr;
 			if (!::GetSecurityDescriptorSacl(get_Data(), pbSaclPresent, &pSacl, pbSaclDefaulted))
 			{
@@ -173,7 +173,7 @@ namespace Gray
 
 		ACL* GetDacl(BOOL* pbDaclPresent = nullptr, BOOL* pbDaclDefaulted = nullptr) const
 		{
-			//! Get attached CSecurityACL. No need to free this pointer.
+			//! Get attached cSecurityACL. No need to free this pointer.
 			ACL* pDacl = nullptr;
 			if (!::GetSecurityDescriptorDacl(get_Data(), pbDaclPresent, &pDacl, pbDaclDefaulted))
 			{
@@ -194,22 +194,22 @@ namespace Gray
 		bool AttachToObject(HANDLE hObject, SE_OBJECT_TYPE type = SE_KERNEL_OBJECT) const;
 	};
 
-	class GRAYCORE_LINK CSecurityAttributes : public SECURITY_ATTRIBUTES
+	class GRAYCORE_LINK cSecurityAttributes : public SECURITY_ATTRIBUTES
 	{
-		//! @class GrayLib::CSecurityAttributes
+		//! @class GrayLib::cSecurityAttributes
 		//! Windows security attributes. for CreateFile etc.
-		//! Same as ATL CSecurityAttributes
+		//! Same as ATL cSecurityAttributes
 		//! Holds: lpSecurityDescriptor = SECURITY_DESCRIPTOR*
 
 	public:
-		CSecurityDesc m_sd;	//!< attached SECURITY_DESCRIPTOR.
+		cSecurityDesc m_sd;	//!< attached SECURITY_DESCRIPTOR.
 	protected:
 		void UpdateSecurityDescriptor();
 
 	public:
-		CSecurityAttributes(bool bInheritHandle = false, ACL* pDacl = nullptr);
-		CSecurityAttributes(bool bInheritHandle, const FILECHAR_t* pszSaclName);
-		~CSecurityAttributes(void);
+		cSecurityAttributes(bool bInheritHandle = false, ACL* pDacl = nullptr);
+		cSecurityAttributes(bool bInheritHandle, const FILECHAR_t* pszSaclName);
+		~cSecurityAttributes(void);
 
 		operator SECURITY_ATTRIBUTES*()
 		{
@@ -217,44 +217,44 @@ namespace Gray
 		}
 		bool isValid() const;
 
-		UNITTEST_FRIEND(CSecurityAttributes);
+		UNITTEST_FRIEND(cSecurityAttributes);
 	};
 
-	class GRAYCORE_LINK CSecurityAttribsLowIntegrity : public CSecurityAttributes
+	class GRAYCORE_LINK cSecurityAttribsLowIntegrity : public cSecurityAttributes
 	{
-		//! @class GrayLib::CSecurityAttribsLowIntegrity
+		//! @class GrayLib::cSecurityAttribsLowIntegrity
 		//! Windows bullshit to indicate that i can speak to untrusted apps. mail channel can be opened by other apps. etc.
 	public:
-		CSecurityAttribsLowIntegrity(bool bInheritHandle = false)
-		: CSecurityAttributes(bInheritHandle, CSecurityDesc::k_szLowIntegrity)
+		cSecurityAttribsLowIntegrity(bool bInheritHandle = false)
+		: cSecurityAttributes(bInheritHandle, cSecurityDesc::k_szLowIntegrity)
 		{
 		}
-		~CSecurityAttribsLowIntegrity()
+		~cSecurityAttribsLowIntegrity()
 		{
 		}
 	};
 
-	class GRAYCORE_LINK CSecurityAttribsWKS : public CSecurityAttributes
+	class GRAYCORE_LINK cSecurityAttribsWKS : public cSecurityAttributes
 	{
-		//! @class GrayLib::CSecurityAttribsWKS
+		//! @class GrayLib::cSecurityAttribsWKS
 		//! Default Windows security. "Well Known SID" type. e.g. WinLocalSid
 		//! Consolidate all the crap into a single object.
 	public:
-		CSecurityAttribsWKS(WELL_KNOWN_SID_TYPE eWellKnownSidType = WinLocalSid, DWORD dwAccess = GENERIC_ALL, bool bInheritHandle = true)
-		: CSecurityAttributes(bInheritHandle)
+		cSecurityAttribsWKS(WELL_KNOWN_SID_TYPE eWellKnownSidType = WinLocalSid, DWORD dwAccess = GENERIC_ALL, bool bInheritHandle = true)
+		: cSecurityAttributes(bInheritHandle)
 		, m_sid(eWellKnownSidType)
 		, m_dacl(m_sid, dwAccess)
 		{
 			m_sd.SetDacl(m_dacl);
 			UpdateSecurityDescriptor();
 		}
-		~CSecurityAttribsWKS()
+		~cSecurityAttribsWKS()
 		{
 		}
 	public:
-		CSecurityId m_sid;	//!< for WELL_KNOWN_SID_TYPE
-		CSecurityACL m_dacl;
+		cSecurityId m_sid;	//!< for WELL_KNOWN_SID_TYPE
+		cSecurityACL m_dacl;
 	};
 };
 #endif	// _WIN32
-#endif	// CSecurityAttributes
+#endif	// cSecurityAttributes

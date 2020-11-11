@@ -35,9 +35,9 @@ namespace Gray
 
 #define STRLIT2(s)	(s), STRMAX(s)		//!< Macro to automatically add the size of literal string or fixed size buffer.
 
-	class GRAYCORE_LINK CStrConst
+	class GRAYCORE_LINK cStrConst
 	{
-		//! @class Gray::CStrConst
+		//! @class Gray::cStrConst
 		//! Produce a string constant of either UNICODE or UTF8. For use inside templates.
 
 	public:
@@ -49,10 +49,10 @@ namespace Gray
 		static const char k_EmptyA = '\0';		//!< like CString::m_Nil
 		static const wchar_t k_EmptyW = '\0';		//!< like CString::m_Nil
 
-		static const CStrConst k_Empty;			//!< Empty CStrConst string. like CString::m_Nil
+		static const cStrConst k_Empty;			//!< Empty cStrConst string. like CString::m_Nil
 
 	public:
-		CStrConst(const char* a, const wchar_t* w)
+		cStrConst(const char* a, const wchar_t* w)
 			: m_A(a), m_W(w)
 		{}
 		operator const char*() const
@@ -86,6 +86,6 @@ namespace Gray
 		}
 	};
 
-#define CSTRCONST(t) CStrConst(t,__TOW(t))	//!< define a const for both Unicode and UTF8 in templates.
+#define CSTRCONST(t) cStrConst(t,__TOW(t))	//!< define a const for both Unicode and UTF8 in templates.
 };
 #endif

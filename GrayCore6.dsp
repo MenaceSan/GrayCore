@@ -85,7 +85,7 @@ LIB32=link.exe -lib
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
-SOURCE=.\CArray.h
+SOURCE=.\cArray.h
 # End Source File
 # Begin Source File
 
@@ -93,23 +93,23 @@ SOURCE=.\CArrayRef.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\CArraySort.h
+SOURCE=.\cArraySort.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\CArrayString.cpp
+SOURCE=.\cArrayString.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\CArrayString.h
+SOURCE=.\cArrayString.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\CAtom.cpp
+SOURCE=.\cAtom.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\CAtom.h
+SOURCE=.\cAtom.h
 # End Source File
 # Begin Source File
 
@@ -117,7 +117,7 @@ SOURCE=.\CException.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\CException.h
+SOURCE=.\cException.h
 # End Source File
 # Begin Source File
 
@@ -129,55 +129,55 @@ SOURCE=.\CFile.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\CFileDir.cpp
+SOURCE=.\cFileDir.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\CFileDir.h
+SOURCE=.\cFileDir.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\CFilePath.cpp
+SOURCE=.\cFilePath.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\CFilePath.h
+SOURCE=.\cFilePath.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\CFileText.cpp
+SOURCE=.\cFileText.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\CFileText.h
+SOURCE=.\cFileText.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\CHeapBlock.cpp
+SOURCE=.\cHeapBlock.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\CHeapBlock.h
+SOURCE=.\cHeapBlock.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\CHeapValidate.h
+SOURCE=.\cHeapValidate.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\CIniFile.cpp
+SOURCE=.\cIniFile.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\CIniFile.h
+SOURCE=.\cIniFile.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\CIniObject.cpp
+SOURCE=.\cIniObject.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\CIniObject.h
+SOURCE=.\cIniObject.h
 # End Source File
 # Begin Source File
 
@@ -189,11 +189,11 @@ SOURCE=.\CLogBase.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\CNewPtr.h
+SOURCE=.\cNewPtr.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\CNonCopyable.h
+SOURCE=.\cNonCopyable.h
 # End Source File
 # Begin Source File
 
@@ -217,19 +217,19 @@ SOURCE=.\CRefPtr.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\CSingleton.h
+SOURCE=.\cSingleton.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\CSingletonMT.h
+SOURCE=.\cSingletonMT.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\CStream.h
+SOURCE=.\cStream.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\CStreamQueue.h
+SOURCE=.\cStreamQueue.h
 # End Source File
 # Begin Source File
 
@@ -237,7 +237,7 @@ SOURCE=.\CString.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\CString.h
+SOURCE=.\cString.h
 # End Source File
 # Begin Source File
 
@@ -245,23 +245,23 @@ SOURCE=.\CStringSys.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\CSystemInfo.cpp
+SOURCE=.\cSystemInfo.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\CSystemInfo.h
+SOURCE=.\cSystemInfo.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\CThreadLock.cpp
+SOURCE=.\cThreadLock.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\CThreadLock.h
+SOURCE=.\cThreadLock.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\CThreadLockX.h
+SOURCE=.\cThreadLockX.h
 # End Source File
 # Begin Source File
 
@@ -277,19 +277,19 @@ SOURCE=.\CTime.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\CTimeDouble.cpp
+SOURCE=.\cTimeDouble.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\CTimeDouble.h
+SOURCE=.\cTimeDouble.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\CTimeSys.cpp
+SOURCE=.\cTimeSys.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\CTimeSys.h
+SOURCE=.\cTimeSys.h
 # End Source File
 # Begin Source File
 

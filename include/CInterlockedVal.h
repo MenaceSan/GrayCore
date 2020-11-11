@@ -1,20 +1,20 @@
 //
-//! @file CInterlockedVal.h
+//! @file cInterlockedVal.h
 //! single values that are safe to change on multiple threads.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 //! @todo http://stackoverflow.com/questions/1158374/portable-compare-and-swap-atomic-operations-c-c-library
 
-#ifndef _INC_CInterlockedVal_H
-#define _INC_CInterlockedVal_H
+#ifndef _INC_cInterlockedVal_H
+#define _INC_cInterlockedVal_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
 #include "Ptr.h"
-#include "CUnitTestDecl.h"
+#include "cUnitTestDecl.h"
 
-UNITTEST_PREDEF(CInterlockedVal)
+UNITTEST_PREDEF(cInterlockedVal)
 
 namespace Gray
 {
@@ -425,21 +425,21 @@ namespace Gray
 	//*************************************************************
 
 	template< typename TYPE = INTER32_t >	// INTER32_t = 32 bit, INT64 for 64 bit.
-	class GRAYCORE_LINK CInterlockedVal
+	class GRAYCORE_LINK cInterlockedVal
 	{
-		//! @class Gray::CInterlockedVal
+		//! @class Gray::cInterlockedVal
 		//! thread interlocked/safe int/long. Not needed if ! _MT
 		//! thread safe unitary actions on a INT32 value (>=32 bits)
 		//! @note This uses inline __asm code and is fast!
 		//! @note should use __DECL_ALIGN(X) to make sure we are aligned.
 
-		typedef CInterlockedVal<TYPE> THIS_t;
+		typedef cInterlockedVal<TYPE> THIS_t;
 
 	protected:
 		TYPE VOLATILE m_nValue;		//!< This MUST be sizeof(TYPE) aligned?! __DECL_ALIGN(sizeof(TYPE)).
 
 	public:
-		CInterlockedVal(TYPE nValue = 0) noexcept
+		cInterlockedVal(TYPE nValue = 0) noexcept
 			: m_nValue(nValue)
 		{
 			ASSERT((((UINT_PTR)&m_nValue) % sizeof(TYPE)) == 0);	// must be aligned!!
@@ -514,31 +514,31 @@ namespace Gray
 
 	// Base types=INT32, INT64. Derived types=UINT32,UINT64
 
-	typedef __DECL_ALIGN(4) CInterlockedVal<INT32> CInterlockedInt32;
-	typedef __DECL_ALIGN(4) CInterlockedVal<UINT32> CInterlockedUInt32;
+	typedef __DECL_ALIGN(4) cInterlockedVal<INT32> cInterlockedInt32;
+	typedef __DECL_ALIGN(4) cInterlockedVal<UINT32> cInterlockedUInt32;
 
-	typedef __DECL_ALIGN(8) CInterlockedVal<INT64> CInterlockedInt64;
-	typedef __DECL_ALIGN(8) CInterlockedVal<UINT64> CInterlockedUInt64;
+	typedef __DECL_ALIGN(8) cInterlockedVal<INT64> cInterlockedInt64;
+	typedef __DECL_ALIGN(8) cInterlockedVal<UINT64> cInterlockedUInt64;
 
-	typedef __DECL_ALIGN(_SIZEOF_INT) CInterlockedVal<int> CInterlockedInt;	// default int type. whatever that is.
-	typedef __DECL_ALIGN(_SIZEOF_INT) CInterlockedVal<UINT> CInterlockedUInt;
+	typedef __DECL_ALIGN(_SIZEOF_INT) cInterlockedVal<int> cInterlockedInt;	// default int type. whatever that is.
+	typedef __DECL_ALIGN(_SIZEOF_INT) cInterlockedVal<UINT> cInterlockedUInt;
 
-	typedef __DECL_ALIGN(_SIZEOF_LONG) CInterlockedVal<long> CInterlockedLong;
-	typedef __DECL_ALIGN(_SIZEOF_LONG) CInterlockedVal<ULONG> CInterlockedULong;
+	typedef __DECL_ALIGN(_SIZEOF_LONG) cInterlockedVal<long> cInterlockedLong;
+	typedef __DECL_ALIGN(_SIZEOF_LONG) cInterlockedVal<ULONG> cInterlockedULong;
 
-	typedef __DECL_ALIGN(_SIZEOF_PTR) CInterlockedVal<INT_PTR> CInterlockedIntPtr;	// int that can also hold a pointer.
+	typedef __DECL_ALIGN(_SIZEOF_PTR) cInterlockedVal<INT_PTR> cInterlockedIntPtr;	// int that can also hold a pointer.
 
 	//*****************************************************
 
 	template< typename TYPE = void >	// INT_PTR = INT32 for 32 bit, INT64 for 64 bit.
-	class GRAYCORE_LINK __DECL_ALIGN(_SIZEOF_PTR) CInterlockedPtr : protected CInterlockedVal < INT_PTR >
+	class GRAYCORE_LINK __DECL_ALIGN(_SIZEOF_PTR) cInterlockedPtr : protected cInterlockedVal < INT_PTR >
 	{
-		//! @class Gray::CInterlockedPtr
+		//! @class Gray::cInterlockedPtr
 		//! An interlocked pointer to something. (pointer size may vary based on architecture)
 		//! Cast it as needed.
 
 	public:
-		CInterlockedPtr(TYPE* pVal) : CInterlockedVal<INT_PTR>((INT_PTR)pVal)
+		cInterlockedPtr(TYPE* pVal) : cInterlockedVal<INT_PTR>((INT_PTR)pVal)
 		{
 		}
 		operator TYPE* ()
@@ -550,7 +550,7 @@ namespace Gray
 			return (const TYPE*)(this->m_nValue);
 		}
 
-		const CInterlockedPtr<TYPE>& operator = (TYPE* pValNew)
+		const cInterlockedPtr<TYPE>& operator = (TYPE* pValNew)
 		{
 			// InterlockedExchangePointer()
 			this->Exchange((INT_PTR)pValNew);
@@ -558,26 +558,26 @@ namespace Gray
 		}
 	};
 
-	typedef CInterlockedPtr<> CInterlockedPtrV;			// void pointer.
+	typedef cInterlockedPtr<> cInterlockedPtrV;			// void pointer.
 
 	//*****************************************************
 
-	class GRAYCORE_LINK CInterlockedInc
+	class GRAYCORE_LINK cInterlockedInc
 	{
-		//! @class Gray::CInterlockedInc
-		//! Used as a thread safe check for code reentrancy. even on the same thread. like CLockableBase.
+		//! @class Gray::cInterlockedInc
+		//! Used as a thread safe check for code reentrancy. even on the same thread. like cLockableBase.
 		//! define an instance of this on the stack. ALWAYS STACK BASED
 
 	private:
-		CInterlockedInt& m_rCount;	//!< pointer to the 'static' count.
+		cInterlockedInt& m_rCount;	//!< pointer to the 'static' count.
 		int m_nCount;	//!< the thread stable value of the count (post increment)
 	public:
-		CInterlockedInc(CInterlockedInt& count)
+		cInterlockedInc(cInterlockedInt& count)
 			: m_rCount(count)
 			, m_nCount(count.Inc())
 		{
 		}
-		~CInterlockedInc()
+		~cInterlockedInc()
 		{
 			m_rCount.Dec();
 		}
@@ -585,15 +585,15 @@ namespace Gray
 		{
 			return m_nCount;	//!< get the count as it was when we created this.
 		}
-		UNITTEST_FRIEND(CInterlockedVal);
+		UNITTEST_FRIEND(cInterlockedVal);
 	};
 
 #ifdef GRAY_DLL // force implementation/instantiate for DLL/SO.
-	template class GRAYCORE_LINK CInterlockedPtr < >;
-	template class GRAYCORE_LINK CInterlockedVal < long >;
-	template class GRAYCORE_LINK CInterlockedVal < ULONG >;
+	template class GRAYCORE_LINK cInterlockedPtr < >;
+	template class GRAYCORE_LINK cInterlockedVal < long >;
+	template class GRAYCORE_LINK cInterlockedVal < ULONG >;
 #endif
 
 }
 
-#endif // _INC_CInterlockedVal_H
+#endif // _INC_cInterlockedVal_H

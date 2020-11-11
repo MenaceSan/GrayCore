@@ -1,16 +1,16 @@
 //
-//! @file CFileCopier.cpp
+//! @file cFileCopier.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
 #include "pch.h"
-#include "CFileCopier.h"
-#include "CFileDir.h"
+#include "cFileCopier.h"
+#include "cFileDir.h"
 
 namespace Gray
 {
 
-	HRESULT GRAYCALL CFileCopier::CopyFileStream(CStreamInput& stmIn, const FILECHAR_t* pszDstFileName, bool bFailIfExists, IStreamProgressCallback* pProgress)
+	HRESULT GRAYCALL cFileCopier::CopyFileStream(cStreamInput& stmIn, const FILECHAR_t* pszDstFileName, bool bFailIfExists, IStreamProgressCallback* pProgress)
 	{
 		//! Copy this (opened OF_READ) file to some other file name/path. (pszDstFileName)
 		//! manually read/copy the contents of the file via WriteStream().
@@ -47,7 +47,7 @@ namespace Gray
 	}
 
 #if defined(_WIN32) && ! defined(UNDER_CE)
-	DWORD CALLBACK CFileCopier::onCopyProgressCallback(
+	DWORD CALLBACK cFileCopier::onCopyProgressCallback(
 		LARGE_INTEGER TotalFileSize,
 		LARGE_INTEGER TotalBytesTransferred,
 		LARGE_INTEGER StreamSize,
@@ -73,7 +73,7 @@ namespace Gray
 			ASSERT(TotalBytesTransferred.QuadPart <= 0xffffffff);
 			ASSERT(TotalFileSize.QuadPart <= 0xffffffff); // truncation!
 			HRESULT hRes = ((IStreamProgressCallback*)lpData)->onProgressCallback(
-				CStreamProgress((STREAM_POS_t)TotalBytesTransferred.QuadPart, (STREAM_POS_t)TotalFileSize.QuadPart));
+				cStreamProgress((STREAM_POS_t)TotalBytesTransferred.QuadPart, (STREAM_POS_t)TotalFileSize.QuadPart));
 			if (FAILED(hRes))
 			{
 				return PROGRESS_STOP;
@@ -83,7 +83,7 @@ namespace Gray
 	}
 #endif
 
-	HRESULT GRAYCALL CFileCopier::CopyFileX(const FILECHAR_t* pszExistingName, const FILECHAR_t* pszNewName, IStreamProgressCallback* pProgress, bool bFailIfExists) // static
+	HRESULT GRAYCALL cFileCopier::CopyFileX(const FILECHAR_t* pszExistingName, const FILECHAR_t* pszNewName, IStreamProgressCallback* pProgress, bool bFailIfExists) // static
 	{
 		//! OS Copy a file from pszExistingName to pszNewName. The pszNewName may or may not already exist.
 		//! @return
@@ -95,16 +95,16 @@ namespace Gray
 		{
 			BOOL fCancel = false;
 			bRet = ::CopyFileExW(
-				CFilePath::GetFileNameLongW(pszExistingName),	// fix long name problems.
-				CFilePath::GetFileNameLongW(pszNewName),
-				CFileCopier::onCopyProgressCallback,
+				cFilePath::GetFileNameLongW(pszExistingName),	// fix long name problems.
+				cFilePath::GetFileNameLongW(pszNewName),
+				cFileCopier::onCopyProgressCallback,
 				pProgress,
 				&fCancel,
 				bFailIfExists ? COPY_FILE_FAIL_IF_EXISTS : 0);
 		}
 		else
 		{
-			bRet = ::CopyFileW(CFilePath::GetFileNameLongW(pszExistingName), CFilePath::GetFileNameLongW(pszNewName), bFailIfExists);
+			bRet = ::CopyFileW(cFilePath::GetFileNameLongW(pszExistingName), cFilePath::GetFileNameLongW(pszNewName), bFailIfExists);
 		}
 		if (!bRet)
 		{
@@ -127,7 +127,7 @@ namespace Gray
 #endif
 	}
 
-	HRESULT GRAYCALL CFileCopier::RenamePath(const FILECHAR_t* lpszOldName, const FILECHAR_t* lpszNewName, IStreamProgressCallback* pProgress) // static
+	HRESULT GRAYCALL cFileCopier::RenamePath(const FILECHAR_t* lpszOldName, const FILECHAR_t* lpszNewName, IStreamProgressCallback* pProgress) // static
 	{
 		//! Equivalent of moving a file. (or directory and its children)
 		//! A new directory must be on the same drive.
@@ -142,8 +142,8 @@ namespace Gray
 #elif defined(UNDER_CE) || defined(__GNUC__)
 		bRet = ::MoveFileW(StrArg<wchar_t>(lpszOldName), StrArg<wchar_t>(lpszNewName));
 #else
-		bRet = ::MoveFileWithProgressW(CFilePath::GetFileNameLongW(lpszOldName), CFilePath::GetFileNameLongW(lpszNewName),
-			CFileCopier::onCopyProgressCallback,
+		bRet = ::MoveFileWithProgressW(cFilePath::GetFileNameLongW(lpszOldName), cFilePath::GetFileNameLongW(lpszNewName),
+			cFileCopier::onCopyProgressCallback,
 			pProgress,
 			MOVEFILE_REPLACE_EXISTING | MOVEFILE_COPY_ALLOWED
 		);
@@ -155,12 +155,12 @@ namespace Gray
 		return S_OK;
 	}
 
-	HRESULT CFileCopier::RequestFile(const FILECHAR_t* pszSrcName, const FILECHAR_t* pszDestPath, IStreamProgressCallback* pProgress, FILE_SIZE_t nOffsetStart, FILE_SIZE_t* pnRequestSizeEst) // virtual 
+	HRESULT cFileCopier::RequestFile(const FILECHAR_t* pszSrcName, const FILECHAR_t* pszDestPath, IStreamProgressCallback* pProgress, FILE_SIZE_t nOffsetStart, FILE_SIZE_t* pnRequestSizeEst) // virtual 
 	{
 		//! Request a file from a m_sServerRoot/pszSrcName to be brought back to me at local pszDestPath.
 		//! @arg pnRequestSizeEst = unused/unnecessary for local file system copy.
 
-		CStringF sSrcPath = makeFilePath(pszSrcName);
+		cStringF sSrcPath = makeFilePath(pszSrcName);
 		bool bRequestSize = (pnRequestSizeEst != nullptr && *pnRequestSizeEst == (FILE_SIZE_t)-1);
 		bool bDestEmpty = StrT::IsWhitespace(pszDestPath);
 		if (bDestEmpty || bRequestSize)
@@ -182,10 +182,10 @@ namespace Gray
 			// A partial copy of the file. CopyFileStream
 			ASSERT(0);
 		}
-		return CFileCopier::CopyFileX(sSrcPath, pszDestPath, pProgress, false);
+		return cFileCopier::CopyFileX(sSrcPath, pszDestPath, pProgress, false);
 	}
 
-	HRESULT CFileCopier::SendFile(const FILECHAR_t* pszSrcPath, const FILECHAR_t* pszDestName, IStreamProgressCallback* pProgress, FILE_SIZE_t nOffsetStart, FILE_SIZE_t nSize) // override virtual 
+	HRESULT cFileCopier::SendFile(const FILECHAR_t* pszSrcPath, const FILECHAR_t* pszDestName, IStreamProgressCallback* pProgress, FILE_SIZE_t nOffsetStart, FILE_SIZE_t nSize) // override virtual 
 	{
 		//! Send a local file to a m_sServerRoot/pszDestName from local pszSrcPath storage
 		//! @note I cannot set the modification time stamp for the file here.
@@ -195,21 +195,21 @@ namespace Gray
 		{
 			return E_INVALIDARG;
 		}
-		CStringF sDestPath = makeFilePath(pszDestName);
+		cStringF sDestPath = makeFilePath(pszDestName);
 		if (StrT::IsWhitespace(pszSrcPath))
 		{
 			// Acts like a delete. delete file or directory recursively.
-			return CFileDir::DeletePathX(sDestPath, 0);
+			return cFileDir::DeletePathX(sDestPath, 0);
 		}
 		if (nOffsetStart != 0)
 		{
 			// A partial copy of the file. CopyFileStream
 			ASSERT(0);
 		}
-		return CFileCopier::CopyFileX(pszSrcPath, sDestPath, pProgress, false);
+		return cFileCopier::CopyFileX(pszSrcPath, sDestPath, pProgress, false);
 	}
 
-	HRESULT CFileCopier::SendAttr(const FILECHAR_t* pszDestName, CTimeFile timeChanged) // override virtual
+	HRESULT cFileCopier::SendAttr(const FILECHAR_t* pszDestName, cTimeFile timeChanged) // override virtual
 	{
 		//! Optionally set the remote side time stamp for a file.
 		return cFileStatus::WriteFileTimes(makeFilePath(pszDestName), &timeChanged, &timeChanged);
@@ -218,15 +218,15 @@ namespace Gray
 
 //***********************************************
 #if USE_UNITTESTS
-#include "CUnitTest.h"
+#include "cUnitTest.h"
 namespace Gray
 {
-	void GRAYCALL CFileCopier::UnitTest_CopyTo(IFileCopier* pDst)
+	void GRAYCALL cFileCopier::UnitTest_CopyTo(IFileCopier* pDst)
 	{
 		//! For testing an implementation of IFileCopier
 		UNREFERENCED_PARAMETER(pDst);
 	}
-	void GRAYCALL CFileCopier::UnitTest_CopyFrom(IFileCopier* pSrc)
+	void GRAYCALL cFileCopier::UnitTest_CopyFrom(IFileCopier* pSrc)
 	{
 		//! For testing an implementation of IFileCopier
 		UNREFERENCED_PARAMETER(pSrc);

@@ -1,34 +1,34 @@
 //
-//! @file CTimeDouble.h
+//! @file cTimeDouble.h
 //! Data Time similar to COleDateTime
 //! Elapsed days since (midnight, December 30, 1899 GMT).
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CTimeDouble_H
-#define _INC_CTimeDouble_H
+#ifndef _INC_cTimeDouble_H
+#define _INC_cTimeDouble_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
-#include "CString.h"
-#include "CTimeUnits.h"
-#include "CTimeFile.h"
+#include "cString.h"
+#include "cTimeUnits.h"
+#include "cTimeFile.h"
 
-UNITTEST_PREDEF(CTimeDouble)
+UNITTEST_PREDEF(cTimeDouble)
 
 namespace Gray
 {
-	class GRAYCORE_LINK CTimeDouble
+	class GRAYCORE_LINK cTimeDouble
 	{
-		//! @class Gray::CTimeDouble
+		//! @class Gray::cTimeDouble
 		//! same as DATE, COleDateTime
 		//! same as _WIN32 VariantTimeToSystemTime, same as DATE, COleDateTime
 		//! Absolute 64 bit double days since (1899/12/30 midnight GMT).
 		//! double 1.0 = 1 day
 		//! NOT the same as REFTIME which is (double) seconds.
 	public:
-		static const int k_nDaysDiffTimeInt = 25569;	//!< days difference from CTimeDouble (1899) to CTimeInt (1970) bases // similar to __linux__ SECS_1601_TO_1970 ?
+		static const int k_nDaysDiffTimeInt = 25569;	//!< days difference from cTimeDouble (1899) to cTimeInt (1970) bases // similar to __linux__ SECS_1601_TO_1970 ?
 		static const double k_nY2K;		//!< The static value for y2k = January 1, 2000 in UTC/GMT
 		static const double k_nY10;		//!< The first 10 years are sometimes reserved to act as offsets.
 		static const int k_nZero = 0;	//!< double cant be used for in-class initializer
@@ -37,43 +37,43 @@ namespace Gray
 		double	m_dateTime;	//!< DATE = days since (midnight, 30 December 1899 GMT), fraction = time of day
 
 	protected:
-		bool InitTimeUnits(const CTimeUnits& rTu);
-		void DecodeDate(CTimeUnits& rTu) const;
+		bool InitTimeUnits(const cTimeUnits& rTu);
+		void DecodeDate(cTimeUnits& rTu) const;
 
 	public:
-		CTimeDouble(const CTimeDouble& dt)
+		cTimeDouble(const cTimeDouble& dt)
 			: m_dateTime(dt.m_dateTime)
 		{
 		}
-		CTimeDouble(const double dTime = k_nZero)
+		cTimeDouble(const double dTime = k_nZero)
 			: m_dateTime(dTime)
 		{
 		}
 
-		static CTimeDouble GRAYCALL EncodeSeconds(double s);
-		static CTimeDouble GRAYCALL EncodeTime(short h, short m, short s, short ms = 0);
-		static CTimeDouble GRAYCALL EncodeDate(short year = 0, short month = 0, short day = 0);
-		static CTimeDouble GRAYCALL GetTimeFromSec(TIMESEC_t nTimeSec);
+		static cTimeDouble GRAYCALL EncodeSeconds(double s);
+		static cTimeDouble GRAYCALL EncodeTime(short h, short m, short s, short ms = 0);
+		static cTimeDouble GRAYCALL EncodeDate(short year = 0, short month = 0, short day = 0);
+		static cTimeDouble GRAYCALL GetTimeFromSec(TIMESEC_t nTimeSec);
 
-		CTimeDouble(const TIMESEC_t nTimeSec)
+		cTimeDouble(const TIMESEC_t nTimeSec)
 			: m_dateTime(GetTimeFromSec(nTimeSec))
 		{
 		}
 
-		static CTimeDouble GRAYCALL GetTimeFromFile(const CTimeFile& ft);
-		CTimeDouble(const CTimeFile& ft)
+		static cTimeDouble GRAYCALL GetTimeFromFile(const cTimeFile& ft);
+		cTimeDouble(const cTimeFile& ft)
 			: m_dateTime(GetTimeFromFile(ft))
 		{
 		}
 
-		static CTimeDouble GRAYCALL GetTimeFromStr(const GChar_t* pszDateTime, TZ_TYPE nTimeZoneOffset)
+		static cTimeDouble GRAYCALL GetTimeFromStr(const GChar_t* pszDateTime, TZ_TYPE nTimeZoneOffset)
 		{
 			// Ignore HRESULT.
-			CTimeDouble t;
+			cTimeDouble t;
 			t.SetTimeStr(pszDateTime, nTimeZoneOffset);
 			return t;
 		}
-		CTimeDouble(const CTimeUnits& rTu)
+		cTimeDouble(const cTimeUnits& rTu)
 		{
 			//! like SystemTimeToVariantTime but it ASSUMES GMT
 			//!  m_dateTime = 1 = whole days since 1900
@@ -110,7 +110,7 @@ namespace Gray
 			return m_dateTime;
 		}
 
-		void operator = (const CTimeDouble& date)
+		void operator = (const cTimeDouble& date)
 		{
 			m_dateTime = date.m_dateTime;
 		}
@@ -119,82 +119,82 @@ namespace Gray
 			SetTimeStr(pszDateTime, TZ_UTC);
 		}
 
-		CTimeDouble operator + (int  i)
+		cTimeDouble operator + (int  i)
 		{
 			//! Add days.
-			return CTimeDouble(m_dateTime + i);
+			return cTimeDouble(m_dateTime + i);
 		}
-		CTimeDouble operator - (int  i)
+		cTimeDouble operator - (int  i)
 		{
 			//! Subtract days.
-			return CTimeDouble(m_dateTime - i);
+			return cTimeDouble(m_dateTime - i);
 		}
-		CTimeDouble operator + (const CTimeDouble& dt)
+		cTimeDouble operator + (const cTimeDouble& dt)
 		{
-			return CTimeDouble(m_dateTime + dt.m_dateTime);
+			return cTimeDouble(m_dateTime + dt.m_dateTime);
 		}
-		CTimeDouble operator - (const CTimeDouble& dt)
+		cTimeDouble operator - (const cTimeDouble& dt)
 		{
-			return CTimeDouble(m_dateTime - dt.m_dateTime);
+			return cTimeDouble(m_dateTime - dt.m_dateTime);
 		}
 
-		CTimeDouble& operator += (int idays)	//!< days
+		cTimeDouble& operator += (int idays)	//!< days
 		{
 			//! Add days.
 			m_dateTime += idays;
 			return *this;
 		}
-		CTimeDouble& operator -= (int idays)	//!< days
+		cTimeDouble& operator -= (int idays)	//!< days
 		{
 			//! Subtract days.
 			m_dateTime -= idays;
 			return *this;
 		}
-		CTimeDouble& operator += (const CTimeDouble& dt)
+		cTimeDouble& operator += (const cTimeDouble& dt)
 		{
 			m_dateTime += dt.m_dateTime;
 			return *this;
 		}
-		CTimeDouble& operator -= (const CTimeDouble& dt)
+		cTimeDouble& operator -= (const cTimeDouble& dt)
 		{
 			m_dateTime -= dt.m_dateTime;
 			return *this;
 		}
 
-		CTimeDouble& operator ++ ()     //!< Prefix increment
+		cTimeDouble& operator ++ ()     //!< Prefix increment
 		{
 			m_dateTime += 1;
 			return *this;
 		}
-		CTimeDouble& operator ++ (int)  //!< Postfix increment
+		cTimeDouble& operator ++ (int)  //!< Postfix increment
 		{
 			m_dateTime += 1; // add a day
 			return *this;
 		}
-		CTimeDouble& operator -- ()     //!< Prefix decrement
+		cTimeDouble& operator -- ()     //!< Prefix decrement
 		{
 			m_dateTime -= 1;
 			return *this;
 		}
-		CTimeDouble& operator -- (int)  //!< Postfix decrement
+		cTimeDouble& operator -- (int)  //!< Postfix decrement
 		{
 			m_dateTime -= 1;
 			return *this;
 		}
 
-		friend bool operator <  (const CTimeDouble &dt1, const CTimeDouble &dt2);
-		friend bool operator <= (const CTimeDouble &dt1, const CTimeDouble &dt2);
-		friend bool operator >  (const CTimeDouble &dt1, const CTimeDouble &dt2);
-		friend bool operator >= (const CTimeDouble &dt1, const CTimeDouble &dt2);
-		friend bool operator == (const CTimeDouble &dt1, const CTimeDouble &dt2);
-		friend bool operator != (const CTimeDouble &dt1, const CTimeDouble &dt2);
+		friend bool operator <  (const cTimeDouble &dt1, const cTimeDouble &dt2);
+		friend bool operator <= (const cTimeDouble &dt1, const cTimeDouble &dt2);
+		friend bool operator >  (const cTimeDouble &dt1, const cTimeDouble &dt2);
+		friend bool operator >= (const cTimeDouble &dt1, const cTimeDouble &dt2);
+		friend bool operator == (const cTimeDouble &dt1, const cTimeDouble &dt2);
+		friend bool operator != (const cTimeDouble &dt1, const cTimeDouble &dt2);
 
-		static CTimeDouble GRAYCALL GetTimeNow();
-		static CTimeDouble GRAYCALL Date();
-		static CTimeDouble GRAYCALL Time();
+		static cTimeDouble GRAYCALL GetTimeNow();
+		static cTimeDouble GRAYCALL Date();
+		static cTimeDouble GRAYCALL Time();
 
-		CTimeFile GetAsFileTime() const;
-		bool GetTimeUnits(OUT CTimeUnits& rTu, TZ_TYPE nTimeZoneOffset) const;
+		cTimeFile GetAsFileTime() const;
+		bool GetTimeUnits(OUT cTimeUnits& rTu, TZ_TYPE nTimeZoneOffset) const;
 
 		TIMEDOW_TYPE get_DayOfWeek() const;      //!< MFC GetDayOfWeek is +1
 
@@ -230,32 +230,32 @@ namespace Gray
 
 		static cString GRAYCALL GetTimeSpanStr(double dDays, TIMEUNIT_TYPE eUnitHigh = TIMEUNIT_Day, int iUnitsDesired = 2, bool bShortText = false);
 
-		UNITTEST_FRIEND(CTimeDouble);
+		UNITTEST_FRIEND(cTimeDouble);
 	};
 
-	bool inline operator < (const CTimeDouble &dt1, const CTimeDouble &dt2)
+	bool inline operator < (const cTimeDouble &dt1, const cTimeDouble &dt2)
 	{
 		return(dt1.m_dateTime < dt2.m_dateTime);
 	}
-	bool inline operator <= (const CTimeDouble &dt1, const CTimeDouble &dt2)
+	bool inline operator <= (const cTimeDouble &dt1, const cTimeDouble &dt2)
 	{
 		return((dt1.m_dateTime <= dt2.m_dateTime));
 	}
-	bool inline operator > (const CTimeDouble &dt1, const CTimeDouble &dt2)
+	bool inline operator > (const cTimeDouble &dt1, const cTimeDouble &dt2)
 	{
 		return(dt1.m_dateTime > dt2.m_dateTime);
 	}
-	bool inline operator >= (const CTimeDouble &dt1, const CTimeDouble &dt2)
+	bool inline operator >= (const cTimeDouble &dt1, const cTimeDouble &dt2)
 	{
 		return((dt1.m_dateTime >= dt2.m_dateTime));
 	}
-	bool inline operator == (const CTimeDouble &dt1, const CTimeDouble &dt2)
+	bool inline operator == (const cTimeDouble &dt1, const cTimeDouble &dt2)
 	{
 		return(dt1.m_dateTime == dt2.m_dateTime);
 	}
-	bool inline operator != (const CTimeDouble &dt1, const CTimeDouble &dt2)
+	bool inline operator != (const cTimeDouble &dt1, const cTimeDouble &dt2)
 	{
 		return(dt1.m_dateTime != dt2.m_dateTime);
 	}
 };
-#endif // _INC_CTimeDouble_H
+#endif // _INC_cTimeDouble_H

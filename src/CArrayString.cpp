@@ -1,26 +1,26 @@
 //
-//! @file CArrayString.cpp
+//! @file cArrayString.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 #include "pch.h"
-#include "CArrayString.h"
-#include "CArraySortString.h"
+#include "cArrayString.h"
+#include "cArraySortString.h"
 
 #if USE_UNITTESTS
-#include "CUnitTest.h"
-#include "CLogMgr.h"
-#include "CArraySort.h"
+#include "cUnitTest.h"
+#include "cLogMgr.h"
+#include "cArraySort.h"
 
-UNITTEST_CLASS(CArraySortString)
+UNITTEST_CLASS(cArraySortString)
 {
-	UNITTEST_METHOD(CArraySortString)
+	UNITTEST_METHOD(cArraySortString)
 	{
 		//! Test sorted arrays. pick a simple template.
 
-		CArrayString<> arrayUns;
+		cArrayString<> arrayUns;
 		UNITTEST_TRUE(arrayUns.GetSize() == 0);
 
-		CArraySortStringA array1;
+		cArraySortStringA array1;
 		for (ITERATE_t i = 0; !k_asTextLines[i].isNull(); i++)
 		{
 			array1.AddStr(k_asTextLines[i]);
@@ -40,5 +40,5 @@ UNITTEST_CLASS(CArraySortString)
 		UNITTEST_TRUE(array1.isArraySorted());
 	}
 };
-UNITTEST_REGISTER(CArraySortString, UNITTEST_LEVEL_Core);
+UNITTEST_REGISTER(cArraySortString, UNITTEST_LEVEL_Core);
 #endif

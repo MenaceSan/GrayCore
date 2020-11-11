@@ -1,21 +1,21 @@
 //
-//! @file CInterlockedVal.cpp
+//! @file cInterlockedVal.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 #include "pch.h"
-#include "CInterlockedVal.h"
+#include "cInterlockedVal.h"
 
 #if USE_UNITTESTS
-#include "CUnitTest.h"
-#include "CLogMgr.h"
+#include "cUnitTest.h"
+#include "cLogMgr.h"
 
-UNITTEST_CLASS(CInterlockedVal)
+UNITTEST_CLASS(cInterlockedVal)
 {
-	UNITTEST_METHOD(CInterlockedVal)
+	UNITTEST_METHOD(cInterlockedVal)
 	{
 		// See CThread for better testing of this.
 		{
-			CInterlockedInt32 lVal32;
+			cInterlockedInt32 lVal32;
 
 			lVal32.IncV();
 			UNITTEST_TRUE(lVal32 == 1);
@@ -34,7 +34,7 @@ UNITTEST_CLASS(CInterlockedVal)
 		}
 
 		{
-			CInterlockedInt64 lVal64;
+			cInterlockedInt64 lVal64;
 
 			UNITTEST_TRUE(lVal64.Inc() == 1);
 			UNITTEST_TRUE(lVal64.Dec() == 0);
@@ -47,8 +47,8 @@ UNITTEST_CLASS(CInterlockedVal)
 			UNITTEST_TRUE(lVal64.get_Value() == 233);
 		}
 
-		// CInterlockedPtr<> pVal = nullptr;
+		// cInterlockedPtr<> pVal = nullptr;
 	}
 };
-UNITTEST_REGISTER(CInterlockedVal, UNITTEST_LEVEL_Core);
+UNITTEST_REGISTER(cInterlockedVal, UNITTEST_LEVEL_Core);
 #endif

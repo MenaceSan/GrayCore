@@ -1,18 +1,18 @@
 //
-//! @file CHookJump.cpp
+//! @file cHookJump.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 #include "pch.h"
-#include "CHookJump.h"
-#include "CLogMgr.h"
+#include "cHookJump.h"
+#include "cLogMgr.h"
 
 #ifdef _WIN32
-#include "CMemPage.h"
+#include "cMemPage.h"
 #endif
 
 namespace Gray
 {
-	FARPROC CHookJump::GetChainFunc() const
+	FARPROC cHookJump::GetChainFunc() const
 	{
 		if (isChainable())
 		{
@@ -25,11 +25,11 @@ namespace Gray
 		return m_pFuncOrig;
 	}
 
-	bool CHookJump::InstallHook(FARPROC pFuncOrig, FARPROC pFuncNew)
+	bool cHookJump::InstallHook(FARPROC pFuncOrig, FARPROC pFuncNew)
 	{
 		//! @note X86 ONLY!! 32 or 64 bit.
 
-		CThreadGuardFast guard(m_Lock);
+		cThreadGuardFast guard(m_Lock);
 		if (pFuncOrig == nullptr || pFuncNew == nullptr)
 		{
 			ASSERT(pFuncNew != nullptr);
@@ -47,7 +47,7 @@ namespace Gray
 
 #ifdef _WIN32
 		// Remove code protection. so i can read/write to code space.
-		const HRESULT hRes = CMemPageMgr::I().ProtectPages((void*)pFuncOrig, k_LEN_A, false);
+		const HRESULT hRes = cMemPageMgr::I().ProtectPages((void*)pFuncOrig, k_LEN_A, false);
 		if (FAILED(hRes))
 		{
 			return false;
@@ -71,7 +71,7 @@ namespace Gray
 
 		if (::memcmp(m_Jump, m_OldCode, sizeof(m_OldCode)) == 0)
 		{
-			// We already injected this with some other CHookJump instance! This is bad. We are fighting ourselfs with duplicated code !! why?
+			// We already injected this with some other cHookJump instance! This is bad. We are fighting ourselfs with duplicated code !! why?
 
 		}
 
@@ -81,9 +81,9 @@ namespace Gray
 		return true;
 	}
 
-	void CHookJump::RemoveHook()
+	void cHookJump::RemoveHook()
 	{
-		CThreadGuardFast guard(m_Lock);
+		cThreadGuardFast guard(m_Lock);
 		if (!isHookInstalled())	// was never set?
 			return;
 		ASSERT(m_pFuncOrig != nullptr);
@@ -95,13 +95,13 @@ namespace Gray
 
 	#ifdef _WIN32
 			// Restore code protection.
-			CMemPageMgr::I().ProtectPages((void*)m_pFuncOrig, k_LEN_A, true);
+			cMemPageMgr::I().ProtectPages((void*)m_pFuncOrig, k_LEN_A, true);
 	#endif
 		}
 			GRAY_TRY_CATCHALL
 		{
 			// UNREFERENCED_PARAMETER(ex);
-			DEBUG_ERR(("CHookJump::RemoveHook FAIL"));
+			DEBUG_ERR(("cHookJump::RemoveHook FAIL"));
 		}
 			GRAY_TRY_END
 	}
@@ -110,76 +110,76 @@ namespace Gray
 //*********************************************************************************
 
 #if USE_UNITTESTS
-#include "CUnitTest.h"
+#include "cUnitTest.h"
 
 // Make sure this code is not optimized out !
 #ifdef _MSC_VER
 #pragma optimize( "", off )
 #endif
-INT_PTR GRAYCALL CUnitTest_HookJump1() // never inline optimize this
+INT_PTR GRAYCALL cUnitTest_HookJump1() // never inline optimize this
 {
-	CUnitTests::sm_pLog->addDebugInfoF("CUnitTest_HookJump1");
+	cUnitTests::sm_pLog->addDebugInfoF("cUnitTest_HookJump1");
 	return 1;
 }
-INT_PTR GRAYCALL CUnitTest_HookJump2() // never inline optimize this
+INT_PTR GRAYCALL cUnitTest_HookJump2() // never inline optimize this
 {
-	// replace CUnitTest_HookJump1 with this.
-	CUnitTests::sm_pLog->addDebugInfoF("CUnitTest_HookJump2");
+	// replace cUnitTest_HookJump1 with this.
+	cUnitTests::sm_pLog->addDebugInfoF("cUnitTest_HookJump2");
 	return 2;
 }
 #ifdef _MSC_VER
 #pragma optimize( "", on )	// restore old params.
 #endif
 
-UNITTEST_CLASS(CHookJump)
+UNITTEST_CLASS(cHookJump)
 {
-	UNITTEST_METHOD(CHookJump)
+	UNITTEST_METHOD(cHookJump)
 	{
 		//! hook a API function for one call.
 
-		UNITTEST_TRUE(CUnitTests::sm_pLog != nullptr);
+		UNITTEST_TRUE(cUnitTests::sm_pLog != nullptr);
 
-		INT_PTR iRet = CUnitTest_HookJump1();
+		INT_PTR iRet = cUnitTest_HookJump1();
 		UNITTEST_TRUE(iRet == 1);
 
-		CHookJump tester;
-		tester.InstallHook((FARPROC)CUnitTest_HookJump1, (FARPROC)CUnitTest_HookJump2);
+		cHookJump tester;
+		tester.InstallHook((FARPROC)cUnitTest_HookJump1, (FARPROC)cUnitTest_HookJump2);
 		UNITTEST_TRUE(tester.isHookInstalled());
 
-		iRet = CUnitTest_HookJump1();	// really calls CUnitTest_HookJump2
+		iRet = cUnitTest_HookJump1();	// really calls cUnitTest_HookJump2
 		UNITTEST_TRUE(iRet == 2);
 
-		iRet = CUnitTest_HookJump2();
+		iRet = cUnitTest_HookJump2();
 		UNITTEST_TRUE(iRet == 2);
 
 		{
-			CHookSwapLock lock(tester);
-			iRet = CUnitTest_HookJump1();	// CUnitTest_HookJump1 was restored globally.
+			cHookSwapLock lock(tester);
+			iRet = cUnitTest_HookJump1();	// cUnitTest_HookJump1 was restored globally.
 			UNITTEST_TRUE(iRet == 1);
 		}
 
-		iRet = CUnitTest_HookJump1();
+		iRet = cUnitTest_HookJump1();
 		UNITTEST_TRUE(iRet == 2);
 
 		{
-			CHookSwapChain lock(tester);
-			iRet = CUnitTest_HookJump1();	// CUnitTest_HookJump1 still as CUnitTest_HookJump2.
+			cHookSwapChain lock(tester);
+			iRet = cUnitTest_HookJump1();	// cUnitTest_HookJump1 still as cUnitTest_HookJump2.
 			UNITTEST_TRUE(iRet == 2);
-			iRet = lock.m_pFuncChain();	// CUnitTest_HookJump1 was restored just for Chain.
+			iRet = lock.m_pFuncChain();	// cUnitTest_HookJump1 was restored just for Chain.
 			UNITTEST_TRUE(iRet == 1);
 		}
 
-		iRet = CUnitTest_HookJump1();	// CUnitTest_HookJump1 as CUnitTest_HookJump2.
+		iRet = cUnitTest_HookJump1();	// cUnitTest_HookJump1 as cUnitTest_HookJump2.
 		UNITTEST_TRUE(iRet == 2);
 
 		tester.RemoveHook();
 		UNITTEST_TRUE(!tester.isHookInstalled());
 
-		iRet = CUnitTest_HookJump1();
+		iRet = cUnitTest_HookJump1();
 		UNITTEST_TRUE(iRet == 1);	// was restored.
-		iRet = CUnitTest_HookJump2();	
+		iRet = cUnitTest_HookJump2();	
 		UNITTEST_TRUE(iRet == 2);		// still works as expected.
 	}
 };
-UNITTEST_REGISTER(CHookJump, UNITTEST_LEVEL_Lib);
+UNITTEST_REGISTER(cHookJump, UNITTEST_LEVEL_Lib);
 #endif

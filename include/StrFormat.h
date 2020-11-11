@@ -11,7 +11,7 @@
 
 #include "StrChar.h"
 #include "StrConst.h"
-#include "CDebugAssert.h"
+#include "cDebugAssert.h"
 
 UNITTEST_PREDEF(StrFormat)
 

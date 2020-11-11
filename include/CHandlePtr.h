@@ -1,28 +1,28 @@
 //
-//! @file CHandlePtr.h
+//! @file cHandlePtr.h
 //! Wrap a general handle/pointer
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CHandlePtr_H
-#define _INC_CHandlePtr_H
+#ifndef _INC_cHandlePtr_H
+#define _INC_cHandlePtr_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
-#include "CNonCopyable.h"
+#include "cNonCopyable.h"
 
 namespace Gray
 {
 #define HANDLEPTR_NULL	nullptr		//!< NOT the same as an OS HANDLE, Not an int in Linux. Always void* based.
 
 	template< typename _TYPE_HAND = void* >
-	class CHandlePtr : protected CNonCopyable
+	class cHandlePtr : protected cNonCopyable
 	{
-		//! @class Gray::CHandlePtr
+		//! @class Gray::cHandlePtr
 		//! Generic handle/pointer that requires an open/close operation. The underlying type is a pointer more or less.
 		//! Assumes handle has been declared as a pointer type with DECLARE_HANDLE() and STRICT or similar.
-		//! @note NOT the same as COSHandle. Might be GUI or User handle. NOT _WIN32 = CloseHandle(HANDLE).
+		//! @note NOT the same as cOSHandle. Might be GUI or User handle. NOT _WIN32 = CloseHandle(HANDLE).
 		//! @note this can't be used with handles that don't declare a type using DECLARE_HANDLE. e.g. HCERTSTORE.
 		//! e.g. _WIN32 types RegCloseKey(HKEY), SC_HANDLE, HDESK, HWINSTA, FreeLibrary(HMODULE),
 		//!  UnhookWindowsHookEx(HHOOK)
@@ -44,11 +44,11 @@ namespace Gray
 		//! MUST Implement versions of this for each _TYPE_HAND.
 		static void inline CloseHandle(_TYPE_HAND h); // Don't use/define a default implementation! This should fail at compile time if type is not implemented explicitly.
 
-		explicit inline CHandlePtr(_TYPE_HAND h = nullptr)
+		explicit inline cHandlePtr(_TYPE_HAND h = nullptr)
 		: m_h(h)
 		{
 		}
-		inline ~CHandlePtr()
+		inline ~cHandlePtr()
 		{
 			CloseHandleLast();
 		}
@@ -100,4 +100,4 @@ namespace Gray
 		}
 	};
 };
-#endif // _INC_CHandlePtr_H
+#endif // _INC_cHandlePtr_H

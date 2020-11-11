@@ -1,62 +1,62 @@
 //
-//! @file CHashTable.h
+//! @file cHashTable.h
 //! A Hash Table with a HASHCODE_t as the key.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CHashTable_H
-#define _INC_CHashTable_H
+#ifndef _INC_cHashTable_H
+#define _INC_cHashTable_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
-#include "CArraySort.h"
-#include "CBits.h"
-#include "CUnitTestDecl.h"
+#include "cArraySortRef.h"
+#include "cBits.h"
+#include "cUnitTestDecl.h"
 
-UNITTEST_PREDEF(CHashTableT)
+UNITTEST_PREDEF(cHashTableT)
 
 namespace Gray
 {
-	class CHashIterator	// inline
+	class cHashIterator	// inline
 	{
-		//! @class Gray::CHashIterator
-		//! used to enumerate/iterate position in CHashTableT
+		//! @class Gray::cHashIterator
+		//! used to enumerate/iterate position in cHashTableT
 	public:
 		ITERATE_t m_i;	//!< array/Bucket number in the hash.
 		ITERATE_t m_j;	//!< element inside a array/Bucket.
 	public:
-		CHashIterator(ITERATE_t nBucket = 0, ITERATE_t jj = 0)
+		cHashIterator(ITERATE_t nBucket = 0, ITERATE_t jj = 0) noexcept
 		: m_i(nBucket)
 		, m_j(jj)
 		{
 		}
-		void SkipRemoved()
+		void SkipRemoved() noexcept
 		{
 			//! We are iterating the hash, and we deleted something.
 			m_j--;
 		}
-		ITERATE_t get_ArrayNum() const
+		ITERATE_t get_ArrayNum() const noexcept
 		{
 			//! use with GetArraySize()
 			return m_i;
 		}
-		bool isValid() const
+		bool isValid() const noexcept
 		{
 			return(m_j >= 0);
 		}
 	};
 
 	template<class _TYPEARRAY, class TYPE, typename TYPE_HASHCODE = HASHCODE_t, int TYPE_HASHBITS = 5 >
-	class CHashTableT
+	class cHashTableT
 	{
-		//! @class Gray::CHashTableT
+		//! @class Gray::cHashTableT
 		//! base class for a full hash table. similar to CMap in MFC
 		//! @note beware TYPE_HASHBITS can make this object huge! TYPE_HASHBITS=5 = 32 buckets.
 
 	public:
 		static const ITERATE_t k_HASH_ARRAY_QTY = _1BITMASK(TYPE_HASHBITS);
-		typedef CHashIterator iterator;	// like STL.
+		typedef cHashIterator iterator;	// like STL.
 		_TYPEARRAY m_aTable[k_HASH_ARRAY_QTY];
 
 	public:
@@ -81,7 +81,7 @@ namespace Gray
 		iterator FindIForKey(TYPE_HASHCODE rid) const
 		{
 			ITERATE_t iBucket = GetHashArray(rid);
-			return(CHashIterator(iBucket, m_aTable[iBucket].FindIForKey(rid)));
+			return(cHashIterator(iBucket, m_aTable[iBucket].FindIForKey(rid)));
 		}
 		TYPE_HASHCODE FindKeyFree(TYPE_HASHCODE rid) const
 		{
@@ -135,16 +135,16 @@ namespace Gray
 			RemoveAll();
 		}
 
-		UNITTEST_FRIEND(CHashTableT);
+		UNITTEST_FRIEND(cHashTableT);
 	};
 
 	template<class TYPE, typename TYPE_HASHCODE = HASHCODE_t, int TYPE_HASHBITS = 5 >
-	class CHashTableStruct : public CHashTableT < CArraySortStructHash<TYPE, TYPE_HASHCODE>, TYPE, TYPE_HASHCODE, TYPE_HASHBITS >
+	class cHashTableStruct : public cHashTableT < cArraySortStructHash<TYPE, TYPE_HASHCODE>, TYPE, TYPE_HASHCODE, TYPE_HASHBITS >
 	{
-		//! @class Gray::CHashTableStruct
+		//! @class Gray::cHashTableStruct
 		//! ASSUME TYPE is just a class that has a get_HashCode() method.
 	public:
-		typedef CHashTableT< CArraySortStructHash<TYPE, TYPE_HASHCODE>, TYPE, TYPE_HASHCODE, TYPE_HASHBITS > SUPER_t;
+		typedef cHashTableT< cArraySortStructHash<TYPE, TYPE_HASHCODE>, TYPE, TYPE_HASHCODE, TYPE_HASHBITS > SUPER_t;
 		typedef const TYPE& REF_t;		// How to refer to this? value or ref or pointer?
 
 	public:
@@ -153,17 +153,17 @@ namespace Gray
 			ITERATE_t iBucket = this->GetHashArray(rid);
 			return this->m_aTable[iBucket].FindArgForKey(rid);
 		}
-		const TYPE& GetAtHash(const CHashIterator& i) const
+		const TYPE& GetAtHash(const cHashIterator& i) const
 		{
 			//! get from hash table. i must exist.
 			ASSERT(IS_INDEX_GOOD_ARRAY(i.m_i, this->m_aTable));
 			return(this->m_aTable[i.m_i].ConstElementAt(i.m_j));
 		}
-		CHashIterator FindHash(TYPE_HASHCODE rid) const
+		cHashIterator FindHash(TYPE_HASHCODE rid) const
 		{
 			ITERATE_t iBucket = this->GetHashArray(rid);
 			ITERATE_t index = this->m_aTable[iBucket].FindArgForKey(rid);
-			return CHashIterator(iBucket, index);
+			return cHashIterator(iBucket, index);
 		}
 		const TYPE& Add(REF_t rNew)
 		{
@@ -189,12 +189,12 @@ namespace Gray
 	};
 
 	template<class TYPE, typename TYPE_HASHCODE = HASHCODE_t, int TYPE_HASHBITS = 5 >
-	class CHashTableSmart : public CHashTableT < CArraySortHash<TYPE, TYPE_HASHCODE>, TYPE, TYPE_HASHCODE, TYPE_HASHBITS >
+	class cHashTableSmart : public cHashTableT < cArraySortHash<TYPE, TYPE_HASHCODE>, TYPE, TYPE_HASHCODE, TYPE_HASHBITS >
 	{
-		//! @class Gray::CHashTableSmart
-		//! ASSUME TYPE is CSmartBase and implements get_HashCode()
+		//! @class Gray::cHashTableSmart
+		//! ASSUME TYPE is cRefBase and implements get_HashCode()
 	protected:
-		typedef CSmartPtr<TYPE> PTR_t;
+		typedef cRefPtr<TYPE> PTR_t;
 	public:
 		PTR_t FindArgForKey(TYPE_HASHCODE rid) const
 		{
@@ -212,7 +212,7 @@ namespace Gray
 				return false;
 			return this->m_aTable[this->GetHashArray(pObj->get_HashCode())].RemoveArgKey(pObj);
 		}
-		PTR_t GetAtHash(const CHashIterator& i) const
+		PTR_t GetAtHash(const cHashIterator& i) const
 		{
 			//! Walk hash table.
 			ASSERT(IS_INDEX_GOOD_ARRAY(i.m_i, this->m_aTable));

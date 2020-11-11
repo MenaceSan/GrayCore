@@ -1,15 +1,15 @@
 //
-//! @file CExceptionAssert.cpp
+//! @file cExceptionAssert.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 #include "pch.h"
-#include "CExceptionAssert.h"
-#include "CDebugAssert.h"
+#include "cExceptionAssert.h"
+#include "cDebugAssert.h"
 #include "StrArg.h"
 
 namespace Gray
 {
-	cExceptionAssert::cExceptionAssert(const LOGCHAR_t* pExp, LOGLEV_TYPE eLogLevel, const CDebugSourceLine& src)
+	cExceptionAssert::cExceptionAssert(const LOGCHAR_t* pExp, LOGLEV_TYPE eLogLevel, const cDebugSourceLine& src)
 		: cException("Assert", eLogLevel)
 		, m_pExp(pExp)
 		, m_Src(src)
@@ -29,7 +29,7 @@ namespace Gray
 		return true;
 	}
 
-	void GRAYCALL cExceptionAssert::Throw(const LOGCHAR_t* pExp, const CDebugSourceLine& src) // static
+	void GRAYCALL cExceptionAssert::Throw(const LOGCHAR_t* pExp, const cDebugSourceLine& src) // static
 	{
 		//! These can get left in release code.
 		//! This is similar to _assert() in M$ code.
@@ -47,7 +47,7 @@ extern "C"
 	int _cdecl _purecall()
 	{
 		//! catch this special type of C++ exception as well.
-		Gray::cExceptionAssert::Throw("purecall", Gray::CDebugSourceLine("unknown", "", 1));
+		Gray::cExceptionAssert::Throw("purecall", Gray::cDebugSourceLine("unknown", "", 1));
 		return 0;
 	}
 #endif
@@ -61,7 +61,7 @@ extern "C"
 		//! DLL returns error LNK2005: __amsg_exit already defined in MSVCRTD.lib(MSVCR80D.dll)
 		//! throw this as cExceptionAssert ?? NOT sure this will work?
 		UNREFERENCED_PARAMETER(iArg);
-		Gray::cExceptionAssert::Throw("_amsg_exit", Gray::CDebugSourceLine("unknown", "", 1));
+		Gray::cExceptionAssert::Throw("_amsg_exit", Gray::cDebugSourceLine("unknown", "", 1));
 	}
 #endif
 
@@ -70,7 +70,7 @@ extern "C"
 	{
 		//! Overload the system version of this just in case.
 		//! Trap for 3rd party libraries doing funny stuff.
-		Gray::cExceptionAssert::Throw((const Gray::LOGCHAR_t*)pExp, Gray::CDebugSourceLine((const char*)pFile, "", (WORD)uLine));
+		Gray::cExceptionAssert::Throw((const Gray::LOGCHAR_t*)pExp, Gray::cDebugSourceLine((const char*)pFile, "", (WORD)uLine));
 	}
 #endif
 }	// extern "C"

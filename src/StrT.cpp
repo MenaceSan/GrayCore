@@ -6,7 +6,7 @@
 
 #include "pch.h"
 #include "StrT.h"
-#include "CHeap.h"
+#include "cHeap.h"
 
 namespace Gray
 {

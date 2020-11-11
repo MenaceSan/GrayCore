@@ -1,17 +1,17 @@
 //
-//! @file CAppState.cpp
+//! @file cAppState.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
 #include "pch.h"
-#include "CAppState.h"
+#include "cAppState.h"
 #include "StrT.h"
-#include "CFileDir.h"
-#include "CLogMgr.h"
-#include "COSModule.h"
-#include "CExceptionAssert.h"
-#include "CUnitTest.h"
-#include "CRandomDef.h"
+#include "cFileDir.h"
+#include "cLogMgr.h"
+#include "cOSModule.h"
+#include "cExceptionAssert.h"
+#include "cUnitTest.h"
+#include "cRandomDef.h"
 
 #if defined(_WIN32) && ! defined(UNDER_CE)
 #include <shlobj.h>		// M$ documentation says this nowhere, but this is the header file for SHGetPathFromIDList shfolder.h
@@ -21,22 +21,22 @@
 
 namespace Gray
 {
-	HMODULE CAppState::sm_hInstance = HMODULE_NULL; //!< the current applications HINSTANCE handle/base address. _IMAGE_DOS_HEADER
+	HMODULE cAppState::sm_hInstance = HMODULE_NULL; //!< the current applications HINSTANCE handle/base address. _IMAGE_DOS_HEADER
 
-	CStringF CAppArgs::get_ArgsStr() const
+	cStringF cAppArgs::get_ArgsStr() const
 	{
-		//! Unparsed Command line args as a single line/string. might be used for COSProcess.
+		//! Unparsed Command line args as a single line/string. might be used for cOSProcess.
 		//! Does not contain App.exe name.
 		return m_sArguments;
 	}
 
-	ITERATE_t CAppArgs::get_ArgsQty() const
+	ITERATE_t cAppArgs::get_ArgsQty() const
 	{
 		//! @return 1 = just app path. 2 = app has 1 argument value. etc.
 		return m_asArgs.GetSize();
 	}
 
-	CStringF CAppArgs::GetArgsEnum(ITERATE_t i) const					// command line arg.
+	cStringF cAppArgs::GetArgsEnum(ITERATE_t i) const					// command line arg.
 	{
 		//! Get a command line argument parsed param by index.
 		//! Command line arguments honor "quoted strings" as a single argument.
@@ -46,7 +46,7 @@ namespace Gray
 		return m_asArgs.GetAtCheck(i);
 	}
 
-	void CAppArgs::InitArgsInt(ITERATE_t argc, APP_ARGS_t ppszArgs)
+	void cAppArgs::InitArgsInt(ITERATE_t argc, APP_ARGS_t ppszArgs)
 	{
 		//! set pre-parsed arguments
 		//! m_asArgs[0] = app name.
@@ -57,7 +57,7 @@ namespace Gray
 		}
 	}
 
-	void CAppArgs::InitArgs2(int argc, APP_ARGS_t ppszArgs)
+	void cAppArgs::InitArgs2(int argc, APP_ARGS_t ppszArgs)
 	{
 		//! Posix, _CONSOLE or DOS style arguments. main() style init.
 		//! set pre-parsed arguments from console style start. ppszArgs[0] = app path
@@ -76,9 +76,9 @@ namespace Gray
 		InitArgsInt(argc, ppszArgs);
 	}
 
-	void CAppArgs::InitArgsW(const FILECHAR_t* pszCommandArgs, const FILECHAR_t* pszSep)
+	void cAppArgs::InitArgsW(const FILECHAR_t* pszCommandArgs, const FILECHAR_t* pszSep)
 	{
-		//! set m_sArguments and parse pszCommandArgs to CArrayString. Windows WinMain() style init.
+		//! set m_sArguments and parse pszCommandArgs to cArrayString. Windows WinMain() style init.
 		//! @arg pszCommandArgs = assumed to NOT contain the app path name.
 		//! Similar to _WIN32  CommandLineToArgvW()
 		//! Honor quotes.
@@ -107,7 +107,7 @@ namespace Gray
 		InitArgsInt(iArgsQty + iSkip, apszArgs);	// skip first.
 	}
 
-	ITERATE_t CAppArgs::FindCommandArg(const FILECHAR_t* pszCommandArgFind, bool bRegex, bool bIgnoreCase) const
+	ITERATE_t cAppArgs::FindCommandArg(const FILECHAR_t* pszCommandArgFind, bool bRegex, bool bIgnoreCase) const
 	{
 		//! Find a command line arg as regex or ignoring case.
 		//! @arg bRegex = Search for a wildcard prefix.
@@ -115,7 +115,7 @@ namespace Gray
 		ITERATE_t iArgsQty = get_ArgsQty();
 		for (ITERATE_t i = 0; i < iArgsQty; i++)
 		{
-			CStringF sArg = GetArgsEnum(i);
+			cStringF sArg = GetArgsEnum(i);
 			const FILECHAR_t* pszArg = sArg;
 			while (IsArgSwitch(*pszArg))
 			{
@@ -142,7 +142,7 @@ namespace Gray
 		return k_ITERATE_BAD;
 	}
 
-	ITERATE_t CAppArgs::FindCommandArgs(bool bIgnoreCase, const FILECHAR_t* pszCommandArgFind, ...) const
+	ITERATE_t cAppArgs::FindCommandArgs(bool bIgnoreCase, const FILECHAR_t* pszCommandArgFind, ...) const
 	{
 		//! Find one of several possible command line args maybe ignoring case. nullptr terminated list.
 		//! @return index of the first one.
@@ -150,9 +150,9 @@ namespace Gray
 		ITERATE_t iArgsQty = get_ArgsQty();
 		for (ITERATE_t i = 0; i < iArgsQty; i++)
 		{
-			CStringF sArg = GetArgsEnum(i);
+			cStringF sArg = GetArgsEnum(i);
 			const FILECHAR_t* pszArg = sArg.get_CPtr();
-			while (CAppArgs::IsArgSwitch(pszArg[0]))
+			while (cAppArgs::IsArgSwitch(pszArg[0]))
 				pszArg++;
 
 			// Match? nullptr terminated.
@@ -182,10 +182,10 @@ namespace Gray
 
 	//*********************************************************
 
-	CAppState::CAppState()
-		: CSingleton<CAppState>(this, typeid(CAppState))
-		, m_Sig(_INC_GrayCore_H, sizeof(CAppState)) // help with debug versioning and DLL usage.
-		, m_nMainThreadId(CThreadId::k_NULL)
+	cAppState::cAppState()
+		: cSingleton<cAppState>(this, typeid(cAppState))
+		, m_Sig(_INC_GrayCore_H, sizeof(cAppState)) // help with debug versioning and DLL usage.
+		, m_nMainThreadId(cThreadId::k_NULL)
 		, m_eAppState(APPSTATE_Init)
 		, m_bTempDirWritable(false)
 	{
@@ -193,16 +193,16 @@ namespace Gray
 		ASSERT(m_ThreadModuleLoading.isInit());
 	}
 
-	CAppState::~CAppState()
+	cAppState::~cAppState()
 	{
 	}
 
-	UINT GRAYCALL CAppState::get_LibVersion() // static
+	UINT GRAYCALL cAppState::get_LibVersion() // static
 	{
 		return _INC_GrayCore_H;
 	}
 
-	bool GRAYCALL CAppState::isDebuggerPresent() // static
+	bool GRAYCALL cAppState::isDebuggerPresent() // static
 	{
 		//! @note kernel debuggers like SoftIce can fool this.
 #ifdef _WIN32
@@ -217,7 +217,7 @@ namespace Gray
 #endif
 	}
 
-	bool GRAYCALL CAppState::isRemoteSession() // static
+	bool GRAYCALL cAppState::isRemoteSession() // static
 	{
 		//! Should we act different if this is a remote terminal?
 #ifdef _WIN32
@@ -228,7 +228,7 @@ namespace Gray
 #endif
 	}
 
-	CStringF GRAYCALL CAppState::get_AppFilePath() // static
+	cStringF GRAYCALL cAppState::get_AppFilePath() // static
 	{
 		//! like _pgmptr in POSIX
 		//! @return The full path of the app EXE now
@@ -239,7 +239,7 @@ namespace Gray
 		{
 			return "";
 		}
-		return CStringF(szPath, dwRetLen);
+		return cStringF(szPath, dwRetLen);
 #elif defined(__linux__)
 		return I().m_Args.GetArgsEnum(0);	// The name of the current app.
 #else
@@ -247,41 +247,41 @@ namespace Gray
 #endif
 	}
 
-	CStringF GRAYCALL CAppState::get_AppFileTitle() // static
+	cStringF GRAYCALL cAppState::get_AppFileTitle() // static
 	{
 		//! Get the title of the app EXE file. No extension.
-		return CFilePath::GetFileNameNE(CAppState::get_AppFilePath());
+		return cFilePath::GetFileNameNE(cAppState::get_AppFilePath());
 	}
-	CStringF GRAYCALL CAppState::get_AppFileDir() // static
+	cStringF GRAYCALL cAppState::get_AppFileDir() // static
 	{
 		//! Get the directory the app EXE is in.
-		return CFilePath::GetFileDir(CAppState::get_AppFilePath());
+		return cFilePath::GetFileDir(cAppState::get_AppFilePath());
 	}
 
-	APPSTATE_TYPE_ GRAYCALL CAppState::GetAppState() // static
+	APPSTATE_TYPE_ GRAYCALL cAppState::GetAppState() // static
 	{
-		if (CAppState::isSingleCreated())
+		if (cAppState::isSingleCreated())
 		{
-			return CAppState::I().get_AppState();
+			return cAppState::I().get_AppState();
 		}
 		else
 		{
 			return APPSTATE_Exit;
 		}
 	}
-	void CAppState::InitAppState()
+	void cAppState::InitAppState()
 	{
-		//! The main app thread has started. often called by CAppStateMain or via InitInstance() in _MFC_VER.
+		//! The main app thread has started. often called by cAppStateMain or via InitInstance() in _MFC_VER.
 		ASSERT(m_eAppState == APPSTATE_Init);	//! Only call this once.
-		this->m_nMainThreadId = CThreadId::GetCurrentId();
+		this->m_nMainThreadId = cThreadId::GetCurrentId();
 		put_AppState(APPSTATE_Run);
 	}
 
-	GRAYCORE_LINK bool GRAYCALL CAppState::isInCInit() // static
+	GRAYCORE_LINK bool GRAYCALL cAppState::isInCInit() // static
 	{
 		//! Indicate the process/app is currently initializing static variables. not yet reached main()
 		//! Also set for a thread loading a DLL/SO.
-		CAppState& app = I();
+		cAppState& app = I();
 		APPSTATE_TYPE_ eAppState = app.m_eAppState;
 		if (eAppState == APPSTATE_Init)
 			return true;
@@ -291,23 +291,23 @@ namespace Gray
 		}
 		return false;
 	}
-	GRAYCORE_LINK bool GRAYCALL CAppState::isAppRunning() // static
+	GRAYCORE_LINK bool GRAYCALL cAppState::isAppRunning() // static
 	{
 		//! Not in static init or destruct.
 		//! Indicate the process/app is DONE initializing static variables. 
 		//! Thought it may be setting up or tearing down. Almost exit.
-		//! Use CAppStateMain inmain;
+		//! Use cAppStateMain inmain;
 		APPSTATE_TYPE_ eAppState = I().m_eAppState;
 		return(eAppState == APPSTATE_RunInit || eAppState == APPSTATE_Run || eAppState == APPSTATE_RunExit);
 	}
-	GRAYCORE_LINK bool GRAYCALL CAppState::isAppStateRun() // static
+	GRAYCORE_LINK bool GRAYCALL cAppState::isAppStateRun() // static
 	{
 		//! the process/app is in APPSTATE_Run?
-		//! Use CAppStateMain inmain;
+		//! Use cAppStateMain inmain;
 		APPSTATE_TYPE_ eAppState = I().m_eAppState;
 		return(eAppState == APPSTATE_Run);
 	}
-	GRAYCORE_LINK bool GRAYCALL CAppState::isInCExit() // static
+	GRAYCORE_LINK bool GRAYCALL cAppState::isInCExit() // static
 	{
 		//! is the app exiting right now ? outside main()
 		//! extern "C" int _C_Termination_Done; // undocumented C runtime variable - set to true during auto-finalization
@@ -317,7 +317,7 @@ namespace Gray
 		return(eAppState == APPSTATE_Exit);
 	}
 
-	StrLen_t GRAYCALL CAppState::GetEnvironStr(const FILECHAR_t* pszVarName, FILECHAR_t* pszValue, StrLen_t iLenMax) noexcept	// static
+	StrLen_t GRAYCALL cAppState::GetEnvironStr(const FILECHAR_t* pszVarName, FILECHAR_t* pszValue, StrLen_t iLenMax) noexcept	// static
 	{
 		//! Get a named environment variable by name.
 		//! @return
@@ -338,7 +338,7 @@ namespace Gray
 #endif
 	}
 
-	CStringF GRAYCALL CAppState::GetEnvironStr(const FILECHAR_t* pszVarName) noexcept	// static
+	cStringF GRAYCALL cAppState::GetEnvironStr(const FILECHAR_t* pszVarName) noexcept	// static
 	{
 		//! Get a named environment variable by name.
 		//! @arg pszVarName = nullptr = get a list of all variable names for the process?
@@ -359,7 +359,7 @@ namespace Gray
 	}
 
 #if 0
-	CStringF CAppState::ExpandEnvironmentString()
+	cStringF cAppState::ExpandEnvironmentString()
 	{
 		//! Expand things like %PATH% in Environment strings or REG_EXPAND_SZ
 		//!
@@ -368,10 +368,10 @@ namespace Gray
 	}
 #endif
 
-	ITERATE_t GRAYCALL CAppState::GetEnvironArray(CArrayString<FILECHAR_t>& a) // static
+	ITERATE_t GRAYCALL cAppState::GetEnvironArray(cArrayString<FILECHAR_t>& a) // static
 	{
 		//! Get the full block of environ strings for this process.
-		//! similar to CVarMap or CIniSectionData
+		//! similar to CVarMap or cIniSectionData
 		//! Each entry is in the form "Var1=Value1"
 		//! http://linux.die.net/man/7/environ
 		ITERATE_t i = 0;
@@ -405,7 +405,7 @@ namespace Gray
 		return i;
 	}
 
-	bool CAppState::SetEnvironStr(const FILECHAR_t* pszVarName, const FILECHAR_t* pszVal) // static
+	bool cAppState::SetEnvironStr(const FILECHAR_t* pszVarName, const FILECHAR_t* pszVal) // static
 	{
 		//! ASSUME pszVarName is valid format.
 		//! @arg pszVal = nullptr = (or "") to erase it.
@@ -430,7 +430,7 @@ namespace Gray
 #endif
 	}
 
-	StrLen_t GRAYCALL CAppState::GetCurrentDir(FILECHAR_t* pszDir, StrLen_t iSizeMax) // static
+	StrLen_t GRAYCALL cAppState::GetCurrentDir(FILECHAR_t* pszDir, StrLen_t iSizeMax) // static
 	{
 		//! return the current directory for the process.
 		//! In __linux__ and _WIN32 the Process has a current/default directory. UNDER_CE does not.
@@ -457,7 +457,7 @@ namespace Gray
 #endif
 	}
 
-	CStringF GRAYCALL CAppState::get_CurrentDir() // static
+	cStringF GRAYCALL cAppState::get_CurrentDir() // static
 	{
 		//! @return the current directory path for the process.
 		FILECHAR_t szPath[_MAX_PATH];
@@ -467,7 +467,7 @@ namespace Gray
 		return szPath;
 	}
 
-	bool GRAYCALL CAppState::SetCurrentDir(const FILECHAR_t* pszDir) // static
+	bool GRAYCALL cAppState::SetCurrentDir(const FILECHAR_t* pszDir) // static
 	{
 		//! set the current directory path for the current app.
 		//! like chdir() or _chdir()
@@ -482,7 +482,7 @@ namespace Gray
 #endif
 	}
 
-	CStringF CAppState::get_TempDir()
+	cStringF cAppState::get_TempDir()
 	{
 		//! Get a directory i can place temporary files. ends with '\'
 		//! This is decided based on the OS,User,App,
@@ -522,19 +522,19 @@ namespace Gray
 				}
 			}
 		}
-		CFilePath::AddFileDirSep(szTmp, iLen);
+		cFilePath::AddFileDirSep(szTmp, iLen);
 #endif
 
 		m_sTempDir = szTmp;	// cache this.
 		return m_sTempDir;
 	}
 
-	CStringF CAppState::GetTempFile(const FILECHAR_t* pszFileTitle)
+	cStringF cAppState::GetTempFile(const FILECHAR_t* pszFileTitle)
 	{
 		//! Create a temporary file to store stuff. Make sure its not colliding.
 		//! @note if pszFileTitle == nullptr then just make a new random named file.
 
-		CStringF sTmp;
+		cStringF sTmp;
 		if (pszFileTitle == nullptr)
 		{
 			// make up a random unused file name. ALA _WIN32 GetTempFileName()
@@ -542,24 +542,24 @@ namespace Gray
 			BYTE noise[8];
 			g_Rand.GetNoise(noise, sizeof(noise));
 			char szNoise[(sizeof(noise) * 2) + 1];	// GetHexDigestSize
-			StrLen_t nLen = CMem::GetHexDigest(szNoise, noise, sizeof(noise));
+			StrLen_t nLen = cMem::GetHexDigest(szNoise, noise, sizeof(noise));
 			ASSERT(nLen == STRMAX(szNoise));
 			sTmp = szNoise;
 			pszFileTitle = sTmp;
 		}
 		// TODO: m_bTempDirWritable = Test if we can really write to it?
-		return CFilePath::CombineFilePathX(get_TempDir(), pszFileTitle);
+		return cFilePath::CombineFilePathX(get_TempDir(), pszFileTitle);
 	}
 
-	CStringF CAppState::GetTempDir(const FILECHAR_t* pszFileDir, bool bCreate)
+	cStringF cAppState::GetTempDir(const FILECHAR_t* pszFileDir, bool bCreate)
 	{
 		//! Get/Create a temporary folder in temporary folder space.
 		//! @arg bCreate = create the sub dir if it doesn't already exist. TODO
 
-		CStringF sTempDir = GetTempFile(pszFileDir);
+		cStringF sTempDir = GetTempFile(pszFileDir);
 		if (bCreate)
 		{
-			HRESULT hRes = CFileDir::CreateDirectoryX(sTempDir);
+			HRESULT hRes = cFileDir::CreateDirectoryX(sTempDir);
 			if (FAILED(hRes))
 			{
 				return "";
@@ -568,15 +568,15 @@ namespace Gray
 		return sTempDir;
 	}
 
-	void CAppState::SetArgValid(ITERATE_t i)
+	void cAppState::SetArgValid(ITERATE_t i)
 	{
 		m_ArgsValid.SetBit((BIT_ENUM_t)i);
 	}
 
-	CStringF CAppState::get_InvalidArgs() const
+	cStringF cAppState::get_InvalidArgs() const
 	{
 		//! Get a list of args NOT marked as valid. Not IN m_ValidArgs
-		CStringF sInvalidArgs;
+		cStringF sInvalidArgs;
 		ITERATE_t iArgsQty = m_Args.get_ArgsQty();
 		for (ITERATE_t i = 1; i < iArgsQty; i++)
 		{
@@ -589,7 +589,7 @@ namespace Gray
 		return sInvalidArgs;
 	}
 
-	void CAppState::InitArgsW(const FILECHAR_t* pszCommandArgs)
+	void cAppState::InitArgsW(const FILECHAR_t* pszCommandArgs)
 	{
 		//! Windows style (unparsed) arguments. WinMain()
 		//! Command line arguments honor "quoted strings" as a single argument.
@@ -611,27 +611,27 @@ namespace Gray
 			m_Args.InitArgsW(pszCommandArgs);
 		}
 
-		CStringF sAppPath = get_AppFilePath();
+		cStringF sAppPath = get_AppFilePath();
 		m_Args.m_asArgs[0] = const_cast<FILECHAR_t*>(sAppPath.get_CPtr());
 	}
 
-	void CAppState::InitArgs2(int argc, APP_ARGS_t argv)
+	void cAppState::InitArgs2(int argc, APP_ARGS_t argv)
 	{
 		//! POSIX main() style init.
 		//! If called by ServiceMain this might be redundant.
 		m_Args.InitArgs2(argc, argv);
 	}
 
-	void GRAYCALL CAppState::AbortApp(APP_EXITCODE_t uExitCode)	// static
+	void GRAYCALL cAppState::AbortApp(APP_EXITCODE_t uExitCode)	// static
 	{
 		//! Abort the application from some place other than the main() or WinMain() fall through.
 		//! Call this instead of abort() or exit() to preclude naughty libraries from exiting badly.
 		//! @arg uExitCode = APP_EXITCODE_t like return from "int main()"
 		//!		APP_EXITCODE_ABORT = 3 = like abort()
-		if (CAppState::isSingleCreated())
+		if (cAppState::isSingleCreated())
 		{
-			// CAppExitCatcher should not block this now.
-			CAppState::I().put_AppState(APPSTATE_Exit);
+			// cAppExitCatcher should not block this now.
+			cAppState::I().put_AppState(APPSTATE_Exit);
 		}
 #ifdef _WIN32
 		::ExitProcess(uExitCode);
@@ -640,7 +640,7 @@ namespace Gray
 #endif
 	}
 
-	void GRAYCALL CAppState::SetExecutionState(bool bActiveCPU, bool bActiveGUI) // static
+	void GRAYCALL cAppState::SetExecutionState(bool bActiveCPU, bool bActiveGUI) // static
 	{
 		//! Tell the system it should not sleep/hibernate if it is active. I have a big task to complete.
 		//! try this for Vista, it will fail on XP
@@ -665,14 +665,14 @@ namespace Gray
 #endif
 	}
 
-	cString GRAYCALL CAppState::GetCurrentUserName(bool bForce) // static
+	cString GRAYCALL cAppState::GetCurrentUserName(bool bForce) // static
 	{
 		//! Get the current system user name for the process/app.
 		//! @note Can't call this "GetUserName" because _WIN32 has a "#define" on that.
 		//! @arg bForce = Read the UserName from the OS, It may change by impersonation.
 		//! (i have this users accounts privs)
 
-		CAppState* pThis = CAppState::get_Single();
+		cAppState* pThis = cAppState::get_Single();
 		ASSERT_N(pThis != nullptr);
 		if (!bForce && !pThis->m_sUserName.IsEmpty())	// cached name,.
 		{
@@ -700,7 +700,7 @@ namespace Gray
 		return pThis->m_sUserName;
 	}
 
-	bool GRAYCALL CAppState::isCurrentUserAdmin() // static
+	bool GRAYCALL cAppState::isCurrentUserAdmin() // static
 	{
 		//! This routine returns 'true' if the caller's process
 		//! is a member of the Administrators local group. Caller is NOT expected
@@ -744,7 +744,7 @@ namespace Gray
 #endif
 	}
 
-	CStringF GRAYCALL CAppState::GetCurrentUserDir(const FILECHAR_t* pszSubFolder, bool bCreate) // static
+	cStringF GRAYCALL cAppState::GetCurrentUserDir(const FILECHAR_t* pszSubFolder, bool bCreate) // static
 	{
 		//! get a folder the user has write access to. for placing log files and such.
 		//! @arg pszSubFolder = create the sub folder if necessary.
@@ -761,17 +761,17 @@ namespace Gray
 		StrLen_t iLen = StrT::Len(szPath);
 #elif defined(__linux__)
 		// e.g. "/home/Dennis/X"
-		StrLen_t iLen = CFilePath::CombineFilePath(szPath, STRMAX(szPath), _FN(FILESTR_DirSep) _FN("home"), CAppState::GetCurrentUserName());
+		StrLen_t iLen = cFilePath::CombineFilePath(szPath, STRMAX(szPath), _FN(FILESTR_DirSep) _FN("home"), cAppState::GetCurrentUserName());
 		HRESULT hRes = S_OK;
 #endif
 		if (iLen <= 0)
 			return "";
 		if (!StrT::IsNullOrEmpty(pszSubFolder))
 		{
-			iLen = CFilePath::CombineFilePathA(szPath, STRMAX(szPath), iLen, pszSubFolder);
+			iLen = cFilePath::CombineFilePathA(szPath, STRMAX(szPath), iLen, pszSubFolder);
 			if (bCreate)
 			{
-				hRes = CFileDir::CreateDirectoryX(szPath);
+				hRes = cFileDir::CreateDirectoryX(szPath);
 				if (FAILED(hRes))
 					return "";
 			}
@@ -779,7 +779,7 @@ namespace Gray
 		return szPath;
 	}
 
-	HMODULE GRAYCALL CAppState::get_HModule() // static
+	HMODULE GRAYCALL cAppState::get_HModule() // static
 	{
 		//! Same as HINSTANCE Passed to app at start in _WIN32 WinMain(HINSTANCE hInstance)
 		//! @return the HMODULE to the current running EXE module. for resources.
@@ -794,7 +794,7 @@ namespace Gray
 	}
 
 #if 0
-	bool CAppState::GetStatTimes(FILETIME* pKernelTime, FILETIME* pUserTime) const
+	bool cAppState::GetStatTimes(FILETIME* pKernelTime, FILETIME* pUserTime) const
 	{
 		//! How much time usage does this process have ? how long have i run ?
 #ifdef _WIN32
@@ -815,61 +815,61 @@ namespace Gray
 
 	//*******************************************************************
 
-	CAppExitCatcher::CAppExitCatcher() : CSingletonStatic<CAppExitCatcher>(this)
+	cAppExitCatcher::cAppExitCatcher() : cSingletonStatic<cAppExitCatcher>(this)
 	{
 		::atexit(ExitCatchProc);
 		// Register for SIGABRT ?? for abort() ?
 	}
 
-	CAppExitCatcher::~CAppExitCatcher()
+	cAppExitCatcher::~cAppExitCatcher()
 	{
 	}
 
-	void CAppExitCatcher::ExitCatch() // virtual
+	void cAppExitCatcher::ExitCatch() // virtual
 	{
 		//! Someone (library) called "exit()" that should not have? Does not catch "abort()".
 		//! The SQL driver calls "exit()" sometimes. bastards.
 		//! but this is also called legit at the application termination.
 
-		APPSTATE_TYPE_ eAppState = CAppState::GetAppState();
+		APPSTATE_TYPE_ eAppState = cAppState::GetAppState();
 		if (eAppState >= APPSTATE_Exit)
 		{
 			// Legit exit.
-			DEBUG_MSG(("CAppExitCatcher::ExitCatch() OK", eAppState));
+			DEBUG_MSG(("cAppExitCatcher::ExitCatch() OK", eAppState));
 			// Just pass through as we are exiting anyhow.
 		}
 		else
 		{
 			// We should not be here !
-			DEBUG_ERR(("CAppExitCatcher::ExitCatch() in CAppState %d redirect.", eAppState));
-			cExceptionAssert::Throw("CAppExitCatcher::ExitCatch", CDebugSourceLine("unknown", "", 1));
+			DEBUG_ERR(("cAppExitCatcher::ExitCatch() in cAppState %d redirect.", eAppState));
+			cExceptionAssert::Throw("cAppExitCatcher::ExitCatch", cDebugSourceLine("unknown", "", 1));
 		}
 	}
 
-	void __cdecl CAppExitCatcher::ExitCatchProc() // static
+	void __cdecl cAppExitCatcher::ExitCatchProc() // static
 	{
-		if (CAppExitCatcher::isSingleCreated())
+		if (cAppExitCatcher::isSingleCreated())
 		{
-			CAppExitCatcher::I().ExitCatch();
+			cAppExitCatcher::I().ExitCatch();
 		}
 	}
 
 	//*******************************************************************
 
 #if defined(_WIN32)
-	CAppStateMain::CAppStateMain(HINSTANCE hInstance, const FILECHAR_t* pszCommandArgs)
-		: m_AppState(CAppState::I())
+	cAppStateMain::cAppStateMain(HINSTANCE hInstance, const FILECHAR_t* pszCommandArgs)
+		: m_AppState(cAppState::I())
 	{
 		//! WinMain()
 		//! Current state should be APPSTATE_Init
 		m_AppState.InitAppState();	// set to APPSTATE_Run
 		m_AppState.InitArgsW(pszCommandArgs);
-		ASSERT(hInstance == CAppState::get_HModule());
-		CAppState::sm_hInstance = hInstance;
+		ASSERT(hInstance == cAppState::get_HModule());
+		cAppState::sm_hInstance = hInstance;
 	}
 #endif
-	CAppStateMain::CAppStateMain(int argc, APP_ARGS_t argv)
-		: m_AppState(CAppState::I())
+	cAppStateMain::cAppStateMain(int argc, APP_ARGS_t argv)
+		: m_AppState(cAppState::I())
 	{
 		//! main() or _tmain()
 		//! Current state should be APPSTATE_Init
@@ -881,17 +881,17 @@ namespace Gray
 //*******************************************************************
 
 #if USE_UNITTESTS
-#include "CUnitTest.h"
-#include "CString.h"
+#include "cUnitTest.h"
+#include "cString.h"
 
-UNITTEST_CLASS(CAppState)
+UNITTEST_CLASS(cAppState)
 {
-	UNITTEST_METHOD(CAppState)
+	UNITTEST_METHOD(cAppState)
 	{
-		CUnitTestAppState inmain;
-		CAppState& app = CAppState::I();
+		cUnitTestAppState inmain;
+		cAppState& app = cAppState::I();
 
-		CAppArgs args2;
+		cAppArgs args2;
 		args2.InitArgsW(_FN(""));
 
 		args2.InitArgsW(_FN("a b c"));
@@ -908,26 +908,26 @@ UNITTEST_CLASS(CAppState)
 		cString sUserName = app.GetCurrentUserName();
 		UNITTEST_TRUE(!sUserName.IsEmpty());
 
-		UNITTEST_TRUE(app.isAppRunning());	// CAppStateMain was called!
+		UNITTEST_TRUE(app.isAppRunning());	// cAppStateMain was called!
 		DEBUG_MSG(("Arg Qty = %d", app.m_Args.get_ArgsQty()));
 
 		for (int i = 0; i < app.m_Args.get_ArgsQty(); i++)
 		{
-			CStringF sArg = app.m_Args.GetArgsEnum(i);
+			cStringF sArg = app.m_Args.GetArgsEnum(i);
 		}
 
-		CArrayString<FILECHAR_t> aEnv;
+		cArrayString<FILECHAR_t> aEnv;
 		app.GetEnvironArray(aEnv);
 		UNITTEST_TRUE(aEnv.GetSize());
 		DEBUG_MSG(("Env Qty = %d", aEnv.GetSize()));
 
-		CStringF sCurrentDir = app.get_CurrentDir();	// just testing.
+		cStringF sCurrentDir = app.get_CurrentDir();	// just testing.
 		DEBUG_MSG(("Current Dir = '%s'", LOGSTR(sCurrentDir)));
 
-		CStringF sDirTmp = app.get_TempDir();
+		cStringF sDirTmp = app.get_TempDir();
 		UNITTEST_TRUE(sDirTmp.GetLength() > 0);
 		DEBUG_MSG(("Temp Dir = '%s'", LOGSTR(sDirTmp)));
 	}
 };
-UNITTEST_REGISTER(CAppState, UNITTEST_LEVEL_Core);
+UNITTEST_REGISTER(cAppState, UNITTEST_LEVEL_Core);
 #endif

@@ -1,11 +1,11 @@
 //
-//! @file CValT.h
+//! @file cValT.h
 //! templates for comparing, swapping and sorting of any type.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CValT_H
-#define _INC_CValT_H
+#ifndef _INC_cValT_H
+#define _INC_cValT_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
@@ -24,16 +24,16 @@ namespace Gray
 		COMPARE_Greater = 1,	//!< VARCMP_GT
 	};
 
-	struct GRAYCORE_LINK CValT	// static. Value/Object of some type in memory.
+	struct GRAYCORE_LINK cValT	// static. Value/Object of some type in memory.
 	{
-		//! @struct Gray::CValT
+		//! @struct Gray::cValT
 		//! Helper functions for an arbitrary value/object type in memory. We may compare these.
 		//! Similar to System.IComparable in .NET
 
 		template <class TYPE>
-		static inline void Swap(TYPE& a, TYPE& b)
+		static inline void Swap(TYPE& a, TYPE& b) noexcept
 		{
-			//! swap 2 values. similar to CMem::Swap() but uses the intrinsic = operator.
+			//! swap 2 values. similar to cMem::Swap() but uses the intrinsic = operator.
 			//! dangerous for complex struct that has pointers and such. may not do a 'deep' copy.
 			//! assume TYPE has a safe overloaded = operator.
 			//! Overload this template for any specific TYPE Swaps.
@@ -43,7 +43,7 @@ namespace Gray
 		}
 
 		template <class TYPE>
-		static inline COMPARE_t Compare(const TYPE& a, const TYPE& b)
+		static inline COMPARE_t Compare(const TYPE& a, const TYPE& b) noexcept
 		{
 			//! compare 2 TYPE values.
 			//! Similar to .NET IComparable but for any types.
@@ -59,9 +59,9 @@ namespace Gray
 		}
 	};
 
-	struct GRAYCORE_LINK CValArray	// static. array of Value of some TYPE.
+	struct GRAYCORE_LINK cValArray	// static. array of Value of some TYPE.
 	{
-		//! @struct Gray::CValArray
+		//! @struct Gray::cValArray
 		//! Helper functions for array of values of some TYPE in memory.
 		//! @note optimizations can be made if we know we are working on larger native types over treating the same things as bytes.
 
@@ -161,7 +161,7 @@ namespace Gray
 		template <class TYPE>
 		static inline void ReverseArray(TYPE* pArray, size_t nArraySizeBytes)
 		{
-			//! reverse the order of an array of a TYPE. similar to CMem::ReverseArrayBlocks but iBlockSize==sizeof(TYPE)
+			//! reverse the order of an array of a TYPE. similar to cMem::ReverseArrayBlocks but iBlockSize==sizeof(TYPE)
 			//! TYPE = BYTE = reverse bytes in a block. similar to htonl(), etc.
 			//! Use ReverseType<> if TYPE = BYTE and nArraySizeBytes <= largest intrinsic type size?
 			size_t nQty = nArraySizeBytes / sizeof(TYPE);
@@ -169,24 +169,24 @@ namespace Gray
 			TYPE* pMemBE = pArray + (nQty - 1);
 			for (; pMemBS < pMemBE; pMemBS++, pMemBE--)
 			{
-				CValT::Swap<TYPE>(*pMemBS, *pMemBE);
+				cValT::Swap<TYPE>(*pMemBS, *pMemBE);
 			}
 		}
 		static void GRAYCALL ReverseArrayBlocks(void* pArray, size_t nArraySizeBytes, size_t iBlockSize);
 	};
 
 	template <>
-	inline void CValArray::FillQty(BYTE* pData, ITERATE_t nBlocks, BYTE bFill) // static
+	inline void cValArray::FillQty(BYTE* pData, ITERATE_t nBlocks, BYTE bFill) // static
 	{
 		//! FillMemory BYTEs like memset()
 		::memset(pData, bFill, (size_t)nBlocks);
 	}
 	template <>
-	inline void CValArray::FillSize(void* pData, size_t nSizeBlock, BYTE bFill) // static
+	inline void cValArray::FillSize(void* pData, size_t nSizeBlock, BYTE bFill) // static
 	{
 		//! FillMemory BYTEs like memset()
 		::memset(pData, bFill, nSizeBlock);
 	}
 }
 
-#endif // _INC_CValT_H
+#endif // _INC_cValT_H

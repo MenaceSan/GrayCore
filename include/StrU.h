@@ -11,7 +11,7 @@
 
 #include "StrChar.h"
 #include "StrConst.h"
-#include "CUnitTestDecl.h"
+#include "cUnitTestDecl.h"
 
 UNITTEST_PREDEF(StrU)
 

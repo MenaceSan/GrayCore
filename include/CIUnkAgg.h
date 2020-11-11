@@ -1,22 +1,22 @@
 //
-//! @file CIUnkAgg.h
+//! @file cIUnkAgg.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CIUnkAgg_H
-#define _INC_CIUnkAgg_H
+#ifndef _INC_cIUnkAgg_H
+#define _INC_cIUnkAgg_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
-#include "CSmartPtr.h"
+#include "cRefPtr.h"
 
 namespace Gray
 {
 	template<class TYPE = IUnknown>
-	class DECLSPEC_NOVTABLE CIUnkAggBase
+	class DECLSPEC_NOVTABLE cIUnkAggBase
 	{
-		//! @class Gray::CIUnkAggBase
+		//! @class Gray::cIUnkAggBase
 		//! Abstract Base for an aggregated interface class. 
 		//! This is the base for a class that is a static or member. has no ref count of its own.
 		//! This makes interfaces look like multiple inheritance when it really is not. (why not just use multiple inheritance ?)
@@ -25,12 +25,12 @@ namespace Gray
 		TYPE* m_pIAggOuter;	//!< the outer object interface.
 
 	public:
-		CIUnkAggBase(TYPE* pIAggOuter)
+		cIUnkAggBase(TYPE* pIAggOuter)
 			: m_pIAggOuter(pIAggOuter)
 		{
 			ASSERT(pIAggOuter != nullptr);
 		}
-		virtual ~CIUnkAggBase()
+		virtual ~cIUnkAggBase()
 		{
 		}
 		// Support IUnknown functions.
@@ -53,13 +53,13 @@ namespace Gray
 		}
 	};
 
-	class DECLSPEC_NOVTABLE CIUnkAgg : public CSmartBase, public CIUnkAggBase < IUnknown >
+	class DECLSPEC_NOVTABLE cIUnkAgg : public cRefBase, public cIUnkAggBase < IUnknown >
 	{
-		//! @class Gray::CIUnkAgg
+		//! @class Gray::cIUnkAgg
 		//! Abstract Base class for an interface that allows aggregation from some IUnknown parent. (or not)
 	public:
-		CIUnkAgg(IUnknown* pIAggOuter)
-			: CIUnkAggBase((pIAggOuter == nullptr) ? this : pIAggOuter)
+		cIUnkAgg(IUnknown* pIAggOuter)
+			: cIUnkAggBase((pIAggOuter == nullptr) ? this : pIAggOuter)
 		{
 		}
 		// Support IUknown functions.
@@ -106,4 +106,4 @@ namespace Gray
 		}
 	};
 };
-#endif // _INC_CIUnkAgg_H
+#endif // _INC_cIUnkAgg_H

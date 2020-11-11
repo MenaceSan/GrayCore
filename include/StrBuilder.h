@@ -10,11 +10,11 @@
 #endif
 
 #include "StrT.h"
-#include "CMem.h"
+#include "cMem.h"
 
 namespace Gray
 {
-	class StrBuilder : public CMemBlock // GRAYCORE_LINK
+	class StrBuilder : public cMemBlock // GRAYCORE_LINK
 	{
 		//! @class Gray::StrBuilder
 		//! Similar to .NET StringBuilder
@@ -41,7 +41,7 @@ namespace Gray
 
 	public:
 		StrBuilder(void* p, StrLen_t nSize)
-			: CMemBlock(p, nSize)
+			: cMemBlock(p, nSize)
 			, m_pCur((char*)p)
 			, m_nLenLeft(nSize)
 		{
@@ -50,8 +50,8 @@ namespace Gray
 			ASSERT(m_pCur != nullptr);
 			*m_pCur = '\0';
 		}
-		StrBuilder(CMemBlock& m)
-			: CMemBlock(m)
+		StrBuilder(cMemBlock& m)
+			: cMemBlock(m)
 			, m_pCur((char*)(m.get_Start()))
 			, m_nLenLeft((StrLen_t)m.get_Size())
 		{

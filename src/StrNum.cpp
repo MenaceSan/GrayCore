@@ -6,10 +6,10 @@
 #include "pch.h"
 #include "StrNum.h"
 #include "StrT.h"
-#include "CTypes.h"
-#include "CFloat.h"
-#include "CFloatDeco.h"
-#include "CValT.h"
+#include "cTypes.h"
+#include "cFloat.h"
+#include "cFloatDeco.h"
+#include "cValT.h"
 
 namespace Gray
 {
@@ -234,8 +234,8 @@ namespace Gray
 		// @todo implement gcvt(), fcvt(), _fcvt_s locally ? no UNICODE version of fcvt().
 
 		// Not handling NaN and inf
-		ASSERT(!CTypeFloat::IsNaN(dVal));
-		ASSERT(!CTypeFloat::IsInfinite(dVal));
+		ASSERT(!cTypeFloat::IsNaN(dVal));
+		ASSERT(!cTypeFloat::IsInfinite(dVal));
 
 		if (dVal < 0)
 		{
@@ -244,7 +244,7 @@ namespace Gray
 		}
 
 		int nExp10; // decimal exponent
-		StrLen_t nMantLength = CFloatDeco::Grisu2(dVal, pszOut, &nExp10);
+		StrLen_t nMantLength = cFloatDeco::Grisu2(dVal, pszOut, &nExp10);
 		ASSERT(nMantLength > 0);
 
 		StrLen_t nOutLen;
@@ -256,7 +256,7 @@ namespace Gray
 			{
 				// Chop off decimal places.
 				nExp10 += nMantLength - iDecPlacesWanted;
-				nMantLength = CFloatDeco::MantRound(pszOut, iDecPlacesWanted);
+				nMantLength = cFloatDeco::MantRound(pszOut, iDecPlacesWanted);
 			}
 
 			// Decide what format to use for the number. like gcvt() selects F or E format.
@@ -269,12 +269,12 @@ namespace Gray
 					iDecPlacesWanted = 0;
 				else
 					iDecPlacesWanted = -1;
-				nOutLen = CFloatDeco::FormatF(pszOut, nMantLength, nExp10, iDecPlacesWanted);	// iDecPlacesWanted
+				nOutLen = cFloatDeco::FormatF(pszOut, nMantLength, nExp10, iDecPlacesWanted);	// iDecPlacesWanted
 			}
 			else
 			{
 				// Prefer E Format.
-				nOutLen = CFloatDeco::FormatE(pszOut, nMantLength, nExp10, -chE);
+				nOutLen = cFloatDeco::FormatE(pszOut, nMantLength, nExp10, -chE);
 			}
 		}
 		else if (chE != '\0')
@@ -282,11 +282,11 @@ namespace Gray
 			// E format. always has 1 whole digit.
 			if (iDecPlacesWanted >= 0)	// restrict decimal places.
 			{
-				StrLen_t iDelta = CFloatDeco::MantAdjust(pszOut, nMantLength, iDecPlacesWanted + 1);
+				StrLen_t iDelta = cFloatDeco::MantAdjust(pszOut, nMantLength, iDecPlacesWanted + 1);
 				nMantLength += iDelta;
 				nExp10 -= iDelta;
 			}
-			nOutLen = CFloatDeco::FormatE(pszOut, nMantLength, nExp10, chE);
+			nOutLen = cFloatDeco::FormatE(pszOut, nMantLength, nExp10, chE);
 		}
 		else
 		{
@@ -294,7 +294,7 @@ namespace Gray
 			if (nExp10 >= 0 && iDecPlacesWanted < 0) // Whole numbers only. No decimal places. 
 				iDecPlacesWanted = 1;	// default = have at least 1 decimal place. 
 
-			nOutLen = CFloatDeco::FormatF(pszOut, nMantLength, nExp10, iDecPlacesWanted);
+			nOutLen = cFloatDeco::FormatF(pszOut, nMantLength, nExp10, iDecPlacesWanted);
 		}
 
 		ASSERT(pszOut[nOutLen] == '\0');
@@ -444,7 +444,7 @@ namespace Gray
 			*ppszInpEnd = (char *)pszInp;
 		}
 
-		double fraction = CFloatDeco::toDouble(fracHi, fracLo, (bExpNegative) ? (nExpFrac - nExp) : (nExpFrac + nExp));
+		double fraction = cFloatDeco::toDouble(fracHi, fracLo, (bExpNegative) ? (nExpFrac - nExp) : (nExpFrac + nExp));
 
 		return (*pszStart == '-') ? (-fraction) : fraction;
 	}
@@ -454,8 +454,8 @@ namespace Gray
 //***************************************************
 
 #if USE_UNITTESTS
-#include "CUnitTest.h"
-#include "CTypes.h"
+#include "cUnitTest.h"
+#include "cTypes.h"
 
 namespace Gray
 {
@@ -494,7 +494,7 @@ namespace Gray
 					if (iLenE > iLenE2)
 					{
 						// e.g. "6.667000e-20"
-						CMem::CopyOverlap(pszOut + iLenE2, pszOut + iLenE, ((iLen + 1) - iLenE) * sizeof(char));
+						cMem::CopyOverlap(pszOut + iLenE2, pszOut + iLenE, ((iLen + 1) - iLenE) * sizeof(char));
 					}
 				}
 			}

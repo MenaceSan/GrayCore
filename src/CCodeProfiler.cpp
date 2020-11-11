@@ -1,22 +1,22 @@
 //
-//! @file CCodeProfiler.cpp
+//! @file cCodeProfiler.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 #include "pch.h"
-#include "CCodeProfiler.h"
+#include "cCodeProfiler.h"
 #include "CFile.h"
-#include "CThreadLock.h"
-#include "CString.h"
-#include "CAppState.h"
+#include "cThreadLock.h"
+#include "cString.h"
+#include "cAppState.h"
 
 namespace Gray
 {
-	bool CCodeProfileFunc::sm_bActive = false;	// static
+	bool cCodeProfileFunc::sm_bActive = false;	// static
 
 #pragma pack(push,2)
-	struct CATTR_PACKED CCodeProfilerItem
+	struct CATTR_PACKED cCodeProfilerItem
 	{
-		//! @struct Gray::CCodeProfilerItem
+		//! @struct Gray::cCodeProfilerItem
 		//! profile log file item struct
 		WORD m_wSize;			//!< Number of bytes in this record
 		WORD m_uLine;			//!< Line number in source file
@@ -30,33 +30,33 @@ namespace Gray
 	};
 #pragma pack(pop)
 
-	class GRAYCORE_LINK CCodeProfilerControl : public CSingleton< CCodeProfilerControl >
+	class GRAYCORE_LINK cCodeProfilerControl : public cSingleton< cCodeProfilerControl >
 	{
-		//! @class Gray::CCodeProfilerControl
+		//! @class Gray::cCodeProfilerControl
 		//! Thread locked singleton stream to write out to. Can be shared by multiple threads.
 
-		friend class CCodeProfileFunc;
-		friend class CSingleton< CCodeProfilerControl >;
+		friend class cCodeProfileFunc;
+		friend class cSingleton< cCodeProfilerControl >;
 
 	protected:
 		cFile m_File;
-		mutable CThreadLockCount m_Lock;
+		mutable cThreadLockCount m_Lock;
 		PROCESSID_t m_ProcessId;
 
 	public:
-		CCodeProfilerControl()
-			: CSingleton<CCodeProfilerControl>(this, typeid(CCodeProfilerControl))
-			, m_ProcessId(CAppState::get_CurrentProcessId())
+		cCodeProfilerControl()
+			: cSingleton<cCodeProfilerControl>(this, typeid(cCodeProfilerControl))
+			, m_ProcessId(cAppState::get_CurrentProcessId())
 		{
 		}
-		~CCodeProfilerControl()
+		~cCodeProfilerControl()
 		{
 			StopTime();
 		}
 
 		bool get_Active() const
 		{
-			return CCodeProfileFunc::sm_bActive;
+			return cCodeProfileFunc::sm_bActive;
 		}
 
 		bool put_Active(bool bActive)
@@ -72,8 +72,8 @@ namespace Gray
 	protected:
 		bool StartTime()
 		{
-			CThreadGuard lock(m_Lock);
-			CCodeProfileFunc::sm_bActive = true;
+			cThreadGuard lock(m_Lock);
+			cCodeProfileFunc::sm_bActive = true;
 			if (m_File.isFileOpen())
 			{
 				return true;
@@ -90,54 +90,54 @@ namespace Gray
 
 		void StopTime()
 		{
-			CThreadGuard lock(m_Lock);
-			CCodeProfileFunc::sm_bActive = false;
+			cThreadGuard lock(m_Lock);
+			cCodeProfileFunc::sm_bActive = false;
 			m_File.Close();
 		}
 
-		void WriteTime(const CTimePerf& nTimeEnd, const class CCodeProfileFunc& Func)
+		void WriteTime(const cTimePerf& nTimeEnd, const class cCodeProfileFunc& Func)
 		{
-			// CThreadLockableObj
+			// cThreadLockableRef
 			ASSERT(get_Active());
 			if (!m_File.isFileOpen())
 			{
 				return;
 			}
-			CThreadGuard lock(m_Lock);
+			cThreadGuard lock(m_Lock);
 			if (!m_File.isFileOpen())
 			{
 				return;
 			}
 			StrLen_t iLenFile = StrT::Len(Func.m_src.m_pszFile);
 			StrLen_t iLenFunc = StrT::Len(Func.m_src.m_pszFunction);
-			StrLen_t iLenTotal = sizeof(CCodeProfilerItem) + iLenFile + iLenFunc + 2;
+			StrLen_t iLenTotal = sizeof(cCodeProfilerItem) + iLenFile + iLenFunc + 2;
 
 			BYTE Tmp[1024];
 			ASSERT(iLenTotal < (StrLen_t) sizeof(Tmp));
 
-			CCodeProfilerItem* pLogItem = reinterpret_cast<CCodeProfilerItem*>(Tmp);
+			cCodeProfilerItem* pLogItem = reinterpret_cast<cCodeProfilerItem*>(Tmp);
 			pLogItem->m_wSize = (WORD)iLenTotal;
 			pLogItem->m_uLine = Func.m_src.m_uLine;
 			pLogItem->m_ProcessID = m_ProcessId;
-			pLogItem->m_ThreadID = CThreadId::GetCurrentId();
+			pLogItem->m_ThreadID = cThreadId::GetCurrentId();
 			pLogItem->m_Cycles = nTimeEnd.m_nTime - Func.m_nTimeStart.m_nTime;
 			// pLogItem->m_Time = nTime;
 
-			CMem::Copy(Tmp + sizeof(CCodeProfilerItem), Func.m_src.m_pszFile, iLenFile + 1);
-			CMem::Copy(Tmp + sizeof(CCodeProfilerItem) + iLenFile + 1, Func.m_src.m_pszFunction, iLenFunc + 1);
+			cMem::Copy(Tmp + sizeof(cCodeProfilerItem), Func.m_src.m_pszFile, iLenFile + 1);
+			cMem::Copy(Tmp + sizeof(cCodeProfilerItem) + iLenFile + 1, Func.m_src.m_pszFunction, iLenFunc + 1);
 
 			m_File.WriteX(Tmp, iLenTotal);
 		}
 	};
 
-	void CCodeProfileFunc::StopTime()
+	void cCodeProfileFunc::StopTime()
 	{
 		//! Record time when this object is destroyed.
-		CTimePerf nTimeEnd(true);	// End cycle count
+		cTimePerf nTimeEnd(true);	// End cycle count
 		ASSERT(sm_bActive);
 		ASSERT(m_nTimeStart.isTimeValid());
 		// Write to log file
-		CCodeProfilerControl* pController = CCodeProfilerControl::get_Single();
+		cCodeProfilerControl* pController = cCodeProfilerControl::get_Single();
 		pController->WriteTime(nTimeEnd, *this);
 	}
 }
@@ -145,20 +145,20 @@ namespace Gray
 //***************************************************************************
 
 #if USE_UNITTESTS
-#include "CUnitTest.h"
+#include "cUnitTest.h"
 
-UNITTEST_CLASS(CCodeProfileFunc)
+UNITTEST_CLASS(cCodeProfileFunc)
 {
 	void TestFunction()
 	{
-		CCodeProfileFunc tester_CCodeProfileFunc(DEBUGSOURCELINE);
-		CThreadId::SleepCurrent(2);		// Waste some time.
+		cCodeProfileFunc tester_cCodeProfileFunc(DEBUGSOURCELINE);
+		cThreadId::SleepCurrent(2);		// Waste some time.
 	}
-	UNITTEST_METHOD(CCodeProfileFunc)
+	UNITTEST_METHOD(cCodeProfileFunc)
 	{
 		TestFunction();
 		// Now look to see if the function recorded something.
 	}
 };
-UNITTEST_REGISTER(CCodeProfileFunc, UNITTEST_LEVEL_Core);
+UNITTEST_REGISTER(cCodeProfileFunc, UNITTEST_LEVEL_Core);
 #endif

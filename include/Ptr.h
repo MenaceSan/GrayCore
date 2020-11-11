@@ -9,7 +9,7 @@
 #pragma once
 #endif
 
-#include "CDebugAssert.h"
+#include "cDebugAssert.h"
 
 namespace Gray
 {

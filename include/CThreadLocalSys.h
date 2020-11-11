@@ -1,16 +1,16 @@
 //
-//! @file CThreadLocalSys.h
+//! @file cThreadLocalSys.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CThreadLocalSys_H
-#define _INC_CThreadLocalSys_H
+#ifndef _INC_cThreadLocalSys_H
+#define _INC_cThreadLocalSys_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
 #include "GrayCore.h"
-#include "CDebugAssert.h"
+#include "cDebugAssert.h"
 
 #ifdef __linux__
 #include <pthread.h>	// pthread_key_t
@@ -37,9 +37,9 @@ namespace Gray
 		//! TODO manage the life of an object. Ask for a new object, or return it when I'm done. (maybe its created or freed, maybe its cached)
 	};
 
-	class CThreadLocalSys
+	class cThreadLocalSys
 	{
-		//! @class Gray::CThreadLocalSys
+		//! @class Gray::cThreadLocalSys
 		//! Store a sizeof(void*) value separate/local for each thread.
 		//! @note Must manually supply PFLS_CALLBACK_FUNCTION thread destructor for this type else pointer leaks!
 		//! @note can't get data for thread other than current! NO GetDataForThreadId
@@ -64,7 +64,7 @@ namespace Gray
 		TYPESLOT_t m_nTypeSlot;		//!< id for the type of data stored per thread. if (_WIN32_WINNT >= 0x0600)
 
 	public:
-		CThreadLocalSys(PFLS_CALLBACK_FUNCTION pDestruct = nullptr)
+		cThreadLocalSys(PFLS_CALLBACK_FUNCTION pDestruct = nullptr)
 		{
 			//! Allocate new (void*) to be stored for EACH thread. Associate this type with m_nTypeSlot
 			//! @arg pDestruct = supply a destructor if i think i need one when a thread is destroyed. (e.g. delete)
@@ -84,7 +84,7 @@ namespace Gray
 #endif
 			ASSERT(isInit());
 		}
-		~CThreadLocalSys()
+		~cThreadLocalSys()
 		{
 			ASSERT(isInit());
 #ifdef _WIN32
@@ -149,20 +149,20 @@ namespace Gray
 	};
 
 	template <class TYPE>
-	class CThreadLocalSysT : public CThreadLocalSys
+	class cThreadLocalSysT : public cThreadLocalSys
 	{
-		//! @class Gray::CThreadLocalSysT
-		//! template typed version of CThreadLocalSys
+		//! @class Gray::cThreadLocalSysT
+		//! template typed version of cThreadLocalSys
 		//! @note if TYPE needs a destructor call then i must supply it via pDestruct.
 		//! @note ASSUME TYPE will fit in a sizeof(void*) space.
 
-		typedef CThreadLocalSys SUPER_t;
+		typedef cThreadLocalSys SUPER_t;
 
 	public:
-		CThreadLocalSysT(PFLS_CALLBACK_FUNCTION pDestruct = nullptr) noexcept
-			: CThreadLocalSys(pDestruct) 
+		cThreadLocalSysT(PFLS_CALLBACK_FUNCTION pDestruct = nullptr) noexcept
+			: cThreadLocalSys(pDestruct) 
 		{
-			STATIC_ASSERT(sizeof(TYPE) <= sizeof(void*), CThreadLocalSysT); // ?
+			STATIC_ASSERT(sizeof(TYPE) <= sizeof(void*), cThreadLocalSysT); // ?
 		}
 		TYPE GetData() const // GetData
 		{
@@ -175,25 +175,25 @@ namespace Gray
 	};
 
 	template <class TYPE>
-	class CThreadLocalSysNew : public CThreadLocalSysT<TYPE*>, public IThreadLocal
+	class cThreadLocalSysNew : public cThreadLocalSysT<TYPE*>, public IThreadLocal
 	{
-		//! @class Gray::CThreadLocalSysNew
-		//! like CThreadLocalSysT but with auto create/allocate/new TYPE if it doesn't already exist.
+		//! @class Gray::cThreadLocalSysNew
+		//! like cThreadLocalSysT but with auto create/allocate/new TYPE if it doesn't already exist.
 		//! Will delete when thread closes.
-		typedef CThreadLocalSysT<TYPE*> SUPER_t;
+		typedef cThreadLocalSysT<TYPE*> SUPER_t;
 
 	protected:
 		static void NTAPI OnThreadClose(IN void* pData)
 		{
-			//! The thread has closed (or CThreadLocalSys was destroyed) so destroy/free/delete my TYPE pointer object.
+			//! The thread has closed (or cThreadLocalSys was destroyed) so destroy/free/delete my TYPE pointer object.
 			ASSERT(pData != nullptr);
 			TYPE* pData2 = (TYPE*)pData;
 			delete pData2;
 		}
 
 	public:
-		CThreadLocalSysNew()
-			: CThreadLocalSysT<TYPE*>(OnThreadClose)
+		cThreadLocalSysNew()
+			: cThreadLocalSysT<TYPE*>(OnThreadClose)
 		{
 		}
 
@@ -225,5 +225,5 @@ namespace Gray
 			}
 		}
 	};
-};
+} 
 #endif

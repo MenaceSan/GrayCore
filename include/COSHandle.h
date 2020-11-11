@@ -1,22 +1,22 @@
 //
-//! @file COSHandle.h
+//! @file cOSHandle.h
 //! Wrap the OS kernel handle (scoped auto-close). for _WIN32 or __linux__.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_COSHandle_H
-#define _INC_COSHandle_H
+#ifndef _INC_cOSHandle_H
+#define _INC_cOSHandle_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
 #include "HResult.h"
-#include "CTimeSys.h" // TIMESYSD_t
-#include "CNonCopyable.h"
-#include "CUnitTestDecl.h"
-#include "CDebugAssert.h"
+#include "cTimeSys.h" // TIMESYSD_t
+#include "cNonCopyable.h"
+#include "cUnitTestDecl.h"
+#include "cDebugAssert.h"
 
-UNITTEST_PREDEF(COSHandle)
+UNITTEST_PREDEF(cOSHandle)
 
 namespace Gray
 {
@@ -57,14 +57,14 @@ namespace Gray
 
 #endif	// ! _MFC_VER
 
-	class GRAYCORE_LINK COSHandle : protected CNonCopyable
+	class GRAYCORE_LINK cOSHandle : protected cNonCopyable
 	{
-		//! @class Gray::COSHandle
+		//! @class Gray::cOSHandle
 		//! Wrap ownership of a OS Kernel HANDLE. (NOT a GUI or User handle)
 		//! Close on destruct.
 		//! Any OS system handles that might use CloseHandle()
 		//! Similar to CHandle in ATL
-		//! @note Don't use CHandlePtr<> because that is just for typed (not void) pointers and HANDLE is 'int' in __linux__
+		//! @note Don't use cHandlePtr<> because that is just for typed (not void) pointers and HANDLE is 'int' in __linux__
 
 	public:
 		HANDLE m_h;
@@ -79,16 +79,16 @@ namespace Gray
 		}
 
 	public:
-		explicit inline COSHandle(HANDLE h = INVALID_HANDLE_VALUE) noexcept
+		explicit inline cOSHandle(HANDLE h = INVALID_HANDLE_VALUE) noexcept
 		: m_h(h)
 		{
 		}
 
-		COSHandle(const COSHandle& Handle) noexcept
+		cOSHandle(const cOSHandle& Handle) noexcept
 		: m_h(Handle.Duplicate())
 		{
 		}
-		COSHandle& operator=(const COSHandle& Handle)
+		cOSHandle& operator=(const cOSHandle& Handle)
 		{
 			if (m_h != Handle.m_h)
 			{
@@ -97,7 +97,7 @@ namespace Gray
 			return (*this);
 		}
 
-		inline ~COSHandle()
+		inline ~cOSHandle()
 		{
 			CloseHandleLast();
 		}
@@ -309,8 +309,8 @@ namespace Gray
 		}
 #endif
 
-		UNITTEST_FRIEND(COSHandle);
+		UNITTEST_FRIEND(cOSHandle);
 	};
 
 };
-#endif // _INC_COSHandle_H
+#endif // _INC_cOSHandle_H

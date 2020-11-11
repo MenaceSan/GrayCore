@@ -1,21 +1,21 @@
 //
-//! @file CExceptionBase.h
+//! @file cExceptionBase.h
 //! Wrap base exception classes:
 //! STL uses exception&
 //! MFC uses CException* (must call Delete()?)
 //! like C#/CLR uses Exception^
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 
-#ifndef _INC_CExceptionBase_H
-#define _INC_CExceptionBase_H
+#ifndef _INC_cExceptionBase_H
+#define _INC_cExceptionBase_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
-#include "CPtrFacade.h"
+#include "cPtrFacade.h"
 #include "StrT.h"
-#include "CObject.h"
-#include "CLogLevel.h"
+#include "cObject.h"
+#include "cLogLevel.h"
 #ifndef _MFC_VER	// NOT using _MFC_VER.
 #include <exception> // use STL based exception class.
 #endif
@@ -46,7 +46,7 @@ namespace Gray
 
 	class GRAYCORE_LINK cException;	// Base for my custom exceptions. Also based on cExceptionBase
 
-	class GRAYCORE_LINK cExceptionHolder : public CPtrFacade < cExceptionBase >
+	class GRAYCORE_LINK cExceptionHolder : public cPtrFacade < cExceptionBase >
 	{
 		//! @class Gray::cExceptionHolder
 		//! Holds/Wraps an exception in a uniform way, and hides the fact that it is a pointer (MFC) or a reference (STL).
@@ -65,13 +65,13 @@ namespace Gray
 		{
 		}
 		explicit cExceptionHolder(cExceptionBase* pEx, bool bDeleteEx = true)
-			: CPtrFacade<cExceptionBase>(pEx)
+			: cPtrFacade<cExceptionBase>(pEx)
 			, m_bDeleteEx(bDeleteEx)
 		{
 			//! Normal usage for _MFC_VER.
 		}
 		explicit cExceptionHolder(cExceptionBase& ex)
-			: CPtrFacade<cExceptionBase>(&ex)
+			: cPtrFacade<cExceptionBase>(&ex)
 			, m_bDeleteEx(false)
 		{
 			//! Normal STL usage.
@@ -97,7 +97,7 @@ namespace Gray
 		cException* get_Ex() const;	// is Custom?
 
 		BOOL GetErrorMessage(LOGCHAR_t* lpszError, StrLen_t nLenMaxError = k_MSG_MAX_SIZE) const;
-		CStringL get_ErrorStr() const;
+		cStringL get_ErrorStr() const;
 		LOGLEV_TYPE get_Severity() const;
 	};
 
@@ -132,4 +132,4 @@ namespace Gray
 
 };
 
-#endif // _INC_CExceptionBase_H
+#endif // _INC_cExceptionBase_H

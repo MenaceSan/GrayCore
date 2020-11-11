@@ -1,22 +1,22 @@
 //
-//! @file CIniObject.h
+//! @file cIniObject.h
 //! very simplistic string scriptable object.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
-#ifndef _INC_CIniObject_H
-#define _INC_CIniObject_H
+#ifndef _INC_cIniObject_H
+#define _INC_cIniObject_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
-#include "CIniBase.h"
-#include "CUnitTestDecl.h"
+#include "cIniBase.h"
+#include "cUnitTestDecl.h"
 
-UNITTEST_PREDEF(CIniObject)
+UNITTEST_PREDEF(cIniObject)
 
 namespace Gray
 {
-	class CStreamOutput;
+	class cStreamOutput;
 
 	DECLARE_INTERFACE(IIniObjectDef)
 	{
@@ -36,16 +36,16 @@ namespace Gray
 		virtual HRESULT PropSetN(IPROPIDX_t ePropIdx, const IniChar_t* pszValue) = 0;
 	};
 
-	class GRAYCORE_LINK CIniObject
+	class GRAYCORE_LINK cIniObject
 	: public IIniObjectDef
 	, public IIniObjectWriteN
 	, public IIniBaseSetter
 	, public IIniBaseGetter
 	, public IIniBaseEnumerator
 	{
-		//! @class Gray::CIniObject
-		//! Base class for generic object with predefined/known props (Unlike CIniSection) read/written via interfaces.
-		//! can be stored as CIniSectionData. Also like CIniMap
+		//! @class Gray::cIniObject
+		//! Base class for generic object with predefined/known props (Unlike cIniSection) read/written via interfaces.
+		//! can be stored as cIniSectionData. Also like cIniMap
 		//! Much more simplistic form of IScriptableObj.
 
 		typedef UINT64 PROPMASK_t;	//!< bitmask of IPROPIDX_t. Max 64 props.
@@ -54,11 +54,11 @@ namespace Gray
 		mutable PROPMASK_t m_nDirtyMask;	//!< bitmask of IPROPIDX_t to be written/persisted.
 
 	public:
-		CIniObject()
+		cIniObject()
 		: m_nDirtyMask(0)
 		{
 		}
-		virtual ~CIniObject()
+		virtual ~cIniObject()
 		{
 		}
 
@@ -77,11 +77,11 @@ namespace Gray
 		virtual HRESULT PropSet(const IniChar_t* pszPropTag, const IniChar_t* pszValue) override;
 		virtual HRESULT PropGet(const IniChar_t* pszPropTag, OUT CStringI& rsValue) const override;
 
-		HRESULT FileWriteN(CStreamOutput& sOut, IPROPIDX_t ePropIdx) const;
-		HRESULT FileWrite(CStreamOutput& sOut, const IniChar_t* pszProp);
-		HRESULT FileWriteAll(CStreamOutput& sOut);
+		HRESULT FileWriteN(cStreamOutput& sOut, IPROPIDX_t ePropIdx) const;
+		HRESULT FileWrite(cStreamOutput& sOut, const IniChar_t* pszProp);
+		HRESULT FileWriteAll(cStreamOutput& sOut);
 
-		UNITTEST_FRIEND(CIniObject);
+		UNITTEST_FRIEND(cIniObject);
 	};
 };
-#endif // _INC_CIniObject_H
+#endif // _INC_cIniObject_H

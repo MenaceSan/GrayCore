@@ -1,46 +1,46 @@
 //
-//! @file CAppImpl.h
+//! @file cAppImpl.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CAppImpl_H
-#define _INC_CAppImpl_H
+#ifndef _INC_cAppImpl_H
+#define _INC_cAppImpl_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
-#include "CAppState.h"
-#include "CObject.h"
-#include "COSModule.h"
+#include "cAppState.h"
+#include "cObject.h"
+#include "cOSModule.h"
 
 #ifndef _MFC_VER
 namespace Gray
 {
-	class GRAYCORE_LINK CAppImpl
-		: public CSingletonStatic < CAppImpl > // use static theApp
+	class GRAYCORE_LINK cAppImpl
+		: public cSingletonStatic < cAppImpl > // use static theApp
 	{
-		//! @class Gray::CAppImpl
+		//! @class Gray::cAppImpl
 		//! Entry point for my implemented application.
 		//! like (CWinApp for MFC) (maybe windowed or console)
-		//! I am NOT a library/DLL. I am an application implementation. NOT the same as (or to be merged with) CAppState.
-		//! Basic framework for my application I implement. Assume a static like CAppImpl theApp is defined some place.
+		//! I am NOT a library/DLL. I am an application implementation. NOT the same as (or to be merged with) cAppState.
+		//! Basic framework for my application I implement. Assume a static like cAppImpl theApp is defined some place.
 
 	public:
 		static const char* k_HelpText;
 
 		const FILECHAR_t* m_pszAppName;		//!< Specifies the name of my application. (display friendly)
-		TIMESYSD_t m_nMinTickTime;			//!< Minimum amount of time to spend in the OnTickApp() (mSec). CThreadId::SleepCurrent() if there is extra time.
-		CAppState& m_State;					//!< Quick reference to CAppState singleton.
+		TIMESYSD_t m_nMinTickTime;			//!< Minimum amount of time to spend in the OnTickApp() (mSec). cThreadId::SleepCurrent() if there is extra time.
+		cAppState& m_State;					//!< Quick reference to cAppState singleton.
 		bool m_bCloseSignal;				//!< Polite request to close the application. checked in Run() and OnTickApp()
 
 	public:
-		CAppImpl(const FILECHAR_t* pszAppName = nullptr);
-		virtual ~CAppImpl();
+		cAppImpl(const FILECHAR_t* pszAppName = nullptr);
+		virtual ~cAppImpl();
 
 		static inline HINSTANCE get_HInstance()
 		{
 			// Similar to MFC?
-			return CAppState::get_HModule();
+			return cAppState::get_HModule();
 		}
 
 		virtual cString get_HelpText() const;

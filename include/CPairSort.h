@@ -1,28 +1,28 @@
 //
-//! @file CPairSort.h
+//! @file cPairSort.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CPairSort_H
-#define _INC_CPairSort_H
+#ifndef _INC_cPairSort_H
+#define _INC_cPairSort_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
-#include "CArraySort.h"
-#include "CPair.h"
+#include "cArraySort.h"
+#include "cPair.h"
 
 namespace Gray
 {
 	template <class _TYPE_PAIR, class _TYPE_KEY>
-	class CPairSortBase : public CArraySorted < _TYPE_PAIR*, _TYPE_PAIR*, _TYPE_KEY >
+	class cPairSortBase : public cArraySorted < _TYPE_PAIR*, _TYPE_PAIR*, _TYPE_KEY >
 	{
-		//! @class Gray::CPairSortBase
+		//! @class Gray::cPairSortBase
 		//! array sorted by _TYPE_KEY numeric or string.
 		//! ITERATE_t FindIForKey("Text") will just find the index to the pointer
 
 	public:
-		virtual ~CPairSortBase()
+		virtual ~cPairSortBase()
 		{
 		}
 
@@ -44,16 +44,16 @@ namespace Gray
 		{
 			//! Compare by a key that may not be part of a data record yet.
 			//! @note If we reach here assume the key is the whole record !
-			return CValT::Compare(Key, *((_TYPE_KEY*)Data2));
+			return cValT::Compare(Key, *((_TYPE_KEY*)Data2));
 		}
 		virtual COMPARE_t CompareData(REF_t Data1, REF_t Data2) const override
 		{
 			//! Compare a data record to another data record.
-			return CValT::Compare(*((_TYPE_KEY*)Data1), *((_TYPE_KEY*)Data2));
+			return cValT::Compare(*((_TYPE_KEY*)Data1), *((_TYPE_KEY*)Data2));
 		}
 		_TYPE_PAIR* FindArgForKey(_TYPE_KEY Key) const
 		{
-			//! @note we should put the result in CSmartPtr derived pointer.
+			//! @note we should put the result in cRefPtr derived pointer.
 			ITERATE_t index = FindIForKey(Key);
 			if (index < 0)
 				return nullptr;
@@ -62,22 +62,22 @@ namespace Gray
 	};
 
 	template < class _TYPE_A, class _TYPE_B >
-	class CPairSortVal : public CPairSortBase < CPair< _TYPE_A, _TYPE_B>, _TYPE_A >
+	class cPairSortVal : public cPairSortBase < cPair< _TYPE_A, _TYPE_B>, _TYPE_A >
 	{
-		//! @class Gray::CPairSortVal
+		//! @class Gray::cPairSortVal
 		//! we are sorted by _TYPE_A value (not a string)
-		typedef CPair< _TYPE_A, _TYPE_B> PAIR_t;
+		typedef cPair< _TYPE_A, _TYPE_B> PAIR_t;
 	};
 
 	template < class _TYPE_A, class _TYPE_B>
-	class CPairSortStr : public CPairSortBase < CPair< _TYPE_A, _TYPE_B>, const ATOMCHAR_t* >
+	class cPairSortStr : public cPairSortBase < cPair< _TYPE_A, _TYPE_B>, const ATOMCHAR_t* >
 	{
-		//! @class Gray::CPairSortStr
+		//! @class Gray::cPairSortStr
 		//! we are sorted by _TYPE_A string
-		typedef CPair< _TYPE_A, _TYPE_B> PAIR_t;
+		typedef cPair< _TYPE_A, _TYPE_B> PAIR_t;
 
 	public:
-		virtual ~CPairSortStr()
+		virtual ~cPairSortStr()
 		{
 		}
 

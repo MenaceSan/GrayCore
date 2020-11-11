@@ -7,8 +7,8 @@
 #include "StrArg.h"
 #include "StrU.h"
 #include "StrT.h"
-#include "CTempPool.h"
-#include "CDebugAssert.h"
+#include "cTempPool.h"
+#include "cDebugAssert.h"
 
 namespace Gray
 {
@@ -19,7 +19,7 @@ namespace Gray
 		if (pszStrInp == nullptr)
 			return __TOW("NULL");
 		StrLen_t iLenOut = StrU::UTF8toUNICODELen(pszStrInp); // needed UNICODE size is variable and <= Len(pszStr).
-		wchar_t* pszTmp = CTempPool::GetTempST<wchar_t>(iLenOut);	//
+		wchar_t* pszTmp = cTempPool::GetTempST<wchar_t>(iLenOut);	//
 		StrU::UTF8toUNICODE(pszTmp, iLenOut + 1, pszStrInp, k_StrLen_UNK);	// true size is variable and < iLen
 		return pszTmp;
 	}
@@ -30,7 +30,7 @@ namespace Gray
 		if (pwStrInp == nullptr)
 			return __TOA("NULL");
 		StrLen_t iLenOut = StrU::UNICODEtoUTF8Size(pwStrInp);	// needed UTF8 size is variable and >= Len(pwStr)!
-		char* pszTmp = CTempPool::GetTempST<char>(iLenOut);
+		char* pszTmp = cTempPool::GetTempST<char>(iLenOut);
 		StrU::UNICODEtoUTF8(pszTmp, iLenOut + 1, pwStrInp, iLenOut);
 		return pszTmp;
 	}
@@ -39,8 +39,8 @@ namespace Gray
 	GRAYCORE_LINK const TYPE* GRAYCALL StrArg(char ch, StrLen_t nRepeat)
 	{
 		//! Get a temporary string that is nRepeat chars repeating
-		TYPE* pszTmp = CTempPool::GetTempST<TYPE>(nRepeat);
-		CValArray::FillQty<TYPE>(pszTmp, nRepeat, (TYPE)ch);
+		TYPE* pszTmp = cTempPool::GetTempST<TYPE>(nRepeat);
+		cValArray::FillQty<TYPE>(pszTmp, nRepeat, (TYPE)ch);
 		pszTmp[nRepeat] = '\0';
 		return pszTmp;
 	}
@@ -48,8 +48,8 @@ namespace Gray
 	GRAYCORE_LINK const TYPE* GRAYCALL StrArg(wchar_t ch, StrLen_t nRepeat)
 	{
 		//! Get a temporary string that is nRepeat chars repeating
-		TYPE* pszTmp = CTempPool::GetTempST<TYPE>(nRepeat);
-		CValArray::FillQty<TYPE>(pszTmp, nRepeat, (TYPE)ch);
+		TYPE* pszTmp = cTempPool::GetTempST<TYPE>(nRepeat);
+		cValArray::FillQty<TYPE>(pszTmp, nRepeat, (TYPE)ch);
 		pszTmp[nRepeat] = '\0';
 		return pszTmp;
 	}
@@ -61,7 +61,7 @@ namespace Gray
 		//! Assume auto convert char, short to int/INT32.
 		TYPE szTmp[StrNum::k_LEN_MAX_DIGITS_INT + 1];
 		StrLen_t nLen = StrT::ItoA(iVal, szTmp, STRMAX(szTmp), 10);
-		return CTempPool::GetTempST<TYPE>(nLen, szTmp);
+		return cTempPool::GetTempST<TYPE>(nLen, szTmp);
 	}
 	template< typename TYPE>
 	GRAYCORE_LINK const TYPE* GRAYCALL StrArg(UINT32 uVal, RADIX_t uRadix)
@@ -70,7 +70,7 @@ namespace Gray
 		//! Assume auto convert BYTE, WORD to UINT/UINT32/DWORD.
 		TYPE szTmp[StrNum::k_LEN_MAX_DIGITS_INT + 1];
 		StrLen_t nLen = StrT::UtoA(uVal, szTmp, STRMAX(szTmp), uRadix);
-		return CTempPool::GetTempST<TYPE>(nLen, szTmp);
+		return cTempPool::GetTempST<TYPE>(nLen, szTmp);
 	}
 
 #ifdef USE_INT64
@@ -80,7 +80,7 @@ namespace Gray
 		//! Get a temporary string that only lives long enough to satisfy the sprintf()
 		TYPE szTmp[StrNum::k_LEN_MAX_DIGITS_INT + 1];
 		StrLen_t nLen = StrT::ILtoA(iVal, szTmp, STRMAX(szTmp), 10);
-		return CTempPool::GetTempST<TYPE>(nLen, szTmp);
+		return cTempPool::GetTempST<TYPE>(nLen, szTmp);
 	}
 	template< typename TYPE>
 	GRAYCORE_LINK const TYPE* GRAYCALL StrArg(UINT64 uVal, RADIX_t uRadix)
@@ -88,7 +88,7 @@ namespace Gray
 		//! Get a temporary string that only lives long enough to satisfy the sprintf()
 		TYPE szTmp[StrNum::k_LEN_MAX_DIGITS_INT + 1];
 		StrLen_t nLen = StrT::ULtoA(uVal, szTmp, STRMAX(szTmp), uRadix);
-		return CTempPool::GetTempST<TYPE>(nLen, szTmp);
+		return cTempPool::GetTempST<TYPE>(nLen, szTmp);
 	}
 #endif
 
@@ -99,7 +99,7 @@ namespace Gray
 		//! assume float gets converted to double.
 		TYPE szTmp[StrNum::k_LEN_MAX_DIGITS+1];
 		StrLen_t nLen = StrT::DtoA(dVal, szTmp, STRMAX(szTmp));
-		return CTempPool::GetTempST<TYPE>(nLen, szTmp);
+		return cTempPool::GetTempST<TYPE>(nLen, szTmp);
 	}
 
 	template< typename TYPE>
@@ -141,7 +141,7 @@ namespace Gray
 
 //***********************************************************
 #if USE_UNITTESTS
-#include "CUnitTest.h"
+#include "cUnitTest.h"
 UNITTEST_CLASS(StrArg)
 {
 	UNITTEST_METHOD(StrArg)
@@ -157,7 +157,7 @@ namespace Gray
 	void StrArg_ForceInstantiate()
 	{
 		//! @note In a static library, there is no good way to force a template function to instantiate. other than calling it!
-		//! DLL will just use "template struct GRAYCORE_LINK CArrayString<char>;" declaration.
+		//! DLL will just use "template struct GRAYCORE_LINK cArrayString<char>;" declaration.
 		StrArg_UnitTestT<char>();
 		StrArg_UnitTestT<wchar_t>();
 	}

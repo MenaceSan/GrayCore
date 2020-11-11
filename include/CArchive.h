@@ -1,15 +1,15 @@
 //
-//! @file CArchive.h
+//! @file cArchive.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CArchive_H
-#define _INC_CArchive_H
+#ifndef _INC_cArchive_H
+#define _INC_cArchive_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
-#include "CStream.h"
+#include "cStream.h"
 
 UNITTEST_PREDEF(cArchive)
 
@@ -22,51 +22,51 @@ namespace Gray
 		//! @note this is inherently dangerous to use since it contains no default/automatic typing/versioning information.
 		//! @note put CVariant into the archive if you desire typing information. (and some version change resistance)
 		//! This is extensible to any type.
-		//! Similar to the MFC CArchive type. except << >> are overridden by the type of the Archive (store vs retrieve).
+		//! Similar to the MFC cArchive type. except << >> are overridden by the type of the Archive (store vs retrieve).
 		//! i.e. store and retrieve a particular structure can use the same code.
 	private:
-		const bool m_bStoring;		//!< What mode is this in? true = writing to the m_pStream CStreamOutput. else reading CStreamInput.
-		CStreamBase* const m_pStream;	//!< CStreamInput or CStreamOutput depending on m_bStoring
+		const bool m_bStoring;		//!< What mode is this in? true = writing to the m_pStream cStreamOutput. else reading cStreamInput.
+		cStreamBase* const m_pStream;	//!< cStreamInput or cStreamOutput depending on m_bStoring
 
 	public:
-		cArchive(CStreamOutput& so) noexcept
+		cArchive(cStreamOutput& so) noexcept
 			: m_bStoring(true)
 			, m_pStream(&so)
 		{
 		}
-		cArchive(CStreamInput& si) noexcept
+		cArchive(cStreamInput& si) noexcept
 			: m_bStoring(false)
 			, m_pStream(&si)
 		{
 		}
 		cArchive(CStream& s, bool bStoring) noexcept
 			: m_bStoring(bStoring)
-			, m_pStream(bStoring ? static_cast<CStreamBase*>(static_cast<CStreamOutput*>(&s)) : static_cast<CStreamBase*>(static_cast<CStreamInput*>(&s)))
+			, m_pStream(bStoring ? static_cast<cStreamBase*>(static_cast<cStreamOutput*>(&s)) : static_cast<cStreamBase*>(static_cast<cStreamInput*>(&s)))
 		{
 		}
 
 		bool IsStoring() const noexcept
 		{
-			//! I am storing the object to the write archive CStreamOutput.
-			//! like MFC CArchive 
+			//! I am storing the object to the write archive cStreamOutput.
+			//! like MFC cArchive 
 			return m_bStoring;
 		}
 		bool IsLoading() const noexcept
 		{
-			//! I am loading the object from the read archive CStreamInput.
-			//! like MFC CArchive 
+			//! I am loading the object from the read archive cStreamInput.
+			//! like MFC cArchive 
 			return !m_bStoring;
 		}
 
-		CStreamOutput& ref_Out()
+		cStreamOutput& ref_Out()
 		{
 			ASSERT(IsStoring());
-			return *static_cast<CStreamOutput*>(m_pStream);
+			return *static_cast<cStreamOutput*>(m_pStream);
 		}
-		CStreamInput& ref_Inp()
+		cStreamInput& ref_Inp()
 		{
 			ASSERT(IsLoading());
-			return *static_cast<CStreamInput*>(m_pStream);
+			return *static_cast<cStreamInput*>(m_pStream);
 		}
 
 		//! Serialize Base Types
@@ -105,7 +105,7 @@ namespace Gray
 		cArchive& operator << (const _TYPE& Val) { Write(&Val,sizeof(Val)); return *this; } \
 		cArchive& operator >> (_TYPE& Val) { Read(&Val,sizeof(Val)); return *this; } 
 
-#include "CTypes.tbl"
+#include "cTypes.tbl"
 #undef CTYPE_DEF
 
 		UNITTEST_FRIEND(cArchive);
@@ -114,7 +114,7 @@ namespace Gray
 
 #ifndef _MFC_VER	// emulate MFC.
 typedef Gray::cArchive CArchive;
-// #define CArchive Gray::cArchive 
+// #define cArchive Gray::cArchive 
 #define DECLARE_SERIAL(class_name) friend CArchive& GRAYCALL operator>>(CArchive& ar, class_name* &pOb);	//   _DECLARE_DYNCREATE(class_name)  
 #define IMPLEMENT_SERIAL(class_name,base_name,quant)	// external to class.
 #endif

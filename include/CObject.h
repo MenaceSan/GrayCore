@@ -1,39 +1,39 @@
 //
-//! @file CObject.h
+//! @file cObject.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CObject_H
-#define _INC_CObject_H
+#ifndef _INC_cObject_H
+#define _INC_cObject_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
 #include "Ptr.h"
-#include "CDebugAssert.h"
-#include "CMem.h"
+#include "cDebugAssert.h"
+#include "cMem.h"
 
 namespace Gray
 {
 	class cArchive;
 
 	template <UINT32 _SIGVALID = 0xCA11AB11>
-	class DECLSPEC_NOVTABLE CObjectSignature : public CMemSignature<_SIGVALID>
+	class DECLSPEC_NOVTABLE cObjectSignature : public cMemSignature<_SIGVALID>
 	{
-		//! @class Gray::CObjectSignature
+		//! @class Gray::cObjectSignature
 		//! use this to make sure 2 DLL/SO's agree on the format and version of some object.
 
-		typedef CMemSignature<_SIGVALID> SUPER_t;
+		typedef cMemSignature<_SIGVALID> SUPER_t;
 	private:
 		const UINT32 m_nVer;			//!< Must be agreed to by all users. e.g. _INC_GrayCore_H
 		const size_t m_nSizeofThis;		//!< Must be agreed to by all users. sizeof(CLASS) for checking alignments of structures.
 
 	public:
-		CObjectSignature(UINT32 nVer, size_t nSizeofThis)
+		cObjectSignature(UINT32 nVer, size_t nSizeofThis)
 			: m_nVer(nVer), m_nSizeofThis(nSizeofThis)
 		{
 		}
-		~CObjectSignature()
+		~cObjectSignature()
 		{
 		}
 
@@ -52,7 +52,7 @@ namespace Gray
 	};
 
 #if defined(_MFC_VER)
-#define COBJECT_IsValidCheck()	CMem::IsValid(this,4)	// not in _MFC_VER.
+#define COBJECT_IsValidCheck()	cMem::IsValid(this,4)	// not in _MFC_VER.
 #else
 
 #ifdef _DEBUG
@@ -78,7 +78,7 @@ namespace Gray
 		{
 			//! NOT in MFC so use COBJECT_IsValidCheck to call.
 			//! @note This can't be called in constructors and destructors of course !
-			if (!CMem::IsValid(this, 4))	// at least not null. (or near it)
+			if (!cMem::IsValid(this, 4))	// at least not null. (or near it)
 			{
 				DEBUG_ASSERT(0, "isValidCheck");
 				return false;

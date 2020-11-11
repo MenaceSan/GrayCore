@@ -1,33 +1,34 @@
 //
-//! @file CArraySort.h
+//! @file cArraySort.h
 //! c++ sorted collections.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CArraySort_H
-#define _INC_CArraySort_H
+#ifndef _INC_cArraySort_H
+#define _INC_cArraySort_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
-#include "CArraySmart.h"
+#include "cArray.h"
 #include "StrT.h"
-#include "CValT.h"
+#include "cValT.h"
+#include "cUnitTestDecl.h"
 
-UNITTEST_PREDEF(CArraySort)
+UNITTEST_PREDEF(cArraySort)
 
 namespace Gray
 {
 	template<class TYPE, class TYPE_ARG, typename TYPE_KEY>
-	class CArraySorted : public CArrayTyped < TYPE, TYPE_ARG >
+	class cArraySorted : public cArrayTyped < TYPE, TYPE_ARG >
 	{
-		//! @class Gray::CArraySorted
+		//! @class Gray::cArraySorted
 		//! An array of some sorted TYPE. duplicates are destroyed.
 		//! default is that it is just sorted by its bytes.
 		//! Similar to .NET HashSet
 
 	public:
-		typedef CArrayTyped<TYPE, TYPE_ARG> SUPER_t;
+		typedef cArrayTyped<TYPE, TYPE_ARG> SUPER_t;
 		typedef TYPE_KEY KEY_t;
 		typedef typename SUPER_t::REF_t REF_t;
 
@@ -37,7 +38,7 @@ namespace Gray
 			//! Compare by a key that may not be part of a data record (yet).
 			//! Default implementation. Overload this for proper implementation.
 			//! @note If we reach here assume the key is &reference to the whole record !
-			return CMem::Compare(&key1, &Data2, sizeof(TYPE_KEY));
+			return cMem::Compare(&key1, &Data2, sizeof(TYPE_KEY));
 		}
 
 		bool RemoveArgKey(REF_t pObj, KEY_t key)
@@ -57,7 +58,7 @@ namespace Gray
 		}
 
 	public:
-		virtual ~CArraySorted()
+		virtual ~cArraySorted()
 		{
 			// Make this virtual to allow derived classes to override this and make destructors work.
 		}
@@ -143,7 +144,7 @@ namespace Gray
 	};
 
 	template<class TYPE, class TYPE_ARG, typename TYPE_KEY>
-	ITERATE_t CArraySorted<TYPE, TYPE_ARG, TYPE_KEY>::FindINear(REF_t pNew, COMPARE_t& riCompareRes) const
+	ITERATE_t cArraySorted<TYPE, TYPE_ARG, TYPE_KEY>::FindINear(REF_t pNew, COMPARE_t& riCompareRes) const
 	{
 		//! Do a binary search for the elements key.
 		//! @return index
@@ -182,7 +183,7 @@ namespace Gray
 	}
 
 	template<class TYPE, class TYPE_ARG, typename TYPE_KEY>
-	ITERATE_t CArraySorted<TYPE, TYPE_ARG, TYPE_KEY>::Add(TYPE_ARG pNew)
+	ITERATE_t cArraySorted<TYPE, TYPE_ARG, TYPE_KEY>::Add(TYPE_ARG pNew)
 	{
 		//! Insertion sort. duplicates are destroyed.
 		//! @return index in the array. (temporary if sorted)
@@ -199,7 +200,7 @@ namespace Gray
 	}
 
 	template<class TYPE, class TYPE_ARG, typename TYPE_KEY>
-	ITERATE_t CArraySorted<TYPE, TYPE_ARG, TYPE_KEY>::FindINearKey(KEY_t key, COMPARE_t& riCompareRes) const
+	ITERATE_t cArraySorted<TYPE, TYPE_ARG, TYPE_KEY>::FindINearKey(KEY_t key, COMPARE_t& riCompareRes) const
 	{
 		//! Do a binary search for the key.
 		//! @return
@@ -241,31 +242,31 @@ namespace Gray
 	//********************************************************************
 
 	template<class TYPE>
-	class CArraySortVal : public CArraySorted < TYPE, TYPE, TYPE >
+	class cArraySortVal : public cArraySorted < TYPE, TYPE, TYPE >
 	{
-		//! @class Gray::CArraySortVal
+		//! @class Gray::cArraySortVal
 		//! A sorted array of some native/simple TYPE of values (NOT Pointers)
 		//! No duplicates allowed.
-		//! ASSUME TYPE supports CValT::Compare()
+		//! ASSUME TYPE supports cValT::Compare()
 		//! DEFAULT = sort is low to high
 
 	public:
-		typedef CArraySorted<TYPE, TYPE, TYPE> SUPER_t;
+		typedef cArraySorted<TYPE, TYPE, TYPE> SUPER_t;
 		typedef typename SUPER_t::KEY_t KEY_t;
 		typedef typename SUPER_t::REF_t REF_t;
 
 	protected:
 		virtual COMPARE_t CompareData(REF_t Data1, REF_t Data2) const override
 		{
-			return CValT::Compare(Data1, Data2);
+			return cValT::Compare(Data1, Data2);
 		}
 		virtual COMPARE_t CompareKey(KEY_t Data1, REF_t Data2) const override
 		{
-			return CValT::Compare(Data1, Data2);
+			return cValT::Compare(Data1, Data2);
 		}
 
 	public:
-		virtual ~CArraySortVal()
+		virtual ~cArraySortVal()
 		{
 		}
 
@@ -276,15 +277,15 @@ namespace Gray
 	};
 
 	template<class TYPE, typename _TYPECH = char >
-	class CArraySortStructName : public CArraySorted < TYPE, const TYPE&, const _TYPECH* >
+	class cArraySortStructName : public cArraySorted < TYPE, const TYPE&, const _TYPECH* >
 	{
-		//! @class Gray::CArraySortStructName
+		//! @class Gray::cArraySortStructName
 		//! A get_Name() sorted array of some type of structure (Non dynamic structure,NOT Pointer)
 		//! ASSUME TYPE supports get_Name()
 		//! DEFAULT = Alphabetic Non cased sort is low to high. A-Z
 
 	public:
-		typedef CArraySorted<TYPE, const TYPE&, const _TYPECH*> SUPER_t;
+		typedef cArraySorted<TYPE, const TYPE&, const _TYPECH*> SUPER_t;
 		typedef typename SUPER_t::REF_t REF_t;
 		typedef typename SUPER_t::KEY_t KEY_t;
 
@@ -299,7 +300,7 @@ namespace Gray
 		}
 
 	public:
-		virtual ~CArraySortStructName()
+		virtual ~cArraySortStructName()
 		{}
 
 		const TYPE* FindArgForKey(KEY_t key1) const
@@ -313,16 +314,16 @@ namespace Gray
 	};
 
 	template<class TYPE, typename TYPE_KEY = int >
-	class CArraySortStructValue : public CArraySorted < TYPE, const TYPE&, TYPE_KEY >
+	class cArraySortStructValue : public cArraySorted < TYPE, const TYPE&, TYPE_KEY >
 	{
-		//! @class Gray::CArraySortStructValue
+		//! @class Gray::cArraySortStructValue
 		//! A get_SortValue() sorted array of some type of structure (Non dynamic structure,NOT Pointer)
 		//! ASSUME TYPE supports get_SortValue()
 		//! Similar to HashCode but different in the it can be any type. (float,etc)
 		//! @note allow duplicate get_SortValue() but NOT duplicate objects!
 
 	public:
-		typedef CArraySorted<TYPE, const TYPE&, TYPE_KEY> SUPER_t;
+		typedef cArraySorted<TYPE, const TYPE&, TYPE_KEY> SUPER_t;
 		typedef typename SUPER_t::REF_t REF_t;
 		typedef typename SUPER_t::KEY_t KEY_t;
 
@@ -332,18 +333,18 @@ namespace Gray
 			//! Compare a data record to another data record.
 			TYPE_KEY key1 = Data1.get_SortValue();
 			TYPE_KEY key2 = Data2.get_SortValue();
-			COMPARE_t iDiff = CValT::Compare(key1, key2);
+			COMPARE_t iDiff = cValT::Compare(key1, key2);
 			if (iDiff == COMPARE_Equal)	// allow duplicate get_SortValue() but NOT duplicate objects!
-				return CValT::Compare((INT_PTR)&Data1, (INT_PTR)&Data2);
+				return cValT::Compare((INT_PTR)&Data1, (INT_PTR)&Data2);
 			return iDiff;
 		}
 		virtual COMPARE_t CompareKey(KEY_t key1, REF_t Base) const override
 		{
 			TYPE_KEY key2 = Base.get_SortValue();
-			return CValT::Compare(key1, key2);
+			return cValT::Compare(key1, key2);
 		}
 	public:
-		virtual ~CArraySortStructValue()
+		virtual ~cArraySortStructValue()
 		{}
 
 		const TYPE* FindArgForKey(KEY_t key1) const
@@ -357,14 +358,14 @@ namespace Gray
 	};
 
 	template<class TYPE, typename _TYPE_HASH = HASHCODE_t >
-	class CArraySortStructHash : public CArraySorted < TYPE, const TYPE&, _TYPE_HASH >
+	class cArraySortStructHash : public cArraySorted < TYPE, const TYPE&, _TYPE_HASH >
 	{
-		//! @class Gray::CArraySortStructHash
+		//! @class Gray::cArraySortStructHash
 		//! A get_HashCode() sorted array of some TYPE of structure (Non dynamic structure,NOT Pointer).
 		//! Does NOT allow dupe hash codes!
 
 	public:
-		typedef CArraySorted<TYPE, const TYPE&, _TYPE_HASH> SUPER_t;
+		typedef cArraySorted<TYPE, const TYPE&, _TYPE_HASH> SUPER_t;
 		typedef typename SUPER_t::REF_t REF_t;
 		typedef typename SUPER_t::KEY_t KEY_t;
 
@@ -374,17 +375,17 @@ namespace Gray
 			//! Compare a data record to another data record.
 			_TYPE_HASH key1 = Data1.get_HashCode();
 			_TYPE_HASH key2 = Data2.get_HashCode();
-			return CValT::Compare(key1, key2);
+			return cValT::Compare(key1, key2);
 		}
 		virtual COMPARE_t CompareKey(KEY_t key1, REF_t Data2) const override
 		{
 			//! INT_MAX - INT_MIN must be positive !
 			//! @note x-y will not work for extreme values! use memcmp()
 			_TYPE_HASH key2 = Data2.get_HashCode();
-			return CValT::Compare(key1, key2);
+			return cValT::Compare(key1, key2);
 		}
 	public:
-		virtual ~CArraySortStructHash()
+		virtual ~cArraySortStructHash()
 		{}
 
 		const TYPE* FindArgForKey(KEY_t key1) const
@@ -400,15 +401,15 @@ namespace Gray
 	//********************************************************************
 
 	template<class TYPE, class TYPE_PTR = TYPE, typename TYPE_KEY = TYPE>
-	class CArraySortFacade : public CArraySorted < TYPE, TYPE_PTR, TYPE_KEY >
+	class cArraySortFacade : public cArraySorted < TYPE, TYPE_PTR, TYPE_KEY >
 	{
-		//! @class Gray::CArraySortFacade
+		//! @class Gray::cArraySortFacade
 		//! TYPE = the pointer or facade we are storing.
 		//! A sorted array of some TYPE_PTR pointers. overload this
 		//! Default Sort by memcmp()
 
 	public:
-		typedef CArraySorted<TYPE, TYPE_PTR, TYPE_KEY> SUPER_t;
+		typedef cArraySorted<TYPE, TYPE_PTR, TYPE_KEY> SUPER_t;
 		typedef typename SUPER_t::REF_t REF_t;
 		typedef typename SUPER_t::ELEM_t ELEM_t;				//
 
@@ -416,12 +417,12 @@ namespace Gray
 		virtual COMPARE_t CompareData(REF_t pData1, REF_t pData2) const override
 		{
 			//! default = Binary compare the whole thing.
-			//! CValT::Compare(*pData1,*pData2) ??
+			//! cValT::Compare(*pData1,*pData2) ??
 			return ::memcmp(pData1, pData2, sizeof(*pData1));
 		}
 
 	public:
-		virtual ~CArraySortFacade()
+		virtual ~cArraySortFacade()
 		{
 			// Make sure virtuals are called correctly if storing a facade.
 			this->RemoveAll();
@@ -437,7 +438,7 @@ namespace Gray
 
 		REF_t GetAt(ITERATE_t index) const
 		{
-			//! @note caller should put the result in TYPE (CSmartPtr) derived pointer.
+			//! @note caller should put the result in TYPE (cRefPtr) derived pointer.
 			return this->ConstElementAt(index);
 		}
 		REF_t GetAtCheck(ITERATE_t nIndex) const
@@ -501,14 +502,14 @@ namespace Gray
 	};
 
 	template<class TYPE, class TYPE_PTR, typename TYPE_KEY>
-	class CArraySortFacadeValue : public CArraySortFacade < TYPE, TYPE_PTR, TYPE_KEY >
+	class cArraySortFacadeValue : public cArraySortFacade < TYPE, TYPE_PTR, TYPE_KEY >
 	{
-		//! @class Gray::CArraySortFacadeValue
+		//! @class Gray::cArraySortFacadeValue
 		//! A get_SortValue() sorted array of some TYPE* pointers. overload this
 		//! @note allow duplicate get_SortValue() but NOT duplicate objects!
 
 	public:
-		typedef CArraySortFacade<TYPE, TYPE_PTR, TYPE_KEY> SUPER_t;
+		typedef cArraySortFacade<TYPE, TYPE_PTR, TYPE_KEY> SUPER_t;
 		typedef typename SUPER_t::REF_t REF_t;
 		typedef typename SUPER_t::KEY_t KEY_t;
 
@@ -520,9 +521,9 @@ namespace Gray
 			ASSERT(pData2 != nullptr);
 			KEY_t key1 = pData1->get_SortValue();
 			KEY_t key2 = pData2->get_SortValue();
-			COMPARE_t iDiff = CValT::Compare(key1, key2);
+			COMPARE_t iDiff = cValT::Compare(key1, key2);
 			if (iDiff == COMPARE_Equal)	// allow duplicate get_SortValue() but NOT duplicate objects!
-				return CValT::Compare((INT_PTR)pData1, (INT_PTR)pData2);
+				return cValT::Compare((INT_PTR)pData1, (INT_PTR)pData2);
 			return iDiff;
 		}
 		virtual COMPARE_t CompareKey(KEY_t key1, TYPE_PTR pBase) const override
@@ -530,11 +531,11 @@ namespace Gray
 			if (pBase == nullptr)
 				return COMPARE_Greater;
 			KEY_t key2 = pBase->get_SortValue();
-			return CValT::Compare(key1, key2);
+			return cValT::Compare(key1, key2);
 		}
 
 	public:
-		virtual ~CArraySortFacadeValue()
+		virtual ~cArraySortFacadeValue()
 		{}
 
 		ITERATE_t FindIForAK(const TYPE_PTR pBase) const
@@ -569,25 +570,25 @@ namespace Gray
 	};
 
 	template<class TYPE, typename TYPE_KEY>
-	class CArraySortPtrValue : public CArraySortFacadeValue < TYPE*, TYPE*, TYPE_KEY >
+	class cArraySortPtrValue : public cArraySortFacadeValue < TYPE*, TYPE*, TYPE_KEY >
 	{
-		//! @class Gray::CArraySortPtrValue
+		//! @class Gray::cArraySortPtrValue
 	};
 
 	template<class TYPE, class TYPE_PTR, typename _TYPE_HASH = HASHCODE_t >
-	class CArraySortFacadeHash : public CArraySortFacade < TYPE, TYPE_PTR, _TYPE_HASH >
+	class cArraySortFacadeHash : public cArraySortFacade < TYPE, TYPE_PTR, _TYPE_HASH >
 	{
-		//! @class Gray::CArraySortFacadeHash
+		//! @class Gray::cArraySortFacadeHash
 		//! a _TYPE_HASH get_HashCode() sorted array of TYPE* pointers
 		//! does NOT allow dupe hash codes !
 
 	public:
-		typedef CArraySortFacade<TYPE, TYPE_PTR, _TYPE_HASH> SUPER_t;
+		typedef cArraySortFacade<TYPE, TYPE_PTR, _TYPE_HASH> SUPER_t;
 		typedef typename SUPER_t::REF_t REF_t;
 		typedef typename SUPER_t::KEY_t KEY_t;
 
 	public:
-		virtual ~CArraySortFacadeHash()
+		virtual ~cArraySortFacadeHash()
 		{}
 
 		virtual COMPARE_t CompareData(REF_t pData1, REF_t pData2) const override
@@ -595,33 +596,33 @@ namespace Gray
 			//! Compare a data record to another data record.
 			_TYPE_HASH key1 = pData1->get_HashCode();
 			_TYPE_HASH key2 = pData2->get_HashCode();
-			return CValT::Compare(key1, key2);
+			return cValT::Compare(key1, key2);
 		}
 		virtual COMPARE_t CompareKey(KEY_t key1, REF_t pData2) const override
 		{
-			//! @note x-y will not work for extreme values so we use CValT::Compare
+			//! @note x-y will not work for extreme values so we use cValT::Compare
 			//! INT_MAX - INT_MIN must be positive !
 			_TYPE_HASH key2 = pData2->get_HashCode();
-			return CValT::Compare(key1, key2);
+			return cValT::Compare(key1, key2);
 		}
 	};
 
 	template<class TYPE, typename TYPE_KEY>
-	class CArraySortPtrHash : public CArraySortFacadeHash < TYPE*, TYPE*, TYPE_KEY >
+	class cArraySortPtrHash : public cArraySortFacadeHash < TYPE*, TYPE*, TYPE_KEY >
 	{
-		//! @class Gray::CArraySortPtrHash
+		//! @class Gray::cArraySortPtrHash
 	};
 
 
 	template<class TYPE, typename _TYPECH = GChar_t>
-	class CArraySortPtrName : public CArraySortFacade < TYPE*, TYPE*, const _TYPECH* >
+	class cArraySortPtrName : public cArraySortFacade < TYPE*, TYPE*, const _TYPECH* >
 	{
-		//! @class Gray::CArraySortPtrName
+		//! @class Gray::cArraySortPtrName
 		//! A get_Name() sorted array of some TYPE* pointers. overload this
 		//! ASSUME supports get_Name()
 
 	public:
-		typedef CArraySortFacade<TYPE*, TYPE*, const _TYPECH*> SUPER_t;
+		typedef cArraySortFacade<TYPE*, TYPE*, const _TYPECH*> SUPER_t;
 		typedef typename SUPER_t::REF_t REF_t;
 		typedef typename SUPER_t::KEY_t KEY_t;
 
@@ -641,7 +642,7 @@ namespace Gray
 		}
 
 	public:
-		virtual ~CArraySortPtrName()
+		virtual ~cArraySortPtrName()
 		{}
 
 		ITERATE_t FindIForAK(REF_t pBase) const
@@ -657,235 +658,5 @@ namespace Gray
 			return SUPER_t::RemoveArgKey(pBase, pBase->get_Name());
 		}
 	};
-
-	//*************************************************
-
-	template<class TYPE, typename TYPE_KEY>
-	class CArraySortSmart : public CArraySortFacade < CSmartPtr<TYPE>, TYPE*, TYPE_KEY >
-	{
-		//! @class Gray::CArraySortSmart
-		//! A sorted array of CSmartPtr<TYPE> objects.
-		//! the array has a reference to the element. similar to CArraySmart but sorted
-		//! It will get deleted when the reference count is 0.
-		//! default sort by memcmp() pointers.
-
-		typedef CArraySortFacade< CSmartPtr<TYPE>, TYPE*, TYPE_KEY > SUPER_t;
-
-	public:
-
-		void DisposeAll()
-		{
-			//! Similar to RemoveAll() except it calls DisposeThis() to try to dereference all the entries.
-			//! @note often DisposeThis() has the effect of removing itself from the list. We protect against this.
-			//! ASSUME TYPE supports DisposeThis(); like CXObject
-
-			ITERATE_t iSize = this->GetSize();
-			if (iSize > 0)
-			{
-				{	// save original list, call DisposeThis on everything from original list
-					CArraySmart<TYPE> orig;
-					orig.SetCopy(*this);
-
-					ASSERT(orig.GetSize() == iSize);
-					for (ITERATE_t i = 0; i < iSize; i++)
-					{
-						TYPE* pObj = orig.GetAt(i);
-						if (pObj != nullptr)
-							pObj->DisposeThis();
-					}
-				}
-				this->RemoveAll();
-			}
-		}
-	};
-
-	//*************************************************
-
-	template <class TYPE, typename _TYPE_HASH = HASHCODE_t>
-	class CArraySortHash : public CArraySortSmart < TYPE, _TYPE_HASH >
-	{
-		//! @class Gray::CArraySortHash
-		//! A _TYPE_HASH get_HashCode() sorted array of CSmartPtr<TYPE>
-		//! TYPE based on IScriptableObj typically
-		//! does NOT allow dupe hash codes !
-
-	public:
-		typedef CArraySortSmart<TYPE, _TYPE_HASH> SUPER_t;
-		typedef typename SUPER_t::REF_t REF_t;
-		typedef typename SUPER_t::KEY_t KEY_t;
-
-	protected:
-		virtual COMPARE_t CompareData(REF_t pData1, REF_t pData2) const override
-		{
-			//! Compare a data record to another data record.
-			ASSERT_N(pData1 != nullptr);
-			ASSERT_N(pData2 != nullptr);
-			KEY_t key1 = pData1->get_HashCode();
-			KEY_t key2 = pData2->get_HashCode();
-			return CValT::Compare(key1, key2);
-		}
-		virtual COMPARE_t CompareKey(KEY_t key1, REF_t pBase) const override
-		{
-			//! INT_MAX - INT_MIN must be positive !
-			//! @note x-y will not work for extreme values so we use CValT::Compare
-			ASSERT_N(pBase != nullptr);
-			KEY_t key2 = pBase->get_HashCode();
-			return CValT::Compare(key1, key2);
-		}
-	public:
-		virtual ~CArraySortHash()
-		{}
-
-		ITERATE_t FindIForAK(const TYPE* pBase) const
-		{
-			//! Like of FindIFor() but uses the key.
-			//! @return index, -1 = k_ITERATE_BAD = none.
-			if (pBase == nullptr)
-				return k_ITERATE_BAD;
-			return this->FindIForKey(pBase->get_HashCode());
-		}
-		bool RemoveArgKey(TYPE* pBase)
-		{
-			if (pBase == nullptr)
-				return false;
-			return SUPER_t::RemoveArgKey(pBase, pBase->get_HashCode());
-		}
-	};
-
-	//*************************************************
-
-	template <class TYPE, typename TYPE_KEY = int>
-	class CArraySortValue : public CArraySortSmart < TYPE, TYPE_KEY >
-	{
-		//! @class Gray::CArraySortValue
-		//! A TYPE_KEY get_SortValue() sorted array of CSmartPtr<TYPE>. sort low to high
-		//! TYPE based on CSmartBase
-		//! TYPE based on IScriptableObj typically
-		//! @note allow duplicate get_SortValue() but NOT duplicate objects!
-		//! Similar to HashCode but different in the it can be any type. (float,etc)
-
-	public:
-		typedef CArraySortSmart<TYPE, TYPE_KEY> SUPER_t;
-		typedef typename SUPER_t::REF_t REF_t;
-		typedef typename SUPER_t::KEY_t KEY_t;
-
-	protected:
-		virtual COMPARE_t CompareData(REF_t pData1, REF_t pData2) const override
-		{
-			//! Compare a data record to another data record.
-			ASSERT(pData1 != nullptr);
-			ASSERT(pData2 != nullptr);
-			TYPE_KEY key1 = pData1->get_SortValue();
-			TYPE_KEY key2 = pData2->get_SortValue();
-			COMPARE_t iDiff = CValT::Compare(key1, key2);
-			if (iDiff == COMPARE_Equal)	// allow duplicate get_SortValue() but NOT duplicate objects!
-				return CValT::Compare((INT_PTR)pData1, (INT_PTR)pData2);
-			return iDiff;
-		}
-		virtual COMPARE_t CompareKey(KEY_t key1, REF_t pBase) const override
-		{
-			if (pBase == nullptr)
-				return COMPARE_Greater;
-			TYPE_KEY key2 = pBase->get_SortValue();
-			return CValT::Compare(key1, key2);
-		}
-	public:
-		virtual ~CArraySortValue()
-		{}
-
-		ITERATE_t FindIForAK(const TYPE* pBase) const
-		{
-			//! Equivalent of FindIFor() but uses the key for faster access. must ignore key dupes.
-			//! @return index, -1 = k_ITERATE_BAD = none.
-			if (pBase == nullptr)
-				return k_ITERATE_BAD;
-			TYPE_KEY nKey = pBase->get_SortValue();
-			ITERATE_t i = this->FindIFirstForKey(nKey);
-			if (i < 0)
-				return k_ITERATE_BAD;
-			for (;; i++)
-			{
-				CSmartPtr<TYPE> pBase2 = this->GetAtCheck(i);
-				if (pBase2 == nullptr)	// pBase is not in the array!
-					break;
-				if (pBase2 == pBase) // since sorted values are allowed to duplicate.
-					return i;
-			}
-			// This probably shouldn't happen? pBase is not in the array!
-			return k_ITERATE_BAD;	// FindIForAC(pBase);	// just do a brute force search.
-		}
-		bool RemoveArgKey(TYPE* pBase)
-		{
-			ITERATE_t index = this->FindIForAK(pBase);
-			if (index < 0)
-				return false;
-			SUPER_t::RemoveAt(index);
-			return true;
-		}
-		ITERATE_t AddAfter(TYPE* pBase)
-		{
-			//! Add this last after any duplicate keys.
-			ASSERT(pBase != nullptr);
-			TYPE_KEY nKey = pBase->get_SortValue();
-			ITERATE_t i = this->FindILastForKey(nKey);
-			if (i < 0)	// one of the same type is here?
-			{
-				return this->Add(pBase);	// add new sorted by nKey.
-			}
-			// add to the end of the get_SortValue series.
-			this->InsertAt(++i, pBase);
-			return i;
-		}
-	};
-
-	//*************************************************
-
-	template <class TYPE, typename _TYPECH = GChar_t>
-	class CArraySortName : public CArraySortSmart < TYPE, const _TYPECH* >
-	{
-		//! @class Gray::CArraySortName
-		//! get_Name() sorted array of CSmartPtr<TYPE>.
-		//! TYPE must support get_Name() and be CSmartBase
-		//! does  NOT allow dupe names !
-
-	public:
-		typedef CArraySortSmart<TYPE, const _TYPECH*> SUPER_t;
-		typedef typename SUPER_t::REF_t REF_t;
-		typedef typename SUPER_t::KEY_t KEY_t;
-
-	protected:
-		virtual COMPARE_t CompareData(REF_t pData1, REF_t pData2) const override
-		{
-			//! Compare a data record to another data record.
-			ASSERT_N(pData1 != nullptr);
-			ASSERT_N(pData2 != nullptr);
-			return StrT::CmpI<_TYPECH>(pData1->get_Name(), pData2->get_Name());
-		}
-		virtual COMPARE_t CompareKey(KEY_t key1, REF_t pObj) const override
-		{
-			ASSERT_N(key1 != nullptr);
-			ASSERT_N(pObj != nullptr);
-			return StrT::CmpI<_TYPECH>(key1, pObj->get_Name());
-		}
-	public:
-		virtual ~CArraySortName()
-		{}
-
-		ITERATE_t FindIForAK(const TYPE* pBase) const
-		{
-			//! Equivalent of FindIFor() but uses the key.
-			//! FindIForKey using the key.
-			//! @return index, -1 = k_ITERATE_BAD = none.
-			if (pBase == nullptr)
-				return k_ITERATE_BAD;
-			return this->FindIForKey(pBase->get_Name());
-		}
-		bool RemoveArgKey(TYPE* pBase)
-		{
-			if (pBase == nullptr)
-				return false;
-			return SUPER_t::RemoveArgKey(pBase, pBase->get_Name());
-		}
-	};
 }
-#endif // _INC_CArraySort_H
+#endif // _INC_cArraySort_H

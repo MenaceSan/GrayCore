@@ -1,17 +1,17 @@
 //
-//! @file CMem.cpp
+//! @file cMem.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 #include "pch.h"
-#include "COSModImpl.h"
-#include "CLogMgr.h"
-#include "CDebugAssert.h"
-#include "CMem.h"
-#include "CAppState.h"
+#include "cOSModImpl.h"
+#include "cLogMgr.h"
+#include "cDebugAssert.h"
+#include "cMem.h"
+#include "cAppState.h"
 
 namespace Gray
 {
-	COSModImpl::COSModImpl(const char* pszModuleName) noexcept
+	cOSModImpl::cOSModImpl(const char* pszModuleName) noexcept
 		: m_pszModuleName(pszModuleName)
 		// , m_hModule(HMODULE_NULL)
 	{
@@ -20,11 +20,11 @@ namespace Gray
 		OnProcessAttach2();
 	}
 
-	COSModImpl::~COSModImpl() // virtual 
+	cOSModImpl::~cOSModImpl() // virtual 
 	{
 	}
 
-	bool COSModImpl::OnProcessAttach() // virtual 
+	bool cOSModImpl::OnProcessAttach() // virtual 
 	{
 		// DLL_PROCESS_ATTACH
 		DEBUG_MSG(("%s:OnProcessAttach 0%x", LOGSTR(m_pszModuleName), (UINT)(UINT_PTR)m_hModule));
@@ -38,7 +38,7 @@ namespace Gray
 		return true;
 	}
 
-	bool COSModImpl::OnProcessAttach2()	// private
+	bool cOSModImpl::OnProcessAttach2()	// private
 	{
 		// NOTE: In the LoadModuel (dynamic) case this will get called BEFORE the constructor for COSModDyn.
 
@@ -46,14 +46,14 @@ namespace Gray
 			return true;
 
 #if defined(_DEBUG) && ! defined(UNDER_CE)
-		HINSTANCE hInstDllTest = COSModule::GetModuleHandleForAddr(m_pszModuleName);
+		HINSTANCE hInstDllTest = cOSModule::GetModuleHandleForAddr(m_pszModuleName);
 		ASSERT(m_hModule == hInstDllTest);
 #endif
 
 		return this->OnProcessAttach();
 	}
 
-	void COSModImpl::OnProcessDetach() // virtual 
+	void cOSModImpl::OnProcessDetach() // virtual 
 	{
 		// DLL_PROCESS_DETACH
 		DEBUG_MSG(("%s:OnProcessDetach 0%x", LOGSTR(m_pszModuleName), (UINT)(UINT_PTR)m_hModule));
@@ -63,11 +63,11 @@ namespace Gray
 #endif
 
 		// Try to release my singletons in proper order.
-		CSingletonRegister::ReleaseModule(m_hModule);
+		cSingletonRegister::ReleaseModule(m_hModule);
 	}
 
 #ifdef _WIN32
-	bool COSModImpl::DllMain(HINSTANCE hMod, DWORD dwReason)
+	bool cOSModImpl::DllMain(HINSTANCE hMod, DWORD dwReason)
 	{
 		switch (dwReason)
 		{
@@ -92,9 +92,9 @@ namespace Gray
 	}
 
 #elif defined(__linux__)
-	void COSModImpl::SOConstructor()
+	void cOSModImpl::SOConstructor()
 	{
-		m_hModule = COSModule::GetModuleHandleForAddr(m_pszModuleName);
+		m_hModule = cOSModule::GetModuleHandleForAddr(m_pszModuleName);
 		this->OnProcessAttach2();
 	}
 #endif

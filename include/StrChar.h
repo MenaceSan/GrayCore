@@ -9,8 +9,8 @@
 #pragma once
 #endif
 
-#include "CUnitTestDecl.h"
-#include "CValT.h"
+#include "cUnitTestDecl.h"
+#include "cValT.h"
 
 #ifdef _WIN32
 #include <wtypes.h>	// BSTR

@@ -1,51 +1,51 @@
 //
-//! @file CLogMgr.cpp
+//! @file cLogMgr.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
 #include "pch.h"
-#include "CLogMgr.h"
-#include "CLogEvent.h"
-#include "CString.h"
-#include "CCodeProfiler.h"
-#include "CAppState.h"
-#include "CStream.h"
+#include "cLogMgr.h"
+#include "cLogEvent.h"
+#include "cString.h"
+#include "cCodeProfiler.h"
+#include "cAppState.h"
+#include "cStream.h"
 
 namespace Gray
 {
-	TIMESECD_t CLogMgr::sm_TimePrevException; //!< doesn't actually matter what this value is at init time.
+	TIMESECD_t cLogMgr::sm_TimePrevException; //!< doesn't actually matter what this value is at init time.
 
 	//************************************************************************
 
-	CLogSubject::CLogSubject(const char* pszSubject)
+	cLogSubject::cLogSubject(const char* pszSubject)
 		: m_pszSubject(pszSubject)
 	{
 	}
 
-	CLogSubject::~CLogSubject()
+	cLogSubject::~cLogSubject()
 	{
 	}
 
-	HRESULT CLogSubject::addEvent(CLogEvent* pEvent) // virtual
+	HRESULT cLogSubject::addEvent(cLogEvent* pEvent) // virtual
 	{
 		//! Prefix the event with the subject.
 		//! @return <0 = failed, 0=not processed by anyone, # = number of processors.
 		pEvent->m_pszSubject = m_pszSubject;	// categorize with this subject.
-		return CLogMgr::I().addEvent(pEvent);
+		return cLogMgr::I().addEvent(pEvent);
 	}
 
 	//************************************************************************
 
-	CLogNexus::CLogNexus(LOG_ATTR_MASK_t uAttrMask, LOGLEV_TYPE eLogLevel)
+	cLogNexus::cLogNexus(LOG_ATTR_MASK_t uAttrMask, LOGLEV_TYPE eLogLevel)
 		: m_LogFilter(uAttrMask, eLogLevel)
 	{
 	}
 
-	CLogNexus::~CLogNexus()
+	cLogNexus::~cLogNexus()
 	{
 	}
 
-	HRESULT CLogNexus::addEvent(CLogEvent* pEvent) // virtual
+	HRESULT cLogNexus::addEvent(cLogEvent* pEvent) // virtual
 	{
 		//! add a new log event and send it to all applicable Appenders.
 		//! @return <0 = failed, 0=not processed by anyone, # = number of processors.
@@ -53,7 +53,7 @@ namespace Gray
 		CODEPROFILEFUNC();
 		if (pEvent == nullptr)
 			return E_POINTER;
-		ASSERT(CLogMgr::isSingleCreated());
+		ASSERT(cLogMgr::isSingleCreated());
 		if (!IsLogged(pEvent->get_LogAttrMask(), pEvent->get_LogLevel()))	// I don't care about these ?
 		{
 			return HRESULT_WIN32_C(ERROR_EMPTY); // no appenders care about this.
@@ -67,15 +67,15 @@ namespace Gray
 		m_LogThrottle.m_nQtyLogLast++;
 
 		int iUsed = 0;
-		CStringL sTextFormatted; // produce a default final formatted string.
-		CLogEventPtr pEventHolder(pEvent);	// one more reference on this.
+		cStringL sTextFormatted; // produce a default final formatted string.
+		cLogEventPtr pEventHolder(pEvent);	// one more reference on this.
 		HRESULT hResAdd = S_OK;
 
 		for (int i = 0;; i++)
 		{
-			CLogAppender* pAppender;
+			cLogAppender* pAppender;
 			{
-				CThreadGuard lock(m_LockLog); // sync multiple threads.
+				cThreadGuard lock(m_LockLog); // sync multiple threads.
 				pAppender = m_aAppenders.GetAtCheck(i);
 				if (pAppender == nullptr)
 					break;
@@ -108,7 +108,7 @@ namespace Gray
 		}
 
 #ifdef _DEBUG
-		if (CAppState::isDebuggerPresent())
+		if (cAppState::isDebuggerPresent())
 		{
 			FlushLogs();
 		}
@@ -117,12 +117,12 @@ namespace Gray
 		return (iUsed > 0) ? iUsed : hResAdd;	// we do any work?
 	}
 
-	HRESULT CLogNexus::FlushLogs() // virtual
+	HRESULT cLogNexus::FlushLogs() // virtual
 	{
-		CThreadGuard lock(m_LockLog);
+		cThreadGuard lock(m_LockLog);
 		for (ITERATE_t i = 0;; i++)
 		{
-			CLogAppender* pAppender = EnumAppender(i);
+			cLogAppender* pAppender = EnumAppender(i);
 			if (pAppender == nullptr)
 				break;
 			pAppender->FlushLogs();
@@ -130,51 +130,51 @@ namespace Gray
 		return S_OK;
 	}
 
-	bool CLogNexus::HasAppender(CLogAppender* pAppenderFind, bool bDescend) const
+	bool cLogNexus::HasAppender(cLogAppender* pAppenderFind, bool bDescend) const
 	{
-		//! Does this CLogNexus contain this CLogAppender ?
-		//! will descend into child CLogNexus as well.
+		//! Does this cLogNexus contain this cLogAppender ?
+		//! will descend into child cLogNexus as well.
 		//! @arg pAppenderFind = what are we trying to find?
 
 		if (pAppenderFind == nullptr)
 			return false;
-		CThreadGuard lock(m_LockLog);
+		cThreadGuard lock(m_LockLog);
 		for (ITERATE_t i = 0;; i++)
 		{
-			const CLogAppender* pAppender = EnumAppender(i);
+			const cLogAppender* pAppender = EnumAppender(i);
 			if (pAppender == nullptr)
 				return false;
 			if (pAppenderFind == pAppender)
 				return true;
 			if (bDescend)
 			{
-				const CLogNexus* pLogNexus = pAppender->get_ThisLogNexus();
+				const cLogNexus* pLogNexus = pAppender->get_ThisLogNexus();
 				if (pLogNexus != nullptr && pLogNexus->HasAppender(pAppenderFind, true))
 					return true;
 			}
 		}
 	}
 
-	HRESULT CLogNexus::AddAppender(CLogAppender* pAppenderAdd)
+	HRESULT cLogNexus::AddAppender(cLogAppender* pAppenderAdd)
 	{
 		//! Newest first.
 		if (pAppenderAdd == nullptr)
 			return E_POINTER;
-		CThreadGuard lock(m_LockLog);
+		cThreadGuard lock(m_LockLog);
 		m_aAppenders.AddHead(pAppenderAdd);
 		return S_OK;
 	}
 
-	bool CLogNexus::RemoveAppender(CLogAppender* pAppenderRemove, bool bDescend)
+	bool cLogNexus::RemoveAppender(cLogAppender* pAppenderRemove, bool bDescend)
 	{
-		//! will descend into child CLogNexus as well.
+		//! will descend into child cLogNexus as well.
 		if (pAppenderRemove == nullptr)
 			return false;
 		bool bRemoved = false;
-		CThreadGuard lock(m_LockLog);
+		cThreadGuard lock(m_LockLog);
 		for (ITERATE_t i = 0;; i++)
 		{
-			CLogAppender* pAppender = EnumAppender(i);
+			cLogAppender* pAppender = EnumAppender(i);
 			if (pAppender == nullptr)
 				return bRemoved;
 			if (pAppenderRemove == pAppender)
@@ -185,34 +185,34 @@ namespace Gray
 			}
 			else if (bDescend)
 			{
-				const CLogNexus* pLogNexus = pAppender->get_ThisLogNexus();
+				const cLogNexus* pLogNexus = pAppender->get_ThisLogNexus();
 				if (pLogNexus != nullptr)
 				{
-					bRemoved |= const_cast<CLogNexus*>(pLogNexus)->RemoveAppender(pAppenderRemove, true);
+					bRemoved |= const_cast<cLogNexus*>(pLogNexus)->RemoveAppender(pAppenderRemove, true);
 				}
 			}
 		}
 	}
 
-	CLogAppender* CLogNexus::FindAppenderType(const TYPEINFO_t& rType, bool bDescend) const
+	cLogAppender* cLogNexus::FindAppenderType(const TYPEINFO_t& rType, bool bDescend) const
 	{
 		//! is there an appender of this type already installed?
-		CThreadGuard lock(m_LockLog);
+		cThreadGuard lock(m_LockLog);
 		for (ITERATE_t i = 0;; i++)
 		{
-			const CLogAppender* pAppender = EnumAppender(i);
+			const cLogAppender* pAppender = EnumAppender(i);
 			if (pAppender == nullptr)
 				break;
 			if (typeid(*pAppender) == rType)	// already here.
-				return const_cast<CLogAppender*>(pAppender);
+				return const_cast<cLogAppender*>(pAppender);
 			if (bDescend)
 			{
-				const CLogNexus* pLogNexus = pAppender->get_ThisLogNexus();
+				const cLogNexus* pLogNexus = pAppender->get_ThisLogNexus();
 				if (pLogNexus != nullptr)
 				{
 					pAppender = pLogNexus->FindAppenderType(rType, true);
 					if (pAppender != nullptr)
-						return const_cast<CLogAppender*>(pAppender);
+						return const_cast<cLogAppender*>(pAppender);
 				}
 			}
 		}
@@ -221,40 +221,40 @@ namespace Gray
 
 	//************************************************************************
 
-	CLogMgr::CLogMgr()
-		: CSingleton<CLogMgr>(this, typeid(CLogMgr))
+	cLogMgr::cLogMgr()
+		: cSingleton<cLogMgr>(this, typeid(cLogMgr))
 #ifdef _DEBUG
-		, CLogNexus((LOG_ATTR_MASK_t)LOG_ATTR_ALL_MASK, LOGLEV_INFO)
+		, cLogNexus((LOG_ATTR_MASK_t)LOG_ATTR_ALL_MASK, LOGLEV_INFO)
 #else
-		, CLogNexus((LOG_ATTR_MASK_t)LOG_ATTR_ALL_MASK, LOGLEV_INFO)
+		, cLogNexus((LOG_ATTR_MASK_t)LOG_ATTR_ALL_MASK, LOGLEV_INFO)
 #endif
 	{
 		//! ideally this is in the very first static initialize.
 #ifdef _DEBUG
-		if (CAppState::isDebuggerPresent())
+		if (cAppState::isDebuggerPresent())
 		{
-			CLogAppendDebug::AddAppenderCheck(this);	// send logs to the debugger.
+			cLogAppendDebug::AddAppenderCheck(this);	// send logs to the debugger.
 		}
 #endif
 	}
-	CLogMgr::~CLogMgr()
+	cLogMgr::~cLogMgr()
 	{
 	}
 
 #ifdef _CPPUNWIND
-	void CLogMgr::LogExceptionV(cExceptionHolder* pEx, const LOGCHAR_t* pszCatchContext, va_list vargs)
+	void cLogMgr::LogExceptionV(cExceptionHolder* pEx, const LOGCHAR_t* pszCatchContext, va_list vargs)
 	{
 		//! An exception occurred. record it.
 		//! if ( this == nullptr ) may be OK?
 
 		CODEPROFILEFUNC();
 
-		TIMESECD_t tNowSec = CTimeSys::GetTimeNow() / CTimeSys::k_FREQ;
+		TIMESECD_t tNowSec = cTimeSys::GetTimeNow() / cTimeSys::k_FREQ;
 		if (sm_TimePrevException == tNowSec)	// prevent message floods. 1 per sec.
 			return;
 		sm_TimePrevException = tNowSec;
 
-		if (!CMem::IsValidApp(this))
+		if (!cMem::IsValidApp(this))
 		{
 			// Nothing we can do about this?!
 			ASSERT(0);
@@ -295,7 +295,7 @@ namespace Gray
 		}
 	}
 
-	void _cdecl CLogMgr::LogExceptionF(cExceptionHolder* pEx, const LOGCHAR_t* pszCatchContext, ...)
+	void _cdecl cLogMgr::LogExceptionF(cExceptionHolder* pEx, const LOGCHAR_t* pszCatchContext, ...)
 	{
 		va_list vargs;
 		va_start(vargs, pszCatchContext);
@@ -304,12 +304,12 @@ namespace Gray
 	}
 #endif
 
-	HRESULT CLogMgr::WriteString(const LOGCHAR_t* pszStr)	// virtual
+	HRESULT cLogMgr::WriteString(const LOGCHAR_t* pszStr)	// virtual
 	{
 		this->addEventS(LOG_ATTR_PRINT, LOGLEV_INFO, pszStr, "");
 		return S_OK;
 	}
-	HRESULT CLogMgr::WriteString(const wchar_t* pszStr) // virtual
+	HRESULT cLogMgr::WriteString(const wchar_t* pszStr) // virtual
 	{
 		this->addEventS(LOG_ATTR_PRINT, LOGLEV_INFO, pszStr, "");
 		return S_OK;
@@ -318,25 +318,25 @@ namespace Gray
 
 //*************************************************************************
 #if USE_UNITTESTS
-#include "CUnitTest.h"
+#include "cUnitTest.h"
 
-UNITTEST_CLASS(CLogMgr)
+UNITTEST_CLASS(cLogMgr)
 {
-	UNITTEST_METHOD(CLogMgr)
+	UNITTEST_METHOD(cLogMgr)
 	{
-		CLogMgr& logmgr = CLogMgr::I();
+		cLogMgr& logmgr = cLogMgr::I();
 
-		CSmartPtr<CLogAppendDebug> pLogDebug(new CLogAppendDebug);
+		cRefPtr<cLogAppendDebug> pLogDebug(new cLogAppendDebug);
 		logmgr.AddAppender(pLogDebug);
-		UNITTEST_TRUE(CLogAppendDebug::AddAppenderCheck(&logmgr) == S_FALSE);
+		UNITTEST_TRUE(cLogAppendDebug::AddAppenderCheck(&logmgr) == S_FALSE);
 
-		CLogAppender* pAppender1 = logmgr.FindAppenderType(typeid(CLogAppendDebug));
+		cLogAppender* pAppender1 = logmgr.FindAppenderType(typeid(cLogAppendDebug));
 		UNITTEST_TRUE(pAppender1 != nullptr);	// already added
 
 		// This should print twice.
-		logmgr.addEventS(LOG_ATTR_DEBUG, LOGLEV_INFO, "Test Event to CLogAppendDebug * 2 (double logged event)", "");
+		logmgr.addEventS(LOG_ATTR_DEBUG, LOGLEV_INFO, "Test Event to cLogAppendDebug * 2 (double logged event)", "");
 		logmgr.RemoveAppender(pLogDebug);
 	}
 };
-UNITTEST_REGISTER(CLogMgr, UNITTEST_LEVEL_Core);
+UNITTEST_REGISTER(cLogMgr, UNITTEST_LEVEL_Core);
 #endif

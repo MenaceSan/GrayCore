@@ -1,21 +1,21 @@
 //
-//! @file CTimeFile.h
+//! @file cTimeFile.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CTimeFile_H
-#define _INC_CTimeFile_H
+#ifndef _INC_cTimeFile_H
+#define _INC_cTimeFile_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
-#include "CTimeUnits.h"
-#include "CValT.h"
-#include "CString.h"
-#include "CDebugAssert.h"
+#include "cTimeUnits.h"
+#include "cValT.h"
+#include "cString.h"
+#include "cDebugAssert.h"
 
 #ifdef __linux__
-#include "CTimeVal.h"
+#include "cTimeVal.h"
 // from '#include <windef.h>'
 struct FILETIME //!< 64-bit value representing the number of 100-nanosecond intervals since January 1, 1601.
 {
@@ -23,40 +23,40 @@ struct FILETIME //!< 64-bit value representing the number of 100-nanosecond inte
 };
 #endif
 
-UNITTEST_PREDEF(CTimeFile)
+UNITTEST_PREDEF(cTimeFile)
 
 namespace Gray
 {
 	typedef UINT64 FILETIME_t;	//!< replace FILETIME for 64 bit math. Absolute 64-bit 100-nanosecond since January 1, 1601 GMT
 
-	class GRAYCORE_LINK CTimeFile : public FILETIME
+	class GRAYCORE_LINK cTimeFile : public FILETIME
 	{
-		//! @class Gray::CTimeFile
+		//! @class Gray::cTimeFile
 		//! Universal time stamp for a file.
 		//! 64-bit integer 100-nanosecond intervals since January 1, 1601 GMT. Overflows in ~58494 years.
 		//! @note FAT32 has time stamps that are only good for ~2 second accuracy.
 		//! Similar to ATL/MFC CFileTime
 
 	public:
-		static const int k_nDaysDiffTimeInt = ((369 * 365) + 89);	//!< days difference from FILETIME (1601) to CTimeInt (1970) bases = 134774
+		static const int k_nDaysDiffTimeInt = ((369 * 365) + 89);	//!< days difference from FILETIME (1601) to cTimeInt (1970) bases = 134774
 		static const int k_nFreq = 10 * 1000000;	//!< 100-nanosecond intervals per second = 10th of a micro second.
 
 	public:
-		CTimeFile(FILETIME_t t = 0)
+		cTimeFile(FILETIME_t t = 0)
 		{
 			InitTime(t);
 		}
-		CTimeFile(const FILETIME& t)
+		cTimeFile(const FILETIME& t)
 		{
 			*static_cast<FILETIME*>(this) = t;
 		}
-		CTimeFile(const CTimeUnits& tu)
+		cTimeFile(const cTimeUnits& tu)
 		{
 			InitTimeUnits(tu);
 		}
 
 #ifdef _WIN32
-		CTimeFile(const SYSTEMTIME& st, TZ_TYPE nTimeZoneOffset)
+		cTimeFile(const SYSTEMTIME& st, TZ_TYPE nTimeZoneOffset)
 		{
 			SetSys(st, nTimeZoneOffset);
 		}
@@ -85,22 +85,22 @@ namespace Gray
 
 		static inline FILETIME_t CvtFileTime(const struct timespec& tSpec)
 		{
-			// ASSUME struct timespec/CTimeSpec has same base/EPOCH as time_t CTimeInt
-			FILETIME_t nTmp = ((UINT64)k_nDaysDiffTimeInt*(UINT64)CTimeUnits::k_nSecondsPerDay);
+			// ASSUME struct timespec/cTimeSpec has same base/EPOCH as time_t cTimeInt
+			FILETIME_t nTmp = ((UINT64)k_nDaysDiffTimeInt*(UINT64)cTimeUnits::k_nSecondsPerDay);
 			nTmp += ((UINT64)tSpec.tv_sec);
 			nTmp *= k_nFreq;
 			nTmp += tSpec.tv_nsec / 100;	// add nanoseconds.
 			return nTmp;
 		}
-		CTimeFile(const struct timespec& tSpec)
+		cTimeFile(const struct timespec& tSpec)
 		{
-			// convert struct timespec/CTimeSpec to 64 bit FILETIME number.
+			// convert struct timespec/cTimeSpec to 64 bit FILETIME number.
 			InitTime(CvtFileTime(tSpec));
 		}
-		CTimeVal get_TimeVal() const
+		cTimeVal get_TimeVal() const
 		{
 			FILETIME_t nTmpSec = this->get_Val() / k_nFreq; // seconds
-			return CTimeVal(nTmpSec - (k_nDaysDiffTimeInt * (FILETIME_t)CTimeUnits::k_nSecondsPerDay), // seconds
+			return cTimeVal(nTmpSec - (k_nDaysDiffTimeInt * (FILETIME_t)cTimeUnits::k_nSecondsPerDay), // seconds
 				(this->get_Val() - (nTmpSec*k_nFreq)) / 10);	// iMicroSecWait
 		}
 #endif
@@ -122,7 +122,7 @@ namespace Gray
 		{
 			//! get the time truncated to 2 second intervals for FAT32.
 			//! 2 second accurate for FAT32
-			//! @note This is not really in proper FAT32/DosDate format. see CTimeUnits DosDate.
+			//! @note This is not really in proper FAT32/DosDate format. see cTimeUnits DosDate.
 			return get_Val() / (2 * k_nFreq);
 		}
 		TIMESECD_t get_AgeSec() const;
@@ -140,45 +140,45 @@ namespace Gray
 		}
 		void InitTimeNow();
 
-		static CTimeFile GRAYCALL GetTimeNow();
-		static CTimeFile GRAYCALL GetCurrentTime()
+		static cTimeFile GRAYCALL GetTimeNow();
+		static cTimeFile GRAYCALL GetCurrentTime()
 		{
 			//! Alternate name for MFC.
 			//! @note GetCurrentTime() is "#define" by _WIN32 to GetTickCount() so i cant use that name!
 			return GetTimeNow();
 		}
 
-		void InitTimeUnits(const CTimeUnits& rTu);
-		bool GetTimeUnits(OUT CTimeUnits& rTu, TZ_TYPE nTimeZoneOffset) const;
+		void InitTimeUnits(const cTimeUnits& rTu);
+		bool GetTimeUnits(OUT cTimeUnits& rTu, TZ_TYPE nTimeZoneOffset) const;
 
 		cString GetTimeFormStr(const GChar_t* pszFormat, TZ_TYPE nTimeZoneOffset = TZ_LOCAL) const;
 
-		UNITTEST_FRIEND(CTimeFile);
+		UNITTEST_FRIEND(cTimeFile);
 	};
 
 	template <>
-	inline COMPARE_t CValT::Compare<CTimeFile>(const CTimeFile& t1, const CTimeFile& t2)
+	inline COMPARE_t cValT::Compare<cTimeFile>(const cTimeFile& t1, const cTimeFile& t2)
 	{
-		//! Overload/implementation of CValT::Compare
+		//! Overload/implementation of cValT::Compare
 		//! Use cFileStatus::isSameChangeTime for FAT32 ~2 second
 		//! like _WIN32 CompareFileTime() ?
-		return CValT::Compare(t1.get_Val(), t2.get_Val());
+		return cValT::Compare(t1.get_Val(), t2.get_Val());
 	}
 
-	class GRAYCORE_LINK CTimeSpanFile
+	class GRAYCORE_LINK cTimeSpanFile
 	{
-		//! @class Gray::CTimeSpanFile
+		//! @class Gray::cTimeSpanFile
 		//! Holds a span of time. Not absolute time.
 		//! Emulate the MFC CTime functionality
 	public:
 		INT64 m_nDiffUnits;
 	public:
-		CTimeSpanFile(INT64 nDiffUnits = 0)
+		cTimeSpanFile(INT64 nDiffUnits = 0)
 			: m_nDiffUnits(nDiffUnits)
 		{
 		}
 
-		CTimeSpanFile(int iDays, int iHours, int iMinutes, int iSeconds)
+		cTimeSpanFile(int iDays, int iHours, int iMinutes, int iSeconds)
 			: m_nDiffUnits(iDays)
 		{
 			m_nDiffUnits *= 24;
@@ -187,7 +187,7 @@ namespace Gray
 			m_nDiffUnits += iMinutes;
 			m_nDiffUnits *= 60;
 			m_nDiffUnits += iSeconds;
-			m_nDiffUnits *= CTimeFile::k_nFreq;
+			m_nDiffUnits *= cTimeFile::k_nFreq;
 		}
 
 		INT64 get_Val() const
@@ -197,12 +197,12 @@ namespace Gray
 		INT64 GetTotalSeconds() const
 		{
 			// MFC like call.
-			return ((INT64)m_nDiffUnits) / CTimeFile::k_nFreq;
+			return ((INT64)m_nDiffUnits) / cTimeFile::k_nFreq;
 		}
 
-		// CTimeUnits::GetTimeSpanStr
+		// cTimeUnits::GetTimeSpanStr
 
 	};
 };
 
-#endif // _INC_CTimeFile_H
+#endif // _INC_cTimeFile_H

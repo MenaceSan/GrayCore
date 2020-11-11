@@ -1,28 +1,28 @@
 //
-//! @file CFileTextReader.h
+//! @file cFileTextReader.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CFileTextReader_H
-#define _INC_CFileTextReader_H
+#ifndef _INC_cFileTextReader_H
+#define _INC_cFileTextReader_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
 #include "CFile.h"
-#include "CStreamStack.h"
-#include "CTextPos.h"
+#include "cStreamStack.h"
+#include "cTextPos.h"
 
-UNITTEST_PREDEF(CFileTextReader)
+UNITTEST_PREDEF(cFileTextReader)
 
 namespace Gray
 {
-	class GRAYCORE_LINK CFileTextReader : public CStreamStackInp
+	class GRAYCORE_LINK cFileTextReader : public cStreamStackInp
 	{
-		//! @class Gray::CFileTextReader 
+		//! @class Gray::cFileTextReader 
 		//! read text lines from a buffer / stream.
 		//! Replace the FILE* streaming file i/o reader fread() with something more under our control.
-		//! Try to use this instead of CFileText.
+		//! Try to use this instead of cFileText.
 		//! Allow control of read buffer size and line length.
 		//! m_nGrowSizeMax = max line size.
 
@@ -48,8 +48,8 @@ namespace Gray
 		}
 
 	public:
-		CFileTextReader(size_t nSizeLineMax = CStream::k_FILE_BLOCK_SIZE * 2);
-		virtual ~CFileTextReader();
+		cFileTextReader(size_t nSizeLineMax = CStream::k_FILE_BLOCK_SIZE * 2);
+		virtual ~cFileTextReader();
 
 		HRESULT OpenX(const FILECHAR_t* pszName, OF_FLAGS_t uShareFlags);
 
@@ -72,7 +72,7 @@ namespace Gray
 
 		virtual STREAM_SEEKRET_t Seek(STREAM_OFFSET_t iOffset, SEEK_ORIGIN_TYPE eSeekOrigin = SEEK_Set) override;
 
-		UNITTEST_FRIEND(CFileTextReader);
+		UNITTEST_FRIEND(cFileTextReader);
 	};
 }
 

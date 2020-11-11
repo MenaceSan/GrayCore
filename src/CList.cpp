@@ -1,21 +1,21 @@
 //
-//! @file CList.cpp
+//! @file cList.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
 #include "pch.h"
-#include "CList.h"
-#include "CDebugAssert.h"
+#include "cList.h"
+#include "cDebugAssert.h"
 
 namespace Gray
 {
-	void CListBase::Empty()
+	void cListBase::Empty()
 	{
 		//! empty the list. but don't necessarily DisposeThis() the objects.
-		CListNodeBase* pNodeLast = nullptr;
+		cListNodeBase* pNodeLast = nullptr;
 		for (;;)	// iterate the list.
 		{
-			CListNodeBase* pNode = get_Head();
+			cListNodeBase* pNode = get_Head();
 			if (pNode == nullptr)
 				break;
 			ASSERT(pNodeLast != pNode);
@@ -29,13 +29,13 @@ namespace Gray
 		m_pTail = nullptr;
 	}
 
-	void CListBase::DisposeAll(void)
+	void cListBase::DisposeAll(void)
 	{
 		//! call DisposeThis() for all entries.
-		CListNodeBase* pNodeLast = nullptr;
+		cListNodeBase* pNodeLast = nullptr;
 		for (;;)	// iterate the list.
 		{
-			CListNodeBase* pNode = get_Head();
+			cListNodeBase* pNode = get_Head();
 			if (pNode == nullptr)
 				break;
 			ASSERT(pNodeLast != pNode);
@@ -49,7 +49,7 @@ namespace Gray
 		m_pTail = nullptr;
 	}
 
-	void CListBase::RemoveListNode(CListNodeBase* pNodeRemove) // virtual Override this = called when removed from list.
+	void cListBase::RemoveListNode(cListNodeBase* pNodeRemove) // virtual Override this = called when removed from list.
 	{
 		//! Some object is being removed from my list.
 		//! Override this to get called when an item is removed from this list.
@@ -60,8 +60,8 @@ namespace Gray
 		ASSERT_N(pNodeRemove != nullptr);
 		ASSERT(IsMyChild(pNodeRemove));
 
-		CListNodeBase* pNodeNext = pNodeRemove->get_Next();
-		CListNodeBase* pNodePrev = pNodeRemove->get_Prev();
+		cListNodeBase* pNodeNext = pNodeRemove->get_Next();
+		cListNodeBase* pNodePrev = pNodeRemove->get_Prev();
 
 		if (pNodeNext != nullptr)
 			pNodeNext->m_pPrev = pNodePrev;
@@ -81,7 +81,7 @@ namespace Gray
 		ASSERT(!pNodeRemove->hasParent());
 	}
 
-	void CListBase::InsertListNode(CListNodeBase* pNodeNew, CListNodeBase* pNodePrev) // virtual Override this = called when add to list.
+	void cListBase::InsertListNode(cListNodeBase* pNodeNew, cListNodeBase* pNodePrev) // virtual Override this = called when add to list.
 	{
 		//! Add pNodeNew after pNodePrev.
 		//! pNodePrev = nullptr == add to the start.
@@ -101,7 +101,7 @@ namespace Gray
 			ASSERT(!pNodeNew->hasParent());
 		}
 
-		CListNodeBase* pNodeNext;
+		cListNodeBase* pNodeNext;
 		if (pNodePrev != nullptr)		// put after some other node?
 		{
 			ASSERT(IsMyChild(pNodePrev));
@@ -134,7 +134,7 @@ namespace Gray
 		// ASSERT(pNodeNew->isValidCheck());
 	}
 
-	void CListBase::InsertList(CListBase* pListSrc, CListNodeBase* pNodePrev)
+	void cListBase::InsertList(cListBase* pListSrc, cListNodeBase* pNodePrev)
 	{
 		//! Transfer the contents of another list into this one.
 		if (pListSrc == this || pListSrc == nullptr)
@@ -142,10 +142,10 @@ namespace Gray
 			// not really a transfer at all
 			return;
 		}
-		CListNodeBase* pNode = pListSrc->get_Head();
+		cListNodeBase* pNode = pListSrc->get_Head();
 		while (pNode != nullptr)
 		{
-			CListNodeBase* pNodeNext = pNode->get_Next();
+			cListNodeBase* pNodeNext = pNode->get_Next();
 			pNode->RemoveFromParent();	// should not be needed
 			this->InsertListNode(pNode, pNodePrev);
 			pNodePrev = pNode;
@@ -153,14 +153,14 @@ namespace Gray
 		}
 	}
 
-	CListNodeBase* CListBase::GetAt(ITERATE_t index) const
+	cListNodeBase* cListBase::GetAt(ITERATE_t index) const
 	{
 		//! iterate the linked list.
 		//! Not very efficient. iterative.
 		//! @return nullptr = past end of list.
 		if (IS_INDEX_BAD(index, get_Count()))
 			return nullptr;
-		CListNodeBase* pNode = get_Head();
+		cListNodeBase* pNode = get_Head();
 		while (index-- > 0 && pNode != nullptr)
 		{
 			pNode = pNode->get_Next();
@@ -169,7 +169,7 @@ namespace Gray
 	}
 
 #if 0
-	CListNodeBase* CListBase::GetNext(CListNodeBase* pNode) const
+	cListNodeBase* cListBase::GetNext(cListNodeBase* pNode) const
 	{
 		//! iterate the linked list.
 		if (pNode == nullptr)
@@ -183,31 +183,31 @@ namespace Gray
 //***********************************************************************
 
 #if USE_UNITTESTS
-#include "CUnitTest.h"
-#include "CListNodeSmart.h"
-#include "CLogMgr.h"
+#include "cUnitTest.h"
+#include "cListNodeSmart.h"
+#include "cLogMgr.h"
 
 namespace Gray
 {
-	class CUnitTestListSmart : public CListNodeSmart < CUnitTestListSmart >
+	class cUnitTestListSmart : public cListNodeSmart < cUnitTestListSmart >
 	{
 	public:
 		int m_iVal;
 	public:
-		CUnitTestListSmart(int iVal)
+		cUnitTestListSmart(int iVal)
 		: m_iVal(iVal)
 		{
 		}
 	};
 };
-UNITTEST_CLASS(CListBase)
+UNITTEST_CLASS(cListBase)
 {
-	UNITTEST_METHOD(CListBase)
+	UNITTEST_METHOD(cListBase)
 	{
-		CListT<CUnitTestListSmart> list;
-		// list.InsertHead(new CUnitTestListSmart(1));
+		CListT<cUnitTestListSmart> list;
+		// list.InsertHead(new cUnitTestListSmart(1));
 		// list.Empty();
 	}
 };
-UNITTEST_REGISTER(CListBase, UNITTEST_LEVEL_Core);
+UNITTEST_REGISTER(cListBase, UNITTEST_LEVEL_Core);
 #endif

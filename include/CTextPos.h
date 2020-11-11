@@ -1,30 +1,30 @@
 //
-//! @file CTextPos.h
+//! @file cTextPos.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CTextPos_H
-#define _INC_CTextPos_H
+#ifndef _INC_cTextPos_H
+#define _INC_cTextPos_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
-#include "CStreamProgress.h"
+#include "cStreamProgress.h"
 #include "StrT.h"
 
 namespace Gray
 {
-	class GRAYCORE_LINK CTextPos
+	class GRAYCORE_LINK cTextPos
 	{
-		//! @class Gray::CTextPos
-		//! Where inside of a CFileText, CFileTextReader (or other type of text buffer) are we ?
+		//! @class Gray::cTextPos
+		//! Where inside of a cFileText, cFileTextReader (or other type of text buffer) are we ?
 		//! Text files have line numbers that won't always correspond to offset when newlines have been transformed.
 		//! ASSUME: we know which file it is in.
 		//! We have no idea how long the file is.
 
 	public:
-		static const CTextPos k_Invalid;	//!< Set to invalid values
-		static const CTextPos k_Zero;		//!< Top of file.
+		static const cTextPos k_Invalid;	//!< Set to invalid values
+		static const cTextPos k_Zero;		//!< Top of file.
 
 	protected:
 		STREAM_POS_t m_lOffset;		//!< byte offset into the file. 0 based
@@ -33,7 +33,7 @@ namespace Gray
 		// m_iLineNum = -1 or -2 can be used to indicate errors.
 
 	public:
-		CTextPos(STREAM_POS_t lOffset = (STREAM_POS_t)k_ITERATE_BAD, ITERATE_t iLineNum = k_ITERATE_BAD, StrLen_t iColNum = k_StrLen_UNK) noexcept
+		cTextPos(STREAM_POS_t lOffset = (STREAM_POS_t)k_ITERATE_BAD, ITERATE_t iLineNum = k_ITERATE_BAD, StrLen_t iColNum = k_StrLen_UNK) noexcept
 			: m_lOffset(lOffset)
 			, m_iLineNum(iLineNum)
 			, m_iColNum(iColNum)
@@ -103,22 +103,22 @@ namespace Gray
 		StrLen_t GetStr2(OUT char* pszOut, StrLen_t nLenOut) const;
 	};
 
-	class GRAYCORE_LINK CTextReader : public CTextPos
+	class GRAYCORE_LINK cTextReader : public cTextPos
 	{
-		//! @class Gray::CTextReader
-		//! current File/CXmlReader/cJSONReader/Etc parsing position. include CTextPos
-		//! similar to CStreamInput but for a memory buffer.
-		//! CTextPos = Current cursor position for m_pszCursor in the file. used for error messages, etc.
+		//! @class Gray::cTextReader
+		//! current File/CXmlReader/cJSONReader/Etc parsing position. include cTextPos
+		//! similar to cStreamInput but for a memory buffer.
+		//! cTextPos = Current cursor position for m_pszCursor in the file. used for error messages, etc.
 	protected:
-		const char* m_pszStart;	//!< starting read position in the data parsing stream/buffer. CTextPos cursor = m_pszStart + m_lOffset.
-		StrLen_t m_nLenMax;		//!< don't advance CTextPos::m_lOffset past this.
+		const char* m_pszStart;	//!< starting read position in the data parsing stream/buffer. cTextPos cursor = m_pszStart + m_lOffset.
+		StrLen_t m_nLenMax;		//!< don't advance cTextPos::m_lOffset past this.
 
 	public:
 		const StrLen_t m_iTabSize;		//!< for proper tracking of the column number on errors. and m_CursorPos. 0 = not used/don't care.
 
 	public:
-		CTextReader(const char* pszStart, StrLen_t nLenMax = StrT::k_LEN_MAX, StrLen_t nTabSize = CStrConst::k_TabSize)
-			: CTextPos(0, 0, 0)
+		cTextReader(const char* pszStart, StrLen_t nLenMax = StrT::k_LEN_MAX, StrLen_t nTabSize = cStrConst::k_TabSize)
+			: cTextPos(0, 0, 0)
 			, m_pszStart(pszStart)
 			, m_nLenMax(nLenMax)
 			, m_iTabSize(nTabSize)

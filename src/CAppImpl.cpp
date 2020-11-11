@@ -1,13 +1,13 @@
 //
-//! @file CAppImpl.cpp
+//! @file cAppImpl.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
 #include "pch.h"
-#include "CAppImpl.h"
-#include "COSModule.h"
-#include "CLogMgr.h"
-#include "CLogAppendConsole.h"
+#include "cAppImpl.h"
+#include "cOSModule.h"
+#include "cLogMgr.h"
+#include "cLogAppendConsole.h"
 
 #ifdef _MFC_VER
 extern int AFXAPI AfxWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow);
@@ -16,14 +16,14 @@ extern int AFXAPI AfxWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTST
 namespace Gray
 {
 #ifndef _MFC_VER
-	const char* CAppImpl::k_HelpText = " -help, -? = Get a general description of this program." STR_NL
+	const char* cAppImpl::k_HelpText = " -help, -? = Get a general description of this program." STR_NL
 		" -debugger = Wait to engage the debugger." STR_NL;
 
-	CAppImpl::CAppImpl(const FILECHAR_t* pszAppName)
-		: CSingletonStatic<CAppImpl>(this)
+	cAppImpl::cAppImpl(const FILECHAR_t* pszAppName)
+		: cSingletonStatic<cAppImpl>(this)
 		, m_pszAppName(pszAppName)	// to be set later.
 		, m_nMinTickTime(10)	// mSec for OnTickApp
-		, m_State(CAppState::I())
+		, m_State(cAppState::I())
 		, m_bCloseSignal(false)
 	{
 		if (StrT::IsWhitespace(m_pszAppName))
@@ -33,26 +33,26 @@ namespace Gray
 		}
 	}
 
-	CAppImpl::~CAppImpl()
+	cAppImpl::~cAppImpl()
 	{
 	}
 
-	cString CAppImpl::get_HelpText() const // virtual 
+	cString cAppImpl::get_HelpText() const // virtual 
 	{
 		// App Name
 		// Description.
 		return k_HelpText;
 	}
 
-	bool CAppImpl::ShowHelp() // virtual 
+	bool cAppImpl::ShowHelp() // virtual 
 	{
 		//! Show my help text via console or dialog .
 
-		cString sMsg = CAppState::get_AppFileTitle() + STR_NL;
+		cString sMsg = cAppState::get_AppFileTitle() + STR_NL;
 		sMsg += get_HelpText();
 
 		// is console mode or have a parent in console mode ? 
-		CLogProcessor& log = CLogMgr::I();
+		cLogProcessor& log = cLogMgr::I();
 
 		// Break into multi lines.
 		log.addEventS(LOG_ATTR_PRINT, LOGLEV_MAJOR, sMsg, "");
@@ -60,7 +60,7 @@ namespace Gray
 		return false; // don't open app.
 	}
 
-	bool CAppImpl::CheckHelpArgs() // virtual
+	bool cAppImpl::CheckHelpArgs() // virtual
 	{
 		//! Is the caller requesting help text via the command line?
 		//! All apps should support "-help" "-?" requests for assistance.
@@ -75,7 +75,7 @@ namespace Gray
 		return true;	// I requested help.
 	}
 
-	BOOL CAppImpl::InitInstance() // virtual 
+	BOOL cAppImpl::InitInstance() // virtual 
 	{
 		//! APPSTATE_RunInit
 		//! Override this to make the application do something.
@@ -86,14 +86,14 @@ namespace Gray
 		return true;
 	}
 
-	bool CAppImpl::OnTickApp() // virtual 
+	bool cAppImpl::OnTickApp() // virtual 
 	{
 		//! Override this to make the application do something. Main loop of main thread.
 		//! @return false = exit
 		return !m_bCloseSignal;	// just keep going.
 	}
 
-	int CAppImpl::Run() // virtual 
+	int cAppImpl::Run() // virtual 
 	{
 		//! APPSTATE_Run
 		//! Override this to make the application do something. Main loop of main thread.
@@ -102,37 +102,37 @@ namespace Gray
 		//! @note In _WIN32, If my parent is a console, the console will return immediately! Not on first message loop like old docs say.
 
 		// Log a message if there were command line arguments that did nothing. unknown.
-		CStringF sInvalidArgs = m_State.get_InvalidArgs();
+		cStringF sInvalidArgs = m_State.get_InvalidArgs();
 		if (!sInvalidArgs.IsEmpty())
 		{
 			// Check m_ArgsValid. Show Error for any junk arguments.
-			CLogMgr::I().addEventF(LOG_ATTR_INIT, LOGLEV_CRIT, "Unknown command line args. '%s'", LOGSTR(sInvalidArgs));
+			cLogMgr::I().addEventF(LOG_ATTR_INIT, LOGLEV_CRIT, "Unknown command line args. '%s'", LOGSTR(sInvalidArgs));
 			// return E_FAIL;
 		}
 
 		for (;;)
 		{
-			TIMESYS_t tStart = CTimeSys::GetTimeNow();	// start of tick.
+			TIMESYS_t tStart = cTimeSys::GetTimeNow();	// start of tick.
 			if (!OnTickApp())
 				break;
 			if (m_nMinTickTime > 0)
 			{
 				// if actual Tick time is less than minimum then wait.
-				TIMESYS_t tNow = CTimeSys::GetTimeNow();
+				TIMESYS_t tNow = cTimeSys::GetTimeNow();
 				TIMESYSD_t iDiff = tNow - tStart;
 				if (iDiff < m_nMinTickTime)
 				{
 					// Sleep to keep from taking over the CPU when i have nothing to do.
 					if (iDiff < 0)
 						iDiff = 0;
-					CThreadId::SleepCurrent(m_nMinTickTime - iDiff);
+					cThreadId::SleepCurrent(m_nMinTickTime - iDiff);
 				}
 			}
 		}
 		return APP_EXITCODE_OK;
 	}
 
-	int CAppImpl::ExitInstance() // virtual 
+	int cAppImpl::ExitInstance() // virtual 
 	{
 		//! APPSTATE_RunExit
 		//! Override this to make the application do something to clean up.
@@ -142,23 +142,23 @@ namespace Gray
 		return APP_EXITCODE_OK;
 	}
 
-	APP_EXITCODE_t CAppImpl::Main(HMODULE hInstance)
+	APP_EXITCODE_t cAppImpl::Main(HMODULE hInstance)
 	{
 		//! The main application entry point and process loop. Like MFC AfxWinMain()
-		//! Assume CAppStateMain was used.
+		//! Assume cAppStateMain was used.
 		//! @return APP_EXITCODE_t
 
 #ifdef _DEBUG
-		DEBUG_MSG(("CAppImpl::Main '%s'", LOGSTR(m_pszAppName)));
-		APPSTATE_TYPE_ eAppState = CAppState::I().get_AppState();
-		ASSERT(eAppState == APPSTATE_Run);	// Assume CAppStateMain
+		DEBUG_MSG(("cAppImpl::Main '%s'", LOGSTR(m_pszAppName)));
+		APPSTATE_TYPE_ eAppState = cAppState::I().get_AppState();
+		ASSERT(eAppState == APPSTATE_Run);	// Assume cAppStateMain
 #endif
 
 #ifdef _WIN32
 		if (hInstance != HMODULE_NULL)	// don't clear it if already set.
 		{
-			ASSERT(hInstance == CAppState::get_HModule());
-			CAppState::sm_hInstance = hInstance;
+			ASSERT(hInstance == cAppState::get_HModule());
+			cAppState::sm_hInstance = hInstance;
 		}
 #endif
 

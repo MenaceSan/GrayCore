@@ -10,7 +10,7 @@
 #endif
 
 #include "IUnknown.h"
-#include "CString.h"
+#include "cString.h"
 
 namespace Gray
 {

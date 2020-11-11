@@ -1,22 +1,22 @@
 //
-//! @file CTempPool.h
+//! @file cTempPool.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
-#ifndef _INC_CStrTemp_H
-#define _INC_CStrTemp_H
+#ifndef _INC_cTempPool_H
+#define _INC_cTempPool_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
-#include "CArray.h"
-#include "CHeap.h"
-#include "CThreadLocalSys.h"
+#include "cArray.h"
+#include "cHeap.h"
+#include "cThreadLocalSys.h"
 
 namespace Gray
 {
-	class GRAYCORE_LINK CTempPool
+	class GRAYCORE_LINK cTempPool
 	{
-		//! @class Gray::CTempPool
+		//! @class Gray::cTempPool
 		//! A set of thread safe temporary strings/spaces for function arguments and Unicode/UTF8 conversions. Used by StrArg<>.
 		//! Pool of re-used strings/spaces after k_iCountMax uses.
 		//! use a new set for each thread. Thread Local/Safe.
@@ -27,20 +27,20 @@ namespace Gray
 
 	public:
 		int m_iCountCur;	//!< rotate this count to re-use buffers in m_aBlocks.
-		CArrayVal2<CHeapBlock> m_aBlocks;	//!< Temporary blocks to be used on a single thread.
+		cArrayVal2<cHeapBlock> m_aBlocks;	//!< Temporary blocks to be used on a single thread.
 
 		static const int k_iCountMax = 16;	//!< Assume nested functions won't use more than m_aBlocks in a single thread. (e.g. This is the max number of args on a single sprintf)
 
 		//! Allow this to be overloaded with a version that destructs on thread close.
 		static IThreadLocal* sm_pThreadLocal;	// can use CThreadLocalTypeNew instead. 
-		static CThreadLocalSysNew<CTempPool> sm_ThreadLocalDefault;	// default for sm_pThreadLocal. set sm_pThreadLocal with CThreadLocalTypeNew in more strict applications.
+		static cThreadLocalSysNew<cTempPool> sm_ThreadLocalDefault;	// default for sm_pThreadLocal. set sm_pThreadLocal with CThreadLocalTypeNew in more strict applications.
 
 	public:
-		CTempPool()
+		cTempPool()
 		: m_iCountCur(0)
 		{
 		}
-		virtual ~CTempPool()
+		virtual ~cTempPool()
 		{
 		}
 
@@ -61,7 +61,7 @@ namespace Gray
 			return (TYPE*)(GetTempV((nLenNeed + 1) * sizeof(TYPE), pData));
 		}
 
-		static CTempPool* GRAYCALL GetTempPool();
+		static cTempPool* GRAYCALL GetTempPool();
 		static void GRAYCALL FreeTempsForThreadManually();
 
 		static void* GRAYCALL GetTempSV(size_t nLenNeed, const void* pData) // static
@@ -85,5 +85,5 @@ namespace Gray
 			return GetTempPool()->GetTempT<TYPE>(nLenNeed, pData);
 		}
 	};
-};
+}
 #endif

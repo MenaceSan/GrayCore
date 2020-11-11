@@ -1,39 +1,39 @@
 //
-//! @file CIniSection.h
+//! @file cIniSection.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CIniSection_H
-#define _INC_CIniSection_H
+#ifndef _INC_cIniSection_H
+#define _INC_cIniSection_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
-#include "CIniBase.h"
+#include "cIniBase.h"
 #include "StrArg.h"
-#include "CHeap.h"
-#include "CTextPos.h"
+#include "cHeap.h"
+#include "cTextPos.h"
 
-UNITTEST_PREDEF(CIniSection)
+UNITTEST_PREDEF(cIniSection)
 
 namespace Gray
 {
 #define INI_CR "\r\n"	//!< use "\n" or "\r\n" like FILE_EOL, STR_NL? M$ likes Windows format ("\r\n") to work with notepad.
 
-	class CStreamOutput;
+	class cStreamOutput;
 
-	class GRAYCORE_LINK CIniWriter
+	class GRAYCORE_LINK cIniWriter
 	{
-		//! @class Gray::CIniWriter
+		//! @class Gray::cIniWriter
 		//! Helper for writing an INI file/stream.
 		//! similar to IScriptableSetter
 
 	protected:
-		CStreamOutput* m_pOut;	//!< write out to this stream.
+		cStreamOutput* m_pOut;	//!< write out to this stream.
 		bool m_bStartedSection;	//!< Must write a newline to close the previous section when we start a new one.
 
 	public:
-		CIniWriter(CStreamOutput* pOut)
+		cIniWriter(cStreamOutput* pOut)
 			: m_pOut(pOut)
 			, m_bStartedSection(false)
 		{
@@ -51,9 +51,9 @@ namespace Gray
 		HRESULT WriteKeyUInt(const IniChar_t* pszKey, UINT nVal);
 	};
 
-	struct GRAYCORE_LINK CIniReader	// static
+	struct GRAYCORE_LINK cIniReader	// static
 	{
-		//! @struct Gray::CIniReader
+		//! @struct Gray::cIniReader
 		//! Helper for reading/parsing an INI file/stream.
 
 		static bool GRAYCALL IsSectionHeader(const IniChar_t* pszLine);
@@ -65,22 +65,22 @@ namespace Gray
 		static CStringI GRAYCALL GetLineParse3(const IniChar_t* pszLine, OUT CStringI& rsArgs);
 	};
 
-	class GRAYCORE_LINK CIniSectionData
+	class GRAYCORE_LINK cIniSectionData
 		: public IIniBaseEnumerator
 		, public IIniBaseGetter
 		, public IIniBaseSetter
-		, public CIniReader
+		, public cIniReader
 	{
-		//! @class Gray::CIniSectionData
+		//! @class Gray::cIniSectionData
 		//! An array of lines (typically) in "Tag=Val" format or "Tag: Val". (comments and junk space is preserved)
 		//! Mostly used as read only.
 		//! Typically the data inside a [section] in an INI file.
 		//! similar to _WIN32 GetPrivateProfileSection()
-		//! @note the [section] name itself is NOT stored here. That is in CIniSection
+		//! @note the [section] name itself is NOT stored here. That is in cIniSection
 		//! @note Allows ad hoc lines "hi this is a line" (with no = or formatting)
-		//! Comments are decoded in CIniReader::FindScriptLineEnd()
+		//! Comments are decoded in cIniReader::FindScriptLineEnd()
 
-		friend class CIniFile;
+		friend class cIniFile;
 	public:
 		static const StrLen_t k_SECTION_SIZE_MAX = (256 * 1024); //!< (chars) max size for whole section. (Windows Me/98/95 = 32K for INI)
 		static const ITERATE_t k_LINE_QTY_MAX = (8 * 1024);	//!< max number of lines i support. (per section)
@@ -91,7 +91,7 @@ namespace Gray
 		bool m_bStripComments;	//!< has been stripped of blank lines, comments, leading and trailing line spaces.
 
 	private:
-		CHeapBlock m_Buffer;		//!< raw/processed data buffer for m_ppLines locally (new) allocated. (null term)
+		cHeapBlock m_Buffer;		//!< raw/processed data buffer for m_ppLines locally (new) allocated. (null term)
 		StrLen_t m_iBufferUsed;		//!< how much of the buffer have we used ? including null.
 
 		IniChar_t** m_ppLines;		//!< array of pointers to lines inside m_Buffer. (e.g. "Tag=Val" but not required to have mapped values.)
@@ -109,8 +109,8 @@ namespace Gray
 		IniChar_t* AllocBeginMin(StrLen_t nSizeChars);
 
 	public:
-		CIniSectionData(bool bStripComments = false);
-		virtual ~CIniSectionData();
+		cIniSectionData(bool bStripComments = false);
+		virtual ~cIniSectionData();
 		void DisposeThis();
 
 		bool isStripped() const
@@ -163,7 +163,7 @@ namespace Gray
 		virtual HRESULT PropGet(const IniChar_t* pszPropTag, OUT CStringI& rsValue) const override;
 
 		bool IsValidLines() const;
-		void SetLinesCopy(const CIniSectionData& section);	// Dupe another section.
+		void SetLinesCopy(const cIniSectionData& section);	// Dupe another section.
 		ITERATE_t AddLine(const IniChar_t* pszLine);
 		bool SetLine(ITERATE_t iLine, const IniChar_t* pszLine = nullptr);
 		bool RemoveLine(ITERATE_t iLine)
@@ -189,30 +189,30 @@ namespace Gray
 		StrLen_t SetLinesParse(const IniChar_t* pszData, StrLen_t iLen = k_StrLen_UNK, const IniChar_t* pszSep = nullptr, STRP_MASK_t uFlags = (STRP_START_WHITE | STRP_MERGE_CRNL | STRP_END_WHITE | STRP_EMPTY_STOP));
 		cStringA GetStringAll(const IniChar_t* pszSep = nullptr) const;
 
-		HRESULT ReadSectionData(cStringA& rsSectionNext, CStreamInput& stream, bool bStripComments);
-		HRESULT WriteSectionData(CStreamOutput& file);
+		HRESULT ReadSectionData(cStringA& rsSectionNext, cStreamInput& stream, bool bStripComments);
+		HRESULT WriteSectionData(cStreamOutput& file);
 	};
 
-	class GRAYCORE_LINK CIniSection : public CIniSectionData
+	class GRAYCORE_LINK cIniSection : public cIniSectionData
 	{
-		//! @class Gray::CIniSection
-		//! CIniSectionData + section title info
-		typedef CIniSectionData SUPER_t;
+		//! @class Gray::cIniSection
+		//! cIniSectionData + section title info
+		typedef cIniSectionData SUPER_t;
 
 	protected:
 		CStringI m_sSectionTitle;	//!< "SECTIONTYPE SECTIONNAME" = everything that was inside [] without the []
 
 	public:
-		CIniSection(bool bStripComments = false)
-			: CIniSectionData(bStripComments)
+		cIniSection(bool bStripComments = false)
+			: cIniSectionData(bStripComments)
 		{
 		}
-		CIniSection(CStringI sSectionTitle, bool bStripComments = false)
-			: CIniSectionData(bStripComments)
+		cIniSection(CStringI sSectionTitle, bool bStripComments = false)
+			: cIniSectionData(bStripComments)
 			, m_sSectionTitle(sSectionTitle)
 		{
 		}
-		CIniSection(const CIniSection& rSectionCopy);
+		cIniSection(const cIniSection& rSectionCopy);
 
 		const CStringI& get_SectionTitle() const
 		{
@@ -233,36 +233,36 @@ namespace Gray
 		}
 		static bool GRAYCALL IsSectionTypeMatch(const IniChar_t* pszSection1, const IniChar_t* pszSection2);
 
-		HRESULT WriteSection(CStreamOutput& file);
+		HRESULT WriteSection(cStreamOutput& file);
 
 		bool IsSectionType(const IniChar_t* pszSectionType) const
 		{
 			return IsSectionTypeMatch(m_sSectionTitle, pszSectionType);
 		}
-		UNITTEST_FRIEND(CIniSection);
+		UNITTEST_FRIEND(cIniSection);
 	};
 
-	class GRAYCORE_LINK CIniSectionEntry : public CSmartBase, public CIniSection
+	class GRAYCORE_LINK cIniSectionEntry : public cRefBase, public cIniSection
 	{
-		//! @class Gray::CIniSectionEntry
-		//! For storing an array of CIniSection(s).
+		//! @class Gray::cIniSectionEntry
+		//! For storing an array of cIniSection(s).
 		//! We might Discard body and reload it again later from the file.
 
 	public:
-		CTextPos m_FilePos;	//!< Where in parent/source file is this? for error reporting. 1 based. ITERATE_t
+		cTextPos m_FilePos;	//!< Where in parent/source file is this? for error reporting. 1 based. ITERATE_t
 
 	public:
-		CIniSectionEntry(CStringI sSectionTitle, bool bStripComments = false, int iLine = 0)
-			: CIniSection(sSectionTitle, bStripComments)
+		cIniSectionEntry(CStringI sSectionTitle, bool bStripComments = false, int iLine = 0)
+			: cIniSection(sSectionTitle, bStripComments)
 			, m_FilePos(0, iLine)
 		{
 		}
-		CIniSectionEntry(const CIniSectionEntry& rSectionCopy)
-			: CIniSection(rSectionCopy)
+		cIniSectionEntry(const cIniSectionEntry& rSectionCopy)
+			: cIniSection(rSectionCopy)
 			, m_FilePos(rSectionCopy.m_FilePos)
 		{
 		}
-		virtual ~CIniSectionEntry()
+		virtual ~cIniSectionEntry()
 		{
 		}
 
@@ -271,7 +271,7 @@ namespace Gray
 			return (int)m_FilePos.get_Line1();
 		}
 	};
-	typedef CSmartPtr<CIniSectionEntry> CIniSectionEntryPtr;
+	typedef cRefPtr<cIniSectionEntry> cIniSectionEntryPtr;
 };
 
 #endif

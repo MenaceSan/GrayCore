@@ -1,15 +1,15 @@
 //
-//! @file CMime.h
+//! @file cMime.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CMime_H
-#define _INC_CMime_H
+#ifndef _INC_cMime_H
+#define _INC_cMime_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
-#include "CSingleton.h"
+#include "cSingleton.h"
 
 namespace Gray
 {
@@ -81,15 +81,15 @@ namespace Gray
 		//! Enumerate of recognized MIME types. Linux version of file types.
 		//! This is similar to the _WIN32 file extension. Registry "Content Type".
 		//! same as HTTP "Content-Type"
-#define CMimeType(a,b,c,d,e)	MIME_##a,
-#include "CMimeTypes.tbl"
-#undef CMimeType
+#define cMimeType(a,b,c,d,e)	MIME_##a,
+#include "cMimeTypes.tbl"
+#undef cMimeType
 		MIME_QTY,
 	};
 
-	struct GRAYCORE_LINK CMime	// static
+	struct GRAYCORE_LINK cMime	// static
 	{
-		//! @struct Gray::CMime
+		//! @struct Gray::cMime
 		//! Declare all the file types that the app might want to use.
 		//! _WIN32 registry calls MIME name strings "Content Type"
 		//! HTTP calls this "Content-Type"

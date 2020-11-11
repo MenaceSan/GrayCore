@@ -1,33 +1,33 @@
 //
-//! @file CSingletonPtr.h
+//! @file cSingletonPtr.h
 //!	A reference counted singleton
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CSingletonPtr_H
-#define _INC_CSingletonPtr_H
+#ifndef _INC_cSingletonPtr_H
+#define _INC_cSingletonPtr_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
-#include "CSingleton.h"
-#include "CSmartPtr.h"
+#include "cSingleton.h"
+#include "cRefPtr.h"
 
 namespace Gray
 {
 	template <class TYPE>
-	class CSingletonSmart : public CSingleton<TYPE>, public CSmartBase
+	class cSingletonSmart : public cSingleton<TYPE>, public cRefBase
 	{
-		//! @class Gray::CSingletonSmart
-		//! Base class for a CSingleton that is reference counted and lazy loaded.
+		//! @class Gray::cSingletonSmart
+		//! Base class for a cSingleton that is reference counted and lazy loaded.
 		//! This will be destroyed when the last reference is released. recreated on demand.
 		//! e.g. a public service (shared by all) that is loaded on demand and released when no one needs it.
-		//! @note These objects are normally CHeapObject, but NOT ALWAYS ! (allow static versions using StaticConstruct() and k_REFCOUNT_STATIC)
+		//! @note These objects are normally cHeapObject, but NOT ALWAYS ! (allow static versions using StaticConstruct() and k_REFCOUNT_STATIC)
 
 	protected:
-		CSingletonSmart(TYPE* pObject, const TYPEINFO_t& rAddrCode, int iRefCountStart = 0)
-			: CSingleton<TYPE>(pObject, rAddrCode)
-			, CSmartBase(iRefCountStart)
+		cSingletonSmart(TYPE* pObject, const TYPEINFO_t& rAddrCode, int iRefCountStart = 0)
+			: cSingleton<TYPE>(pObject, rAddrCode)
+			, cRefBase(iRefCountStart)
 		{
 			//! typically this == pObject
 		}
@@ -35,21 +35,21 @@ namespace Gray
 	};
 
 	template <class TYPE>
-	class CSingletonPtr : protected CSmartPtr < TYPE >		// protected for read only.
+	class cSingletonPtr : protected cRefPtr < TYPE >		// protected for read only.
 	{
-		//! @class Gray::CSingletonPtr
-		//! A reference to a CSingletonSmart<> based TYPE or a type that has both CSingleton and CSmartBase.
-		typedef CSmartPtr<TYPE> SUPER_t;
+		//! @class Gray::cSingletonPtr
+		//! A reference to a cSingletonSmart<> based TYPE or a type that has both cSingleton and cRefBase.
+		typedef cRefPtr<TYPE> SUPER_t;
 
 	public:
-		CSingletonPtr(bool bInit = true) : CSmartPtr<TYPE>(bInit ? TYPE::get_Single() : nullptr)
+		cSingletonPtr(bool bInit = true) : cRefPtr<TYPE>(bInit ? TYPE::get_Single() : nullptr)
 		{
-			//! @arg bInit = Allocate a reference automatically by default. Attach to CSingletonSmart, false = defer init until later.
+			//! @arg bInit = Allocate a reference automatically by default. Attach to cSingletonSmart, false = defer init until later.
 		}
 		void InitPtr()
 		{
-			//! If i created an empty CSingletonPtr(false) (as part of some class) this is how I populate it on that classes constructor.
-			//! Attach to CSingletonSmart
+			//! If i created an empty cSingletonPtr(false) (as part of some class) this is how I populate it on that classes constructor.
+			//! Attach to cSingletonSmart
 			this->put_Ptr(TYPE::get_Single());
 		}
 		void ReleasePtr()

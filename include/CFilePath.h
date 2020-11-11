@@ -1,22 +1,22 @@
 //
-//! @file CFilePath.h
+//! @file cFilePath.h
 //! Manipulate file path names.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 
-#ifndef _INC_CFilePath_H
-#define _INC_CFilePath_H
+#ifndef _INC_cFilePath_H
+#define _INC_cFilePath_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
-#include "CString.h"
+#include "cString.h"
 #include "FileName.h"
 
-UNITTEST_PREDEF(CFilePath)
+UNITTEST_PREDEF(cFilePath)
 
 namespace Gray
 {
-	typedef cStringT<FILECHAR_t> CStringF;	//!< A file name. checks USE_UNICODE_FN. related to CFilePath.
+	typedef cStringT<FILECHAR_t> cStringF;	//!< A file name. checks USE_UNICODE_FN. related to cFilePath.
 
 	enum FILESYS_TYPE
 	{
@@ -55,9 +55,9 @@ namespace Gray
 	};
 	typedef WORD FILECHR_MASK_t;	//!< Mask of enum FILECHR_TYPE_
 
-	class GRAYCORE_LINK CFilePath : public CStringF
+	class GRAYCORE_LINK cFilePath : public cStringF
 	{
-		//! @class Gray::CFilePath
+		//! @class Gray::cFilePath
 		//! File Name and Path manipulation helper functions.
 		//! Manipulation of a files name parts such as found in FILECHR_TYPE_
 		//! similar to .NET System.IO.Path
@@ -101,34 +101,34 @@ namespace Gray
 
 		static FILECHAR_t* GRAYCALL GetFileNameExt(const FILECHAR_t* pszName, StrLen_t iLen = k_StrLen_UNK, bool bMultiDot = false);
 		static StrLen_t GRAYCALL StripFileExt(FILECHAR_t* pszFile, StrLen_t iLen, bool bMultiDot = false);
-		static CStringF GRAYCALL ReplaceFileExt(const FILECHAR_t* pszFilePath, const FILECHAR_t* pszExtNew); // ChangeExtension
-		static CStringF GRAYCALL GetNameExtStar(const FILECHAR_t* pszFilePath);
+		static cStringF GRAYCALL ReplaceFileExt(const FILECHAR_t* pszFilePath, const FILECHAR_t* pszExtNew); // ChangeExtension
+		static cStringF GRAYCALL GetNameExtStar(const FILECHAR_t* pszFilePath);
 
 		static FILECHAR_t* GRAYCALL GetFileName(const FILECHAR_t* pszPath, StrLen_t iLenPath = k_StrLen_UNK);
-		static CStringF GRAYCALL GetFileNameNE(const FILECHAR_t* pszPath, StrLen_t iLenPath = k_StrLen_UNK, bool bMultiDot = false);
+		static cStringF GRAYCALL GetFileNameNE(const FILECHAR_t* pszPath, StrLen_t iLenPath = k_StrLen_UNK, bool bMultiDot = false);
 
 		static StrLen_t GRAYCALL MakeFileSymbolicName(ATOMCHAR_t* pszOut, const FILECHAR_t* pszPath, const ATOMCHAR_t* pszPrefix = nullptr, ATOMCHAR_t chSub = '_', bool bAllowLeadingNumber = false);
 		static cStringA GRAYCALL GetFileSymbolicName(const FILECHAR_t* pszPath, const ATOMCHAR_t* pszPrefix = nullptr, ATOMCHAR_t chSub = '_', bool bAllowLeadingNumber = false);
 
 		static StrLen_t GRAYCALL MakeFullPath2(FILECHAR_t* pszFileOut, const FILECHAR_t* pszFileInp, StrLen_t iLenMax, FILECHAR_t chSep = k_DirSep);
 		static StrLen_t GRAYCALL MakeFullPath(FILECHAR_t* pszFileOut, const FILECHAR_t* pszFileInp, StrLen_t iLenMax, FILECHAR_t chSep = k_DirSep);
-		static CStringF GRAYCALL MakeFullPathX(const FILECHAR_t* pszFileInp, FILECHAR_t chSep = k_DirSep);
+		static cStringF GRAYCALL MakeFullPathX(const FILECHAR_t* pszFileInp, FILECHAR_t chSep = k_DirSep);
 
 		static StrLen_t GRAYCALL MakeProperPath(FILECHAR_t* pszFileOut, StrLen_t iLenMax = _MAX_PATH, const FILECHAR_t* pszFileInp = nullptr, FILECHAR_t chSep = k_DirSep);
-		static CStringF GRAYCALL MakeProperPathX(const FILECHAR_t* pszFileInp, FILECHAR_t chSep = k_DirSep);
+		static cStringF GRAYCALL MakeProperPathX(const FILECHAR_t* pszFileInp, FILECHAR_t chSep = k_DirSep);
 		static StrLen_t GRAYCALL AddFileDirSep(FILECHAR_t* pszOut, StrLen_t iLen = k_StrLen_UNK, FILECHAR_t chSep = k_DirSep);
 		static StrLen_t GRAYCALL CombineFilePathA(FILECHAR_t* pszOut, StrLen_t iLenMax, StrLen_t iLen, const FILECHAR_t* pszName, FILECHAR_t chSep = k_DirSep);
 		static StrLen_t GRAYCALL CombineFilePath(FILECHAR_t* pszFilePathOut, StrLen_t iLenMax, const FILECHAR_t* pszDir, const FILECHAR_t* pszName, FILECHAR_t chSep = k_DirSep); // .NET Combine
-		static CStringF GRAYCALL CombineFilePathX(const FILECHAR_t* pszBase, const FILECHAR_t* pszName, FILECHAR_t chSep = k_DirSep);
-		static CStringF _cdecl CombineFilePathF(FILECHAR_t chSep, const FILECHAR_t* pszBase, ...);
+		static cStringF GRAYCALL CombineFilePathX(const FILECHAR_t* pszBase, const FILECHAR_t* pszName, FILECHAR_t chSep = k_DirSep);
+		static cStringF _cdecl CombineFilePathF(FILECHAR_t chSep, const FILECHAR_t* pszBase, ...);
 
 		static StrLen_t GRAYCALL ExtractDir(FILECHAR_t* pszPath, StrLen_t iLen = k_StrLen_UNK, bool bTrailingSep = true);
 		static StrLen_t GRAYCALL ExtractDirCopy(FILECHAR_t* pszDirPath, StrLen_t iLenMax, const FILECHAR_t* pszFilePathSrc, bool bTrailingSep = true);
-		static CStringF GRAYCALL GetFileDir(const FILECHAR_t* pszFilePath, bool bTrailingSep = true);
+		static cStringF GRAYCALL GetFileDir(const FILECHAR_t* pszFilePath, bool bTrailingSep = true);
 
 		static bool GRAYCALL IsRelativeRoot(const FILECHAR_t* pszFullPath, const FILECHAR_t* pszRootDir, StrLen_t iLen = k_StrLen_UNK);
 		static bool GRAYCALL IsRelativePath(const FILECHAR_t* pszFullPath, const FILECHAR_t* pszRelativePath);
-		static CStringF GRAYCALL MakeRelativePath(const FILECHAR_t* pszFullPath, const FILECHAR_t* pszRootDir);
+		static cStringF GRAYCALL MakeRelativePath(const FILECHAR_t* pszFullPath, const FILECHAR_t* pszRootDir);
 
 		static StrLen_t GRAYCALL GetFilePathDeviceLen(const FILECHAR_t* pszNameRoot);
 		static bool GRAYCALL IsFileDeviceRemote(const FILECHAR_t* pszPath);
@@ -139,7 +139,7 @@ namespace Gray
 
 		static FILECHAR_t* GRAYCALL SkipRelativePrefix(const FILECHAR_t* pszName);
 		static FILECHAR_t* GRAYCALL GetFilePathUpDir2(const FILECHAR_t* pszName, StrLen_t iLen = k_StrLen_UNK, int iQtyDirs = 1);
-		static CStringF GRAYCALL GetFilePathUpDir1(const FILECHAR_t* pszName, StrLen_t iLen = k_StrLen_UNK, int iQtyDirs = 1);
+		static cStringF GRAYCALL GetFilePathUpDir1(const FILECHAR_t* pszName, StrLen_t iLen = k_StrLen_UNK, int iQtyDirs = 1);
 		static bool GRAYCALL MakeFilePathUpDir(FILECHAR_t* pszName);
 
 		//! @note Path may or may not be case sensitive!
@@ -147,12 +147,12 @@ namespace Gray
 
 #ifdef _WIN32
 		static const wchar_t* GRAYCALL MakeFileNameLongW(const FILECHAR_t* pszFilePath);
-		static const wchar_t* GRAYCALL GetFileNameLongW(CStringF sFilePath);
+		static const wchar_t* GRAYCALL GetFileNameLongW(cStringF sFilePath);
 		static const wchar_t* GRAYCALL GetFileNameLongW(const FILECHAR_t* pszFileName);
 #endif
 
-		UNITTEST_FRIEND(CFilePath);
+		UNITTEST_FRIEND(cFilePath);
 	};
 
 };
-#endif // _INC_CFilePath_H
+#endif // _INC_cFilePath_H

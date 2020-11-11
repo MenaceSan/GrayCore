@@ -1,19 +1,19 @@
 //
-//! @file CFileText.h
+//! @file cFileText.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CFileText_H
-#define _INC_CFileText_H
+#ifndef _INC_cFileText_H
+#define _INC_cFileText_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
-#include "CFile.h"
-#include "CTextPos.h"
+#include "cFile.h"
+#include "cTextPos.h"
 
 #if USE_CRT
-UNITTEST_PREDEF(CFileText)
+UNITTEST_PREDEF(cFileText)
 
 namespace Gray
 {
@@ -23,9 +23,9 @@ namespace Gray
 	typedef int FILEDESC_t;		//!< Posix file descriptor id for std C. used for separate _fileno in FILE*
 #endif
 
-	class GRAYCORE_LINK CFileText : public cFile	// Try to be compatible with MFC CStdioFile
+	class GRAYCORE_LINK cFileText : public cFile	// Try to be compatible with MFC CStdioFile
 	{
-		//! @class Gray::CFileText
+		//! @class Gray::cFileText
 		//! A text file with special processing for detecting and converting text "\r\n" chars
 		//! like MFC CStdioFile. Compatible with C standard FILE,stdin,stdout,stderr.
 		//! use OF_TEXT_A or OF_TEXT_W for format ??
@@ -35,11 +35,11 @@ namespace Gray
 	protected:
 		FILE* m_pStream;	//!< the current open script/text type file. named as MFC CStdioFile.
 	private:
-		ITERATE_t m_iCurLineNum;	//!< track the line number we are on currently. (0 based) (for CTextPos)
+		ITERATE_t m_iCurLineNum;	//!< track the line number we are on currently. (0 based) (for cTextPos)
 
 	private:
 		const FILECHAR_t* get_ModeCPtr() const;
-		HRESULT OpenCreate(CStringF sFilePath, OF_FLAGS_t nOpenFlags = OF_CREATE | OF_WRITE, _SECURITY_ATTRIBUTES* pSa = nullptr)
+		HRESULT OpenCreate(cStringF sFilePath, OF_FLAGS_t nOpenFlags = OF_CREATE | OF_WRITE, _SECURITY_ATTRIBUTES* pSa = nullptr)
 		{
 			//! Don't use this.
 			ASSERT(0);
@@ -50,9 +50,9 @@ namespace Gray
 		}
 
 	public:
-		CFileText();
-		CFileText(CStringF sFilePath, OF_FLAGS_t nOpenFlags);
-		virtual ~CFileText();
+		cFileText();
+		cFileText(cStringF sFilePath, OF_FLAGS_t nOpenFlags);
+		virtual ~cFileText();
 
 		virtual bool isFileOpen() const override
 		{
@@ -62,7 +62,7 @@ namespace Gray
 		HRESULT GetStreamError() const;
 
 		// NOT OF_TEXT since \n processing is weird.
-		virtual HRESULT OpenX(CStringF sFilePath = "", OF_FLAGS_t nOpenFlags = OF_READ | OF_SHARE_DENY_NONE) override;
+		virtual HRESULT OpenX(cStringF sFilePath = "", OF_FLAGS_t nOpenFlags = OF_READ | OF_SHARE_DENY_NONE) override;
 		virtual void Close(void) override;
 		HRESULT OpenFileHandle(HANDLE h, OF_FLAGS_t nOpenFlags);
 
@@ -104,10 +104,10 @@ namespace Gray
 		}
 #endif
 
-		bool put_TextPos(const CTextPos& rPos);
-		CTextPos get_TextPos() const
+		bool put_TextPos(const cTextPos& rPos);
+		cTextPos get_TextPos() const
 		{
-			return CTextPos(GetPosition(), m_iCurLineNum, 0);
+			return cTextPos(GetPosition(), m_iCurLineNum, 0);
 		}
 		ITERATE_t get_CurrentLineNumber() const
 		{
@@ -120,13 +120,13 @@ namespace Gray
 		}
 		// operator FILE* () const { return m_pStream; }	// Dangerous.
 
-		UNITTEST_FRIEND(CFileText);
+		UNITTEST_FRIEND(cFileText);
 	};
 }
 
 #ifndef _MFC_VER
-typedef Gray::CFileText CStdioFile;		// emulate  _MFC_VER
+typedef Gray::cFileText CStdioFile;		// emulate  _MFC_VER
 #endif
 
 #endif	// USE_CRT
-#endif	// _INC_CFileText_H
+#endif	// _INC_cFileText_H

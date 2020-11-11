@@ -1,12 +1,12 @@
 //
-//! @file COSProcess.cpp
+//! @file cOSProcess.cpp
 //! @note Launching processes is a common basic feature for __linux__
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
 #include "pch.h"
-#include "COSProcess.h"
-#include "COSModule.h"
+#include "cOSProcess.h"
+#include "cOSModule.h"
 #include "CFile.h"
 
 #ifdef __linux__
@@ -48,13 +48,13 @@ struct CATTR_PACKED _PROCESS_BASIC_INFORMATION
 
 namespace Gray
 {
-	COSProcess::COSProcess()
+	cOSProcess::cOSProcess()
 		: m_nPid(PROCESSID_BAD)
 	{
 		// _WIN32 = ::GetCurrentProcess() = 0xFFFFFFFF as a shortcut.
 	}
 
-	COSProcess::~COSProcess()
+	cOSProcess::~cOSProcess()
 	{
 #ifdef _WIN32
 		CloseProcessHandle();
@@ -62,7 +62,7 @@ namespace Gray
 	}
 
 #ifdef _WIN32
-	void COSProcess::CloseProcessHandle()
+	void cOSProcess::CloseProcessHandle()
 	{
 		//! The process may continue running of course.
 		if (!isValidProcess())
@@ -72,12 +72,12 @@ namespace Gray
 	}
 #endif
 
-	HRESULT COSProcess::CreateProcessX(const FILECHAR_t* pszExeName, const FILECHAR_t* pszArgs, SHOWWINDOW_t nShowCmd, const FILECHAR_t* pszCurrentDir, cFile* pFileOutPipe)
+	HRESULT cOSProcess::CreateProcessX(const FILECHAR_t* pszExeName, const FILECHAR_t* pszArgs, SHOWWINDOW_t nShowCmd, const FILECHAR_t* pszCurrentDir, cFile* pFileOutPipe)
 	{
 		//! Create/launch/spawn the child process file and get handle to it.
 		//! @note DOES NOT expand things like %programFiles% . use ExpandEnvironmentStrings()
 		//! @arg pszExeName = the app file to start. 
-		//! @arg pszCurrentDir = CFilePath::GetFileDir( pszExeName )
+		//! @arg pszCurrentDir = cFilePath::GetFileDir( pszExeName )
 		//! similar to POSIX execvp()
 		// 
 
@@ -86,7 +86,7 @@ namespace Gray
 
 #ifdef _WIN32
 		_FNF(STARTUPINFO) startInfo;
-		CMem::Zero(&startInfo, sizeof(startInfo));
+		cMem::Zero(&startInfo, sizeof(startInfo));
 		startInfo.cb = sizeof(startInfo);
 #ifndef UNDER_CE
 		startInfo.dwFlags = STARTF_USESHOWWINDOW;	// what fields are used?
@@ -104,7 +104,7 @@ namespace Gray
 		}
 
 		PROCESS_INFORMATION procInf;
-		CMem::Zero(&procInf, sizeof(procInf));
+		cMem::Zero(&procInf, sizeof(procInf));
 
 		// @note The Unicode version of this function, CreateProcessW, can modify the contents of lpCommandLine.
 		// https://msdn.microsoft.com/en-us/library/windows/desktop/ms682425(v=vs.85).aspx
@@ -172,7 +172,7 @@ namespace Gray
 		return S_OK;
 	}
 
-	CStringF COSProcess::get_ProcessPath() const // virtual
+	cStringF cOSProcess::get_ProcessPath() const // virtual
 	{
 		//! Get the full file path for this process EXE. MUST be loaded by this process for _WIN32.
 		//! e.g. "c:\Windows\System32\smss.exe" or "\Device\HarddiskVolume2\Windows\System32\smss.exe"
@@ -187,11 +187,11 @@ namespace Gray
 			// HRESULT hRes = HResult::GetLast(); // GetLastError is set.
 			return "";		// I don't have PROCESS_QUERY_INFORMATION or PROCESS_VM_READ rights.
 		}
-		return CStringF(szProcessName, dwRet); 
+		return cStringF(szProcessName, dwRet); 
 #elif  defined(__linux__)
 		if (m_sPath.IsEmpty())
 		{
-			CStringF sFileName = CStringF::GetFormatf(_FN("/proc/%d/cmdline"), this->get_ProcessId());
+			cStringF sFileName = cStringF::GetFormatf(_FN("/proc/%d/cmdline"), this->get_ProcessId());
 			cFile file;
 			HRESULT hRes = file.OpenX(sFileName);
 			if (FAILED(hRes))
@@ -200,7 +200,7 @@ namespace Gray
 			}
 			hRes = file.ReadX(szProcessName, sizeof(szProcessName));
 			// TODO __linux__  chop args?			 
-			m_sPath = CStringF(szProcessName);
+			m_sPath = cStringF(szProcessName);
 		}
 		return m_sPath;
 #else
@@ -208,15 +208,15 @@ namespace Gray
 #endif
 	}
 
-	cString COSProcess::get_ProcessName() const
+	cString cOSProcess::get_ProcessName() const
 	{
 		//! Get a process name from a handle. like GetModuleBaseName()
 		//! _WIN32 must have the PROCESS_QUERY_INFORMATION and PROCESS_VM_READ access rights.
-		CStringF sProcessPath = get_ProcessPath();
-		return CFilePath::GetFileName(sProcessPath);
+		cStringF sProcessPath = get_ProcessPath();
+		return cFilePath::GetFileName(sProcessPath);
 	}
 
-	HRESULT COSProcess::OpenProcessId(PROCESSID_t nProcessId, DWORD dwDesiredAccess, bool bInheritHandle)
+	HRESULT cOSProcess::OpenProcessId(PROCESSID_t nProcessId, DWORD dwDesiredAccess, bool bInheritHandle)
 	{
 		//! get a handle to a process by its PROCESSID_t.
 		//! @arg dwDesiredAccess = PROCESS_TERMINATE | PROCESS_VM_READ
@@ -260,7 +260,7 @@ namespace Gray
 
 #ifdef _WIN32
 
-	HRESULT COSProcess::CreateRemoteThread(const void* pvFunc, const void* pvArgs, COSHandle& thread )
+	HRESULT cOSProcess::CreateRemoteThread(const void* pvFunc, const void* pvArgs, cOSHandle& thread )
 	{
 		// Create a thread (and run it) in the context of some other process
 		// https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-createremotethread
@@ -276,12 +276,12 @@ namespace Gray
 		return S_OK;
 	}
 
-	HRESULT COSProcess::GetProcessCommandLine(OUT wchar_t* pwText, _Inout_ size_t* pdwTextSize) const
+	HRESULT cOSProcess::GetProcessCommandLine(OUT wchar_t* pwText, _Inout_ size_t* pdwTextSize) const
 	{
 		//! Get the command line that invoked this process. "App.exe Args"
 		//! http://www.codeproject.com/threads/CmdLine.asp
 		//! ReadProcessMemory(); GetCommandLine()
-		//! ASSUME: PROCESS_QUERY_INFORMATION | PROCESS_VM_READ access AND COSUserToken with SE_DEBUG_NAME
+		//! ASSUME: PROCESS_QUERY_INFORMATION | PROCESS_VM_READ access AND cOSUserToken with SE_DEBUG_NAME
 
 		SIZE_T dwSize = 0;
 		_PROCESS_BASIC_INFORMATION pbi;
@@ -289,7 +289,7 @@ namespace Gray
 
 		// we'll default to the above address, but newer OSs might have a different
 		// base address for the PEB
-		COSModule hLibrary(_FN("ntdll.dll"), COSModule::k_Load_NoRefCount | COSModule::k_Load_ByName);
+		cOSModule hLibrary(_FN("ntdll.dll"), cOSModule::k_Load_NoRefCount | cOSModule::k_Load_ByName);
 		if (hLibrary.isValidModule())
 		{
 			NTQIP_t* lpfnNtQueryInformationProcess = (NTQIP_t*)hLibrary.GetSymbolAddress("ZwQueryInformationProcess");
@@ -317,7 +317,7 @@ namespace Gray
 	}
 #endif
 
-	CStringF COSProcess::get_CommandLine() const
+	cStringF cOSProcess::get_CommandLine() const
 	{
 		//! Get the full command line arguments for the process by id.
 		//! "App.exe Args"
@@ -332,7 +332,7 @@ namespace Gray
 			return "";
 		}
 #elif defined(__linux__)
-		CStringF sFileName = CStringF::GetFormatf(_FN("/proc/%d/cmdline"), get_ProcessId());
+		cStringF sFileName = cStringF::GetFormatf(_FN("/proc/%d/cmdline"), get_ProcessId());
 		cFile file;
 		HRESULT hRes = file.OpenX(sFileName);
 		if (FAILED(hRes))
@@ -348,7 +348,7 @@ namespace Gray
 		return szCmdLine;
 	}
 
-	HRESULT COSProcess::WaitForProcessExit(TIMESYSD_t nTimeWait, APP_EXITCODE_t* pnExitCode)
+	HRESULT cOSProcess::WaitForProcessExit(TIMESYSD_t nTimeWait, APP_EXITCODE_t* pnExitCode)
 	{
 		//! Wait for a process to exit.
 		//! @arg nTimeWait = how long to wait in seconds. 0 = dont wait. (Does NOT terminate app)
@@ -405,7 +405,7 @@ namespace Gray
 	}
 
 #ifdef _WIN32
-	HWND COSProcess::FindWindowForProcessID(PROCESSID_t nProcessId, DWORD dwStyleFlags, const GChar_t* pszClassName) // static
+	HWND cOSProcess::FindWindowForProcessID(PROCESSID_t nProcessId, DWORD dwStyleFlags, const GChar_t* pszClassName) // static
 	{
 		//! look through all the top level windows for the window that has this PROCESSID_t.
 		//! @note there may be more than 1. just take the first/best one.
@@ -480,7 +480,7 @@ namespace Gray
 #endif
 
 #if 0  // _WIN32
-	PROCESSID_t COSProcess::GetProcessIDFromHandle()
+	PROCESSID_t cOSProcess::GetProcessIDFromHandle()
 	{
 		//! Get the PROCESSID_t from a process handle.
 		//! The handle must have the PROCESS_QUERY_INFORMATION access right
@@ -497,18 +497,18 @@ namespace Gray
 //****************************************************************************
 
 #if USE_UNITTESTS
-#include "CUnitTest.h"
+#include "cUnitTest.h"
 
-UNITTEST_CLASS(COSProcess)
+UNITTEST_CLASS(cOSProcess)
 {
-	UNITTEST_METHOD(COSProcess)
+	UNITTEST_METHOD(cOSProcess)
 	{
 		//! just open a process for URL view ?
 
 
-		COSProcess proc;
+		cOSProcess proc;
 
 	}
 };
-UNITTEST_REGISTER(COSProcess, UNITTEST_LEVEL_Core);
+UNITTEST_REGISTER(cOSProcess, UNITTEST_LEVEL_Core);
 #endif

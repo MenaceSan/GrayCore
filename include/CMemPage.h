@@ -1,30 +1,30 @@
 //
-//! @file CMemPage.h
+//! @file cMemPage.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CMemPage_H
-#define _INC_CMemPage_H
+#ifndef _INC_cMemPage_H
+#define _INC_cMemPage_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
-#include "CSingleton.h"
-#include "CArraySort.h"
-#include "CSystemInfo.h"
+#include "cSingleton.h"
+#include "cArraySortRef.h"
+#include "cSystemInfo.h"
 
 namespace Gray
 {
-	class CMemPage : public CSmartBase
+	class cMemPage : public cRefBase
 	{
-		//! @class GrayLib::CMemPage
+		//! @class GrayLib::cMemPage
 		//! Track a protected memory page.
 		//! _WIN32 ONLY allocates whole pages at a time, not just specified range of bytes. Pool these locked blocks.
 
-		friend class CMemPageMgr;
+		friend class cMemPageMgr;
 
 	public:
-		CMemPage(UINT_PTR nPageStart, size_t nPageSize)
+		cMemPage(UINT_PTR nPageStart, size_t nPageSize)
 			: m_nPageStart(nPageStart)
 			, m_nPageSize(nPageSize)
 			, m_dwOldProtectionFlags(0)
@@ -33,7 +33,7 @@ namespace Gray
 			ASSERT(get_SortValue() != 0);
 			ASSERT((get_SortValue() % m_nPageSize) == 0);
 		}
-		virtual ~CMemPage() noexcept
+		virtual ~cMemPage() noexcept
 		{
 		}
 
@@ -66,21 +66,21 @@ namespace Gray
 		DWORD m_dwOldProtectionFlags;	//!< original flags used/returned by _WIN32 VirtualProtect()
 		int m_nRefCount2;				//!< ProtectPages count.
 	};
-	typedef CSmartPtr<CMemPage> CMemPagePtr;
+	typedef cRefPtr<cMemPage> cMemPagePtr;
 
-	class CMemPageMgr : public CSingleton<CMemPageMgr>
+	class cMemPageMgr : public cSingleton<cMemPageMgr>
 	{
-		//! @class GrayLib::CMemPageMgr
+		//! @class GrayLib::cMemPageMgr
 		//! Track my protected memory pages.
 		//! _WIN32 ONLY allocates whole pages at a time, not just specified range of bytes. Pool these locked blocks.
 
 	public:
-		CMemPageMgr()
-			: CSingleton<CMemPageMgr>(this, typeid(CMemPageMgr))
+		cMemPageMgr()
+			: cSingleton<cMemPageMgr>(this, typeid(cMemPageMgr))
 			, m_dwPageSize(0)
 		{
 		}
-		virtual ~CMemPageMgr()
+		virtual ~cMemPageMgr()
 		{
 			// Make sure this stuff doesnt get destroyed too early.
 		}
@@ -90,7 +90,7 @@ namespace Gray
 			//! Protect or un-protect these pages.
 			if (m_dwPageSize == 0)
 			{
-				m_dwPageSize = CSystemInfo::I().m_SystemInfo.dwPageSize;
+				m_dwPageSize = cSystemInfo::I().m_SystemInfo.dwPageSize;
 				ASSERT(m_dwPageSize);
 			}
 
@@ -100,7 +100,7 @@ namespace Gray
 			UINT_PTR nPageStart = nStart - nPageOver;
 			for (; nPageStart < nEnd; nPageStart += m_dwPageSize)
 			{
-				CMemPagePtr pPage = m_aPages.FindArgForKey(nPageStart);
+				cMemPagePtr pPage = m_aPages.FindArgForKey(nPageStart);
 				if (bProtect)
 				{
 					if (pPage == nullptr)
@@ -122,7 +122,7 @@ namespace Gray
 				{
 					if (pPage == nullptr)
 					{
-						pPage = new CMemPage(nPageStart, m_dwPageSize);
+						pPage = new cMemPage(nPageStart, m_dwPageSize);
 						ASSERT(pPage);
 						if (!pPage->SetProtect(false))
 						{
@@ -141,7 +141,7 @@ namespace Gray
 		}
 
 		DWORD m_dwPageSize;
-		CArraySortValue<CMemPage, UINT_PTR> m_aPages;
+		cArraySortValue<cMemPage, UINT_PTR> m_aPages;
 	};
 }
 

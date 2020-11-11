@@ -1,19 +1,19 @@
 //
-//! @file CRandomDef.h
+//! @file cRandomDef.h
 //! Basic random number generator.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CRandomDef_H
-#define _INC_CRandomDef_H
+#ifndef _INC_cRandomDef_H
+#define _INC_cRandomDef_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
-#include "CSingleton.h"
+#include "cSingleton.h"
 #include "IUnknown.h"
 
-UNITTEST_PREDEF(CRandomBase)
+UNITTEST_PREDEF(cRandomBase)
 
 namespace Gray
 {
@@ -25,9 +25,9 @@ namespace Gray
 		virtual HRESULT GetNoise(void* pData, size_t iSize) = 0;	//!< fill array with random bytes. return # bytes filled.
 	};
 
-	class GRAYCORE_LINK CRandomBase : public IRandomNoise
+	class GRAYCORE_LINK cRandomBase : public IRandomNoise
 	{
-		//! @class Gray::CRandomBase
+		//! @class Gray::cRandomBase
 		//! Generic abstract base class for a integer/binary (pseudo) random number generator.
 		//! Similar to .NET System.Random
 		//! @note derived class MUST implement get_RandUns or GetRandUX
@@ -35,10 +35,10 @@ namespace Gray
 	public:
 		typedef UINT SEED_t;		//!< default seed size might be 32 or 64 bit depending on k_RAND_MAX.
 
-		CRandomBase()
+		cRandomBase()
 		{
 		}
-		virtual ~CRandomBase()
+		virtual ~cRandomBase()
 		{
 		}
 
@@ -62,12 +62,12 @@ namespace Gray
 		virtual UINT GetRandUX(UINT nScale); // get integer random number in desired interval. (Non inclusive)
 		int GetRandIRange(int iRangeLo, int iRangeHi);    // output random int
 
-		UNITTEST_FRIEND(CRandomBase);
+		UNITTEST_FRIEND(cRandomBase);
 	};
 
-	class GRAYCORE_LINK CRandomNoise : public CRandomBase, public CSingleton < CRandomNoise >
+	class GRAYCORE_LINK cRandomNoise : public cRandomBase, public cSingleton < cRandomNoise >
 	{
-		//! @class Gray::CRandomNoise
+		//! @class Gray::cRandomNoise
 		//! Get Low level Hardware based noise supplied by the OS.
 		//! __linux__ use "/dev/urandom" as a get_RandomSeed().
 	private:
@@ -79,8 +79,8 @@ namespace Gray
 		}
 
 	public:
-		CRandomNoise();
-		virtual ~CRandomNoise();
+		cRandomNoise();
+		virtual ~cRandomNoise();
 
 		static HRESULT GRAYCALL GetNoiseOS(void* pData, size_t iSize);
 		static void GRAYCALL GetNoisePerf(void* pData, size_t iSize);
@@ -91,9 +91,9 @@ namespace Gray
 		CHEAPOBJECT_IMPL;
 	};
 
-	class GRAYCORE_LINK CRandomDef : public CRandomBase
+	class GRAYCORE_LINK cRandomDef : public cRandomBase
 	{
-		//! @class Gray::CRandomDef
+		//! @class Gray::cRandomDef
 		//! Like the default 'C' library seeded pseudo-random number generator ::srand() and ::rand()
 		//! Control a series of pseudo random numbers via a seed. 
 		//! not thread safe. Use CThreadLocal to make thread safe.
@@ -106,8 +106,8 @@ namespace Gray
 		SEED_t m_nSeed;	//!< Control the pattern of random numbers via the seed. may be globally/thread shared.
 
 	public:
-		CRandomDef(SEED_t nSeed = 1);
-		virtual ~CRandomDef();
+		cRandomDef(SEED_t nSeed = 1);
+		virtual ~cRandomDef();
 
 		SEED_t GetRandNext();
 
@@ -122,7 +122,7 @@ namespace Gray
 		//! Supply test 'random' data. (e.g. not random at all)
 
 	public:
-		CMemBlock m_Src;		// a block of 'random' test data. 
+		cMemBlock m_Src;		// a block of 'random' test data. 
 		size_t m_nOffset;		// How far have we read?
 
 	public:
@@ -137,12 +137,12 @@ namespace Gray
 			if (m_Src.get_Start() == nullptr)
 			{
 				// No m_Src supplied so fill with fixed data.
-				CMem::Fill(pData, len, 0x2a);
+				cMem::Fill(pData, len, 0x2a);
 				m_nOffset += len;
 			}
 			else
 			{
-				// todo repeat like CMem::CopyRepeat() ?
+				// todo repeat like cMem::CopyRepeat() ?
 				::memcpy(pData, m_Src.GetOffset(m_nOffset), len);
 				m_nOffset += len;
 				ASSERT(m_Src.IsValidIndex2(m_nOffset));		// Don't overflow!
@@ -152,6 +152,6 @@ namespace Gray
 	};
 #endif
 
-	extern GRAYCORE_LINK CRandomDef g_Rand;	//!< the global random number generator. NOT thread safe. but does that matter?
+	extern GRAYCORE_LINK cRandomDef g_Rand;	//!< the global random number generator. NOT thread safe. but does that matter?
 };
 #endif

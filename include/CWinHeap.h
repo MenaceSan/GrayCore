@@ -1,25 +1,25 @@
 //
-//! @file CWinHeap.h
+//! @file cWinHeap.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CWinHeap_H
-#define _INC_CWinHeap_H
+#ifndef _INC_cWinHeap_H
+#define _INC_cWinHeap_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
-#include "COSHandle.h"
-#include "CUnitTestDecl.h"
+#include "cOSHandle.h"
+#include "cUnitTestDecl.h"
 
 #ifdef _WIN32
-UNITTEST_PREDEF(CWinHeap)
+UNITTEST_PREDEF(cWinHeap)
 
 namespace Gray
 {
-	class GRAYCORE_LINK CWinHeap
+	class GRAYCORE_LINK cWinHeap
 	{
-		//! @class GrayLib::CWinHeap
+		//! @class GrayLib::cWinHeap
 		//! Create a private heap for the app. or access the process default heap.
 
 	private:
@@ -27,25 +27,25 @@ namespace Gray
 		bool m_bManaged;	//!< I manage its lifetime? use HeapDestroy() ?
 
 	public:
-		CWinHeap()
+		cWinHeap()
 		: m_hHeap(::GetProcessHeap())
 		, m_bManaged(false)		// This belongs to the process. leave it.
 		{
 			//! Use the current/default process heap.
 		}
-		CWinHeap(HANDLE hHeap, bool bManaged = true)
+		cWinHeap(HANDLE hHeap, bool bManaged = true)
 		: m_hHeap(hHeap)
 		, m_bManaged(bManaged)
 		{
 			//! Attach existing handle to this class.
 		}
-		CWinHeap(DWORD flOptions, SIZE_T dwInitialSize = 0, SIZE_T dwMaximumSize = 0)
+		cWinHeap(DWORD flOptions, SIZE_T dwInitialSize = 0, SIZE_T dwMaximumSize = 0)
 		: m_hHeap(::HeapCreate(flOptions, dwInitialSize, dwMaximumSize))
 		, m_bManaged(true)
 		{
 			//! flOptions = HEAP_GENERATE_EXCEPTIONS
 		}
-		~CWinHeap()
+		~cWinHeap()
 		{
 			if (m_bManaged)
 			{
@@ -125,11 +125,11 @@ namespace Gray
 			return ::HeapSize(m_hHeap, dwFlags, pMem);
 		}
 
-		UNITTEST_FRIEND(CWinHeap);
+		UNITTEST_FRIEND(cWinHeap);
 	};
 
  
 };
 
 #endif
-#endif // _INC_CWinHeap_H
+#endif // _INC_cWinHeap_H

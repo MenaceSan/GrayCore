@@ -1,26 +1,26 @@
 //
-//! @file CArrayIUnk.h
+//! @file cArrayIUnk.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CArrayIUnk_H
-#define _INC_CArrayIUnk_H
+#ifndef _INC_cArrayIUnk_H
+#define _INC_cArrayIUnk_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
-#include "CArray.h"
-#include "CIUnkPtr.h"
+#include "cArray.h"
+#include "cIUnkPtr.h"
 
 namespace Gray
 {
 	template<class TYPE>
-	class CArrayIUnk : public CArrayFacade < CIUnkPtr<TYPE>, TYPE* >
+	class cArrayIUnk : public cArrayFacade < cIUnkPtr<TYPE>, TYPE* >
 	{
-		//! @class Gray::CArrayIUnk
-		//! All items in this array are base on IUnknown and maybe on CSmartBase
-		//! The array owns a ref to the object like CIUnkPtr.
+		//! @class Gray::cArrayIUnk
+		//! All items in this array are base on IUnknown and maybe on cRefBase
+		//! The array owns a ref to the object like cIUnkPtr.
 		//! It will get deleted when all refs are gone.
 	};
 }
-#endif // _INC_CArrayIUnk_H
+#endif // _INC_cArrayIUnk_H

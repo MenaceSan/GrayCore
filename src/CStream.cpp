@@ -3,26 +3,26 @@
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 #include "pch.h"
-#include "CStream.h"
-#include "CHeap.h"
-#include "CThreadLock.h"
+#include "cStream.h"
+#include "cHeap.h"
+#include "cThreadLock.h"
 
 namespace Gray
 {
-	STREAM_POS_t CStreamBase::GetPosition() const // virtual
+	STREAM_POS_t cStreamBase::GetPosition() const // virtual
 	{
 		//! Get current read position.
 		//! default implementation. If Seek() is not overridden.
-		CStreamBase* pThis = const_cast<CStreamBase*>(this);
+		cStreamBase* pThis = const_cast<cStreamBase*>(this);
 		return (STREAM_POS_t)(pThis->Seek(0, SEEK_Cur));
 	}
 
-	STREAM_POS_t CStreamBase::GetLength() const // virtual
+	STREAM_POS_t cStreamBase::GetLength() const // virtual
 	{
 		//! default implementation. override this for better implementation.
 		//! @return total length of the stream in bytes. if available. not the same as Read Length.
 
-		CStreamBase* pThis = const_cast<CStreamBase*>(this);
+		cStreamBase* pThis = const_cast<cStreamBase*>(this);
 		STREAM_POS_t nCurrent = (STREAM_POS_t)pThis->Seek(0, SEEK_Cur);	// save current position.
 		STREAM_POS_t nLength = (STREAM_POS_t)pThis->Seek(0, SEEK_End);		// seek to the end to find the length.
 		pThis->Seek((STREAM_OFFSET_t)nCurrent, SEEK_Set);		// restore the position pointer back.
@@ -31,15 +31,15 @@ namespace Gray
 
 	//*************************************************************************
 
-	HRESULT CStreamOutput::WriteStream(CStreamInput& stmIn, STREAM_POS_t nSizeMax, IStreamProgressCallback* pProgress, TIMESYSD_t nTimeout)
+	HRESULT cStreamOutput::WriteStream(cStreamInput& stmIn, STREAM_POS_t nSizeMax, IStreamProgressCallback* pProgress, TIMESYSD_t nTimeout)
 	{
 		//! Copy data from one read stream (stmIn) to another write stream (this). 
 		//! @arg nSizeMax = Length of file or some arbitrary max to the stream size.
 		//! like the IStream::CopyTo() or MFC CopyFrom()
 		//! @return Size of data moved.
 
-		CTimeSys tStart(CTimeSys::GetTimeNow());
-		CHeapBlock Data(CStream::k_FILE_BLOCK_SIZE);	// temporary buffer.
+		cTimeSys tStart(cTimeSys::GetTimeNow());
+		cHeapBlock Data(CStream::k_FILE_BLOCK_SIZE);	// temporary buffer.
 		STREAM_POS_t dwAmount = 0;
 		for (; dwAmount < nSizeMax;)
 		{
@@ -66,7 +66,7 @@ namespace Gray
 				{
 					if (tStart.get_AgeSys() <= nTimeout) // wait for more.
 					{
-						CThreadId::SleepCurrent(1);
+						cThreadId::SleepCurrent(1);
 						continue;
 					}
 				}
@@ -94,7 +94,7 @@ namespace Gray
 			dwAmount += nSizeBlock;
 			if (pProgress != nullptr)
 			{
-				HRESULT hRes = pProgress->onProgressCallback(CStreamProgress(dwAmount, nSizeMax));
+				HRESULT hRes = pProgress->onProgressCallback(cStreamProgress(dwAmount, nSizeMax));
 				if (hRes != S_OK)
 				{
 					return hRes;
@@ -109,7 +109,7 @@ namespace Gray
 		return (HRESULT)dwAmount;	// done.
 	}
 
-	HRESULT CStreamOutput::WriteSize(size_t nSize)
+	HRESULT cStreamOutput::WriteSize(size_t nSize)
 	{
 		//! Write a packed (unsigned) size_t. opposite of ReadSize(nSize)
 		//! Packed low to high values.
@@ -132,7 +132,7 @@ namespace Gray
 
 	//*************************************************************************
 
-	HRESULT CStreamInput::ReadSize(OUT size_t& nSize)
+	HRESULT cStreamInput::ReadSize(OUT size_t& nSize)
 	{
 		//! Packed low to high values.
 		//! Read a packed (variable length) unsigned size. <0 = error;
@@ -157,7 +157,7 @@ namespace Gray
 		return (HRESULT)nBits;
 	}
 
-	HRESULT CStreamInput::ReadStringLine(OUT char* pszBuffer, StrLen_t iSizeMax) // virtual
+	HRESULT cStreamInput::ReadStringLine(OUT char* pszBuffer, StrLen_t iSizeMax) // virtual
 	{
 		//! Read a string up until (including) a "\n" or "\r\n". end of line. FILE_EOL.
 		//! Some streams can support this better than others. like fgets(FILE*)
@@ -189,7 +189,7 @@ namespace Gray
 		return i;
 	}
 
-	HRESULT CStreamInput::ReadStringLine(OUT wchar_t* pszBuffer, StrLen_t iSizeMax) // virtual
+	HRESULT cStreamInput::ReadStringLine(OUT wchar_t* pszBuffer, StrLen_t iSizeMax) // virtual
 	{
 		//! Read a string up until (including) a "\n" or "\r\n". end of line. FILE_EOL.
 		//! Some streams can support this better than others. like fgets(FILE*).
@@ -218,7 +218,7 @@ namespace Gray
 		return i;
 	}
 
-	HRESULT CStreamInput::ReadPeek(void* pData, size_t nDataSize) // virtual
+	HRESULT cStreamInput::ReadPeek(void* pData, size_t nDataSize) // virtual
 	{
 		//! Peek ahead in the stream if possible. Non blocking.
 		//! just try to read data but not remove from the queue.
@@ -240,19 +240,19 @@ namespace Gray
 
 //*************************************************************************
 #if USE_UNITTESTS
-#include "CUnitTest.h"
-#include "CStreamQueue.h"
-#include "CLogMgr.h"
-#include "CRandomDef.h"
-#include "CTypes.h"
+#include "cUnitTest.h"
+#include "cStreamQueue.h"
+#include "cLogMgr.h"
+#include "cRandomDef.h"
+#include "cTypes.h"
 
-void CStream::UnitTest_StreamIntegrity(CStreamOutput& stmOut, CStreamInput& stmIn, size_t nSizeTotal)
+void CStream::UnitTest_StreamIntegrity(cStreamOutput& stmOut, cStreamInput& stmIn, size_t nSizeTotal)
 {
 	// Write to streams in random block sizes and make sure i read the same back.
 	// @arg nSizeTotal = How much to write/test total ?
 
 	size_t iSizeBlock = g_Rand.GetRandUX(1024) + 100;	// TODO Make random range bigger !! 2k ?
-	CHeapBlock blockwrite(iSizeBlock * 2);
+	cHeapBlock blockwrite(iSizeBlock * 2);
 	g_Rand.GetNoise(blockwrite, iSizeBlock);
 	::memcpy(blockwrite.get_DataBytes() + iSizeBlock, blockwrite.get_DataBytes(), iSizeBlock);	// double it.
 
@@ -260,8 +260,8 @@ void CStream::UnitTest_StreamIntegrity(CStreamOutput& stmOut, CStreamInput& stmI
 	size_t iSizeReadTotal = 0;
 
 	HRESULT hRes;
-	CHeapBlock blockread(iSizeBlock);
-	CTimeSys tStart = CTimeSys::GetTimeNow();
+	cHeapBlock blockread(iSizeBlock);
+	cTimeSys tStart = cTimeSys::GetTimeNow();
 	size_t nSizeReal;
 
 	int i = 0;
@@ -295,14 +295,14 @@ void CStream::UnitTest_StreamIntegrity(CStreamOutput& stmOut, CStreamInput& stmI
 
 		// Make sure i read correctly.
 		const BYTE* pWrite = blockwrite.get_DataBytes() + (iSizeReadTotal%iSizeBlock);
-		COMPARE_t iRet = CMem::Compare(pWrite, pRead, nSizeReal);
+		COMPARE_t iRet = cMem::Compare(pWrite, pRead, nSizeReal);
 		UNITTEST_TRUE(iRet == 0);
 		iSizeReadTotal += nSizeReal;
 		UNITTEST_TRUE(iSizeReadTotal <= iSizeWriteTotal);
 
 		if (iSizeReadTotal >= nSizeTotal)	// done?
 			break;
-		if (!CUnitTests::IsTestInteractive() && tStart.get_AgeSec() > 100)
+		if (!cUnitTests::IsTestInteractive() && tStart.get_AgeSec() > 100)
 		{
 			UNITTEST_TRUE(false);
 			return;
@@ -346,7 +346,7 @@ UNITTEST_CLASS(CStream)
 	UNITTEST_METHOD(CStream)
 	{
 		//! ReadSize, WriteSize()
-		CStreamQueue q;
+		cStreamQueue q;
 		UnitTest_StreamSize(q);
 		UNITTEST_TRUE(q.isEmptyQ());	// all read back.
 		UNITTEST_TRUE(q.get_ReadQty() == 0);

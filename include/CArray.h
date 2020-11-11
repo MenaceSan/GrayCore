@@ -1,18 +1,18 @@
 //
-//! @file CArray.h
+//! @file cArray.h
 //! c++ Collections. MFC compatible.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CArray_H
-#define _INC_CArray_H
+#ifndef _INC_cArray_H
+#define _INC_cArray_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
-#include "CHeap.h"
-#include "CObject.h"
-#include "CValT.h"
+#include "cHeap.h"
+#include "cObject.h"
+#include "cValT.h"
 #ifdef _MFC_VER
 #include <afxtempl.h>	// CArray
 #else
@@ -38,9 +38,9 @@ namespace Gray
 			return;
 
 #ifdef _DEBUG
-		ASSERT(CMem::IsValid(pElements, nCount * sizeof(TYPE), true));
+		ASSERT(cMem::IsValid(pElements, nCount * sizeof(TYPE), true));
 		// for debug. first do bit-wise init (or zero) initialization
-		CValArray::FillSize<BYTE>(pElements, nCount * sizeof(TYPE), CHeap::FILL_Alloc);
+		cValArray::FillSize<BYTE>(pElements, nCount * sizeof(TYPE), cHeap::FILL_Alloc);
 #endif
 
 		for (; (nCount--) != 0; pElements++)
@@ -57,7 +57,7 @@ namespace Gray
 			return;
 
 #ifdef _DEBUG
-		ASSERT(CMem::IsValid(pElements, nCount * sizeof(TYPE), true));
+		ASSERT(cMem::IsValid(pElements, nCount * sizeof(TYPE), true));
 		ITERATE_t nCountPrev = nCount;	// just for debug
 		UNREFERENCED_PARAMETER(nCountPrev);
 #endif
@@ -75,8 +75,8 @@ namespace Gray
 		if (nCount <= 0)
 			return;
 
-		ASSERT(CMem::IsValid(pDest, nCount * sizeof(TYPE), true));
-		ASSERT(CMem::IsValid(pSrc, nCount * sizeof(TYPE), false));
+		ASSERT(cMem::IsValid(pDest, nCount * sizeof(TYPE), true));
+		ASSERT(cMem::IsValid(pSrc, nCount * sizeof(TYPE), false));
 
 		while ((nCount--) != 0)
 		{
@@ -89,7 +89,7 @@ namespace Gray
 	inline void __cdecl CopyElements<BYTE>(BYTE* pDest, const BYTE* pSrc, ITERATE_t nCount)
 	{
 		//! Any integral type could use this ?
-		CMem::Copy(pDest, pSrc, nCount);
+		cMem::Copy(pDest, pSrc, nCount);
 	}
 
 	/////////////////////////////////////////////////////////////////////////////
@@ -151,7 +151,7 @@ namespace Gray
 		{
 			//! Get quantity of objects truly allocated. (may not be whole number)
 			//! like STL capacity()
-			return (ITERATE_t)(CHeap::GetSize(m_pData) / sizeof(TYPE));
+			return (ITERATE_t)(cHeap::GetSize(m_pData) / sizeof(TYPE));
 		}
 
 		// Operations
@@ -189,7 +189,7 @@ namespace Gray
 		void SetDataArrayPtr(TYPE* pData, ITERATE_t nSize)
 		{
 			//! set internal pointer. (dangerous)
-			ASSERT(!CMem::IsCorrupt(pData, nSize));
+			ASSERT(!cMem::IsCorrupt(pData, nSize));
 			m_pData = pData;
 			m_nSize = nSize;
 		}
@@ -238,7 +238,7 @@ namespace Gray
 		if (m_pData != nullptr)
 		{
 			DestructElements<TYPE>(m_pData, iSize);
-			CHeap::FreePtr((void*)(m_pData));	// const_cast
+			cHeap::FreePtr((void*)(m_pData));	// const_cast
 			m_pData = nullptr;
 		}
 	}
@@ -257,7 +257,7 @@ namespace Gray
 		else if (m_pData == nullptr)
 		{
 			// create one with exact size
-			m_pData = (TYPE*)CHeap::AllocPtr(nNewSize * sizeof(TYPE));
+			m_pData = (TYPE*)cHeap::AllocPtr(nNewSize * sizeof(TYPE));
 			ASSERT(m_pData != nullptr);
 			ConstructElements<TYPE>(m_pData, nNewSize);
 		}
@@ -281,9 +281,9 @@ namespace Gray
 			// otherwise, grow array
 			// MFC will heuristically determine growth when nGrowBy == 0 (this avoids heap fragmentation in many situations)
 #if 1
-			m_pData = (TYPE*)CHeap::ReAllocPtr(m_pData, (nNewSize + (nNewSize / 16)) * sizeof(TYPE));
+			m_pData = (TYPE*)cHeap::ReAllocPtr(m_pData, (nNewSize + (nNewSize / 16)) * sizeof(TYPE));
 #else
-			m_pData = (TYPE*)CHeap::ReAllocPtr(m_pData, nNewSize * sizeof(TYPE));
+			m_pData = (TYPE*)cHeap::ReAllocPtr(m_pData, nNewSize * sizeof(TYPE));
 #endif
 			ASSERT_N(m_pData != nullptr);
 
@@ -327,13 +327,13 @@ namespace Gray
 		//! dangerous for types that have internal pointers !
 		BYTE bTmp[sizeof(TYPE)];
 		ASSERT(IsValidIndex(iFrom));
-		CMem::Copy(bTmp, &m_pData[iFrom], sizeof(TYPE));
+		cMem::Copy(bTmp, &m_pData[iFrom], sizeof(TYPE));
 		// shift old data to fill gap
 		ASSERT(IsValidIndex(iTo));
-		CMem::CopyOverlap(&m_pData[iTo + 1], &m_pData[iTo],
+		cMem::CopyOverlap(&m_pData[iTo + 1], &m_pData[iTo],
 			(iFrom - iTo) * sizeof(TYPE));
 		// re-init slots we copied from
-		CMem::Copy(&m_pData[iTo], bTmp, sizeof(TYPE));
+		cMem::Copy(&m_pData[iTo], bTmp, sizeof(TYPE));
 	}
 
 	template <class TYPE, class ARG_TYPE>
@@ -386,7 +386,7 @@ namespace Gray
 		DestructElements<TYPE>(&m_pData[nIndex], iQty);
 		if (nMoveCount)
 		{
-			CMem::CopyOverlap(&m_pData[nIndex], &m_pData[nIndex + iQty], nMoveCount * sizeof(TYPE));
+			cMem::CopyOverlap(&m_pData[nIndex], &m_pData[nIndex + iQty], nMoveCount * sizeof(TYPE));
 		}
 		m_nSize -= iQty;
 	}
@@ -413,14 +413,14 @@ namespace Gray
 	//*************************************************
 
 	template <class TYPE, class ARG_TYPE = const TYPE&>
-	class CArrayTyped : public CArray < TYPE, ARG_TYPE >
+	class cArrayTyped : public CArray < TYPE, ARG_TYPE >
 	{
-		//! @class Gray::CArrayTyped
+		//! @class Gray::cArrayTyped
 		//! Equivalent to MFC CArray with added functions not in MFC
 		//! TYPE = the type stored. ARG_TYPE = how it should be referenced. const TYPE&	typically
 	public:
 		typedef CArray<TYPE, ARG_TYPE> SUPER_t;
-		typedef CArrayTyped<TYPE, ARG_TYPE> THIS_t;
+		typedef cArrayTyped<TYPE, ARG_TYPE> THIS_t;
 
 		typedef ITERATE_t iterator;			// like STL
 		typedef ITERATE_t const_iterator;	// like STL
@@ -434,28 +434,28 @@ namespace Gray
 			//! Compare a data record to another data record.
 			//! ASSUME this is the same as comparing keys. Otherwise you must overload this.
 			//! Default implementation. Override this for proper implementation. This probably won't work for most cases.
-			// return CValT::Compare(Data1,Data2);
-			return CMem::Compare(&Data1, &Data2, sizeof(REF_t));	// should we use use CValT::Compare()??
+			// return cValT::Compare(Data1,Data2);
+			return cMem::Compare(&Data1, &Data2, sizeof(REF_t));	// should we use use cValT::Compare()??
 		}
 
 		ITERATE_t QSortPartition(ITERATE_t iLeft, ITERATE_t iRight);
 		void QSort(ITERATE_t iLeft, ITERATE_t iRight);
 
 	public:
-		CArrayTyped()
+		cArrayTyped()
 		{
 		}
-		CArrayTyped(const THIS_t& rArray)
+		cArrayTyped(const THIS_t& rArray)
 		{
 			//! Force copies to be explicit!
 			this->SetSize(rArray.GetSize());
 			CopyElements(this->GetData(), rArray.GetData(), this->GetSize());
 		}
-		explicit CArrayTyped(ITERATE_t iSize)
+		explicit cArrayTyped(ITERATE_t iSize)
 		{
 			this->SetSize(iSize);
 		}
-		virtual ~CArrayTyped()
+		virtual ~cArrayTyped()
 		{
 		}
 
@@ -491,7 +491,7 @@ namespace Gray
 			if (this->m_pData == nullptr)
 				return 0;
 			iAllocCount++; // just the alloc for the array
-			return CHeap::GetSize(this->m_pData);
+			return cHeap::GetSize(this->m_pData);
 		}
 
 		void SecureValidIndex(ITERATE_t nIndex) const
@@ -563,19 +563,19 @@ namespace Gray
 			//! Remove the object from the list.
 			//! DO NOT call its normal destructor!
 			ASSERT(IsValidIndex(nIndex));
-			CMem::CopyOverlap(&(this->m_pData[nIndex]), &(this->m_pData[nIndex + 1]), ((this->m_nSize - nIndex) - 1) * sizeof(TYPE));
+			cMem::CopyOverlap(&(this->m_pData[nIndex]), &(this->m_pData[nIndex + 1]), ((this->m_nSize - nIndex) - 1) * sizeof(TYPE));
 			this->m_nSize--;
 			if (this->m_nSize == 0)
 				this->RemoveAll();
 		}
 		void Swap(ITERATE_t i, ITERATE_t j)
 		{
-			//! like CMemT::Swap(). dangerous for types that have pointers to themselves. self referenced.
+			//! like cMemT::Swap(). dangerous for types that have pointers to themselves. self referenced.
 			if (i == j)
 				return;
-			CMem::Swap((BYTE*)&this->ElementAt(i), (BYTE*)&(this->ElementAt(j)), sizeof(TYPE));
+			cMem::Swap((BYTE*)&this->ElementAt(i), (BYTE*)&(this->ElementAt(j)), sizeof(TYPE));
 		}
-		void SetCopy(const CArrayTyped<TYPE, ARG_TYPE>& aValues)
+		void SetCopy(const cArrayTyped<TYPE, ARG_TYPE>& aValues)
 		{
 			//! @note This will call empty constructors.
 			if (this == &aValues)
@@ -585,7 +585,7 @@ namespace Gray
 			CopyElements(this->GetData(), aValues.GetData(), this->GetSize());
 		}
 
-		const CArrayTyped<TYPE, ARG_TYPE>& operator = (const CArrayTyped<TYPE, ARG_TYPE>& aValues)
+		const cArrayTyped<TYPE, ARG_TYPE>& operator = (const cArrayTyped<TYPE, ARG_TYPE>& aValues)
 		{
 			SetCopy(aValues);
 			return *this;
@@ -709,7 +709,7 @@ namespace Gray
 	};
 
 	template<class TYPE, class ARG_TYPE>
-	bool CArrayTyped<TYPE, ARG_TYPE>::isArraySorted() const
+	bool cArrayTyped<TYPE, ARG_TYPE>::isArraySorted() const
 	{
 		//! Hard check for sorted. Allow dupes!
 		ITERATE_t iQty = this->GetSize() - 1;
@@ -726,7 +726,7 @@ namespace Gray
 	}
 
 	template<class TYPE, class ARG_TYPE>
-	bool CArrayTyped<TYPE, ARG_TYPE>::isArraySortedND() const
+	bool cArrayTyped<TYPE, ARG_TYPE>::isArraySortedND() const
 	{
 		//! Hard check for sorted. Allow NO dupes!
 		ITERATE_t iQty = this->GetSize() - 1;
@@ -743,7 +743,7 @@ namespace Gray
 	}
 
 	template<class TYPE, class ARG_TYPE>
-	ITERATE_t CArrayTyped<TYPE, ARG_TYPE>::QSortPartition(ITERATE_t iLeft, ITERATE_t iRight)
+	ITERATE_t cArrayTyped<TYPE, ARG_TYPE>::QSortPartition(ITERATE_t iLeft, ITERATE_t iRight)
 	{
 		ASSERT(iLeft < iRight);
 		for (;;)
@@ -766,7 +766,7 @@ namespace Gray
 	}
 
 	template<class TYPE, class ARG_TYPE>
-	void CArrayTyped<TYPE, ARG_TYPE>::QSort(ITERATE_t iLeft, ITERATE_t iRight)
+	void cArrayTyped<TYPE, ARG_TYPE>::QSort(ITERATE_t iLeft, ITERATE_t iRight)
 	{
 		//! Re-sort- might have become unsorted for some reason.
 		//! similar to std::sort()
@@ -780,21 +780,21 @@ namespace Gray
 	//*************************************************
 
 	template <class TYPE, class TYPE_ARG = TYPE*>
-	class CArrayFacade : public CArrayTyped < TYPE, TYPE_ARG >
+	class cArrayFacade : public cArrayTyped < TYPE, TYPE_ARG >
 	{
-		//! @class Gray::CArrayPtr
-		//! An array of some type of pointer using CPtrFacade. Allow dupes.
-		//! base for CArrayPtr, CArryNew, CArrayIUnk and CArraySmart
+		//! @class Gray::cArrayFacade
+		//! An array of some type of pointer using cPtrFacade. Allow dupes.
+		//! base for cArrayPtr, CArryNew, cArrayIUnk and cArrayRef
 
 	public:
-		typedef CArrayTyped<TYPE, TYPE_ARG> SUPER_t;
-		typedef CArrayFacade<TYPE, TYPE_ARG> THIS_t;
+		typedef cArrayTyped<TYPE, TYPE_ARG> SUPER_t;
+		typedef cArrayFacade<TYPE, TYPE_ARG> THIS_t;
 
 		typedef typename SUPER_t::ELEM_t ELEM_t;			// GCC needs this silliness.
 		typedef typename SUPER_t::REF_t REF_t;				// 
 
 	public:
-		virtual ~CArrayFacade()
+		virtual ~cArrayFacade()
 		{
 			//! Make sure the virtuals get called correctly.
 			this->RemoveAll();
@@ -802,9 +802,9 @@ namespace Gray
 
 		virtual COMPARE_t CompareData(REF_t pData1, REF_t pData2) const override
 		{
-			//! Compare a data record to another data record. Use CValT::Compare()??
-			// return CValT::Compare(Data1,Data2);
-			return CMem::Compare(pData1, pData2, sizeof(*pData2));
+			//! Compare a data record to another data record. Use cValT::Compare()??
+			// return cValT::Compare(Data1,Data2);
+			return cMem::Compare(pData1, pData2, sizeof(*pData2));
 		}
 
 		REF_t GetAt(ITERATE_t index) const // Override
@@ -840,13 +840,13 @@ namespace Gray
 	};
 
 	template <class TYPE>
-	class CArrayPtr : public CArrayFacade < TYPE*, TYPE* >
+	class cArrayPtr : public cArrayFacade < TYPE*, TYPE* >
 	{
-		//! @class CArrayPtr
-		//! An array of some sort of pointer. Pointer memory ownership is unknown. Do not free it.
+		//! @class Gray::cArrayPtr
+		//! An array of some sort of dumb pointer. Pointer memory ownership is unknown. Do not free it.
 
 	public:
-		typedef CArrayFacade<TYPE*, TYPE*> SUPER_t;
+		typedef cArrayFacade<TYPE*, TYPE*> SUPER_t;
 		typedef typename SUPER_t::REF_t REF_t;				// How to refer to this? value or ref or pointer?
 		typedef typename SUPER_t::ELEM_t ELEM_t;			// How to refer to this? value or ref or pointer?
 
@@ -886,40 +886,40 @@ namespace Gray
 	};
 
 	//*************************************************
-	// CArrayVal
+	// cArrayVal
 
 	template<class TYPE>
-	class CArrayVal : public CArrayTyped < TYPE, TYPE >
+	class cArrayVal : public cArrayTyped < TYPE, TYPE >
 	{
-		//! @class Gray::CArrayVal
+		//! @class Gray::cArrayVal
 		//! An array of some simple value type that is easy to copy.
 		//! Using a Reference is a waste if the object is small. Just use a copy for small objects.
 	public:
-		CArrayVal()
+		cArrayVal()
 		{
 		}
-		explicit CArrayVal(ITERATE_t iSize) : CArrayTyped<TYPE, TYPE>(iSize)
+		explicit cArrayVal(ITERATE_t iSize) : cArrayTyped<TYPE, TYPE>(iSize)
 		{
 		}
 	};
 
 	//*************************************************
-	// CArrayVal2
+	// cArrayVal2
 
 	template<class TYPE>
-	class CArrayVal2 : public CArrayTyped < TYPE, const TYPE& >
+	class cArrayVal2 : public cArrayTyped < TYPE, const TYPE& >
 	{
-		//! @class Gray::CArrayVal2
+		//! @class Gray::cArrayVal2
 		//! An array of some bigger value type.
 		//! maybe TYPE has constructor/destructor that does real work.
 		//! should be referenced instead of copied.
 	public:
-		CArrayVal2()
+		cArrayVal2()
 		{
 		}
-		explicit CArrayVal2(ITERATE_t iSize) : CArrayTyped<TYPE, const TYPE&>(iSize)
+		explicit cArrayVal2(ITERATE_t iSize) : cArrayTyped<TYPE, const TYPE&>(iSize)
 		{
 		}
 	};
 }
-#endif	// _INC_CArray_H
+#endif	// _INC_cArray_H

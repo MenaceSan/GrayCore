@@ -1,25 +1,25 @@
 //
-//! @file CSingleton.h
+//! @file cSingleton.h
 //!	A singleton is a type of class of which only one single instance may exist.
 //! This is commonly used for management classes used to control system-wide resources.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CSingleton_H
-#define _INC_CSingleton_H
+#ifndef _INC_cSingleton_H
+#define _INC_cSingleton_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
-#include "CNonCopyable.h"
-#include "CThreadLock.h"
-#include "CUnitTestDecl.h"
-#include "CTypeInfo.h"
-#include "CHeapObject.h"
-#include "CObject.h"
-#include "CDebugAssert.h"
+#include "cNonCopyable.h"
+#include "cThreadLock.h"
+#include "cUnitTestDecl.h"
+#include "cTypeInfo.h"
+#include "cHeapObject.h"
+#include "cObject.h"
+#include "cDebugAssert.h"
 
-UNITTEST_PREDEF(CSingletonRegister)
+UNITTEST_PREDEF(cSingletonRegister)
 
 namespace Gray
 {
@@ -28,11 +28,11 @@ namespace Gray
 #endif
 
 	template <class TYPE>
-	class CSingletonStatic 
+	class cSingletonStatic 
 	{
-		//! @class Gray::CSingletonStatic
+		//! @class Gray::cSingletonStatic
 		//! base class for a type that we want to make sure only one of these can exist at a time.
-		//! @note TYPE = CSingletonStatic based class = this
+		//! @note TYPE = cSingletonStatic based class = this
 		//! Externally created singleton. might be stack based, or abstract (e.g.CNTServiceImpl) but usually static allocated.
 		//! @note Assume 1. gets constructed/destructed by the C Runtime, 2. Is inherently thread safe since its not created on demand.
 		//! The BIG problem with this is that we cannot guarantee order of creation. So singletons that rely/construct on each other may be corrupt/uninitialized.
@@ -40,29 +40,29 @@ namespace Gray
 	protected:
 		static TYPE* sm_pThe;	//!< pointer to the one and only object of this TYPE. ASSUME automatically init to = nullptr.
 	private:
-		NonCopyable_IMPL(CSingletonStatic);
+		NonCopyable_IMPL(cSingletonStatic);
 
 	protected:
-		CSingletonStatic(TYPE* pObject) noexcept
+		cSingletonStatic(TYPE* pObject) noexcept
 		{
 			//! the singleton must be constructed with a reference to the controlled object
 			//! typically this == pObject == sm_pThe
-			DEBUG_ASSERT(pObject != nullptr, "CSingletonStatic");
+			DEBUG_ASSERT(pObject != nullptr, "cSingletonStatic");
 			if (sm_pThe != nullptr)
 			{
 				// THIS SHOULD NOT HAPPEN! Find who else is creating this singleton!
-				DEBUG_ASSERT(sm_pThe == nullptr, "CSingletonStatic");
+				DEBUG_ASSERT(sm_pThe == nullptr, "cSingletonStatic");
 				return;
 			}
 			sm_pThe = pObject;
-			DEBUG_ASSERT(sm_pThe == this, "CSingletonStatic");
+			DEBUG_ASSERT(sm_pThe == this, "cSingletonStatic");
 		}
-		virtual ~CSingletonStatic() noexcept
+		virtual ~cSingletonStatic() noexcept
 		{
 			//! the singleton accessor
 			if (sm_pThe != nullptr)
 			{
-				DEBUG_ASSERT(sm_pThe == this, "~CSingletonStatic");
+				DEBUG_ASSERT(sm_pThe == this, "~cSingletonStatic");
 				sm_pThe = nullptr;
 			}
 		}
@@ -97,60 +97,60 @@ namespace Gray
 		}
 	};
 
-	template <class TYPE> TYPE* CSingletonStatic<TYPE>::sm_pThe = nullptr; // assume this is always set before any usage.
+	template <class TYPE> TYPE* cSingletonStatic<TYPE>::sm_pThe = nullptr; // assume this is always set before any usage.
 
-	class GRAYCORE_LINK CSingletonRegister : public CObject, public CHeapObject // IHeapObject
+	class GRAYCORE_LINK cSingletonRegister : public CObject, public cHeapObject // IHeapObject
 	{
-		//! @class Gray::CSingletonRegister
-		//! NON template base for CSingleton. MUST be IHeapObject
+		//! @class Gray::cSingletonRegister
+		//! NON template base for cSingleton. MUST be IHeapObject
 		//! Register this to allow for proper order of virtual destruction at C runtime destruct.
 		//! Allows for ordered destruction of singletons if modules unload.
 		//! @note Static singletons are not multi threaded anyhow. so don't worry about static init order for sm_LockSingle.
 
-		friend class CSingletonManager;
+		friend class cSingletonManager;
 
 	protected:
 #ifndef UNDER_CE
 		HMODULE m_hModuleLoaded;	//!< What modules loaded this ? So singletons can be destroyed if DLL/SO unloads.
 #endif
 	public:
-		static CThreadLockFast sm_LockSingle; //!< common lock for all CSingleton.
+		static cThreadLockFast sm_LockSingle; //!< common lock for all cSingleton.
 	protected:
-		CSingletonRegister(const TYPEINFO_t& rAddrCode);
-		virtual ~CSingletonRegister();
+		cSingletonRegister(const TYPEINFO_t& rAddrCode);
+		virtual ~cSingletonRegister();
 		void RegisterSingleton();
 	public:
 		static void GRAYCALL ReleaseModule(HMODULE hMod);
-		UNITTEST_FRIEND(CSingletonRegister);
+		UNITTEST_FRIEND(cSingletonRegister);
 	};
 
 	template <class TYPE>
-	class CSingleton : public CSingletonStatic<TYPE>, public CSingletonRegister
+	class cSingleton : public cSingletonStatic<TYPE>, public cSingletonRegister
 	{
-		//! @class Gray::CSingleton
-		//! abstract base class for singleton created lazy/on demand if it does not yet exist or maybe static. see CSingletonSmart<> to destroy on non use.
+		//! @class Gray::cSingleton
+		//! abstract base class for singleton created lazy/on demand if it does not yet exist or maybe static. see cSingletonSmart<> to destroy on non use.
 		//! Thread safe.
-		//! ASSUME CSingletonRegister will handle destruct order on app close or module unload.
-		//! ASSUME TYPE is based on CSingleton and IHeapObject.
+		//! ASSUME cSingletonRegister will handle destruct order on app close or module unload.
+		//! ASSUME TYPE is based on cSingleton and IHeapObject.
 		//! @note If this is really static beware of the "first use" race condition. static init will ASSERT if dynamic is called first.
 		//! @note This can get created at C static init time if used inside some other static. But later is OK too of course.
 		//!  It's Safe being constructed INSIDE another C runtime init constructor. (order irrelevant) ASSUME m_pThe = nullptr at init.
 		//!  http://www.cs.wustl.edu/~schmidt/editorial-3.html
 
-		typedef CSingletonStatic<TYPE> SUPER_t;
+		typedef cSingletonStatic<TYPE> SUPER_t;
 
 	protected:
-		CSingleton(TYPE* pObject, const TYPEINFO_t& rAddrCode = typeid(TYPE))
-			: CSingletonStatic<TYPE>(pObject)
-			, CSingletonRegister(rAddrCode)	// track the module for the codes implementation.
+		cSingleton(TYPE* pObject, const TYPEINFO_t& rAddrCode = typeid(TYPE))
+			: cSingletonStatic<TYPE>(pObject)
+			, cSingletonRegister(rAddrCode)	// track the module for the codes implementation.
 		{
-			//! typically this == pObject is type of CSingleton
+			//! typically this == pObject is type of cSingleton
 			//! @arg rAddrCode = typeid(XXX) but GCC doesn't like it as part of template?
 		}
-		virtual ~CSingleton()
+		virtual ~cSingleton()
 		{
 			//! I am being destroyed.
-			//! sm_pThe is set to nullptr in ~CSingletonStatic
+			//! sm_pThe is set to nullptr in ~cSingletonStatic
 		}
 
 	public:
@@ -158,12 +158,12 @@ namespace Gray
 		{
 			//! get (or create) a pointer to the singleton object.
 			//! @note This ensures proper creation order for singletons (Statics) that ref each other!
-			//! @todo use CreateObject from CObjectCreator Like the MFC CreateObject() and "CRuntime?"
+			//! @todo use CreateObject from cObjectCreator Like the MFC CreateObject() and "CRuntime?"
 
 			if (!SUPER_t::isSingleCreated())
 			{
 				// Double Check Lock for multi threaded
-				CThreadGuardFast threadguard(CSingletonRegister::sm_LockSingle);	// thread sync critical section.
+				cThreadGuardFast threadguard(cSingletonRegister::sm_LockSingle);	// thread sync critical section.
 				if (!SUPER_t::isSingleCreated())
 				{
 					ASSERT(!TYPE::isSingleCreated());	// SUPER_t::sm_pThe
@@ -185,7 +185,7 @@ namespace Gray
 			if (!SUPER_t::isSingleCreated())
 			{
 				// Double Check Lock for multi threaded
-				CThreadGuardFast threadguard(CSingletonRegister::sm_LockSingle);	// thread sync critical section.
+				cThreadGuardFast threadguard(cSingletonRegister::sm_LockSingle);	// thread sync critical section.
 				if (!SUPER_t::isSingleCreated())
 				{
 					ASSERT(!TYPE2::isSingleCreated());	// SUPER_t::sm_pThe
@@ -206,4 +206,4 @@ namespace Gray
 	};
 }
 
-#endif	// _INC_CSingleton_H
+#endif	// _INC_cSingleton_H

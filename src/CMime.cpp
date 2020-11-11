@@ -1,30 +1,30 @@
 //
-//! @file CMime.cpp
+//! @file cMime.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 #include "pch.h"
-#include "CMime.h"
+#include "cMime.h"
 #include "StrT.h"
 
 namespace Gray
 {
 
-	const char* const CMime::k_aszMimeType[MIME_QTY + 1] =
+	const char* const cMime::k_aszMimeType[MIME_QTY + 1] =
 	{
-	#define CMimeType(a,b,c,d,e)	b,
-	#include "CMimeTypes.tbl"
-	#undef CMimeType
+	#define cMimeType(a,b,c,d,e)	b,
+	#include "cMimeTypes.tbl"
+	#undef cMimeType
 		nullptr,				// MIME_QTY
 	};
-	const char* const CMime::k_aszMimeExt[(MIME_QTY * 2) + 1] =
+	const char* const cMime::k_aszMimeExt[(MIME_QTY * 2) + 1] =
 	{
-	#define CMimeType(a,b,c,d,e)	c, d,
-	#include "CMimeTypes.tbl"
-	#undef CMimeType
+	#define cMimeType(a,b,c,d,e)	c, d,
+	#include "cMimeTypes.tbl"
+	#undef cMimeType
 		nullptr,				// MIME_QTY*2
 	};
 
-	MIME_TYPE GRAYCALL CMime::FindMimeTypeForExt(const char* pszExt, MIME_TYPE eMimeTypeDefault) // static
+	MIME_TYPE GRAYCALL cMime::FindMimeTypeForExt(const char* pszExt, MIME_TYPE eMimeTypeDefault) // static
 	{
 		//! For a given file '.ext', find the MIME_TYPE for it. CMIMEType
 		//! @note we could check for text files vs binary files ?
@@ -35,7 +35,7 @@ namespace Gray
 		return (MIME_TYPE)(iType / 2);
 	}
 
-	const char* GRAYCALL CMime::GetMimeTypeName(MIME_TYPE eMimeType) // static
+	const char* GRAYCALL cMime::GetMimeTypeName(MIME_TYPE eMimeType) // static
 	{
 		ASSERT(_countof(k_aszMimeType) == MIME_QTY + 1);
 		if (IS_INDEX_BAD(eMimeType, MIME_QTY))
@@ -45,7 +45,7 @@ namespace Gray
 		return k_aszMimeType[eMimeType];
 	}
 
-	MIME_TYPE GRAYCALL CMime::FindMimeTypeName(const char* pszName) // static
+	MIME_TYPE GRAYCALL cMime::FindMimeTypeName(const char* pszName) // static
 	{
 		//! NOT exactly the same as Str_TableFindHead() ?
 		if (pszName == nullptr)

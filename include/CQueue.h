@@ -1,18 +1,18 @@
 //
-//! @file CQueue.h
+//! @file cQueue.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CQueue_H
-#define _INC_CQueue_H
+#ifndef _INC_cQueue_H
+#define _INC_cQueue_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
-#include "CHeap.h"
+#include "cHeap.h"
 #include "HResult.h"
-#include "CArray.h"
-#include "CStreamProgress.h"
+#include "cArray.h"
+#include "cStreamProgress.h"
 
 UNITTEST_PREDEF(cQueueBase)
 
@@ -110,7 +110,7 @@ namespace Gray
 		{
 			ASSERT(_QTY > 0);
 #if defined(_DEBUG)
-			CMem::Zero(m_Data, sizeof(m_Data));
+			cMem::Zero(m_Data, sizeof(m_Data));
 #endif
 		}
 		bool isFullQ() const
@@ -341,7 +341,7 @@ namespace Gray
 			if (iSize > 0)	// there is data to move ?
 			{
 				const TYPE* pTmp = this->m_pData + this->m_iReadLast;
-				CMem::CopyOverlap(this->m_pData, pTmp, iSize * sizeof(TYPE));
+				cMem::CopyOverlap(this->m_pData, pTmp, iSize * sizeof(TYPE));
 			}
 			this->InitQ(0, iSize);
 		}
@@ -545,7 +545,7 @@ namespace Gray
 		typedef cQueueRW<TYPE> SUPER_t;
 
 	private:
-		CArrayVal<TYPE> m_aData;		//!< m_pData
+		cArrayVal<TYPE> m_aData;		//!< m_pData
 
 	protected:
 		ITERATE_t m_nGrowSizeChunk;		//!< number of TYPE elements to grow by in a single re-alloc chunk. 0 = never grow.
@@ -569,7 +569,7 @@ namespace Gray
 		}
 
 	public:
-		cQueueDyn(ITERATE_t nGrowSizeChunk = 128, ITERATE_t nGrowSizeMax = (CHeap::k_ALLOC_MAX / sizeof(TYPE))) noexcept
+		cQueueDyn(ITERATE_t nGrowSizeChunk = 128, ITERATE_t nGrowSizeMax = (cHeap::k_ALLOC_MAX / sizeof(TYPE))) noexcept
 			: m_nGrowSizeChunk(nGrowSizeChunk)
 			, m_nGrowSizeMax(nGrowSizeMax)
 		{
@@ -700,7 +700,7 @@ namespace Gray
 
 		typedef cQueueDyn<BYTE> SUPER_t;
 	public:
-		explicit cQueueBytes(size_t nGrowSizeChunk = 8 * 1024, size_t nGrowSizeMax = CHeap::k_ALLOC_MAX)
+		explicit cQueueBytes(size_t nGrowSizeChunk = 8 * 1024, size_t nGrowSizeMax = cHeap::k_ALLOC_MAX)
 			: cQueueDyn<BYTE>((ITERATE_t)nGrowSizeChunk, (ITERATE_t)nGrowSizeMax)
 		{
 			//! @arg nGrowSizeMax = 0 = not used. write only ? total size < nGrowSizeMax.
@@ -715,8 +715,8 @@ namespace Gray
 			//! insert data at the head of the queue. first out.
 			if (!MakeWritePrepared((ITERATE_t)iLen))
 				return false;
-			CMem::CopyOverlap(m_pData + m_iReadLast + iLen, m_pData + m_iReadLast, get_ReadQty());
-			CMem::Copy(m_pData + m_iReadLast, pDataSrc, iLen);
+			cMem::CopyOverlap(m_pData + m_iReadLast + iLen, m_pData + m_iReadLast, get_ReadQty());
+			cMem::Copy(m_pData + m_iReadLast, pDataSrc, iLen);
 			AdvanceWrite((ITERATE_t)iLen);
 			return true;
 		}
@@ -729,7 +729,7 @@ namespace Gray
 				if (!AllocSizeMaxQ((ITERATE_t)iLen))
 					return false;
 			}
-			CMem::CopyOverlap(m_pData, pData, iLen);	// may be from the same buffer!? use memmove to be safe.
+			cMem::CopyOverlap(m_pData, pData, iLen);	// may be from the same buffer!? use memmove to be safe.
 			InitQ(0, (ITERATE_t)iLen);
 			return true;
 		}
@@ -913,4 +913,4 @@ namespace Gray
 #endif
 
 }	// Gray
-#endif // _INC_CQueue_H
+#endif // _INC_cQueue_H

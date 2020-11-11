@@ -1,42 +1,42 @@
 //
-//! @file CPtrFacade.h
+//! @file cPtrFacade.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CPtrFacade_H
-#define _INC_CPtrFacade_H
+#ifndef _INC_cPtrFacade_H
+#define _INC_cPtrFacade_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
 #include "Ptr.h"
-#include "CDebugAssert.h"
-#include "CTypeInfo.h"
-#include "CUnitTestDecl.h"
+#include "cDebugAssert.h"
+#include "cTypeInfo.h"
+#include "cUnitTestDecl.h"
 
-UNITTEST_PREDEF(CPtrTrace)
+UNITTEST_PREDEF(cPtrTrace)
 
 namespace Gray
 {
-	class CLogProcessor;
+	class cLogProcessor;
 
-	class GRAYCORE_LINK CPtrTrace
+	class GRAYCORE_LINK cPtrTrace
 	{
-		//! @class Gray::CPtrTrace
-		//! Trace each use of the a pointer in CPtrFacade/CIUnkPtr for debug purposes.
+		//! @class Gray::cPtrTrace
+		//! Trace each use of the a pointer in cPtrFacade/cIUnkPtr for debug purposes.
 		//! If the lock count fails to go to 0 we know who the leaker was. or if the object is deleted but still has refs we can detect that as well.
-		//! Add myself to the CPtrTraceMgr table if the m_p pointer is set.
+		//! Add myself to the cPtrTraceMgr table if the m_p pointer is set.
 
 	public:
 		const char* m_pszType;		//!< from __typeof(TYPEINFO_t).name()
-		CDebugSourceLine m_Src;		//!< where (in code) was m_p set?
+		cDebugSourceLine m_Src;		//!< where (in code) was m_p set?
 
 	public:
-		CPtrTrace(const TYPEINFO_t& TypeInfo)
+		cPtrTrace(const TYPEINFO_t& TypeInfo) noexcept
 			: m_pszType(TypeInfo.name())
 		{
 		}
-		CPtrTrace(const CPtrTrace& ref)
+		cPtrTrace(const cPtrTrace& ref) noexcept
 			: m_pszType(ref.m_pszType), m_Src(ref.m_Src)
 		{
 			// copy constructor.
@@ -45,28 +45,28 @@ namespace Gray
 		void TraceOpen(void* p);
 		void TraceClose(void* p);
 
-		static void GRAYCALL TraceDump(CLogProcessor& log, ITERATE_t iCountExpected);
-		UNITTEST_FRIEND(CPtrTrace);
+		static void GRAYCALL TraceDump(cLogProcessor& log, ITERATE_t iCountExpected);
+		UNITTEST_FRIEND(cPtrTrace);
 	};
 
 	template<class TYPE>
-	class CPtrFacade
+	class cPtrFacade
 	{
-		//! @class Gray::CPtrFacade
-		//! a class that acts like (wraps) a pointer to TYPE. Not specific to TYPE=CSmartBase.
-		//! Base for: cExceptionHolder, CLockerT, CNewPtr, CSmartPtr, CIUnkPtr, etc.
+		//! @class Gray::cPtrFacade
+		//! a class that acts like (wraps) a pointer to TYPE. Not specific to TYPE=cRefBase.
+		//! Base for: cExceptionHolder, cLockerT, cNewPtr, cRefPtr, cIUnkPtr, etc.
 
-		typedef CPtrFacade<TYPE> THIS_t;
+		typedef cPtrFacade<TYPE> THIS_t;
 
 	protected:
 		TYPE* m_p;	//!< Pointer to some object of TYPE.
 
 	public:
-		CPtrFacade(TYPE* p = nullptr) noexcept
+		cPtrFacade(TYPE* p = nullptr) noexcept
 			: m_p(p)
 		{
 		}
-		CPtrFacade(THIS_t&& ref) noexcept
+		cPtrFacade(THIS_t&& ref) noexcept
 		{
 			//! move constructor.
 			this->m_p = ref.m_p; ref.m_p = nullptr;
@@ -173,4 +173,4 @@ namespace Gray
 
 }
 
-#endif // _INC_CPtrFacade_H
+#endif // _INC_cPtrFacade_H

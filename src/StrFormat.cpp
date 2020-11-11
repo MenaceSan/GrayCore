@@ -8,7 +8,7 @@
 #include "pch.h"
 #include "StrFormat.h"
 #include "StrT.h"
-#include "CTypes.h"
+#include "cTypes.h"
 
 namespace Gray
 {
@@ -131,21 +131,21 @@ namespace Gray
 			nEnd = nWidth - nPrecision;
 			if (nEnd > nLenOutMax)
 				nEnd = nLenOutMax;
-			CValArray::FillQty<TYPE>(pszOut, nEnd, ' ');
+			cValArray::FillQty<TYPE>(pszOut, nEnd, ' ');
 			i = nEnd;
 		}
 
 		nEnd = i + nPrecision;
 		if (nEnd > nLenOutMax)
 			nPrecision = (short)(nLenOutMax - i);
-		CMem::Copy(pszOut + i, pszParam, sizeof(TYPE) * nPrecision);
+		cMem::Copy(pszOut + i, pszParam, sizeof(TYPE) * nPrecision);
 		i += nPrecision;
 
 		if (m_bAlignLeft && nWidth > i)	// pad right
 		{
 			if (nWidth > nLenOutMax)
 				nWidth = (short) nLenOutMax;
-			CValArray::FillQty<TYPE>(pszOut + i, nWidth - i, ' ');
+			cValArray::FillQty<TYPE>(pszOut + i, nWidth - i, ' ');
 			i = nWidth;
 		}
 
@@ -173,7 +173,7 @@ namespace Gray
 				nPad = StrNum::k_LEN_MAX_DIGITS_INT;
 			nPad -= nDigits;
 			pDigits -= nPad;
-			CValArray::FillQty<TYPE>(pDigits, nPad, '0');
+			cValArray::FillQty<TYPE>(pDigits, nPad, '0');
 			nDigits += nPad;
 			if (nPrecision >= 0)
 				nPrecision += nPad;
@@ -185,7 +185,7 @@ namespace Gray
 			StrLen_t nPrefix = StrT::Len(pszPrefix);
 			ASSERT(nPrefix <= 2);	// we left some prefix space for this.
 			pDigits -= nPrefix;
-			CMem::Copy(pDigits, pszPrefix, nPrefix * sizeof(TYPE));
+			cMem::Copy(pDigits, pszPrefix, nPrefix * sizeof(TYPE));
 			nDigits += nPrefix;
 			if (nPrecision >= 0)
 				nPrecision += nPrefix;
@@ -264,7 +264,7 @@ namespace Gray
 			{
 				pszParam = CSTRCONST("(null)");
 			}
-			else if (!CMem::IsValid(pszParam, 16))
+			else if (!cMem::IsValid(pszParam, 16))
 			{
 				pszParam = CSTRCONST("(ERR)");
 			}
@@ -507,7 +507,7 @@ namespace Gray
 //******************************************************************************************************
 
 #if USE_UNITTESTS
-#include "CUnitTest.h"
+#include "cUnitTest.h"
 
 namespace Gray
 {
@@ -750,7 +750,7 @@ namespace Gray
 
 			if (pszOut != nullptr)
 			{
-				CValArray::FillSize<BYTE>(pszOut, StrT::k_LEN_MAX * sizeof(TYPE), CHeap::FILL_UnusedStack);	// fill background.
+				cValArray::FillSize<BYTE>(pszOut, StrT::k_LEN_MAX * sizeof(TYPE), cHeap::FILL_UnusedStack);	// fill background.
 			}
 
 			StrLen_t nLenRet = UnitTestFormat1(pFormat, pszOut, nLenOut, sFormat, test.m_eArgs);
@@ -771,7 +771,7 @@ namespace Gray
 				UNITTEST_TRUE(pszOut[nLenX] == '\0');
 				UNITTEST_TRUE(!StrT::CmpN<TYPE>(pszOut, sExpected, nLenX));
 				BYTE chEnd2 = (BYTE)pszOut[StrT::k_LEN_MAX - 1];
-				UNITTEST_TRUE(chEnd2 == CHeap::FILL_UnusedStack);
+				UNITTEST_TRUE(chEnd2 == cHeap::FILL_UnusedStack);
 			}
 		}
 	}
@@ -808,13 +808,13 @@ UNITTEST_CLASS(StrFormat)
 {
 	UNITTEST_METHOD(StrFormat)
 	{
-		CTimePerf timeStart1(true);
+		cTimePerf timeStart1(true);
 		StrFormat<wchar_t>::UnitTestFormat(StrFormat<wchar_t>::FormatF);
 		StrFormat<char>::UnitTestFormat(StrFormat<char>::FormatF);
-		CTimePerf timeStart2(true);
+		cTimePerf timeStart2(true);
 		StrFormat<wchar_t>::UnitTestFormat(StrT::sprintfN<wchar_t>);
 		StrFormat<char>::UnitTestFormat(StrT::sprintfN<char>);
-		CTimePerf timeStart3(true);
+		cTimePerf timeStart3(true);
 		TIMEPERF_t iDff1 = timeStart1.GetAgeDiff(timeStart2);
 		TIMEPERF_t iDff2 = timeStart2.GetAgeDiff(timeStart3);
 		UNITTEST_TRUE(iDff1 > 0);

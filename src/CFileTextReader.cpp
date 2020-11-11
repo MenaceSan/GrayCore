@@ -1,31 +1,31 @@
 //
-//! @file CFileTextReader.cpp
+//! @file cFileTextReader.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 #include "pch.h"
-#include "CFileTextReader.h"
+#include "cFileTextReader.h"
 
 namespace Gray
 {
-	CFileTextReader::CFileTextReader(size_t nSizeLineMax)
-		: CStreamStackInp(&m_File, nSizeLineMax)
+	cFileTextReader::cFileTextReader(size_t nSizeLineMax)
+		: cStreamStackInp(&m_File, nSizeLineMax)
 	{
 		// Max buffer size = max lien length.
 		this->put_AutoReadCommit((ITERATE_t)(nSizeLineMax / 2));		// default = half buffer.
 	}
 
-	CFileTextReader::~CFileTextReader()
+	cFileTextReader::~cFileTextReader()
 	{
 	}
 
-	HRESULT CFileTextReader::OpenX(const FILECHAR_t* pszName, OF_FLAGS_t uShareFlags)
+	HRESULT cFileTextReader::OpenX(const FILECHAR_t* pszName, OF_FLAGS_t uShareFlags)
 	{
 		//! Open some existing text file.
 		//! @arg uShareFlags = OF_TEXT | OF_CACHE_SEQ
 		return m_File.OpenX(pszName, uShareFlags);
 	}
 
-	HRESULT CFileTextReader::ReadStringLine(OUT const char** ppszLine) 
+	HRESULT cFileTextReader::ReadStringLine(OUT const char** ppszLine) 
 	{
 		//! Read a line of text. like fgets().
 		//! Read up until (including) newline character = \n = The newline character, if read, is included in the string.
@@ -78,18 +78,18 @@ namespace Gray
 		return i;		// length.
 	}
 
-	HRESULT CFileTextReader::ReadStringLine(OUT char* pszBuffer, StrLen_t iSizeMax) // override // virtual
+	HRESULT cFileTextReader::ReadStringLine(OUT char* pszBuffer, StrLen_t iSizeMax) // override // virtual
 	{
 		const char* pszRet;
 		HRESULT hRes = ReadStringLine(&pszRet);
 		if (FAILED(hRes))
 			return hRes;
 		iSizeMax = MIN(hRes, iSizeMax);
-		CMem::Copy(pszBuffer, pszRet, iSizeMax);
+		cMem::Copy(pszBuffer, pszRet, iSizeMax);
 		return iSizeMax;
 	}
 
-	STREAM_SEEKRET_t CFileTextReader::Seek(STREAM_OFFSET_t iOffset, SEEK_ORIGIN_TYPE eSeekOrigin) // override;
+	STREAM_SEEKRET_t cFileTextReader::Seek(STREAM_OFFSET_t iOffset, SEEK_ORIGIN_TYPE eSeekOrigin) // override;
 	{
 		//! @arg eSeekOrigin = // SEEK_SET ?
 		//! @return the New position, -1=FAILED
@@ -141,21 +141,21 @@ namespace Gray
 //*****************************************************************************
 
 #if USE_UNITTESTS
-#include "CUnitTest.h"
-#include "CMime.h"
+#include "cUnitTest.h"
+#include "cMime.h"
 
-UNITTEST_CLASS(CFileTextReader)
+UNITTEST_CLASS(cFileTextReader)
 {
-	UNITTEST_METHOD(CFileTextReader)
+	UNITTEST_METHOD(cFileTextReader)
 	{
-		//! test reading CFileTextReader.
+		//! test reading cFileTextReader.
 		//! @note any text changes to this file can invalidate the test results.
 
-		CStringF sFilePath = CFilePath::CombineFilePathX(get_TestInpDir(), _FN(GRAY_NAMES) _FN("Core/src/CFileTextReader.cpp"));	// Find myself. __FILE__
+		cStringF sFilePath = cFilePath::CombineFilePathX(get_TestInpDir(), _FN(GRAY_NAMES) _FN("Core/src/cFileTextReader.cpp"));	// Find myself. __FILE__
 
 		static const int k_MaxLineLen = 180;	// was CStream::k_FILE_BLOCK_SIZE 256. Assume no other line is this long for my test.
 
-		CFileTextReader tr(k_MaxLineLen);
+		cFileTextReader tr(k_MaxLineLen);
 		HRESULT hRes = tr.OpenX(sFilePath, OF_READ | OF_TEXT | OF_SHARE_DENY_NONE | OF_CACHE_SEQ);
 		UNITTEST_TRUE(SUCCEEDED(hRes));
 
@@ -187,5 +187,5 @@ UNITTEST_CLASS(CFileTextReader)
 		UNITTEST_TRUE(iLineNumber == 188);	// Fix this if source changes.
 	}
 };
-UNITTEST_REGISTER(CFileTextReader, UNITTEST_LEVEL_Core);
+UNITTEST_REGISTER(cFileTextReader, UNITTEST_LEVEL_Core);
 #endif

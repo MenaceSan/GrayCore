@@ -1,35 +1,35 @@
 //
-//! @file CUInt64.h
+//! @file cUInt64.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CUInt64_H
-#define _INC_CUInt64_H
+#ifndef _INC_cUInt64_H
+#define _INC_cUInt64_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
 #include "StrArg.h"
-#include "CBits.h"
-#include "CTypes.h"
-#include "CString.h"
+#include "cBits.h"
+#include "cTypes.h"
+#include "cString.h"
 
-UNITTEST_PREDEF(CUInt64)
+UNITTEST_PREDEF(cUInt64)
 
 namespace Gray
 {
-	class CThreadState;
+	class cThreadState;
 
 #pragma pack(push,1)
-	class GRAYCORE_LINK CATTR_PACKED CUInt64
+	class GRAYCORE_LINK CATTR_PACKED cUInt64
 	{
-		//! @class Gray::CUInt64
+		//! @class Gray::cUInt64
 		//! emulate 64 bit unsigned integer as a native type for systems that don't actually support this. QWord
 		//! if ! USE_INT64 then ASSUME we DONT support 64 bit int types natively. Assume all platforms support 32 bit types.
 		//! we don't support __int64 (_MSC_VER) or int64_t (C99/GCC standard) native.
 		//! like CUnion64 or LARGE_INTEGER as a native type for operators.
 		//! same size as UINT64
-		//! use typedef CUInt64 UINT64; if ! USE_INT64
+		//! use typedef cUInt64 UINT64; if ! USE_INT64
 
 	public:
 #ifdef USE_INT64	// native support.
@@ -53,7 +53,7 @@ namespace Gray
 #endif
 
 	public:
-		CUInt64()
+		cUInt64()
 #ifdef USE_INT64
 		: m_u(0)
 #else
@@ -62,7 +62,7 @@ namespace Gray
 #endif
 		{
 		}
-		CUInt64(UNIT_t n)
+		cUInt64(UNIT_t n)
 #ifdef USE_INT64
 		: m_u(n)
 #else
@@ -71,7 +71,7 @@ namespace Gray
 #endif
 		{
 		}
-		CUInt64(const char* pszVal, RADIX_t n = 10)
+		cUInt64(const char* pszVal, RADIX_t n = 10)
 		{
 			SetStr(pszVal, n);
 		}
@@ -99,15 +99,15 @@ namespace Gray
 			//! which has value 2^nBit.
 			//! Bits beyond m_nBlksUse are considered to be 0.
 #ifdef USE_INT64
-			return CBits::IsSet(m_u, nBit);
+			return cBits::IsSet(m_u, nBit);
 #else
 			if ( nBit < k_UNIT_BITS )
-				return CBits::IsSet( m_uLo, nBit );
+				return cBits::IsSet( m_uLo, nBit );
 			else
-				return CBits::IsSet( m_uHi, nBit-k_UNIT_BITS );
+				return cBits::IsSet( m_uHi, nBit-k_UNIT_BITS );
 #endif
 		}
-		bool operator == (const CUInt64& n) const
+		bool operator == (const cUInt64& n) const
 		{
 #ifdef USE_INT64
 			return m_u == n.m_u;
@@ -115,7 +115,7 @@ namespace Gray
 			return m_uLo == n.m_uLo && m_uHi == n.m_uHi;
 #endif
 		}
-		bool operator != (const CUInt64& n) const
+		bool operator != (const cUInt64& n) const
 		{
 			return !(*this == n);
 		}
@@ -127,7 +127,7 @@ namespace Gray
 			return m_uLo == n;
 #endif
 		}
-		bool operator>(const CUInt64& n) const
+		bool operator>(const cUInt64& n) const
 		{
 #ifdef USE_INT64
 			return m_u > n.m_u;
@@ -139,7 +139,7 @@ namespace Gray
 #endif
 		}
 
-		bool operator<(const CUInt64& n) const
+		bool operator<(const cUInt64& n) const
 		{
 #ifdef USE_INT64
 			return m_u < n.m_u;
@@ -151,7 +151,7 @@ namespace Gray
 #endif
 		}
 
-		bool operator <=(const CUInt64& n) const
+		bool operator <=(const cUInt64& n) const
 		{
 #ifdef USE_INT64
 			return m_u <= n.m_u;
@@ -210,7 +210,7 @@ namespace Gray
 			--*this;
 		}
 
-		CUInt64& operator+=(const CUInt64& n)
+		cUInt64& operator+=(const cUInt64& n)
 		{
 #ifdef USE_INT64
 			m_u += n.m_u;
@@ -222,7 +222,7 @@ namespace Gray
 #endif
 			return *this;
 		}
-		CUInt64& operator-=(const CUInt64& n)
+		cUInt64& operator-=(const cUInt64& n)
 		{
 #ifdef USE_INT64
 			m_u -= n.m_u;
@@ -231,9 +231,9 @@ namespace Gray
 #endif
 			return *this;
 		}
-		CUInt64& operator *=(const CUInt64& x)
+		cUInt64& operator *=(const cUInt64& x)
 		{
-			CUInt64 ans;
+			cUInt64 ans;
 #ifdef USE_INT64
 			m_u *= x.m_u;
 #else
@@ -241,9 +241,9 @@ namespace Gray
 #endif
 			return *this;
 		}
-		CUInt64 operator *(const CUInt64& x) const
+		cUInt64 operator *(const cUInt64& x) const
 		{
-			CUInt64 ans;
+			cUInt64 ans;
 #ifdef USE_INT64
 			ans.m_u = m_u * x.m_u;
 #else
@@ -251,7 +251,7 @@ namespace Gray
 #endif
 			return ans;
 		}
-		void operator %=(const CUInt64& x)
+		void operator %=(const cUInt64& x)
 		{
 			//! Modulus *this by x.
 #ifdef USE_INT64
@@ -278,7 +278,7 @@ namespace Gray
 #endif
 		}
 
-		CUInt64& operator|=(const CUInt64& n)
+		cUInt64& operator|=(const cUInt64& n)
 		{
 #ifdef USE_INT64
 			m_u |= n.m_u;
@@ -289,7 +289,7 @@ namespace Gray
 			return *this;
 		}
 
-		CUInt64& operator&=(const CUInt64& n)
+		cUInt64& operator&=(const cUInt64& n)
 		{
 #ifdef USE_INT64
 			m_u &= n.m_u;
@@ -300,7 +300,7 @@ namespace Gray
 			return *this;
 		}
 
-		CUInt64& operator^=(const CUInt64& n)
+		cUInt64& operator^=(const cUInt64& n)
 		{
 #ifdef USE_INT64
 			m_u ^= n.m_u;
@@ -311,7 +311,7 @@ namespace Gray
 			return *this;
 		}
 
-		CUInt64& operator<<=(BIT_ENUM_t uiBits)
+		cUInt64& operator<<=(BIT_ENUM_t uiBits)
 		{
 #ifdef USE_INT64
 			m_u <<= uiBits;
@@ -330,7 +330,7 @@ namespace Gray
 			return *this;
 		}
 
-		CUInt64& operator>>=(BIT_ENUM_t uiBits)
+		cUInt64& operator>>=(BIT_ENUM_t uiBits)
 		{
 #ifdef USE_INT64
 			m_u >>= uiBits;
@@ -355,58 +355,58 @@ namespace Gray
 
 		BIT_ENUM_t get_Highest1Bit() const;
 		HRESULT SetRandomBits(BIT_ENUM_t nBits);
-		void SetPowerMod(const CUInt64& base, const CUInt64& exponent, const CUInt64& modulus);
+		void SetPowerMod(const cUInt64& base, const cUInt64& exponent, const cUInt64& modulus);
 
 		bool isPrime() const;
-		int SetRandomPrime(BIT_ENUM_t nBits, CThreadState* pCancel = nullptr);
+		int SetRandomPrime(BIT_ENUM_t nBits, cThreadState* pCancel = nullptr);
 		void OpBitShiftLeft1(UNIT_t nBitMask);
 
-		static void GRAYCALL Divide(const CUInt64& dividend, const CUInt64& divisor, OUT CUInt64& quotient, OUT CUInt64& remainder);
-		static void GRAYCALL EuclideanAlgorithm(const CUInt64& x, const CUInt64& y, OUT CUInt64& a, OUT CUInt64& b, OUT CUInt64& g);
+		static void GRAYCALL Divide(const cUInt64& dividend, const cUInt64& divisor, OUT cUInt64& quotient, OUT cUInt64& remainder);
+		static void GRAYCALL EuclideanAlgorithm(const cUInt64& x, const cUInt64& y, OUT cUInt64& a, OUT cUInt64& b, OUT cUInt64& g);
 
-		UNITTEST_FRIEND(CUInt64);
+		UNITTEST_FRIEND(cUInt64);
 	};
 
 #pragma pack(pop)
 
-	inline CUInt64 operator+(const CUInt64& roUI64_1, const CUInt64& roUI64_2)
+	inline cUInt64 operator+(const cUInt64& roUI64_1, const cUInt64& roUI64_2)
 	{
-		CUInt64 temp = roUI64_1;
+		cUInt64 temp = roUI64_1;
 		temp += roUI64_2;
 		return temp;
 	}
 
-	inline CUInt64 operator|(const CUInt64& roUI64_1, const CUInt64& roUI64_2)
+	inline cUInt64 operator|(const cUInt64& roUI64_1, const cUInt64& roUI64_2)
 	{
-		CUInt64 temp = roUI64_1;
+		cUInt64 temp = roUI64_1;
 		temp |= roUI64_2;
 		return temp;
 	}
 
-	inline CUInt64 operator&(const CUInt64& roUI64_1, const CUInt64& roUI64_2)
+	inline cUInt64 operator&(const cUInt64& roUI64_1, const cUInt64& roUI64_2)
 	{
-		CUInt64 temp = roUI64_1;
+		cUInt64 temp = roUI64_1;
 		temp &= roUI64_2;
 		return temp;
 	}
 
-	inline CUInt64 operator^(const CUInt64& roUI64_1, const CUInt64& roUI64_2)
+	inline cUInt64 operator^(const cUInt64& roUI64_1, const cUInt64& roUI64_2)
 	{
-		CUInt64 temp = roUI64_1;
+		cUInt64 temp = roUI64_1;
 		temp ^= roUI64_2;
 		return temp;
 	}
 
-	inline CUInt64 operator<<(const CUInt64& n, BIT_ENUM_t uiBits)
+	inline cUInt64 operator<<(const cUInt64& n, BIT_ENUM_t uiBits)
 	{
-		CUInt64 temp = n;
+		cUInt64 temp = n;
 		temp <<= uiBits;
 		return temp;
 	}
 
-	inline CUInt64 operator>>(const CUInt64& n, BIT_ENUM_t uiBits)
+	inline cUInt64 operator>>(const cUInt64& n, BIT_ENUM_t uiBits)
 	{
-		CUInt64 temp = n;
+		cUInt64 temp = n;
 		temp >>= uiBits;
 		return temp;
 	}

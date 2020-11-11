@@ -1,43 +1,43 @@
 //
-//! @file CList.h
+//! @file cList.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CList_H
-#define _INC_CList_H
+#ifndef _INC_cList_H
+#define _INC_cList_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
 #include "GrayCore.h"
 #include "HResult.h"
-#include "CUnitTestDecl.h"
-#include "CDebugAssert.h"
-#include "CHeapObject.h"
+#include "cUnitTestDecl.h"
+#include "cDebugAssert.h"
+#include "cHeapObject.h"
 
-UNITTEST_PREDEF(CListBase)
+UNITTEST_PREDEF(cListBase)
 
 namespace Gray
 {
-	class CListBase;
+	class cListBase;
 
-	class GRAYCORE_LINK CListNodeBase : public CHeapObject
+	class GRAYCORE_LINK cListNodeBase : public cHeapObject
 	{
-		//! @class Gray::CListNodeBase
-		//! base class for a single node in a CListBase.
-		//! derive a class from CListNodeBase to be a node member in a CListBase.
-		//! Single owner = This item belongs to JUST ONE CListBase (m_pParent)
+		//! @class Gray::cListNodeBase
+		//! base class for a single node in a cListBase.
+		//! derive a class from cListNodeBase to be a node member in a cListBase.
+		//! Single owner = This item belongs to JUST ONE cListBase (m_pParent)
 		//! Double linked list.
 		//! NOT circular. head and tail are nullptr.
-		friend class CListBase; // so m_pNext and m_pPrev can be manipulated directly.
+		friend class cListBase; // so m_pNext and m_pPrev can be manipulated directly.
 
 	private:
-		CListBase* m_pParent;		//!< link me back to my parent object.
-		CListNodeBase* m_pNext;	//!< next sibling
-		CListNodeBase* m_pPrev;	//!< previous sibling
+		cListBase* m_pParent;		//!< link me back to my parent object.
+		cListNodeBase* m_pNext;	//!< next sibling
+		cListNodeBase* m_pPrev;	//!< previous sibling
 
 	protected:
-		virtual void put_Parent(CListBase* pParent)
+		virtual void put_Parent(cListBase* pParent)
 		{
 			//! I am being added to a list. (or nullptr = no list)
 			ASSERT(m_pParent == nullptr || pParent == nullptr || m_pParent == pParent);
@@ -45,7 +45,7 @@ namespace Gray
 		}
 
 	protected:
-		CListNodeBase() 	// always just a base class.
+		cListNodeBase() 	// always just a base class.
 			: m_pParent(nullptr)	// not linked yet.
 			, m_pNext(nullptr)
 			, m_pPrev(nullptr)
@@ -53,21 +53,21 @@ namespace Gray
 		}
 
 	public:
-		virtual ~CListNodeBase()
+		virtual ~cListNodeBase()
 		{
 			//! ASSUME: RemoveFromParent() was already called! (virtuals don't work in destruct!)
 			ASSERT(!hasParent());
 		}
 
-		CListBase* get_Parent() const
+		cListBase* get_Parent() const
 		{
 			return m_pParent;
 		}
-		CListNodeBase* get_Next() const
+		cListNodeBase* get_Next() const
 		{
 			return m_pNext;
 		}
-		CListNodeBase* get_Prev() const
+		cListNodeBase* get_Prev() const
 		{
 			return m_pPrev;
 		}
@@ -85,7 +85,7 @@ namespace Gray
 		}
 
 		//! remove ListNode from List.
-		//! @note Must define body of this function after CListBase has been defined.
+		//! @note Must define body of this function after cListBase has been defined.
 		void RemoveFromParent();
 
 		virtual HRESULT DisposeThis()	// delete myself from the system.
@@ -99,35 +99,35 @@ namespace Gray
 
 	//*************************************************
 
-	class GRAYCORE_LINK CListBase	// generic list of objects based on CListNodeBase.
+	class GRAYCORE_LINK cListBase	// generic list of objects based on cListNodeBase.
 	{
-		//! @class Gray::CListBase
+		//! @class Gray::cListBase
 		//! Double linked list. NOT circular. head and tail are nullptr.
 		//! @note Lists are primarily used if inserts and deletes for large sets occurs frequently.
 		//! Objects should remove themselves from the list when deleted.
 		//! Similar to the MFC CList, or std::list<T>, std::deque
 
-		friend class CListNodeBase; // so it can call RemoveListNode() to remove self.
+		friend class cListNodeBase; // so it can call RemoveListNode() to remove self.
 
 	protected:
 		ITERATE_t m_iCount;		//!< how many children? nice to get read only direct access to this for scripting.
 	private:
-		CListNodeBase* m_pHead;	//!< Head of my list.
-		CListNodeBase* m_pTail;	//!< Tail of my list.
+		cListNodeBase* m_pHead;	//!< Head of my list.
+		cListNodeBase* m_pTail;	//!< Tail of my list.
 
 	protected:
 		//! Override this to get called when an item is removed from this list.
 		//! Never called directly. ALWAYS called from pObRec->RemoveFromParent()
-		virtual void RemoveListNode(CListNodeBase* pNode);	//!< allow Override of this. called when child pObRec removed from list.
+		virtual void RemoveListNode(cListNodeBase* pNode);	//!< allow Override of this. called when child pObRec removed from list.
 
 	public:
-		CListBase() noexcept
+		cListBase() noexcept
 			: m_iCount(0)
 			, m_pHead(nullptr)
 			, m_pTail(nullptr)
 		{
 		}
-		virtual ~CListBase()
+		virtual ~cListBase()
 		{
 			//! @note virtuals do not work in destructors !
 			//! ASSUME: DisposeAll() or Empty() is called from higher levels
@@ -137,19 +137,19 @@ namespace Gray
 
 		//! Override this to check items being added.
 		//! pPrev = nullptr = first
-		virtual void InsertListNode(CListNodeBase* pNodeNew, CListNodeBase* pNodePrev = nullptr);
-		void InsertList(CListBase* pListSrc, CListNodeBase* pNodePrev = nullptr);
+		virtual void InsertListNode(cListNodeBase* pNodeNew, cListNodeBase* pNodePrev = nullptr);
+		void InsertList(cListBase* pListSrc, cListNodeBase* pNodePrev = nullptr);
 
-		void InsertBefore(CListNodeBase* pNodeNew, CListNodeBase* pNodeNext)
+		void InsertBefore(cListNodeBase* pNodeNew, cListNodeBase* pNodeNext)
 		{
 			//! @arg pNext = nullptr = insert last
 			InsertListNode(pNodeNew, (pNodeNext != nullptr) ? (pNodeNext->get_Prev()) : get_Tail());
 		}
-		void InsertHead(CListNodeBase* pNodeNew)
+		void InsertHead(cListNodeBase* pNodeNew)
 		{
 			InsertListNode(pNodeNew, nullptr);
 		}
-		void InsertTail(CListNodeBase* pNodeNew)
+		void InsertTail(cListNodeBase* pNodeNew)
 		{
 			InsertListNode(pNodeNew, get_Tail());
 		}
@@ -157,11 +157,11 @@ namespace Gray
 		void DisposeAll();
 		void Empty();
 
-		CListNodeBase* get_Head(void) const noexcept
+		cListNodeBase* get_Head(void) const noexcept
 		{
 			return m_pHead;
 		}
-		CListNodeBase* get_Tail(void) const noexcept
+		cListNodeBase* get_Tail(void) const noexcept
 		{
 			return m_pTail;
 		} 
@@ -175,21 +175,21 @@ namespace Gray
 		}
 
 		//! iterate the linked list.
-		CListNodeBase* GetAt(ITERATE_t index) const;
+		cListNodeBase* GetAt(ITERATE_t index) const;
 
-		bool IsMyChild(const CListNodeBase* pNode) const
+		bool IsMyChild(const cListNodeBase* pNode) const
 		{
 			if (pNode == nullptr)
 				return false;
 			return(pNode->get_Parent() == this);
 		}
 
-		UNITTEST_FRIEND(CListBase);
+		UNITTEST_FRIEND(cListBase);
 	};
 
 	//*************************************************
 
-	inline void CListNodeBase::RemoveFromParent()
+	inline void cListNodeBase::RemoveFromParent()
 	{
 		//! Remove this(myself) from my parent list (if i have one)
 		if (m_pParent != nullptr)
@@ -202,12 +202,12 @@ namespace Gray
 	//*************************************************
 	// template type casting for lists.
 
-	template<class _TYPE_REC = CListNodeBase>
-	class CListNodeT : public CListNodeBase
+	template<class _TYPE_REC = cListNodeBase>
+	class cListNodeT : public cListNodeBase
 	{
-		//! @class Gray::CListNodeT
-		//! Assume this is a node (in a linked list) of type _TYPE_REC. e.g. _TYPE_REC is based on CListNodeT<> which is based on CListNodeBase.
-		typedef CListNodeBase SUPER_t;
+		//! @class Gray::cListNodeT
+		//! Assume this is a node (in a linked list) of type _TYPE_REC. e.g. _TYPE_REC is based on cListNodeT<> which is based on cListNodeBase.
+		typedef cListNodeBase SUPER_t;
 	public:
 		/*
 		operator _TYPE_REC*()
@@ -228,14 +228,14 @@ namespace Gray
 		}
 	};
 
-	template<class _TYPE_REC /* = CListNodeBase */ >
-	class CListT : public CListBase
+	template<class _TYPE_REC /* = cListNodeBase */ >
+	class CListT : public cListBase
 	{
 		//! @class Gray::CListT
 		//! Hold a List of _TYPE_REC things.
-		//! @note _TYPE_REC is the type of class this list contains. _TYPE_REC is based on CListNodeT<_TYPE_REC> and/or CListNodeBase
-		typedef CListBase SUPER_t;
-		typedef CListNodeT<_TYPE_REC> NODEBASE_t;
+		//! @note _TYPE_REC is the type of class this list contains. _TYPE_REC is based on cListNodeT<_TYPE_REC> and/or cListNodeBase
+		typedef cListBase SUPER_t;
+		typedef cListNodeT<_TYPE_REC> NODEBASE_t;
 	public:
 		_TYPE_REC* GetAt(ITERATE_t index) const
 		{
@@ -252,4 +252,4 @@ namespace Gray
 		}
 	};
 };
-#endif // _INC_CList_H
+#endif // _INC_cList_H

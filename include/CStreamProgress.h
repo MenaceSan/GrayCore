@@ -1,22 +1,22 @@
 //
-//! @file CStreamProgress.h
+//! @file cStreamProgress.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CStreamProgress_H
-#define _INC_CStreamProgress_H
+#ifndef _INC_cStreamProgress_H
+#define _INC_cStreamProgress_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
-#include "COSHandle.h"
+#include "cOSHandle.h"
 
 namespace Gray
 {
 	template< typename TYPE = STREAM_POS_t >
-	class CStreamProgressT
+	class cStreamProgressT
 	{
-		//! @class Gray::CStreamProgressT
+		//! @class Gray::cStreamProgressT
 		//! How much of some total has been processed?
 
 	public:
@@ -24,7 +24,7 @@ namespace Gray
 		TYPE m_nTotal;		//!< Total size of the stream. 0 = i have no idea how big the total is.
 
 	public:
-		CStreamProgressT(TYPE nAmount = 0, TYPE nTotal = 0)
+		cStreamProgressT(TYPE nAmount = 0, TYPE nTotal = 0)
 		: m_nAmount(nAmount)
 		, m_nTotal(nTotal)
 		{
@@ -65,23 +65,23 @@ namespace Gray
 		}
 	};
 
-	typedef CStreamProgressT<STREAM_POS_t> CStreamProgress;
+	typedef cStreamProgressT<STREAM_POS_t> cStreamProgress;
 
-	class GRAYCORE_LINK CStreamProgressF
+	class GRAYCORE_LINK cStreamProgressF
 	{
-		//! @class Gray::CStreamProgressF
+		//! @class Gray::cStreamProgressF
 		//! We are descending into nested tasks we have not fully measured.
 		//! i.e. enumerating subdirectories i have not yet counted.
 		//! TODO This can be a used as a time throbber. the task time is just an estimate. we should never actually reach it.
 
-		friend class CStreamProgressChunk;
+		friend class cStreamProgressChunk;
 	private:
 		// Stats
 		float m_nTotal;			//!< Estimated Value of the directory we are processing. (1.0=total of all files)
 		float m_nAmount;	//!< Current progress 0 to 1.0 (m_nTotal)
 
 	public:
-		CStreamProgressF()
+		cStreamProgressF()
 		: m_nTotal(1.0f)
 		, m_nAmount(0.0f)
 		{}
@@ -107,19 +107,19 @@ namespace Gray
 		}
 	};
 
-	class GRAYCORE_LINK CStreamProgressChunk
+	class GRAYCORE_LINK cStreamProgressChunk
 	{
-		//! @class Gray::CStreamProgressChunk
+		//! @class Gray::cStreamProgressChunk
 		//! Track nested work load. Processing a tree.
 
 	private:
-		CStreamProgressF& m_Prog;
-		CStreamProgressF m_ProgPrev;	//!< m_Prog at start.
+		cStreamProgressF& m_Prog;
+		cStreamProgressF m_ProgPrev;	//!< m_Prog at start.
 		int m_iChunk;	//!< What chunk are we on ?
 		int m_iChunks;	//!< how many chunks is this supposed to be ?
 
 	public:
-		CStreamProgressChunk(CStreamProgressF& prog, int iSubChunks, int iParentChunks = 1)
+		cStreamProgressChunk(cStreamProgressF& prog, int iSubChunks, int iParentChunks = 1)
 		: m_Prog(prog)
 		, m_iChunk(0)
 		, m_iChunks(iSubChunks)
@@ -138,7 +138,7 @@ namespace Gray
 				prog.m_nTotal = (((float)iParentChunks) * prog.m_nTotal) / ((float)m_iChunks);	// MULDIV
 			}
 		}
-		~CStreamProgressChunk()
+		~cStreamProgressChunk()
 		{
 			//! complete the task.
 			if (m_ProgPrev.m_nTotal >= 1.0f)
@@ -169,11 +169,11 @@ namespace Gray
 		//! @struct Gray::IStreamProgressCallback
 		//! Abstract Base class. Get call backs indicating the overall progress of some action.
 		//! Similar to .NET System.IProgress<T>
-		//! This can be used as ICancellable with CThreadState. The caller may decide to cancel the function via the onProgressCallback return.
+		//! This can be used as ICancellable with cThreadState. The caller may decide to cancel the function via the onProgressCallback return.
 
 		IGNORE_WARN_ABSTRACT(IStreamProgressCallback);
 
-		virtual HRESULT _stdcall onProgressCallback(const CStreamProgress& progress)
+		virtual HRESULT _stdcall onProgressCallback(const cStreamProgress& progress)
 		{
 			//! Some synchronous process is notifying us how far it has gone.
 			//! @return

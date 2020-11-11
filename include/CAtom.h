@@ -1,19 +1,19 @@
 //
-//! @file CAtom.h
+//! @file cAtom.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CAtom_H
-#define _INC_CAtom_H
+#ifndef _INC_cAtom_H
+#define _INC_cAtom_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
-#include "CString.h"
+#include "cString.h"
 #include "HResult.h"
 #include "FileName.h"
 
-UNITTEST_PREDEF(CAtomRef);
+UNITTEST_PREDEF(cAtomRef);
 
 namespace Gray
 {
@@ -24,21 +24,21 @@ namespace Gray
 #define CATOM_STATIC(a)		#a	//!< A static atom defined in the code. (e.g."SymName","Root")
 #define CATOM_STATSTR(a)	#a	//!< A static atom i know is defined some place, but i just want to use the string here.
 
-	class GRAYCORE_LINK CAtomDef : public CSmartBase
+	class GRAYCORE_LINK cAtomDef : public cRefBase
 	{
-		//! @class Gray::CAtomDef
-		//! Internal holder for the atom. Don't use this publicly. Use CAtomRef.
+		//! @class Gray::cAtomDef
+		//! Internal holder for the atom. Don't use this publicly. Use cAtomRef.
 		//! A single string name shared by all.
 
-		friend class CAtomRef;
-		friend class CAtomManager;
+		friend class cAtomRef;
+		friend class cAtomManager;
 
 	private:
 		cStringA m_s;				//!< the string being represented.
 		ATOMCODE_t m_nHashCode;		//!< GetHashCode32() for m_s; case independent. e.g. THIS==this==same atom.
 
 	public:
-		CAtomDef(cStringA s = "")
+		cAtomDef(cStringA s = "")
 			: m_s(s)
 			, m_nHashCode(StrT::GetHashCode32<ATOMCHAR_t>(s, k_StrLen_UNK, 0))
 		{
@@ -55,40 +55,40 @@ namespace Gray
 			return m_s;
 		}
 	};
-	typedef CSmartPtr<CAtomDef> CAtomDefPtr;
+	typedef cRefPtr<cAtomDef> cAtomDefPtr;
 
-	class GRAYCORE_LINK CAtomRef
+	class GRAYCORE_LINK cAtomRef
 	{
-		//! @class Gray::CAtomRef
+		//! @class Gray::cAtomRef
 		//! A single string name shared by all.
 		//! Similar to the _WIN32 ATOM GlobalAddAtom(). but not system shared of course.
 		//! case independent. e.g. THIS==this=>same atom.
 
-		friend class CAtomManager;
+		friend class cAtomManager;
 		typedef cStringA STR_t;
-		typedef CAtomRef THIS_t;
-		UNITTEST_FRIEND(CAtomRef)
+		typedef cAtomRef THIS_t;
+		UNITTEST_FRIEND(cAtomRef)
 
 	private:
-		CAtomDefPtr	m_pDef;	//!< a reference to an atom. NOT allowed to be nullptr!
+		cAtomDefPtr	m_pDef;	//!< a reference to an atom. NOT allowed to be nullptr!
 
 	public:
-		CAtomRef(const THIS_t& ref)
+		cAtomRef(const THIS_t& ref)
 			: m_pDef(ref.m_pDef)
 		{
 			ASSERT(m_pDef != nullptr);
 		}
-		CAtomRef(const STR_t& sName)
+		cAtomRef(const STR_t& sName)
 			: m_pDef(FindorCreateAtomStr(sName))
 		{
 			ASSERT(m_pDef != nullptr);
 		}
-		CAtomRef(const ATOMCHAR_t* pszName = "")
+		cAtomRef(const ATOMCHAR_t* pszName = "")
 			: m_pDef(FindorCreateAtomStr(pszName))
 		{
 			ASSERT(m_pDef != nullptr);
 		}
-		~CAtomRef()
+		~cAtomRef()
 		{
 			EmptyAtom();
 		}
@@ -131,7 +131,7 @@ namespace Gray
 			return m_pDef->m_s.GetLength();
 		}
 
-		bool operator==(const CAtomRef& atom) const
+		bool operator==(const cAtomRef& atom) const
 		{
 			return(m_pDef == atom.m_pDef);
 		}
@@ -175,8 +175,8 @@ namespace Gray
 		void SetAtomStatic();
 
 		static void GRAYCALL CreateStaticAtoms(const ATOMCHAR_t** ppAtoms);
-		static CAtomRef GRAYCALL FindAtomStr(const ATOMCHAR_t* pszText);
-		static CAtomRef GRAYCALL FindAtomHashCode(ATOMCODE_t idAtomCode);
+		static cAtomRef GRAYCALL FindAtomStr(const ATOMCHAR_t* pszText);
+		static cAtomRef GRAYCALL FindAtomHashCode(ATOMCODE_t idAtomCode);
 
 		static HRESULT GRAYCALL CheckSymbolicStr(const ATOMCHAR_t* pszTag, bool bAllowDots = false);
 		static StrLen_t GRAYCALL GetSymbolicStr(OUT ATOMCHAR_t* pszTag, const ATOMCHAR_t* pszExp, bool bAllowDots = false);
@@ -186,12 +186,12 @@ namespace Gray
 #endif
 
 	private:
-		CAtomRef(CAtomDef* pDef)
+		cAtomRef(cAtomDef* pDef)
 			: m_pDef(pDef)
 		{
 		}
-		static CAtomDefPtr GRAYCALL FindorCreateAtomStr(const ATOMCHAR_t* pszText);
-		static CAtomDefPtr GRAYCALL FindorCreateAtomStr(const STR_t& sText);
+		static cAtomDefPtr GRAYCALL FindorCreateAtomStr(const ATOMCHAR_t* pszText);
+		static cAtomDefPtr GRAYCALL FindorCreateAtomStr(const STR_t& sText);
 	};
 }
-#endif // _INC_CAtom_H
+#endif // _INC_cAtom_H

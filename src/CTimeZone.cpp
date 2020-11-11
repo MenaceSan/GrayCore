@@ -1,14 +1,14 @@
 //
-//! @file CTimeZone.cpp
+//! @file cTimeZone.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 #include "pch.h"
-#include "CTimeZone.h"
+#include "cTimeZone.h"
 #include "StrT.h"
 
 namespace Gray
 {
-	const CTimeZone CTimeZoneMgr::k_TimeZones[] = 	//!< terminated by name = nullptr;
+	const cTimeZone cTimeZoneMgr::k_TimeZones[] = 	//!< terminated by name = nullptr;
 	{
 		{ _GT("Z"), _GT(""), TZ_UTC, TZ_DSTRULE_NONE },
 		{ _GT("G"), _GT(""), TZ_UTC, TZ_DSTRULE_NONE },
@@ -21,11 +21,11 @@ namespace Gray
 		{ nullptr, nullptr, TZ_UTC, TZ_DSTRULE_NONE },
 	};
 
-	bool CTimeZoneMgr::sm_bInitTimeZoneSet = false;	//!< Have I called tzset() ?
+	bool cTimeZoneMgr::sm_bInitTimeZoneSet = false;	//!< Have I called tzset() ?
 
 	//******************************************************************************************
 
-	TZ_TYPE GRAYCALL CTimeZoneMgr::GetLocalTimeZoneOffset() // static
+	TZ_TYPE GRAYCALL cTimeZoneMgr::GetLocalTimeZoneOffset() // static
 	{
 		//! Get the time zone offset (for this local system) in minutes.
 		//! The difference in minutes between UTC and local time
@@ -69,15 +69,15 @@ namespace Gray
 #endif
 
 #if 0 // defined(__linux__)
-		CTimeVal tv;
+		cTimeVal tv;
 		struct timezone tz;
-		CMem::Zero(&tz, sizeof(tz));
+		cMem::Zero(&tz, sizeof(tz));
 		gettimeofday(&tv, &tz);
 		return (TZ_TYPE)tz.tz_minuteswest;
 #endif
 	}
 
-	const CTimeZone* GRAYCALL CTimeZoneMgr::FindTimeZone(TZ_TYPE nTimeZoneOffset) // static
+	const cTimeZone* GRAYCALL cTimeZoneMgr::FindTimeZone(TZ_TYPE nTimeZoneOffset) // static
 	{
 		//! Get a block describing the time zone. (by offset)
 		//! geographic timezone does not include offset for DST.
@@ -88,7 +88,7 @@ namespace Gray
 		}
 		return nullptr;
 	}
-	const CTimeZone* GRAYCALL CTimeZoneMgr::FindTimeZone(const GChar_t* pszName) // static
+	const cTimeZone* GRAYCALL cTimeZoneMgr::FindTimeZone(const GChar_t* pszName) // static
 	{
 		//! Get a block describing the time zone. (by name)
 		for (UINT i = 0; i < _countof(k_TimeZones) - 1; i++)
@@ -98,7 +98,7 @@ namespace Gray
 		}
 		return nullptr;
 	}
-	const CTimeZone* GRAYCALL CTimeZoneMgr::FindTimeZoneHead(const GChar_t* pszName) // static
+	const cTimeZone* GRAYCALL cTimeZoneMgr::FindTimeZoneHead(const GChar_t* pszName) // static
 	{
 		// like FindTimeZone() but doesn't have to be a full string.
 		for (UINT i = 0; i < _countof(k_TimeZones); i++)

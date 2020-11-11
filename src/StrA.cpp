@@ -7,10 +7,10 @@
 #include "pch.h"
 #include "StrA.h"
 #include "StrChar.h"
-#include "CLogMgr.h"
-#include "CIniBase.h"	// IIniBaseGetter
-#include "CHeap.h"
-#include "CBits.h"
+#include "cLogMgr.h"
+#include "cIniBase.h"	// IIniBaseGetter
+#include "cHeap.h"
+#include "cBits.h"
 
 namespace Gray
 {
@@ -340,7 +340,7 @@ namespace Gray
 
 //*************************************************************************
 #if USE_UNITTESTS
-#include "CUnitTest.h"
+#include "cUnitTest.h"
 
 UNITTEST_CLASS(StrA)
 {
@@ -372,7 +372,7 @@ UNITTEST_CLASS(StrA)
 		// "0,1,5,8"
 
 		// StrA::BlockReplacement
-		class CUnitTestBlock : public Gray::IIniBaseGetter
+		class cUnitTestBlock : public Gray::IIniBaseGetter
 		{
 		public:
 			virtual HRESULT PropGet(const char* pszPropTag, OUT CStringI& rsVal) const

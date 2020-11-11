@@ -1,5 +1,5 @@
 //
-//! @file CFileStatus.h
+//! @file cFileStatus.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
@@ -10,10 +10,10 @@
 #endif
 
 #include "FileName.h"
-#include "CTimeFile.h"
-#include "CTimeInt.h"
-#include "CValT.h"
-#include "CStreamProgress.h"
+#include "cTimeFile.h"
+#include "cTimeInt.h"
+#include "cValT.h"
+#include "cStreamProgress.h"
 #include "HResult.h"
 
 #ifdef _WIN32
@@ -60,14 +60,14 @@ namespace Gray
 		//! Attributes for a file (or directory) in a directory. Does NOT store the name.
 		//! Support of fields varies based on file system. FAT,FAT32,NTFS, etc
 		//! Similar to ANSI (or POSIX) stat() _stat
-		//! Similar to MFC CFileStatus
+		//! Similar to MFC cFileStatus
 
 		typedef cFileStatus THIS_t;
 
 	public:
-		CTimeFile m_timeCreate;		//!< m_ctime  = (may not be supported by file system).
-		CTimeFile m_timeChange;		//!< m_mtime = real world time/date of last modification. (FAT32 only accurate to 2 seconds) // All OS support this.
-		CTimeFile m_timeLastAccess;	//!< m_atime = time of last access/Open. (For Caching). (may not be supported by file system)
+		cTimeFile m_timeCreate;		//!< m_ctime  = (may not be supported by file system).
+		cTimeFile m_timeChange;		//!< m_mtime = real world time/date of last modification. (FAT32 only accurate to 2 seconds) // All OS support this.
+		cTimeFile m_timeLastAccess;	//!< m_atime = time of last access/Open. (For Caching). (may not be supported by file system)
 		FILE_SIZE_t m_Size;			//!< file size in bytes. size_t. not always accurate for directories. (-1)
 		FILEATTR_MASK_t m_Attributes;		//!< Mask of FILEATTR_TYPE_ attribute bits. FILEATTR_None
 
@@ -104,34 +104,34 @@ namespace Gray
 			return(m_timeChange.isValid());
 		}
 
-		static COMPARE_t GRAYCALL CompareChangeFileTime(const CTimeFile& t1, const CTimeFile& t2)	//! (accurate to 2 seconds)
+		static COMPARE_t GRAYCALL CompareChangeFileTime(const cTimeFile& t1, const cTimeFile& t2)	//! (accurate to 2 seconds)
 		{
 			//! ~2 sec accurate for FAT32
-			return CValT::Compare(t1.get_FAT32(), t2.get_FAT32());
+			return cValT::Compare(t1.get_FAT32(), t2.get_FAT32());
 		}
-		bool IsSameChangeFileTime(const CTimeFile& t2) const	//! (accurate to 2 seconds)
+		bool IsSameChangeFileTime(const cTimeFile& t2) const	//! (accurate to 2 seconds)
 		{
 			//! ~2 sec accurate for FAT32
-			return CValT::Compare(m_timeChange.get_FAT32(), t2.get_FAT32()) == COMPARE_Equal;
+			return cValT::Compare(m_timeChange.get_FAT32(), t2.get_FAT32()) == COMPARE_Equal;
 		}
 		static TIMESEC_t GRAYCALL MakeFatTime(TIMESEC_t tTime)
 		{
 			//! (accurate to 2 seconds)
 			return tTime &~1;
 		}
-		static COMPARE_t GRAYCALL CompareChangeTime(const CTimeInt& t1, const CTimeInt& t2)
+		static COMPARE_t GRAYCALL CompareChangeTime(const cTimeInt& t1, const cTimeInt& t2)
 		{
 			//! ~2 second accurate for FAT32
-			return CValT::Compare(MakeFatTime(t1.GetTime()), MakeFatTime(t2.GetTime()));
+			return cValT::Compare(MakeFatTime(t1.GetTime()), MakeFatTime(t2.GetTime()));
 		}
-		bool IsSameChangeTime(const CTimeInt& t2) const
+		bool IsSameChangeTime(const cTimeInt& t2) const
 		{
 			return CompareChangeTime(m_timeChange, t2) == COMPARE_Equal;
 		}
 
 		bool IsFileEqualTo(const THIS_t& rFileStatus) const
 		{
-			if (CValT::Compare(m_timeCreate.get_Val(), rFileStatus.m_timeCreate.get_Val()) != COMPARE_Equal)
+			if (cValT::Compare(m_timeCreate.get_Val(), rFileStatus.m_timeCreate.get_Val()) != COMPARE_Equal)
 				return false;
 			if (!IsSameChangeFileTime(rFileStatus.m_timeChange))
 				return false;
@@ -168,7 +168,7 @@ namespace Gray
 		}
 
 		static HRESULT GRAYCALL WriteFileAttributes(const FILECHAR_t* pszFilePath, FILEATTR_MASK_t dwAttributes);
-		static HRESULT GRAYCALL WriteFileTimes(const FILECHAR_t* pszFilePath, const CTimeFile* pTimeCreate, const CTimeFile* pTimeChange = nullptr);
+		static HRESULT GRAYCALL WriteFileTimes(const FILECHAR_t* pszFilePath, const cTimeFile* pTimeCreate, const cTimeFile* pTimeChange = nullptr);
 		static HRESULT GRAYCALL ReadFileStatus2(const FILECHAR_t* pszFilePath, cFileStatus* pFileStatus=nullptr, bool bFollowLink = false);
 
 		static bool GRAYCALL Exists(const FILECHAR_t* pszFilePath)

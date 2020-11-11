@@ -1,12 +1,12 @@
 //
-//! @file CFileText.cpp
+//! @file cFileText.cpp
 //! see http://www.codeproject.com/file/handles.asp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
 #include "pch.h"
-#include "CFileText.h"
-#include "CLogMgr.h"
+#include "cFileText.h"
+#include "cLogMgr.h"
 
 #if USE_CRT
 #if defined(_WIN32) && ! defined(UNDER_CE)
@@ -19,24 +19,24 @@
 namespace Gray
 {
  
-	CFileText::CFileText()
+	cFileText::cFileText()
 		: m_pStream(nullptr)
 		, m_iCurLineNum(0)
 	{
 	}
-	CFileText::CFileText(CStringF sFilePath, OF_FLAGS_t nOpenFlags)
+	cFileText::cFileText(cStringF sFilePath, OF_FLAGS_t nOpenFlags)
 		: m_pStream(nullptr)
 		, m_iCurLineNum(0)
 	{
 		OpenX(sFilePath, nOpenFlags);
 	}
-	CFileText::~CFileText() // virtual
+	cFileText::~cFileText() // virtual
 	{
 		// Virtuals don't work in destructors !
 		Close();
 	}
 
-	const FILECHAR_t* CFileText::get_ModeCPtr() const
+	const FILECHAR_t* cFileText::get_ModeCPtr() const
 	{
 		//! get the proper fopen() mode arguments.
 		UINT nOpenFlags = get_ModeFlags();
@@ -67,7 +67,7 @@ namespace Gray
 			return _FN("r");
 	}
 
-	HRESULT CFileText::OpenX(CStringF sFilePath, OF_FLAGS_t nOpenFlags)
+	HRESULT cFileText::OpenX(cStringF sFilePath, OF_FLAGS_t nOpenFlags)
 	{
 		//! Open a text file.
 		//! @arg nOpenFlags = OF_READ|OF_WRITE|OF_READWRITE
@@ -126,7 +126,7 @@ namespace Gray
 		return S_OK;
 	}
 
-	HRESULT CFileText::OpenFileHandle(HANDLE h, OF_FLAGS_t nOpenFlags)
+	HRESULT cFileText::OpenFileHandle(HANDLE h, OF_FLAGS_t nOpenFlags)
 	{
 		// Use _fdopen() to get the backing OSHandle.
 
@@ -156,7 +156,7 @@ namespace Gray
 		return S_OK;
 	}
 
-	void CFileText::Close()	// virtual
+	void cFileText::Close()	// virtual
 	{
 		// virtuals don't work in destruct.
 		if (!isFileOpen())
@@ -173,7 +173,7 @@ namespace Gray
 		m_pStream = nullptr;
 	}
 
-	STREAM_SEEKRET_t CFileText::Seek(STREAM_OFFSET_t offset, SEEK_ORIGIN_TYPE eSeekOrigin) // virtual
+	STREAM_SEEKRET_t cFileText::Seek(STREAM_OFFSET_t offset, SEEK_ORIGIN_TYPE eSeekOrigin) // virtual
 	{
 		//! eSeekOrigin = SEEK_SET, SEEK_END
 		//! @note end of line translation might be broken? ftell() and fseek() don't work correctly when you use it.
@@ -197,7 +197,7 @@ namespace Gray
 		return ::ftell(m_pStream);	// did it really move?
 	}
 
-	STREAM_POS_t CFileText::GetPosition() const // virtual
+	STREAM_POS_t cFileText::GetPosition() const // virtual
 	{
 		//! override CStream
 		//! @note end of line translation might be broken? ftell and fseek don't work correctly when you use it.
@@ -207,7 +207,7 @@ namespace Gray
 		return(::ftell(m_pStream));
 	}
 
-	HRESULT CFileText::FlushX() // virtual
+	HRESULT cFileText::FlushX() // virtual
 	{
 		if (!isFileOpen())
 			return S_OK;
@@ -220,14 +220,14 @@ namespace Gray
 		return S_OK;
 	}
 
-	bool CFileText::isEOF() const
+	bool cFileText::isEOF() const
 	{
 		if (!isFileOpen())
 			return true;
 		return(::feof(m_pStream)) ? true : false;
 	}
 
-	HRESULT CFileText::GetStreamError() const
+	HRESULT cFileText::GetStreamError() const
 	{
 		// errno in M$
 		if (!isFileOpen())
@@ -235,7 +235,7 @@ namespace Gray
 		return HResult::FromPOSIX(::ferror(m_pStream));
 	}
 
-	HRESULT CFileText::ReadX(void* pBuffer, size_t nSizeMax) // virtual
+	HRESULT cFileText::ReadX(void* pBuffer, size_t nSizeMax) // virtual
 	{
 		//! CStream
 		//! Read a block of binary data or as much as we can until end of file.
@@ -258,7 +258,7 @@ namespace Gray
 		return (HRESULT)uRet;	// size we got. 0 = end of file?
 	}
 
-	HRESULT CFileText::WriteX(const void* pData, size_t nDataSize) // virtual
+	HRESULT cFileText::WriteX(const void* pData, size_t nDataSize) // virtual
 	{
 		//! CStream
 		//! Write binary data to the file.
@@ -277,7 +277,7 @@ namespace Gray
 		return((HRESULT)nDataSize);
 	}
 
-	HRESULT CFileText::WriteString(const char* pszStr)	// virtual
+	HRESULT cFileText::WriteString(const char* pszStr)	// virtual
 	{
 		//! override CStream
 		//! @note If we did fgets() it will translate the \n for us.
@@ -299,7 +299,7 @@ namespace Gray
 	}
 
 #if 0
-	HRESULT CFileText::ReadStringLine(wchar_t* pszBuffer, StrLen_t iSizeMax) // virtual
+	HRESULT cFileText::ReadStringLine(wchar_t* pszBuffer, StrLen_t iSizeMax) // virtual
 	{
 		//! override CStream
 		//! Read a line of text. like fgets()
@@ -309,7 +309,7 @@ namespace Gray
 	}
 #endif
 
-	HRESULT CFileText::ReadStringLine(char* pszBuffer, StrLen_t iSizeMax) // virtual
+	HRESULT cFileText::ReadStringLine(char* pszBuffer, StrLen_t iSizeMax) // virtual
 	{
 		//! override CStream
 		//! Read a line of text. like fgets().
@@ -341,7 +341,7 @@ namespace Gray
 		return StrT::Len(pszBuffer);	// Return length in chars.
 	}
 
-	HRESULT CFileText::ReadStringLineA(cStringA& r)
+	HRESULT cFileText::ReadStringLineA(cStringA& r)
 	{
 		//! Read an ASCII or UTF8 string/line from the file.
 		//! Read to the end of the single line.
@@ -355,7 +355,7 @@ namespace Gray
 		return hRes;
 	}
 
-	bool CFileText::put_TextPos(const CTextPos& rPos)
+	bool cFileText::put_TextPos(const cTextPos& rPos)
 	{
 		// FILE_BEGIN == SEEK_SET
 		if (!rPos.isValidPos())
@@ -370,37 +370,37 @@ namespace Gray
 //*****************************************************************************
 
 #if USE_UNITTESTS
-#include "CUnitTest.h"
-#include "CMime.h"
+#include "cUnitTest.h"
+#include "cMime.h"
 
-UNITTEST_CLASS(CFileText)
+UNITTEST_CLASS(cFileText)
 {
-	UNITTEST_METHOD(CFileText)
+	UNITTEST_METHOD(cFileText)
 	{
-		//! @todo test reading CFileText and seek position inside it. Must not be fooled by \r\n and \n.
-		CTextPos fp1(CTextPos::k_Invalid);
-		fp1 = CTextPos::k_Zero;
+		//! @todo test reading cFileText and seek position inside it. Must not be fooled by \r\n and \n.
+		cTextPos fp1(cTextPos::k_Invalid);
+		fp1 = cTextPos::k_Zero;
 
-		CStringF sFilePathB = CFilePath::CombineFilePathX(get_TestOutDir(), _FN(GRAY_NAMES) _FN("CFileTextB") _FN(MIME_EXT_txt));
+		cStringF sFilePathB = cFilePath::CombineFilePathX(get_TestOutDir(), _FN(GRAY_NAMES) _FN("CFileTextB") _FN(MIME_EXT_txt));
 		cFile testfileB;
 		HRESULT hRes = testfileB.OpenX(sFilePathB, OF_CREATE | OF_WRITE | OF_BINARY);
 		UNITTEST_TRUE(SUCCEEDED(hRes));
 
-		hRes = testfileB.WriteString(CUnitTests::k_sTextBlob.get_CPtr());
-		//UNITTEST_TRUE(hRes == CUnitTests::k_TEXTBLOB_LEN);
+		hRes = testfileB.WriteString(cUnitTests::k_sTextBlob.get_CPtr());
+		//UNITTEST_TRUE(hRes == cUnitTests::k_TEXTBLOB_LEN);
 		UNITTEST_TRUE(SUCCEEDED(hRes));
 
-		CStringF sFilePathT = CFilePath::CombineFilePathX(get_TestOutDir(), _FN(GRAY_NAMES) _FN("CFileTextT") _FN(MIME_EXT_txt));
+		cStringF sFilePathT = cFilePath::CombineFilePathX(get_TestOutDir(), _FN(GRAY_NAMES) _FN("CFileTextT") _FN(MIME_EXT_txt));
 
-		CFileText testfileT;
+		cFileText testfileT;
 		hRes = testfileT.OpenX(sFilePathT, OF_CREATE | OF_WRITE | OF_BINARY);
 		UNITTEST_TRUE(SUCCEEDED(hRes));
 
-		hRes = testfileT.WriteString(CUnitTests::k_sTextBlob.get_CPtr());
+		hRes = testfileT.WriteString(cUnitTests::k_sTextBlob.get_CPtr());
 		UNITTEST_TRUE(SUCCEEDED(hRes));
-		//UNITTEST_TRUE(hRes == CUnitTests::k_TEXTBLOB_LEN);
+		//UNITTEST_TRUE(hRes == cUnitTests::k_TEXTBLOB_LEN);
 	}
 };
-UNITTEST_REGISTER(CFileText, UNITTEST_LEVEL_Core);
+UNITTEST_REGISTER(cFileText, UNITTEST_LEVEL_Core);
 #endif
 #endif

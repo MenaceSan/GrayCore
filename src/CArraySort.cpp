@@ -1,31 +1,31 @@
 //
-//! @file CArraySort.cpp
+//! @file cArraySort.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 #include "pch.h"
-#include "CArraySort.h"
+#include "cArraySort.h"
 
 #if USE_UNITTESTS
-#include "CUnitTest.h"
-#include "CLogMgr.h"
-#include "CRandomDef.h"
-#include "CNewPtr.h"
+#include "cUnitTest.h"
+#include "cLogMgr.h"
+#include "cRandomDef.h"
+#include "cNewPtr.h"
 
 namespace Gray
 {
-	class CUnitTestArraySort
+	class cUnitTestArraySort
 	{
 	public:
 		int m_iSortVal;
 		// HASHCODE_t m_nHashCode;
 		static int sm_nAllocated;
 	public:
-		CUnitTestArraySort(int iSortVal)
+		cUnitTestArraySort(int iSortVal)
 			: m_iSortVal(iSortVal)
 		{
 			sm_nAllocated++;
 		}
-		~CUnitTestArraySort()
+		~cUnitTestArraySort()
 		{
 			sm_nAllocated--;
 		}
@@ -35,17 +35,17 @@ namespace Gray
 		}
 	};
 
-	int CUnitTestArraySort::sm_nAllocated = 0;
+	int cUnitTestArraySort::sm_nAllocated = 0;
 }
 
-UNITTEST_CLASS(CArraySort)
+UNITTEST_CLASS(cArraySort)
 {
-	UNITTEST_METHOD(CArraySort)
+	UNITTEST_METHOD(cArraySort)
 	{
 		//! Test sorted arrays. pick a simple template.
 
 		// Test QSort. Create test array of random data then sort it.
-		CArrayVal<UINT> aVals;
+		cArrayVal<UINT> aVals;
 		for (int i = 0; i < 300; i++)
 		{
 			aVals.Add(g_Rand.get_RandUns());
@@ -55,19 +55,19 @@ UNITTEST_CLASS(CArraySort)
 		aVals.QSort();
 		UNITTEST_TRUE(aVals.isArraySorted());
 
-		// Test a list of CNewPtr things sorted.
-		UNITTEST_TRUE(CUnitTestArraySort::sm_nAllocated == 0);
+		// Test a list of cNewPtr things sorted.
+		UNITTEST_TRUE(cUnitTestArraySort::sm_nAllocated == 0);
 		{
-			CArraySortFacadeValue< CNewPtr<CUnitTestArraySort>, CUnitTestArraySort*, int > aSortNew;
-			aSortNew.Add(new CUnitTestArraySort(1));
-			aSortNew.Add(new CUnitTestArraySort(2));
-			aSortNew.Add(new CUnitTestArraySort(5));
-			aSortNew.Add(new CUnitTestArraySort(4));
-			aSortNew.Add(new CUnitTestArraySort(0));
-			aSortNew.Add(new CUnitTestArraySort(3));
+			cArraySortFacadeValue< cNewPtr<cUnitTestArraySort>, cUnitTestArraySort*, int > aSortNew;
+			aSortNew.Add(new cUnitTestArraySort(1));
+			aSortNew.Add(new cUnitTestArraySort(2));
+			aSortNew.Add(new cUnitTestArraySort(5));
+			aSortNew.Add(new cUnitTestArraySort(4));
+			aSortNew.Add(new cUnitTestArraySort(0));
+			aSortNew.Add(new cUnitTestArraySort(3));
 			UNITTEST_TRUE(aSortNew.isArraySorted());
 			UNITTEST_TRUE(aSortNew.GetSize() == 6);
-			UNITTEST_TRUE(CUnitTestArraySort::sm_nAllocated == 6);
+			UNITTEST_TRUE(cUnitTestArraySort::sm_nAllocated == 6);
 			UNITTEST_TRUE(aSortNew[3]->m_iSortVal == 3);
 			UNITTEST_TRUE(aSortNew[4]->m_iSortVal == 4);
 
@@ -76,13 +76,13 @@ UNITTEST_CLASS(CArraySort)
 
 			UNITTEST_TRUE(aSortNew.isArraySorted());
 			UNITTEST_TRUE(aSortNew.GetSize() == 5);
-			UNITTEST_TRUE(CUnitTestArraySort::sm_nAllocated == 5);
+			UNITTEST_TRUE(cUnitTestArraySort::sm_nAllocated == 5);
 			UNITTEST_TRUE(aSortNew[3]->m_iSortVal == 3);
 			UNITTEST_TRUE(aSortNew[4]->m_iSortVal == 5);
 		}
-		UNITTEST_TRUE(CUnitTestArraySort::sm_nAllocated == 0);
+		UNITTEST_TRUE(cUnitTestArraySort::sm_nAllocated == 0);
 
 	}
 };
-UNITTEST_REGISTER(CArraySort, UNITTEST_LEVEL_Core);
+UNITTEST_REGISTER(cArraySort, UNITTEST_LEVEL_Core);
 #endif

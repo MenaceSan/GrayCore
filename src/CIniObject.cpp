@@ -1,17 +1,17 @@
 //
-//! @file CIniObject.cpp
+//! @file cIniObject.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 #include "pch.h"
-#include "CIniObject.h"
-#include "CIniSection.h"
-#include "CString.h"
-#include "CCodeProfiler.h"
-#include "CStream.h"
+#include "cIniObject.h"
+#include "cIniSection.h"
+#include "cString.h"
+#include "cCodeProfiler.h"
+#include "cStream.h"
 
 namespace Gray
 {
-	HRESULT CIniObject::PropSet(const IniChar_t* pszPropTag, const IniChar_t* pszValue) // override
+	HRESULT cIniObject::PropSet(const IniChar_t* pszPropTag, const IniChar_t* pszValue) // override
 	{
 		//! IIniBaseSetter
 		//! Set a prop by its string name.
@@ -23,7 +23,7 @@ namespace Gray
 		return this->PropSetN(this->FindProp(pszPropTag), pszValue);
 	}
 
-	HRESULT CIniObject::PropGet(const IniChar_t* pszPropTag, OUT CStringI& rsValue) const // override
+	HRESULT cIniObject::PropGet(const IniChar_t* pszPropTag, OUT CStringI& rsValue) const // override
 	{
 		//! IIniBaseGetter
 		//! Read a prop by its string name.
@@ -31,10 +31,10 @@ namespace Gray
 		return this->PropEnum(this->FindProp(pszPropTag), rsValue, nullptr);
 	}
 
-	HRESULT CIniObject::FileWriteN(CStreamOutput& rOut, IPROPIDX_t ePropIdx) const
+	HRESULT cIniObject::FileWriteN(cStreamOutput& rOut, IPROPIDX_t ePropIdx) const
 	{
 		//! Write the prop out to the stream.
-		//! CStreamOutput
+		//! cStreamOutput
 		CODEPROFILEFUNC();
 		PROPMASK_t nPropMask = GetDirtyMask(ePropIdx);
 		if (!(m_nDirtyMask & nPropMask))	// already written. or not changed?
@@ -44,10 +44,10 @@ namespace Gray
 		if (FAILED(hRes))
 			return hRes;
 		m_nDirtyMask &= ~nPropMask;		// not dirty anymore.
-		return CIniWriter(&rOut).WriteKeyUnk(this->get_PropName(ePropIdx), sValue);
+		return cIniWriter(&rOut).WriteKeyUnk(this->get_PropName(ePropIdx), sValue);
 	}
 
-	HRESULT CIniObject::FileWrite(CStreamOutput& rOut, const IniChar_t* pszProp)
+	HRESULT cIniObject::FileWrite(cStreamOutput& rOut, const IniChar_t* pszProp)
 	{
 		//! write this prop by name.
 		CODEPROFILEFUNC();
@@ -57,7 +57,7 @@ namespace Gray
 		return FileWriteN(rOut, ePropIdx);
 	}
 
-	HRESULT CIniObject::FileWriteAll(CStreamOutput& rOut)
+	HRESULT cIniObject::FileWriteAll(cStreamOutput& rOut)
 	{
 		//! Write out all that are not already written.
 		//! Assume [HEADER] already written.
@@ -83,15 +83,15 @@ namespace Gray
 
 //*************************************************************************
 #if USE_UNITTESTS
-#include "CUnitTest.h"
-#include "CLogMgr.h"
+#include "cUnitTest.h"
+#include "cLogMgr.h"
 
-UNITTEST_CLASS(CIniObject)
+UNITTEST_CLASS(cIniObject)
 {
-	UNITTEST_METHOD(CIniObject)
+	UNITTEST_METHOD(cIniObject)
 	{
-		// TODO: UNITTEST CIniObject
-		class CUnitTestIniObject : public CIniObject
+		// TODO: UNITTEST cIniObject
+		class cUnitTestIniObject : public cIniObject
 		{
 		public:
 			virtual IPROPIDX_t get_PropQty(void) const
@@ -127,8 +127,8 @@ UNITTEST_CLASS(CIniObject)
 				return E_NOTIMPL;
 			}
 		};
-		CUnitTestIniObject obj;
+		cUnitTestIniObject obj;
 	}
 };
-UNITTEST_REGISTER(CIniObject, UNITTEST_LEVEL_Core);
+UNITTEST_REGISTER(cIniObject, UNITTEST_LEVEL_Core);
 #endif

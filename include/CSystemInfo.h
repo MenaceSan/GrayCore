@@ -1,21 +1,21 @@
 //
-//! @file CSystemInfo.h
+//! @file cSystemInfo.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CSystemInfo_H
-#define _INC_CSystemInfo_H
+#ifndef _INC_cSystemInfo_H
+#define _INC_cSystemInfo_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
-#include "CSingleton.h"
-#include "CFilePath.h"
+#include "cSingleton.h"
+#include "cFilePath.h"
 
 #ifdef __linux__
 #include <sys/utsname.h>	// uname()
 #endif
-UNITTEST_PREDEF(CSystemInfo)
+UNITTEST_PREDEF(cSystemInfo)
 
 namespace Gray
 {
@@ -45,16 +45,16 @@ namespace Gray
 #error NOOS
 #endif
 
-	class GRAYCORE_LINK CSystemInfo : public CSingleton < CSystemInfo >
+	class GRAYCORE_LINK cSystemInfo : public cSingleton < cSystemInfo >
 	{
-		//! @class Gray::CSystemInfo
+		//! @class Gray::cSystemInfo
 		//! The system as a whole. (as far as we can detect) not just the current running app/process or user login.
 		//! The detected system params may be effected by system virtualization.
 
-		friend class CSingleton < CSystemInfo > ;
+		friend class cSingleton < cSystemInfo > ;
 
 	protected:
-		CStringF m_sSystemName;		//!< Cached (or overridden for debug purposes) system name.
+		cStringF m_sSystemName;		//!< Cached (or overridden for debug purposes) system name.
 
 #ifdef _WIN32
 	public:
@@ -73,8 +73,8 @@ namespace Gray
 #endif
 
 	protected:
-		CSystemInfo();
-		~CSystemInfo();
+		cSystemInfo();
+		~cSystemInfo();
 
 	public:
 		UINT get_NumberOfProcessors() const;	// SMP issues ?
@@ -91,16 +91,16 @@ namespace Gray
 		bool isVer3_17_plus() const;
 #endif
 
-		CStringF get_SystemName();		//!< The node name of the machine.
+		cStringF get_SystemName();		//!< The node name of the machine.
 		static StrLen_t GRAYCALL GetSystemDir(FILECHAR_t* pszDir, StrLen_t iLenMax);
-		static CStringF GRAYCALL get_SystemDir();
+		static cStringF GRAYCALL get_SystemDir();
 
 		static bool GRAYCALL SystemShutdown(bool bReboot);
 		static void GRAYCALL SystemBeep();
 
 		CHEAPOBJECT_IMPL;
-		UNITTEST_FRIEND(CSystemInfo);
+		UNITTEST_FRIEND(cSystemInfo);
 	};
 };
 
-#endif // _INC_CSystemInfo_H
+#endif // _INC_cSystemInfo_H

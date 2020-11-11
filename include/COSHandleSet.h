@@ -1,23 +1,23 @@
 //
-//! @file COSHandleSet.h
+//! @file cOSHandleSet.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_COSHandleSet_H
-#define _INC_COSHandleSet_H
+#ifndef _INC_cOSHandleSet_H
+#define _INC_cOSHandleSet_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
-#include "COSHandle.h"
-#include "CArray.h"
+#include "cOSHandle.h"
+#include "cArray.h"
 
 namespace Gray
 {
-	class GRAYCORE_LINK COSHandleSet
+	class GRAYCORE_LINK cOSHandleSet
 	{
-		//! @class Gray::COSHandleSet
-		//! A collection of COSHandle
+		//! @class Gray::cOSHandleSet
+		//! A collection of cOSHandle
 		//! Wait on any of a set of OS handles to be signaled.
 		//! Similar to CNetSocketSet and ::select() especially for __linux__
 		//! Similar to _WIN32 WaitForMultipleObjects(). MAX = MAXIMUM_WAIT_OBJECTS or FD_SETSIZE
@@ -33,7 +33,7 @@ namespace Gray
 
 	private:
 #ifdef _WIN32
-		CArrayVal<HANDLE> m_fds;	//!< Just an array of OS handles. like fd_set. but dynamic.
+		cArrayVal<HANDLE> m_fds;	//!< Just an array of OS handles. like fd_set. but dynamic.
 #elif defined(__linux__)
 		HANDLE m_hHandleMax;		//!< Largest handle we have. <= FD_SETSIZE
 		fd_set m_fds;				//!< array of FD_SETSIZE possible HANDLE(s). NOTE: sizeof(m_fds) varies/fixed with FD_SETSIZE
@@ -51,11 +51,11 @@ namespace Gray
 		}
 
 	public:
-		COSHandleSet(void) noexcept
+		cOSHandleSet(void) noexcept
 		{
 			InitHandles();
 		}
-		COSHandleSet(HANDLE h)
+		cOSHandleSet(HANDLE h)
 		{
 			// a handle set with a single handle.
 #ifdef __linux__			 
@@ -67,25 +67,25 @@ namespace Gray
 			AddHandle(h);
 #endif
 		}
-		COSHandleSet(const COSHandleSet& nss)
+		cOSHandleSet(const cOSHandleSet& nss)
 		{
 			InitHandles();
 			SetCopy(nss);
 		}
-		~COSHandleSet()
+		~cOSHandleSet()
 		{
 		}
 
-		void operator = (const COSHandleSet& nss)
+		void operator = (const cOSHandleSet& nss)
 		{
 			SetCopy(nss);
 		}
-		void SetCopy(const COSHandleSet& nss)
+		void SetCopy(const cOSHandleSet& nss)
 		{
 #ifdef __linux__
 			m_hHandleMax = nss.m_hHandleMax;
 			// FD_COPY(pfds,&m_fds);
-			CMem::Copy(&m_fds,&nss.m_fds,sizeof(m_fds));
+			cMem::Copy(&m_fds,&nss.m_fds,sizeof(m_fds));
 #else
 			m_fds = nss.m_fds;
 #endif
@@ -105,7 +105,7 @@ namespace Gray
 			FD_SET(h,&m_fds);
 #else
 			// Only add up to
-			if (h == HANDLE_NULL)	// COSHandle
+			if (h == HANDLE_NULL)	// cOSHandle
 				return false;
 			if (m_fds.GetSize() >= MAXIMUM_WAIT_OBJECTS)
 				return false;

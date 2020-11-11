@@ -1,35 +1,35 @@
 //
-//! @file CCodeProfiler.h
+//! @file cCodeProfiler.h
 //! Declare entry/exit from a function such that it will build a profile.
 //! Write out a profile PCP file.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CCodeProfiler_H
-#define _INC_CCodeProfiler_H
+#ifndef _INC_cCodeProfiler_H
+#define _INC_cCodeProfiler_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
-#include "CTimeSys.h"
-#include "CUnitTestDecl.h"
-#include "CDebugAssert.h"
+#include "cTimeSys.h"
+#include "cUnitTestDecl.h"
+#include "cDebugAssert.h"
 
-UNITTEST_PREDEF(CCodeProfileFunc)
+UNITTEST_PREDEF(cCodeProfileFunc)
 
 namespace Gray
 {
-	class GRAYCORE_LINK CCodeProfileFunc
+	class GRAYCORE_LINK cCodeProfileFunc
 	{
-		//! @class Gray::CCodeProfileFunc
+		//! @class Gray::cCodeProfileFunc
 		//! profile the entry/exit for a function.
 		//! This is ALWAYS stack based so its thread safe.
 
-		friend class CCodeProfilerControl;
+		friend class cCodeProfilerControl;
 
 	private:
-		CDebugSourceLine m_src;		//!< Record source location of this function.
-		CTimePerf m_nTimeStart;		//!< Function enter Start time in system clock ticks
+		cDebugSourceLine m_src;		//!< Record source location of this function.
+		cTimePerf m_nTimeStart;		//!< Function enter Start time in system clock ticks
 
 		static bool sm_bActive;		//!< are we actively measuring? Thread Safe read.
 
@@ -37,25 +37,25 @@ namespace Gray
 		void StopTime();
 
 	public:
-		CCodeProfileFunc(CDebugSourceLine src)
+		cCodeProfileFunc(cDebugSourceLine src)
 			: m_src(src)	// Current source file + Current line in that file
 			, m_nTimeStart(sm_bActive)	// Cheat a little and burn off 4 instructions inside counted function time.
 		{
 			//! record Start/Record cycle count on object construct.			
 		}
 
-		~CCodeProfileFunc()
+		~cCodeProfileFunc()
 		{
 			if (sm_bActive)	// inline check for maximum speed.
 				StopTime();
 		}
 
-		UNITTEST_FRIEND(CCodeProfileFunc);
+		UNITTEST_FRIEND(cCodeProfileFunc);
 	};
 
-	// CCodeProfileFunc usage requires only single declaration at beginning of function
+	// cCodeProfileFunc usage requires only single declaration at beginning of function
 #if 0 // defined(_DEBUG)
-#define CODEPROFILEFUNC()	CCodeProfileFunc _tagPROFILE_CLASS(DEBUGSOURCELINE)
+#define CODEPROFILEFUNC()	cCodeProfileFunc _tagPROFILE_CLASS(DEBUGSOURCELINE)
 #else
 #define CODEPROFILEFUNC()	__noop	// compile out profiling. Do nothing.
 #endif

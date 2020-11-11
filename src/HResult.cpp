@@ -5,16 +5,16 @@
 
 #include "pch.h"
 #include "HResult.h"
-#include "CString.h"
-#include "CLogMgr.h"
-#include "CPair.h"
+#include "cString.h"
+#include "cLogMgr.h"
+#include "cPair.h"
 #ifndef UNDER_CE
 #include <errno.h>
 #endif
 
 namespace Gray
 {
-	static CArrayPtr<const HResultCode> s_HResult_CodeSets;	// local private Facility_t sets .
+	static cArrayPtr<const HResultCode> s_HResult_CodeSets;	// local private Facility_t sets .
 	GRAYCORE_LINK va_list k_va_list_empty;	// For faking out the va_list. __GNUC__ doesn't allow a pointer to va_list. So use this to simulate nullptr.
 
 	const HResult::Facility_t HResult::k_Facility[] =
@@ -400,7 +400,7 @@ namespace Gray
 //*****************************************************
 
 #if USE_UNITTESTS
-#include "CUnitTest.h"
+#include "cUnitTest.h"
 
 UNITTEST_CLASS(HResult)
 {

@@ -1,15 +1,15 @@
 //
-//! @file CIniBase.h
+//! @file cIniBase.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
-#ifndef _INC_CIniBase_H
-#define _INC_CIniBase_H
+#ifndef _INC_cIniBase_H
+#define _INC_cIniBase_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
 #include "HResult.h"
-#include "CString.h"
+#include "cString.h"
 
 namespace Gray
 {

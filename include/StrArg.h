@@ -11,7 +11,7 @@
 
 #include "StrChar.h"
 #include "StrConst.h"
-#include "CUnitTestDecl.h"
+#include "cUnitTestDecl.h"
 
 UNITTEST_PREDEF(StrArg)
 
@@ -19,7 +19,7 @@ namespace Gray
 {
 	// Convert some type into a string. ALA ToString()
 	// Define temporary string values for use as sprintf() arguments.
-	// Use CTempPool
+	// Use cTempPool
 
 	template< typename TYPE>
 	GRAYCORE_LINK const TYPE* GRAYCALL StrArg(const char* pszStr);

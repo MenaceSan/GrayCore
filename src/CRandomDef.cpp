@@ -1,11 +1,10 @@
 //
-//! @file CRandomDef.cpp
+//! @file cRandomDef.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 #include "pch.h"
-#include "CRandomDef.h"
-#include "CHeap.h"
-// #include "CHandlePtr.h"
+#include "cRandomDef.h"
+#include "cHeap.h"
 
 #ifdef __linux__
 #include <fcntl.h>	// open()
@@ -13,7 +12,7 @@
 
 namespace Gray
 {
-	GRAYCORE_LINK CRandomDef g_Rand;	//! the default random number generator. NOT Thread Safe!
+	GRAYCORE_LINK cRandomDef g_Rand;	//! the default random number generator. NOT Thread Safe!
 
 #if defined(_WIN32) && ! defined(_MSC_VER)
 	// extern for CryptAcquireContext
@@ -21,27 +20,27 @@ namespace Gray
 
 	//*************************************************************
 
-	void CRandomBase::InitSeed(IRandomNoise* pSrc, size_t iSize)
+	void cRandomBase::InitSeed(IRandomNoise* pSrc, size_t iSize)
 	{
-		CHeapBlock block(iSize);
+		cHeapBlock block(iSize);
 		HRESULT iSizeRet = pSrc->GetNoise(block.get_Data(), iSize);
 		InitSeed(block.get_Data(), (size_t)iSizeRet);	// pure virtual
 	}
 
-	void CRandomBase::InitSeedDefault(size_t iSize)
+	void cRandomBase::InitSeedDefault(size_t iSize)
 	{
 		//! Initialize random sequence randomly.
 		//! Seed the random generator with time or some mix of more random data.
-		InitSeed(CRandomNoise::get_Single(), iSize);
+		InitSeed(cRandomNoise::get_Single(), iSize);
 	}
 
-	void CRandomBase::InitSeedUns(UINT nSeed)
+	void cRandomBase::InitSeedUns(UINT nSeed)
 	{
 		//! set seed from UINT. Similar to SEED_t
 		InitSeed(&nSeed, sizeof(nSeed));
 	}
 
-	UINT CRandomBase::get_RandUns() // virtual
+	UINT cRandomBase::get_RandUns() // virtual
 	{
 		//! get UINT random number in 0 to < UINT_MAX range
 		//! default implementation.
@@ -49,7 +48,7 @@ namespace Gray
 		return GetRandUX(UINT_MAX);
 	}
 
-	UINT CRandomBase::GetRandUX(UINT nScale) // virtual
+	UINT cRandomBase::GetRandUX(UINT nScale) // virtual
 	{
 		//! get random integer number in 0 to < nScale range
 		//! NON inclusive
@@ -61,7 +60,7 @@ namespace Gray
 		return uVal;
 	}
 
-	int CRandomBase::GetRandIRange(int iRangeLo, int iRangeHi)    // output random int
+	int cRandomBase::GetRandIRange(int iRangeLo, int iRangeHi)    // output random int
 	{
 		//! get a random integer inclusive inside range. default implementation.
 		//! @return a random number in an inclusive range of integers.
@@ -75,7 +74,7 @@ namespace Gray
 			return iRangeLo + GetRandUX(iRange);
 	}
 
-	HRESULT CRandomBase::GetNoise(void* pvData, size_t iSize) // override
+	HRESULT cRandomBase::GetNoise(void* pvData, size_t iSize) // override
 	{
 		//! fill a buffer with random bytes of data.
 		//! < 0 = error.
@@ -99,22 +98,22 @@ namespace Gray
 
 	//*************************************************************
 
-	CRandomNoise::CRandomNoise()
-		: CSingleton<CRandomNoise>(this, typeid(CRandomNoise))
+	cRandomNoise::cRandomNoise()
+		: cSingleton<cRandomNoise>(this, typeid(cRandomNoise))
 	{
 	}
-	CRandomNoise::~CRandomNoise()
+	cRandomNoise::~cRandomNoise()
 	{
 	}
 
-	HRESULT GRAYCALL CRandomNoise::GetNoiseOS(void* pData, size_t iSize)	// static. fill array with random. return # filled.
+	HRESULT GRAYCALL cRandomNoise::GetNoiseOS(void* pData, size_t iSize)	// static. fill array with random. return # filled.
 	{
 		//! Try to use the OS supplied noise generator. It may not work.
 #ifdef __linux__
 	// Is the Linux version high enough for random function ?
 
 #if defined(SYS_getrandom)
-		if (CSystemInfo::I().isVer3_17_plus())
+		if (cSystemInfo::I().isVer3_17_plus())
 		{
 			// long sys_getrandom(char __user *buf, size_t count, unsigned int flags)
 			int iRet = ::syscall(SYS_getrandom, pData, iSize, 0);
@@ -125,7 +124,7 @@ namespace Gray
 		}
 #endif
 
-		COSHandle fd;
+		cOSHandle fd;
 		fd.OpenHandle("/dev/random", O_RDONLY);
 		if (!fd.isValidHandle())
 			fd.OpenHandle("/dev/urandom", O_RDONLY);
@@ -139,7 +138,7 @@ namespace Gray
 
 #elif defined(_WIN32) && defined(_MSC_VER) && defined(WINCRYPT32API)
 		// WinCrypt
-		HCRYPTPROV hProvider;	// NOT a pointer ? CHandlePtr
+		HCRYPTPROV hProvider;	// NOT a pointer ? cHandlePtr
 		if (_FNF(::CryptAcquireContext)(&hProvider, nullptr, nullptr, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT))
 		{
 			bool bRet = ::CryptGenRandom(hProvider, (DWORD)iSize, (BYTE*)pData);
@@ -153,16 +152,16 @@ namespace Gray
 		return 0;	// OS noise not available. Try some other pseudo random source.
 	}
 
-	void GRAYCALL CRandomNoise::GetNoisePerf(void* pData, size_t iSize) // static
+	void GRAYCALL cRandomNoise::GetNoisePerf(void* pData, size_t iSize) // static
 	{
-		//! Get noise via low bits of CTimePerf
+		//! Get noise via low bits of cTimePerf
 		//! Prefer GetNoiseOS noise over this, but use this as a fallback or XOR.
 
 		UINT* puData = (UINT*)pData;
 		size_t iSizeLeft = iSize;
 		while (iSizeLeft > 0)
 		{
-			CTimePerf tStart(true);		// the low bits of high performance timer should be random-ish.
+			cTimePerf tStart(true);		// the low bits of high performance timer should be random-ish.
 			UINT32 uVal = (UINT32)(tStart.m_nTime ^ 3141592654UL);	// use PI as default XOR pattern
 			if (iSizeLeft < sizeof(uVal))
 			{
@@ -176,7 +175,7 @@ namespace Gray
 		}
 	}
 
-	HRESULT CRandomNoise::GetNoise(void* pData, size_t iSize)	// override. fill array with random. return # filled.
+	HRESULT cRandomNoise::GetNoise(void* pData, size_t iSize)	// override. fill array with random. return # filled.
 	{
 		//! Get the best source or random noise the system can supply.
 		//! Make a random seed from the most random source we can find.
@@ -190,7 +189,7 @@ namespace Gray
 		return (HRESULT)iSize;
 	}
 
-	UINT CRandomNoise::get_RandUns() // virtual
+	UINT cRandomNoise::get_RandUns() // virtual
 	{
 		// UINT_MAX
 		UINT uVal = 0;
@@ -209,17 +208,17 @@ namespace Gray
 	}
 #endif
 
-	CRandomDef::CRandomDef(SEED_t nSeed)
+	cRandomDef::cRandomDef(SEED_t nSeed)
 		: m_nSeed(nSeed)
 	{
 		//! like ::srand()
 		//! http://stackoverflow.com/questions/4768180/rand-implementation
 	}
-	CRandomDef::~CRandomDef()
+	cRandomDef::~cRandomDef()
 	{
 	}
 
-	void CRandomDef::InitSeed(const void* pData, size_t iSize)	// override
+	void cRandomDef::InitSeed(const void* pData, size_t iSize)	// override
 	{
 		//! Start a repeatable series of pseudo random numbers
 		//! like ::srand()
@@ -229,7 +228,7 @@ namespace Gray
 		::memcpy(&m_nSeed, pData, iSize);
 	}
 
-	UINT CRandomDef::GetRandNext()
+	UINT cRandomDef::GetRandNext()
 	{
 		//! Get next pseudo random number like ::rand();
 		//! k_RAND_MAX assumed to be 32767
@@ -241,7 +240,7 @@ namespace Gray
 		return (m_nSeed >> 16) & k_RAND_MAX;
 	}
 
-	UINT CRandomDef::GetRandUX(UINT nScale) // override
+	UINT cRandomDef::GetRandUX(UINT nScale) // override
 	{
 		//! @return value from 0 to less than nScale. (non inclusive of nScale)
 		//! granularity may be effected by k_RAND_MAX (much larger for Linux) like rand()
@@ -274,14 +273,14 @@ namespace Gray
 //*************************************************************
 
 #if USE_UNITTESTS
-#include "CUnitTest.h"
-#include "CLogMgr.h"
-UNITTEST_CLASS(CRandomBase)
+#include "cUnitTest.h"
+#include "cLogMgr.h"
+UNITTEST_CLASS(cRandomBase)
 {
-	UNITTEST_METHOD(CRandomBase)
+	UNITTEST_METHOD(cRandomBase)
 	{
 		// Test general randomness.
-		CRandomNoise& rSys = CRandomNoise::I();
+		cRandomNoise& rSys = cRandomNoise::I();
 
 		BYTE s1[16];
 		rSys.GetNoise(s1, sizeof(s1));
@@ -296,7 +295,7 @@ UNITTEST_CLASS(CRandomBase)
 		UNITTEST_TRUE(s2 != s1);
 
 		// Test seed repeatability.
-		CRandomBase::SEED_t uSeed = 123;
+		cRandomBase::SEED_t uSeed = 123;
 		g_Rand.InitSeed(&uSeed, sizeof(uSeed));
 		u1 = g_Rand.get_RandUns();
 #ifdef __linux__	// GNUC
@@ -314,5 +313,5 @@ UNITTEST_CLASS(CRandomBase)
 		UNITTEST_TRUE(u1 == u2);	// Must repeat.
 	}
 };
-UNITTEST_REGISTER(CRandomBase, UNITTEST_LEVEL_Core);
+UNITTEST_REGISTER(cRandomBase, UNITTEST_LEVEL_Core);
 #endif

@@ -1,21 +1,21 @@
 //
-//! @file COSHandleSet.cpp
+//! @file cOSHandleSet.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 #include "pch.h"
-#include "COSHandleSet.h"
+#include "cOSHandleSet.h"
 #include "HResult.h"
-#include "CTimeVal.h"	// must include this for _WIN32 DLL instantiate.
+#include "cTimeVal.h"	// must include this for _WIN32 DLL instantiate.
 
 namespace Gray
 {
-	HRESULT COSHandleSet::WaitForObjects(TIMESYSD_t dwMilliseconds, bool bWaitForAll)
+	HRESULT cOSHandleSet::WaitForObjects(TIMESYSD_t dwMilliseconds, bool bWaitForAll)
 	{
 		//! Wait for any or all of these handles to be signaled.
 		//! @return HRESULT_WIN32_C(ERROR_WAIT_TIMEOUT) after dwMilliseconds
 		//! @note WIN32 does not use select() here because it is in a strange ws2_32.dll AND MUST CALL WSAStartup()
 #ifdef __linux__
-		CTimeVal timeWait(dwMilliseconds);
+		cTimeVal timeWait(dwMilliseconds);
 		int iRet = ::select(m_hHandleMax + 1, &m_fds, nullptr, nullptr, &timeWait);
 		if (iRet == 0)
 		{

@@ -1,24 +1,24 @@
 //
-//! @file CHashTable.cpp
+//! @file cHashTable.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
 #include "pch.h"
-#include "CHashTable.h"
+#include "cHashTable.h"
 
 #if USE_UNITTESTS
-#include "CUnitTest.h"
-#include "CNewPtr.h"
-#include "CLogMgr.h"
+#include "cUnitTest.h"
+#include "cNewPtr.h"
+#include "cLogMgr.h"
 
 namespace Gray
 {
-	class CUnitTestHashStruct
+	class cUnitTestHashStruct
 	{
 	private:
 		HASHCODE_t m_nHashCode;
 	public:
-		CUnitTestHashStruct(HASHCODE_t nHashCode = 0)
+		cUnitTestHashStruct(HASHCODE_t nHashCode = 0)
 		: m_nHashCode(nHashCode)
 		{
 		}
@@ -28,37 +28,37 @@ namespace Gray
 		}
 	};
 
-	class CUnitTestHashSmart : public CSmartBase, public CUnitTestHashStruct
+	class cUnitTestHashSmart : public cRefBase, public cUnitTestHashStruct
 	{
 	public:
-		CUnitTestHashSmart(HASHCODE_t nHashCode = 0)
-		: CUnitTestHashStruct(nHashCode)
+		cUnitTestHashSmart(HASHCODE_t nHashCode = 0)
+		: cUnitTestHashStruct(nHashCode)
 		{
 		}
 		HASHCODE_t get_HashCode() const	// resolve ambiguous.
 		{
-			return CUnitTestHashStruct::get_HashCode();
+			return cUnitTestHashStruct::get_HashCode();
 		}
 	};
 };
 
-UNITTEST_CLASS(CHashTableT)
+UNITTEST_CLASS(cHashTableT)
 {
-	UNITTEST_METHOD(CHashTableT)
+	UNITTEST_METHOD(cHashTableT)
 	{
-		//! @todo add and remove stuff. CUnitTestHashSmart
+		//! @todo add and remove stuff. cUnitTestHashSmart
 
-		CHashTableStruct<CUnitTestHashStruct, HASHCODE_t, 5> hashtable1;
+		cHashTableStruct<cUnitTestHashStruct, HASHCODE_t, 5> hashtable1;
 		UNITTEST_TRUE(hashtable1.get_HashArrayQty() == 32);
-		hashtable1.Add(CUnitTestHashStruct(123));
+		hashtable1.Add(cUnitTestHashStruct(123));
 		// UNITTEST_TRUE(hashtable1.FindArgForKey(123) == t1.get_Ptr());
 
-		CHashTableSmart<CUnitTestHashSmart, HASHCODE_t, 5> hashtable2;
+		cHashTableSmart<cUnitTestHashSmart, HASHCODE_t, 5> hashtable2;
 		UNITTEST_TRUE(hashtable1.get_HashArrayQty() == 32);
-		CSmartPtr<CUnitTestHashSmart> t2( new CUnitTestHashSmart(123));
+		cRefPtr<cUnitTestHashSmart> t2( new cUnitTestHashSmart(123));
 		hashtable2.Add(t2);
 		UNITTEST_TRUE(hashtable2.FindArgForKey(123) == t2);
 	}
 };
-UNITTEST_REGISTER(CHashTableT, UNITTEST_LEVEL_Core);
+UNITTEST_REGISTER(cHashTableT, UNITTEST_LEVEL_Core);
 #endif
