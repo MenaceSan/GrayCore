@@ -5,6 +5,7 @@
 
 #include "pch.h"
 #include "cSystemInfo.h"   // class implemented
+#include "cSystemHelper.h"
 #include "cAppState.h"
 #include "StrT.h"
 #include "StrConst.h"
@@ -125,135 +126,12 @@ namespace Gray
 	bool cSystemInfo::isOS64Bit() const
 	{
 		//! can both the OS and CPU handle 64 bit apps.
+		//! A 32 bit app can run on 64 bit system.
 #ifdef USE_64BIT
-		return true;	// I only run on 64 bit OS so it must be.
+		return true;	// I can only run on 64 bit OS so it must be.
 #else
 		return m_bOS64Bit;
 #endif
-	}
-
-	cString cSystemInfo::get_OSName() const
-	{
-		//! More detailed info about the actual OS we are running on.
-		//! like GRAY_BUILD_NAME but dynamic.
-		//! number of processors and processor type etc.
-		//! Do we support MMX etc ?
-		//! http://sourceforge.net/p/predef/wiki/Architectures/
-
-		cString sTmp;
-#ifdef _WIN32
-		const GChar_t* pszCPU;
-		switch (m_SystemInfo.wProcessorArchitecture)
-		{
-		case PROCESSOR_ARCHITECTURE_INTEL:
-			switch (LOBYTE(m_SystemInfo.wProcessorLevel))
-			{
-			case 3: pszCPU = _GT("i386"); break;
-			case 4: pszCPU = _GT("i486"); break;
-			case 5: pszCPU = _GT("Pentium"); break;
-			case 6: pszCPU = _GT("Pentium Pro"); break; // /II/III/IV
-			default:
-				pszCPU = _GT("x86");
-				break;
-			}
-			break;
-
-#ifndef UNDER_CE
-		case PROCESSOR_ARCHITECTURE_AMD64:
-			pszCPU = _GT("AMD64");
-			break;
-#endif
-#if defined(_M_ARM) || defined(_M_ARMT) || defined(__arm__) || defined(__thumb__)	// VC and GNUC
-		case PROCESSOR_ARCHITECTURE_ARM:
-			pszCPU = _GT("ARM");
-			break;
-#endif
-
-#if 0	// we would have to compile special for this !
-		case PROCESSOR_ARCHITECTURE_MIPS:
-			pszCPU = _GT("Mips");
-			break;
-		case PROCESSOR_ARCHITECTURE_PPC:
-			pszCPU = _GT("PPC");
-			break;
-		case PROCESSOR_ARCHITECTURE_ALPHA:
-			switch (m_SystemInfo.wProcessorLevel)
-			{
-			case 21064: pszCPU = _GT("Alpha 21064"); break;
-			case 21066: pszCPU = _GT("Alpha 21066"); break;
-			case 21164: pszCPU = _GT("Alpha 21164"); break;
-			default:
-				pszCPU = _GT("Alpha");
-				break;
-			}
-			break;
-#endif
-		default:
-			pszCPU = _GT("?");
-			break;
-		}
-
-		const GChar_t* pszOS;
-		switch (m_OsInfo.dwPlatformId)
-		{
-		case VER_PLATFORM_WIN32_NT:
-			pszOS = _GT("NT?");
-			switch (m_OsInfo.dwMajorVersion)
-			{
-			case 4: pszOS = _GT("NT"); break;
-			case 5:
-				switch (m_OsInfo.dwMinorVersion)
-				{
-				case 0: pszOS = _GT("2000"); break;
-				case 1: pszOS = _GT("XP"); break;
-				case 2:	// XP 64 bit ? or Home server ?
-				default: pszOS = _GT("Server 2003"); break;
-				}
-				break;
-			case 6:
-				switch (m_OsInfo.dwMinorVersion)
-				{
-				case 0: pszOS = _GT("Vista"); break;
-				case 1: pszOS = _GT("7"); break;	// 6.1 = Windows 7
-				case 2: pszOS = _GT("8"); break;	// 6.2 = Windows 8
-				default: pszOS = _GT("8?"); break;
-				}
-				break;
-			case 10:
-				pszOS = _GT("10"); break;
-				break;
-			}
-			break;
-		case VER_PLATFORM_WIN32_WINDOWS:
-			pszOS = _GT("Win9X/ME"); break;
-		default:
-			pszOS = _GT("Unknown"); break;
-		}
-
-		sTmp.Format(_GT("Windows %s %dbit v%d.%d.%d (%d %s CPU%s)"),
-			StrArg<GChar_t>(pszOS),
-			isOS64Bit() ? 64 : 32,
-			m_OsInfo.dwMajorVersion,
-			m_OsInfo.dwMinorVersion,
-			m_OsInfo.dwBuildNumber,
-			get_NumberOfProcessors(),
-			StrArg<GChar_t>(pszCPU),
-			StrArg<GChar_t>((get_NumberOfProcessors() > 1) ? _GT("s") : _GT("")));
-#else // __linux__
-		if (StrT::IsWhitespace(m_utsname.sysname))
-		{
-			return _GT("Linux UNK VER!?");
-		}
-
-		// NOTE: ignore m_utsname.nodename here since it is the same as SystemName
-		sTmp.Format(_GT("%s %dbit '%s' '%s' '%s'"),
-			StrArg<GChar_t>(&m_utsname.sysname[0]),
-			isOS64Bit() ? 64 : 32,
-			StrArg<GChar_t>(&m_utsname.release[0]),
-			StrArg<GChar_t>(&m_utsname.version[0]),
-			StrArg<GChar_t>(&m_utsname.machine[0]));
-#endif
-		return sTmp;
 	}
 
 	UINT cSystemInfo::get_OSVer() const
@@ -302,35 +180,6 @@ namespace Gray
 	}
 #endif
 
-	cStringF cSystemInfo::get_SystemName()
-	{
-		//! Get this computers station name.
-		//! UNDER_CE -> "HKLM\Ident\Name"
-
-		if (!m_sSystemName.IsEmpty())
-		{
-			return m_sSystemName;
-		}
-
-#if defined(__linux__) || defined(UNDER_CE)
-		char szNodeName[_MAX_PATH + 1];
-		if (::gethostname(szNodeName, STRMAX(szNodeName)) != 0) // SOCKET_ERROR
-#elif defined(_WIN32)
-		FILECHAR_t szNodeName[2 * MAX_COMPUTERNAME_LENGTH + 1];
-		DWORD dwSize = STRMAX(szNodeName);	// ::GetComputerName
-		if (!_FNF(::GetComputerName)(szNodeName, &dwSize))	// HResult::GetLast() if this fails ?
-#else
-#error NOOS
-#endif
-		{
-			// NO NAME? I've seen this fail on some machines. don't know why.
-			return "";
-		}
-
-		m_sSystemName = szNodeName;
-		return m_sSystemName;
-	}
-
 	StrLen_t GRAYCALL cSystemInfo::GetSystemDir(FILECHAR_t* pszDir, StrLen_t iLenMax) // static
 	{
 		//! Where does the OS keep its files. CSIDL_SYSTEM
@@ -350,13 +199,24 @@ namespace Gray
 #endif
 	}
 
-	cStringF GRAYCALL cSystemInfo::get_SystemDir() // static
+	HRESULT GRAYCALL cSystemInfo::GetSystemName(FILECHAR_t* pszName, StrLen_t iLenMax) // static
 	{
-		//! Where does the OS keep its files. CSIDL_SYSTEM
-		//! GetSystemDirectory() == "C:\Windows\System32" or "C:\Windows\SysWOW64" for 32 bit app on 64 bit OS.
-		FILECHAR_t szTmp[_MAX_PATH];
-		GetSystemDir(szTmp, STRMAX(szTmp));
-		return szTmp;
+		// HResult::GetLast() if this fails ?
+
+		pszName[0] = '\0';
+#if defined(__linux__) || defined(UNDER_CE)
+		int iErrNo = ::gethostname(pszName, iLenMax);
+		if (iErrNo != 0) // SOCKET_ERROR
+			return HResult::FromPOSIX(iErrNo);
+		return StrT::Len(pszName);
+#elif defined(_WIN32)
+		DWORD dwSize = iLenMax;	// size in TCHARs
+		if (!_FNF(::GetComputerName)(pszName, &dwSize))	
+			return HResult::GetLastDef();
+		return (StrLen_t)dwSize;
+#else
+#error NOOS
+#endif	
 	}
 
 	bool GRAYCALL cSystemInfo::SystemShutdown(bool bReboot) // static
@@ -450,6 +310,178 @@ namespace Gray
 #error NOOS
 #endif
 	}
+
+	//**********************************************
+
+	cSystemHelper::cSystemHelper()
+		: cSingleton<cSystemHelper>(this, typeid(cSystemHelper))
+		, m_Info(cSystemInfo::I())
+	{
+	}
+
+	cString cSystemHelper::get_OSInfoStr() const
+	{
+		//! More detailed info about the actual OS we are running on.
+		//! like GRAY_BUILD_NAME but dynamic.
+		//! number of processors and processor type etc.
+		//! Do we support MMX etc ?
+		//! http://sourceforge.net/p/predef/wiki/Architectures/
+
+		cString sTmp;
+#ifdef _WIN32
+		const GChar_t* pszCPU;
+		switch (m_Info.m_SystemInfo.wProcessorArchitecture)
+		{
+		case PROCESSOR_ARCHITECTURE_INTEL:
+			switch (LOBYTE(m_Info.m_SystemInfo.wProcessorLevel))
+			{
+			case 3: pszCPU = _GT("i386"); break;
+			case 4: pszCPU = _GT("i486"); break;
+			case 5: pszCPU = _GT("Pentium"); break;
+			case 6: pszCPU = _GT("Pentium Pro"); break; // /II/III/IV
+			default:
+				pszCPU = _GT("x86");
+				break;
+			}
+			break;
+
+#ifndef UNDER_CE
+		case PROCESSOR_ARCHITECTURE_AMD64:
+			pszCPU = _GT("AMD64");
+			break;
+#endif
+#if defined(_M_ARM) || defined(_M_ARMT) || defined(__arm__) || defined(__thumb__)	// VC and GNUC
+		case PROCESSOR_ARCHITECTURE_ARM:
+			pszCPU = _GT("ARM");
+			break;
+#endif
+
+#if 0	// we would have to compile special for this !
+		case PROCESSOR_ARCHITECTURE_MIPS:
+			pszCPU = _GT("Mips");
+			break;
+		case PROCESSOR_ARCHITECTURE_PPC:
+			pszCPU = _GT("PPC");
+			break;
+		case PROCESSOR_ARCHITECTURE_ALPHA:
+			switch (m_SystemInfo.wProcessorLevel)
+			{
+			case 21064: pszCPU = _GT("Alpha 21064"); break;
+			case 21066: pszCPU = _GT("Alpha 21066"); break;
+			case 21164: pszCPU = _GT("Alpha 21164"); break;
+			default:
+				pszCPU = _GT("Alpha");
+				break;
+			}
+			break;
+#endif
+		default:
+			pszCPU = _GT("?");
+			break;
+		}
+
+		const GChar_t* pszOS;
+		switch (m_Info.m_OsInfo.dwPlatformId)
+		{
+		case VER_PLATFORM_WIN32_NT:
+			pszOS = _GT("NT?");
+			switch (m_Info.m_OsInfo.dwMajorVersion)
+			{
+			case 4: pszOS = _GT("NT"); break;
+			case 5:
+				switch (m_Info.m_OsInfo.dwMinorVersion)
+				{
+				case 0: pszOS = _GT("2000"); break;
+				case 1: pszOS = _GT("XP"); break;
+				case 2:	// XP 64 bit ? or Home server ?
+				default: pszOS = _GT("Server 2003"); break;
+				}
+				break;
+			case 6:
+				switch (m_Info.m_OsInfo.dwMinorVersion)
+				{
+				case 0: pszOS = _GT("Vista"); break;
+				case 1: pszOS = _GT("7"); break;	// 6.1 = Windows 7
+				case 2: pszOS = _GT("8"); break;	// 6.2 = Windows 8
+				default: pszOS = _GT("8?"); break;
+				}
+				break;
+			case 10:
+				pszOS = _GT("10"); break;
+				break;
+			}
+			break;
+		case VER_PLATFORM_WIN32_WINDOWS:
+			pszOS = _GT("Win9X/ME"); break;
+		default:
+			pszOS = _GT("Unknown"); break;
+		}
+
+		sTmp.Format(_GT("Windows %s %dbit v%d.%d.%d (%d %s CPU%s)"),
+			StrArg<GChar_t>(pszOS),
+			m_Info.isOS64Bit() ? 64 : 32,
+			m_Info.m_OsInfo.dwMajorVersion,
+			m_Info.m_OsInfo.dwMinorVersion,
+			m_Info.m_OsInfo.dwBuildNumber,
+			m_Info.get_NumberOfProcessors(),
+			StrArg<GChar_t>(pszCPU),
+			StrArg<GChar_t>((m_Info.get_NumberOfProcessors() > 1) ? _GT("s") : _GT("")));
+#else // __linux__
+		if (StrT::IsWhitespace(m_Info.m_utsname.sysname))
+		{
+			return _GT("Linux UNK VER!?");
+		}
+
+		// NOTE: ignore m_utsname.nodename here since it is the same as SystemName
+		sTmp.Format(_GT("%s %dbit '%s' '%s' '%s'"),
+			StrArg<GChar_t>(&m_Info.m_utsname.sysname[0]),
+			m_Info.isOS64Bit() ? 64 : 32,
+			StrArg<GChar_t>(&m_Info.m_utsname.release[0]),
+			StrArg<GChar_t>(&m_Info.m_utsname.version[0]),
+			StrArg<GChar_t>(&m_Info.m_utsname.machine[0]));
+#endif
+		return sTmp;
+	}
+
+	cStringF cSystemHelper::get_SystemName()
+	{
+		//! Get this computers station name.
+		//! UNDER_CE -> "HKLM\Ident\Name"
+
+		if (!m_sSystemName.IsEmpty())
+		{
+			return m_sSystemName;
+		}
+
+#if defined(__linux__) || defined(UNDER_CE)
+		const StrLen_t kSizeSystemName = _MAX_PATH;
+#elif defined(_WIN32)
+		const StrLen_t kSizeSystemName = MAX_COMPUTERNAME_LENGTH;
+#else
+#error NOOS
+#endif
+
+		FILECHAR_t szNodeName[kSizeSystemName + 1];
+		HRESULT hRes = cSystemInfo::GetSystemName(szNodeName, kSizeSystemName);
+		if (FAILED(hRes))
+		{
+			// NO NAME? I've seen this fail on some machines. don't know why.
+			return "";
+		}
+
+		m_sSystemName = szNodeName;
+		return m_sSystemName;
+	}
+
+	cStringF GRAYCALL cSystemHelper::get_SystemDir() // static
+	{
+		//! Where does the OS keep its files. CSIDL_SYSTEM
+		//! GetSystemDirectory() == "C:\Windows\System32" or "C:\Windows\SysWOW64" for 32 bit app on 64 bit OS.
+		FILECHAR_t szTmp[_MAX_PATH];
+		cSystemInfo::GetSystemDir(szTmp, STRMAX(szTmp));
+		return szTmp;
+	}
+
 }
 
 //******************************************************************
@@ -462,15 +494,15 @@ UNITTEST_CLASS(cSystemInfo)
 {
 	UNITTEST_METHOD(cSystemInfo)
 	{
-		cSystemInfo& i = cSystemInfo::I();
+		cSystemHelper& i = cSystemHelper::I();
 
 		cStringF sSysName = i.get_SystemName();
 		UNITTEST_TRUE(!sSysName.IsEmpty());
 
-		cString sOsName = i.get_OSName();
+		cString sOsName = i.get_OSInfoStr();
 		UNITTEST_TRUE(!sOsName.IsEmpty());
 
-		UINT uOSVer = i.get_OSVer();
+		UINT uOSVer = i.m_Info.get_OSVer();
 #ifdef _WIN32
 		UNITTEST_TRUE(uOSVer > 0x500);	// For windows.
 #endif

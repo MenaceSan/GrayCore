@@ -12,7 +12,7 @@
 #include "cExceptionBase.h"
 #include "HResult.h"
 #include "cUnitTestDecl.h"
-#include "cObjectCreator.h"		// DECLARE_DYNAMIC
+#include "cObject.h" 		// DECLARE_DYNAMIC()
 
 UNITTEST_PREDEF(cException)
 

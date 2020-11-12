@@ -9,7 +9,7 @@
 #pragma once
 #endif
 
-#include "cArraySort.h"
+#include "cArraySortRef.h"
 #include "cArrayString.h"
 #include "cUnitTestDecl.h"
 

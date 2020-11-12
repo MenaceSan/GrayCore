@@ -657,7 +657,7 @@
     <ClInclude Include="include\cNewPtr.h" />
     <ClInclude Include="include\cNonCopyable.h" />
     <ClInclude Include="include\cObject.h" />
-    <ClInclude Include="include\cObjectCreator.h" />
+    <ClInclude Include="include\cObjectFactory.h" />
     <ClInclude Include="include\cOSHandle.h" />
     <ClInclude Include="include\cOSHandleSet.h" />
     <ClInclude Include="include\cOSModImpl.h" />
@@ -678,6 +678,7 @@
     <ClInclude Include="include\cStreamQueue.h" />
     <ClInclude Include="include\cStreamStack.h" />
     <ClInclude Include="include\cString.h" />
+    <ClInclude Include="include\cSystemHelper.h" />
     <ClInclude Include="include\cSystemInfo.h" />
     <ClInclude Include="include\cTempPool.h" />
     <ClInclude Include="include\cTextPos.h" />
@@ -782,7 +783,7 @@
     <ClCompile Include="src\cMem.cpp" />
     <ClCompile Include="src\cMemPage.cpp" />
     <ClCompile Include="src\cMime.cpp" />
-    <ClCompile Include="src\cObjectCreator.cpp" />
+    <ClCompile Include="src\cObjectFactory.cpp" />
     <ClCompile Include="src\cOSHandle.cpp" />
     <ClCompile Include="src\cOSHandleSet.cpp" />
     <ClCompile Include="src\cOSModImpl.cpp" />

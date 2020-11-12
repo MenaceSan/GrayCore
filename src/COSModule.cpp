@@ -7,6 +7,7 @@
 
 #include "pch.h"
 #include "cOSModule.h"
+#include "cSystemHelper.h"
 #include "cFilePath.h"
 #include "cLogMgr.h"
 #include "cAppState.h"
@@ -362,7 +363,7 @@ UNITTEST_CLASS(cOSModule)
 		// A system DLL we are sure will NOT be already loaded.
 #ifdef _WIN32
 		const FILECHAR_t* k_FileName = _FN("avrt.dll");	// some other ? 
-		cStringF sDir = cSystemInfo::get_SystemDir();	//  /Windows/System32
+		cStringF sDir = cSystemHelper::get_SystemDir();	//  /Windows/System32
 		const char* k_SymName = "AvSetMmThreadPriority";
 #elif defined(__linux__)
 		cStringF k_FileName = _FN("libcupsmime.so");		// 

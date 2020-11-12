@@ -170,7 +170,7 @@
     <ClInclude Include="include\cObject.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="include\cObjectCreator.h">
+    <ClInclude Include="include\cObjectFactory.h">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="include\cOSHandle.h">
@@ -519,7 +519,7 @@
     <ClCompile Include="src\cMime.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\cObjectCreator.cpp">
+    <ClCompile Include="src\cObjectFactory.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\cOSHandle.cpp">

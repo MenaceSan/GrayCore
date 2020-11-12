@@ -10,7 +10,7 @@
 #endif
 
 #include "cSingleton.h"
-#include "cFilePath.h"
+#include "FileName.h"
 
 #ifdef __linux__
 #include <sys/utsname.h>	// uname()
@@ -51,10 +51,7 @@ namespace Gray
 		//! The system as a whole. (as far as we can detect) not just the current running app/process or user login.
 		//! The detected system params may be effected by system virtualization.
 
-		friend class cSingleton < cSystemInfo > ;
-
-	protected:
-		cStringF m_sSystemName;		//!< Cached (or overridden for debug purposes) system name.
+		friend class cSingleton < cSystemInfo >;
 
 #ifdef _WIN32
 	public:
@@ -80,7 +77,6 @@ namespace Gray
 		UINT get_NumberOfProcessors() const;	// SMP issues ?
 		bool isOS64Bit() const;
 
-		cString get_OSName() const;
 		UINT get_OSVer() const;
 
 #ifdef _WIN32
@@ -91,9 +87,8 @@ namespace Gray
 		bool isVer3_17_plus() const;
 #endif
 
-		cStringF get_SystemName();		//!< The node name of the machine.
 		static StrLen_t GRAYCALL GetSystemDir(FILECHAR_t* pszDir, StrLen_t iLenMax);
-		static cStringF GRAYCALL get_SystemDir();
+		static HRESULT GRAYCALL GetSystemName(FILECHAR_t* pszName, StrLen_t iLenMax);
 
 		static bool GRAYCALL SystemShutdown(bool bReboot);
 		static void GRAYCALL SystemBeep();

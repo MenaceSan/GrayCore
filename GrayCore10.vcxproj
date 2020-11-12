@@ -551,7 +551,7 @@
     <ClCompile Include="cLogMgr.cpp" />
     <ClCompile Include="cMem.cpp" />
     <ClCompile Include="cMime.cpp" />
-    <ClCompile Include="cObjectCreator.cpp" />
+    <ClCompile Include="cObjectFactory.cpp" />
     <ClCompile Include="cOSHandle.cpp" />
     <ClCompile Include="cOSHandleSet.cpp" />
     <ClCompile Include="cOSModImpl.cpp" />
@@ -668,7 +668,7 @@
     <ClInclude Include="cNewPtr.h" />
     <ClInclude Include="cNonCopyable.h" />
     <ClInclude Include="cObject.h" />
-    <ClInclude Include="cObjectCreator.h" />
+    <ClInclude Include="cObjectFactory.h" />
     <ClInclude Include="cOSHandle.h" />
     <ClInclude Include="cOSHandleSet.h" />
     <ClInclude Include="cOSModImpl.h" />

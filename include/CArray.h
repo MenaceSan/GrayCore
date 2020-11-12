@@ -218,7 +218,8 @@ namespace Gray
 
 		// Operations that move elements around
 		void InsertAt(ITERATE_t nIndex, ARG_TYPE newElement);
-		void RemoveAt(ITERATE_t nIndex, ITERATE_t iQty = 1);
+		void RemoveAt(ITERATE_t nIndex);
+		void RemoveAt(ITERATE_t nIndex, ITERATE_t iQty);
 
 		void MoveElement(ITERATE_t iFrom, ITERATE_t iTo); // throw
 	};
@@ -363,28 +364,44 @@ namespace Gray
 	}
 
 	template <class TYPE, class ARG_TYPE>
+	void CArray<TYPE, ARG_TYPE>::RemoveAt(ITERATE_t nIndex)
+	{
+		// NOTE: Any destructor effecting the array will be reentrant ?!
+		ASSERT_VALID(this);
+		if (!IsValidIndex(nIndex))
+			return;
+		DestructElements<TYPE>(&m_pData[nIndex], 1);
+		m_nSize--;
+		if (nIndex < m_nSize) // not last.
+		{
+			cMem::Copy(&m_pData[nIndex], &m_pData[nIndex + 1], sizeof(TYPE));
+		}
+	}
+
+	template <class TYPE, class ARG_TYPE>
 	void CArray<TYPE, ARG_TYPE>::RemoveAt(ITERATE_t nIndex, ITERATE_t iQty)
 	{
+		// NOTE: Any destructor effecting the array will be reentrant ?!
 		ASSERT_VALID(this);
 		if (iQty <= 0)
 			return;
 		ASSERT(IsValidIndex(nIndex));
 		ITERATE_t nMoveCount = m_nSize - (nIndex + iQty);
-		if (nMoveCount < 0)
+		if (nMoveCount < 0)	// iQty beyond the end!
 		{
 			ASSERT(nMoveCount >= 0);
-			nMoveCount = 0;
+			nMoveCount = 0;	// Last element.
 			iQty = m_nSize - nIndex;
 		}
 		if (iQty >= m_nSize)
 		{
+			// ASSERT(nIndex == 0);	// assumed.
 			RemoveAll();
 			return;
 		}
 		// just remove a range
-		// NOTE: Any destructor effecting the array will be reentrant ?!
 		DestructElements<TYPE>(&m_pData[nIndex], iQty);
-		if (nMoveCount)
+		if (nMoveCount > 0)	// not last.
 		{
 			cMem::CopyOverlap(&m_pData[nIndex], &m_pData[nIndex + iQty], nMoveCount * sizeof(TYPE));
 		}

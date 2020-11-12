@@ -100,6 +100,12 @@ namespace Gray
 	};
 #endif // _MFC_VER
 
+#ifndef _MFC_VER
+	// Dynamic cObject is one that can be created knowing only its name and perhaps some interface that it supports. using cObjectFactory<T>
+#define DECLARE_DYNAMIC(c)			//__noop
+#define IMPLEMENT_DYNAMIC(c, cb)	//__noop
+#endif // _MFC_VER
+
 };
 
 #endif

@@ -344,9 +344,6 @@
     <ClInclude Include="include\cStreamStack.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="include\cObjectCreator.h">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="include\cArraySortRef.h">
       <Filter>include</Filter>
     </ClInclude>
@@ -369,6 +366,12 @@
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="include\cStream.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cObjectFactory.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cSystemHelper.h">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>
@@ -639,9 +642,6 @@
     <ClCompile Include="src\cExceptionSystem.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\cObjectCreator.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\cStreamStack.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -655,6 +655,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\cList.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cObjectFactory.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

@@ -35,7 +35,7 @@ namespace Gray
 		//! @note TYPE = cSingletonStatic based class = this
 		//! Externally created singleton. might be stack based, or abstract (e.g.CNTServiceImpl) but usually static allocated.
 		//! @note Assume 1. gets constructed/destructed by the C Runtime, 2. Is inherently thread safe since its not created on demand.
-		//! The BIG problem with this is that we cannot guarantee order of creation. So singletons that rely/construct on each other may be corrupt/uninitialized.
+		//! The BIG problem with this is that we cannot guarantee order of creation/destruction. So singletons that rely/construct on each other may be corrupt/uninitialized.
 
 	protected:
 		static TYPE* sm_pThe;	//!< pointer to the one and only object of this TYPE. ASSUME automatically init to = nullptr.
@@ -158,7 +158,7 @@ namespace Gray
 		{
 			//! get (or create) a pointer to the singleton object.
 			//! @note This ensures proper creation order for singletons (Statics) that ref each other!
-			//! @todo use CreateObject from cObjectCreator Like the MFC CreateObject() and "CRuntime?"
+			//! @todo use CreateObject from cObjectFactory Like the MFC CreateObject() and "CRuntime?"
 
 			if (!SUPER_t::isSingleCreated())
 			{

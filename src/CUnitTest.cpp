@@ -14,7 +14,7 @@
 #include "cSingletonPtr.h"
 #include "cFileDir.h"
 #include "cNewPtr.h"
-#include "cSystemInfo.h"
+#include "cSystemHelper.h"
 #include "cTypes.h"
 #include "cTimeDouble.h"
 #include "cAppImpl.h"
@@ -498,7 +498,7 @@ do ordain and establish this constitution of the United States of America\n\n");
 		// Display build/compile info. date, compiler, _MFC_VER/_AFXDLL, 64/32 bit.
 		sm_pLog->addDebugInfoF("Build: '%s' v%d for '%s' on '%s'", GRAY_COMPILER_NAME, GRAY_COMPILER_VER, GRAY_BUILD_NAME, __DATE__);
 		// Display current run environment info. OS type, 64/32 bit, OS version, CPU's.
-		sm_pLog->addDebugInfoF("OS: '%s'", LOGSTR(cSystemInfo::I().get_OSName()));
+		sm_pLog->addDebugInfoF("OS: '%s'", LOGSTR(cSystemHelper::I().get_OSInfoStr()));
 
 		// Test presumed behavior of compiler types.
 		TestTypes();

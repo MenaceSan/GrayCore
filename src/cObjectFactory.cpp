@@ -1,15 +1,15 @@
 //
-//! @file cObjectCreator.cpp
+//! @file cObjectFactory.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 #include "pch.h"
-#include "cObjectCreator.h"
+#include "cObjectFactory.h"
 #include "cArchive.h"
 
 namespace Gray
 {
-	// CObjectCreationMgr : public cSingleton<>
-	// Use something like the Singleton register.
+	// cObjectFactory<T> : public cSingleton<cObjectFactory<T>>
+	// Use something like the Singleton register for creation of a given type.
 
 #ifndef _MFC_VER
 	void CObject::Serialize(cArchive& a) // virtual

@@ -244,13 +244,14 @@ namespace Gray
 		}
 		static inline HRESULT GetLastDef(HRESULT hResDef = E_FAIL) noexcept
 		{
-			//! Get the last system error recorded for this thread.
+			//! Get the last system error recorded for this thread. A known failure.
 			//! If there isn't one then just use the supplied default. E_FAIL
 			return GetDef(GetLast(), hResDef);
 		}
 
-#ifndef UNDER_CE
 		static HRESULT GRAYCALL FromPOSIX(int iErrNo) noexcept;	// from <errno.h> style
+
+#ifndef UNDER_CE
 		static HRESULT GRAYCALL GetPOSIXLast() noexcept;
 		static HRESULT GRAYCALL GetPOSIXLastDef(HRESULT hResDef = E_FAIL) noexcept // static 
 		{

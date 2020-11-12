@@ -10,7 +10,7 @@
 #include "cCodeProfiler.h"
 #include "cLogMgr.h"
 #include "StrU.h"
-#include "cObjectCreator.h"
+#include "cObjectFactory.h"
 
 namespace Gray
 {

@@ -51,13 +51,13 @@ namespace Gray
 		return k_ITERATE_BAD;
 	}
 
-#ifndef UNDER_CE
 	HRESULT GRAYCALL HResult::FromPOSIX(int iErrno) noexcept
 	{
 		//! Translate/Convert a DOS/POSIX error code errno_t to HRESULT type. AKA errno
 		//! POSIX calls like system() return these codes.
 		//! http://www.koders.com/c/fid8425F6A15760BC96CEEEC6FD90C93E689C2C1AF5.aspx
 
+#ifndef UNDER_CE
 		switch (iErrno)
 		{
 		case 0:	// EZERO
@@ -113,11 +113,13 @@ namespace Gray
 #endif
 			break;
 		}
+#endif
 
 		// pack a posix code in HRESULT
 		return Make(FACILITY_POSIX, (iErrno) & 0x0000FFFF);
 	}
 
+#ifndef UNDER_CE
 	HRESULT GRAYCALL HResult::GetPOSIXLast() noexcept // static 
 	{
 		//! Get last POSIX error code. 'errno'

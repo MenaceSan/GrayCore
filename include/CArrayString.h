@@ -9,7 +9,7 @@
 #pragma once
 #endif
 
-#include "cArray.h"
+#include "cArrayRef.h"
 #include "cString.h"
 
 namespace Gray

@@ -339,7 +339,7 @@
     <ClInclude Include="cFloatDeco.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="cObjectCreator.h">
+    <ClInclude Include="cObjectFactory.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="StrBuilder.h">
@@ -560,7 +560,7 @@
     <ClCompile Include="cFloatDeco.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="cObjectCreator.cpp">
+    <ClCompile Include="cObjectFactory.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="StrNum.cpp">
