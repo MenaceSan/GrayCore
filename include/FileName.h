@@ -13,7 +13,7 @@
 namespace Gray
 {
 	// File names might be _UNICODE wchar_t or UTF8 characters.
-#if defined(USE_UNICODE_FN)
+#if USE_UNICODE_FN
 	typedef wchar_t FILECHAR_t;		//!< a _UNICODE char in a file name. like TCHAR
 #define _FN(x)		__TOW(x)	//!< like _T(x) macro for static text file names.
 #define _FNF(c)		c##W		//!< _WIN32 name has a A or W for UTF8 or UNICODE

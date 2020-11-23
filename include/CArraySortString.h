@@ -13,10 +13,10 @@
 #include "cArrayString.h"
 #include "cUnitTestDecl.h"
 
-UNITTEST_PREDEF(cArraySortString)
-
 namespace Gray
 {
+	UNITTEST2_PREDEF(cArraySortString);
+
 	template< typename _TYPE_CH = TCHAR >
 	class GRAYCORE_LINK cArraySortString : public cArraySorted < cStringT<_TYPE_CH>, cStringT<_TYPE_CH>, const _TYPE_CH* >
 	{
@@ -105,20 +105,12 @@ namespace Gray
 			return k_ITERATE_BAD;
 		}
 
-		UNITTEST_FRIEND(cArraySortString);
+		UNITTEST2_FRIEND(cArraySortString);
 	};
 
 	typedef cArraySortString<char> cArraySortStringA;
 	typedef cArraySortString<wchar_t> cArraySortStringW;
 
-#ifdef GRAY_DLL // force implementation/instantiate for DLL/SO.
-	template class GRAYCORE_LINK cArraySortString < char >;
-	template class GRAYCORE_LINK cArraySortString < wchar_t >;
-	template class GRAYCORE_LINK cArraySorted < cStringT<char>, const char*, const char* >;
-	template class GRAYCORE_LINK cArraySorted < cStringT<wchar_t>, const wchar_t*, const wchar_t* >;
-#endif
-
 }
 
 #endif
-

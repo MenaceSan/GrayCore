@@ -14,10 +14,9 @@
 #include "cTypes.h"
 #include "cString.h"
 
-UNITTEST_PREDEF(cUInt64)
-
 namespace Gray
 {
+	UNITTEST2_PREDEF(cUInt64);
 	class cThreadState;
 
 #pragma pack(push,1)
@@ -27,7 +26,7 @@ namespace Gray
 		//! emulate 64 bit unsigned integer as a native type for systems that don't actually support this. QWord
 		//! if ! USE_INT64 then ASSUME we DONT support 64 bit int types natively. Assume all platforms support 32 bit types.
 		//! we don't support __int64 (_MSC_VER) or int64_t (C99/GCC standard) native.
-		//! like CUnion64 or LARGE_INTEGER as a native type for operators.
+		//! like cUnion64 or LARGE_INTEGER as a native type for operators.
 		//! same size as UINT64
 		//! use typedef cUInt64 UINT64; if ! USE_INT64
 
@@ -41,11 +40,11 @@ namespace Gray
 #endif
 
 	private:
-		// don't use CUnion64 so we can use CUINT64(h,l) for init.
+		// don't use cUnion64 so we can use CUINT64(h,l) for init.
 #ifdef USE_INT64		// native support for UINT 64 bit.
 		UNIT_t m_u;
 #elif defined(USE_LITTLE_ENDIAN)
-		UNIT_t m_uLo;	
+		UNIT_t m_uLo;
 		UNIT_t m_uHi;
 #else
 		UNIT_t m_uHi;
@@ -55,19 +54,19 @@ namespace Gray
 	public:
 		cUInt64()
 #ifdef USE_INT64
-		: m_u(0)
+			: m_u(0)
 #else
-		: m_uLo(0)
-		, m_uHi(0)
+			: m_uLo(0)
+			, m_uHi(0)
 #endif
 		{
 		}
 		cUInt64(UNIT_t n)
 #ifdef USE_INT64
-		: m_u(n)
+			: m_u(n)
 #else
-		: m_uLo(n)
-		, m_uHi(0)
+			: m_uLo(n)
+			, m_uHi(0)
 #endif
 		{
 		}
@@ -101,10 +100,10 @@ namespace Gray
 #ifdef USE_INT64
 			return cBits::IsSet(m_u, nBit);
 #else
-			if ( nBit < k_UNIT_BITS )
-				return cBits::IsSet( m_uLo, nBit );
+			if (nBit < k_UNIT_BITS)
+				return cBits::IsSet(m_uLo, nBit);
 			else
-				return cBits::IsSet( m_uHi, nBit-k_UNIT_BITS );
+				return cBits::IsSet(m_uHi, nBit - k_UNIT_BITS);
 #endif
 		}
 		bool operator == (const cUInt64& n) const
@@ -132,7 +131,7 @@ namespace Gray
 #ifdef USE_INT64
 			return m_u > n.m_u;
 #else
-			if(m_uHi == n.m_uHi)
+			if (m_uHi == n.m_uHi)
 				return m_uLo > n.m_uLo;
 			else
 				return m_uHi > n.m_uHi;
@@ -144,7 +143,7 @@ namespace Gray
 #ifdef USE_INT64
 			return m_u < n.m_u;
 #else
-			if(m_uHi == n.m_uHi)
+			if (m_uHi == n.m_uHi)
 				return m_uLo < n.m_uLo;
 			else
 				return m_uHi < n.m_uHi;
@@ -156,7 +155,7 @@ namespace Gray
 #ifdef USE_INT64
 			return m_u <= n.m_u;
 #else
-			if(m_uHi == n.m_uHi)
+			if (m_uHi == n.m_uHi)
 				return m_uLo <= n.m_uLo;
 			else
 				return m_uHi < n.m_uHi;
@@ -183,14 +182,14 @@ namespace Gray
 #else
 			UNIT_t n = m_uLo;
 			m_uLo++;
-			if(m_uLo < n)	// carry bit.
+			if (m_uLo < n)	// carry bit.
 				m_uHi++;
 #endif
 		}
 		void operator ++(int)
 		{
 			//! Post fix increment: same as prefix
-			++*this;
+			++* this;
 		}
 
 		void operator--()
@@ -200,14 +199,14 @@ namespace Gray
 #else
 			UNIT_t n = m_uLo;
 			m_uLo--;
-			if(m_uLo > n) // carry bit.
+			if (m_uLo > n) // carry bit.
 				m_uHi--;
 #endif
 		}
 		void operator --(int)
 		{
 			//! Postfix decrement: same as prefix
-			--*this;
+			--* this;
 		}
 
 		cUInt64& operator+=(const cUInt64& n)
@@ -216,7 +215,7 @@ namespace Gray
 			m_u += n.m_u;
 #else
 			m_uLo += n.m_uLo;
-			if(m_uLo < n.m_uLo) // carry bit.
+			if (m_uLo < n.m_uLo) // carry bit.
 				m_uHi++;
 			m_uHi += n.m_uHi;
 #endif
@@ -267,13 +266,13 @@ namespace Gray
 #ifdef USE_INT64
 			m_u |= ((UNIT_t)1) << uiBit;
 #else
-			if ( uiBit < k_UNIT_BITS )
+			if (uiBit < k_UNIT_BITS)
 			{
 				m_uLo |= ((UNIT_t)1) << uiBit;
 			}
 			else
 			{
-				m_uHi |= ((UNIT_t)1) << ( uiBit - k_UNIT_BITS );
+				m_uHi |= ((UNIT_t)1) << (uiBit - k_UNIT_BITS);
 			}
 #endif
 		}
@@ -316,14 +315,14 @@ namespace Gray
 #ifdef USE_INT64
 			m_u <<= uiBits;
 #else
-			if(uiBits < k_UNIT_BITS)
+			if (uiBits < k_UNIT_BITS)
 			{
-				(m_uHi <<= uiBits) |= (m_uLo >> (k_UNIT_BITS-uiBits));
+				(m_uHi <<= uiBits) |= (m_uLo >> (k_UNIT_BITS - uiBits));
 				m_uLo <<= uiBits;
 			}
 			else
 			{
-				m_uHi = m_uLo << (uiBits-k_UNIT_BITS);
+				m_uHi = m_uLo << (uiBits - k_UNIT_BITS);
 				m_uLo = 0;
 			}
 #endif
@@ -335,14 +334,14 @@ namespace Gray
 #ifdef USE_INT64
 			m_u >>= uiBits;
 #else
-			if(uiBits < k_UNIT_BITS)
+			if (uiBits < k_UNIT_BITS)
 			{
-				(m_uLo >>= uiBits) |= (m_uHi << (k_UNIT_BITS-uiBits));
+				(m_uLo >>= uiBits) |= (m_uHi << (k_UNIT_BITS - uiBits));
 				m_uHi >>= uiBits;
 			}
 			else
 			{
-				m_uLo = m_uHi >> (uiBits-k_UNIT_BITS);
+				m_uLo = m_uHi >> (uiBits - k_UNIT_BITS);
 				m_uHi = 0;
 			}
 #endif
@@ -364,7 +363,7 @@ namespace Gray
 		static void GRAYCALL Divide(const cUInt64& dividend, const cUInt64& divisor, OUT cUInt64& quotient, OUT cUInt64& remainder);
 		static void GRAYCALL EuclideanAlgorithm(const cUInt64& x, const cUInt64& y, OUT cUInt64& a, OUT cUInt64& b, OUT cUInt64& g);
 
-		UNITTEST_FRIEND(cUInt64);
+		UNITTEST2_FRIEND(cUInt64);
 	};
 
 #pragma pack(pop)

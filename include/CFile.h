@@ -24,10 +24,10 @@
 struct _SECURITY_ATTRIBUTES;	// stub this out
 #endif
 
-UNITTEST_PREDEF(cFile)
-
 namespace Gray
 {
+	UNITTEST2_PREDEF(cFile);
+
 	enum OF_FLAGS_TYPE_
 	{
 		//! @enum Gray::OF_FLAGS_TYPE_
@@ -129,7 +129,7 @@ namespace Gray
 
 	class GRAYCORE_LINK cFile
 		: public CFile
-		, public CStream
+		, public cStream
 	{
 		//! @class Gray::cFile
 		//! General OS file access interface. Extends MFC functionality
@@ -172,7 +172,7 @@ namespace Gray
 
 		virtual STREAM_SEEKRET_t Seek(STREAM_OFFSET_t lOffset = 0, SEEK_ORIGIN_TYPE eSeekOrigin = SEEK_Set) override
 		{
-			//! disambiguate CStream
+			//! disambiguate cStream
 			//! not const in MFC
 			//! @return
 			//!  the New position,  <0 = FAILED = INVALID_SET_FILE_POINTER
@@ -180,13 +180,13 @@ namespace Gray
 		}
 		virtual STREAM_POS_t GetPosition() const override
 		{
-			//! disambiguate. CStream
+			//! disambiguate. cStream
 			//! should be same as FILE_SIZE_t?
 			return CFile::GetPosition();
 		}
 		virtual STREAM_POS_t GetLength() const override
 		{
-			//! disambiguate. CStream 
+			//! disambiguate. cStream 
 			//! should be same as FILE_SIZE_t?
 			return CFile::GetLength();
 		}
@@ -194,12 +194,12 @@ namespace Gray
 #ifdef _MFC_VER
 		void SeekToBegin()
 		{
-			//! disambiguate. CStream
+			//! disambiguate. cStream
 			CFile::SeekToBegin();
 		}
 		STREAM_POS_t SeekToEnd()
 		{
-			//! disambiguate. CStream
+			//! disambiguate. cStream
 			return CFile::SeekToEnd();
 		}
 #else
@@ -275,7 +275,7 @@ namespace Gray
 		bool SetFileTime(cTimeInt timeCreation, cTimeInt timeLastWrite);
 		HRESULT GetFileStatus(cFileStatus& attr) const;
 
-		// CStream
+		// cStream
 		virtual HRESULT ReadX(void* pData, size_t nDataSize) override;
 		virtual HRESULT WriteX(const void* pData, size_t nDataSize) override; // disambiguate.
 		virtual HRESULT FlushX() override;
@@ -284,11 +284,7 @@ namespace Gray
 		static HRESULT GRAYCALL DeletePathX(const FILECHAR_t* pszFilePath, DWORD nFileFlags = 0);
 		static HRESULT GRAYCALL LoadFile(const FILECHAR_t* pszFilePath, OUT cHeapBlock& block, size_t nSizeExtra = 0);
 
-#if USE_UNITTESTS
-		static void GRAYCALL UnitTest_Write(cStreamOutput& testfile1);
-		static void GRAYCALL UnitTest_Read(cStreamInput& testfile1, bool bString);
-		UNITTEST_FRIEND(cFile);
-#endif
+		UNITTEST2_FRIEND(cFile);
 	};	
 } 
 

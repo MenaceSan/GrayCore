@@ -16,7 +16,7 @@ namespace Gray
 	enum ASCII_TYPE
 	{
 		//! @enum Gray::ASCII_TYPE
-		//! Make names for all the ASCII values.
+		//! Make names for all the ASCII values. control chars.
 
 		ASCII_NONE = -1,	// No char was produced.
 

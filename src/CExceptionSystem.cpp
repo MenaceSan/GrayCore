@@ -147,45 +147,5 @@ namespace Gray
 #endif
 	}
 }
-
-//***************************************************************************
-
-#if USE_UNITTESTS
-#include "cUnitTest.h"
-
-UNITTEST_CLASS(cExceptionSystem)
-{
-	UNITTEST_METHOD(cExceptionSystem)
-	{
-#ifdef _MSC_VER
-		__try
-		{
-			// do bad stuff.
-
-			// nullptr reference.
-
-			// divide by zero. RPC_S_ZERO_DIVIDE
-		}
-		__except (cExceptionSystem::FilterException(GetExceptionCode(), GetExceptionInformation()))
-		{
-			// like catch
-			//-- display the fatal error message
-#if 0
-			MessageBox(0, "Exception was caught here!",
-				"Unexpected Error", MB_OK);
-#endif
-
-			DEBUG_MSG(("Exception Test"));
-		}
-#endif
-
-		// TODO a try/catch block as well.
-
-		// cExceptionSystem::InitForCurrentThread()
-
-	}
-};
-UNITTEST_REGISTER(cExceptionSystem, UNITTEST_LEVEL_Core);
-#endif
-
+ 
 #endif	// ! _CPPUNWIND

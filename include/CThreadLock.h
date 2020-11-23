@@ -20,17 +20,38 @@
 #if defined(__linux__)
 #include <pthread.h>
 #endif
-UNITTEST_PREDEF(cThreadId)
 
 namespace Gray
 {
+	UNITTEST2_PREDEF(cThreadLock);
+
 #ifdef _WIN32
-	typedef DWORD		THREADID_t;		//!< CreateThread uses LPDWORD in 64 bit code.
+	typedef DWORD		THREADID_t;		//!< CreateThread uses LPDWORD even in 64 bit code.
 #define _SIZEOF_THREADID 4	// sizeof(THREADID_t)
-#else
+#elif defined(__linux__)
 	typedef pthread_t	THREADID_t;		//!< @note old __linux__ gettid() is not compatible with pthreads
 #define _SIZEOF_THREADID _SIZEOF_PTR
+#else
+#error NOOS
 #endif
+
+#ifdef _WIN32
+	typedef DWORD THREAD_EXITCODE_t;	//!< Similar to APP_EXITCODE_t
+	static constexpr THREAD_EXITCODE_t THREAD_EXITCODE_RUNNING = ((THREAD_EXITCODE_t)STILL_ACTIVE);	//!< can't get exit code if not exited. STILL_ACTIVE = 0x00000103L
+	static constexpr THREAD_EXITCODE_t THREAD_EXITCODE_ERR = ((THREAD_EXITCODE_t)-1);	//!< failure exit.
+
+#elif defined(__linux__)
+	typedef void* THREAD_EXITCODE_t;	//!< Similar to APP_EXITCODE_t
+	static constexpr THREAD_EXITCODE_t THREAD_EXITCODE_RUNNING = ((THREAD_EXITCODE_t)2);	//!< can't get exit code if not exited.
+	static constexpr THREAD_EXITCODE_t THREAD_EXITCODE_ERR = ((THREAD_EXITCODE_t)1);	//!< failure exit.
+
+#else
+#error NOOS
+#endif
+
+	static constexpr THREAD_EXITCODE_t THREAD_EXITCODE_OK = ((THREAD_EXITCODE_t)0);	//!< Similar to APP_EXITCODE_t
+
+	typedef THREAD_EXITCODE_t (_stdcall* THREAD_FUNC_t)(void*);		// entry point for a thread. same as _WIN32 PTHREAD_START_ROUTINE. like FARPROC ?
 
 	class GRAYCORE_LINK cThreadId
 	{
@@ -110,7 +131,7 @@ namespace Gray
 #endif
 		};
 
-		UNITTEST_FRIEND(cThreadId);
+		UNITTEST2_FRIEND(cThreadLock);
 	};
 
 	class GRAYCORE_LINK cThreadState
@@ -141,7 +162,7 @@ namespace Gray
 			return m_bThreadStopping;
 		}
 
-		virtual bool RequestStopThread(bool bWillWait = false)
+		virtual bool RequestStopThread(bool bWillWait = false) noexcept
 		{
 			UNREFERENCED_PARAMETER(bWillWait);
 			m_bThreadStopping = true;

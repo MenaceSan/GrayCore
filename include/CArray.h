@@ -134,15 +134,15 @@ namespace Gray
 		bool IsValidTestSize() const;
 
 		// Attributes
-		ITERATE_t GetSize() const
+		inline ITERATE_t GetSize() const noexcept
 		{
 			return m_nSize;
 		}
-		ITERATE_t GetUpperBound() const
+		inline ITERATE_t GetUpperBound() const noexcept
 		{
 			return m_nSize - 1;
 		}
-		bool IsEmpty() const
+		bool IsEmpty() const noexcept
 		{
 			return(this->m_nSize <= 0);
 		}
@@ -178,11 +178,11 @@ namespace Gray
 		}
 
 		// Direct Access to the element data (may return nullptr)
-		const TYPE* GetData() const
+		inline const TYPE* GetData() const
 		{
 			return m_pData;
 		}
-		TYPE* GetData()
+		inline TYPE* GetData()
 		{
 			return m_pData;
 		}
@@ -207,11 +207,11 @@ namespace Gray
 		void Copy(const CArray& src);
 
 		// overloaded operator helpers
-		TYPE& operator[](ITERATE_t nIndex)
+		inline TYPE& operator[](ITERATE_t nIndex)
 		{
 			return ElementAt(nIndex);
 		}
-		const TYPE& operator[](ITERATE_t nIndex) const
+		inline const TYPE& operator[](ITERATE_t nIndex) const
 		{
 			return GetAt(nIndex);
 		}
@@ -368,13 +368,16 @@ namespace Gray
 	{
 		// NOTE: Any destructor effecting the array will be reentrant ?!
 		ASSERT_VALID(this);
-		if (!IsValidIndex(nIndex))
+		if (nIndex < 0)
+			return;
+		ITERATE_t nMoveCount = m_nSize - (nIndex + 1);
+		if (nMoveCount < 0)
 			return;
 		DestructElements<TYPE>(&m_pData[nIndex], 1);
 		m_nSize--;
-		if (nIndex < m_nSize) // not last.
+		if (nMoveCount > 0) // not last.
 		{
-			cMem::Copy(&m_pData[nIndex], &m_pData[nIndex + 1], sizeof(TYPE));
+			cMem::CopyOverlap(&m_pData[nIndex], &m_pData[nIndex + 1], nMoveCount * sizeof(TYPE));
 		}
 	}
 
@@ -383,9 +386,8 @@ namespace Gray
 	{
 		// NOTE: Any destructor effecting the array will be reentrant ?!
 		ASSERT_VALID(this);
-		if (iQty <= 0)
+		if (iQty <= 0 || nIndex < 0)
 			return;
-		ASSERT(IsValidIndex(nIndex));
 		ITERATE_t nMoveCount = m_nSize - (nIndex + iQty);
 		if (nMoveCount < 0)	// iQty beyond the end!
 		{
@@ -489,11 +491,11 @@ namespace Gray
 		}
 
 		// New
-		bool IsValidIndex(ITERATE_t i) const
+		bool IsValidIndex(ITERATE_t i) const noexcept
 		{
 			return IS_INDEX_GOOD(i, this->m_nSize);
 		}
-		ITERATE_t ClampValidIndex(ITERATE_t i) const
+		ITERATE_t ClampValidIndex(ITERATE_t i) const noexcept
 		{
 			//! @return -1 = empty array.
 			if (i < 0)
@@ -534,11 +536,11 @@ namespace Gray
 			ASSERT(IsValidIndex(nIndex));
 			return this->m_pData[nIndex];
 		}
-		TYPE& operator[](ITERATE_t nIndex) // throw
+		inline TYPE& operator[](ITERATE_t nIndex) // throw
 		{
 			return this->ElementAt(nIndex);
 		}
-		const TYPE& operator[](ITERATE_t nIndex) const // throw
+		inline const TYPE& operator[](ITERATE_t nIndex) const // throw
 		{
 			// Const array should return const values.
 			ASSERT(IsValidIndex(nIndex));

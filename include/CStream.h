@@ -13,14 +13,14 @@
 #include "cStreamProgress.h"
 #include "cTimeSys.h"
 #include "cMem.h"
-#include "cUnitTestDecl.h"
 #include "cHeap.h"
 #include "HResult.h"
-
-UNITTEST_PREDEF(CStream)
+#include "cUnitTestDecl.h"
 
 namespace Gray
 {
+	UNITTEST2_PREDEF(cStream);
+
 #ifdef _WIN32
 #define FILE_EOL	STR_CRLF	//!< CRLF for DOS/Windows format text files. (13,10)
 #else
@@ -44,17 +44,17 @@ namespace Gray
 			, m_tLast(cTimeSys::k_CLEAR)
 		{
 		}
-		void ResetStat()
+		void ResetStat() noexcept
 		{
 			m_nCount = 0;		//!< Keep arbitrary stats on how much i TX/RX.
 			m_tLast.InitTime();
 		}
-		void UpdateStat(size_t n)
+		void UpdateStat(size_t n) noexcept
 		{
 			m_nCount += n;
 			m_tLast.InitTimeNow();
 		}
-		void Add(const cStreamStat& n)
+		void Add(const cStreamStat& n) noexcept
 		{
 			m_nCount += n.m_nCount;
 			if (n.m_tLast.get_TimeSys() > m_tLast.get_TimeSys())
@@ -133,7 +133,7 @@ namespace Gray
 		//! similar to STL std::ostream, and IWriteStream
 
 	public:
-		cStreamOutput()
+		cStreamOutput() noexcept
 		{
 		}
 		virtual ~cStreamOutput()
@@ -310,7 +310,7 @@ namespace Gray
 		//! Generic input stream of data.
 		//! @note Seek() not always available from this interface. ReadX(nullptr) = skip over but not true seek.
 	public:
-		cStreamInput()
+		cStreamInput() noexcept
 		{
 		}
 		virtual ~cStreamInput()
@@ -452,11 +452,11 @@ namespace Gray
 #include "cTypes.tbl"
 #undef CTYPE_DEF
 
-	class GRAYCORE_LINK CStream
+	class GRAYCORE_LINK cStream
 		: public cStreamInput
 		, public cStreamOutput
 	{
-		//! @class Gray::CStream
+		//! @class Gray::cStream
 		//! This is a bi-directional stream. RX and TX
 		//! Sequential = seek May not be avail from this interface. or only partial support.
 		//! Similar to MFC cArchive, COM ISequentialStream, std::basic_streambuf ?
@@ -486,10 +486,7 @@ namespace Gray
 			return cStreamInput::SeekToEnd();
 		}
 
-#if USE_UNITTESTS
-		UNITTEST_FRIEND(CStream);
-		static void GRAYCALL UnitTest_StreamIntegrity(cStreamOutput& stmOut, cStreamInput& strIn, size_t nSizeTotal);
-#endif
+		UNITTEST2_FRIEND(cStream);
 	};
 
 	class GRAYCORE_LINK cStreamTransaction
@@ -572,10 +569,10 @@ namespace Gray
 		}
 	};
 
-	class GRAYCORE_LINK cStreamNull : public CStream
+	class GRAYCORE_LINK cStreamNull : public cStream
 	{
 		//! @class Gray::cStreamNull
-		//! A junk/null CStream that just tosses write data and has no read data.
+		//! A junk/null cStream that just tosses write data and has no read data. For testing.
 
 	public:
 		virtual HRESULT WriteX(const void* pData, size_t nDataSize) override // = 0;
@@ -587,4 +584,4 @@ namespace Gray
 	};
 };
 
-#endif // _INC_CStream_H
+#endif // _INC_cStream_H

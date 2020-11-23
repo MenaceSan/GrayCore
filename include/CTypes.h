@@ -32,9 +32,9 @@ namespace Gray
 #define MAKEDWORD(low, high)	((UINT32)(((WORD)(low)) | (((UINT32)((WORD)(high))) << 16)))
 
 #pragma pack(push,1)
-	union CATTR_PACKED CUnion16
+	union CATTR_PACKED cUnion16
 	{
-		//! @union Gray::CUnion64
+		//! @union Gray::cUnion64
 		//! What types can fit inside 16 bits? MAKEWORD(l,h)
 		//! 16 bit union. size = 2 bytes
 		//! This depends on USE_LITTLE_ENDIAN of course.
@@ -62,9 +62,9 @@ namespace Gray
 		} u2;
 	};
 
-	union CATTR_PACKED CUnion32
+	union CATTR_PACKED cUnion32
 	{
-		//! @union Gray::CUnion32
+		//! @union Gray::cUnion32
 		//! What types can fit inside 32 bits? MAKEDWORD(low, high)
 		//! 32 bit union. size = 4 bytes
 		//! This depends on USE_LITTLE_ENDIAN of course.
@@ -90,22 +90,22 @@ namespace Gray
 		struct
 		{
 #ifdef USE_LITTLE_ENDIAN
-			CUnion16 m_Lo;	// LowPart
-			CUnion16 m_Hi;	// HighPart
+			cUnion16 m_Lo;	// LowPart
+			cUnion16 m_Hi;	// HighPart
 #else
-			CUnion16 m_Hi;
-			CUnion16 m_Lo;
+			cUnion16 m_Hi;
+			cUnion16 m_Lo;
 #endif
 		} u2;
 	};
 
-	union CATTR_PACKED CUnion64
+	union CATTR_PACKED cUnion64
 	{
-		//! @union Gray::CUnion64
+		//! @union Gray::cUnion64
 		//! What types can fit inside 64 bits?
 		//! 64 bit union. Assumes alignment if anyone cares. size = 8 bytes
 		//! similar to _WIN32 LARGE_INTEGER union. or cUInt64
-		//! 2 * CUnion32
+		//! 2 * cUnion32
 		//! This depends on USE_LITTLE_ENDIAN of course.
 		//! Warning in __GNUC__ reinterpret_ warning: dereferencing type-punned pointer will break strict-aliasing rules [-Wstrict-aliasing]
 
@@ -134,11 +134,11 @@ namespace Gray
 		struct
 		{
 #ifdef USE_LITTLE_ENDIAN
-			CUnion32 m_Lo;	// LowPart
-			CUnion32 m_Hi;	// HighPart
+			cUnion32 m_Lo;	// LowPart
+			cUnion32 m_Hi;	// HighPart
 #else
-			CUnion32 m_Hi;
-			CUnion32 m_Lo;
+			cUnion32 m_Hi;
+			cUnion32 m_Lo;
 #endif
 		} u2;
 	};
@@ -148,9 +148,9 @@ namespace Gray
 #pragma pack(pop)
 
 	template< typename TYPE = int >
-	struct CTypeLimit	// static
+	struct cTypeLimit	// static
 	{
-		//! @struct Gray::CTypeLimit
+		//! @struct Gray::cTypeLimit
 		//! Numeric constants (limits) each basic type.
 		//! Similar to std::numeric_limits<T>::max(), or INT_MAX
 		static const TYPE k_Min;		//!< Min value TYPE can represent. negative if signed type. NOT EPSILON (near zero). e.g. INT_MIN, -FLT_MAX 
@@ -169,7 +169,7 @@ namespace Gray
 	};
 
 #ifdef _MSC_VER		// M$ this is not a redundant define.
-#define CTYPE_DEF(a,_TYPE,c,d,e,f,g,h)  template<> const _TYPE CTypeLimit<_TYPE>::k_Min = e; template<> const _TYPE CTypeLimit<_TYPE>::k_Max = f; const BYTE CTypeLimit<_TYPE>::k_TypeFlags = (c);
+#define CTYPE_DEF(a,_TYPE,c,d,e,f,g,h)  template<> const _TYPE cTypeLimit<_TYPE>::k_Min = e; template<> const _TYPE cTypeLimit<_TYPE>::k_Max = f; const BYTE cTypeLimit<_TYPE>::k_TypeFlags = (c);
 #include "cTypes.tbl"
 #undef CTYPE_DEF
 #endif	// _MSC_VER

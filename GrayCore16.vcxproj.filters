@@ -80,9 +80,6 @@
     <ClInclude Include="include\cQueue.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="include\cRandomDef.h">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="include\cRefPtr.h">
       <Filter>include</Filter>
     </ClInclude>
@@ -156,9 +153,6 @@
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="include\cUnitTestDecl.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cUnitTestMs.h">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="include\cValT.h">
@@ -374,14 +368,23 @@
     <ClInclude Include="include\cSystemHelper.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="include\cPtrTrace.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cPtrTraceMgr.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cRandom.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cAtomManager.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.md" />
     <None Include="include\StrT.inl">
       <Filter>include</Filter>
-    </None>
-    <None Include="test\CIniFileUnitTest.ini">
-      <Filter>test</Filter>
     </None>
     <None Include="LICENSE.txt" />
     <None Include="include\cMimeExts.tbl">
@@ -419,9 +422,6 @@
     <Filter Include="include">
       <UniqueIdentifier>{17d5e6aa-3bd2-4aff-85ac-b1d8b35bb64f}</UniqueIdentifier>
     </Filter>
-    <Filter Include="test">
-      <UniqueIdentifier>{03c72c66-c06a-4ddc-8f9f-f6a5aa2e1cb3}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -441,22 +441,13 @@
     <ClCompile Include="src\cDebugAssert.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\cFloat.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\cFloatDeco.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\cHashTable.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\cHeap.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\cHookJump.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\cInterlockedVal.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\cMem.cpp">
@@ -490,9 +481,6 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\cQueue.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\cRandomDef.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\cSingleton.cpp">
@@ -540,9 +528,6 @@
     <ClCompile Include="src\cUnitTest.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\cWinHeap.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\HResult.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -571,9 +556,6 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\StrXUnitTest.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\cBits.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\cCodeProfiler.cpp">
@@ -630,12 +612,6 @@
     <ClCompile Include="src\cIniSection.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\cArraySort.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\cArrayString.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\cExceptionAssert.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -658,6 +634,12 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\cObjectFactory.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="cArray.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cRandom.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

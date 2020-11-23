@@ -179,35 +179,4 @@ namespace Gray
 	}
 #endif
 }
-
-//***********************************************************************
-
-#if USE_UNITTESTS
-#include "cUnitTest.h"
-#include "cListNodeSmart.h"
-#include "cLogMgr.h"
-
-namespace Gray
-{
-	class cUnitTestListSmart : public cListNodeSmart < cUnitTestListSmart >
-	{
-	public:
-		int m_iVal;
-	public:
-		cUnitTestListSmart(int iVal)
-		: m_iVal(iVal)
-		{
-		}
-	};
-};
-UNITTEST_CLASS(cListBase)
-{
-	UNITTEST_METHOD(cListBase)
-	{
-		CListT<cUnitTestListSmart> list;
-		// list.InsertHead(new cUnitTestListSmart(1));
-		// list.Empty();
-	}
-};
-UNITTEST_REGISTER(cListBase, UNITTEST_LEVEL_Core);
-#endif
+ 

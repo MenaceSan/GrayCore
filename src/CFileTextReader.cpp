@@ -25,7 +25,7 @@ namespace Gray
 		return m_File.OpenX(pszName, uShareFlags);
 	}
 
-	HRESULT cFileTextReader::ReadStringLine(OUT const char** ppszLine) 
+	HRESULT cFileTextReader::ReadStringLine(OUT const char** ppszLine)
 	{
 		//! Read a line of text. like fgets().
 		//! Read up until (including) newline character = \n = The newline character, if read, is included in the string.
@@ -80,13 +80,20 @@ namespace Gray
 
 	HRESULT cFileTextReader::ReadStringLine(OUT char* pszBuffer, StrLen_t iSizeMax) // override // virtual
 	{
-		const char* pszRet;
-		HRESULT hRes = ReadStringLine(&pszRet);
+		//! @arg iSizeMax = Maximum number of characters to be copied into pszBuffer (including room for the the terminating '\0' character).
+		//! @return
+		//!  length of the string read in chars. (includes \r\n) (not including null)
+
+		if (iSizeMax <= 0)
+			return 0;
+		const char* pszLine = nullptr;
+		HRESULT hRes = ReadStringLine(&pszLine);
 		if (FAILED(hRes))
 			return hRes;
-		iSizeMax = MIN(hRes, iSizeMax);
-		cMem::Copy(pszBuffer, pszRet, iSizeMax);
-		return iSizeMax;
+		size_t nSizeCopy = MIN(hRes, iSizeMax-1 );
+		cMem::Copy(pszBuffer, pszLine, nSizeCopy);
+		pszBuffer[nSizeCopy] = '\0';
+		return nSizeCopy;
 	}
 
 	STREAM_SEEKRET_t cFileTextReader::Seek(STREAM_OFFSET_t iOffset, SEEK_ORIGIN_TYPE eSeekOrigin) // override;
@@ -137,55 +144,3 @@ namespace Gray
 		return((STREAM_POS_t)-1);
 	}
 }
-
-//*****************************************************************************
-
-#if USE_UNITTESTS
-#include "cUnitTest.h"
-#include "cMime.h"
-
-UNITTEST_CLASS(cFileTextReader)
-{
-	UNITTEST_METHOD(cFileTextReader)
-	{
-		//! test reading cFileTextReader.
-		//! @note any text changes to this file can invalidate the test results.
-
-		cStringF sFilePath = cFilePath::CombineFilePathX(get_TestInpDir(), _FN(GRAY_NAMES) _FN("Core/src/cFileTextReader.cpp"));	// Find myself. __FILE__
-
-		static const int k_MaxLineLen = 180;	// was CStream::k_FILE_BLOCK_SIZE 256. Assume no other line is this long for my test.
-
-		cFileTextReader tr(k_MaxLineLen);
-		HRESULT hRes = tr.OpenX(sFilePath, OF_READ | OF_TEXT | OF_SHARE_DENY_NONE | OF_CACHE_SEQ);
-		UNITTEST_TRUE(SUCCEEDED(hRes));
-
-		int iLineNumber = 1;	// 1 based.
-		for (;; )
-		{
-			const char* pszLine = nullptr;
-			hRes = tr.ReadStringLine(&pszLine);
-			UNITTEST_TRUE(SUCCEEDED(hRes));
-			if (hRes == 0)
-				break;
-
-			//*** Make this over k_MaxLineLen chars long ****************************************************************************************************************************************************
-
-			if (hRes >= k_MaxLineLen)
-			{
-				// Warning  line length was too long !
-				UNITTEST_TRUE(iLineNumber == 167);	// Fix this if source changes.
-				DEBUG_MSG(("line %d length was > %d", iLineNumber, hRes));
-			}
-			else
-			{
-				iLineNumber++;	// don't count split lines.
-			}
-
-			UNITTEST_TRUE(hRes <= k_MaxLineLen);
-		}
-
-		UNITTEST_TRUE(iLineNumber == 188);	// Fix this if source changes.
-	}
-};
-UNITTEST_REGISTER(cFileTextReader, UNITTEST_LEVEL_Core);
-#endif

@@ -174,15 +174,6 @@ namespace Gray
 	typedef cArrayString<char> cArrayStringA;
 	typedef cArrayString<wchar_t> cArrayStringW;
 
-#ifdef GRAY_DLL // force implementation/instantiate for DLL/SO.
-	template class GRAYCORE_LINK CArray < cStringT<char>, const char* >;
-	template class GRAYCORE_LINK cArrayTyped < cStringT<char>, const char* >;
-
-	template class GRAYCORE_LINK cArrayString < char >;
-	template class GRAYCORE_LINK cArrayString < wchar_t >;
-
-#endif
-
 }
 
 #endif	// _INC_cArrayString_H

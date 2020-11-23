@@ -561,7 +561,7 @@
     <ClCompile Include="CQueue.cpp" />
     <ClCompile Include="cRandomDef.cpp" />
     <ClCompile Include="cSingleton.cpp" />
-    <ClCompile Include="CStream.cpp" />
+    <ClCompile Include="cStream.cpp" />
     <ClCompile Include="cStreamStack.cpp" />
     <ClCompile Include="CString.cpp" />
     <ClCompile Include="cSystemInfo.cpp" />
@@ -636,7 +636,7 @@
     <ClInclude Include="cExceptionAssert.h" />
     <ClInclude Include="cExceptionBase.h" />
     <ClInclude Include="cExceptionSystem.h" />
-    <ClInclude Include="CFile.h" />
+    <ClInclude Include="cFile.h" />
     <ClInclude Include="cFileDir.h" />
     <ClInclude Include="cFilePath.h" />
     <ClInclude Include="cFileStatus.h" />

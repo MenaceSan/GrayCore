@@ -13,17 +13,18 @@
 #include "cArrayRef.h"
 #include "HResult.h"
 #include "FileName.h"
-
-UNITTEST_PREDEF(cIniFile);
+#include "cUnitTestDecl.h"
 
 namespace Gray
 {
+	UNITTEST2_PREDEF(cIniFile);
+
 	class GRAYCORE_LINK cIniFile
 		: public IIniBaseEnumerator	// enumerate the sections.
 	{
 		//! @class Gray::cIniFile
-		//! Reads the whole file into memory so we may parse it further.
 		//! Very simple interface to read/write an ".INI" MIME_EXT_ini format file.
+		//! Reads the whole file into memory so we may parse it further.
 		//! Allows initial data keys without [SECTIONTYPE Sectionnamedata] (unlike windows)
 	private:
 		cArrayRef<cIniSectionEntry> m_aSections;	//!< store all my sections. not sorted, dupes allowed.
@@ -46,7 +47,7 @@ namespace Gray
 		{
 			return m_aSections.GetAtCheck(i);
 		}
-		virtual HRESULT PropEnum(IPROPIDX_t ePropIdx, OUT CStringI& rsValue, CStringI* psPropTag = nullptr) const override;
+		virtual HRESULT PropEnum(IPROPIDX_t ePropIdx, OUT cStringI& rsValue, cStringI* psPropTag = nullptr) const override;
 		cIniSectionEntryPtr FindSection(const IniChar_t* pszSectionTitle = nullptr, bool bPrefix = false) const;
 
 		const IniChar_t* FindKeyLinePtr(const IniChar_t* pszSectionTitle, const IniChar_t* pszKey) const;
@@ -54,10 +55,7 @@ namespace Gray
 		HRESULT SetKeyLine(const IniChar_t* pszSectionTitle, const IniChar_t* pszKey, const IniChar_t* pszLine);
 		HRESULT SetKeyArg(const IniChar_t* pszSectionTitle, const IniChar_t* pszKey, const IniChar_t* pszArg);
 
-#if USE_UNITTESTS
-		static const FILECHAR_t* k_UnitTestFile;
-		UNITTEST_FRIEND(cIniFile);
-#endif
+		UNITTEST2_FRIEND(cIniFile);
 	};
 };
 

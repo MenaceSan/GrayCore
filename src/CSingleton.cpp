@@ -100,7 +100,7 @@ namespace Gray
 
 	cThreadLockFast cSingletonRegister::sm_LockSingle; // common lock for all cSingleton.
 
-	cSingletonRegister::cSingletonRegister(const TYPEINFO_t& rAddrCode)
+	cSingletonRegister::cSingletonRegister(const TYPEINFO_t& rAddrCode) noexcept
 	{
 #ifndef UNDER_CE
 		// Track the module that created the singleton. Maybe in a DLL ?
@@ -117,7 +117,7 @@ namespace Gray
 		{
 			// Static init will get created / destroyed in the order it was first used.
 			static cSingletonManager sm_The;
-			ASSERT(cSingletonManager::isSingleCreated());
+			DEBUG_CHECK(cSingletonManager::isSingleCreated());
 		}
 
 		// Prevent re-registering of singletons constructed after SingletonManager shutdown (during exit)
@@ -142,35 +142,4 @@ namespace Gray
 		cSingletonManager::I().ReleaseModule(hMod);
 	}
 }
-
-//*************************************************************************
-#if USE_UNITTESTS
-#include "cUnitTest.h"
-#include "cLogMgr.h"
-
-namespace Gray
-{
-	class cUnitTestSing : public cSingleton < cUnitTestSing >
-	{
-	public:
-		cUnitTestSing() : cSingleton<cUnitTestSing>(this, typeid(cUnitTestSing))
-		{
-		}
-		CHEAPOBJECT_IMPL;
-	};
-};
-UNITTEST_CLASS(cSingletonRegister)
-{
-	UNITTEST_METHOD(cSingletonRegister)
-	{
-		UNITTEST_TRUE(!cUnitTestSing::isSingleCreated());
-		{
-			cUnitTestSing inst;
-			UNITTEST_TRUE(cUnitTestSing::isSingleCreated());
-			// Will be destructed at app close.
-		}
-		UNITTEST_TRUE(!cUnitTestSing::isSingleCreated());
-	}
-};
-UNITTEST_REGISTER(cSingletonRegister, UNITTEST_LEVEL_Core);
-#endif
+ 

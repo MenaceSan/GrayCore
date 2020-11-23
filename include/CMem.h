@@ -15,10 +15,10 @@
 #include "cValT.h"
 #include "cUnitTestDecl.h"
 
-UNITTEST_PREDEF(cMem)
-
 namespace Gray
 {
+	UNITTEST2_PREDEF(cMem);
+
 	struct GRAYCORE_LINK cMem	// static cSingleton
 	{
 		//! @struct Gray::cMem
@@ -234,7 +234,7 @@ namespace Gray
 		static StrLen_t GRAYCALL ConvertToString(char* pszDst, StrLen_t iSizeDstMax, const BYTE* pSrc, size_t iLenSrc);
 		static size_t GRAYCALL ReadFromString(BYTE* pDst, size_t iLenBytesMax, const char* pszSrc);
 
-		static inline StrLen_t GetHexDigestSize(size_t nSize)
+		static inline StrLen_t GetHexDigestSize(size_t nSize) noexcept
 		{
 			//!< How much space does the hex digest need?
 			return (StrLen_t)((nSize * 2) + 1);
@@ -242,7 +242,7 @@ namespace Gray
 		static StrLen_t GRAYCALL GetHexDigest(OUT char* pszHexString, const BYTE* pData, size_t nSizeData);
 		static HRESULT GRAYCALL SetHexDigest(const char* pszHexString, OUT BYTE* pData, size_t nSizeData);
 
-		UNITTEST_FRIEND(cMem);
+		UNITTEST2_FRIEND(cMem);
 	};
 
 	template <UINT32 _SIGVALID = 0xCA11AB1E>

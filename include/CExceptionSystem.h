@@ -14,10 +14,10 @@
 
 #if defined(_CPPUNWIND)
 
-UNITTEST_PREDEF(cExceptionSystem)
-
 namespace Gray
 {
+	UNITTEST2_PREDEF(cException);
+
 	class GRAYCORE_LINK cExceptionSystem : public cException
 	{
 		//! @class Gray::cExceptionSystem
@@ -57,7 +57,7 @@ namespace Gray
 #else
 		static void __cdecl SignalHandler(SYSCODE_t iSignal);
 #endif
-		UNITTEST_FRIEND(cExceptionSystem);
+		UNITTEST2_FRIEND(cException);
 	};
 }
 #endif

@@ -13,13 +13,13 @@
 
 #if ! defined(UNDER_CE) 
 #include "cStream.h"
-#include "cUnitTestDecl.h"
 #include "StrArg.h"
-
-UNITTEST_PREDEF(cAppConsole)
+#include "cUnitTestDecl.h"
 
 namespace Gray
 {
+	UNITTEST2_PREDEF(cAppConsole);
+
 	enum AppStd_TYPE
 	{
 		//! @enum Gray::AppStd_TYPE
@@ -128,7 +128,7 @@ namespace Gray
 		}
 
 		CHEAPOBJECT_IMPL;
-		UNITTEST_FRIEND(cAppConsole);
+		UNITTEST2_FRIEND(cAppConsole);
 	};
 }
 #endif	// UNDER_CE

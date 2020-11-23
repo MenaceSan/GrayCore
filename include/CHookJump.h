@@ -11,10 +11,11 @@
 
 #include "cThreadLock.h"
 #include "cUnitTestDecl.h"
-UNITTEST_PREDEF(cHookJump)
 
 namespace Gray
 {
+	UNITTEST2_PREDEF(cHookJump);
+
 	class GRAYCORE_LINK cHookJump
 	{
 		//! @class GrayLib::cHookJump
@@ -103,7 +104,7 @@ namespace Gray
 		bool InstallHook(FARPROC pFuncOrig, FARPROC pFuncNew);
 		void RemoveHook();
 
-		UNITTEST_FRIEND(cHookJump);
+		UNITTEST2_FRIEND(cHookJump);
 	};
 
 	class GRAYCORE_LINK cHookSwapLock : public cThreadGuardFast

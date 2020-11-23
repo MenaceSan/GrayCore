@@ -14,10 +14,10 @@
 #include "cBits.h"
 #include "cUnitTestDecl.h"
 
-UNITTEST_PREDEF(cHashTableT)
-
 namespace Gray
 {
+	UNITTEST2_PREDEF(cHashTable);
+
 	class cHashIterator	// inline
 	{
 		//! @class Gray::cHashIterator
@@ -135,7 +135,7 @@ namespace Gray
 			RemoveAll();
 		}
 
-		UNITTEST_FRIEND(cHashTableT);
+		UNITTEST2_FRIEND(cHashTable);
 	};
 
 	template<class TYPE, typename TYPE_HASHCODE = HASHCODE_t, int TYPE_HASHBITS = 5 >

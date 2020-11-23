@@ -13,10 +13,10 @@
 #include "cUnitTestDecl.h"
 #include "StrConst.h"
 
-//UNITTEST_PREDEF(cTimeZoneMgr);
-
 namespace Gray
 {
+	UNITTEST2_PREDEF(cTimeZone);
+
 	enum TZ_DSTRULE_TYPE
 	{
 		//! @enum Gray::TZ_DSTRULE_TYPE
@@ -59,10 +59,8 @@ namespace Gray
 		static const cTimeZone* GRAYCALL FindTimeZone(const GChar_t* pszName);
 		static const cTimeZone* GRAYCALL FindTimeZoneHead(const GChar_t* pszName);
 
-		//UNITTEST_FRIEND(cTimeZoneMgr);
+		UNITTEST2_FRIEND(cTimeZone);
 	};
-
-
 }
 
 #endif

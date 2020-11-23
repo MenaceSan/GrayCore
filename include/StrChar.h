@@ -22,10 +22,9 @@
 #error NOOS
 #endif
 
-UNITTEST_PREDEF(StrChar)
-
 namespace Gray
 {
+	UNITTEST2_PREDEF(StrChar);
 	typedef WORD RADIX_t;		//!< Base for convert of numbers to strings. e.g. 10 base vs 16 base hex numbers.
 
 #ifdef _WIN32
@@ -294,7 +293,7 @@ namespace Gray
 		static char GRAYCALL U2Radix(UINT uVal, RADIX_t uRadix = 10);
 		static int GRAYCALL Radix2U(wchar_t ch, RADIX_t uRadix = 10);
 
-		UNITTEST_FRIEND(StrChar);
+		UNITTEST2_FRIEND(StrChar);
 	};
 
 }

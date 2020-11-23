@@ -18,7 +18,6 @@
 
 namespace Gray
 {
- 
 	cFileText::cFileText()
 		: m_pStream(nullptr)
 		, m_iCurLineNum(0)
@@ -81,13 +80,13 @@ namespace Gray
 
 		// _wfsopen() for wchar_t
 #if ! defined(UNDER_CE) && (_MSC_VER >= 1400)
-#ifdef USE_UNICODE_FN
+#if USE_UNICODE_FN
 		errno_t eRet = ::_wfopen_s(&m_pStream, sFilePath, pszMode);
 #else
 		errno_t eRet = ::fopen_s(&m_pStream, sFilePath, pszMode);
 #endif
 #else
-#ifdef USE_UNICODE_FN
+#if USE_UNICODE_FN
 		m_pStream = ::_wfopen(sFilePath, pszMode);
 #else
 		m_pStream = ::fopen(sFilePath, pszMode);
@@ -199,7 +198,7 @@ namespace Gray
 
 	STREAM_POS_t cFileText::GetPosition() const // virtual
 	{
-		//! override CStream
+		//! override cStream
 		//! @note end of line translation might be broken? ftell and fseek don't work correctly when you use it.
 		//! @return -1 = error.
 		if (!isFileOpen())
@@ -237,7 +236,7 @@ namespace Gray
 
 	HRESULT cFileText::ReadX(void* pBuffer, size_t nSizeMax) // virtual
 	{
-		//! CStream
+		//! cStream
 		//! Read a block of binary data or as much as we can until end of file.
 		//! @return
 		//!  the number of bytes actually read.
@@ -260,7 +259,7 @@ namespace Gray
 
 	HRESULT cFileText::WriteX(const void* pData, size_t nDataSize) // virtual
 	{
-		//! CStream
+		//! cStream
 		//! Write binary data to the file.
 		//! all or fail.
 		//! @return >0 = success else fail.
@@ -279,7 +278,7 @@ namespace Gray
 
 	HRESULT cFileText::WriteString(const char* pszStr)	// virtual
 	{
-		//! override CStream
+		//! override cStream
 		//! @note If we did fgets() it will translate the \n for us.
 		//!  so we must do the same on the output side.
 		//! like .NET StreamWriter.WriteLine()
@@ -301,7 +300,7 @@ namespace Gray
 #if 0
 	HRESULT cFileText::ReadStringLine(wchar_t* pszBuffer, StrLen_t iSizeMax) // virtual
 	{
-		//! override CStream
+		//! override cStream
 		//! Read a line of text. like fgets()
 		//! @return length of the string read in chars. (includes \r\n) (not including null)
 		ASSERT(0);
@@ -311,7 +310,7 @@ namespace Gray
 
 	HRESULT cFileText::ReadStringLine(char* pszBuffer, StrLen_t iSizeMax) // virtual
 	{
-		//! override CStream
+		//! override cStream
 		//! Read a line of text. like fgets().
 		//! Read up until (including) newline character = \n = The newline character, if read, is included in the string.
 		//! like .NET StreamReader.ReadLine
@@ -367,40 +366,5 @@ namespace Gray
 	}
 }
 
-//*****************************************************************************
+#endif // USE_CRT
 
-#if USE_UNITTESTS
-#include "cUnitTest.h"
-#include "cMime.h"
-
-UNITTEST_CLASS(cFileText)
-{
-	UNITTEST_METHOD(cFileText)
-	{
-		//! @todo test reading cFileText and seek position inside it. Must not be fooled by \r\n and \n.
-		cTextPos fp1(cTextPos::k_Invalid);
-		fp1 = cTextPos::k_Zero;
-
-		cStringF sFilePathB = cFilePath::CombineFilePathX(get_TestOutDir(), _FN(GRAY_NAMES) _FN("CFileTextB") _FN(MIME_EXT_txt));
-		cFile testfileB;
-		HRESULT hRes = testfileB.OpenX(sFilePathB, OF_CREATE | OF_WRITE | OF_BINARY);
-		UNITTEST_TRUE(SUCCEEDED(hRes));
-
-		hRes = testfileB.WriteString(cUnitTests::k_sTextBlob.get_CPtr());
-		//UNITTEST_TRUE(hRes == cUnitTests::k_TEXTBLOB_LEN);
-		UNITTEST_TRUE(SUCCEEDED(hRes));
-
-		cStringF sFilePathT = cFilePath::CombineFilePathX(get_TestOutDir(), _FN(GRAY_NAMES) _FN("CFileTextT") _FN(MIME_EXT_txt));
-
-		cFileText testfileT;
-		hRes = testfileT.OpenX(sFilePathT, OF_CREATE | OF_WRITE | OF_BINARY);
-		UNITTEST_TRUE(SUCCEEDED(hRes));
-
-		hRes = testfileT.WriteString(cUnitTests::k_sTextBlob.get_CPtr());
-		UNITTEST_TRUE(SUCCEEDED(hRes));
-		//UNITTEST_TRUE(hRes == cUnitTests::k_TEXTBLOB_LEN);
-	}
-};
-UNITTEST_REGISTER(cFileText, UNITTEST_LEVEL_Core);
-#endif
-#endif

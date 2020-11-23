@@ -34,15 +34,14 @@ enum FOF_TYPE_
 	// NON WIN32 standard.
 	FOF_X_FollowLinks = 0x10000,
 	FOF_X_WantDots = 0x20000,
-#ifndef USE_UNICODE_FN
+#if ! USE_UNICODE_FN
 	FOF_X_UTF8 = 0x40000,			//!< store file names as UTF8. even if USE_UNICODE.
 #endif
 };
 
-UNITTEST_PREDEF(cFileDir)
-
 namespace Gray
 {
+	UNITTEST2_PREDEF(cFileDir);
 
 #ifdef _WIN32
 #define FILEDEVICE_PREFIX	"\\\\.\\"	// usually _FN(FILEDEVICE_PREFIX). similar to "\\Device\\"
@@ -172,7 +171,7 @@ namespace Gray
 		cStringF m_sDirPath;			//!< Assume it ends with k_DirSep
 		DWORD m_nFileFlags;				//!< Options such as follow the links in the directory. Act as though these are regular files.
 #ifdef _WIN32
-		WIN32_FIND_DATAW m_FindInfo;	//!< Always USE_UNICODE as base.
+		WIN32_FIND_DATAW m_FindInfo;	//!< Always UNICODE as base.
 		HANDLE m_hContext;				//!< Handle for my search. NOT OSHandle, uses FindClose()
 #elif defined(__linux__)
 		cStringF m_sWildcardFilter;		//!< Need to perform wildcard (strip out the *.EXT part) later/manually in Linux.
@@ -333,7 +332,7 @@ namespace Gray
 		HRESULT ReadDirAnyExt(const FILECHAR_t* pszFilePath, ITERATE_t iFilesMax = k_FilesMax);
 		HRESULT ReadDirPreferredExt(const FILECHAR_t* pszFilePath, const FILECHAR_t* const* pszExtTable);
 
-		UNITTEST_FRIEND(cFileDir);
+		UNITTEST2_FRIEND(cFileDir);
 	};
 
 #ifdef GRAY_DLL // force implementation/instantiate for DLL/SO.

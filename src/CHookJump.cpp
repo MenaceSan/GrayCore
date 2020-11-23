@@ -17,7 +17,7 @@ namespace Gray
 		if (isChainable())
 		{
 			// Get a callable function from this.
-			int lRelAddr;
+			int lRelAddr; // not int_ptr
 			STATIC_ASSERT(sizeof(lRelAddr) == k_LEN_P, lRelAddr);
  			::memcpy(&lRelAddr, m_OldCode + k_LEN_J, k_LEN_P);
 			return (FARPROC)(((UINT_PTR)m_pFuncOrig) + lRelAddr + sizeof(m_OldCode));
@@ -106,80 +106,4 @@ namespace Gray
 			GRAY_TRY_END
 	}
 }
-
-//*********************************************************************************
-
-#if USE_UNITTESTS
-#include "cUnitTest.h"
-
-// Make sure this code is not optimized out !
-#ifdef _MSC_VER
-#pragma optimize( "", off )
-#endif
-INT_PTR GRAYCALL cUnitTest_HookJump1() // never inline optimize this
-{
-	cUnitTests::sm_pLog->addDebugInfoF("cUnitTest_HookJump1");
-	return 1;
-}
-INT_PTR GRAYCALL cUnitTest_HookJump2() // never inline optimize this
-{
-	// replace cUnitTest_HookJump1 with this.
-	cUnitTests::sm_pLog->addDebugInfoF("cUnitTest_HookJump2");
-	return 2;
-}
-#ifdef _MSC_VER
-#pragma optimize( "", on )	// restore old params.
-#endif
-
-UNITTEST_CLASS(cHookJump)
-{
-	UNITTEST_METHOD(cHookJump)
-	{
-		//! hook a API function for one call.
-
-		UNITTEST_TRUE(cUnitTests::sm_pLog != nullptr);
-
-		INT_PTR iRet = cUnitTest_HookJump1();
-		UNITTEST_TRUE(iRet == 1);
-
-		cHookJump tester;
-		tester.InstallHook((FARPROC)cUnitTest_HookJump1, (FARPROC)cUnitTest_HookJump2);
-		UNITTEST_TRUE(tester.isHookInstalled());
-
-		iRet = cUnitTest_HookJump1();	// really calls cUnitTest_HookJump2
-		UNITTEST_TRUE(iRet == 2);
-
-		iRet = cUnitTest_HookJump2();
-		UNITTEST_TRUE(iRet == 2);
-
-		{
-			cHookSwapLock lock(tester);
-			iRet = cUnitTest_HookJump1();	// cUnitTest_HookJump1 was restored globally.
-			UNITTEST_TRUE(iRet == 1);
-		}
-
-		iRet = cUnitTest_HookJump1();
-		UNITTEST_TRUE(iRet == 2);
-
-		{
-			cHookSwapChain lock(tester);
-			iRet = cUnitTest_HookJump1();	// cUnitTest_HookJump1 still as cUnitTest_HookJump2.
-			UNITTEST_TRUE(iRet == 2);
-			iRet = lock.m_pFuncChain();	// cUnitTest_HookJump1 was restored just for Chain.
-			UNITTEST_TRUE(iRet == 1);
-		}
-
-		iRet = cUnitTest_HookJump1();	// cUnitTest_HookJump1 as cUnitTest_HookJump2.
-		UNITTEST_TRUE(iRet == 2);
-
-		tester.RemoveHook();
-		UNITTEST_TRUE(!tester.isHookInstalled());
-
-		iRet = cUnitTest_HookJump1();
-		UNITTEST_TRUE(iRet == 1);	// was restored.
-		iRet = cUnitTest_HookJump2();	
-		UNITTEST_TRUE(iRet == 2);		// still works as expected.
-	}
-};
-UNITTEST_REGISTER(cHookJump, UNITTEST_LEVEL_Lib);
-#endif
+ 

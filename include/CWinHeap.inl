@@ -13,6 +13,8 @@ namespace Gray
 		//! Wrap the HANDLE_t heap/memory object for lock/unlock of an instance. (HLOCAL or HGLOBAL)
 		//! manage lock and unlock. yes i know lock/unlock doesn't do anything in _WIN32
 		//! Does NOT free on destruct. just unlock.
+		//! m_pData = Locked pointer. GlobalHandle(m_pData)==m_hData
+
 	public:
 		typedef WINHEAPH HANDLE_t;
 		WINHEAPN(Handle)(HANDLE_t hData = HANDLE_NULL, void* pData = nullptr, size_t nSize = 0)
@@ -162,7 +164,6 @@ namespace Gray
 
 	protected:
 		HANDLE_t m_hData;
-		LPVOID m_pData;		//!< Locked pointer. GlobalHandle(m_pData)==m_hData
 	};
 
 	class WINHEAPN(V) : public WINHEAPN(Handle)
@@ -253,10 +254,9 @@ namespace Gray
 			//! @note Make sure you call UpdateHandle() after this.
 			return (_TYPE**)SUPER_t::get_PPtrData();
 		}
-		_TYPE* operator ->()
+		_TYPE* operator ->() const
 		{
 			return (_TYPE*)m_pData;
 		}
 	};
-
 } 

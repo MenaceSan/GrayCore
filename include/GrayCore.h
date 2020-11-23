@@ -4,7 +4,7 @@
 //! Can be included from an .RC file. RC_INVOKED
 
 #ifndef _INC_GrayCore_H
-#define _INC_GrayCore_H	0x002	//!< 0.0.2 Version stamp the API. Especially the CVariant.
+#define _INC_GrayCore_H	0x003	//!< 0.0.3 Version stamp the API. Especially important to the Variant and Archive types.
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
@@ -12,20 +12,18 @@
 // Pull in my system/compiler CLR includes and arbitrate them with common names.
 #include "SysTypes.h"
 
-// Ignore the system #define UNICODE and _UNICODE. I use my own USE_UNICODE system as default char type. We don't have to use UNICODE just because the system does.
-#if defined(UNICODE) || defined(_UNICODE)
-#define USE_UNICODE				//!< This allows the including of core headers that use conflicting #define UNICODE to still work.
-#define USE_UNICODE_FN			//!< make file names UNICODE as well.
-#endif
-
-#ifndef USE_UNITTESTS
-#ifdef _DEBUG 
-#define USE_UNITTESTS 1		//!< Compile in the unit test code. tests will self-register at static init time.
+// override the system #define UNICODE and _UNICODE. I use my own USE_UNICODE system as default char type. We don't have to use UNICODE just because the system does.
+#ifndef USE_UNICODE
+#if defined(UNICODE) // || defined(_UNICODE)
+#define USE_UNICODE 1				//!< This allows the including of core headers that use conflicting #define UNICODE to still work.
 #else
-#define USE_UNITTESTS 0	
+#define USE_UNICODE 0				// same as _MBCS
 #endif
 #endif
-
+#ifndef USE_UNICODE_FN
+#define USE_UNICODE_FN USE_UNICODE			//!< make file names UNICODE as well?
+#endif
+ 
 namespace Gray		//!< The main namespace for all Core functions.
 {
 	//! @namespace Gray

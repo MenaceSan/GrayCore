@@ -15,10 +15,10 @@
 #include "cUnitTestDecl.h"
 #include "cDebugAssert.h"
 
-UNITTEST_PREDEF(cCodeProfileFunc)
-
 namespace Gray
 {
+	UNITTEST2_PREDEF(cCodeProfiler);
+
 	class GRAYCORE_LINK cCodeProfileFunc
 	{
 		//! @class Gray::cCodeProfileFunc
@@ -50,7 +50,7 @@ namespace Gray
 				StopTime();
 		}
 
-		UNITTEST_FRIEND(cCodeProfileFunc);
+		UNITTEST2_FRIEND(cCodeProfiler);
 	};
 
 	// cCodeProfileFunc usage requires only single declaration at beginning of function

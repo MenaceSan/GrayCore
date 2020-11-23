@@ -14,7 +14,7 @@
 namespace Gray
 {
 	//! static_assert = compile time assert. evaluates as a constant at compile time. like BOOST_STATIC_ASSERT
-	//! NOTE: Takes a NON string name argument to support old compilers.
+	//! @note: Takes a NON string name argument to support old compilers.
 #ifndef STATIC_ASSERT
 #if defined(_MSC_VER) && ( _MSC_VER >= 1600 )
 #define STATIC_ASSERT(exp, name) static_assert(exp,#name)
@@ -29,7 +29,7 @@ namespace Gray
 	{
 		//! @class Gray::cDebugSourceLine
 		//! a place in the code where something occurred. for debugging
-		//! like CppUnitTestFramework.__LineInfo
+		//! like M$ CppUnitTestFramework.__LineInfo
 	public:
 		const char* m_pszFile;	//!< name of the source file. static text. __FILE__
 		const char* m_pszFunction;	// __func__, __FUNCTION__, __FUNCDNAME__, and __FUNCSIG__
@@ -48,7 +48,7 @@ namespace Gray
 	//! ?? Should we get rid of this if !(defined(_DEBUG) || defined(_DEBUG_FAST))
 #define DEBUGSOURCELINE ::Gray::cDebugSourceLine( __FILE__, __FUNCTION__, (WORD) __LINE__ )	//!< record the file and line this macro is used on.
 
-	typedef bool (CALLBACK AssertCallback_t)(const char* pszExp, const cDebugSourceLine& src);	// for redirect.
+	typedef bool (CALLBACK AssertCallback_t)(const char* pszExp, const cDebugSourceLine& src);	// for redirect of assert in testing.
 
 	struct GRAYCORE_LINK cDebugAssert	// static
 	{

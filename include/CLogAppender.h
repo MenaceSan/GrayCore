@@ -19,6 +19,9 @@ namespace Gray
 {
 	class cLogEvent;
 
+	typedef cStringT<LOGCHAR_t> cStringL;	//!< Log string.
+#define LOGERR(hRes) LOGSTR(cStringL::GetErrorString(hRes))		//!< Used to supply "ERR='%s'"
+
 	enum LOG_ATTR_TYPE_
 	{
 		//! @enum Gray::LOG_ATTR_TYPE_
@@ -172,12 +175,12 @@ namespace Gray
 		}
 		virtual const cLogNexus* get_ThisLogNexus() const
 		{
-			//! Is this a cLogNexus or just a cLogProcessor?
+			//! Is this a cLogNexus or just a cLogProcessor? like dynamic_cast<>
 			return nullptr;
 		}
 		virtual bool IsLogged(LOG_ATTR_MASK_t uAttrMask, LOGLEV_TYPE eLogLevel) const override // fast pre-check.
 		{
-			//! would this message be logged?
+			//! would this message be logged? should i bother building it ? fast.
 			UNREFERENCED_PARAMETER(uAttrMask);
 			UNREFERENCED_PARAMETER(eLogLevel);
 			return true;

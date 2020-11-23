@@ -23,7 +23,7 @@ namespace Gray
 		return this->PropSetN(this->FindProp(pszPropTag), pszValue);
 	}
 
-	HRESULT cIniObject::PropGet(const IniChar_t* pszPropTag, OUT CStringI& rsValue) const // override
+	HRESULT cIniObject::PropGet(const IniChar_t* pszPropTag, OUT cStringI& rsValue) const // override
 	{
 		//! IIniBaseGetter
 		//! Read a prop by its string name.
@@ -39,7 +39,7 @@ namespace Gray
 		PROPMASK_t nPropMask = GetDirtyMask(ePropIdx);
 		if (!(m_nDirtyMask & nPropMask))	// already written. or not changed?
 			return S_FALSE;
-		CStringI sValue;
+		cStringI sValue;
 		HRESULT hRes = this->PropEnum(ePropIdx, sValue);
 		if (FAILED(hRes))
 			return hRes;
@@ -80,55 +80,4 @@ namespace Gray
 		return S_OK;
 	}
 }
-
-//*************************************************************************
-#if USE_UNITTESTS
-#include "cUnitTest.h"
-#include "cLogMgr.h"
-
-UNITTEST_CLASS(cIniObject)
-{
-	UNITTEST_METHOD(cIniObject)
-	{
-		// TODO: UNITTEST cIniObject
-		class cUnitTestIniObject : public cIniObject
-		{
-		public:
-			virtual IPROPIDX_t get_PropQty(void) const
-			{
-				// IIniObjectDef
-				return 0;
-			}
-			virtual const IniChar_t* get_PropName(IPROPIDX_t ePropIdx) const
-			{
-				// IIniObjectDef
-				UNREFERENCED_PARAMETER(ePropIdx);
-				return nullptr;
-			}
-			virtual IPROPIDX_t FindProp(const IniChar_t* pName) const
-			{
-				// IIniObjectDef
-				UNREFERENCED_PARAMETER(pName);
-				return -1;
-			}
-			HRESULT PropSetN(IPROPIDX_t ePropIdx, const IniChar_t* pszName)
-			{
-				// IIniObjectWriteN
-				UNREFERENCED_PARAMETER(ePropIdx);
-				UNREFERENCED_PARAMETER(pszName);
-				return E_NOTIMPL;
-			}
-			virtual HRESULT PropEnum(IPROPIDX_t ePropIdx, OUT CStringI& rsValue, CStringI* psKey = nullptr) const
-			{
-				// IIniBaseEnumerator
-				UNREFERENCED_PARAMETER(ePropIdx);
-				UNREFERENCED_REFERENCE(rsValue);
-				UNREFERENCED_PARAMETER(psKey);
-				return E_NOTIMPL;
-			}
-		};
-		cUnitTestIniObject obj;
-	}
-};
-UNITTEST_REGISTER(cIniObject, UNITTEST_LEVEL_Core);
-#endif
+ 

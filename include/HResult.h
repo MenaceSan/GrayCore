@@ -17,10 +17,9 @@
 #include <winerror.h>
 #endif
 
-UNITTEST_PREDEF(HResult)
-
 namespace Gray
 {
+	UNITTEST2_PREDEF(HResult);
 
 #if defined(_CPPUNWIND)
 #define THROW_DEF throw()		// indicate that a function can throw exceptions.
@@ -270,7 +269,7 @@ namespace Gray
 
 		static HRESULT GRAYCALL GetHResFromStr(const GChar_t* pszError, StrLen_t nLenError = -1);
 
-		UNITTEST_FRIEND(HResult);
+		UNITTEST2_FRIEND(HResult);
 	};
 }
 

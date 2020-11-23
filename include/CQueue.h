@@ -14,10 +14,10 @@
 #include "cArray.h"
 #include "cStreamProgress.h"
 
-UNITTEST_PREDEF(cQueueBase)
-
 namespace Gray
 {
+	UNITTEST2_PREDEF(cQueue);
+
 	class GRAYCORE_LINK cQueueBase
 	{
 		//! @class Gray::cQueueBase
@@ -75,7 +75,7 @@ namespace Gray
 
 		STREAM_SEEKRET_t SeekQ(STREAM_OFFSET_t iOffset, SEEK_ORIGIN_TYPE eSeekOrigin = SEEK_Set);	// support virtual
 
-		UNITTEST_FRIEND(cQueueBase);
+		UNITTEST2_FRIEND(cQueue);
 	};
 
 	//*********************************************************************

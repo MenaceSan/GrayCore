@@ -15,14 +15,16 @@
 #include "cHeapObject.h"
 #include "cRefPtr.h"
 #include "StrT.h"
+#include "cUnitTestDecl.h"
 
 #if defined(_MFC_VER) // Only need minimal sub-set if using MFC. __ATLSTR_H__
 #include <cstringt.h>	// __ATLSIMPSTR_H__
 #endif
-UNITTEST_PREDEF(cString)
 
 namespace Gray
 {
+	UNITTEST2_PREDEF(cString);
+
 	class GRAYCORE_LINK cStreamInput;
 	class GRAYCORE_LINK cStreamOutput;
 	class GRAYCORE_LINK cArchive;
@@ -624,10 +626,7 @@ namespace Gray
 
 		static THIS_t GRAYCALL GetSizeK(UINT64 uVal, UINT nKUnit = 1024, bool bSpace = false);
 
-#if USE_UNITTESTS
-		static void GRAYCALL UnitTestT();
-		UNITTEST_FRIEND(cString);
-#endif
+		UNITTEST2_FRIEND(cString);
 	};
 
 	typedef cStringT< wchar_t > cStringW;
@@ -680,6 +679,7 @@ namespace Gray
 #endif
 
 #undef cStringT_DEF
+
 };
 
 #endif // _INC_cString_H

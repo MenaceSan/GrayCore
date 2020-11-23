@@ -1,11 +1,11 @@
 //
-//! @file cRandomDef.h
+//! @file cRandom.h
 //! Basic random number generator.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_cRandomDef_H
-#define _INC_cRandomDef_H
+#ifndef _INC_cRandom_H
+#define _INC_cRandom_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
@@ -13,10 +13,10 @@
 #include "cSingleton.h"
 #include "IUnknown.h"
 
-UNITTEST_PREDEF(cRandomBase)
-
 namespace Gray
 {
+	UNITTEST2_PREDEF(cRandom);
+
 	DECLARE_INTERFACE(IRandomNoise)
 	{
 		//! @interface Gray::IRandomNoise
@@ -35,7 +35,7 @@ namespace Gray
 	public:
 		typedef UINT SEED_t;		//!< default seed size might be 32 or 64 bit depending on k_RAND_MAX.
 
-		cRandomBase()
+		cRandomBase() noexcept
 		{
 		}
 		virtual ~cRandomBase()
@@ -62,7 +62,7 @@ namespace Gray
 		virtual UINT GetRandUX(UINT nScale); // get integer random number in desired interval. (Non inclusive)
 		int GetRandIRange(int iRangeLo, int iRangeHi);    // output random int
 
-		UNITTEST_FRIEND(cRandomBase);
+		UNITTEST2_FRIEND(cRandom);
 	};
 
 	class GRAYCORE_LINK cRandomNoise : public cRandomBase, public cSingleton < cRandomNoise >
@@ -114,43 +114,6 @@ namespace Gray
 		virtual void InitSeed(const void* pData, size_t iSize) override;	// Start a repeatable seeded series
 		virtual UINT GetRandUX(UINT nScale) override; // k_RAND_MAX is not the same as UINT.
 	};
-
-#if USE_UNITTESTS
-	class cRandomUnitTest : public IRandomNoise
-	{
-		//! @class Gray::cRandomUnitTest
-		//! Supply test 'random' data. (e.g. not random at all)
-
-	public:
-		cMemBlock m_Src;		// a block of 'random' test data. 
-		size_t m_nOffset;		// How far have we read?
-
-	public:
-		cRandomUnitTest(const void* pData, size_t nSize) noexcept
-			: m_Src(nSize, pData)
-			, m_nOffset(0)
-		{
-		}
-		virtual HRESULT GetNoise(void* pData, size_t len) override	// IRandomNoise
-		{
-			//! Get sample random data bytes
-			if (m_Src.get_Start() == nullptr)
-			{
-				// No m_Src supplied so fill with fixed data.
-				cMem::Fill(pData, len, 0x2a);
-				m_nOffset += len;
-			}
-			else
-			{
-				// todo repeat like cMem::CopyRepeat() ?
-				::memcpy(pData, m_Src.GetOffset(m_nOffset), len);
-				m_nOffset += len;
-				ASSERT(m_Src.IsValidIndex2(m_nOffset));		// Don't overflow!
-			}
-			return (HRESULT)len;
-		}
-	};
-#endif
 
 	extern GRAYCORE_LINK cRandomDef g_Rand;	//!< the global random number generator. NOT thread safe. but does that matter?
 };

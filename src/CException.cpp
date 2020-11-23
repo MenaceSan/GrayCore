@@ -33,7 +33,7 @@ namespace Gray
 		}
 
 #ifdef _MFC_VER	// using _MFC_VER.
-#ifdef USE_UNICODE
+#if USE_UNICODE
 		GChar_t szTmp[cExceptionHolder::k_MSG_MAX_SIZE];
 		m_p->GetErrorMessage(szTmp, (UINT)cExceptionHolder::k_MSG_MAX_SIZE, nullptr);
 		StrU::UNICODEtoUTF8(lpszError, nLenMaxError, szTmp, cExceptionHolder::k_MSG_MAX_SIZE);
@@ -64,7 +64,7 @@ namespace Gray
 		return szTmp;
 #else
 		cException* pEx = get_Ex();
-		if (pEx == nullptr)	// NOT cException based. raw STL/MFC exception.
+		if (pEx == nullptr)	// raw STL exception.
 		{
 			return m_p->what();
 		}
@@ -134,52 +134,3 @@ namespace Gray
 		return SUPER_t::GetErrorMessage(lpszError, nLenMaxError, pnHelpContext);
 	}
 }
-
-//***************************************************************************
-
-#if USE_UNITTESTS
-#include "cUnitTest.h"
-
-UNITTEST_CLASS(cException)
-{
-	class cExceptionTest : public cException
-	{
-	public:
-		cExceptionTest(const char* pszMsg, LOGLEV_TYPE eLogLevel)
-			: cException(pszMsg, eLogLevel)
-		{
-		}
-	};
-
-	UNITTEST_METHOD(cException)
-	{
-#ifdef _CPPUNWIND
-		static const char* k_pszMsg = "Test Exception";
-		GRAY_TRY
-		{
-			GRAY_THROW cExceptionTest(k_pszMsg, LOGLEV_TRACE);
-		}
-		GRAY_TRY_CATCH(cExceptionBase, ex)
-		{
-			// We should get here.
-			cExceptionHolder exh(ex);	// kill it.
-			UNITTEST_TRUE(exh.get_Severity() == LOGLEV_TRACE);
-			cStringL sMsg = exh.get_ErrorStr();	// may have prefix.
-			UNITTEST_TRUE(sMsg.Contains(k_pszMsg));
-			return;	// done.
-		}
-#ifndef _MFC_VER
-		GRAY_TRY_CATCHALL
-		{
-			UNITTEST_TRUE(false);	// should not get here !
-		}
-#endif
-		GRAY_TRY_END
-		UNREACHABLE_CODE(__noop);	// should never get here.
-#else
-		// No exceptions allowed
-#endif
-	}
-};
-UNITTEST_REGISTER(cException, UNITTEST_LEVEL_Core);
-#endif

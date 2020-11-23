@@ -19,10 +19,10 @@
 #include "cObject.h"
 #include "cDebugAssert.h"
 
-UNITTEST_PREDEF(cSingletonRegister)
-
 namespace Gray
 {
+	UNITTEST2_PREDEF(cSingleton);
+
 #ifdef _MSC_VER	
 #pragma warning(disable:4355)	// disable the warning regarding 'this' pointers being used in base member initializer list. Singletons rely on this action
 #endif
@@ -87,7 +87,7 @@ namespace Gray
 		template <class TYPE2>
 		static TYPE2* GRAYCALL get_SingleCast()	// ASSUME TYPE2 derived from TYPE?
 		{
-			// DYNPTR_CAST or CHECKPTR_CAST for up-cast.
+			// DYNPTR_CAST or CHECKPTR_CAST for up-cast to some other type.
 			return CHECKPTR_CAST(TYPE2, get_Single());
 		}
 		static inline TYPE& I() noexcept
@@ -116,12 +116,12 @@ namespace Gray
 	public:
 		static cThreadLockFast sm_LockSingle; //!< common lock for all cSingleton.
 	protected:
-		cSingletonRegister(const TYPEINFO_t& rAddrCode);
+		cSingletonRegister(const TYPEINFO_t& rAddrCode) noexcept;
 		virtual ~cSingletonRegister();
 		void RegisterSingleton();
 	public:
 		static void GRAYCALL ReleaseModule(HMODULE hMod);
-		UNITTEST_FRIEND(cSingletonRegister);
+		UNITTEST2_FRIEND(cSingleton);
 	};
 
 	template <class TYPE>
@@ -140,7 +140,7 @@ namespace Gray
 		typedef cSingletonStatic<TYPE> SUPER_t;
 
 	protected:
-		cSingleton(TYPE* pObject, const TYPEINFO_t& rAddrCode = typeid(TYPE))
+		cSingleton(TYPE* pObject, const TYPEINFO_t& rAddrCode = typeid(TYPE)) noexcept
 			: cSingletonStatic<TYPE>(pObject)
 			, cSingletonRegister(rAddrCode)	// track the module for the codes implementation.
 		{
@@ -166,9 +166,9 @@ namespace Gray
 				cThreadGuardFast threadguard(cSingletonRegister::sm_LockSingle);	// thread sync critical section.
 				if (!SUPER_t::isSingleCreated())
 				{
-					ASSERT(!TYPE::isSingleCreated());	// SUPER_t::sm_pThe
+					DEBUG_CHECK(!TYPE::isSingleCreated());	// SUPER_t::sm_pThe
 					new TYPE(); // assume it calls its constructor properly and sets sm_pThe
-					ASSERT(TYPE::isSingleCreated());	// SUPER_t::sm_pThe
+					DEBUG_CHECK(TYPE::isSingleCreated());	// SUPER_t::sm_pThe
 					SUPER_t::sm_pThe->RegisterSingleton();	// Register only if i know it is dynamic. Not static.
 				}
 			}

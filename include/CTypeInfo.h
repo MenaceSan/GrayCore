@@ -16,10 +16,10 @@
 #include <typeinfo>		// type_info& typeid(class type) std::
 #endif
 
-UNITTEST_PREDEF(cTypeInfo)
-
 namespace Gray
 {
+	UNITTEST2_PREDEF(cTypeInfo);
+
 #ifdef UNDER_CE // no TYPEINFO_t in UNDER_CE. stub this out.
 	typedef struct TYPEINFO_t { BYTE notused; };
 #define typeid(x) 0			// stub this out.
@@ -47,7 +47,7 @@ namespace Gray
 			return (size_t) this;
 #endif
 		}
-		const char* get_Name() const
+		const char* get_Name() const noexcept
 		{
 			// Get the user friendly version of the name.
 			return name();
@@ -55,7 +55,7 @@ namespace Gray
 
 		const char* GetMemberName(int i) const;
 
-		UNITTEST_FRIEND(cTypeInfo);
+		UNITTEST2_FRIEND(cTypeInfo);
 	};
 }
 #endif

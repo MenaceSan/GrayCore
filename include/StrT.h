@@ -19,10 +19,9 @@
 #include "cUnitTestDecl.h"
 #include "cDebugAssert.h"	// ASSERT
 
-UNITTEST_PREDEF(StrX)
-
 namespace Gray
 {
+	UNITTEST2_PREDEF(StrT);
 	class cLogProcessor;
 
 	enum STR_BLOCK_TYPE	//!< quotes/brackets and parenthesis must be matched.
@@ -416,7 +415,7 @@ namespace Gray
 
 		static void GRAYCALL UnitTestT(); // unit test all cases of TYPE type.
 
-		UNITTEST_FRIEND(StrX);
+		UNITTEST2_FRIEND(StrT);
 	};
 
 	// Override implementations
@@ -425,7 +424,7 @@ namespace Gray
 	{
 		//! Get length of string not including '\0'. Like strlen()
 		//! Danger. ASSUME sane iLenMax ?? <= k_LEN_MAX
-		//! nullptr is NOT allowed by strlen(). ASSERT?
+		//! nullptr is NOT allowed by ::strlen(). ASSERT?
 		if (pszStr == nullptr)
 			return 0;
 		return (StrLen_t) ::strlen(pszStr);

@@ -274,7 +274,7 @@ namespace Gray
 		return StrT::GetWhitespaceEnd(pszLine, iLenChars);
 	}
 
-	CStringI GRAYCALL cIniReader::GetLineParse2(const IniChar_t* pszLine, IniChar_t** ppszArgs) // static
+	cStringI GRAYCALL cIniReader::GetLineParse2(const IniChar_t* pszLine, IniChar_t** ppszArgs) // static
 	{
 		//! Parse the pszLine into 2 parts. "TAG=Args" or "Tag Args"
 		//! @note Does NOT clip // comment from end of line.
@@ -291,27 +291,27 @@ namespace Gray
 			{
 				return "";
 			}
-			return CStringI(pszLine);
+			return cStringI(pszLine);
 		}
 
 		StrLen_t iLen = StrT::Diff(pszArgs, pszLine) - 1;
 		iLen = StrT::GetWhitespaceEnd(pszLine, iLen);
 
-		return CStringI(pszLine, iLen);
+		return cStringI(pszLine, iLen);
 	}
 
-	CStringI GRAYCALL cIniReader::GetLineParse3(const IniChar_t* pszLine, OUT CStringI& rsArgs) // static
+	cStringI GRAYCALL cIniReader::GetLineParse3(const IniChar_t* pszLine, OUT cStringI& rsArgs) // static
 	{
 		//! Parse a line in the format of: "TAG=Value // comments."
 		//! Clip comments off the end of the arg.
 		//! @return Tag/Property/Key text. rsArgs = Value.
 
 		IniChar_t* pszArgs = nullptr;
-		CStringI sKey = GetLineParse2(pszLine, &pszArgs);
+		cStringI sKey = GetLineParse2(pszLine, &pszArgs);
 		StrLen_t nLenArg = FindScriptLineEnd(pszArgs);
 
 		// Maybe empty if this is a comment line.
-		rsArgs = CStringI(pszArgs, nLenArg);
+		rsArgs = cStringI(pszArgs, nLenArg);
 		return sKey;
 	}
 
@@ -383,7 +383,7 @@ namespace Gray
 		return(-1);	// cant find it.
 	}
 
-	HRESULT cIniSectionData::PropEnum(IPROPIDX_t ePropIdx, OUT CStringI& rsValue, CStringI* psKey) const // virtual
+	HRESULT cIniSectionData::PropEnum(IPROPIDX_t ePropIdx, OUT cStringI& rsValue, cStringI* psKey) const // virtual
 	{
 		//! IIniBaseEnumerator
 		//! @arg = optionally return psKey. nullptr = don't care.
@@ -391,7 +391,7 @@ namespace Gray
 		if (pszLine == nullptr)
 			return HRESULT_WIN32_C(ERROR_UNKNOWN_PROPERTY);
 		// Ignore comment lines ?
-		CStringI sKey = cIniReader::GetLineParse3(pszLine, rsValue);
+		cStringI sKey = cIniReader::GetLineParse3(pszLine, rsValue);
 		if (psKey != nullptr)
 			*psKey = sKey;
 		return S_OK;
@@ -600,7 +600,7 @@ namespace Gray
 		return StrT::toI(pszVal);
 	}
 
-	HRESULT cIniSectionData::PropGet(const IniChar_t* pszPropTag, OUT CStringI& rsValue) const // virtual 
+	HRESULT cIniSectionData::PropGet(const IniChar_t* pszPropTag, OUT cStringI& rsValue) const // virtual 
 	{
 		//! IIniBaseGetter
 		const IniChar_t* pszVal = FindArgForKey(pszPropTag, nullptr);
@@ -609,7 +609,7 @@ namespace Gray
 			rsValue = "";
 			return HRESULT_WIN32_C(ERROR_UNKNOWN_PROPERTY);
 		}
-		rsValue = CStringI(pszVal, cIniReader::FindScriptLineEnd(pszVal));
+		rsValue = cStringI(pszVal, cIniReader::FindScriptLineEnd(pszVal));
 		return S_OK;
 	}
 
@@ -989,7 +989,7 @@ namespace Gray
 		return SUPER_t::WriteSectionData(file);
 	}
 
-	CStringI GRAYCALL cIniSection::GetSectionTitleParse(CStringI sSectionTitle, CStringI* psPropTag) // static
+	cStringI GRAYCALL cIniSection::GetSectionTitleParse(cStringI sSectionTitle, cStringI* psPropTag) // static
 	{
 		//! Parse [SectionTitle]. similar to GetLineParse2()
 		if (psPropTag == nullptr)
@@ -1004,43 +1004,8 @@ namespace Gray
 			return "";
 		}
 
-		*psPropTag = CStringI(sSectionTitle, StrT::Diff<IniChar_t>(pszSep, sSectionTitle));
-		return CStringI(pszSep + 1);
+		*psPropTag = cStringI(sSectionTitle, StrT::Diff<IniChar_t>(pszSep, sSectionTitle));
+		return cStringI(pszSep + 1);
 	}
 }
-
-//**************************************************************
-
-#if USE_UNITTESTS
-#include "cUnitTest.h"
-
-UNITTEST_CLASS(cIniSection)
-{
-	UNITTEST_METHOD(cIniSection)
-	{
-		// Test read a blob of data as a section.
-
-		cIniSectionData section;
-
-		static const IniChar_t k_SectionData[] =
-			"DATA1\r\n" // 7
-			"DATA2\r\n"	// 7
-			"DATA3=3\r\n"	// 9
-			"DATA4:4\r\n"	// 9
-			"\r\n"
-			"DATA6:5\r\n"	// ignored.
-			"\r\n";
-
-		StrLen_t iRead = section.SetLinesParse(k_SectionData, _countof(k_SectionData), nullptr, STRP_START_WHITE | STRP_MERGE_CRNL | STRP_END_WHITE | STRP_EMPTY_STOP);
-		UNITTEST_TRUE(iRead == 33);
-		UNITTEST_TRUE(section.get_LineQty() == 5);
-
-		static const IniChar_t* k_tSent = "This is a sentence. And another. // comment";
-		iRead = cIniReader::FindScriptLineEnd(k_tSent);	// k_tSent
-		UNITTEST_TRUE(iRead == 32);
-
-	}
-};
-UNITTEST_REGISTER(cIniSection, UNITTEST_LEVEL_Core);
-
-#endif // USE_UNITTESTS
+ 

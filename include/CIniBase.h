@@ -15,7 +15,7 @@ namespace Gray
 {
 	typedef int IPROPIDX_t;		//!< enumerate known properties for some interface/object/class. similar to SCRIPTPROPID_t
 	typedef char IniChar_t;		//!< char format even on UNICODE system! Screw M$, INI files should ALWAYS have UTF8 contents
-	typedef cStringT<IniChar_t> CStringI;	//!< A .INI file string.
+	typedef cStringT<IniChar_t> cStringI;	//!< A .INI file string.
 
 	DECLARE_INTERFACE(IIniBaseSetter)	
 	{
@@ -29,15 +29,15 @@ namespace Gray
 		//! @interface Gray::IIniBaseGetter
 		//! Reader Get the properties as a set of named props with string values. Assume pszPropTag is unique ?
 		IGNORE_WARN_INTERFACE(IIniBaseGetter);
-		virtual HRESULT PropGet(const IniChar_t* pszPropTag, OUT CStringI& rsValue) const = 0;
+		virtual HRESULT PropGet(const IniChar_t* pszPropTag, OUT cStringI& rsValue) const = 0;
 	};
 	DECLARE_INTERFACE(IIniBaseEnumerator) 
 	{
 		//! @interface Gray::IIniBaseEnumerator
 		//! Read/Enumerate the object properties. 0 to max defined tags.
 		IGNORE_WARN_INTERFACE(IIniBaseEnumerator);
-		virtual HRESULT PropEnum(IPROPIDX_t ePropIdx, OUT CStringI& rsValue, CStringI* psPropTag = nullptr) const = 0;
+		virtual HRESULT PropEnum(IPROPIDX_t ePropIdx, OUT cStringI& rsValue, cStringI* psPropTag = nullptr) const = 0;
 	};
-};
+} 
 
 #endif

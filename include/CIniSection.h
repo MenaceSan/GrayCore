@@ -14,12 +14,11 @@
 #include "cHeap.h"
 #include "cTextPos.h"
 
-UNITTEST_PREDEF(cIniSection)
-
 namespace Gray
 {
 #define INI_CR "\r\n"	//!< use "\n" or "\r\n" like FILE_EOL, STR_NL? M$ likes Windows format ("\r\n") to work with notepad.
 
+	UNITTEST2_PREDEF(cIniSection);
 	class cStreamOutput;
 
 	class GRAYCORE_LINK cIniWriter
@@ -61,8 +60,8 @@ namespace Gray
 		static bool GRAYCALL IsLineComment(const IniChar_t* pszLine);
 		static IniChar_t* GRAYCALL FindLineArg(const IniChar_t* pszLine, bool bAllowSpace = false);
 		static StrLen_t GRAYCALL FindScriptLineEnd(const IniChar_t* pLineStr);
-		static CStringI GRAYCALL GetLineParse2(const IniChar_t* pszLine, IniChar_t** ppszArgs = nullptr);
-		static CStringI GRAYCALL GetLineParse3(const IniChar_t* pszLine, OUT CStringI& rsArgs);
+		static cStringI GRAYCALL GetLineParse2(const IniChar_t* pszLine, IniChar_t** ppszArgs = nullptr);
+		static cStringI GRAYCALL GetLineParse3(const IniChar_t* pszLine, OUT cStringI& rsArgs);
 	};
 
 	class GRAYCORE_LINK cIniSectionData
@@ -152,7 +151,7 @@ namespace Gray
 		static StrLen_t GRAYCALL IsLineTrigger(const IniChar_t* pszLine);
 		ITERATE_t FindTriggerName(const IniChar_t* pszTrigName) const;
 
-		virtual HRESULT PropEnum(IPROPIDX_t ePropIdx, OUT CStringI& rsValue, CStringI* psKey = nullptr) const override;
+		virtual HRESULT PropEnum(IPROPIDX_t ePropIdx, OUT cStringI& rsValue, cStringI* psKey = nullptr) const override;
 		void ClearLineQty();
 
 		ITERATE_t FindKeyLine(const IniChar_t* pszKeyName, bool bPrefixOnly = false) const; //!< Find a key in the section (key=args)
@@ -160,7 +159,7 @@ namespace Gray
 		const IniChar_t* FindArgForKey(const IniChar_t* pszKey, const IniChar_t* pszDefault = nullptr) const;
 		int FindIntForKey(const IniChar_t* pszKey, int iDefault = 0) const;
 
-		virtual HRESULT PropGet(const IniChar_t* pszPropTag, OUT CStringI& rsValue) const override;
+		virtual HRESULT PropGet(const IniChar_t* pszPropTag, OUT cStringI& rsValue) const override;
 
 		bool IsValidLines() const;
 		void SetLinesCopy(const cIniSectionData& section);	// Dupe another section.
@@ -200,21 +199,21 @@ namespace Gray
 		typedef cIniSectionData SUPER_t;
 
 	protected:
-		CStringI m_sSectionTitle;	//!< "SECTIONTYPE SECTIONNAME" = everything that was inside [] without the []
+		cStringI m_sSectionTitle;	//!< "SECTIONTYPE SECTIONNAME" = everything that was inside [] without the []
 
 	public:
 		cIniSection(bool bStripComments = false)
 			: cIniSectionData(bStripComments)
 		{
 		}
-		cIniSection(CStringI sSectionTitle, bool bStripComments = false)
+		cIniSection(cStringI sSectionTitle, bool bStripComments = false)
 			: cIniSectionData(bStripComments)
 			, m_sSectionTitle(sSectionTitle)
 		{
 		}
 		cIniSection(const cIniSection& rSectionCopy);
 
-		const CStringI& get_SectionTitle() const
+		const cStringI& get_SectionTitle() const
 		{
 			//! @return everything that was inside [] without the []. Not parsed.
 			return m_sSectionTitle;
@@ -224,7 +223,7 @@ namespace Gray
 			return cString(get_SectionTitle());
 		}
 
-		static CStringI GRAYCALL GetSectionTitleParse(CStringI sSectionTitle, CStringI* psPropTag);
+		static cStringI GRAYCALL GetSectionTitleParse(cStringI sSectionTitle, cStringI* psPropTag);
 
 		static bool GRAYCALL IsSectionTypeRoot(const IniChar_t* pszSection)
 		{
@@ -239,7 +238,7 @@ namespace Gray
 		{
 			return IsSectionTypeMatch(m_sSectionTitle, pszSectionType);
 		}
-		UNITTEST_FRIEND(cIniSection);
+		UNITTEST2_FRIEND(cIniSection);
 	};
 
 	class GRAYCORE_LINK cIniSectionEntry : public cRefBase, public cIniSection
@@ -252,7 +251,7 @@ namespace Gray
 		cTextPos m_FilePos;	//!< Where in parent/source file is this? for error reporting. 1 based. ITERATE_t
 
 	public:
-		cIniSectionEntry(CStringI sSectionTitle, bool bStripComments = false, int iLine = 0)
+		cIniSectionEntry(cStringI sSectionTitle, bool bStripComments = false, int iLine = 0)
 			: cIniSection(sSectionTitle, bStripComments)
 			, m_FilePos(0, iLine)
 		{

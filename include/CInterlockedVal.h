@@ -14,10 +14,10 @@
 #include "Ptr.h"
 #include "cUnitTestDecl.h"
 
-UNITTEST_PREDEF(cInterlockedVal)
-
 namespace Gray
 {
+	UNITTEST2_PREDEF(cInterlockedVal);
+
 #define _SIZEOF_INT 4	//! sizeof(int) seems to be 32 bits in all tested configurations. _MSC_VER and __GNUC__, 32 and 64 bit.
 #if defined(USE_64BIT) && defined(__GNUC__)
 #define _SIZEOF_LONG 8	//!< # bytes in long or unsigned long for __DECL_ALIGN macro. Use if we can't do sizeof(x)
@@ -581,11 +581,13 @@ namespace Gray
 		{
 			m_rCount.Dec();
 		}
-		int get_Count() const
+
+		int get_Count() const noexcept
 		{
 			return m_nCount;	//!< get the count as it was when we created this.
 		}
-		UNITTEST_FRIEND(cInterlockedVal);
+
+		UNITTEST2_FRIEND(cInterlockedVal);
 	};
 
 #ifdef GRAY_DLL // force implementation/instantiate for DLL/SO.

@@ -85,24 +85,4 @@ namespace Gray
 		return (TIMESECD_t)((tNow.get_Val() - this->get_Val()) / cTimeFile::k_nFreq);
 	}
 }
-
-//*****************************************************************
-
-#if USE_UNITTESTS
-#include "cUnitTest.h"
-
-UNITTEST_CLASS(cTimeFile)
-{
-	UNITTEST_METHOD(cTimeFile)
-	{
-
-		UINT64 uVal = 0xFFFFFFFFFFFFFFFFULL;
-		uVal /= cTimeFile::k_nFreq;	// seconds.
-		uVal /= 60 * 60 * 24;		// days.
-		uVal /= 365;	// years
-
-		UNITTEST_TRUE(uVal == 58494 );
-	}
-};
-UNITTEST_REGISTER(cTimeFile, UNITTEST_LEVEL_Core);	// UNITTEST_LEVEL_Core
-#endif
+ 

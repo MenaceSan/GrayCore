@@ -14,10 +14,9 @@
 #include "cFilePath.h"
 #include "cThreadLock.h"
 
-UNITTEST_PREDEF(cOSProcess)
-
 namespace Gray
 {
+	UNITTEST2_PREDEF(cOSProcess);
 	class cFile;
 
 #ifdef _WIN32
@@ -45,7 +44,7 @@ namespace Gray
 	typedef pid_t PROCESSID_t;		//!< pid_t getpid() for __linux__
 	typedef int APP_EXITCODE_t;		//!< main() return value.
 #endif
-	const PROCESSID_t PROCESSID_BAD = 0;	//!< Invalid process id.
+	constexpr PROCESSID_t PROCESSID_BAD = 0;	//!< Invalid process id.
 
 	enum APP_EXITCODE_TYPE
 	{
@@ -83,6 +82,8 @@ namespace Gray
 #elif defined(__linux__)
 	protected:
 		cStringF m_sPath;		//!< cached file path for the EXE/ELF/etc file.
+#else
+#error NOOS
 #endif
 
 	public:
@@ -124,7 +125,7 @@ namespace Gray
 			return m_nPid;
 		}
 		virtual cStringF get_ProcessPath() const;
-		cString get_ProcessName() const;
+		cStringF get_ProcessName() const;
 		HRESULT OpenProcessId(PROCESSID_t dwProcessID, DWORD dwDesiredAccess = 0, bool bInheritHandle = false);
 
 #ifdef _WIN32
@@ -136,8 +137,9 @@ namespace Gray
 
 		void AttachCurrentProcess() noexcept
 		{
-			//! No need to close this handle! 0xFFFFFFFF = current process.
+			//! No need to close this handle!
 #ifdef _WIN32
+			// 0xFFFFFFFF = current process. https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getcurrentprocess
 			m_nPid = ::GetCurrentProcessId();
 			m_hProcess.AttachHandle(::GetCurrentProcess());
 #elif defined(__linux__)
@@ -177,6 +179,7 @@ namespace Gray
 		}
 		bool put_PriorityClass(DWORD dwPriorityClass) noexcept
 		{
+			//! Set the threads priority.
 			//! @arg dwPriorityClass = ABOVE_NORMAL_PRIORITY_CLASS
 #if defined(_WIN32) && ! defined(UNDER_CE)
 			return ::SetPriorityClass(get_ProcessHandle(), dwPriorityClass) ? true : false;
@@ -188,8 +191,8 @@ namespace Gray
 		}
 
 #ifdef _WIN32
-
-		HRESULT CreateRemoteThread(const void* pvFunc, const void* pvArgs, OUT cOSHandle& thread);
+		
+		HRESULT CreateRemoteThread(THREAD_FUNC_t pvFunc, const void* pvArgs, OUT cOSHandle& thread);
 
 		void* AllocMemory(size_t nSize)
 		{
@@ -203,7 +206,7 @@ namespace Gray
 			//! ASSUME: PROCESS_QUERY_INFORMATION | PROCESS_VM_WRITE access AND cOSUserToken with SE_DEBUG_NAME
 
 			SIZE_T nSizeWrite = nSize;
-			BOOL bSuccess = ::WriteProcessMemory(get_ProcessHandle(), pBaseAddress, pData, nSize, &nSizeWrite);
+			const BOOL bSuccess = ::WriteProcessMemory(get_ProcessHandle(), pBaseAddress, pData, nSize, &nSizeWrite);
 			if (!bSuccess)
 			{
 				return HResult::GetLastDef(HRESULT_WIN32_C(ERROR_WRITE_FAULT));
@@ -218,7 +221,7 @@ namespace Gray
 			//! ASSUME: PROCESS_QUERY_INFORMATION | PROCESS_VM_READ access AND cOSUserToken with SE_DEBUG_NAME
 
 			SIZE_T nSizeRead = nSize;
-			BOOL bSuccess = ::ReadProcessMemory(get_ProcessHandle(), pBaseAddress, pDataIn, nSize, &nSizeRead);
+			const BOOL bSuccess = ::ReadProcessMemory(get_ProcessHandle(), pBaseAddress, pDataIn, nSize, &nSizeRead);
 			if (!bSuccess)
 			{
 				return HResult::GetLastDef(HRESULT_WIN32_C(ERROR_READ_FAULT));
@@ -268,7 +271,7 @@ namespace Gray
 		static HWND GRAYCALL FindWindowForProcessID(PROCESSID_t nProcessID, DWORD dwStyleFlags, const GChar_t* pszClassName = nullptr); // WS_VISIBLE
 #endif // _WIN32
 
-		UNITTEST_FRIEND(cOSProcess);
+		UNITTEST2_FRIEND(cOSProcess);
 	};
 }
 

@@ -3,7 +3,7 @@
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 #include "pch.h"
-#include "cRandomDef.h"
+#include "cRandom.h"
 #include "cHeap.h"
 
 #ifdef __linux__
@@ -269,49 +269,4 @@ namespace Gray
 		return(uRand % nScale);	// chop off extra junk high bits.
 	}
 }
-
-//*************************************************************
-
-#if USE_UNITTESTS
-#include "cUnitTest.h"
-#include "cLogMgr.h"
-UNITTEST_CLASS(cRandomBase)
-{
-	UNITTEST_METHOD(cRandomBase)
-	{
-		// Test general randomness.
-		cRandomNoise& rSys = cRandomNoise::I();
-
-		BYTE s1[16];
-		rSys.GetNoise(s1, sizeof(s1));
-
-		g_Rand.InitSeedDefault();
-		UINT u1 = g_Rand.get_RandUns();
-		UINT u2 = g_Rand.get_RandUns();
-		UNITTEST_TRUE(u2 != u1);
-
-		BYTE s2[16];
-		rSys.GetNoise(s2, sizeof(s2));
-		UNITTEST_TRUE(s2 != s1);
-
-		// Test seed repeatability.
-		cRandomBase::SEED_t uSeed = 123;
-		g_Rand.InitSeed(&uSeed, sizeof(uSeed));
-		u1 = g_Rand.get_RandUns();
-#ifdef __linux__	// GNUC
-		UNITTEST_TRUE(u1 == 3711425268);
-#else
-		UNITTEST_TRUE(u1 == 595497326);	// this will vary on other systems ?
-#endif
-
-		g_Rand.InitSeed(s2, sizeof(s2));
-		u2 = g_Rand.get_RandUns();
-		UNITTEST_TRUE(u1 != u2);
-
-		g_Rand.InitSeed(&uSeed, sizeof(uSeed));
-		u2 = g_Rand.get_RandUns();
-		UNITTEST_TRUE(u1 == u2);	// Must repeat.
-	}
-};
-UNITTEST_REGISTER(cRandomBase, UNITTEST_LEVEL_Core);
-#endif
+ 

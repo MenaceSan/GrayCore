@@ -11,12 +11,12 @@
 
 #include "cString.h"
 #include "HResult.h"
-#include "FileName.h"
-
-UNITTEST_PREDEF(cAtomRef);
+#include "cUnitTestDecl.h"
 
 namespace Gray
 {
+	UNITTEST2_PREDEF(cAtom);
+
 	typedef HASHCODE32_t ATOMCODE_t;	//!< Encode a atom as a 32 bit hashcode instead of using its name/pointer. StrT::GetHashCode32()
 
 #define CATOM_STR(a)		a	//!< Part of a static atom quoted string. for concatenate use. e.g. "Tag_XX"
@@ -32,19 +32,21 @@ namespace Gray
 
 		friend class cAtomRef;
 		friend class cAtomManager;
+		UNITTEST2_FRIEND(cAtom);
 
 	private:
 		cStringA m_s;				//!< the string being represented.
 		ATOMCODE_t m_nHashCode;		//!< GetHashCode32() for m_s; case independent. e.g. THIS==this==same atom.
 
-	public:
-		cAtomDef(cStringA s = "")
+	private:
+		cAtomDef(cStringA s)
 			: m_s(s)
 			, m_nHashCode(StrT::GetHashCode32<ATOMCHAR_t>(s, k_StrLen_UNK, 0))
 		{
 			// Private construct.
 		}
 
+	public:
 		ATOMCODE_t get_HashCode() const noexcept
 		{
 			//! GetHashCode32() for m_s; case independent. e.g. THIS==this==same atom.
@@ -67,15 +69,27 @@ namespace Gray
 		friend class cAtomManager;
 		typedef cStringA STR_t;
 		typedef cAtomRef THIS_t;
-		UNITTEST_FRIEND(cAtomRef)
+		UNITTEST2_FRIEND(cAtom);
 
 	private:
-		cAtomDefPtr	m_pDef;	//!< a reference to an atom. NOT allowed to be nullptr!
+		cAtomDefPtr	m_pDef;		//!< a counted reference to an atom. NOT allowed to be nullptr!
+
+	private:
+		static cAtomDefPtr GRAYCALL FindorCreateAtomStr(const ATOMCHAR_t* pszText);
+		static cAtomDefPtr GRAYCALL FindorCreateAtomStr(const STR_t& sText);
+
+		explicit inline cAtomRef(cAtomDef* pDef)	// cAtomManager only.
+			: m_pDef(pDef)
+		{
+		}
+
+		void EmptyAtom(bool isLast);
 
 	public:
 		cAtomRef(const THIS_t& ref)
 			: m_pDef(ref.m_pDef)
 		{
+			// copy
 			ASSERT(m_pDef != nullptr);
 		}
 		cAtomRef(const STR_t& sName)
@@ -90,7 +104,7 @@ namespace Gray
 		}
 		~cAtomRef()
 		{
-			EmptyAtom();
+			EmptyAtom(true);
 		}
 
 		size_t GetHeapStats(OUT ITERATE_t& iAllocCount) const;
@@ -103,22 +117,20 @@ namespace Gray
 			return m_pDef->get_HashCode();
 		}
 
-		void EmptyAtom();
-
-		const STR_t& get_StrA() const
+		const STR_t& get_StrA() const noexcept
 		{
 			return m_pDef->m_s;
 		}
-		const ATOMCHAR_t* get_CPtr() const       //!< as a C string
+		const ATOMCHAR_t* get_CPtr() const noexcept       //!< as a C string
 		{
 			return m_pDef->m_s;
 		}
-		operator const ATOMCHAR_t* () const       //!< as a C string
+		operator const ATOMCHAR_t* () const noexcept       //!< as a C string
 		{
 			return m_pDef->m_s;
 		}
 
-		bool isValidCheck() const
+		bool isValidCheck() const 
 		{
 			return m_pDef->m_s.isValidCheck();
 		}
@@ -131,7 +143,7 @@ namespace Gray
 			return m_pDef->m_s.GetLength();
 		}
 
-		bool operator==(const cAtomRef& atom) const
+		bool operator==(const cAtomRef& atom) const noexcept
 		{
 			return(m_pDef == atom.m_pDef);
 		}
@@ -148,7 +160,7 @@ namespace Gray
 		{
 			if (m_pDef != atom.m_pDef)
 			{
-				EmptyAtom();
+				EmptyAtom(true);
 				m_pDef = atom.m_pDef;
 			}
 			return *this;
@@ -157,7 +169,7 @@ namespace Gray
 		{
 			if (CompareNoCase(pStr) != COMPARE_Equal)
 			{
-				EmptyAtom();
+				EmptyAtom(true);
 				m_pDef = FindorCreateAtomStr(pStr);
 			}
 			return *this;
@@ -166,12 +178,16 @@ namespace Gray
 		{
 			if (CompareNoCase(sStr) != COMPARE_Equal)
 			{
-				EmptyAtom();
+				EmptyAtom(true);
 				m_pDef = FindorCreateAtomStr(sStr);
 			}
 			return *this;
 		}
 
+		void EmptyAtom()
+		{
+			EmptyAtom(false);
+		}
 		void SetAtomStatic();
 
 		static void GRAYCALL CreateStaticAtoms(const ATOMCHAR_t** ppAtoms);
@@ -184,14 +200,6 @@ namespace Gray
 #ifdef _DEBUG
 		static HRESULT GRAYCALL DebugDumpFile(const FILECHAR_t* pszFilePath);
 #endif
-
-	private:
-		cAtomRef(cAtomDef* pDef)
-			: m_pDef(pDef)
-		{
-		}
-		static cAtomDefPtr GRAYCALL FindorCreateAtomStr(const ATOMCHAR_t* pszText);
-		static cAtomDefPtr GRAYCALL FindorCreateAtomStr(const STR_t& sText);
 	};
 }
 #endif // _INC_cAtom_H

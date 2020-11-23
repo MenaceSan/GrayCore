@@ -1947,7 +1947,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\CStream.cpp"
+				RelativePath=".\cStream.cpp"
 				>
 			</File>
 			<File
@@ -2317,7 +2317,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\CFile.h"
+				RelativePath=".\cFile.h"
 				>
 			</File>
 			<File

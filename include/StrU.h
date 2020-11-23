@@ -13,10 +13,10 @@
 #include "StrConst.h"
 #include "cUnitTestDecl.h"
 
-UNITTEST_PREDEF(StrU)
-
 namespace Gray
 {
+	UNITTEST2_PREDEF(StrU);
+
 	struct GRAYCORE_LINK StrU // : public StrT // static
 	{
 		//! @struct Gray::StrU
@@ -52,11 +52,7 @@ namespace Gray
 		static StrLen_t GRAYCALL UTF8toUNICODE(OUT wchar_t* pOut, StrLen_t iSizeOutMaxChars, const char* pInp, StrLen_t iSizeInpBytes = k_StrLen_UNK);
 		static StrLen_t GRAYCALL UNICODEtoUTF8(OUT char* pOut, StrLen_t iSizeOutMaxBytes, const wchar_t* pInp, StrLen_t iSizeInpChars = k_StrLen_UNK);
 
-#if defined(USE_UNITTESTS)
-		static bool GRAYCALL UnitTestU(const wchar_t* pszText, StrLen_t nLen);
-		static bool GRAYCALL UnitTest8(const char* pszText, StrLen_t nLen);
-		UNITTEST_FRIEND(StrU);
-#endif
+		UNITTEST2_FRIEND(StrU);
 	};
 }
 

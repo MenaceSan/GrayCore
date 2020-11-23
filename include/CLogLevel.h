@@ -17,10 +17,6 @@ namespace Gray
 	typedef char LOGCHAR_t;	//!< always just use UTF8 for logs, don't bother with UNICODE.
 #define LOGSTR(x) ::Gray::StrArg< ::Gray::LOGCHAR_t >(x)		//!< safe convert wchar_t arguments to char if needed.
 #define LOGSTR2(x,y) ::Gray::StrArg< ::Gray::LOGCHAR_t >(x,(RADIX_t)y)	//!< for a numeric. safe convert wchar_t arguments to char if needed.
-#define LOGERR(hRes) LOGSTR(cStringL::GetErrorString(hRes))		//!< Used to supply "ERR='%s'"
-
-	template <typename _TYPE_CH> class GRAYCORE_LINK cStringT;	//!< forward declare this.
-	typedef cStringT<LOGCHAR_t> cStringL;	//!< Log string.
 
 	enum LOGLEV_TYPE
 	{

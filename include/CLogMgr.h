@@ -25,10 +25,11 @@
 #include "cTypeInfo.h"
 
 // #define _DEBUG_FAST	// put debug in release mode optimized code.
-UNITTEST_PREDEF(cLogMgr)
 
 namespace Gray
 {
+	UNITTEST2_PREDEF(cLogMgr);
+
 	class GRAYCORE_LINK cLogSubject : public cLogProcessor
 	{
 		//! @class Gray::cLogSubject
@@ -133,7 +134,7 @@ namespace Gray
 		virtual HRESULT WriteString(const wchar_t* pszStr) override;
 
 		CHEAPOBJECT_IMPL;
-		UNITTEST_FRIEND(cLogMgr);
+		UNITTEST2_FRIEND(cLogMgr);
 	};
 
 	//***********************************************************************************

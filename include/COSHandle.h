@@ -16,10 +16,10 @@
 #include "cUnitTestDecl.h"
 #include "cDebugAssert.h"
 
-UNITTEST_PREDEF(cOSHandle)
-
 namespace Gray
 {
+	UNITTEST2_PREDEF(cOSHandle);
+
 #define HANDLE_NULL		NULL	//!< Invalid OS handle for _WIN32. Not invalid OS handle for __linux__.
 
 #define WINHANDLE_NULL	NULL	//!< HWND, HPEN, etc are NOT OS Handles. like HWND_DESKTOP. like HANDLEPTR_NULL. This is a WINAPI void* handle via DECLARE_HANDLE like HWND, HPEN, HINSTANCE, etc. can't call CloseHandle() on it.
@@ -309,7 +309,7 @@ namespace Gray
 		}
 #endif
 
-		UNITTEST_FRIEND(cOSHandle);
+		UNITTEST2_FRIEND(cOSHandle);
 	};
 
 };

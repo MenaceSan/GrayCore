@@ -14,10 +14,10 @@
 #include "cDebugAssert.h"
 #include <time.h> // timespec
 
-UNITTEST_PREDEF(cTimeSys)
-
 namespace Gray
 {
+	UNITTEST2_PREDEF(cTimeSys);
+
 	typedef int TIMESECD_t;			//!< signed delta seconds. like TIMESEC_t. redefined in TimeUnits.h.
 	typedef float TIMESECF_t;		//!< delta float seconds.
 
@@ -107,20 +107,20 @@ namespace Gray
 		TIMESYS_t m_TimeSys;
 
 	public:
-		cTimeSys()
+		cTimeSys() noexcept
 			: m_TimeSys(k_CLEAR)
 		{
 		}
-		cTimeSys(const cTimeSys& t)
+		cTimeSys(const cTimeSys& t) noexcept
 			: m_TimeSys(t.m_TimeSys)
 		{
 		}
-		cTimeSys(TIMESYS_t t)
+		cTimeSys(TIMESYS_t t) noexcept
 			: m_TimeSys(t)
 		{
 		}
 
-		static TIMESYS_t inline GetTimeNow()
+		static TIMESYS_t inline GetTimeNow() noexcept
 		{
 			//! @note ASSUME this is FAST !
 			//! _WIN32 is limited to the resolution of the system timer, which is typically in the range of 10 milliseconds to 16 milliseconds.
@@ -155,24 +155,24 @@ namespace Gray
 		{
 			m_TimeSys = t;
 		}
-		void InitTimeNow()
+		void InitTimeNow() noexcept
 		{
 			m_TimeSys = GetTimeNow();
 		}
-		void InitTimeNowPlusSys(TIMESYSD_t iOffset)
+		void InitTimeNowPlusSys(TIMESYSD_t iOffset) noexcept
 		{
 			m_TimeSys = GetTimeNow() + iOffset;
 		}
-		void InitTimeNowPlusSec(float fOffsetSec)
+		void InitTimeNowPlusSec(float fOffsetSec) noexcept
 		{
 			InitTimeNowPlusSys((TIMESYSD_t)(fOffsetSec * k_FREQ));
 		}
-		bool isTimeFuture() const
+		bool isTimeFuture() const noexcept
 		{
 			return(m_TimeSys > GetTimeNow()); // GetTimeNow
 		}
 
-		TIMESYSD_t get_TimeTilSys() const
+		TIMESYSD_t get_TimeTilSys() const noexcept
 		{
 			//! How long until this time (msec)
 			//! @return >0 = m_TimeSys is in the future.
@@ -182,7 +182,7 @@ namespace Gray
 				return k_DMAX;
 			return((TIMESYSD_t)(m_TimeSys - GetTimeNow()));
 		}
-		TIMESYSD_t get_AgeSys() const
+		TIMESYSD_t get_AgeSys() const noexcept
 		{
 			//! How long ago was this ? (was TIMESYS_GetAge(x))
 			//! @return signed TIMESYS_t (mSec)
@@ -195,23 +195,24 @@ namespace Gray
 			return((TIMESYSD_t)(GetTimeNow() - m_TimeSys));
 		}
 
-		TIMESECF_t get_TimeTilSecF() const
+		TIMESECF_t get_TimeTilSecF() const noexcept
 		{
 			//! in float seconds.
 			return(get_TimeTilSys() / (TIMESECF_t)k_FREQ);
 		}
-		TIMESECF_t get_AgeSecF() const
+		TIMESECF_t get_AgeSecF() const noexcept
 		{
 			//! in float seconds.
 			return(get_AgeSys() / (TIMESECF_t)k_FREQ);
 		}
-		TIMESECD_t get_AgeSec() const
+		TIMESECD_t get_AgeSec() const noexcept
 		{
 			//! How old is this? (in seconds)
 			//! current time - this time.
 			return(get_AgeSys() / k_FREQ);
 		}
-		UNITTEST_FRIEND(cTimeSys);
+
+		UNITTEST2_FRIEND(cTimeSys);
 	};
 
 	//****************************************************************************

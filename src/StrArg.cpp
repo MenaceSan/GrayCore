@@ -36,7 +36,7 @@ namespace Gray
 	}
 
 	template< typename TYPE>
-	GRAYCORE_LINK const TYPE* GRAYCALL StrArg(char ch, StrLen_t nRepeat)
+	GRAYCORE_LINK const TYPE* GRAYCALL StrArg(TYPE ch, StrLen_t nRepeat) // static
 	{
 		//! Get a temporary string that is nRepeat chars repeating
 		TYPE* pszTmp = cTempPool::GetTempST<TYPE>(nRepeat);
@@ -44,16 +44,7 @@ namespace Gray
 		pszTmp[nRepeat] = '\0';
 		return pszTmp;
 	}
-	template< typename TYPE>
-	GRAYCORE_LINK const TYPE* GRAYCALL StrArg(wchar_t ch, StrLen_t nRepeat)
-	{
-		//! Get a temporary string that is nRepeat chars repeating
-		TYPE* pszTmp = cTempPool::GetTempST<TYPE>(nRepeat);
-		cValArray::FillQty<TYPE>(pszTmp, nRepeat, (TYPE)ch);
-		pszTmp[nRepeat] = '\0';
-		return pszTmp;
-	}
-
+ 
 	template< typename TYPE>
 	GRAYCORE_LINK const TYPE* GRAYCALL StrArg(INT32 iVal)
 	{
@@ -102,64 +93,30 @@ namespace Gray
 		return cTempPool::GetTempST<TYPE>(nLen, szTmp);
 	}
 
-	template< typename TYPE>
-	GRAYCORE_LINK bool GRAYCALL StrArg_UnitTestT()
-	{
-		//! Include this code event if ! USE_UNITTESTS to force DLL implementation.
-		const TYPE* pszStr1 = StrArg<TYPE>('a', (StrLen_t)10);
-		if(StrT::Cmp<TYPE>(pszStr1, CSTRCONST("aaaaaaaaaa")) != 0)
-			{ ASSERT(0); return false; }
+#if true // def GRAY_DLL // force implementation/instantiate for DLL/SO.
+	template GRAYCORE_LINK const wchar_t* GRAYCALL StrArg<wchar_t>(const char* pszStrInp);		// Force Instantiation for DLL.
+	template GRAYCORE_LINK const char* GRAYCALL StrArg<char>(const wchar_t* pszStrInp);		// Force Instantiation for DLL.
 
-		INT32 iVal32 = 0x12;
-		const TYPE* pszStr2 = StrArg<TYPE>(iVal32);
-		if(StrT::Cmp<TYPE>(pszStr2, CSTRCONST("18")) != 0)
-		{ ASSERT(0); return false; }
+	template GRAYCORE_LINK const wchar_t* GRAYCALL StrArg<wchar_t>(wchar_t ch, StrLen_t nRepeat);		// Force Instantiation for DLL.
+	template GRAYCORE_LINK const char* GRAYCALL StrArg<char>(char ch, StrLen_t nRepeat);		// Force Instantiation for DLL.
 
-		UINT32 uVal32 = 0x12;
-		const TYPE* pszStr3 = StrArg<TYPE>(uVal32, (RADIX_t)0x10);
-		if(StrT::Cmp<TYPE>(pszStr3, CSTRCONST("012")) != 0)
-		{ ASSERT(0); return false; }
+	template GRAYCORE_LINK const wchar_t* GRAYCALL StrArg<wchar_t>(INT32 v);		// Force Instantiation for DLL.
+	template GRAYCORE_LINK const char* GRAYCALL StrArg<char>(INT32 v);		// Force Instantiation for DLL.
 
-		INT64 iVal64 = 0x12;
-		const TYPE* pszStr4 = StrArg<TYPE>(iVal64);
-		if(StrT::Cmp<TYPE>(pszStr4, CSTRCONST("18")) != 0)
-		{ ASSERT(0); return false; }
+	template GRAYCORE_LINK const wchar_t* GRAYCALL StrArg<wchar_t>(UINT32 uVal, RADIX_t uRadix);		// Force Instantiation for DLL.
+	template GRAYCORE_LINK const char* GRAYCALL StrArg<char>(UINT32 uVal, RADIX_t uRadix);		// Force Instantiation for DLL.
 
-		UINT64 uVal64 = 0x12;
-		const TYPE* pszStr5 = StrArg<TYPE>(uVal64, (RADIX_t)0x10);
-		if(StrT::Cmp<TYPE>(pszStr5, CSTRCONST("012")) != 0)
-		{ ASSERT(0); return false; }
+#ifdef USE_INT64
+	template GRAYCORE_LINK const wchar_t* GRAYCALL StrArg<wchar_t>(INT64 v);		// Force Instantiation for DLL.
+	template GRAYCORE_LINK const char* GRAYCALL StrArg<char>(INT64 v);		// Force Instantiation for DLL.
 
-		double dVal = 123.123;
-		const TYPE* pszStr6 = StrArg<TYPE>(dVal);
-		if(StrT::Cmp<TYPE>(pszStr6, CSTRCONST("123.123")) != 0)
-		{ ASSERT(0); return false; }
+	template GRAYCORE_LINK const wchar_t* GRAYCALL StrArg<wchar_t>(UINT64 uVal, RADIX_t uRadix);		// Force Instantiation for DLL.
+	template GRAYCORE_LINK const char* GRAYCALL StrArg<char>(UINT64 uVal, RADIX_t uRadix);		// Force Instantiation for DLL.
+#endif
 
-		return true;
-	}
+	template GRAYCORE_LINK const wchar_t* GRAYCALL StrArg<wchar_t>(double v);		// Force Instantiation for DLL.
+	template GRAYCORE_LINK const char* GRAYCALL StrArg<char>(double v);		// Force Instantiation for DLL.
+
+#endif
 };
-
-//***********************************************************
-#if USE_UNITTESTS
-#include "cUnitTest.h"
-UNITTEST_CLASS(StrArg)
-{
-	UNITTEST_METHOD(StrArg)
-	{
-		StrArg_UnitTestT<char>();
-		StrArg_UnitTestT<wchar_t>();
-	}
-};
-UNITTEST_REGISTER(StrArg, UNITTEST_LEVEL_Core);
-#else
-namespace Gray
-{
-	void StrArg_ForceInstantiate()
-	{
-		//! @note In a static library, there is no good way to force a template function to instantiate. other than calling it!
-		//! DLL will just use "template struct GRAYCORE_LINK cArrayString<char>;" declaration.
-		StrArg_UnitTestT<char>();
-		StrArg_UnitTestT<wchar_t>();
-	}
-};
-#endif // USE_UNITTESTS
+ 

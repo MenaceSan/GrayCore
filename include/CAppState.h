@@ -18,11 +18,12 @@
 #include "cThreadLock.h"
 #include "cBits.h"
 #include "cOSProcess.h"
-
-UNITTEST_PREDEF(cAppState)
+#include "cUnitTestDecl.h"
 
 namespace Gray
 {
+	UNITTEST2_PREDEF(cAppState);
+
 	enum APPSTATE_TYPE_
 	{
 		//! @enum Gray::APPSTATE_TYPE_
@@ -53,7 +54,7 @@ namespace Gray
 		void InitArgsInt(ITERATE_t argc, APP_ARGS_t ppszArgs);
 
 	public:
-		static inline bool IsArgSwitch(wchar_t ch)
+		static inline bool IsArgSwitch(wchar_t ch) noexcept
 		{
 			//! Is FILECHAR_t char 'ch' a command line switch char?
 			return ((ch) == '-' || (ch) == '/');
@@ -213,7 +214,7 @@ namespace Gray
 		static void GRAYCALL AbortApp(APP_EXITCODE_t uExitCode = APP_EXITCODE_ABORT);
 
 		CHEAPOBJECT_IMPL;
-		UNITTEST_FRIEND(cAppState);
+		UNITTEST2_FRIEND(cAppState);
 	};
 
 	class GRAYCORE_LINK cAppStateMain

@@ -15,10 +15,11 @@
 #include "cUnitTestDecl.h"
 
 // #define USE_HEAP_STATS		// Debug total allocation stats.
-UNITTEST_PREDEF(cHeap)
 
 namespace Gray
 {
+	UNITTEST2_PREDEF(cHeap);
+
 	struct GRAYCORE_LINK cHeap	// static class
 	{
 		//! @struct Gray::cHeap
@@ -83,7 +84,7 @@ namespace Gray
 		static void GRAYCALL FreePtr(void* pData);
 		static void* GRAYCALL ReAllocPtr(void* pData, size_t nSize);
 
-		UNITTEST_FRIEND(cHeap);
+		UNITTEST2_FRIEND(cHeap);
 	};
 
 	struct GRAYCORE_LINK cHeapAlign : public cHeap	// static

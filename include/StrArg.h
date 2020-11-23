@@ -13,10 +13,10 @@
 #include "StrConst.h"
 #include "cUnitTestDecl.h"
 
-UNITTEST_PREDEF(StrArg)
-
 namespace Gray
 {
+	UNITTEST2_PREDEF(StrArg);
+
 	// Convert some type into a string. ALA ToString()
 	// Define temporary string values for use as sprintf() arguments.
 	// Use cTempPool
@@ -29,9 +29,7 @@ namespace Gray
 	// TODO Front padding with max X chars.
 
 	template< typename TYPE>
-	GRAYCORE_LINK const TYPE* GRAYCALL StrArg(char ch, StrLen_t nRepeat = 1);
-	template< typename TYPE>
-	GRAYCORE_LINK const TYPE* GRAYCALL StrArg(wchar_t ch, StrLen_t nRepeat = 1);
+	GRAYCORE_LINK const TYPE* GRAYCALL StrArg(TYPE ch, StrLen_t nRepeat = 1);
 
 	template< typename TYPE>
 	GRAYCORE_LINK const TYPE* GRAYCALL StrArg(INT32 iVal);

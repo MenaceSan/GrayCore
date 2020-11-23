@@ -14,7 +14,7 @@
 #include "cLogMgr.h"
 
 #ifdef _WIN32
-	// CWinGlobalHandle CWinGlobalV, CWinGlobalT<> use GMEM_*
+	// CWinGlobalHandle or CWinGlobalV will create CWinGlobalT<X> use GMEM_*
 #define WINHEAPN(n)	CWinGlobal##n
 #define WINHEAPM(n)	GMEM_##n
 #define WINHEAPH	HGLOBAL

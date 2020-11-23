@@ -15,11 +15,11 @@
 #ifdef __linux__
 #include <sys/utsname.h>	// uname()
 #endif
-UNITTEST_PREDEF(cSystemInfo)
 
 namespace Gray
 {
 	//! OS build type name. OS target known at compile time. Actually run environment may vary of course.
+	UNITTEST2_PREDEF(cSystemInfo);
 
 #ifdef _MFC_VER
 #if defined(USE_64BIT)
@@ -94,7 +94,7 @@ namespace Gray
 		static void GRAYCALL SystemBeep();
 
 		CHEAPOBJECT_IMPL;
-		UNITTEST_FRIEND(cSystemInfo);
+		UNITTEST2_FRIEND(cSystemInfo);
 	};
 };
 

@@ -4,7 +4,7 @@
 //
 
 #include "pch.h"
-#include "CFile.h"
+#include "cFile.h"
 #include "cHeap.h"
 #include "cString.h"
 #include "cLogMgr.h"
@@ -395,12 +395,12 @@ namespace Gray
 
 	void cFile::Close() // virtual
 	{
-		//! CStream
+		//! cStream
 		if (!isFileOpen())
 			return;
 		sm_iFilesOpen--;
 		DEBUG_CHECK(sm_iFilesOpen >= 0);
-		CFile::Close();	// NOT __super from CStream
+		CFile::Close();	// NOT __super from cStream
 	}
 
 	HANDLE cFile::DetachFileHandle()
@@ -677,84 +677,4 @@ namespace Gray
 		return hRes;
 	}
 }
-
-	//**********************************************************
-
-#if USE_UNITTESTS
-#include "cUnitTest.h"
-#include "cMime.h"
-
-namespace Gray
-{
-	void GRAYCALL cFile::UnitTest_Write(cStreamOutput& testfile1) // static
-	{
-		//! Write strings to it.
-		for (ITERATE_t i = 0; !cUnitTests::k_asTextLines[i].isNull(); i++)
-		{
-			HRESULT hRes = testfile1.WriteString(cUnitTests::k_asTextLines[i].get_CPtr());
-			UNITTEST_TRUE(SUCCEEDED(hRes));
-			testfile1.WriteString(_GT(STR_NL));
-		}
-	}
-
-	void GRAYCALL cFile::UnitTest_Read(cStreamInput& stmIn, bool bString) // static
-	{
-		//! Other side of UnitTest_Write()
-		//! Read strings from it (as binary).
-		GChar_t szTmp[256];
-
-		for (ITERATE_t j = 0; !cUnitTests::k_asTextLines[j].isNull(); j++)
-		{
-			const GChar_t* pszLine = cUnitTests::k_asTextLines[j];
-			StrLen_t iLenStr = StrT::Len(pszLine);
-			UNITTEST_TRUE(iLenStr < (StrLen_t)STRMAX(szTmp));
-			size_t nSizeBytes = (iLenStr + 1) * sizeof(GChar_t);
-			HRESULT hResRead = bString ? stmIn.ReadStringLine(szTmp, STRMAX(szTmp)) : stmIn.ReadX(szTmp, nSizeBytes);
-			UNITTEST_TRUE(hResRead == (HRESULT)(bString ? (iLenStr + 1) : nSizeBytes));
-			UNITTEST_TRUE(!cMem::Compare(szTmp, pszLine, iLenStr * sizeof(GChar_t)));	// pszLine has no newline.
-			UNITTEST_TRUE(szTmp[iLenStr] == '\n');
-		}
-
-		// Check for proper read past end of file.
-		HRESULT hResRead = stmIn.ReadX(szTmp, STRMAX(szTmp));
-		UNITTEST_TRUE(hResRead == 0);
-		hResRead = stmIn.ReadX(szTmp, STRMAX(szTmp));
-		UNITTEST_TRUE(hResRead == 0);
-	}
  
-}
-
-UNITTEST_CLASS(cFile)
-{
-	UNITTEST_METHOD(cFile)
-	{
-		//! Create a test file.
-		HRESULT hRes;
-		cStringF sFilePath = cFilePath::CombineFilePathX(get_TestOutDir(), _FN(GRAY_NAMES) _FN("CoreUnitTestFile") _FN(MIME_EXT_txt));
-
-		{
-			cFile testfile1;
-			hRes = testfile1.OpenX(sFilePath, OF_CREATE | OF_WRITE | OF_BINARY);
-			UNITTEST_TRUE(SUCCEEDED(hRes));
-			cFile::UnitTest_Write(testfile1);
-		}
-
-		// Read it back.
-		for (int i = 0; i < 2; i++)
-		{
-			cFile testfile2;
-			hRes = testfile2.OpenX(sFilePath, OF_READ | OF_BINARY);
-			UNITTEST_TRUE(SUCCEEDED(hRes));
-			cFileStatus filestatus2;
-			hRes = testfile2.GetFileStatus(filestatus2);
-			UNITTEST_TRUE(SUCCEEDED(hRes));
-			cFile::UnitTest_Read(testfile2, (bool)i);
-		}
-
-		// Fail to delete directory.
-		hRes = cFile::DeletePath(get_TestOutDir());
-		UNITTEST_TRUE(hRes == E_ACCESSDENIED);	// this should fail! E_ACCESSDENIED=WIN32
-	}
-};
-UNITTEST_REGISTER(cFile, UNITTEST_LEVEL_Core);	// UNITTEST_LEVEL_Core
-#endif

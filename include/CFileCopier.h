@@ -9,7 +9,7 @@
 #pragma once
 #endif
 
-#include "CFile.h"
+#include "cFile.h"
 
 namespace Gray
 {
@@ -115,12 +115,7 @@ namespace Gray
 
 		static HRESULT GRAYCALL CopyFileX(const FILECHAR_t* pszExistingName, const FILECHAR_t* pszNewName, IStreamProgressCallback* pProgress = nullptr, bool bFailIfExists = false);
 		static HRESULT GRAYCALL RenamePath(const FILECHAR_t* pszOldName, const FILECHAR_t* pszNewName, IStreamProgressCallback* pProgress = nullptr);
-
-#if USE_UNITTESTS
-		static void GRAYCALL UnitTest_CopyTo(IFileCopier* pDst);
-		static void GRAYCALL UnitTest_CopyFrom(IFileCopier* pSrc);
-#endif
-
+ 
 	};
 }
 

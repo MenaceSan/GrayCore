@@ -162,7 +162,7 @@ namespace Gray
 		//! @class Gray::cPairA
 		//! The aggregate/simple type for simple static const init. AKA Tuple.
 		//! similar to "std::pair" or "std::tuple<>" or "System.Collections.Generic.KeyValuePair<>"
-		//! not the same as CValueRange (same type)
+		//! not the same as cValueRange (same type)
 		//! @note if i give this a constructor then the compiler won't allow it to be static initialized.
 
 	public:

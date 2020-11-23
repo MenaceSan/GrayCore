@@ -51,7 +51,7 @@ namespace Gray
 		return GetAt(i).m_sVal;
 	}
 
-	HRESULT cIniMap::SetVal(const IniChar_t* pszPropTag, CStringI sValue)
+	HRESULT cIniMap::SetVal(const IniChar_t* pszPropTag, cStringI sValue)
 	{
 		//! will replace if existing key.
 		//! @return E_INVALIDARG,  HRESULT_WIN32_C(ERROR_UNKNOWN_PROPERTY)
@@ -59,7 +59,7 @@ namespace Gray
 		return (HRESULT)i;
 	}
 
-	HRESULT cIniMap::PropGet(const IniChar_t* pszPropTag, OUT CStringI& rsValue) const // override
+	HRESULT cIniMap::PropGet(const IniChar_t* pszPropTag, OUT cStringI& rsValue) const // override
 	{
 		//! IIniBaseGetter
 		ITERATE_t i = Find(pszPropTag);
@@ -77,7 +77,7 @@ namespace Gray
 		return SetVal(pszPropTag, pszValue);
 	}
 
-	HRESULT cIniMap::PropEnum(IPROPIDX_t ePropIdx, OUT CStringI& rsValue, CStringI* psKey) const // override
+	HRESULT cIniMap::PropEnum(IPROPIDX_t ePropIdx, OUT cStringI& rsValue, cStringI* psKey) const // override
 	{
 		//! IIniBaseEnumerator
 		//! Enum the values and keys of the map.

@@ -132,7 +132,14 @@ namespace Gray
 			nExp10++;
 
 		unsigned index = static_cast<unsigned>((nExp10 >> 3) + 1);
-		ASSERT(IS_INDEX_GOOD_ARRAY(index, k_CachedPowers));
+		if (IS_INDEX_BAD_ARRAY(index, k_CachedPowers))
+		{
+			// exp out of range.
+			*pnExp10 = 0;
+			if (index < 0)
+				return k_CachedPowers[0];
+			return k_CachedPowers[_countof(k_CachedPowers)-1];
+		}
 
 		*pnExp10 = -(-348 + static_cast<int>(index << 3));	// decimal exponent doesn't need lookup table
 		return k_CachedPowers[index];

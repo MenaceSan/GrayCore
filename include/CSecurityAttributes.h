@@ -25,10 +25,11 @@ enum WELL_KNOWN_SID_TYPE
 #define SID_MAX_SUB_AUTHORITIES 15
 #define SECURITY_MAX_SID_SIZE  (sizeof(SID) - sizeof(DWORD) + (SID_MAX_SUB_AUTHORITIES * sizeof(DWORD)))
 #endif
-UNITTEST_PREDEF(cSecurityAttributes)
 
 namespace Gray
 {
+	UNITTEST2_PREDEF(cSecurityAttributes);
+
 	class GRAYCORE_LINK cSecurityId : private CWinLocalT < SID >
 	{
 		//! @class GrayLib::cSecurityId
@@ -203,6 +204,7 @@ namespace Gray
 
 	public:
 		cSecurityDesc m_sd;	//!< attached SECURITY_DESCRIPTOR.
+
 	protected:
 		void UpdateSecurityDescriptor();
 
@@ -217,7 +219,7 @@ namespace Gray
 		}
 		bool isValid() const;
 
-		UNITTEST_FRIEND(cSecurityAttributes);
+		UNITTEST2_FRIEND(cSecurityAttributes);
 	};
 
 	class GRAYCORE_LINK cSecurityAttribsLowIntegrity : public cSecurityAttributes

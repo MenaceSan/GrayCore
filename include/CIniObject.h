@@ -12,10 +12,9 @@
 #include "cIniBase.h"
 #include "cUnitTestDecl.h"
 
-UNITTEST_PREDEF(cIniObject)
-
 namespace Gray
 {
+	UNITTEST2_PREDEF(cIniObject);
 	class cStreamOutput;
 
 	DECLARE_INTERFACE(IIniObjectDef)
@@ -75,13 +74,13 @@ namespace Gray
 		}
 
 		virtual HRESULT PropSet(const IniChar_t* pszPropTag, const IniChar_t* pszValue) override;
-		virtual HRESULT PropGet(const IniChar_t* pszPropTag, OUT CStringI& rsValue) const override;
+		virtual HRESULT PropGet(const IniChar_t* pszPropTag, OUT cStringI& rsValue) const override;
 
 		HRESULT FileWriteN(cStreamOutput& sOut, IPROPIDX_t ePropIdx) const;
 		HRESULT FileWrite(cStreamOutput& sOut, const IniChar_t* pszProp);
 		HRESULT FileWriteAll(cStreamOutput& sOut);
 
-		UNITTEST_FRIEND(cIniObject);
+		UNITTEST2_FRIEND(cIniObject);
 	};
 };
 #endif // _INC_cIniObject_H

@@ -7,7 +7,7 @@
 #include "pch.h"
 #include "cOSProcess.h"
 #include "cOSModule.h"
-#include "CFile.h"
+#include "cFile.h"
 
 #ifdef __linux__
 #include <sys/types.h>
@@ -15,7 +15,7 @@
 #endif
 
 #ifdef _WIN32
- 
+
 #pragma pack(push,1)
 struct CATTR_PACKED __PEB
 {
@@ -108,7 +108,7 @@ namespace Gray
 
 		// @note The Unicode version of this function, CreateProcessW, can modify the contents of lpCommandLine.
 		// https://msdn.microsoft.com/en-us/library/windows/desktop/ms682425(v=vs.85).aspx
-#if defined(USE_UNICODE_FN)
+#if USE_UNICODE_FN 
 		FILECHAR_t sCommandLine[_MAX_PATH];
 		StrT::CopyLen(sCommandLine, pszArgs, STRMAX(sCommandLine));
 #else
@@ -180,14 +180,17 @@ namespace Gray
 		FILECHAR_t szProcessName[_MAX_PATH];
 
 #ifdef _WIN32
-		// NOTE: GetModuleFileName doesn't work for external processes. GetModuleFileNameEx does but its in psapi.dll
-		DWORD dwRet = _FNF(::GetModuleFileName)((HINSTANCE)m_hProcess.get_Handle(), szProcessName, _countof(szProcessName));
+		// NOTE: GetModuleFileName doesn't work for external processes. GetModuleFileNameEx does but its in psapi.dll		
+		HINSTANCE hInst = (HINSTANCE)m_hProcess.get_Handle();
+		if (hInst == (HINSTANCE)-1)	// special case from GetCurrentProcess()
+			hInst = NULL;
+		DWORD dwRet = _FNF(::GetModuleFileName)(hInst, szProcessName, _countof(szProcessName));
 		if (dwRet <= 0)
-		{			
-			// HRESULT hRes = HResult::GetLast(); // GetLastError is set.
+		{
+			HRESULT hRes = HResult::GetLast(); // GetLastError is set.
 			return "";		// I don't have PROCESS_QUERY_INFORMATION or PROCESS_VM_READ rights.
 		}
-		return cStringF(szProcessName, dwRet); 
+		return cStringF(szProcessName, dwRet);
 #elif  defined(__linux__)
 		if (m_sPath.IsEmpty())
 		{
@@ -208,7 +211,7 @@ namespace Gray
 #endif
 	}
 
-	cString cOSProcess::get_ProcessName() const
+	cStringF cOSProcess::get_ProcessName() const
 	{
 		//! Get a process name from a handle. like GetModuleBaseName()
 		//! _WIN32 must have the PROCESS_QUERY_INFORMATION and PROCESS_VM_READ access rights.
@@ -260,16 +263,16 @@ namespace Gray
 
 #ifdef _WIN32
 
-	HRESULT cOSProcess::CreateRemoteThread(const void* pvFunc, const void* pvArgs, cOSHandle& thread )
+	HRESULT cOSProcess::CreateRemoteThread(THREAD_FUNC_t pvFunc, const void* pvArgs, OUT cOSHandle& thread)
 	{
 		// Create a thread (and run it) in the context of some other process
 		// https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-createremotethread
 		// PROCESS_CREATE_THREAD|PROCESS_QUERY_INFORMATION|PROCESS_VM_READ|PROCESS_VM_WRITE|PROCESS_VM_OPERATION
 		// NOTE: ASSUME pvArgs is a valid pointer in the apps context. i.e. VirtualAlloc etc.
- 
+
 		// Load our DLL 
 		DWORD dwThreadId = 0;
-		thread.AttachHandle(::CreateRemoteThread(m_hProcess, nullptr, 0, (LPTHREAD_START_ROUTINE)pvFunc, (LPVOID)pvArgs, 0, &dwThreadId));
+		thread.AttachHandle(::CreateRemoteThread(m_hProcess, nullptr, 0, pvFunc, (LPVOID)pvArgs, 0, &dwThreadId));
 		if (!thread.isValidHandle())
 			return HResult::GetLast();
 
@@ -285,7 +288,7 @@ namespace Gray
 
 		SIZE_T dwSize = 0;
 		_PROCESS_BASIC_INFORMATION pbi;
-		pbi.PebBaseAddress = (__PEB *)0x7ffdf000;	// Default for most process?
+		pbi.PebBaseAddress = (__PEB*)0x7ffdf000;	// Default for most process?
 
 		// we'll default to the above address, but newer OSs might have a different
 		// base address for the PEB
@@ -346,7 +349,7 @@ namespace Gray
 #endif
 		szCmdLine[STRMAX(szCmdLine)] = '\0';	// Extra safe termination.
 		return szCmdLine;
-	}
+		}
 
 	HRESULT cOSProcess::WaitForProcessExit(TIMESYSD_t nTimeWait, APP_EXITCODE_t* pnExitCode)
 	{
@@ -399,7 +402,7 @@ namespace Gray
 		if (pnExitCode != nullptr)
 		{
 			*pnExitCode = WEXITSTATUS(iStatus);
-		}
+	}
 #endif
 		return S_OK;
 	}
@@ -489,26 +492,7 @@ namespace Gray
 		{
 			m_nPid = ::GetProcessId(m_hProcess.get_Handle());	// XP SP1 Function.
 		}
-	}
+}
 #endif
 
 }
-
-//****************************************************************************
-
-#if USE_UNITTESTS
-#include "cUnitTest.h"
-
-UNITTEST_CLASS(cOSProcess)
-{
-	UNITTEST_METHOD(cOSProcess)
-	{
-		//! just open a process for URL view ?
-
-
-		cOSProcess proc;
-
-	}
-};
-UNITTEST_REGISTER(cOSProcess, UNITTEST_LEVEL_Core);
-#endif

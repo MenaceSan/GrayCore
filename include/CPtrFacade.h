@@ -11,44 +11,9 @@
 
 #include "Ptr.h"
 #include "cDebugAssert.h"
-#include "cTypeInfo.h"
-#include "cUnitTestDecl.h"
-
-UNITTEST_PREDEF(cPtrTrace)
 
 namespace Gray
 {
-	class cLogProcessor;
-
-	class GRAYCORE_LINK cPtrTrace
-	{
-		//! @class Gray::cPtrTrace
-		//! Trace each use of the a pointer in cPtrFacade/cIUnkPtr for debug purposes.
-		//! If the lock count fails to go to 0 we know who the leaker was. or if the object is deleted but still has refs we can detect that as well.
-		//! Add myself to the cPtrTraceMgr table if the m_p pointer is set.
-
-	public:
-		const char* m_pszType;		//!< from __typeof(TYPEINFO_t).name()
-		cDebugSourceLine m_Src;		//!< where (in code) was m_p set?
-
-	public:
-		cPtrTrace(const TYPEINFO_t& TypeInfo) noexcept
-			: m_pszType(TypeInfo.name())
-		{
-		}
-		cPtrTrace(const cPtrTrace& ref) noexcept
-			: m_pszType(ref.m_pszType), m_Src(ref.m_Src)
-		{
-			// copy constructor.
-		}
-
-		void TraceOpen(void* p);
-		void TraceClose(void* p);
-
-		static void GRAYCALL TraceDump(cLogProcessor& log, ITERATE_t iCountExpected);
-		UNITTEST_FRIEND(cPtrTrace);
-	};
-
 	template<class TYPE>
 	class cPtrFacade
 	{

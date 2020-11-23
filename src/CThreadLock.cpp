@@ -44,6 +44,7 @@ namespace Gray
 		}
 #endif
 	}
+
 	bool cThreadLockFast::LockTry(TIMESYSD_t dwDelayMS)
 	{
 		//! inline version of this made bad code?
@@ -88,35 +89,4 @@ namespace Gray
 		return true;
 	}
 }
-
-//*******************************************************************
-
-#if USE_UNITTESTS
-#include "cUnitTest.h"
-#include "cLogMgr.h"
-
-UNITTEST_CLASS(cThreadId)
-{
-	UNITTEST_METHOD(cThreadId)
-	{
-		// NOTE: See CThread UnitTest for better testing of locks.
-		THREADID_t idCurrent = cThreadId::GetCurrentId();
-		UNITTEST_TRUE(cThreadId::IsValidId(idCurrent));
-
-		cThreadLockFast lockFast;
-		lockFast.Lock();
-		lockFast.Unlock();
-
-		cThreadLockCrit lockCrit;
-		lockCrit.Lock();
-		lockCrit.Unlock();
-
-		cThreadLockMutex lockMutex;
-		lockMutex.Lock();
-		lockMutex.Unlock();
-
-		// cThreadLockRef
-	}
-};
-UNITTEST_REGISTER(cThreadId, UNITTEST_LEVEL_Core);
-#endif
+ 

@@ -25,7 +25,7 @@ namespace Gray
 	{
 		//! @class Gray::cOSModImpl
 		//! My implementation of a DLL/SO. _WINDLL
-		//! Must be only one of these in a single link space for DLL/SO. So it is not a true cSingleton. Always static allocated. NEVER heap or Stack allocated.
+		//! Must be only one of these in a single link space for DLL/SO. So it is not a true cSingletonStatic. Always static allocated. NEVER heap or Stack allocated.
 		//! Assume g_Module gets defined for the DLL/SO. On some derived class based on cOSModImpl named g_Module.
 		//! e.g. cOSModImpl g_Module("ModuleName");
 		//! @todo Support _WIN32 DLL_THREAD_ATTACH and DLL_THREAD_DETACH ?
@@ -65,7 +65,6 @@ namespace Gray
 		}
 #endif
 	};
-
 
 #ifdef GRAY_DLL	// _WINDLL
 	// ASSUME g_Module is defined for DLL/SO. (and is outside namespace)

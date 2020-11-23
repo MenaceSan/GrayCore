@@ -10,11 +10,12 @@
 #endif
 
 #include "cStream.h"
-
-UNITTEST_PREDEF(cArchive)
+#include "cUnitTestDecl.h"
 
 namespace Gray
 {
+	UNITTEST2_PREDEF(cArchive);
+
 	class GRAYCORE_LINK cArchive
 	{
 		//! @class Gray::cArchive
@@ -39,7 +40,7 @@ namespace Gray
 			, m_pStream(&si)
 		{
 		}
-		cArchive(CStream& s, bool bStoring) noexcept
+		cArchive(cStream& s, bool bStoring) noexcept
 			: m_bStoring(bStoring)
 			, m_pStream(bStoring ? static_cast<cStreamBase*>(static_cast<cStreamOutput*>(&s)) : static_cast<cStreamBase*>(static_cast<cStreamInput*>(&s)))
 		{
@@ -108,7 +109,7 @@ namespace Gray
 #include "cTypes.tbl"
 #undef CTYPE_DEF
 
-		UNITTEST_FRIEND(cArchive);
+		UNITTEST2_FRIEND(cArchive);
 	};
 }
 

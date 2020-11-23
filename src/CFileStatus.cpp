@@ -5,7 +5,7 @@
 
 #include "pch.h"
 #include "cFileStatus.h"
-#include "CFile.h"
+#include "cFile.h"
 
 #ifdef __linux__
 #include <unistd.h>

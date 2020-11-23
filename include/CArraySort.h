@@ -15,10 +15,10 @@
 #include "cValT.h"
 #include "cUnitTestDecl.h"
 
-UNITTEST_PREDEF(cArraySort)
-
 namespace Gray
 {
+	UNITTEST2_PREDEF(cArraySort);
+
 	template<class TYPE, class TYPE_ARG, typename TYPE_KEY>
 	class cArraySorted : public cArrayTyped < TYPE, TYPE_ARG >
 	{

@@ -26,10 +26,10 @@ typedef int (GRAYCALL * FARPROC)();
 #error NOOS
 #endif
 
-UNITTEST_PREDEF(cOSModule)
-
 namespace Gray
 {
+	UNITTEST2_PREDEF(cOSModule);
+
 #define HMODULE_NULL ((HMODULE)nullptr)	// This sometimes means the current process module.
  
 	class GRAYCORE_LINK cOSModule
@@ -150,7 +150,7 @@ namespace Gray
 #ifdef _WIN32
 		// Load or enum resources ?? CWinResource, CAppRes
 #endif
-		UNITTEST_FRIEND(cOSModule);
+		UNITTEST2_FRIEND(cOSModule);
 	};
 
 	template<class TYPE = FARPROC>

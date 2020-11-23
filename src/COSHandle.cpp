@@ -38,24 +38,5 @@ namespace Gray
 #error NOOS
 #endif
 	}
-};
-
-//******************************************************************
-
-#if USE_UNITTESTS
-#include "cUnitTest.h"
-#include "cLogMgr.h"
-
-UNITTEST_CLASS(cOSHandle)
-{
-	UNITTEST_METHOD(cOSHandle)
-	{
-		cOSHandle h1;
-		cOSHandle h2;
-#ifdef _WIN32
-		// Test dupe handle.
-#endif
-	}
-};
-UNITTEST_REGISTER(cOSHandle, UNITTEST_LEVEL_Core);
-#endif
+} 
+ 

@@ -15,10 +15,10 @@
 
 namespace Gray
 {
-	class GRAYCORE_LINK cStreamQueue : public CStream, public cQueueBytes
+	class GRAYCORE_LINK cStreamQueue : public cStream, public cQueueBytes
 	{
 		//! @class Gray::cStreamQueue
-		//! Read and write to/from a dynamic memory CStream.
+		//! Read and write to/from a dynamic memory cStream.
 		//! Grow the cQueueBytes memory allocation as needed.
 		//! similar to CFileMem, System.IO.MemoryStream
 
@@ -71,10 +71,10 @@ namespace Gray
 		}
 	};
 
-	class GRAYCORE_LINK cStreamStatic : public CStream, public cQueueRW < BYTE >
+	class GRAYCORE_LINK cStreamStatic : public cStream, public cQueueRW < BYTE >
 	{
 		//! @class Gray::cStreamStatic
-		//! Read and write to a single preallocated memory block as CStream.
+		//! Read and write to a single preallocated memory block as cStream.
 		//! Data block is pre-allocated and provided.
 		//! DO NOT grow the memory allocation if needed.
 
@@ -94,13 +94,13 @@ namespace Gray
 		explicit cStreamStatic(const void* pData, size_t iDataMax)
 			: cQueueRW<BYTE>((const BYTE*)pData, (ITERATE_t)iDataMax)
 		{
-			//! Used to serve a memory string as a CStream. AKA StringStream or StreamString.
+			//! Used to serve a memory string as a cStream. AKA StringStream or StreamString.
 			//! Read Only iDataMax.
 		}
 		explicit cStreamStatic(const cMemBlock& m)
 			: cQueueRW<BYTE>((const BYTE*)m.get_Start(), (ITERATE_t)m.get_Size())
 		{
-			//! Used to serve a memory string as a CStream. AKA StringStream or StreamString.
+			//! Used to serve a memory string as a cStream. AKA StringStream or StreamString.
 			//! Read Only m.get_Size().
 		}
 		cStreamStatic(const cStreamStatic& a)

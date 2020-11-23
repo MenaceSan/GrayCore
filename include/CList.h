@@ -15,10 +15,9 @@
 #include "cDebugAssert.h"
 #include "cHeapObject.h"
 
-UNITTEST_PREDEF(cListBase)
-
 namespace Gray
 {
+	UNITTEST2_PREDEF(cList);
 	class cListBase;
 
 	class GRAYCORE_LINK cListNodeBase : public cHeapObject
@@ -184,7 +183,7 @@ namespace Gray
 			return(pNode->get_Parent() == this);
 		}
 
-		UNITTEST_FRIEND(cListBase);
+		UNITTEST2_FRIEND(cList);
 	};
 
 	//*************************************************

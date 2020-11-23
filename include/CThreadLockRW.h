@@ -16,10 +16,10 @@
 #include "cNonCopyable.h"
 #include "cThreadLockRef.h"
 
-UNITTEST_PREDEF(cThreadLockRW)
-
 namespace Gray
 {
+	UNITTEST2_PREDEF(cThreadLockRW);
+
 	class GRAYCORE_LINK cThreadLockRWS : protected cNonCopyable
 	{
 		//! @class Gray::cThreadLockRWS
@@ -133,7 +133,7 @@ namespace Gray
 		inline void DecReadLockCount()
 		{
 		}
-		UNITTEST_FRIEND(cThreadLockRW);
+		UNITTEST2_FRIEND(cThreadLockRW);
 	};
 
 	class cThreadGuardRead : public cLockerT < cThreadLockRW >

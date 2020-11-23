@@ -18,7 +18,7 @@ namespace Gray
 #define __TOA(x)	x			//!< like __T(x) macro for UTF8. Second layer "#define" to catch macro string arguments for x.
 #define __TOW(x)	L##x		//!< like __T(x) macro for UNICODE. or OLESTR()
 
-#ifdef USE_UNICODE
+#if USE_UNICODE
 	typedef wchar_t GChar_t;		//!< My version of TCHAR, _TCHAR
 #define _GT(x)		__TOW(x)	//!< like _T(x) macro for static text.
 #define _GTN(c)		c##W		//!< _WIN32 name has a A or W for UTF8 or UNICODE (like _FNF)
@@ -42,7 +42,7 @@ namespace Gray
 
 	public:
 		const char* m_A;
-		const wchar_t* m_W;
+		const wchar_t* m_W;		// the Unicode version  of m_A;
 
 		static const StrLen_t k_TabSize = 4;	//!< default desired spaces for a tab.
 
@@ -52,35 +52,35 @@ namespace Gray
 		static const cStrConst k_Empty;			//!< Empty cStrConst string. like CString::m_Nil
 
 	public:
-		cStrConst(const char* a, const wchar_t* w)
+		cStrConst(const char* a, const wchar_t* w) noexcept
 			: m_A(a), m_W(w)
 		{}
-		operator const char*() const
+		operator const char*() const noexcept
 		{
 			return m_A;
 		}
-		operator const wchar_t*() const
+		operator const wchar_t*() const noexcept
 		{
 			return m_W;
 		}
-		const char* get_StrA() const
+		const char* get_StrA() const noexcept
 		{
 			return m_A;
 		}
-		const wchar_t* get_StrW() const
+		const wchar_t* get_StrW() const noexcept
 		{
 			return m_W;
 		}
-		const GChar_t* get_CPtr() const
+		const GChar_t* get_CPtr() const noexcept
 		{
-			//! Get the default char type.
-#ifdef USE_UNICODE
+			//! Get the default GChar_t type.
+#if USE_UNICODE
 			return m_W;
 #else
 			return m_A;
 #endif
 		}
-		bool isNull() const
+		bool isNull() const noexcept
 		{
 			return(m_A == nullptr);
 		}

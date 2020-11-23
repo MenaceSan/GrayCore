@@ -12,10 +12,10 @@
 #include "cString.h"
 #include "FileName.h"
 
-UNITTEST_PREDEF(cFilePath)
-
 namespace Gray
 {
+	UNITTEST2_PREDEF(cFilePath);
+
 	typedef cStringT<FILECHAR_t> cStringF;	//!< A file name. checks USE_UNICODE_FN. related to cFilePath.
 
 	enum FILESYS_TYPE
@@ -151,7 +151,7 @@ namespace Gray
 		static const wchar_t* GRAYCALL GetFileNameLongW(const FILECHAR_t* pszFileName);
 #endif
 
-		UNITTEST_FRIEND(cFilePath);
+		UNITTEST2_FRIEND(cFilePath);
 	};
 
 };

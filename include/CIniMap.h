@@ -24,12 +24,12 @@ namespace Gray
 
 	public:
 		cAtomRef m_aKey;	//!< property key name.
-		CStringI m_sVal;	//!< property value as a string.
+		cStringI m_sVal;	//!< property value as a string.
 	public:
 		cIniKeyValue()
 		{
 		}
-		cIniKeyValue(cAtomRef aKey, CStringI sVal)
+		cIniKeyValue(cAtomRef aKey, cStringI sVal)
 		: m_aKey(aKey), m_sVal(sVal)
 		{
 		}
@@ -70,11 +70,11 @@ namespace Gray
 
 		ITERATE_t Find(const IniChar_t* pszPropTag) const;
 		const IniChar_t* GetVal(const IniChar_t* pszPropTag) const;
-		HRESULT SetVal(const IniChar_t* pszPropTag, CStringI sValue);
+		HRESULT SetVal(const IniChar_t* pszPropTag, cStringI sValue);
 
 		virtual HRESULT PropSet(const IniChar_t* pszPropTag, const IniChar_t* pszValue) override;
-		virtual HRESULT PropGet(const IniChar_t* pszPropTag, OUT CStringI& rsValue) const override;
-		virtual HRESULT PropEnum(IPROPIDX_t ePropIdx, OUT CStringI& rsValue, CStringI* psKey = nullptr) const override;
+		virtual HRESULT PropGet(const IniChar_t* pszPropTag, OUT cStringI& rsValue) const override;
+		virtual HRESULT PropEnum(IPROPIDX_t ePropIdx, OUT cStringI& rsValue, cStringI* psKey = nullptr) const override;
 
 		void SetCopy(const cIniMap& rAttribs);
 

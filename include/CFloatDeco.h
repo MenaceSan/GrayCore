@@ -34,23 +34,23 @@ namespace Gray
 		int m_iExp2;		//!< Hold base 2 Biased Exponent
 
 	public:
-		cFloatDeco()
+		cFloatDeco() noexcept
 			: m_uMant(0), m_iExp2(0)
 		{}
 
-		cFloatDeco(UINT64 uMan, int iExp2)
+		cFloatDeco(UINT64 uMan, int iExp2) noexcept
 			: m_uMant(uMan), m_iExp2(iExp2)
 		{}
 
-		cFloatDeco(double d)
+		cFloatDeco(double d) noexcept
 		{
 			//! Decompose d.
 			static const int k_DpExponentBias = 0x3FF + cFloat64::k_MANT_BITS;
 
 			cFloat64 u(d);
 
-			int iExpBiased = (u.m_v.u_qw & cFloat64::k_EXP_MASK) >> cFloat64::k_MANT_BITS;
-			UINT64 nMantSig = u.get_Mantissa();
+			const int iExpBiased = (u.m_v.u_qw & cFloat64::k_EXP_MASK) >> cFloat64::k_MANT_BITS;
+			const UINT64 nMantSig = u.get_Mantissa();
 			if (iExpBiased != 0)
 			{
 				m_uMant = nMantSig + k_MANT_MASK_X;
@@ -132,7 +132,7 @@ namespace Gray
 		}
 #endif
 
-		static inline unsigned GetCountDecimalDigit32(UINT32 n)
+		static inline unsigned GetCountDecimalDigit32(UINT32 n) noexcept
 		{
 			//! How many decimal digits?
 			//! k_Exp10

@@ -215,23 +215,4 @@ namespace Gray
 		return cFileStatus::WriteFileTimes(makeFilePath(pszDestName), &timeChanged, &timeChanged);
 	}
 }
-
-//***********************************************
-#if USE_UNITTESTS
-#include "cUnitTest.h"
-namespace Gray
-{
-	void GRAYCALL cFileCopier::UnitTest_CopyTo(IFileCopier* pDst)
-	{
-		//! For testing an implementation of IFileCopier
-		UNREFERENCED_PARAMETER(pDst);
-	}
-	void GRAYCALL cFileCopier::UnitTest_CopyFrom(IFileCopier* pSrc)
-	{
-		//! For testing an implementation of IFileCopier
-		UNREFERENCED_PARAMETER(pSrc);
-	}
-}
-
-#endif
-
+ 

@@ -432,47 +432,4 @@ namespace Gray
 	}
 }
 
-//*************************************************************************
-#if USE_UNITTESTS
-#include "cUnitTest.h"
-#include "StrCharAscii.h"
-
-UNITTEST_CLASS(cAppConsole)
-{
-	UNITTEST_METHOD(cAppConsole)
-	{
-		cAppConsole& console = cAppConsole::I();
-		if (!console.isConsoleMode())
-		{
-			if (sm_pLog != nullptr)
-			{
-				sm_pLog->addDebugInfoF("cAppConsole is NOT in CONSOLE MODE");
-			}
-			// try to create or attach a console using AllocConsole() ??
-			console.AttachOrAllocConsole();
-		}
-
-		console.WriteString(_GT("cAppConsole in CONSOLE MODE" STR_NL));
-
-		if (cUnitTestCur::IsTestInteractive())
-		{
-			console.WriteString(_GT("Press ESC to continue." STR_NL));
-
-			console.SetKeyModes(false, false);
-			for (int i = 0; i < 20; i++)
-			{
-				const int iKey = console.ReadKeyWait();
-				if (iKey == ASCII_ESC)	// ESC = 27
-					break;
-				console.Printf(_GT("Got Key %d='%c'." STR_NL), iKey, iKey);
-				cThreadId::SleepCurrent(1);
-			}
-			console.SetKeyModes();	// restore modes to default.
-		}
-		console.ReleaseConsole();
-	}
-};
-UNITTEST_REGISTER(cAppConsole, UNITTEST_LEVEL_Core);
-#endif
-
 #endif	// UNDER_CE

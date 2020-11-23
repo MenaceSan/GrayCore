@@ -15,7 +15,7 @@
 
 namespace Gray
 {
-#if USE_UNITTESTS
+ 
 	template< typename TYPE>
 	void GRAYCALL StrX<TYPE>::UnitTestT() // static
 	{
@@ -274,24 +274,11 @@ namespace Gray
 		UNITTEST_TRUE(StrT::Cmp<TYPE>(StrX<TYPE>::GetBoolStr(true), CSTRCONST("1")) == 0);
 		UNITTEST_TRUE(StrT::Cmp<TYPE>(StrX<TYPE>::GetBoolStr(false), CSTRCONST("0")) == 0);
 
-		StrFormat<TYPE>::UnitTestFormat(StrT::sprintfN<TYPE>);	// StrT::sprintfN<TYPE>
+		// TODO FIXME
+		// StrFormat<TYPE>::UnitTestFormat(StrT::sprintfN<TYPE>);	// StrT::sprintfN<TYPE>
 	}
-#endif
 
-	template struct GRAYCORE_LINK StrX<char>;		// Force Instantiation for static libs.
-	template struct GRAYCORE_LINK StrX<wchar_t>;	// Force Instantiation for static libs.
+	template struct GRAYCORE_LINK StrX<char>;		// Force Instantiation for DLL
+	template struct GRAYCORE_LINK StrX<wchar_t>;	// Force Instantiation for DLL.
 }
 
-//***************************************************
-
-#if USE_UNITTESTS
-UNITTEST_CLASS(StrX)
-{
-	UNITTEST_METHOD(StrX)
-	{
-		StrX<char>::UnitTestT();
-		StrX<wchar_t>::UnitTestT();
-	}
-};
-UNITTEST_REGISTER(StrX, UNITTEST_LEVEL_Core);
-#endif // USE_UNITTESTS

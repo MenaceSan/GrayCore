@@ -4,7 +4,7 @@
 //
 #include "pch.h"
 #include "cCodeProfiler.h"
-#include "CFile.h"
+#include "cFile.h"
 #include "cThreadLock.h"
 #include "cString.h"
 #include "cAppState.h"
@@ -141,24 +141,4 @@ namespace Gray
 		pController->WriteTime(nTimeEnd, *this);
 	}
 }
-
-//***************************************************************************
-
-#if USE_UNITTESTS
-#include "cUnitTest.h"
-
-UNITTEST_CLASS(cCodeProfileFunc)
-{
-	void TestFunction()
-	{
-		cCodeProfileFunc tester_cCodeProfileFunc(DEBUGSOURCELINE);
-		cThreadId::SleepCurrent(2);		// Waste some time.
-	}
-	UNITTEST_METHOD(cCodeProfileFunc)
-	{
-		TestFunction();
-		// Now look to see if the function recorded something.
-	}
-};
-UNITTEST_REGISTER(cCodeProfileFunc, UNITTEST_LEVEL_Core);
-#endif
+ 

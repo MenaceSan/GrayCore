@@ -11,16 +11,73 @@
 
 #include "cExceptionBase.h"
 #include "HResult.h"
-#include "cUnitTestDecl.h"
 #include "cObject.h" 		// DECLARE_DYNAMIC()
-
-UNITTEST_PREDEF(cException)
+#include "cString.h"
+#include "cUnitTestDecl.h"
 
 namespace Gray
 {
+	UNITTEST2_PREDEF(cException);
+
+	typedef cStringT<LOGCHAR_t> cStringL;	//!< Log string.
+
 #if defined(_MSC_VER)
 #pragma warning(disable:4275)	// non dll-interface class 'type_info' used as base for dll-interface class. http://msdn.microsoft.com/en-us/library/3tdb471s.aspx 
 #endif
+	class GRAYCORE_LINK cExceptionHolder : public cPtrFacade < cExceptionBase >
+	{
+		//! @class Gray::cExceptionHolder
+		//! Holds/Wraps an exception in a uniform way, and hides the fact that it is a pointer (MFC) or a reference (STL).
+		//! make sure we call Delete() when we are done with this.
+		//! ONLY useful because MFC passes all exceptions by pointer and STL does not.
+
+	public:
+		static const StrLen_t k_MSG_MAX_SIZE = 1024;	//!< arbitrary max message size.
+
+	private:
+		bool m_bDeleteEx;	//!< i must delete this. Always true for MFC ?
+
+	public:
+		cExceptionHolder()
+			: m_bDeleteEx(false)
+		{
+		}
+		explicit cExceptionHolder(cExceptionBase* pEx, bool bDeleteEx = true)
+			: cPtrFacade<cExceptionBase>(pEx)
+			, m_bDeleteEx(bDeleteEx)
+		{
+			//! Normal usage for _MFC_VER.
+		}
+		explicit cExceptionHolder(cExceptionBase& ex)
+			: cPtrFacade<cExceptionBase>(&ex)
+			, m_bDeleteEx(false)
+		{
+			//! Normal STL usage.
+		}
+		~cExceptionHolder()
+		{
+			//! basically an auto_ptr
+			if (m_bDeleteEx && m_p != nullptr) // make sure DetachException() wasn't called.
+			{
+#ifdef _MFC_VER	// using _MFC_VER.
+				m_p->Delete();
+#else
+				delete m_p;
+#endif
+			}
+		}
+		void AttachException(cExceptionBase* pEx, bool bDeleteEx)
+		{
+			ASSERT(m_p == nullptr);
+			m_p = pEx;
+			m_bDeleteEx = bDeleteEx;
+		}
+		cException* get_Ex() const;	// is Custom?
+
+		BOOL GetErrorMessage(LOGCHAR_t* lpszError, StrLen_t nLenMaxError = k_MSG_MAX_SIZE) const;
+		cStringL get_ErrorStr() const;
+		LOGLEV_TYPE get_Severity() const;
+	};
 
 	class GRAYCORE_LINK cException : public cExceptionBase
 	{
@@ -66,7 +123,7 @@ namespace Gray
 		}
 #endif // ! _MFC_VER
 
-		UNITTEST_FRIEND(cException);
+		UNITTEST2_FRIEND(cException);
 	};
 
 	class GRAYCORE_LINK cExceptionHResult : public cException

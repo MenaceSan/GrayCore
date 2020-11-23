@@ -11,6 +11,7 @@
 #endif
 
 #include "cPtrFacade.h"
+#include "cPtrTrace.h"
 #include "IUnknown.h"
 
 #if defined(_DEBUG) && ! defined(UNDER_CE)

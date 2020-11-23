@@ -80,7 +80,7 @@
 #endif // _MSC_VER >= 1000
 
 #ifndef USE_CRT
-#define USE_CRT 1	// 1 = use all normal CRT functions. 0 = attempt to use minimal CRT.
+#define USE_CRT 1	// 1 = use all normal CRT functions. 0 = attempt to use minimal/no CRT.
 #endif
 
 // Define your compiler here.
@@ -268,8 +268,10 @@
 #define USE_LONG_AS_INT64	//!< avoid ambiguous/duplicated types. __GNUC__ defines __int64_t as 'signed long int' but usually (_MSC_VER) long is just 32 bits
 #endif
 
+//********************************
+
 #if defined(_WIN32) && ! defined(WIN32)
-#define WIN32	// Some external stuff needs this alternate define. like js (JavaScript)
+#define WIN32	// Some external stuff needs this alternate define. like JS (JavaScript)
 #endif
 #if defined(DEBUG) && ! defined(_DEBUG)
 #define _DEBUG	// Make sure everyone uses this define.
@@ -398,8 +400,8 @@ typedef unsigned long	DWORD_PTR;	// Same as ULONG_PTR
 #define LOBYTE(w)			((BYTE)(((WORD)(w))&0xFF))
 #define HIBYTE(w)			((BYTE)(((WORD)(w))>>8))
 
-#define CALLBACK			GRAYCALL // ?
-#define STDMETHODCALLTYPE	GRAYCALL // ?
+#define CALLBACK			GRAYCALL // just make this the same as GRAYCALL
+#define STDMETHODCALLTYPE	GRAYCALL // just make this the same as GRAYCALL
 
 #define _MAX_PATH 			PATH_MAX	// #include <limits.h> or MAX_PATH in windef.h. (Put this in Filepath.h ?) FILENAME_MAX ?
 

@@ -1,5 +1,5 @@
 //
-//! @file CStream.cpp
+//! @file cStream.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 #include "pch.h"
@@ -39,11 +39,11 @@ namespace Gray
 		//! @return Size of data moved.
 
 		cTimeSys tStart(cTimeSys::GetTimeNow());
-		cHeapBlock Data(CStream::k_FILE_BLOCK_SIZE);	// temporary buffer.
+		cHeapBlock Data(cStream::k_FILE_BLOCK_SIZE);	// temporary buffer.
 		STREAM_POS_t dwAmount = 0;
 		for (; dwAmount < nSizeMax;)
 		{
-			size_t nSizeBlock = CStream::k_FILE_BLOCK_SIZE;
+			size_t nSizeBlock = cStream::k_FILE_BLOCK_SIZE;
 			if (dwAmount + nSizeBlock > nSizeMax)
 			{
 				nSizeBlock = nSizeMax - dwAmount;
@@ -161,7 +161,7 @@ namespace Gray
 	{
 		//! Read a string up until (including) a "\n" or "\r\n". end of line. FILE_EOL.
 		//! Some streams can support this better than others. like fgets(FILE*)
-		//! @arg iSizeMax = Maximum number of characters to be copied into pszBuffer (including the terminating null-character).
+		//! @arg iSizeMax = Maximum number of characters to be copied into pszBuffer (including room for the the terminating '\0' character).
 		//! @return
 		//!  >= 0 = size of the string in characters not bytes. NOT pointer to pBuffer like fgets()
 		//!  HRESULT < 0 = error. HRESULT_WIN32_C(ERROR_IO_INCOMPLETE) = not full line.
@@ -237,125 +237,3 @@ namespace Gray
 		return hResRead;
 	}
 }
-
-//*************************************************************************
-#if USE_UNITTESTS
-#include "cUnitTest.h"
-#include "cStreamQueue.h"
-#include "cLogMgr.h"
-#include "cRandomDef.h"
-#include "cTypes.h"
-
-void CStream::UnitTest_StreamIntegrity(cStreamOutput& stmOut, cStreamInput& stmIn, size_t nSizeTotal)
-{
-	// Write to streams in random block sizes and make sure i read the same back.
-	// @arg nSizeTotal = How much to write/test total ?
-
-	size_t iSizeBlock = g_Rand.GetRandUX(1024) + 100;	// TODO Make random range bigger !! 2k ?
-	cHeapBlock blockwrite(iSizeBlock * 2);
-	g_Rand.GetNoise(blockwrite, iSizeBlock);
-	::memcpy(blockwrite.get_DataBytes() + iSizeBlock, blockwrite.get_DataBytes(), iSizeBlock);	// double it.
-
-	size_t iSizeWriteTotal = 0;
-	size_t iSizeReadTotal = 0;
-
-	HRESULT hRes;
-	cHeapBlock blockread(iSizeBlock);
-	cTimeSys tStart = cTimeSys::GetTimeNow();
-	size_t nSizeReal;
-
-	int i = 0;
-	for (;; i++)
-	{
-		UNITTEST_TRUE(iSizeReadTotal <= iSizeWriteTotal);
-
-		if (iSizeWriteTotal < nSizeTotal)	// write more?
-		{
-			size_t iSizeWriteBlock = g_Rand.GetRandUX((UINT)(iSizeBlock - 1)) + 1;
-			if (iSizeWriteTotal + iSizeWriteBlock > nSizeTotal)
-				iSizeWriteBlock = nSizeTotal - iSizeWriteTotal;
-			UNITTEST_TRUE(iSizeWriteBlock <= iSizeBlock);
-			hRes = stmOut.WriteX(blockwrite.get_DataBytes() + (iSizeWriteTotal%iSizeBlock), iSizeWriteBlock);
-			UNITTEST_TRUE(SUCCEEDED(hRes));
-			nSizeReal = (size_t)hRes;
-			UNITTEST_TRUE(nSizeReal <= iSizeWriteBlock);
-			iSizeWriteTotal += nSizeReal;
-			UNITTEST_TRUE(iSizeWriteTotal <= nSizeTotal);
-		}
-
-		UNITTEST_TRUE(iSizeReadTotal <= iSizeWriteTotal);
-
-		size_t iSizeReadBlock = g_Rand.GetRandUX((UINT)(iSizeBlock - 1)) + 1;
-		UNITTEST_TRUE(iSizeReadBlock <= iSizeBlock);
-		BYTE* pRead = blockread.get_DataBytes();
-		hRes = stmIn.ReadX(pRead, iSizeReadBlock);
-		UNITTEST_TRUE(SUCCEEDED(hRes));
-		nSizeReal = (size_t)hRes;
-		UNITTEST_TRUE(nSizeReal <= iSizeReadBlock);
-
-		// Make sure i read correctly.
-		const BYTE* pWrite = blockwrite.get_DataBytes() + (iSizeReadTotal%iSizeBlock);
-		COMPARE_t iRet = cMem::Compare(pWrite, pRead, nSizeReal);
-		UNITTEST_TRUE(iRet == 0);
-		iSizeReadTotal += nSizeReal;
-		UNITTEST_TRUE(iSizeReadTotal <= iSizeWriteTotal);
-
-		if (iSizeReadTotal >= nSizeTotal)	// done?
-			break;
-		if (!cUnitTests::IsTestInteractive() && tStart.get_AgeSec() > 100)
-		{
-			UNITTEST_TRUE(false);
-			return;
-		}
-	}
-}
-
-UNITTEST_CLASS(CStream)
-{
-	void UnitTest_StreamSize(CStream& q)
-	{
-		//! Write size to a stream and read back.
-
-		ITERATE_t iIterations = 0;
-		size_t iInc = 1;
-		for (size_t i = 0; i < CTypeLimit<DWORD>::k_Max && iIterations <= 64; i += iInc, iInc *= 2, iIterations++)
-		{
-			HRESULT hRes = q.WriteSize(i);
-			UNITTEST_TRUE(SUCCEEDED(hRes));
-		}
-
-		STREAM_SEEKRET_t nRetSeek = q.GetPosition();
-		UNITTEST_TRUE(nRetSeek == 0);
-		UNITTEST_TRUE(q.GetLength() == 86);
-
-		ITERATE_t iIterations2 = 0;
-		iInc = 1;
-		for (size_t i = 0; i < CTypeLimit<DWORD>::k_Max && iIterations2 <= 64; i += iInc, iInc *= 2, iIterations2++)
-		{
-			size_t nSizeRead;
-			HRESULT hRes = q.ReadSize(nSizeRead);
-			UNITTEST_TRUE(SUCCEEDED(hRes));
-			UNITTEST_TRUE(i == nSizeRead);
-		}
-
-		nRetSeek = q.GetPosition();
-		UNITTEST_TRUE(nRetSeek == 86);
-		UNITTEST_TRUE(iIterations == iIterations2);
-	}
-
-	UNITTEST_METHOD(CStream)
-	{
-		//! ReadSize, WriteSize()
-		cStreamQueue q;
-		UnitTest_StreamSize(q);
-		UNITTEST_TRUE(q.isEmptyQ());	// all read back.
-		UNITTEST_TRUE(q.get_ReadQty() == 0);
-
-		CStream::UnitTest_StreamIntegrity(q, q, 10000 + g_Rand.GetRandUX(500000));
-		UNITTEST_TRUE(q.isEmptyQ());	// all read back.
-		UNITTEST_TRUE(q.get_ReadQty() == 0);
-
-	}
-};
-UNITTEST_REGISTER(CStream, UNITTEST_LEVEL_Core);
-#endif

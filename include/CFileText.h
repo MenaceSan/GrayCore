@@ -13,10 +13,11 @@
 #include "cTextPos.h"
 
 #if USE_CRT
-UNITTEST_PREDEF(cFileText)
 
 namespace Gray
 {
+	UNITTEST2_PREDEF(cFileText);
+
 #if defined(UNDER_CE) || defined(__linux__)
 	typedef HANDLE FILEDESC_t;		//!< Posix file descriptor id. _fileno is same as HANDLE in __linux__ and UNDER_CE
 #else
@@ -109,18 +110,18 @@ namespace Gray
 		{
 			return cTextPos(GetPosition(), m_iCurLineNum, 0);
 		}
-		ITERATE_t get_CurrentLineNumber() const
+		ITERATE_t get_CurrentLineNumber() const noexcept
 		{
 			return m_iCurLineNum;
 		}
 
-		FILE* get_FileStream() const
+		FILE* get_FileStream() const noexcept
 		{
 			return m_pStream;
 		}
 		// operator FILE* () const { return m_pStream; }	// Dangerous.
 
-		UNITTEST_FRIEND(cFileText);
+		UNITTEST2_FRIEND(cFileText);
 	};
 }
 

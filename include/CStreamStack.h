@@ -27,7 +27,7 @@ namespace Gray
 		HRESULT ReadFillAligned(size_t nSizeBlockAlign = 1);
 
 	public:
-		cStreamStackInp(cStreamInput* pStreamInp = nullptr, size_t nSizeMaxBuffer = CStream::k_FILE_BLOCK_SIZE)
+		cStreamStackInp(cStreamInput* pStreamInp = nullptr, size_t nSizeMaxBuffer = cStream::k_FILE_BLOCK_SIZE)
 			: cStreamQueue(MIN(nSizeMaxBuffer / 2, 8 * 1024), nSizeMaxBuffer)	// chunk size, max size.
 			, m_pStreamInp(pStreamInp)
 		{
@@ -51,7 +51,7 @@ namespace Gray
 		HRESULT WriteFlush();
 
 	public:
-		cStreamStackOut(cStreamOutput* pStreamOut = nullptr, size_t nSizeBuffer = CStream::k_FILE_BLOCK_SIZE)
+		cStreamStackOut(cStreamOutput* pStreamOut = nullptr, size_t nSizeBuffer = cStream::k_FILE_BLOCK_SIZE)
 			: cStreamQueue(8 * 1024, nSizeBuffer)
 			, m_pStreamOut(pStreamOut)
 		{
@@ -69,7 +69,7 @@ namespace Gray
 		//! nSizeBuffer = the size of the largest possible whole packet.
 
 	public:
-		cStreamStackPackets(cStreamOutput* pStreamOut = nullptr, size_t nSizeBuffer = CStream::k_FILE_BLOCK_SIZE)
+		cStreamStackPackets(cStreamOutput* pStreamOut = nullptr, size_t nSizeBuffer = cStream::k_FILE_BLOCK_SIZE)
 			: cStreamStackOut(pStreamOut, nSizeBuffer)
 		{
 		}

@@ -13,10 +13,10 @@
 #include "StrConst.h"
 #include "cDebugAssert.h"
 
-UNITTEST_PREDEF(StrFormat)
-
 namespace Gray
 {
+	UNITTEST2_PREDEF(StrFormat);
+
 	struct GRAYCORE_LINK StrFormatBase
 	{
 		//! @class Gray::StrFormatBase
@@ -41,12 +41,12 @@ namespace Gray
 		bool m_bAddPrefix;	//!< Add a prefix 0x for hex or 0 for octal.
 
 	public:
-		static inline char FindSpec(char ch)
+		static inline char FindSpec(char ch) noexcept
 		{
 			//! Find a valid spec char.
 			for (size_t i = 0; i < _countof(k_Specs) - 1; i++)
 			{
-				char chTest = k_Specs[i];
+				const char chTest = k_Specs[i];
 				if (ch > chTest)	// keep looking.
 					continue;
 				if (ch < chTest)	// they are sorted.
@@ -65,7 +65,7 @@ namespace Gray
 		//! Hold a single printf type format parameter/specifier and render it.
 
 	public:
-		typedef StrLen_t(_cdecl *STRFORMAT_t)(TYPE* pszOut, StrLen_t iLenOutMax, const TYPE* pszFormat, ...);
+		typedef StrLen_t(_cdecl *STRFORMAT_t)(TYPE* pszOut, StrLen_t iLenOutMax, const TYPE* pszFormat, ...);	// for testing.
 
 	public:
 		StrLen_t ParseParam(const TYPE* pszFormat);
@@ -78,13 +78,8 @@ namespace Gray
 		static StrLen_t GRAYCALL FormatV(TYPE* pszOut, StrLen_t nLenOutMax, const TYPE* pszFormat, va_list vlist);
 		static StrLen_t _cdecl FormatF(TYPE* pszOut, StrLen_t nLenOutMax, const TYPE* pszFormat, ...);
 
-#if USE_UNITTESTS
-		static StrLen_t GRAYCALL UnitTestFormat1(STRFORMAT_t pFormat, TYPE* pszOut, StrLen_t nLenOut, const TYPE* pszFormat, int eArgs);
-		static void GRAYCALL UnitTestFormatX(STRFORMAT_t pFormat, TYPE* pszOut, StrLen_t nLenOut);
-		static void GRAYCALL UnitTestFormat(STRFORMAT_t pFormat);
-		UNITTEST_FRIEND(StrFormat);
-#endif
+		UNITTEST2_FRIEND(StrFormat);
 	};
-};
+}
 
 #endif

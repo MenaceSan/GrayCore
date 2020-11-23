@@ -12,10 +12,10 @@
 #include "GrayCore.h"
 #include "cUnitTestDecl.h"
 
-UNITTEST_PREDEF(cBits)
-
 namespace Gray
 {
+	UNITTEST2_PREDEF(cBits);
+
 	typedef unsigned int BIT_ENUM_t;	//!< Enumerate number of bits or address a single bit.
 	enum BITOP_TYPE
 	{
@@ -172,7 +172,7 @@ namespace Gray
 			// TODO or,and,xor/not // 
 		}
 #endif
-		UNITTEST_FRIEND(cBits);
+		UNITTEST2_FRIEND(cBits);
 	};
 
 	// Override implementations of templates.

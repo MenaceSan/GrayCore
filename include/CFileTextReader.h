@@ -9,14 +9,14 @@
 #pragma once
 #endif
 
-#include "CFile.h"
+#include "cFile.h"
 #include "cStreamStack.h"
 #include "cTextPos.h"
 
-UNITTEST_PREDEF(cFileTextReader)
-
 namespace Gray
 {
+	UNITTEST2_PREDEF(cFileTextReader);
+
 	class GRAYCORE_LINK cFileTextReader : public cStreamStackInp
 	{
 		//! @class Gray::cFileTextReader 
@@ -48,7 +48,7 @@ namespace Gray
 		}
 
 	public:
-		cFileTextReader(size_t nSizeLineMax = CStream::k_FILE_BLOCK_SIZE * 2);
+		cFileTextReader(size_t nSizeLineMax = cStream::k_FILE_BLOCK_SIZE * 2);
 		virtual ~cFileTextReader();
 
 		HRESULT OpenX(const FILECHAR_t* pszName, OF_FLAGS_t uShareFlags);
@@ -72,7 +72,7 @@ namespace Gray
 
 		virtual STREAM_SEEKRET_t Seek(STREAM_OFFSET_t iOffset, SEEK_ORIGIN_TYPE eSeekOrigin = SEEK_Set) override;
 
-		UNITTEST_FRIEND(cFileTextReader);
+		UNITTEST2_FRIEND(cFileTextReader);
 	};
 }
 

@@ -13,10 +13,10 @@
 #include "StrConst.h"
 #include "cUnitTestDecl.h"
 
-UNITTEST_PREDEF(StrNum)
-
 namespace Gray
 {
+	UNITTEST2_PREDEF(StrNum);
+
 	struct GRAYCORE_LINK StrNum	// static
 	{
 		//! @struct Gray::StrNum
@@ -64,10 +64,6 @@ namespace Gray
 		static StrLen_t GRAYCALL DtoAG2(double dVal, OUT char* pszOut, int iDecPlacesWanted = -1, char chE = -'e');
 		static StrLen_t GRAYCALL DtoAG(double dVal, OUT char* pszOut, StrLen_t iStrMax, int iDecPlacesWanted = -1, char chE = -'e');
 
-#if USE_UNITTESTS
-		static StrLen_t GRAYCALL DToATestLegacy(double dVal, OUT char* pszOut, StrLen_t iStrMax, StrLen_t iDecPlaces);
-#endif
-
 		template < typename _TYPE >
 		static _TYPE inline toValue(const char* pszInp, const char** ppszInpEnd = (const char**)nullptr);
 		template < typename _TYPE >
@@ -82,7 +78,7 @@ namespace Gray
 		template < typename _TYPE >
 		static StrLen_t _cdecl ValArrayToAF(OUT char* pszDst, StrLen_t iSizeDstMax, size_t nSrcQty, ...);
 
-		UNITTEST_FRIEND(StrNum);
+		UNITTEST2_FRIEND(StrNum);
 	};
 
 	template<> inline INT32 StrNum::toValue<INT32>(const char* pszInp, const char** ppszInpEnd)

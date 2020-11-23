@@ -54,7 +54,7 @@
     <ClInclude Include="cExceptionSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CFile.h">
+    <ClInclude Include="cFile.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="cFileDir.h">
@@ -440,7 +440,7 @@
     <ClCompile Include="cSingleton.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CStream.cpp">
+    <ClCompile Include="cStream.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="cStreamStack.cpp">
