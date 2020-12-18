@@ -187,7 +187,7 @@ namespace Gray
 		DWORD dwRet = _FNF(::GetModuleFileName)(hInst, szProcessName, _countof(szProcessName));
 		if (dwRet <= 0)
 		{
-			HRESULT hRes = HResult::GetLast(); // GetLastError is set.
+			// HRESULT hRes = HResult::GetLast(); // GetLastError is set.
 			return "";		// I don't have PROCESS_QUERY_INFORMATION or PROCESS_VM_READ rights.
 		}
 		return cStringF(szProcessName, dwRet);

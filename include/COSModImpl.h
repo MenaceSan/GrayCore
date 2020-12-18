@@ -30,7 +30,7 @@ namespace Gray
 		//! e.g. cOSModImpl g_Module("ModuleName");
 		//! @todo Support _WIN32 DLL_THREAD_ATTACH and DLL_THREAD_DETACH ?
 		//! Similar to MFC AFX_EXTENSION_MODULE DLLModule or CAtlDllModuleT
-		//! This might have a corresponding CXObjModulePtr. cIUnkPtr can be used alternatively.
+		//! This might have a corresponding cXObjModulePtr. cIUnkPtr can be used alternatively.
 
 	public:
 		const char* m_pszModuleName;	//!< Just derive this from the file name ?

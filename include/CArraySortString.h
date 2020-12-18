@@ -38,7 +38,7 @@ namespace Gray
 			ASSERT(pszID1 != nullptr);
 			return StrT::CmpI<_TYPE_CH>(pszID1, sID2);
 		}
-		virtual COMPARE_t CompareData(REF_t sID1, REF_t sID2) const override
+		virtual COMPARE_t CompareData(REF_t sID1, REF_t sID2) const noexcept override
 		{
 			return StrT::CmpI<_TYPE_CH>(sID1, sID2);
 		}
@@ -61,8 +61,8 @@ namespace Gray
 			while (iLow <= iHigh)
 			{
 				ITERATE_t i = (iHigh + iLow) / 2;
-				STR_t sTest = this->GetAt(i);
-				COMPARE_t iCompare = StrT::CmpIN<_TYPE_CH>(pszRoot, sTest, iStrLen);
+				STR_t sCur = this->GetAt(i);
+				COMPARE_t iCompare = StrT::CmpIN<_TYPE_CH>(pszRoot, sCur, iStrLen);
 				if (iCompare == COMPARE_Equal)
 					return i;	// pszRoot is a parent of
 				if (iCompare > 0)
@@ -89,10 +89,10 @@ namespace Gray
 			while (iLow <= iHigh)
 			{
 				ITERATE_t i = (iHigh + iLow) / 2;
-				STR_t sTest = this->GetAt(i);
-				COMPARE_t iCompare = StrT::CmpIN<_TYPE_CH>(pszDerived, sTest, sTest.GetLength());
+				STR_t sCur = this->GetAt(i);
+				COMPARE_t iCompare = StrT::CmpIN<_TYPE_CH>(pszDerived, sCur, sCur.GetLength());
 				if (iCompare == COMPARE_Equal)
-					return(i);	// pszDerived is a child of sTest (derived from root sTest)
+					return(i);	// pszDerived is a child of sCur (derived from root sCur)
 				if (iCompare > 0)
 				{
 					iLow = i + 1;

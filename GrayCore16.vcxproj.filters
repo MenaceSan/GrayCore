@@ -332,9 +332,6 @@
     <ClInclude Include="include\cExceptionSystem.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="include\cListNodeSmart.h">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="include\cStreamStack.h">
       <Filter>include</Filter>
     </ClInclude>
@@ -378,6 +375,12 @@
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="include\cAtomManager.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cResourceBase.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cListNodeRef.h">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>
@@ -555,9 +558,6 @@
     <ClCompile Include="src\StrU.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\StrXUnitTest.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\cCodeProfiler.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -636,10 +636,10 @@
     <ClCompile Include="src\cObjectFactory.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="cArray.cpp">
+    <ClCompile Include="src\cRandom.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\cRandom.cpp">
+    <ClCompile Include="src\cArray.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

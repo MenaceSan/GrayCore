@@ -20,20 +20,22 @@ namespace Gray
 		//! @class Gray::cStreamQueue
 		//! Read and write to/from a dynamic memory cStream.
 		//! Grow the cQueueBytes memory allocation as needed.
-		//! similar to CFileMem, System.IO.MemoryStream
+		//! similar to cFileMem, System.IO.MemoryStream
 
 		typedef cQueueBytes SUPER_t;
 
-	public:
-		cStreamQueue(size_t nGrowSizeChunk = 4 * 1024, size_t nGrowSizeMax = cHeap::k_ALLOC_MAX)
-			: cQueueBytes(nGrowSizeChunk, nGrowSizeMax)
-		{
-			//! @arg nGrowSizeMax = 0 = not used. write only ?
-		}
-		cStreamQueue(const cStreamQueue& a)
+	protected:
+		cStreamQueue(const cStreamQueue& a) noexcept
 		{
 			//! do nothing!
 			UNREFERENCED_REFERENCE(a);
+		}
+
+	public:
+		cStreamQueue(size_t nGrowSizeChunk = 4 * 1024, size_t nGrowSizeMax = cHeap::k_ALLOC_MAX) noexcept
+			: cQueueBytes(nGrowSizeChunk, nGrowSizeMax)
+		{
+			//! @arg nGrowSizeMax = 0 = not used. write only ?
 		}
 		~cStreamQueue()
 		{

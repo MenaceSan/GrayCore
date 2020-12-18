@@ -194,7 +194,7 @@ namespace Gray
 			// duplicates don't normally happen, but just replace the old one just in case.
 			// DestructElements is called automatically for previous.
 			this->SetAt(index, pNew);
-			return(index);
+			return index;
 		}
 		return AddPresorted(index, iCompareRes, pNew);
 	}
@@ -235,6 +235,7 @@ namespace Gray
 				iHigh = i - 1;
 			}
 		}
+
 		riCompareRes = iCompareRes;
 		return i;
 	}
@@ -256,7 +257,7 @@ namespace Gray
 		typedef typename SUPER_t::REF_t REF_t;
 
 	protected:
-		virtual COMPARE_t CompareData(REF_t Data1, REF_t Data2) const override
+		virtual COMPARE_t CompareData(REF_t Data1, REF_t Data2) const noexcept override
 		{
 			return cValT::Compare(Data1, Data2);
 		}
@@ -290,11 +291,11 @@ namespace Gray
 		typedef typename SUPER_t::KEY_t KEY_t;
 
 	protected:
-		virtual COMPARE_t CompareData(REF_t Data1, REF_t Data2) const override
+		virtual COMPARE_t CompareData(REF_t Data1, REF_t Data2) const noexcept override
 		{
 			return StrT::CmpI<_TYPECH>(Data1.get_Name(), Data2.get_Name());
 		}
-		virtual COMPARE_t CompareKey(KEY_t key1, REF_t Data2) const override
+		virtual COMPARE_t CompareKey(KEY_t key1, REF_t Data2) const  override
 		{
 			return StrT::CmpI<_TYPECH>(key1, Data2.get_Name());
 		}
@@ -328,7 +329,7 @@ namespace Gray
 		typedef typename SUPER_t::KEY_t KEY_t;
 
 	protected:
-		virtual COMPARE_t CompareData(REF_t Data1, REF_t Data2) const override
+		virtual COMPARE_t CompareData(REF_t Data1, REF_t Data2) const noexcept override
 		{
 			//! Compare a data record to another data record.
 			TYPE_KEY key1 = Data1.get_SortValue();
@@ -370,7 +371,7 @@ namespace Gray
 		typedef typename SUPER_t::KEY_t KEY_t;
 
 	protected:
-		virtual COMPARE_t CompareData(REF_t Data1, REF_t Data2) const override
+		virtual COMPARE_t CompareData(REF_t Data1, REF_t Data2) const noexcept override
 		{
 			//! Compare a data record to another data record.
 			_TYPE_HASH key1 = Data1.get_HashCode();
@@ -414,7 +415,7 @@ namespace Gray
 		typedef typename SUPER_t::ELEM_t ELEM_t;				//
 
 	protected:
-		virtual COMPARE_t CompareData(REF_t pData1, REF_t pData2) const override
+		virtual COMPARE_t CompareData(REF_t pData1, REF_t pData2) const noexcept override
 		{
 			//! default = Binary compare the whole thing.
 			//! cValT::Compare(*pData1,*pData2) ??
@@ -428,15 +429,15 @@ namespace Gray
 			this->RemoveAll();
 		}
 
-		bool IsValidIndex(ITERATE_t i) const
+		bool IsValidIndex(ITERATE_t i) const noexcept
 		{
 			//! @todo RENAME THIS. Don't overload IsValidIndex. Make IsValidAt() ?
 			if (!SUPER_t::IsValidIndex(i))
 				return false;
-			return(this->GetAt(i) != nullptr);
+			return this->GetAt(i) != nullptr ;
 		}
 
-		REF_t GetAt(ITERATE_t index) const
+		REF_t GetAt(ITERATE_t index) const noexcept
 		{
 			//! @note caller should put the result in TYPE (cRefPtr) derived pointer.
 			return this->ConstElementAt(index);
@@ -451,7 +452,7 @@ namespace Gray
 			return this->ConstElementAt(nIndex);
 		}
 
-		TYPE_PTR FindArgForKey(TYPE_KEY key1) const
+		TYPE_PTR FindArgForKey(TYPE_KEY key1) const noexcept
 		{
 			ITERATE_t index = this->FindIForKey(key1);
 			if (index < 0)
@@ -514,7 +515,7 @@ namespace Gray
 		typedef typename SUPER_t::KEY_t KEY_t;
 
 	protected:
-		virtual COMPARE_t CompareData(REF_t pData1, REF_t pData2) const override
+		virtual COMPARE_t CompareData(REF_t pData1, REF_t pData2) const noexcept override
 		{
 			//! Compare a data record to another data record.
 			ASSERT(pData1 != nullptr);
@@ -591,7 +592,7 @@ namespace Gray
 		virtual ~cArraySortFacadeHash()
 		{}
 
-		virtual COMPARE_t CompareData(REF_t pData1, REF_t pData2) const override
+		virtual COMPARE_t CompareData(REF_t pData1, REF_t pData2) const noexcept override
 		{
 			//! Compare a data record to another data record.
 			_TYPE_HASH key1 = pData1->get_HashCode();
@@ -627,7 +628,7 @@ namespace Gray
 		typedef typename SUPER_t::KEY_t KEY_t;
 
 	protected:
-		virtual COMPARE_t CompareData(REF_t pData1, REF_t pData2) const override
+		virtual COMPARE_t CompareData(REF_t pData1, REF_t pData2) const noexcept override
 		{
 			//! Compare a data record to another data record.
 			ASSERT(pData1 != nullptr);

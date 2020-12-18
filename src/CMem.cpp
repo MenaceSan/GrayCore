@@ -30,7 +30,7 @@ namespace Gray
 	uintptr_t VOLATILE cMem::sm_bDontOptimizeOut0 = 0;	//!< used to trick the optimizer. Always 0.
 	uintptr_t VOLATILE cMem::sm_bDontOptimizeOutX = 1;	//!< used to trick the optimizer. Unknown value.
 
-	bool GRAYCALL cMem::IsValid(const void* pData, size_t nLen, bool bWriteAccess) // static
+	bool GRAYCALL cMem::IsValid(const void* pData, size_t nLen, bool bWriteAccess) noexcept // static
 	{
 		//! Is this pointer valid to read/write to ? On heap, stack or static const data space.
 		//! similar to _MFC_VER AfxIsValidAddress(), AtlIsValidAddress() 

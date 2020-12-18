@@ -265,7 +265,7 @@ namespace Gray
 		{
 		}
 
-		int get_HashCode() const
+		int get_HashCode() const noexcept
 		{
 			return (int)m_FilePos.get_Line1();
 		}

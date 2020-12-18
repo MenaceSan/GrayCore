@@ -487,7 +487,7 @@ namespace Gray
 		return SetFileTime(&CreationTime, nullptr, &LastWriteTime);
 	}
 
-	HRESULT cFile::GetFileStatus(cFileStatus& attr) const
+	HRESULT cFile::GetFileStatus(OUT cFileStatus& attr) const
 	{
 		//! Get the file status info by its open handle
 		//! Similar to CFile::GetStatus()

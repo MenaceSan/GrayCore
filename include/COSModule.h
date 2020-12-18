@@ -37,7 +37,7 @@ namespace Gray
 		//! @class Gray::cOSModule
 		//! manage access to a dynamically loaded *.DLL file. (or .SO in __linux__)
 		//! in _WIN32 HMODULE is just a load address. Not the same as cOSHandle?
-		//! ASSUME Default = loaded into my app space ! Use COSModuleX for other processes modules.
+		//! ASSUME Default = loaded into my app space ! Use cOSModuleX for other processes modules.
 		//! Inside a DLL there may be procedures and resources.
 		//! DLL's are "shared objects" or "shared libraries" in __linux__
 		//! __linux__ link with "dl" library
@@ -148,7 +148,7 @@ namespace Gray
 		HRESULT LoadModuleWithSymbol(const FILECHAR_t* pszModuleName, const char* pszSymbolName);
 
 #ifdef _WIN32
-		// Load or enum resources ?? CWinResource, CAppRes
+		// Load or enum resources ?? cWinResource, cAppRes
 #endif
 		UNITTEST2_FRIEND(cOSModule);
 	};

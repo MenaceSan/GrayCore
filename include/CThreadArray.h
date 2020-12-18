@@ -1,11 +1,11 @@
 //
-//! @file CThreadArray.h
+//! @file cThreadArray.h
 //! Thread safe arrays of stuff.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_CThreadArray_H
-#define _INC_CThreadArray_H
+#ifndef _INC_cThreadArray_H
+#define _INC_cThreadArray_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
@@ -48,6 +48,7 @@ namespace Gray
 		}
 		ITERATE_t Add(REF_t pObj)
 		{
+			// add to tail
 			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			return SUPER_t::Add(pObj); // add to tail
 		}
@@ -124,27 +125,31 @@ namespace Gray
 		}
 		cRefPtr<TYPE> PopHead()
 		{
+			// a queue.
 			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
-			return SUPER_t::PopHead();	// pull off tail
+			return SUPER_t::PopHead();	// pop off head
 		}
 		cRefPtr<TYPE> PopTail()
 		{
+			// stack form = tail = latest.
 			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
-			return SUPER_t::PopTail();	// pull off tail
+			return SUPER_t::PopTail();	// pop off tail
 		}
 		bool HasArg(TYPE* pObj) const
 		{
 			//! Find a specified entry.
 			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
-			return(SUPER_t::FindIFor(pObj) >= 0);
+			return SUPER_t::FindIFor(pObj) >= 0 ;
 		}
 		ITERATE_t Add(TYPE* pObj)
 		{
+			// add to tail
 			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			return SUPER_t::Add(pObj); // add to tail
 		}
 		ITERATE_t AddTail(TYPE* pObj)
 		{
+			// add to tail = latest. aka Push to stack.
 			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			return SUPER_t::AddTail(pObj); // add to tail
 		}
@@ -161,7 +166,7 @@ namespace Gray
 		}
 		void DisposeAll()
 		{
-			//! ASSUME TYPE supports DisposeThis(); like CXObject
+			//! ASSUME TYPE supports DisposeThis(); like cXObject
 			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			SUPER_t::DisposeAll();
 		}
@@ -297,7 +302,7 @@ namespace Gray
 		}
 		void DisposeAll()
 		{
-			//! ASSUME TYPE supports DisposeThis(); like CXObject
+			//! ASSUME TYPE supports DisposeThis(); like cXObject
 			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			SUPER_t::DisposeAll();
 		}
@@ -355,7 +360,7 @@ namespace Gray
 		ITERATE_t Add(TYPE* pObj)
 		{
 			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
-			return(SUPER_t::Add(pObj));	// AddTail
+			return SUPER_t::Add(pObj) ;	// AddTail
 		}
 		ITERATE_t AddAfter(TYPE* pObj)
 		{
@@ -386,7 +391,7 @@ namespace Gray
 		}
 		void DisposeAll()
 		{
-			//! ASSUME TYPE supports DisposeThis(); like CXObject
+			//! ASSUME TYPE supports DisposeThis(); like cXObject
 			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			SUPER_t::DisposeAll();
 		}

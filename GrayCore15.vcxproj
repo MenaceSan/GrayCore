@@ -625,6 +625,7 @@
     <ClInclude Include="include\cArraySortString.h" />
     <ClInclude Include="include\cArrayString.h" />
     <ClInclude Include="include\cAtom.h" />
+    <ClInclude Include="include\cAtomManager.h" />
     <ClInclude Include="include\cBits.h" />
     <ClInclude Include="include\cCodeProfiler.h" />
     <ClInclude Include="include\cDebugAssert.h" />
@@ -655,7 +656,7 @@
     <ClInclude Include="include\cIUnkAgg.h" />
     <ClInclude Include="include\cIUnkPtr.h" />
     <ClInclude Include="include\cList.h" />
-    <ClInclude Include="include\cListNodeSmart.h" />
+    <ClInclude Include="include\cListNodeRef.h" />
     <ClInclude Include="include\cLocker.h" />
     <ClInclude Include="include\cLogAppendConsole.h" />
     <ClInclude Include="include\cLogAppender.h" />
@@ -678,9 +679,12 @@
     <ClInclude Include="include\cPair.h" />
     <ClInclude Include="include\cPairSort.h" />
     <ClInclude Include="include\cPtrFacade.h" />
+    <ClInclude Include="include\cPtrTrace.h" />
+    <ClInclude Include="include\cPtrTraceMgr.h" />
     <ClInclude Include="include\cQueue.h" />
-    <ClInclude Include="include\cRandomDef.h" />
+    <ClInclude Include="include\cRandom.h" />
     <ClInclude Include="include\cRefPtr.h" />
+    <ClInclude Include="include\cResourceBase.h" />
     <ClInclude Include="include\cSecurityAttributes.h" />
     <ClInclude Include="include\cSingleton.h" />
     <ClInclude Include="include\cSingletonPtr.h" />
@@ -689,6 +693,7 @@
     <ClInclude Include="include\cStreamQueue.h" />
     <ClInclude Include="include\cStreamStack.h" />
     <ClInclude Include="include\cString.h" />
+    <ClInclude Include="include\cSystemHelper.h" />
     <ClInclude Include="include\cSystemInfo.h" />
     <ClInclude Include="include\cTempPool.h" />
     <ClInclude Include="include\cTextPos.h" />
@@ -711,7 +716,6 @@
     <ClInclude Include="include\cUInt64.h" />
     <ClInclude Include="include\cUnitTest.h" />
     <ClInclude Include="include\cUnitTestDecl.h" />
-    <ClInclude Include="include\cUnitTestMs.h" />
     <ClInclude Include="include\cValT.h" />
     <ClInclude Include="include\cWinHeap.h" />
     <ClInclude Include="include\cWinHeap2.h" />
@@ -759,10 +763,8 @@
     <ClCompile Include="src\cAppImpl.cpp" />
     <ClCompile Include="src\cAppState.cpp" />
     <ClCompile Include="src\cArchive.cpp" />
-    <ClCompile Include="src\cArraySort.cpp" />
-    <ClCompile Include="src\cArrayString.cpp" />
+    <ClCompile Include="src\cArray.cpp" />
     <ClCompile Include="src\cAtom.cpp" />
-    <ClCompile Include="src\cBits.cpp" />
     <ClCompile Include="src\cCodeProfiler.cpp" />
     <ClCompile Include="src\cDebugAssert.cpp" />
     <ClCompile Include="src\cException.cpp" />
@@ -775,16 +777,13 @@
     <ClCompile Include="src\cFileStatus.cpp" />
     <ClCompile Include="src\cFileText.cpp" />
     <ClCompile Include="src\cFileTextReader.cpp" />
-    <ClCompile Include="src\cFloat.cpp" />
     <ClCompile Include="src\cFloatDeco.cpp" />
-    <ClCompile Include="src\cHashTable.cpp" />
     <ClCompile Include="src\cHeap.cpp" />
     <ClCompile Include="src\cHookJump.cpp" />
     <ClCompile Include="src\cIniFile.cpp" />
     <ClCompile Include="src\cIniMap.cpp" />
     <ClCompile Include="src\cIniObject.cpp" />
     <ClCompile Include="src\cIniSection.cpp" />
-    <ClCompile Include="src\cInterlockedVal.cpp" />
     <ClCompile Include="src\cList.cpp" />
     <ClCompile Include="src\cLogAppendConsole.cpp" />
     <ClCompile Include="src\cLogAppender.cpp" />
@@ -802,7 +801,7 @@
     <ClCompile Include="src\cOSUser.cpp" />
     <ClCompile Include="src\cPtrTrace.cpp" />
     <ClCompile Include="src\cQueue.cpp" />
-    <ClCompile Include="src\cRandomDef.cpp" />
+    <ClCompile Include="src\cRandom.cpp" />
     <ClCompile Include="src\cSecurityAttributes.cpp" />
     <ClCompile Include="src\cSingleton.cpp" />
     <ClCompile Include="src\cStream.cpp" />
@@ -822,7 +821,6 @@
     <ClCompile Include="src\cTypeInfo.cpp" />
     <ClCompile Include="src\cUInt64.cpp" />
     <ClCompile Include="src\cUnitTest.cpp" />
-    <ClCompile Include="src\cWinHeap.cpp" />
     <ClCompile Include="src\HResult.cpp" />
     <ClCompile Include="src\StrA.cpp" />
     <ClCompile Include="src\StrArg.cpp" />

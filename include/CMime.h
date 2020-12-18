@@ -9,7 +9,7 @@
 #pragma once
 #endif
 
-#include "cSingleton.h"
+#include "GrayCore.h"
 
 namespace Gray
 {

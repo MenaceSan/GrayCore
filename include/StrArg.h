@@ -26,6 +26,22 @@ namespace Gray
 	template< typename TYPE>
 	GRAYCORE_LINK const TYPE* GRAYCALL StrArg(const wchar_t* pszStr);
 
+	template< typename TYPE>
+	inline const TYPE* StrArg(const BYTE* pszStr)
+	{
+		// auto convert to a const type arg. (but not return)
+		return StrArg<TYPE>(reinterpret_cast<const char*>(pszStr));
+	}
+
+#ifdef _NATIVE_WCHAR_T_DEFINED
+	template< typename TYPE>
+	inline const TYPE* StrArg(const WORD* pszStr)
+	{
+		// auto convert to a const type arg. (but not return)
+		return StrArg<TYPE>(reinterpret_cast<const wchar_t*>(pszStr));
+	}
+#endif
+
 	// TODO Front padding with max X chars.
 
 	template< typename TYPE>
@@ -46,19 +62,57 @@ namespace Gray
 	template< typename TYPE>
 	GRAYCORE_LINK const TYPE* GRAYCALL StrArg(double dVal);	// , int iPlaces, bool bFormat=false
 
-	template<> inline const char* GRAYCALL StrArg<char>(const char* pszStr) // static
+	template<> inline const char* GRAYCALL StrArg<char>(const char* pszStr) noexcept // static
 	{
 		//! safe convert arguments for sprintf("%s") type params. ONLY if needed.
 		//! for string args to _cdecl (variable ...) functions
 		//! inline this because no processing is needed.
 		return pszStr;
 	}
-	template<> inline const wchar_t* GRAYCALL StrArg<wchar_t>(const wchar_t* pszStr) // static
+	template<> inline const wchar_t* GRAYCALL StrArg<wchar_t>(const wchar_t* pszStr) noexcept // static
 	{
 		//! safe convert arguments for sprintf("%s") type params. ONLY if needed.
 		//! for string args to _cdecl (variable ...) functions
 		//! inline this because no processing is needed.
 		return pszStr;
 	}
+
+	template<> inline const BYTE* GRAYCALL StrArg<BYTE>(const BYTE* pszStr) noexcept // static
+	{
+		return pszStr;
+	}
+	template<> inline const BYTE* GRAYCALL StrArg<BYTE>(const char* pszStr) noexcept // static
+	{
+		return (const BYTE *)pszStr;
+	}
+
+#if 0 // def _NATIVE_WCHAR_T_DEFINED	// is wchar_t the same type as WORD ?
+	template<> inline const BYTE* GRAYCALL StrArg<BYTE>(const wchar_t* pszStr) noexcept // static
+	{
+		return (const BYTE*)StrArg<char>(pszStr);
+	}
+	template<> inline const BYTE* GRAYCALL StrArg<BYTE>(const WORD* pszStr) noexcept // static
+	{
+		return (const BYTE*)StrArg<char>((const wchar_t*)pszStr);
+	}
+
+	template<> inline const WORD* GRAYCALL StrArg<WORD>(const WORD* pszStr) noexcept // static
+	{
+		return pszStr;
+	}
+	template<> inline const WORD* GRAYCALL StrArg<WORD>(const wchar_t* pszStr) noexcept // static
+	{
+		return (const WORD*)pszStr;
+	}
+	template<> inline const WORD* GRAYCALL StrArg<WORD>(const char* pszStr) noexcept // static
+	{
+		return (const WORD*)StrArg<wchar_t>(pszStr);
+	}
+	template<> inline const WORD* GRAYCALL StrArg<WORD>(const BYTE* pszStr) noexcept // static
+	{
+		return (const WORD*)StrArg<wchar_t>((const char*)pszStr);
+	}
+#endif
+
 };
 #endif

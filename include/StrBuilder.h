@@ -72,7 +72,7 @@ namespace Gray
 			//! get Length used.
 			return StrT::Diff(m_pCur, (const char*)get_Start());
 		}
-		const char* get_Str() const
+		const char* get_Str() const noexcept
 		{
 			// get_StrA();
 			return (const char*)get_Start();

@@ -12,7 +12,7 @@
 namespace Gray
 {
 	cThreadLocalSysNew<cTempPool> cTempPool::sm_ThreadLocalDefault;	// default Thread Local Mechanism. 
-	IThreadLocal* cTempPool::sm_pThreadLocal = &cTempPool::sm_ThreadLocalDefault;	// can use CThreadLocalTypeNew<> instead
+	IThreadLocal* cTempPool::sm_pThreadLocal = &cTempPool::sm_ThreadLocalDefault;	// can use cThreadLocalTypeNew<> instead
 
 	cTempPool* GRAYCALL cTempPool::GetTempPool() // static
 	{

@@ -175,7 +175,7 @@ namespace Gray
 				return HRESULT_WIN32_C(RPC_S_STRING_TOO_LONG);	// overrun ERROR_INVALID_DATA
 			}
 			char ch = '\0';
-			HRESULT hRes = this->ReadT<char>(ch);
+			HRESULT hRes = this->ReadT<char>(ch);	// read one character at a time.
 			if (FAILED(hRes))
 			{
 				pszBuffer[i] = '\0';
@@ -205,7 +205,7 @@ namespace Gray
 			if (i >= iSizeMax)
 				return HRESULT_WIN32_C(RPC_S_STRING_TOO_LONG);	// overrun ERROR_INVALID_DATA
 			wchar_t ch = '\0';
-			HRESULT hRes = this->ReadT<wchar_t>(ch);
+			HRESULT hRes = this->ReadT<wchar_t>(ch);  // read one character at a time.
 			if (FAILED(hRes))
 			{
 				return hRes;

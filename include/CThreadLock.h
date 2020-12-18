@@ -51,7 +51,7 @@ namespace Gray
 
 	static constexpr THREAD_EXITCODE_t THREAD_EXITCODE_OK = ((THREAD_EXITCODE_t)0);	//!< Similar to APP_EXITCODE_t
 
-	typedef THREAD_EXITCODE_t (_stdcall* THREAD_FUNC_t)(void*);		// entry point for a thread. same as _WIN32 PTHREAD_START_ROUTINE. like FARPROC ?
+	typedef THREAD_EXITCODE_t(_stdcall* THREAD_FUNC_t)(void*);		// entry point for a thread. same as _WIN32 PTHREAD_START_ROUTINE. like FARPROC ?
 
 	class GRAYCORE_LINK cThreadId
 	{
@@ -73,7 +73,7 @@ namespace Gray
 		THREADID_t GetThreadId() const noexcept
 		{
 			//! Similar to the MFC CWorkerThread call.
-			//! __linux__ don't use the old fashioned gettid(). Also (m_hThread == THREADID_t)
+			//! __linux__ use pthread. don't use the old fashioned gettid(). Also (m_hThread == THREADID_t)
 			return m_dwThreadId;
 		}
 		THREADID_t get_HashCode() const noexcept
@@ -84,7 +84,7 @@ namespace Gray
 		bool isCurrentThread() const noexcept
 		{
 			//!< Is this the current running thread?
-			return IsEqualId(m_dwThreadId, GetCurrentId()) ;
+			return IsEqualId(m_dwThreadId, GetCurrentId());
 		}
 		bool isValidId() const noexcept
 		{
@@ -98,6 +98,7 @@ namespace Gray
 
 		static inline THREADID_t GetCurrentId() noexcept
 		{
+			//! Get the callers ThreadId.
 			//! @note We ASSUME this is VERY fast.
 			//! ASSUME IsValidThreadId();
 #ifdef _WIN32
@@ -108,14 +109,14 @@ namespace Gray
 		}
 		static inline bool IsValidId(THREADID_t id) noexcept
 		{
-			//! @todo actually check for the system thread.
-			return (id != cThreadId::k_NULL);
+			//! Is this thread valid? the system thread is considered valid.
+			return id != cThreadId::k_NULL;
 		}
 		static inline bool IsEqualId(THREADID_t a, THREADID_t b) noexcept
 		{
 			//! Are these id's the same thread? In Linux this might be similar to _WIN32 HANDLE.
 #ifdef _WIN32
-			return (a == b);
+			return a == b;
 #else
 			return ::pthread_equal(a, b);
 #endif
@@ -192,13 +193,13 @@ namespace Gray
 			//! @return cThreadId::k_NULL = not locked.
 			THREADID_t nTid1 = m_nLockThreadID;
 			ASSERT(nTid1 == cThreadId::k_NULL || cThreadId::IsValidId(nTid1));
-			return(nTid1);
+			return nTid1;
 		}
 		inline bool isThreadLockedByCurrent() const noexcept
 		{
 			THREADID_t nTid1 = m_nLockThreadID;
 			THREADID_t nTid2 = cThreadId::GetCurrentId();
-			return(cThreadId::IsEqualId(nTid1, nTid2));
+			return cThreadId::IsEqualId(nTid1, nTid2);
 		}
 	};
 

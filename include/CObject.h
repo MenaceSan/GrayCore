@@ -74,18 +74,18 @@ namespace Gray
 		virtual ~CObject()
 		{
 		}
-		virtual bool isValidCheck() const	//!< memory allocation and structure definitions are valid.
+		virtual bool isValidCheck() const noexcept	//!< memory allocation and structure definitions are valid.
 		{
 			//! NOT in MFC so use COBJECT_IsValidCheck to call.
 			//! @note This can't be called in constructors and destructors of course !
 			if (!cMem::IsValid(this, 4))	// at least not null. (or near it)
 			{
-				DEBUG_ASSERT(0, "isValidCheck");
+				DEBUG_CHECK(false);
 				return false;
 			}
 			if (!IS_TYPE_OF(CObject, this))	// structure definitions are valid..
 			{
-				DEBUG_ASSERT(0, "isValidCheck");
+				DEBUG_CHECK(false);
 				return false;
 			}
 			return true;

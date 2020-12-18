@@ -30,7 +30,7 @@ namespace Gray
 		void DisposeAll()
 		{
 			//! Similar to RemoveAll() except it calls DisposeThis() to try to dereference all the entries.
-			//! ASSUME TYPE supports DisposeThis(); like CXObject
+			//! ASSUME TYPE supports DisposeThis(); like cXObject
 			//! @note often DisposeThis() has the effect of removing itself from the list. Beware of this.
 
 			ITERATE_t iSize = this->GetSize();

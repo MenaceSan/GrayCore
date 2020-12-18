@@ -106,7 +106,7 @@ namespace Gray
 	class GRAYCORE_LINK cTextReader : public cTextPos
 	{
 		//! @class Gray::cTextReader
-		//! current File/CXmlReader/cJSONReader/Etc parsing position. include cTextPos
+		//! current File/cXmlReader/cJSONReader/Etc parsing position. include cTextPos
 		//! similar to cStreamInput but for a memory buffer.
 		//! cTextPos = Current cursor position for m_pszCursor in the file. used for error messages, etc.
 	protected:

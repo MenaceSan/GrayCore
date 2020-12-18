@@ -17,22 +17,29 @@ namespace Gray
 {
 	UNITTEST2_PREDEF(cFileTextReader);
 
-	class GRAYCORE_LINK cFileTextReader : public cStreamStackInp
+	class GRAYCORE_LINK cStreamTextReader : public cStreamStackInp
 	{
 		//! @class Gray::cFileTextReader 
 		//! read text lines from a buffer / stream.
-		//! Replace the FILE* streaming file i/o reader fread() with something more under our control.
-		//! Try to use this instead of cFileText.
 		//! Allow control of read buffer size and line length.
+		//! Faster than cStreamInput::ReadStringLine() since it buffers ? maybe ?
 		//! m_nGrowSizeMax = max line size.
 
-	public:
-		cFile m_File;			// The backing OS file.
+		cStreamInput& m_reader;
+
+	protected:
+		cStreamTextReader(cStreamInput& reader, size_t nSizeLineMax)
+			: cStreamStackInp(&reader, nSizeLineMax)
+			, m_reader(reader)
+		{
+			// Max buffer size = max line length.
+			this->put_AutoReadCommit((ITERATE_t)(nSizeLineMax / 2));		// default = half buffer.
+		}
 
 	protected:
 		virtual HRESULT ReadX(void* pData, size_t nDataSize) override
 		{
-			// Use ReadStringLine instead.
+			// Use ReadStringLine instead. Prevent use of this.
 			ASSERT(0);
 			UNREFERENCED_PARAMETER(pData);
 			UNREFERENCED_PARAMETER(nDataSize);
@@ -40,12 +47,30 @@ namespace Gray
 		}
 		virtual HRESULT WriteX(const void* pData, size_t nDataSize) override
 		{
-			// Read ONLY.
+			// Read ONLY. Prevent use of this.
 			ASSERT(0);
 			UNREFERENCED_PARAMETER(pData);
 			UNREFERENCED_PARAMETER(nDataSize);
 			return E_NOTIMPL;
 		}
+
+		HRESULT ReadStringLine(OUT const char** ppszLine);
+
+	public:
+		virtual HRESULT ReadStringLine(OUT char* pszBuffer, StrLen_t iSizeMax) override;
+
+		virtual STREAM_SEEKRET_t Seek(STREAM_OFFSET_t iOffset, SEEK_ORIGIN_TYPE eSeekOrigin = SEEK_Set) override;
+	};
+
+	class GRAYCORE_LINK cFileTextReader : public cStreamTextReader
+	{
+		//! @class Gray::cFileTextReader 
+		//! read text lines from a file stream.
+		//! Try to use this instead of cFileText. 
+		//! Replace the FILE* streaming file i/o reader fread() with something more under our control.
+
+	public:
+		cFile m_File;			// The backing OS file.
 
 	public:
 		cFileTextReader(size_t nSizeLineMax = cStream::k_FILE_BLOCK_SIZE * 2);
@@ -61,16 +86,10 @@ namespace Gray
 		{
 			m_File.Close();
 		}
-
 		virtual STREAM_POS_t GetPosition() const override
 		{
 			return m_File.GetPosition() - this->get_ReadQty();
 		}
-
-		HRESULT ReadStringLine(OUT const char** ppszLine);
-		virtual HRESULT ReadStringLine(OUT char* pszBuffer, StrLen_t iSizeMax) override;
-
-		virtual STREAM_SEEKRET_t Seek(STREAM_OFFSET_t iOffset, SEEK_ORIGIN_TYPE eSeekOrigin = SEEK_Set) override;
 
 		UNITTEST2_FRIEND(cFileTextReader);
 	};

@@ -1,6 +1,6 @@
 //
 //! @file cUnitTest.h
-//! Included from c++ file to implement unit test. Compatible with M$ unit tests. USE_UNITTESTS_MS
+//! Included from c++ file to implement unit test. Compatible with M$ unit tests.  
 //! @note Don't include this from some other header file. Only use in implementation of a test.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
@@ -52,6 +52,7 @@ namespace Gray
 		//! Assume we compile in the same environment as we unit test.
 
 		static int sm_nCreatedUnitTests;		//!< Count the cUnitTest objects I have created. NOT just m_aUnitTests
+		static const FILECHAR_t* k_TestFiles;	// a sub directory under m_sTestOutDir containing all the test files.
 
 		// Sample Test const data.
 		static const StrLen_t k_TEXTBLOB_LEN = 566;	//!< StrT::Len(k_sTextBlob) = 0x236
@@ -127,6 +128,7 @@ namespace Gray
 	private:
 		cAppState& m_AppState;				//!< Fast access to this.
 		APPSTATE_TYPE_ m_eAppStatePrev;		//!< Restore the true state of the app if we need to.
+		THREADID_t m_nMainThreadPrev;		//!< The thread we started with. main().
 
 	public:
 		cUnitTestAppState()
@@ -134,20 +136,14 @@ namespace Gray
 		{
 			// called in UNITTEST_METHOD for M$ tests.
 			m_eAppStatePrev = m_AppState.get_AppState();
-			if (m_eAppStatePrev == APPSTATE_Init || m_eAppStatePrev == APPSTATE_Exit)
-			{
-				m_eAppStatePrev = APPSTATE_Exit;
-				m_AppState.InitAppState();	// set to APPSTATE_Run
-			}
-			else
-			{
-				m_AppState.put_AppState(APPSTATE_Run);
-			}
+			m_nMainThreadPrev = m_AppState.get_MainThreadId();
+			m_AppState.InitAppState();	// set to APPSTATE_Run
 		}
 
 		~cUnitTestAppState() noexcept
 		{
 			m_AppState.put_AppState(m_eAppStatePrev);	// destructors should be called next.
+			m_AppState.m_nMainThreadId = m_nMainThreadPrev;
 		}
 	};
 
@@ -165,8 +161,9 @@ namespace Gray
 		AssertCallback_t* m_pAssertOrig;			//! restore the original assert.
 		
 		UNITTEST_LEVEL_TYPE m_nTestLevel;		//!< The current global test level for UnitTests(). throttle tests at run time.
+		cArrayString<LOGCHAR_t> m_aTestNames;	// just run these tests.
 
-		cStringF m_sTestInpDir;				//!< root for source of test input files. might change based on cOSModImpl
+		cStringF m_sTestInpDir;				//!< root for source of test input files. might change based on cOSModImpl?
 		cStringF m_sTestOutDir;				//!< global config for input files.
 
 		cLogProcessor* m_pLog;			//!< cLogMgr::I() for output of tests.	Why not just use DEBUG_MSG ??
@@ -177,9 +174,11 @@ namespace Gray
 	public:
 		cUnitTests();
 
+		HRESULT InitTestOutDir();
 		bool RegisterUnitTest(cUnitTestRegister* pTest);
 
 		void SetTestLevel(UNITTEST_LEVEL_TYPE nTestLevel);
+		bool TestActive(const cUnitTestRegister* pUnitTest, bool remove);
 
 		cUnitTestRegister* FindUnitTest(const char* pszName) const;
 
@@ -198,6 +197,11 @@ namespace Gray
 		CHEAPOBJECT_IMPL;	// dynamic singleton
 	};
 
+#define UNITTEST_TRUE(x)		ASSERT(x)	// UNITTEST_TRUE is different from a normal ASSERT ?
+#define UNITTEST_TRUE2(x,d)		ASSERT(x)	// UNITTEST_TRUE with a description
+
+	// Deprecate all below in favor of UNITTEST2_*
+
 #define UNITTEST_CLASS(n)		class UNITTEST_N(n) : public cUnitTest //!< define and implement class. TEST_CLASS(n)
 #define UNITTEST_METHOD(x)		public: virtual void RunUnitTest() override				// call the public virtual as a test. TEST_METHOD(x)
 
@@ -206,9 +210,6 @@ namespace Gray
 
 	// Allow an external hard link. optional.
 #define UNITTEST_REGISTER_EXT(n)	cUnitTestRegister* UNITTEST_EXT(n) = &UNITTEST_REGISTER_NAME(n);
-
-#define UNITTEST_TRUE(x)		ASSERT(x)	// UNITTEST_TRUE is different from a normal ASSERT ?
-#define UNITTEST_TRUE2(x,d)		ASSERT(x)	// UNITTEST_TRUE with a description
 
 };	// namespace
 

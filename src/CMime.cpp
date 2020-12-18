@@ -8,7 +8,6 @@
 
 namespace Gray
 {
-
 	const char* const cMime::k_aszMimeType[MIME_QTY + 1] =
 	{
 	#define cMimeType(a,b,c,d,e)	b,

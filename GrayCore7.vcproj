@@ -496,7 +496,7 @@ copy $(TargetDir)\$(TargetName).pdb ..\..\bin\$(OutDir)
 				RelativePath=".\cAtom.h">
 			</File>
 			<File
-				RelativePath=".\CCodedPtr.h">
+				RelativePath=".\cCodedPtr.h">
 			</File>
 			<File
 				RelativePath=".\CCompare.h">
@@ -646,10 +646,10 @@ copy $(TargetDir)\$(TargetName).pdb ..\..\bin\$(OutDir)
 				RelativePath=".\cSystemInfo.h">
 			</File>
 			<File
-				RelativePath=".\CThreadArray.h">
+				RelativePath=".\cThreadArray.h">
 			</File>
 			<File
-				RelativePath=".\CThreadArrayString.h">
+				RelativePath=".\cThreadArrayString.h">
 			</File>
 			<File
 				RelativePath=".\cThreadLock.cpp">
@@ -694,10 +694,10 @@ copy $(TargetDir)\$(TargetName).pdb ..\..\bin\$(OutDir)
 				RelativePath=".\cTimeUnits.h">
 			</File>
 			<File
-				RelativePath=".\CWinString.cpp">
+				RelativePath=".\cWinString.cpp">
 			</File>
 			<File
-				RelativePath=".\CWinString.h">
+				RelativePath=".\cWinString.h">
 			</File>
 			<File
 				RelativePath=".\DebugChecks.cpp">

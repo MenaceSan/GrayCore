@@ -68,7 +68,7 @@ namespace Gray
 	class GRAYCORE_LINK cRandomNoise : public cRandomBase, public cSingleton < cRandomNoise >
 	{
 		//! @class Gray::cRandomNoise
-		//! Get Low level Hardware based noise supplied by the OS.
+		//! Get Low level Hardware based noise supplied by the OS. NO SEED. NOT Deterministic (in theory)
 		//! __linux__ use "/dev/urandom" as a get_RandomSeed().
 	private:
 		virtual void InitSeed(const void* pData, size_t iSize)
@@ -91,12 +91,48 @@ namespace Gray
 		CHEAPOBJECT_IMPL;
 	};
 
+	class GRAYCORE_LINK cRandomBlock : public IRandomNoise
+	{
+		//! @class Gray::cRandomBlock
+		//! Hold a blob of random data. Acts as a one time cipher.
+		//! Supply test 'random' data. (e.g. maybe not random at all)
+
+	public:
+		cMemBlock m_Src;		// a block of 'random' test data. 
+		size_t m_nOffset;		// How far have we read in m_Src?
+
+	public:
+		cRandomBlock(const void* pData, size_t nSize) noexcept
+			: m_Src(nSize, pData)
+			, m_nOffset(0)
+		{
+		}
+		virtual HRESULT GetNoise(void* pData, size_t len) override	// IRandomNoise
+		{
+			//! Get sample random data bytes
+			if (m_Src.get_Start() == nullptr)
+			{
+				// No m_Src supplied so fill with fixed data.
+				cMem::Fill(pData, len, 0x2a);
+				m_nOffset += len;
+			}
+			else
+			{
+				// todo repeat like cMem::CopyRepeat() ?
+				::memcpy(pData, m_Src.GetOffset(m_nOffset), len);
+				m_nOffset += len;
+				ASSERT(m_Src.IsValidIndex2(m_nOffset));		// Don't overflow!
+			}
+			return (HRESULT)len;
+		}
+	};
+
 	class GRAYCORE_LINK cRandomDef : public cRandomBase
 	{
 		//! @class Gray::cRandomDef
 		//! Like the default 'C' library seeded pseudo-random number generator ::srand() and ::rand()
 		//! Control a series of pseudo random numbers via a seed. 
-		//! not thread safe. Use CThreadLocal to make thread safe.
+		//! not thread safe. Use cThreadLocal to make thread safe.
 		//! RESOLUTION = k_RAND_MAX
 
 	public:

@@ -2,6 +2,8 @@
 # GrayCore
 C++ core library providing very basic utility functionality without using any STL. Minimal dependencies.
 
+Version 1.603
+
 https://www.menasoft.com/graydox/index.html#graycore
 https://github.com/MenaceSan/GrayCore
 
@@ -83,12 +85,13 @@ avoid magic numbers and magic strings embedded in code.
 Avoid project include paths if possible. Put more informative path into "#include". "#include "GrayCore/x.h"" except for "#include <system.h>" files.
 Declare modular dependencies loudly. Use "#pragma lib" in MSVC.
 Avoid use of STL. It has poor implementation in M$ world and is cryptic.
-Minimal use of standard C libraries. May have platform dependent issues.
+Minimal use of standard C libraries. May have platform dependent issues. CRT versions. etc.
 Don't care about single function exit point. Conserve indentation. return when done.
 Tab indentation.
 Use .tbl files to equate static data sets with enums.
 a 'struct' is used for bare structures (POCO w/o methods), interfaces and static classes (use namespace?). a 'class' is used for all others. e.g. things that can be instantiated and have methods.
 define typedef SUPER_t to (mostly) replace M$ specific __super keyword.
+Any function named IsValid* should never throw. use noexcept.
 @endverbatim
 
 C++11 keywords used: override, final, auto, decltype, static_assert, nullptr

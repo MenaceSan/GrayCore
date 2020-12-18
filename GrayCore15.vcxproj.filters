@@ -41,6 +41,9 @@
     <ClInclude Include="include\cAtom.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="include\cAtomManager.h">
+      <Filter>include</Filter>
+    </ClInclude>
     <ClInclude Include="include\cBits.h">
       <Filter>include</Filter>
     </ClInclude>
@@ -131,7 +134,7 @@
     <ClInclude Include="include\cList.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="include\cListNodeSmart.h">
+    <ClInclude Include="include\cListNodeRef.h">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="include\cLocker.h">
@@ -200,13 +203,22 @@
     <ClInclude Include="include\cPtrFacade.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="include\cPtrTrace.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cPtrTraceMgr.h">
+      <Filter>include</Filter>
+    </ClInclude>
     <ClInclude Include="include\cQueue.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="include\cRandomDef.h">
+    <ClInclude Include="include\cRandom.h">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="include\cRefPtr.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cResourceBase.h">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="include\cSecurityAttributes.h">
@@ -231,6 +243,9 @@
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="include\cString.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cSystemHelper.h">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="include\cSystemInfo.h">
@@ -297,9 +312,6 @@
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="include\cUnitTestDecl.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cUnitTestMs.h">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="include\cValT.h">
@@ -374,9 +386,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.md" />
-    <None Include="test\cIniFileUnitTest.ini">
-      <Filter>test</Filter>
-    </None>
     <None Include="LICENSE.txt" />
     <None Include="include\cLogLevel.tbl">
       <Filter>include</Filter>
@@ -416,9 +425,6 @@
     <Filter Include="include">
       <UniqueIdentifier>{17d5e6aa-3bd2-4aff-85ac-b1d8b35bb64f}</UniqueIdentifier>
     </Filter>
-    <Filter Include="test">
-      <UniqueIdentifier>{03c72c66-c06a-4ddc-8f9f-f6a5aa2e1cb3}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -435,16 +441,10 @@
     <ClCompile Include="src\cArchive.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\cArraySort.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\cArrayString.cpp">
+    <ClCompile Include="src\cArray.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\cAtom.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\cBits.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\cCodeProfiler.cpp">
@@ -453,10 +453,19 @@
     <ClCompile Include="src\cDebugAssert.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\cException.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
     <ClCompile Include="src\cExceptionAssert.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\cExceptionSystem.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cFile.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cFileCopier.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\cFileDir.cpp">
@@ -474,16 +483,13 @@
     <ClCompile Include="src\cFileTextReader.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\cFloat.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\cFloatDeco.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\cHashTable.cpp">
+    <ClCompile Include="src\cHeap.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\cHeap.cpp">
+    <ClCompile Include="src\cHookJump.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\cIniFile.cpp">
@@ -498,7 +504,7 @@
     <ClCompile Include="src\cIniSection.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\cInterlockedVal.cpp">
+    <ClCompile Include="src\cList.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\cLogAppendConsole.cpp">
@@ -514,6 +520,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\cMem.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cMemPage.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\cMime.cpp">
@@ -537,22 +546,40 @@
     <ClCompile Include="src\cOSProcess.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\cOSUser.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
     <ClCompile Include="src\cPtrTrace.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\cRandomDef.cpp">
+    <ClCompile Include="src\cQueue.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cRandom.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cSecurityAttributes.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\cSingleton.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\cStream.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
     <ClCompile Include="src\cStreamStack.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cString.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\cSystemInfo.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\cTempPool.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cTextPos.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\cThreadLock.cpp">
@@ -616,45 +643,6 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\StrXUnitTest.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\cHookJump.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\cTextPos.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\cMemPage.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\cFileCopier.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\cOSUser.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\cSecurityAttributes.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\cWinHeap.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\cException.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\cFile.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\cList.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\cQueue.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\cStream.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\cString.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

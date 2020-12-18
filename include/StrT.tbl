@@ -33,11 +33,6 @@ StrTTbl(ITERATE_t,TableFindHead,(const TYPE* pszFindHead, const void* ppszTableI
 StrTTbl(ITERATE_t,TableFindSorted,(const TYPE* pszFindThis, const void* ppszTableInit, ITERATE_t iCountMax, size_t iElemSize))
 StrTTbl(ITERATE_t,TableFindHeadSorted,(const TYPE* pszFindHead, const void* ppszTableInit, ITERATE_t iCountMax, size_t iElemSize))
 
-// StrTTbl(bool,GetBoolStr, (bool bDefault))
-StrTTbl(ITERATE_t,GetTableCount,(const void* ppszTableInit, size_t iElemSize))
-StrTTbl(ITERATE_t,GetTableCountSorted,(const void* ppszTableInit, size_t iElemSize))
-StrTTbl(const TYPE*,GetTableElem,(ITERATE_t iEnumVal, const void* ppszTableInit, ITERATE_t iCountMax, size_t iElemSize))
-
 // String modifiers
 
 StrTTbl(StrLen_t,CopyLen,(TYPE* pDst, const TYPE* pSrc, StrLen_t iLenMaxChars))
@@ -57,17 +52,3 @@ StrTTbl(StrLen_t,MatchRegEx,(const TYPE* pText, const TYPE* pPattern, bool bIgno
 
 StrTTbl(TYPE*,FindBlockEnd,(STR_BLOCK_TYPE eBlockType, const TYPE* pszLine, StrLen_t iLenMaxChars))
 StrTTbl(TYPE*,StripBlock,(TYPE* pszText))
-
-// Numerics 
-StrTTbl(StrLen_t,ULtoAK,(UINT64 uVal, TYPE* pszOut, StrLen_t iStrMax, UINT nKUnit, bool bSpace))
-
-//StrTTbl(UINT64,toUL,(const TYPE* pszStr, const TYPE** ppszStrEnd, RADIX_t nBaseRadix))
-//StrTTbl(INT64,toIL,(const TYPE* pszStr, const TYPE** ppszStrEnd, RADIX_t nBaseRadix))
-		// numeric to string
-//StrTTbl(StrLen_t,ULtoA,(UINT64 uVal, TYPE* pszStr, StrLen_t iStrMax, RADIX_t nBaseRadix))
-//StrTTbl(StrLen_t,ILtoA,(INT64 nVal, TYPE* pszStr, StrLen_t iStrMax, RADIX_t nBaseRadix))
-
-//StrTTbl(double,toDouble,(const TYPE* pszStr, const TYPE** ppszStrEnd))
-//StrTTbl(StrLen_t,DtoA,(double dVal, TYPE* pszStr, StrLen_t iStrMax, int iDecPlaces, char chE))
-
-

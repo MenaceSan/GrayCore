@@ -19,11 +19,11 @@ namespace Gray
 		//! @class Gray::cOSHandleSet
 		//! A collection of cOSHandle
 		//! Wait on any of a set of OS handles to be signaled.
-		//! Similar to CNetSocketSet and ::select() especially for __linux__
+		//! Similar to cNetSocketSet and ::select() especially for __linux__
 		//! Similar to _WIN32 WaitForMultipleObjects(). MAX = MAXIMUM_WAIT_OBJECTS or FD_SETSIZE
 
 	public:
-		static const int k_nHandeMax =	//! not always the same as CNetSocketSet::k_nSocketSetSize
+		static const int k_nHandeMax =	//! not always the same as cNetSocketSet::k_nSocketSetSize
 #ifdef _WIN32
 		MAXIMUM_WAIT_OBJECTS
 #else

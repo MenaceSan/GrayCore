@@ -77,7 +77,7 @@ namespace Gray
 		InitArgsInt(argc, ppszArgs);
 	}
 
-	void cAppArgs::InitArgsW(const FILECHAR_t* pszCommandArgs, const FILECHAR_t* pszSep)
+	void cAppArgs::InitArgsF(const FILECHAR_t* pszCommandArgs, const FILECHAR_t* pszSep)
 	{
 		//! set m_sArguments and parse pszCommandArgs to cArrayString. Windows WinMain() style init.
 		//! @arg pszCommandArgs = assumed to NOT contain the app path name.
@@ -270,10 +270,9 @@ namespace Gray
 			return APPSTATE_Exit;
 		}
 	}
-	void cAppState::InitAppState()
+	void cAppState::InitAppState() noexcept
 	{
 		//! The main app thread has started. often called by cAppStateMain or via InitInstance() in _MFC_VER.
-		ASSERT(m_eAppState == APPSTATE_Init);	//! Only call this once.
 		this->m_nMainThreadId = cThreadId::GetCurrentId();
 		put_AppState(APPSTATE_Run);
 	}
@@ -372,7 +371,7 @@ namespace Gray
 	ITERATE_t GRAYCALL cAppState::GetEnvironArray(cArrayString<FILECHAR_t>& a) // static
 	{
 		//! Get the full block of environ strings for this process.
-		//! similar to CVarMap or cIniSectionData
+		//! similar to cVarMap or cIniSectionData
 		//! Each entry is in the form "Var1=Value1"
 		//! http://linux.die.net/man/7/environ
 		ITERATE_t i = 0;
@@ -488,7 +487,7 @@ namespace Gray
 		//! Get a directory i can place temporary files. ends with '\'
 		//! This is decided based on the OS,User,App,
 		//! Similar to _FNF(::SHGetFolderPath)(CSIDL_INTERNET_CACHE)
-		//! Assume CInstallDir::IsInstallDirRestricted()
+		//! Assume cInstallDir::IsInstallDirRestricted()
 
 		if (!m_sTempDir.IsEmpty())
 		{
@@ -555,7 +554,7 @@ namespace Gray
 	cStringF cAppState::GetTempDir(const FILECHAR_t* pszFileDir, bool bCreate)
 	{
 		//! Get/Create a temporary folder in temporary folder space.
-		//! @arg bCreate = create the sub dir if it doesn't already exist. TODO
+		//! @arg bCreate = create the sub directory if it doesn't already exist. 
 
 		cStringF sTempDir = GetTempFile(pszFileDir);
 		if (bCreate)
@@ -590,7 +589,7 @@ namespace Gray
 		return sInvalidArgs;
 	}
 
-	void cAppState::InitArgsW(const FILECHAR_t* pszCommandArgs)
+	void cAppState::InitArgsF(const FILECHAR_t* pszCommandArgs)
 	{
 		//! Windows style (unparsed) arguments. WinMain()
 		//! Command line arguments honor "quoted strings" as a single argument.
@@ -601,7 +600,7 @@ namespace Gray
 		{
 			// Get command line from the OS ? 
 #ifdef _WIN32
-			m_Args.InitArgsW(_FNF(::GetCommandLine)());
+			m_Args.InitArgsF(_FNF(::GetCommandLine)());
 #elif defined(__linux__)
 			// Use "/proc/self/cmdline"
 			return;
@@ -609,7 +608,7 @@ namespace Gray
 		}
 		else
 		{
-			m_Args.InitArgsW(pszCommandArgs);
+			m_Args.InitArgsF(pszCommandArgs);
 		}
 
 		cStringF sAppPath = get_AppFilePath();
@@ -863,8 +862,9 @@ namespace Gray
 	{
 		//! WinMain()
 		//! Current state should be APPSTATE_Init
+		ASSERT(m_AppState.m_eAppState == APPSTATE_Init);	//! Only call this once.
 		m_AppState.InitAppState();	// set to APPSTATE_Run
-		m_AppState.InitArgsW(pszCommandArgs);
+		m_AppState.InitArgsF(pszCommandArgs);
 		ASSERT(hInstance == cAppState::get_HModule());
 		cAppState::sm_hInstance = hInstance;
 	}
@@ -874,6 +874,7 @@ namespace Gray
 	{
 		//! main() or _tmain()
 		//! Current state should be APPSTATE_Init
+		ASSERT(m_AppState.m_eAppState == APPSTATE_Init);	//! Only call this once.
 		m_AppState.InitAppState();	// set to APPSTATE_Run
 		m_AppState.InitArgs2(argc, argv);
 	}

@@ -153,10 +153,10 @@
     <ClInclude Include="cSystemInfo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CThreadArray.h">
+    <ClInclude Include="cThreadArray.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CThreadArrayString.h">
+    <ClInclude Include="cThreadArrayString.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="cThreadLocalSys.h">
@@ -315,7 +315,7 @@
     <ClInclude Include="cOSProcess.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="cListNodeSmart.h">
+    <ClInclude Include="cListNodeRef.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="cLogAppendConsole.h">

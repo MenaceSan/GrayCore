@@ -1,10 +1,10 @@
 //
-//! @file cListNodeSmart.h
+//! @file cListNodeRef.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_cListNodeSmart_H
-#define _INC_cListNodeSmart_H
+#ifndef _INC_cListNodeRef_H
+#define _INC_cListNodeRef_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
@@ -16,16 +16,18 @@
 namespace Gray
 {
 	template<class _TYPE_REC>
-	class cListNodeSmart
-	: public cListNodeT < _TYPE_REC >
-	, public cRefBase
+	class cListNodeRef
+		: public cListNodeT < _TYPE_REC >
+		, public cRefBase
 	{
-		//! @class Gray::cListNodeSmart
+		//! @class Gray::cListNodeRef
 		//! A smart pointer referenced node in a linked list. Attaching to my parent/list puts a Smart Pointer reference on me.
-		//! For Objects that are in CListT and based on cHeapObject,cListNodeBase and cRefBase
+		//! For Objects that are in cListT and based on cHeapObject, cListNodeBase and cRefBase
 		//! @note DecRefCount should "delete this;" in onFinalRelease
+
 		typedef cListNodeT<_TYPE_REC> SUPER_t;
-		typedef CListT<_TYPE_REC> PARENT_t;
+		typedef cListT<_TYPE_REC> PARENT_t;
+
 	protected:
 		virtual void put_Parent(PARENT_t* pParent)
 		{
@@ -37,5 +39,5 @@ namespace Gray
 				DecRefCount();
 		}
 	};
-};
-#endif // _INC_cListNodeSmart_H
+}
+#endif // _INC_cListNodeRef_H

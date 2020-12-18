@@ -241,10 +241,10 @@ namespace Gray
 		{
 			//! Find process Id for the hWnd.
 			//! @return 0 = can't find it. PROCESSID_BAD
-			PROCESSID_t dwProcessIDTest = PROCESSID_BAD;
-			const THREADID_t dwThreadID = ::GetWindowThreadProcessId(hWnd, &dwProcessIDTest);
+			PROCESSID_t dwProcessIDRet = PROCESSID_BAD;
+			const THREADID_t dwThreadID = ::GetWindowThreadProcessId(hWnd, &dwProcessIDRet);
 			UNREFERENCED_PARAMETER(dwThreadID);
-			return dwProcessIDTest;
+			return dwProcessIDRet;
 		}
 
 		// Stats

@@ -32,7 +32,7 @@ namespace Gray
 		virtual ~cExceptionBase()
 		{
 		}
-		virtual const char* what() const THROW_DEF = 0;
+		virtual const char* what() const THROW_DEF = 0;	// can throw ? strange.
 	};
 #elif defined(_MFC_VER)
 	// MFC throw a pointer to this structure to track an error. must call Delete() to destruct.

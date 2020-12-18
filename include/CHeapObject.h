@@ -22,7 +22,7 @@ namespace Gray
 		//! @interface Gray::IHeapObject
 		//! This is a base interface supported by objects/classes that are ALWAYS assumed allocated on the heap.
 		//! Use this because multiple inheritance can hide my top heap (freeable) pointer.
-		//! Top should implement some version of cHeapObject. e.g. "x = new CXObject"
+		//! Top should implement some version of cHeapObject. e.g. "x = new cXObject"
 
 		IGNORE_WARN_INTERFACE(IHeapObject);
 
@@ -91,7 +91,7 @@ namespace Gray
 			iAllocCount++;
 			return cHeapAlign::GetSize(get_HeapPtr());
 		}
-		virtual bool isValidCheck() const
+		virtual bool isValidCheck() const noexcept
 		{
 			//! @note can't call this in a destructor since get_HeapPtr() is virtual.
 			if (!cMem::IsValidApp(this))	// NOT be based on nullptr ? sanity check.

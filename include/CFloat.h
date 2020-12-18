@@ -56,7 +56,7 @@ namespace Gray
 		{
 			//! reinterpret a float as an UINT32 assuming IEEE 32
 			//! Warning in __GNUC__ reinterpret_ warning: dereferencing type-punned pointer will break strict-aliasing rules [-Wstrict-aliasing]
-			UINT32 dst;
+			UINT32 dst = 0;
 			STATIC_ASSERT(sizeof(src) == sizeof(dst), toBits);
 			::memcpy(&dst, &src, sizeof(dst));
 			return dst;
@@ -65,7 +65,7 @@ namespace Gray
 		{
 			//! reinterpret an UINT32 as a float assuming IEEE 32
 			//! Warning in __GNUC__ reinterpret_ warning: dereferencing type-punned pointer will break strict-aliasing rules [-Wstrict-aliasing]
-			float dst;
+			float dst = 0;
 			STATIC_ASSERT(sizeof(src) == sizeof(dst), fromBits);
 			::memcpy(&dst, &src, sizeof(dst));
 			return dst;

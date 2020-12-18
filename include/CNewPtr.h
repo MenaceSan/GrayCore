@@ -25,10 +25,10 @@ namespace Gray
 		typedef cPtrFacade<TYPE> SUPER_t;
 
 	public:
-		cNewPtr()
+		cNewPtr() noexcept
 		{
 		}
-		explicit cNewPtr(TYPE* pObj)
+		explicit cNewPtr(TYPE* pObj) noexcept
 			: cPtrFacade<TYPE>(pObj)
 		{
 			// explicit to make sure we don't copy an allocated pointer accidentally.
@@ -36,7 +36,7 @@ namespace Gray
 
 	private:
 		// Don't allow this ! copy would be risky.
-		cNewPtr(const THIS_t& rObj)
+		cNewPtr(const THIS_t& rObj) noexcept
 			: cPtrFacade<TYPE>(nullptr)
 		{
 			//! copy the contents? beware performance problems here. I don't know if its a derived type or array?

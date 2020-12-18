@@ -37,49 +37,49 @@ namespace Gray
 		TIMESEC_t m_time;	//!< Seconds. Essentially the UNIX long time format. (not usable after 2018 unless 64 bit?)
 
 	public:
-		CTime(TIMESEC_t nTime = ((TIMESEC_t)0))
+		CTime(TIMESEC_t nTime = ((TIMESEC_t)0)) noexcept
 		: m_time(nTime)
 		{
 		}
 		CTime(const cTimeFile& fileTime, int nDST = -1);
 
-		const CTime& operator=(const CTime& timeSrc)
+		const CTime& operator=(const CTime& timeSrc) noexcept
 		{
 			m_time = timeSrc.m_time;
 			return *this;
 		}
-		const CTime& operator=(TIMESEC_t nTime)
+		const CTime& operator=(TIMESEC_t nTime) noexcept
 		{
 			m_time = nTime;
 			return *this;
 		}
 
-		bool operator<=(TIMESEC_t nTime) const
+		bool operator<=(TIMESEC_t nTime) const noexcept
 		{
 			return(m_time <= nTime);
 		}
-		bool operator==(TIMESEC_t nTime) const
+		bool operator==(TIMESEC_t nTime) const noexcept
 		{
 			return(m_time == nTime);
 		}
-		bool operator!=(TIMESEC_t nTime) const
+		bool operator!=(TIMESEC_t nTime) const noexcept
 		{
 			return(m_time != nTime);
 		}
-		bool operator>=(CTime ttime) const
+		bool operator>=(CTime ttime) const noexcept
 		{
 			return(m_time >= ttime.m_time);
 		}
 
-		operator TIMESEC_t() const
+		operator TIMESEC_t() const noexcept
 		{
 			return m_time;
 		}
-		TIMESEC_t GetTime() const	// Assume time in seconds. (MFC like)
+		TIMESEC_t GetTime() const noexcept	// Assume time in seconds. (MFC like)
 		{
 			return m_time;
 		}
-		TIMESEC_t GetTotalSeconds() const
+		TIMESEC_t GetTotalSeconds() const noexcept
 		{
 			return m_time;
 		}
@@ -129,7 +129,8 @@ namespace Gray
 		{
 			InitTimeUnits(rTu);
 		}
-		static TIMESEC_t GRAYCALL GetTimeFromDays(double dTimeDays);
+		static TIMESEC_t GRAYCALL GetTimeFromDays(double dTimeDays) noexcept;
+
 		cTimeInt(double dTimeDays) : CTime(GetTimeFromDays(dTimeDays))
 		{
 		}
@@ -147,9 +148,9 @@ namespace Gray
 		{ return (TIMESEC_t) SUPER_t::GetTime(); } // convert 64 bit time to old 32 bit form?
 #endif
 
-		static cTimeInt GRAYCALL GetTimeNow();
+		static cTimeInt GRAYCALL GetTimeNow() noexcept;
 
-		static cTimeInt GRAYCALL GetCurrentTime()
+		static cTimeInt GRAYCALL GetCurrentTime() noexcept
 		{
 			//! Alternate name for MFC.
 			//! @note GetCurrentTime() is "#define" by _WIN32 to GetTickCount() so i cant use that name!

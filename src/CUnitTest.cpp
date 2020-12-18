@@ -19,6 +19,7 @@
 #include "cTypes.h"
 #include "cTimeDouble.h"
 #include "cAppImpl.h"
+#include "cFileCopier.h"
 
 namespace Gray
 {
@@ -26,14 +27,15 @@ namespace Gray
 	{
 		//! @class Gray::cUnitTestLogger
 		//! special log file for unit test output.
-		
-		cFile m_File; // like CLogFileDay
+
+		cFile m_File; // like cLogFileDay
 
 	public:
 		IUNKNOWN_DISAMBIG(cRefBase);
 
 		bool CreateLogFile(const FILECHAR_t* pszFileDir)
 		{
+			// Create a daily file.
 			cTimeUnits tStart;
 			tStart.InitTimeNow();
 			cStringF sLogFileName;
@@ -61,7 +63,9 @@ namespace Gray
 
 	int	cUnitTestCur::sm_nCreatedUnitTests = 0;
 
-	const cStrConst cUnitTestCur::k_asTextLines[k_TEXTLINES_QTY+1] =	// sample test data
+	const FILECHAR_t* cUnitTestCur::k_TestFiles = _FN("TestFiles");
+
+	const cStrConst cUnitTestCur::k_asTextLines[k_TEXTLINES_QTY + 1] =	// sample test data
 	{
 		CSTRCONST("four"),
 		CSTRCONST("one"),
@@ -114,77 +118,78 @@ do ordain and establish this constitution of the United States of America\n\n");
 		STATIC_ASSERT(sizeof(INT32) == 4, INT32);
 		STATIC_ASSERT(sizeof(UINT32) == 4, UINT32);
 		STATIC_ASSERT(sizeof(cUnion32) == 4, cUnion32);	// 32 bits exactly.
+		STATIC_ASSERT(sizeof(DWORD) == 4, DWORD);			// _MSC_VER 64=4, _MSC_VER 32=4
 		STATIC_ASSERT(sizeof(INT64) == 8, INT64);
 		STATIC_ASSERT(sizeof(UINT64) == 8, UINT64);
 		STATIC_ASSERT(sizeof(cUnion64) == 8, cUnion64);	// 64 bits exactly.
-		STATIC_ASSERT(sizeof(DWORD) == 4, DWORD);			// _MSC_VER 64=4, _MSC_VER 32=4
 
-		size_t iSizeBool = sizeof(bool);	// _MSC_VER 32=1, _MSC_VER 64=1
-		UNITTEST_TRUE(iSizeBool == 1);
-		size_t iSizeEnum = sizeof(enum UNITTEST_LEVEL_TYPE);	// __MSC_VER 32=4, _MSC_VER 64=4
-		UNITTEST_TRUE(iSizeEnum == 4);
-		size_t nSizeWChar = sizeof(wchar_t);	// _MSC_VER 64=2, __MSC_VER 32=2
+		const size_t iSizeBool = sizeof(bool);	// _MSC_VER 32=1, _MSC_VER 64=1
+		STATIC_ASSERT(iSizeBool == 1, iSizeBool);
+		const size_t iSizeEnum = sizeof(enum UNITTEST_LEVEL_TYPE);	// __MSC_VER 32=4, _MSC_VER 64=4
+		STATIC_ASSERT(iSizeEnum == 4, iSizeEnum);
+		const size_t nSizeWChar = sizeof(wchar_t);	// _MSC_VER 64=2, __MSC_VER 32=2
 #ifdef __GNUC__
-		UNITTEST_TRUE(nSizeWChar == 4);
+		STATIC_ASSERT(nSizeWChar == 4, nSizeWChar); // weird.
 #else
-		UNITTEST_TRUE(nSizeWChar == 2);
+		STATIC_ASSERT(nSizeWChar == 2, nSizeWChar);
 #endif
 
-		size_t iSizeFloat = sizeof(float);	// __MSC_VER 32=4, _MSC_VER 64=4
-		UNITTEST_TRUE(iSizeFloat == 4);
-		size_t iSizeDouble = sizeof(double);	// __MSC_VER 32=8, _MSC_VER 64=8
-		UNITTEST_TRUE(iSizeDouble == 8);	// 64 bits
+		const size_t iSizeFloat = sizeof(float);	// __MSC_VER 32=4, _MSC_VER 64=4
+		STATIC_ASSERT(iSizeFloat == 4, iSizeFloat);
+		const size_t iSizeDouble = sizeof(double);	// __MSC_VER 32=8, _MSC_VER 64=8
+		STATIC_ASSERT(iSizeDouble == 8, iSizeDouble);  // 64 bits
 
 #ifdef USE_LONG_DOUBLE
-	// long double = 10 byte, 80 bit float point ? ieee854_float80_t
-		UNITTEST_TRUE(sizeof(long double) > 8);
+		const size_t iSizeLongDouble = sizeof(long double);
+		// long double = 10 byte, 80 bit float point ? ieee854_float80_t
+		STATIC_ASSERT(iSizeLongDouble > 8, iSizeLongDouble);
 #endif
 
 #ifdef _WIN32
 		STATIC_ASSERT(true == TRUE, TRUE);	// _WIN32 only
-		bool bVal = true;
-		UNITTEST_TRUE(((BYTE)bVal) == 1);
-		bVal = false;
-		UNITTEST_TRUE(((BYTE)bVal) == 0);
+		const bool bVal1 = true;
+		STATIC_ASSERT(((BYTE)bVal1) == 1, bVal1);
+		const bool bVal0 = false;
+		STATIC_ASSERT(((BYTE)bVal0) == 0, bVal0);
 
-		size_t nSizeUINT_PTR = sizeof(UINT_PTR);	// _WIN32=4 _WIN64=8
-		UNITTEST_TRUE(nSizeUINT_PTR >= 4);
-		size_t nSizeATOM = sizeof(ATOM);			// _WIN32=2 _WIN64=2
-		UNITTEST_TRUE(nSizeATOM == 2);
-		size_t nSizeHWND = sizeof(HWND);			// _WIN32=4 _WIN64=8
-		UNITTEST_TRUE(nSizeHWND >= 4);
-		size_t nSizeHCURSOR = sizeof(HCURSOR);		// _WIN32=4 _WIN64=8
-		UNITTEST_TRUE(nSizeHCURSOR >= 4);
-		size_t nSizePOINT = sizeof(POINT);			// _WIN32=8 _WIN64=8
-		UNITTEST_TRUE(nSizePOINT == 8);
-		size_t nSizeMSG = sizeof(MSG);				// _WIN32=28 _WIN64=48
-		UNITTEST_TRUE(nSizeMSG >= 2);
+		const size_t nSizeUINT_PTR = sizeof(UINT_PTR);	// _WIN32=4 _WIN64=8
+		STATIC_ASSERT(nSizeUINT_PTR >= 4, nSizeUINT_PTR);
+		const size_t nSizeATOM = sizeof(ATOM);			// _WIN32=2 _WIN64=2
+		STATIC_ASSERT(nSizeATOM == 2, nSizeATOM);
+		const size_t nSizeHWND = sizeof(HWND);			// _WIN32=4 _WIN64=8
+		STATIC_ASSERT(nSizeHWND >= 4, nSizeHWND);
+		const size_t nSizeHCURSOR = sizeof(HCURSOR);		// _WIN32=4 _WIN64=8
+		STATIC_ASSERT(nSizeHCURSOR >= 4, nSizeHCURSOR);
+		const size_t nSizePOINT = sizeof(POINT);			// _WIN32=8 _WIN64=8
+		STATIC_ASSERT(nSizePOINT == 8, nSizePOINT);
+		const size_t nSizeMSG = sizeof(MSG);				// _WIN32=28 _WIN64=48
+		STATIC_ASSERT(nSizeMSG >= 2, nSizeMSG);
 #endif
 
 		// Test the ambiguous/questionable types first.
-		size_t iSizeInt = sizeof(int);		// _MSC_VER 64=4, and _MSC_VER 32=4
-		UNITTEST_TRUE(iSizeInt == 4);
+		const size_t iSizeInt = sizeof(int);		// _MSC_VER 64=4, and _MSC_VER 32=4
+		STATIC_ASSERT(iSizeInt == 4, iSizeInt);
 
 		// USE_LONG_AS_INT64 // 4 or 8 ?
-		size_t iSizeLong = sizeof(long);		// _MSC_VER 64=4 _MSC_VER 32=4, __GNUC__ 64=?
-		UNITTEST_TRUE(iSizeLong >= 4);
-		UNITTEST_TRUE(iSizeLong == _SIZEOF_LONG);
-		size_t iSizeLongInt = sizeof(long int);		// _MSC_VER 64=4, _MSC_VER 32=4
-		UNITTEST_TRUE(iSizeLong == iSizeLongInt);
+		const size_t iSizeLong = sizeof(long);		// _MSC_VER 64=4 _MSC_VER 32=4, __GNUC__ 64=?
+		STATIC_ASSERT(iSizeLong >= 4, iSizeLong);
+		STATIC_ASSERT(iSizeLong == _SIZEOF_LONG, _SIZEOF_LONG);
+		const size_t iSizeLongInt = sizeof(long int);		// _MSC_VER 64=4, _MSC_VER 32=4
+		STATIC_ASSERT(iSizeLongInt == iSizeLong, iSizeLongInt);
 
-		size_t nSizeSize = sizeof(size_t);		// _MSC_VER 64=8 _MSC_VER 32=4
-		UNITTEST_TRUE(nSizeSize >= 4);
-
-		StrLen_t nLenStrA = StrT::Len<char>(k_sTextBlob);
-		StrLen_t nLenStrW = StrT::Len<wchar_t>(k_sTextBlob);
-		UNITTEST_TRUE(nLenStrW == nLenStrA);
-		UNITTEST_TRUE(nLenStrA == k_TEXTBLOB_LEN);
+		const size_t nSizeSize = sizeof(size_t);		// _MSC_VER 64=8 _MSC_VER 32=4
+		STATIC_ASSERT(nSizeSize >= 4, nSizeSize);
 
 #define k_abc "abcdefghijkl"
-		UNITTEST_TRUE(sizeof(k_abc) == 13);	// confirm presumed behavior
-		UNITTEST_TRUE(_countof(k_abc) == 13);	// confirm presumed behavior
-		UNITTEST_TRUE(STRMAX(k_abc) == 12);
+		STATIC_ASSERT(sizeof(k_abc) == 13, k_abc);	// confirm presumed behavior
+		STATIC_ASSERT(_countof(k_abc) == 13, k_abc);	// confirm presumed behavior
+		STATIC_ASSERT(STRMAX(k_abc) == 12, k_abc);
 #undef k_abc
+
+		const StrLen_t nLenStrA = StrT::Len<char>(k_sTextBlob);
+		const StrLen_t nLenStrW = StrT::Len<wchar_t>(k_sTextBlob);
+		UNITTEST_TRUE(nLenStrW == nLenStrA);
+		UNITTEST_TRUE(nLenStrA == k_TEXTBLOB_LEN);
 
 		// is endian set correctly ?
 		cUnion32 u32;
@@ -196,17 +201,17 @@ do ordain and establish this constitution of the United States of America\n\n");
 #endif
 
 #ifndef __GNUC__
-		size_t iOffset = offsetof(cException, m_pszDescription);	// NOTE: Always has a warning using __GNUC__
-		UNITTEST_TRUE(iOffset > 8);	// check offsetof().
+		const size_t iOffset = offsetof(cException, m_pszDescription);	// NOTE: Always has a warning using __GNUC__
+		STATIC_ASSERT(iOffset > 8, iOffset);	// check offsetof().
 #endif
 
 	// Test some size assumptions. cPtrFacade
 		cNewPtr<int> pNewObj;
-		UNITTEST_TRUE(sizeof(cNewPtr<int>) == sizeof(int*));
+		STATIC_ASSERT(sizeof(cNewPtr<int>) == sizeof(void*), cNewPtr);
 		cRefBasePtr pRefObj;
-		UNITTEST_TRUE(sizeof(cRefBasePtr) == sizeof(cRefBase*));
+		STATIC_ASSERT(sizeof(cRefBasePtr) == sizeof(void*), cRefBasePtr);
 		cIUnkBasePtr pIRefObj;
-		// UNITTEST_TRUE( sizeof(cIUnkBasePtr) == sizeof(IUnknown*));
+		STATIC_ASSERT(sizeof(cIUnkBasePtr) >= sizeof(void*), cIUnkBasePtr);	// may have extra stuff!
 
 		// Test CHECKPTR_CAST(TYPE2, get_Single());
 		cAppState* pTest1 = cAppState::get_Single();
@@ -270,7 +275,13 @@ do ordain and establish this constitution of the United States of America\n\n");
 		, m_iFailures(0)
 		, m_nTestLevel(UNITTEST_LEVEL_Common) // UNITTEST_LEVEL_Common
 	{
- 
+		cTimePerf::InitFreq();	// make sure this gets called. OK to call again.
+
+		// TODO cRandom g_Rand Seed ?
+
+		// Attach logger.
+		m_pLog = cLogMgr::get_Single();  // use normal logging nexus by default.
+
 		// Get path to supporting test files 
 		// e.g. "C:\Dennis\Source\bin\x64v142"
 		m_sTestInpDir = cAppState::get_CurrentDir();
@@ -281,12 +292,45 @@ do ordain and establish this constitution of the United States of America\n\n");
 #endif
 		ASSERT(!m_sTestInpDir.IsEmpty());
 
-		m_sTestOutDir = cAppState::I().GetTempDir(_FN(GRAY_NAMES));
+		m_sTestOutDir = cAppState::I().GetTempDir(_FN(GRAY_NAMES));	// create it if needed.
 		ASSERT(!m_sTestOutDir.IsEmpty());
 
-		// Attach logger.
-		m_pLog = cLogMgr::get_Single();  // route logs here.
-		cTimePerf::InitFreq();	// make sure this gets called. OK to call again.
+		// Make sure all my test files are copied to the m_sTestOutDir
+		InitTestOutDir();
+	}
+
+	HRESULT cUnitTests::InitTestOutDir()
+	{
+		cStringF dstDir = cFilePath::CombineFilePathX(get_TestOutDir(), k_TestFiles);
+		HRESULT hRes = cFileDir::CreateDirectory1(dstDir);
+
+		int nCount = 0;
+		cFileFind dir1(m_sTestInpDir);
+		hRes = dir1.FindFile();
+		for (; SUCCEEDED(hRes); hRes = dir1.FindFileNext())
+		{
+			// Is this entry something to copy?
+			if (dir1.isDots())
+				continue;
+			if (dir1.m_FileEntry.m_sFileName.StartsWithI(GRAY_NAMES))
+				continue;
+			// Don't bother copying it if it looks the same.
+			cStringF dstPath = cFilePath::CombineFilePathX(dstDir, dir1.m_FileEntry.m_sFileName);
+			cFileStatus dstStatus;
+			hRes = dstStatus.ReadFileStatus(dstPath);
+			if (FAILED(hRes) && hRes != HRESULT_WIN32_C(ERROR_FILE_NOT_FOUND))
+				break;
+			if (dstStatus.IsFileEqualTo(dir1.m_FileEntry)) // 
+				continue;
+			hRes = cFileCopier::CopyFileX(dir1.get_FilePath(), dstPath);
+			if (FAILED(hRes))
+				break;
+			cFileStatus::WriteFileTimes(dstPath, dir1.m_FileEntry);
+			nCount++;
+		}
+		if (hRes == HRESULT_WIN32_C(ERROR_NO_MORE_ITEMS))
+			return nCount;
+		return hRes;
 	}
 
 	bool cUnitTests::RegisterUnitTest(cUnitTestRegister* pTest)
@@ -328,17 +372,40 @@ do ordain and establish this constitution of the United States of America\n\n");
 		return m_sTestOutDir.get_CPtr();
 	}
 
-	const FILECHAR_t* cUnitTests::get_TestInpDir() const  
+	const FILECHAR_t* cUnitTests::get_TestInpDir() const
 	{
 		//! Get source of input files for tests.
-		//! e.g. "C:\Dennis\Source\Gray\", "C:\Dennis\Source\bin\x64v142"
+		//! e.g. "C:\Dennis\Source\Gray\" or "C:\Dennis\Source\bin\x64v142"
 		return m_sTestInpDir.get_CPtr();
 	}
 
-	void cUnitTests::SetTestLevel(UNITTEST_LEVEL_TYPE nTestLevel)  
+	void cUnitTests::SetTestLevel(UNITTEST_LEVEL_TYPE nTestLevel)
 	{
 		m_nTestLevel = nTestLevel;
 		m_iFailures = 0;
+	}
+
+	bool cUnitTests::TestActive(const cUnitTestRegister* pUnitTest, bool remove)
+	{
+		// Is this test active ?
+		if (pUnitTest->m_nTestLevel > m_nTestLevel)
+			return false;
+		if (m_aTestNames.GetData() != nullptr)	// filter.
+		{
+			for (int j = 0; j < m_aTestNames.GetSize(); j++)
+			{
+				if (StrT::MatchRegEx<LOGCHAR_t>(pUnitTest->m_pszTestName, m_aTestNames[j], true) > 0)
+				{
+					if (remove)
+					{
+						m_aTestNames.RemoveAt(j);	// found it.
+					}
+					return true;
+				}
+			}
+			return false;
+		}
+		return true;
 	}
 
 	bool cUnitTests::IsTestInteractive() const noexcept
@@ -356,7 +423,7 @@ do ordain and establish this constitution of the United States of America\n\n");
 		return false;
 	}
 
-	bool cUnitTests::TestInteractivePrompt(const char* pszMsg) noexcept  
+	bool cUnitTests::TestInteractivePrompt(const char* pszMsg) noexcept
 	{
 		//! prompt the user to manually check some output from the test.
 		//! require user to press key or button.
@@ -381,7 +448,7 @@ do ordain and establish this constitution of the United States of America\n\n");
 
 	void cUnitTests::RunInitialize()
 	{
-		// Where to send the test output?
+		// Where to send the test output?  Clear the temporary directory ?
 		m_pAssertOrig = cDebugAssert::sm_pAssertCallback;
 		cDebugAssert::sm_pAssertCallback = UnitTest_AssertCallback;		// route asserts back here.
 
@@ -399,7 +466,7 @@ do ordain and establish this constitution of the United States of America\n\n");
 
 	void cUnitTests::RunCleanup()
 	{
-		// Clear the temporary directory ? get_TestOutDir()
+		// get_TestOutDir()
 		cLogMgr& logger = cLogMgr::I();
 		logger.RemoveAppenderType(typeid(cUnitTestLogger), true);
 		cDebugAssert::sm_pAssertCallback = m_pAssertOrig;	// restore.
@@ -426,15 +493,16 @@ do ordain and establish this constitution of the United States of America\n\n");
 		m_pLog->addDebugInfoF("cUnitTests input from '%s'", LOGSTR(m_sTestInpDir));
 		m_pLog->addDebugInfoF("cUnitTests output to '%s'", LOGSTR(m_sTestOutDir));
 
-		cArrayString<LOGCHAR_t> aNames;
 		if (pszTestNameMatch == nullptr)
 		{
 			m_pLog->addDebugInfoF("cUnitTests STARTING %d TESTS at level %d", m_aUnitTests.GetSize(), nTestLevel);
+			m_aTestNames.RemoveAll();
 		}
 		else
 		{
 			m_pLog->addDebugInfoF("cUnitTests STARTING '%s' from %d TESTS", LOGSTR(pszTestNameMatch), m_aUnitTests.GetSize());
-			aNames.SetStrSep(pszTestNameMatch, ',');
+			m_aTestNames.SetStrSep(pszTestNameMatch, ',');
+			// m_nTestLevel ?
 		}
 
 		// Display build/compile info. date, compiler, _MFC_VER/_AFXDLL, 64/32 bit.
@@ -457,23 +525,8 @@ do ordain and establish this constitution of the United States of America\n\n");
 		for (ITERATE_t i = 0; i < m_aUnitTests.GetSize(); i++)
 		{
 			cUnitTestRegister* pUnitTest = m_aUnitTests[i];
-			if (pszTestNameMatch == nullptr)
-			{
-				if (pUnitTest->m_nTestLevel > m_nTestLevel)
-					continue;
-			}
-			else
-			{
-				int j = 0;
-				for (; j < aNames.GetSize(); j++)
-				{
-					if (StrT::MatchRegEx<LOGCHAR_t>(pUnitTest->m_pszTestName, aNames[j], true) > 0)
-						break;
-				}
-				if (j >= aNames.GetSize())	// NOT matched.
-					continue;
-				aNames.RemoveAt(j);	// Did this.
-			}
+			if (!TestActive(pUnitTest, true))
+				continue;
 
 			StrLen_t iLenName = StrT::Len(pUnitTest->m_pszTestName) + 1;
 			UNITTEST_TRUE(iLenName > 0 && iLenName < STRMAX(szDashes));
@@ -525,10 +578,10 @@ do ordain and establish this constitution of the United States of America\n\n");
 		m_pLog->addDebugInfoF("cUnitTests ENDING %d/%d TESTS in %s", iTestsRun, m_aUnitTests.GetSize(),
 			LOGSTR(cTimeInt::GetTimeSpanStr(tStart.get_AgeSec())));
 
-		if (pszTestNameMatch != nullptr && aNames.GetSize() > 0)
+		if (pszTestNameMatch != nullptr && m_aTestNames.GetSize() > 0)
 		{
 			// Didn't find some names !
-			m_pLog->addDebugInfoF("cUnitTest FAILED to find test for '%s'", LOGSTR(aNames[0]));
+			m_pLog->addDebugInfoF("cUnitTest FAILED to find test for '%s'", LOGSTR(m_aTestNames[0]));
 		}
 
 #ifdef USE_IUNK_TRACE

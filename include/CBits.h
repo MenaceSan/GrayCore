@@ -16,7 +16,7 @@ namespace Gray
 {
 	UNITTEST2_PREDEF(cBits);
 
-	typedef unsigned int BIT_ENUM_t;	//!< Enumerate number of bits or address a single bit.
+	typedef unsigned int BIT_ENUM_t;	//!< Enumerate number of bits or address a single bit in some array of bits.
 	enum BITOP_TYPE
 	{
 		//! @enum Gray::BITOP_TYPE
@@ -50,15 +50,15 @@ namespace Gray
 
 		static const BYTE k_8 = 8;	//!< represent the 8 bits in a byte. BIT_ENUM_t
 
-		static inline size_t GetSizeBytes(BIT_ENUM_t nBits)
+		static constexpr size_t GetSizeBytes(BIT_ENUM_t nBits)
 		{
 			//! How many bytes to hold these bits. Round up to next byte.
-#define GETSIZEBYTES(nBits) (((nBits)+7)/8)		// for use in const
+#define GETSIZEBYTES(nBits) (((nBits)+7)/8)		// equiv for use in const
 			return (nBits + 7) / k_8;
 		}
 
 		template <typename TYPE>
-		static inline TYPE Mask1(BIT_ENUM_t nBit)
+		static constexpr TYPE Mask1(BIT_ENUM_t nBit)
 		{
 			//! Create a 1 bit mask of a given TYPE. Overflow/Underflow is just lost.
 			//! _1BITMASK(nBit) = cBits::Mask1<size_t>(nBit).
@@ -66,41 +66,41 @@ namespace Gray
 			return(((TYPE)1) << nBit);
 		}
 		template <typename TYPE>
-		static inline bool IsMask1(TYPE nVal)
+		static constexpr bool IsMask1(TYPE nVal)
 		{
 			//! Does this just have a single bit on ? Is power of 2 ?
 			return ((nVal != 0) && ((nVal & (nVal - 1)) == 0));
 		}
 
 		template <typename TYPE>
-		static inline bool IsSet(TYPE nVal, BIT_ENUM_t nBit)
+		static constexpr bool IsSet(TYPE nVal, BIT_ENUM_t nBit)
 		{
 			//! Test if a bit is set.
 			return((nVal & Mask1<TYPE>(nBit)) ? true : false);
 		}
 		template <typename TYPE>
-		static inline bool IsClear(TYPE nVal, BIT_ENUM_t nBit)
+		static constexpr bool IsClear(TYPE nVal, BIT_ENUM_t nBit)
 		{
 			//! Test if a bit is NOT set.
 			return((nVal & Mask1<TYPE>(nBit)) ? false : true);
 		}
 
 		template <typename TYPE>
-		static inline TYPE SetBit(TYPE nVal, BIT_ENUM_t nBit)
+		static constexpr TYPE SetBit(TYPE nVal, BIT_ENUM_t nBit)
 		{
 			return nVal | Mask1<TYPE>(nBit);
 		}
 		template <typename TYPE>
-		static inline TYPE ClearBit(TYPE nVal, BIT_ENUM_t nBit)
+		static constexpr TYPE ClearBit(TYPE nVal, BIT_ENUM_t nBit)
 		{
 			return nVal & ~Mask1<TYPE>(nBit);
 		}
 
 		template <typename TYPE>
-		static inline bool HasMask(TYPE nVal, TYPE nMask)
+		static constexpr bool HasMask(TYPE nVal, TYPE nMask)
 		{
 			//! Any nMask bits set ?
-			return((nVal & nMask) != 0);
+			return (nVal & nMask) != 0 ;
 		}
 
 		template <typename TYPE>

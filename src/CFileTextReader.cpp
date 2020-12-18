@@ -8,10 +8,8 @@
 namespace Gray
 {
 	cFileTextReader::cFileTextReader(size_t nSizeLineMax)
-		: cStreamStackInp(&m_File, nSizeLineMax)
+		: cStreamTextReader(m_File, nSizeLineMax)
 	{
-		// Max buffer size = max lien length.
-		this->put_AutoReadCommit((ITERATE_t)(nSizeLineMax / 2));		// default = half buffer.
 	}
 
 	cFileTextReader::~cFileTextReader()
@@ -25,7 +23,7 @@ namespace Gray
 		return m_File.OpenX(pszName, uShareFlags);
 	}
 
-	HRESULT cFileTextReader::ReadStringLine(OUT const char** ppszLine)
+	HRESULT cStreamTextReader::ReadStringLine(OUT const char** ppszLine)
 	{
 		//! Read a line of text. like fgets().
 		//! Read up until (including) newline character = \n = The newline character, if read, is included in the string.
@@ -78,7 +76,7 @@ namespace Gray
 		return i;		// length.
 	}
 
-	HRESULT cFileTextReader::ReadStringLine(OUT char* pszBuffer, StrLen_t iSizeMax) // override // virtual
+	HRESULT cStreamTextReader::ReadStringLine(OUT char* pszBuffer, StrLen_t iSizeMax) // override // virtual
 	{
 		//! @arg iSizeMax = Maximum number of characters to be copied into pszBuffer (including room for the the terminating '\0' character).
 		//! @return
@@ -90,18 +88,18 @@ namespace Gray
 		HRESULT hRes = ReadStringLine(&pszLine);
 		if (FAILED(hRes))
 			return hRes;
-		size_t nSizeCopy = MIN(hRes, iSizeMax-1 );
+		size_t nSizeCopy = MIN(hRes, iSizeMax - 1);
 		cMem::Copy(pszBuffer, pszLine, nSizeCopy);
 		pszBuffer[nSizeCopy] = '\0';
-		return nSizeCopy;
+		return (HRESULT)nSizeCopy;
 	}
 
-	STREAM_SEEKRET_t cFileTextReader::Seek(STREAM_OFFSET_t iOffset, SEEK_ORIGIN_TYPE eSeekOrigin) // override;
+	STREAM_SEEKRET_t cStreamTextReader::Seek(STREAM_OFFSET_t iOffset, SEEK_ORIGIN_TYPE eSeekOrigin) // override;
 	{
 		//! @arg eSeekOrigin = // SEEK_SET ?
 		//! @return the New position, -1=FAILED
 
-		STREAM_SEEKRET_t nPosFile = m_File.GetPosition();	// WriteIndex
+		STREAM_SEEKRET_t nPosFile = m_reader.GetPosition();	// WriteIndex
 		ITERATE_t iReadQty = this->get_ReadQty();		// what i have buffered.
 
 		switch (eSeekOrigin)
@@ -115,12 +113,12 @@ namespace Gray
 			}
 			// outside current buffer.
 			this->EmptyQ();
-			return m_File.Seek(nPosFile + iOffset - iReadQty, SEEK_Set);
+			return m_reader.Seek(nPosFile + iOffset - iReadQty, SEEK_Set);
 
 		case SEEK_End:
 			if (iOffset > 0)
 				break;
-			iOffset += m_File.GetLength();
+			iOffset += m_reader.GetLength();
 
 			// Fall through.
 
@@ -134,7 +132,7 @@ namespace Gray
 			}
 			// outside current buffer.
 			this->EmptyQ();
-			return m_File.Seek(iOffset, SEEK_Set);
+			return m_reader.Seek(iOffset, SEEK_Set);
 
 		default:
 			break;

@@ -32,7 +32,7 @@ namespace Gray
 	{
 		//! @class Gray::cIUnkPtr
 		//! Smart pointer to an IUnknown based object.
-		//! like _WIN32 ATL CComPtr<> or "com_ptr_t"
+		//! like _WIN32 ATL cComPtr<> or "com_ptr_t"
 		//! TYPE must be based on IUnknown
 
 #ifdef USE_IUNK_TRACE
@@ -134,6 +134,8 @@ namespace Gray
 		}
 		void** get_PPtrV()
 		{
+			//! get a ** to assign the pointer.
+			//! assume the caller has added the first reference for me. Don't call AddRef! 
 			//! use IUNK_GETPPTRV() macro to track this with USE_IUNK_TRACE.
 			//! QueryInterface() and others don't like the typing.
 			ReleasePtr();
@@ -196,6 +198,7 @@ namespace Gray
 		}
 		HRESULT SetQI(IUnknown* p2)
 		{
+			//! set the proper pointer for this interface.
 			//! Do proper COM style dynamic_cast for Interface using QueryInterface.
 			return SetQI(p2, GetIID());
 		}
@@ -267,6 +270,7 @@ namespace Gray
 		//! auto stack based only.
 	private:
 		cIUnkPtr<TYPE>& m_rpIObj;	//!< track the open IUnk
+
 	public:
 		cIUnkTraceOpaque(cIUnkPtr<TYPE>& rpObj, const cDebugSourceLine& src)
 			: m_rpIObj(rpObj)

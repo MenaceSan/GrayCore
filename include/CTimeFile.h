@@ -104,29 +104,29 @@ namespace Gray
 		}
 #endif
 
-		FILETIME_t& ref_Val()
+		FILETIME_t& ref_Val() noexcept
 		{
 			//! @return 64-bit integer 100-nanosecond intervals since January 1, 1601 GMT
 			//! Warning in __GNUC__ reinterpret_ warning: dereferencing type-punned pointer will break strict-aliasing rules [-Wstrict-aliasing]
 			return *reinterpret_cast<FILETIME_t*>(static_cast<FILETIME*>(this));
 		}
-		FILETIME_t get_Val() const
+		FILETIME_t get_Val() const noexcept
 		{
 			//! @return 64-bit integer 100-nanosecond intervals since January 1, 1601 GMT
 			//! Warning in __GNUC__ reinterpret_ warning: dereferencing type-punned pointer will break strict-aliasing rules [-Wstrict-aliasing]
 			return *reinterpret_cast<const FILETIME_t*>(static_cast<const FILETIME*>(this));
 		}
 
-		FILETIME_t get_FAT32() const
+		FILETIME_t get_FAT32() const noexcept
 		{
 			//! get the time truncated to 2 second intervals for FAT32.
 			//! 2 second accurate for FAT32
-			//! @note This is not really in proper FAT32/DosDate format. see cTimeUnits DosDate.
+			//! @note This is not really in proper FILETIME_t or FAT32/DosDate format. see cTimeUnits DosDate.
 			return get_Val() / (2 * k_nFreq);
 		}
 		TIMESECD_t get_AgeSec() const;
 
-		bool isValid() const
+		bool isValid() const noexcept
 		{
 			if (get_Val() == 0)
 				return false;

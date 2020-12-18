@@ -170,25 +170,25 @@ namespace Gray
 		_TYPE_B m_b;	//!< nullptr or 0 = last in array.
 
 	public:
-		_TYPE_A get_A() const
+		_TYPE_A get_A() const noexcept
 		{
 			return this->m_a;	// Key
 		}
-		_TYPE_B get_B() const
+		_TYPE_B get_B() const noexcept
 		{
 			return this->m_b;	// Value
 		}
-		_TYPE_A get_HashCode() const
+		_TYPE_A get_HashCode() const noexcept
 		{
 			//! Support this in case anyone wants to use it.
 			return m_a;
 		}
 
-		void put_A(_TYPE_A a)
+		void put_A(_TYPE_A a) noexcept
 		{
 			m_a = a;
 		}
-		void put_B(_TYPE_B b)
+		void put_B(_TYPE_B b) noexcept
 		{
 			m_b = b;
 		}
@@ -203,42 +203,42 @@ namespace Gray
 		//! typically sorted by _TYPE_A. but not assumed/enforced.
 		//! typically in a static table!
 		//! typically LAST ENTRY in static table = { 0  or nullptr }, in either place.
-		//! Like cArrayVal2<> is to cArrayVal<>
+		//! Like cArrayStruct<> is to cArrayVal<>
 
 		typedef cPairT<_TYPE_A, _TYPE_B> SUPER_t;
 
 	public:
-		cPairX()	// Undefined values for dynamic arrays.
+		cPairX() noexcept	// Undefined values for dynamic arrays.
 		{}
-		cPairX(_TYPE_ARG_A a, _TYPE_ARG_B b)
+		cPairX(_TYPE_ARG_A a, _TYPE_ARG_B b) noexcept
 		{
 			this->m_a = a;
 			this->m_b = b;
 		}
 
-		void SetValues(_TYPE_ARG_A a, _TYPE_ARG_B b)
+		void SetValues(_TYPE_ARG_A a, _TYPE_ARG_B b) noexcept
 		{
 			this->m_a = a;
 			this->m_b = b;
 		}
-		_TYPE_ARG_A get_HashCode() const
+		_TYPE_ARG_A get_HashCode() const noexcept
 		{
 			//! Support this in case anyone wants to use it.
 			return this->m_a;
 		}
-		const _TYPE_A& get_A() const
+		const _TYPE_A& get_A() const noexcept
 		{
 			return this->m_a;
 		}
-		void put_A(_TYPE_ARG_A a)
+		void put_A(_TYPE_ARG_A a) noexcept
 		{
 			this->m_a = a;
 		}
-		const _TYPE_A& get_B() const
+		const _TYPE_A& get_B() const noexcept
 		{
 			return this->m_b;
 		}
-		void put_B(_TYPE_ARG_B b)
+		void put_B(_TYPE_ARG_B b) noexcept
 		{
 			this->m_b = b;
 		}
@@ -248,14 +248,14 @@ namespace Gray
 	class cPair : public cPairT < _TYPE_A, _TYPE_B >
 	{
 		//! @class Gray::cPair
-		//! Associated pair of simple things. Like cArrayVal<> is to cArrayVal2<>
+		//! Associated pair of simple things. Like cArrayVal<> is to cArrayStruct<>
 
 		typedef cPairT<_TYPE_A, _TYPE_B> SUPER_t;
 
 	public:
-		cPair()	// Undefined values for dynamic arrays.
+		cPair()	noexcept // Undefined values for dynamic arrays.
 		{}
-		cPair(_TYPE_A a, _TYPE_B b)
+		cPair(_TYPE_A a, _TYPE_B b) noexcept
 		{
 			this->m_a = a;
 			this->m_b = b;
@@ -263,7 +263,7 @@ namespace Gray
 
 		// If element is a member of a static array.
 
-		bool IsValidIndex(ITERATE_t i) const
+		bool IsValidIndex(ITERATE_t i) const noexcept
 		{
 			//! ASSUME static array.
 			//! either value is non zero?
@@ -272,7 +272,7 @@ namespace Gray
 			return this[i].m_a || this[i].m_b;
 		}
 
-		ITERATE_t FindIA(_TYPE_A a) const
+		ITERATE_t FindIA(_TYPE_A a) const noexcept
 		{
 			//! ASSUME static array.
 			//! brute force lookup A
@@ -283,7 +283,7 @@ namespace Gray
 			}
 			return k_ITERATE_BAD;
 		}
-		ITERATE_t FindIB(_TYPE_B b) const
+		ITERATE_t FindIB(_TYPE_B b) const noexcept
 		{
 			//! ASSUME static array.
 			//! brute force lookup B return index
@@ -295,8 +295,8 @@ namespace Gray
 			}
 			return k_ITERATE_BAD;
 		}
-
-		bool FindARetB(_TYPE_A a, _TYPE_B* pb) const
+		 
+		bool FindARetB(_TYPE_A a, _TYPE_B* pb) const noexcept
 		{
 			//! ASSUME static array.
 			//! brute force lookup A to return corresponding B
@@ -309,7 +309,7 @@ namespace Gray
 			}
 			return false;
 		}
-		bool FindBRetA(_TYPE_B b, _TYPE_A* pa) const
+		bool FindBRetA(_TYPE_B b, _TYPE_A* pa) const noexcept
 		{
 			//! ASSUME static array.
 			//! brute force lookup B to return corresponding A
@@ -322,7 +322,7 @@ namespace Gray
 			return false;
 		}
 
-		_TYPE_B FindSortedARetB(_TYPE_A a) const
+		_TYPE_B FindSortedARetB(_TYPE_A a) const noexcept
 		{
 			//! ASSUME sorted static array.
 			//! Assume _TYPE_A sorted values from min to max.

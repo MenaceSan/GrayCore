@@ -86,6 +86,7 @@ namespace Gray
 	HRESULT GRAYCALL cFileCopier::CopyFileX(const FILECHAR_t* pszExistingName, const FILECHAR_t* pszNewName, IStreamProgressCallback* pProgress, bool bFailIfExists) // static
 	{
 		//! OS Copy a file from pszExistingName to pszNewName. The pszNewName may or may not already exist.
+		//! @note you may want to call WriteFileTimes() after this.
 		//! @return
 		//!  ERROR_REQUEST_ABORTED = canceled by callback.
 

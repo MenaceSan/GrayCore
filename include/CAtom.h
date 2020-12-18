@@ -39,7 +39,7 @@ namespace Gray
 		ATOMCODE_t m_nHashCode;		//!< GetHashCode32() for m_s; case independent. e.g. THIS==this==same atom.
 
 	private:
-		cAtomDef(cStringA s)
+		cAtomDef(cStringA s) noexcept
 			: m_s(s)
 			, m_nHashCode(StrT::GetHashCode32<ATOMCHAR_t>(s, k_StrLen_UNK, 0))
 		{
@@ -78,7 +78,7 @@ namespace Gray
 		static cAtomDefPtr GRAYCALL FindorCreateAtomStr(const ATOMCHAR_t* pszText);
 		static cAtomDefPtr GRAYCALL FindorCreateAtomStr(const STR_t& sText);
 
-		explicit inline cAtomRef(cAtomDef* pDef)	// cAtomManager only.
+		explicit inline cAtomRef(cAtomDef* pDef)  	// cAtomManager only.
 			: m_pDef(pDef)
 		{
 		}
@@ -86,21 +86,21 @@ namespace Gray
 		void EmptyAtom(bool isLast);
 
 	public:
-		cAtomRef(const THIS_t& ref)
+		cAtomRef(const THIS_t& ref) noexcept
 			: m_pDef(ref.m_pDef)
 		{
 			// copy
-			ASSERT(m_pDef != nullptr);
+			DEBUG_CHECK(m_pDef != nullptr);
 		}
-		cAtomRef(const STR_t& sName)
+		cAtomRef(const STR_t& sName) noexcept
 			: m_pDef(FindorCreateAtomStr(sName))
 		{
-			ASSERT(m_pDef != nullptr);
+			DEBUG_CHECK(m_pDef != nullptr);
 		}
-		cAtomRef(const ATOMCHAR_t* pszName = "")
+		cAtomRef(const ATOMCHAR_t* pszName = "") noexcept
 			: m_pDef(FindorCreateAtomStr(pszName))
 		{
-			ASSERT(m_pDef != nullptr);
+			DEBUG_CHECK(m_pDef != nullptr);
 		}
 		~cAtomRef()
 		{
@@ -109,11 +109,11 @@ namespace Gray
 
 		size_t GetHeapStats(OUT ITERATE_t& iAllocCount) const;
 
-		ATOMCODE_t get_HashCode() const
+		ATOMCODE_t get_HashCode() const noexcept
 		{
 			//! particular hash value is not important.
 			//! Value just needs to be unique and consistent on a single machine.
-			ASSERT(m_pDef != nullptr);
+			DEBUG_CHECK(m_pDef != nullptr);
 			return m_pDef->get_HashCode();
 		}
 
@@ -130,11 +130,11 @@ namespace Gray
 			return m_pDef->m_s;
 		}
 
-		bool isValidCheck() const 
+		bool isValidCheck() const noexcept
 		{
-			return m_pDef->m_s.isValidCheck();
+			return m_pDef != nullptr && m_pDef->m_s.isValidCheck();
 		}
-		bool IsEmpty() const
+		bool IsEmpty() const 
 		{
 			return m_pDef->m_s.IsEmpty();
 		}

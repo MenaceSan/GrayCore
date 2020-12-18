@@ -32,7 +32,7 @@ namespace Gray
 		static void __cdecl IsValidFailHandler(int nSig);	// JMP_t
 #endif
 
-		static ptrdiff_t inline Diff(const void* pEnd, const void* pStart)
+		static ptrdiff_t inline Diff(const void* pEnd, const void* pStart) noexcept
 		{
 			//! @return Difference in bytes. Assume it is a reasonable sized block?
 			ptrdiff_t i = ((const BYTE*)pEnd - (const BYTE*)pStart);	// like INT_PTR
@@ -54,8 +54,8 @@ namespace Gray
 			return true;
 		}
 
-		static bool GRAYCALL IsValid(const void* pData, size_t nSize = 1, bool bWriteAccess = false);
-		static inline bool IsCorrupt(const void* pData, size_t nSize = 1, bool bWriteAccess = false)
+		static bool GRAYCALL IsValid(const void* pData, size_t nSize = 1, bool bWriteAccess = false) noexcept;
+		static inline bool IsCorrupt(const void* pData, size_t nSize = 1, bool bWriteAccess = false) noexcept
 		{
 			//! is this a NOT valid/corrupt pointer? nullptr is not corrupt.
 			//! @note this should only ever be used in debug code. and only in an ASSERT.
@@ -76,14 +76,14 @@ namespace Gray
 			return true;
 		}
 
-		static inline COMPARE_t Compare(const void* p1, const void* p2, size_t nSizeBlock)
+		static inline COMPARE_t Compare(const void* p1, const void* p2, size_t nSizeBlock) noexcept
 		{
 			//! Compare two blocks of memory. ASSUME both are at least nSizeBlock sized.
 			//! Does not assume memory alignment.
 			return ::memcmp(p1, p2, nSizeBlock);
 		}
 
-		static inline COMPARE_t CompareSecure(const void* p1, const void* p2, size_t nSizeBlock)
+		static inline COMPARE_t CompareSecure(const void* p1, const void* p2, size_t nSizeBlock) noexcept
 		{
 			//! constant-time buffer comparison. NOT efficient. Prevents timing based hacks.
 			const BYTE* pB1 = (const BYTE*)p1;
@@ -98,7 +98,7 @@ namespace Gray
 
 		static size_t GRAYCALL CompareIndex(const void* p1, const void* p2, size_t nSizeBlock);
 
-		static inline void Zero(void* pData, size_t nSizeBlock)
+		static inline void Zero(void* pData, size_t nSizeBlock) noexcept
 		{
 			//! Zero a block of memory.
 			//! same as RtlZeroMemory() but maybe not the same as SecureZeroMeory() to make sure it is not optimized out. (for password clearing)
@@ -108,7 +108,7 @@ namespace Gray
 			::memset(pData, 0, nSizeBlock);
 #endif
 		}
-		static inline void ZeroSecure(void* pData, size_t nSizeBlock)
+		static inline void ZeroSecure(void* pData, size_t nSizeBlock) noexcept
 		{
 			//! This is for security purposes. Not for initialization. Zero destructed values so they leave no trace. 
 			//! like SecureZeroMeory() and RtlSecureZeroMemory(). ensure it doesn't get optimized out.
@@ -117,34 +117,34 @@ namespace Gray
 				*p2++ = 0;
 		}
 
-		static inline void Xor(BYTE* pDst, const BYTE* pSrc, size_t nBlockSize)
+		static inline void Xor(BYTE* pDst, const BYTE* pSrc, size_t nBlockSize) noexcept
 		{
 			// Xor with self.
 			for (size_t i = 0; i < nBlockSize; i++)
 				pDst[i] ^= pSrc[i];
 		}
 
-		static inline void Xor2(BYTE* pDst, const BYTE* pSrc1, const BYTE* pSrc2, size_t nBlockSize)
+		static inline void Xor2(BYTE* pDst, const BYTE* pSrc1, const BYTE* pSrc2, size_t nBlockSize) noexcept
 		{
 			for (size_t i = 0; i < nBlockSize; i++)
 				pDst[i] = pSrc1[i] ^ pSrc2[i];
 		}
 
-		static inline void Copy(void* pDst, const void* pSrc, size_t nSizeBlock)
+		static inline void Copy(void* pDst, const void* pSrc, size_t nSizeBlock) noexcept
 		{
 			//! Copy a block of memory.
 			//! same as CopyMemory(), RtlCopyMemory, memcpy()
 			//! @note: Some older architectures needed versions of this to do 'huge' memory copies.
 			::memcpy(pDst, pSrc, nSizeBlock);
 		}
-		static inline void CopyOverlap(void* pDst, const void* pSrc, size_t nSizeBlock)
+		static inline void CopyOverlap(void* pDst, const void* pSrc, size_t nSizeBlock) noexcept
 		{
 			//! Copy possibly overlapping blocks of memory. start from end or beginning if needed.
 			//! same as MoveMemory RtlMoveMemory, memmove, hmemcpy(),
 			//! @note: Some older architectures needed versions of this to do 'huge' memory moves.
 			::memmove(pDst, pSrc, nSizeBlock);
 		}
-		static inline void ReverseBytes(void* pDst, size_t nSizeBlock)
+		static inline void ReverseBytes(void* pDst, size_t nSizeBlock) noexcept
 		{
 			register BYTE* pSrcB = (BYTE*)pDst;
 			register BYTE* pDstB = (BYTE*)pDst + nSizeBlock - 1;
@@ -154,7 +154,7 @@ namespace Gray
 				cValT::Swap(*pSrcB++, *pDstB--);
 			}
 		}
-		static inline void CopyReverse(void* pDst, const void* pSrc, size_t nSizeBlock)
+		static inline void CopyReverse(void* pDst, const void* pSrc, size_t nSizeBlock) noexcept
 		{
 			//! Copy a block of memory BYTEs reversed. e.g. {3,2,1} = {1,2,3}, nSizeBlock = 3
 			if (pDst == pSrc)
@@ -180,7 +180,7 @@ namespace Gray
 				((BYTE*)pDst)[j] = bVal;
 			}
 		}
-		static inline void CopyRepeat(void* pDst, size_t nDstSize, const void* pSrc, size_t nSrcSize)
+		static inline void CopyRepeat(void* pDst, size_t nDstSize, const void* pSrc, size_t nSrcSize) noexcept
 		{
 			//! Fill pDst with repeating copies of pSrc.
 			for (size_t i = 0; i < nDstSize;)
@@ -192,7 +192,7 @@ namespace Gray
 			}
 		}
 
-		static inline void CopyHtoN(BYTE* pDst, const void* pSrc, size_t nSizeBlock)
+		static inline void CopyHtoN(BYTE* pDst, const void* pSrc, size_t nSizeBlock) noexcept
 		{
 			//! Copy from Host (Local Native) Order into Network Order (Big Endian)
 #ifdef USE_LITTLE_ENDIAN
@@ -201,7 +201,7 @@ namespace Gray
 			cMem::Copy(pDst, pSrc, nSizeBlock);
 #endif
 		}
-		static inline void CopyNtoH(void* pDst, const BYTE* pSrc, size_t nSizeBlock)
+		static inline void CopyNtoH(void* pDst, const BYTE* pSrc, size_t nSizeBlock) noexcept
 		{
 			//! Copy from Network Order (Big Endian) to Host Order (Local Native)
 #ifdef USE_LITTLE_ENDIAN
@@ -211,7 +211,7 @@ namespace Gray
 #endif
 		}
 
-		static inline void Swap(void* pvMem1, void* pvMem2, size_t nBlockSize)
+		static inline void Swap(void* pvMem1, void* pvMem2, size_t nBlockSize) noexcept
 		{
 			//! swap copy 2 blocks of memory by bytes. like cMemT::Swap() but for 2 arbitrary sized blocks.
 			//! swap them byte by byte.
@@ -270,7 +270,7 @@ namespace Gray
 			ASSERT(isValidSignature());
 			m_nSignature = k_INVALID;	// Mark as invalid.
 		}
-		bool inline isValidSignature() const
+		bool inline isValidSignature() const noexcept
 		{
 			if (!cMem::IsValidApp(this))
 				return false;
@@ -293,16 +293,16 @@ namespace Gray
 		BYTE m_Data[TYPE_SIZE];		//!< All objects of this type are this size.
 
 	public:
-		size_t get_DataLength() const
+		size_t get_DataLength() const noexcept
 		{
 			//! size in bytes.
 			return TYPE_SIZE;
 		}
-		const BYTE* get_DataBytes() const
+		const BYTE* get_DataBytes() const noexcept
 		{
 			return m_Data;
 		}
-		operator const BYTE* () const
+		operator const BYTE* () const noexcept
 		{
 			return m_Data;
 		}
@@ -360,7 +360,7 @@ namespace Gray
 		void* get_Data() const noexcept
 		{
 			//! Might be nullptr. that's OK.
-			return m_pData;	 
+			return m_pData;
 		}
 
 		bool isValidPtr() const noexcept
@@ -458,12 +458,12 @@ namespace Gray
 			return ((BYTE*)m_pData) + m_nSize;
 		}
 
-		void put_Start(void* pStart)
+		void put_Start(void* pStart) noexcept
 		{
 			m_pData = pStart;
 			// ASSERT(is pStart reasonable?)
 		}
-		void put_Size(size_t nSize)
+		void put_Size(size_t nSize) noexcept
 		{
 			m_nSize = nSize;
 		}
@@ -474,15 +474,15 @@ namespace Gray
 			m_nSize = pEnd - get_Start();
 		}
 
-		void SetEmptyBlock()
+		void SetEmptyBlock() noexcept
 		{
 			m_pData = nullptr;
 			m_nSize = 0;
 		}
-		void SetBlock(void* pData, size_t nSize)
+		void SetBlock(void* pData, size_t nSize) noexcept
 		{
 			m_pData = pData;
-			m_nSize = nSize;
+			m_nSize = nSize;	// size does not apply if nullptr.
 		}
 
 		void InitZeros()
@@ -504,7 +504,7 @@ namespace Gray
 		//! Deal with it as an array of bytes.
 
 		template <class TYPE>
-		static inline TYPE ReverseType(TYPE nVal)
+		static inline TYPE ReverseType(TYPE nVal) noexcept
 		{
 			//! Reverse the byte order in an intrinsic type.
 			//! Like __GNUC__ __builtin_bswap16(), __builtin_bswap32, etc
@@ -514,7 +514,7 @@ namespace Gray
 			return nVal;
 		}
 		template <typename TYPE>
-		static inline TYPE HtoN(TYPE nVal)
+		static inline TYPE HtoN(TYPE nVal) noexcept
 		{
 			//! Host byte order to network order (big endian). like htonl() htons()
 #ifdef USE_LITTLE_ENDIAN
@@ -525,7 +525,7 @@ namespace Gray
 #endif
 		}
 		template <typename TYPE>
-		static inline TYPE NtoH(TYPE nVal)
+		static inline TYPE NtoH(TYPE nVal) noexcept
 		{
 			//! Network byte order (big endian) to host order. like ntohl() ntohs()
 			//! Network order = BigEndian = High order comes first = Not Intel.
@@ -538,7 +538,7 @@ namespace Gray
 		}
 
 		template <typename TYPE>
-		static inline TYPE HtoLE(TYPE nVal)
+		static inline TYPE HtoLE(TYPE nVal) noexcept
 		{
 			//! Host byte order to little endian. (Intel)
 #ifdef USE_LITTLE_ENDIAN
@@ -549,7 +549,7 @@ namespace Gray
 #endif
 		}
 		template <typename TYPE>
-		static inline TYPE LEtoH(TYPE nVal)
+		static inline TYPE LEtoH(TYPE nVal) noexcept
 		{
 			//! Little Endian (Intel) to host byte order.
 #ifdef USE_LITTLE_ENDIAN
@@ -561,7 +561,7 @@ namespace Gray
 		}
 
 		template <typename TYPE>
-		static inline TYPE GetUnaligned(const void* pData)
+		static inline TYPE GetUnaligned(const void* pData) noexcept
 		{
 			//! Get a data value from an unaligned TYPE pointer.
 			//! Like the _WIN32 UNALIGNED macro.
@@ -574,7 +574,7 @@ namespace Gray
 #endif
 		}
 		template <typename TYPE>
-		static inline void SetUnaligned(void* pData, TYPE nVal)
+		static inline void SetUnaligned(void* pData, TYPE nVal) noexcept
 		{
 			//! Get a data value from an unaligned TYPE pointer.
 			//! Like the _WIN32 UNALIGNED macro.
@@ -588,39 +588,39 @@ namespace Gray
 		}
 
 		template <typename TYPE>
-		static inline TYPE GetLEtoH(const void* pData)
+		static inline TYPE GetLEtoH(const void* pData) noexcept
 		{
 			//! Get bytes packed as LE (Intel). ( Not "Network order" which is big endian.)
 			return LEtoH(GetUnaligned<TYPE>(pData));
 		}
 		template <typename TYPE>
-		static inline void SetHtoLE(void* pData, TYPE nVal)
+		static inline void SetHtoLE(void* pData, TYPE nVal) noexcept
 		{
 			//! Set bytes packed as LE (Intel). ( Not "Network order" which is big endian.)
 			return SetUnaligned(pData, HtoLE(nVal));
 		}
 		template <typename TYPE>
-		static inline TYPE GetNtoH(const void* pData)
+		static inline TYPE GetNtoH(const void* pData) noexcept
 		{
 			//! Get bytes packed as BE (Network order, Not Intel).
 			//! similar to CopyNtoH()
 			return NtoH(GetUnaligned<TYPE>(pData));
 		}
 		template <typename TYPE>
-		static inline void SetHtoN(void* pData, TYPE nVal)
+		static inline void SetHtoN(void* pData, TYPE nVal) noexcept
 		{
 			//! Set bytes packed as BE (Network order, Not Intel).
 			//! similar to CopyHtoN()
 			return SetUnaligned(pData, HtoN(nVal));
 		}
 
-		static inline DWORD GetNVal3(const BYTE* p)
+		static inline DWORD GetNVal3(const BYTE* p) noexcept
 		{
 			//! Get 3 packed BYTEs as a host value. from Network order. Big Endian.
 			//! opposite of SetNVal3()
 			return ((DWORD)p[0]) << 16 | ((DWORD)p[1]) << 8 | p[2];
 		}
-		static inline void SetNVal3(BYTE* p, DWORD nVal)
+		static inline void SetNVal3(BYTE* p, DWORD nVal) noexcept
 		{
 			//! Set 3 packed BYTEs as a value. Network order. Big Endian.
 			//! opposite of GetNVal3()
@@ -631,14 +631,14 @@ namespace Gray
 	};
 
 	template <>
-	inline WORD cMemT::ReverseType(WORD nVal) // static
+	inline WORD cMemT::ReverseType<WORD>(WORD nVal) noexcept // static
 	{
 		//! Reverse the bytes in an intrinsic 16 bit type WORD. e.g. 0x1234 = 0x3412
 		//! like ntohs(),htons(), MAKEWORD()
 		return (WORD)((nVal >> 8) | (nVal << 8));
 	}
 	template <>
-	inline UINT32 cMemT::ReverseType(UINT32 nVal) // static
+	inline UINT32 cMemT::ReverseType<UINT32>(UINT32 nVal) noexcept // static
 	{
 		//! Reverse the bytes in an intrinsic 32 bit type UINT32.
 		//! like ntohl(),htonl()
@@ -648,7 +648,7 @@ namespace Gray
 
 #ifdef USE_INT64
 	template <>
-	inline UINT64 cMemT::ReverseType(UINT64 nVal) // static
+	inline UINT64 cMemT::ReverseType<UINT64>(UINT64 nVal) noexcept // static
 	{
 		//! Reverse the bytes in an intrinsic 64 bit type UINT64.
 		nVal = (nVal >> 32) | (nVal << 32);
@@ -658,7 +658,7 @@ namespace Gray
 #endif
 #ifndef USE_LONG_AS_INT64
 	template <>
-	inline ULONG cMemT::ReverseType(ULONG nVal) // static
+	inline ULONG cMemT::ReverseType<ULONG>(ULONG nVal) noexcept // static
 	{
 		//! ULONG may be equiv to UINT32 or UINT64
 		// return ReverseType<UINT64>(nVal);
@@ -668,7 +668,7 @@ namespace Gray
 
 #if 0 // USE_LITTLE_ENDIAN
 	template <>
-	inline UINT32 cMemT::GetNtoH(const void* pData)
+	inline UINT32 cMemT::GetNtoH<UINT32>(const void* pData)
 	{
 		const BYTE* p = (const BYTE*)pData;
 		return ((UINT32)p[0] << 24)
@@ -677,7 +677,7 @@ namespace Gray
 			| ((UINT32)p[3]);
 	}
 	template <>
-	inline void cMemT::SetHtoN(void* pData, UINT32 nVal)
+	inline void cMemT::SetHtoN<UINT32>(void* pData, UINT32 nVal)
 	{
 		BYTE* p = (BYTE*)pData;
 		p[0] = (BYTE)(nVal >> 24);
@@ -687,7 +687,7 @@ namespace Gray
 	}
 
 	template <>
-	inline UINT64 cMemT::GetNtoH(const void* pData)
+	inline UINT64 cMemT::GetNtoH<UINT64>(const void* pData)
 	{
 		const BYTE* p = (const BYTE*)pData;
 		return ((UINT64)p[0] << 56)
@@ -700,7 +700,7 @@ namespace Gray
 			| ((UINT64)p[7]);
 	}
 	template <>
-	inline void cMemT::SetHtoN(void* pData, UINT64 nVal)
+	inline void cMemT::SetHtoN<UINT64>(void* pData, UINT64 nVal)
 	{
 		BYTE* p = (BYTE*)pData;
 		p[0] = (BYTE)(nVal >> 56);
@@ -714,5 +714,5 @@ namespace Gray
 	}
 #endif
 
-};
+}
 #endif

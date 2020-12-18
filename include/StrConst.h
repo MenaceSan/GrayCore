@@ -86,6 +86,6 @@ namespace Gray
 		}
 	};
 
-#define CSTRCONST(t) cStrConst(t,__TOW(t))	//!< define a const for both Unicode and UTF8 in templates.
+#define CSTRCONST(t) cStrConst(t,__TOW(t))	//!< define a const for both Unicode and UTF8 in templates. used at run-time not just compile time.
 };
 #endif

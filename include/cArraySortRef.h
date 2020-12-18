@@ -31,7 +31,7 @@ namespace Gray
 		{
 			//! Similar to RemoveAll() except it calls DisposeThis() to try to dereference all the entries.
 			//! @note often DisposeThis() has the effect of removing itself from the list. We protect against this.
-			//! ASSUME TYPE supports DisposeThis(); like CXObject
+			//! ASSUME TYPE supports DisposeThis(); like cXObject
 
 			ITERATE_t iSize = this->GetSize();
 			if (iSize > 0)
@@ -69,7 +69,7 @@ namespace Gray
 		typedef typename SUPER_t::KEY_t KEY_t;
 
 	protected:
-		virtual COMPARE_t CompareData(REF_t pData1, REF_t pData2) const override
+		virtual COMPARE_t CompareData(REF_t pData1, REF_t pData2) const noexcept override
 		{
 			//! Compare a data record to another data record.
 			ASSERT_N(pData1 != nullptr);
@@ -124,7 +124,7 @@ namespace Gray
 		typedef typename SUPER_t::KEY_t KEY_t;
 
 	protected:
-		virtual COMPARE_t CompareData(REF_t pData1, REF_t pData2) const override
+		virtual COMPARE_t CompareData(REF_t pData1, REF_t pData2) const noexcept override
 		{
 			//! Compare a data record to another data record.
 			ASSERT(pData1 != nullptr);
@@ -208,7 +208,7 @@ namespace Gray
 		typedef typename SUPER_t::KEY_t KEY_t;
 
 	protected:
-		virtual COMPARE_t CompareData(REF_t pData1, REF_t pData2) const override
+		virtual COMPARE_t CompareData(REF_t pData1, REF_t pData2) const noexcept override
 		{
 			//! Compare a data record to another data record.
 			ASSERT_N(pData1 != nullptr);

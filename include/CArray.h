@@ -109,7 +109,7 @@ namespace Gray
 		ITERATE_t m_nSize;		//!< Number of elements (upperBound - 1)
 
 	protected:
-		bool IsValidIndex(ITERATE_t i) const
+		bool IsValidIndex(ITERATE_t i) const noexcept
 		{
 			return IS_INDEX_GOOD(i, this->m_nSize);
 		}
@@ -131,7 +131,7 @@ namespace Gray
 			RemoveAll();
 		}
 
-		bool IsValidTestSize() const;
+		bool IsValidMallocSize() const noexcept;
 
 		// Attributes
 		inline ITERATE_t GetSize() const noexcept
@@ -144,10 +144,10 @@ namespace Gray
 		}
 		bool IsEmpty() const noexcept
 		{
-			return(this->m_nSize <= 0);
+			return this->m_nSize <= 0;
 		}
 		void SetSize(ITERATE_t nNewSize);
-		ITERATE_t GetMallocSize() const
+		ITERATE_t GetMallocSize() const noexcept
 		{
 			//! Get quantity of objects truly allocated. (may not be whole number)
 			//! like STL capacity()
@@ -411,8 +411,9 @@ namespace Gray
 	}
 
 	template <class TYPE, class ARG_TYPE>
-	bool CArray<TYPE, ARG_TYPE>::IsValidTestSize() const
+	bool CArray<TYPE, ARG_TYPE>::IsValidMallocSize() const noexcept
 	{
+		// Make sure the alloc is actually bigger than the declared size.
 		if (m_pData == nullptr)
 		{
 			if (m_nSize != 0)
@@ -448,7 +449,7 @@ namespace Gray
 		typedef ARG_TYPE REF_t;				//!< How to refer to this? value or ref or pointer?
 
 	protected:
-		virtual COMPARE_t CompareData(REF_t Data1, REF_t Data2) const
+		virtual COMPARE_t CompareData(REF_t Data1, REF_t Data2) const noexcept
 		{
 			//! Compare a data record to another data record.
 			//! ASSUME this is the same as comparing keys. Otherwise you must overload this.
@@ -461,7 +462,7 @@ namespace Gray
 		void QSort(ITERATE_t iLeft, ITERATE_t iRight);
 
 	public:
-		cArrayTyped()
+		cArrayTyped() noexcept
 		{
 		}
 		cArrayTyped(const THIS_t& rArray)
@@ -478,13 +479,13 @@ namespace Gray
 		{
 		}
 
-		bool isValidCheck() const
+		bool isValidCheck() const noexcept
 		{
 			if (!COBJECT_IsValidCheck())
 				return false;
 			// ASSERT( ISTYPE_OF(CArray<TYPE, ARG_TYPE>,this));
 #ifndef _MFC_VER
-			if (!this->IsValidTestSize())
+			if (!this->IsValidMallocSize())
 				return false;
 #endif
 			return true;
@@ -504,7 +505,7 @@ namespace Gray
 				return(this->m_nSize - 1);
 			return i;
 		}
-		size_t GetHeapStats(OUT ITERATE_t& iAllocCount) const
+		size_t GetHeapStats(OUT ITERATE_t& iAllocCount) const noexcept
 		{
 			//! @return sizeof all children alloc(s). not size of *this
 			if (this->m_pData == nullptr)
@@ -513,27 +514,27 @@ namespace Gray
 			return cHeap::GetSize(this->m_pData);
 		}
 
-		void SecureValidIndex(ITERATE_t nIndex) const
+		void AssertValidIndex(ITERATE_t nIndex) const
 		{
 			ASSERT_THROW(IsValidIndex(nIndex));
 		}
 		const TYPE& GetAtSecure(ITERATE_t nIndex) const // throw
 		{
 			//! throw an exception if we are out or range.
-			SecureValidIndex(nIndex);
+			AssertValidIndex(nIndex);
 			return this->m_pData[nIndex];
 		}
 		TYPE& ElementAtSecure(ITERATE_t nIndex) // throw
 		{
 			//! throw an exception if we are out or range.
-			SecureValidIndex(nIndex);
+			AssertValidIndex(nIndex);
 			return this->m_pData[nIndex];
 		}
 
 		REF_t ConstElementAt(ITERATE_t nIndex) const // throw
 		{
 			// Same as GetAt ?
-			ASSERT(IsValidIndex(nIndex));
+			AssertValidIndex(nIndex);
 			return this->m_pData[nIndex];
 		}
 		inline TYPE& operator[](ITERATE_t nIndex) // throw
@@ -543,7 +544,7 @@ namespace Gray
 		inline const TYPE& operator[](ITERATE_t nIndex) const // throw
 		{
 			// Const array should return const values.
-			ASSERT(IsValidIndex(nIndex));
+			AssertValidIndex(nIndex);
 			return this->m_pData[nIndex];
 		}
 
@@ -624,7 +625,7 @@ namespace Gray
 		bool HasArg(ARG_TYPE arg) const
 		{
 			//! Find the index of a specified entry.
-			return(FindIFor(arg) >= 0);
+			return FindIFor(arg) >= 0;
 		}
 
 		void RemoveLast()
@@ -664,21 +665,21 @@ namespace Gray
 		}
 		ITERATE_t AddTail(ARG_TYPE newElement) // a "Push"
 		{
+			// add to tail. alias
 			return this->Add(newElement);
 		}
 		ITERATE_t PushTail(ARG_TYPE newElement)
 		{
+			// add to tail. alias
 			return this->Add(newElement);
 		}
 		void AddHead(ARG_TYPE newElement)
 		{
+			// NOT a normal stack or queue. Adds are usually to the tail.
 			this->InsertAt(0, newElement);
 		}
-		void PushHead(ARG_TYPE newElement)
-		{
-			this->InsertAt(0, newElement);
-		}
-		TYPE* get_DataWork()
+
+		TYPE* get_DataWork() const
 		{
 			return this->m_pData;
 		}
@@ -803,7 +804,7 @@ namespace Gray
 	{
 		//! @class Gray::cArrayFacade
 		//! An array of some type of pointer using cPtrFacade. Allow dupes.
-		//! base for cArrayPtr, CArryNew, cArrayIUnk and cArrayRef
+		//! base for cArrayPtr, cArryNew, cArrayIUnk and cArrayRef
 
 	public:
 		typedef cArrayTyped<TYPE, TYPE_ARG> SUPER_t;
@@ -819,7 +820,7 @@ namespace Gray
 			this->RemoveAll();
 		}
 
-		virtual COMPARE_t CompareData(REF_t pData1, REF_t pData2) const override
+		virtual COMPARE_t CompareData(REF_t pData1, REF_t pData2) const noexcept override
 		{
 			//! Compare a data record to another data record. Use cValT::Compare()??
 			// return cValT::Compare(Data1,Data2);
@@ -863,6 +864,7 @@ namespace Gray
 	{
 		//! @class Gray::cArrayPtr
 		//! An array of some sort of dumb pointer. Pointer memory ownership is unknown. Do not free it.
+		//! TYPE is allowed to be const X 
 
 	public:
 		typedef cArrayFacade<TYPE*, TYPE*> SUPER_t;
@@ -923,20 +925,20 @@ namespace Gray
 	};
 
 	//*************************************************
-	// cArrayVal2
+	// cArrayStruct
 
 	template<class TYPE>
-	class cArrayVal2 : public cArrayTyped < TYPE, const TYPE& >
+	class cArrayStruct : public cArrayTyped < TYPE, const TYPE& >
 	{
-		//! @class Gray::cArrayVal2
+		//! @class Gray::cArrayStruct
 		//! An array of some bigger value type.
 		//! maybe TYPE has constructor/destructor that does real work.
 		//! should be referenced instead of copied.
 	public:
-		cArrayVal2()
+		cArrayStruct() noexcept
 		{
 		}
-		explicit cArrayVal2(ITERATE_t iSize) : cArrayTyped<TYPE, const TYPE&>(iSize)
+		explicit cArrayStruct(ITERATE_t iSize) : cArrayTyped<TYPE, const TYPE&>(iSize)
 		{
 		}
 	};

@@ -273,7 +273,7 @@ namespace Gray
 
 	//*******************************************************
 
-	cFileFind::cFileFind(cStringF sDir, DWORD nFileFlags)
+	cFileFind::cFileFind(cStringF sDir, DWORD nFileFlags) noexcept
 		: m_sDirPath(sDir)
 		, m_nFileFlags(nFileFlags)
 #ifdef _WIN32
@@ -487,6 +487,8 @@ namespace Gray
 	{
 		//! HRESULT_WIN32_C(ERROR_ALREADY_EXISTS) is OK ?
 		//! use CreateDirectory1 name because might be "#define CreateDirectory CreateDirectoryA" in _WIN32
+		//! Does NOT create missing parent folders.
+		
 #ifdef _WIN32
 		if (!::CreateDirectoryW(cFilePath::GetFileNameLongW(pszDirName), nullptr))
 #elif defined(__linux__)
@@ -629,7 +631,7 @@ namespace Gray
 
 	HRESULT GRAYCALL cFileDir::CreateDirectoryX(const FILECHAR_t* pszDir) // static
 	{
-		//! This is like CreateDirectory1() except will create intermediate directories if needed.
+		//! This is like CreateDirectory1() except will create intermediate/parent directories if needed.
 		//! @note like SHCreateDirectoryExA() but we can't always use since thats only for Win2K+
 		//! @return S_FALSE = already exists. equiv to ERROR_ALREADY_EXISTS. NOT a real error.
 

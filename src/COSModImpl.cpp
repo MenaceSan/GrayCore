@@ -40,7 +40,7 @@ namespace Gray
 
 	bool cOSModImpl::OnProcessAttach2()	// private
 	{
-		// NOTE: In the LoadModuel (dynamic) case this will get called BEFORE the constructor for COSModDyn.
+		// NOTE: In the LoadModule (dynamic) case this will get called BEFORE the constructor for cOSModDyn.
 
 		if (!IsLoaded())	// Race is over.
 			return true;
@@ -76,7 +76,7 @@ namespace Gray
 			this->OnProcessDetach();
 			break;
 		case DLL_PROCESS_ATTACH:
-			// NOTE: In the LoadModuel (dynamic) case this will get called BEFORE the constructor for COSModDyn.
+			// NOTE: In the LoadModuel (dynamic) case this will get called BEFORE the constructor for cOSModDyn.
 			ASSERT(m_hModule == HMODULE_NULL);
 			ASSERT(hMod != HMODULE_NULL);
 			m_hModule = hMod;

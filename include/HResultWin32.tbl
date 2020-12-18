@@ -2,11 +2,11 @@
 //! @file HResultWin32.tbl
 //! HRESULT_WIN32_C codes for FACILITY_WIN32
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//! Add FACILITY_WIN32 codes.
+//! Add FACILITY_WIN32 codes. 0x80070XXX
 //! _WIN32 defined these values as LONG for some reason. Not idea why.
 
 // VS8 doesn't include this code.
-HRESULT_WIN32_DEF( ERROR_WAIT_TIMEOUT,			258L,	"The wait operation timed out" )	// WAIT_TIMEOUT
+HRESULT_WIN32_DEF( ERROR_WAIT_TIMEOUT,			258L,	"The wait operation timed out" )	// WAIT_TIMEOUT -> 0x80070102
 
 #if ! defined(ERROR_ELEVATION_REQUIRED) // || ( _MSC_VER <= 1400 )
 HRESULT_WIN32_DEF( ERROR_ELEVATION_REQUIRED,	740L,	"Vista only security failure for UAC" )
@@ -103,6 +103,7 @@ HRESULT_WIN32_DEF( ERROR_PIPE_LISTENING,		536L,	"Waiting for a process to open t
 HRESULT_WIN32_DEF( ERROR_OPERATION_ABORTED,		995L,	"The I/O operation has been aborted because of either a thread exit or an application request." )
 HRESULT_WIN32_DEF( ERROR_IO_INCOMPLETE,			996L,	"The I/O event is not yet complete" ) // "Overlapped I/O event is not in a signaled state"
 HRESULT_WIN32_DEF( ERROR_STACK_OVERFLOW,        1001L,	"Recursion too deep; the stack overflowed.")
+HRESULT_WIN32_DEF( ERROR_FILE_INVALID,			1006L,	"The volume for a file has been externally altered so that the opened file is no longer valid.")
 HRESULT_WIN32_DEF( ERROR_CANTWRITE,				1013L,	"The configuration registry key could not be written.")
 
 HRESULT_WIN32_DEF( ERROR_INVALID_SERVICE_ACCOUNT,   1057L, "The account name is invalid or does not exist, or the password is invalid for the account name specified." )
@@ -127,6 +128,7 @@ HRESULT_WIN32_DEF( ERROR_NOT_AUTHENTICATED,		1244L, "The operation being request
 HRESULT_WIN32_DEF( ERROR_NOT_LOGGED_ON,			1245L, "The operation being requested was not performed because the user has not logged on" )
 HRESULT_WIN32_DEF( ERROR_BAD_USER_PROFILE,      1253L, "The specified user does not have a valid profile." )
 
+HRESULT_WIN32_DEF( ERROR_NO_SUCH_PRIVILEGE,  	1313L,	"No such privilege exists")
 HRESULT_WIN32_DEF( ERROR_PRIVILEGE_NOT_HELD,  	1314L,	"Not privileged to perform action")
 HRESULT_WIN32_DEF( ERROR_INVALID_ACCOUNT_NAME,	1315L,	"The name provided is not a properly formed account name." )
 HRESULT_WIN32_DEF( ERROR_INTERNAL_ERROR,     	1359L,	"An internal error occurred")

@@ -46,7 +46,7 @@ namespace Gray
 			//! @note If we reach here assume the key is the whole record !
 			return cValT::Compare(Key, *((_TYPE_KEY*)Data2));
 		}
-		virtual COMPARE_t CompareData(REF_t Data1, REF_t Data2) const override
+		virtual COMPARE_t CompareData(REF_t Data1, REF_t Data2) const noexcept override
 		{
 			//! Compare a data record to another data record.
 			return cValT::Compare(*((_TYPE_KEY*)Data1), *((_TYPE_KEY*)Data2));
@@ -87,7 +87,7 @@ namespace Gray
 			//! @note If we reach here assume the key is the whole record !
 			return StrT::CmpI((const ATOMCHAR_t*)pszKey, *(const ATOMCHAR_t**)Data2);
 		}
-		virtual COMPARE_t CompareData(REF_t Data1, REF_t Data2) const override
+		virtual COMPARE_t CompareData(REF_t Data1, REF_t Data2) const noexcept override
 		{
 			//! Compare a data record to another data record.
 			return StrT::CmpI(*(const ATOMCHAR_t**)Data1, *(const ATOMCHAR_t**)Data2);

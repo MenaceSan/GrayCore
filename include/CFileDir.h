@@ -138,7 +138,7 @@ namespace Gray
 				return true;
 			return false;
 		}
-		bool isDots() const
+		bool isDots() const noexcept
 		{
 			//! ignore the . and .. that old systems can give us.
 			if (m_sFileName[0] != '.')
@@ -184,13 +184,13 @@ namespace Gray
 #endif
 
 	public:
-		explicit cFileFind(cStringF sDirPath = "", DWORD nFileFlags = 0);
+		explicit cFileFind(cStringF sDirPath = "", DWORD nFileFlags = 0) noexcept;
 		~cFileFind()
 		{
 			CloseContext();
 		}
 
-		cStringF get_DirPath() const
+		cStringF get_DirPath() const noexcept
 		{
 			return m_sDirPath;
 		}
@@ -205,7 +205,7 @@ namespace Gray
 			//! like MFC CFileFind::GetFilePath()
 			return cFilePath::CombineFilePathX(m_sDirPath, m_FileEntry.m_sFileName);
 		}
-		bool isDots() const
+		bool isDots() const noexcept
 		{
 			return m_FileEntry.isDots();
 		}
@@ -228,7 +228,7 @@ namespace Gray
 		static const int k_FilesMax = 64 * 1024;
 		static const LOGCHAR_t k_szCantMoveFile[];	//!< if MoveDirFiles failed for this.
 
-		cArrayVal2<cFileFindEntry> m_aFiles;	//!< Array of the files we found matching the ReadDir criteria.
+		cArrayStruct<cFileFindEntry> m_aFiles;	//!< Array of the files we found matching the ReadDir criteria.
 
 	protected:
 		cStringF m_sDirPath;	//!< Does NOT include the wild card.
@@ -272,14 +272,14 @@ namespace Gray
 		}
 		static HRESULT GRAYCALL DeleteDirFiles(const FILECHAR_t* pszDirName, const FILECHAR_t* pszWildcardFile = nullptr, DWORD nFileFlags = 0)
 		{
-			//! Delete this directory and all its files.
-			//! similar to CFileDirDlg::DeleteDirFiles( FOF_NOCONFIRMATION | FOF_SILENT | FOF_NOERRORUI )
+			//! Delete this directory AND all its files.
+			//! similar to cFileDirDlg::DeleteDirFiles( FOF_NOCONFIRMATION | FOF_SILENT | FOF_NOERRORUI )
 			//! e.g. cFileDir::DeleteDirFiles( pszDirPath ); = delete directory and all its sub stuff.
 			//! e.g. cFileDir::DeleteDirFiles( pszDirPath, "*.h" ); = delete contents of directory and all its wild carded children. leaves directory.
 			return DirFileOp(FILEOP_DELETE, pszDirName, pszWildcardFile, nFileFlags, nullptr, nullptr);
 		}
 
-		static HRESULT GRAYCALL DeletePathX(const FILECHAR_t* pszPath, DWORD nFileFlags);
+		static HRESULT GRAYCALL DeletePathX(const FILECHAR_t* pszPath, DWORD nFileFlags = 0);
 
 		cStringF get_DirPath() const
 		{
@@ -338,7 +338,7 @@ namespace Gray
 #ifdef GRAY_DLL // force implementation/instantiate for DLL/SO.
 	template class GRAYCORE_LINK CArray < cFileFindEntry, const cFileFindEntry& >;
 	template class GRAYCORE_LINK cArrayTyped < cFileFindEntry, const cFileFindEntry& >;
-	template class GRAYCORE_LINK cArrayVal2 < cFileFindEntry >;
+	template class GRAYCORE_LINK cArrayStruct < cFileFindEntry >;
 #endif
 
 }

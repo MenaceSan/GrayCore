@@ -17,7 +17,7 @@
 #include "HResult.h"
 
 #ifdef _WIN32
-typedef WIN32_FIND_DATAW CFileStatusSys;
+typedef WIN32_FIND_DATAW CFileStatusSys;	// or BY_HANDLE_FILE_INFORMATION ?
 #else
 struct stat;
 typedef struct stat CFileStatusSys;
@@ -78,14 +78,14 @@ namespace Gray
 		void InitFileStatus();
 		void InitFileStatus(const CFileStatusSys& filestat);
 
-		static bool IsLinuxHidden(const FILECHAR_t* pszName)
+		static bool IsLinuxHidden(const FILECHAR_t* pszName) noexcept
 		{
 			//! Is this a hidden file on __linux__ (NFS) ?
 			if (pszName == nullptr)
 				return true;
-			return(pszName[0] == '.');
+			return pszName[0] == '.';
 		}
-		bool UpdateLinuxHidden(const FILECHAR_t* pszName)
+		bool UpdateLinuxHidden(const FILECHAR_t* pszName) noexcept
 		{
 			//! Is this a __linux__ (NFS) hidden file name ? starts with dot.
 			if (IsLinuxHidden(pszName))
@@ -96,12 +96,12 @@ namespace Gray
 			return false;
 		}
 
-		bool isFileValid() const
+		bool isFileValid() const noexcept
 		{
-			//! did i get file data ?
-			//! @return false = bad file like 'com1:' 'lpt:' etc.
+			//! did i get file data ? is this a file vs a device ?
+			//! @return false = bad (or not a) file like 'com1:' 'lpt:' etc.
 			//! @note asking for a 'devicename' is BAD! i.e. http://myserver/com5.txt (this will trap that!)
-			return(m_timeChange.isValid());
+			return m_timeChange.isValid();
 		}
 
 		static COMPARE_t GRAYCALL CompareChangeFileTime(const cTimeFile& t1, const cTimeFile& t2)	//! (accurate to 2 seconds)
@@ -109,27 +109,27 @@ namespace Gray
 			//! ~2 sec accurate for FAT32
 			return cValT::Compare(t1.get_FAT32(), t2.get_FAT32());
 		}
-		bool IsSameChangeFileTime(const cTimeFile& t2) const	//! (accurate to 2 seconds)
+		bool IsSameChangeFileTime(const cTimeFile& t2) const noexcept	//! (accurate to 2 seconds)
 		{
 			//! ~2 sec accurate for FAT32
 			return cValT::Compare(m_timeChange.get_FAT32(), t2.get_FAT32()) == COMPARE_Equal;
 		}
-		static TIMESEC_t GRAYCALL MakeFatTime(TIMESEC_t tTime)
+		static TIMESEC_t GRAYCALL MakeFatTime(TIMESEC_t tTime) noexcept
 		{
 			//! (accurate to 2 seconds)
-			return tTime &~1;
+			return tTime & ~1;
 		}
-		static COMPARE_t GRAYCALL CompareChangeTime(const cTimeInt& t1, const cTimeInt& t2)
+		static COMPARE_t GRAYCALL CompareChangeTime(const cTimeInt& t1, const cTimeInt& t2) noexcept
 		{
 			//! ~2 second accurate for FAT32
 			return cValT::Compare(MakeFatTime(t1.GetTime()), MakeFatTime(t2.GetTime()));
 		}
-		bool IsSameChangeTime(const cTimeInt& t2) const
+		bool IsSameChangeTime(const cTimeInt& t2) const noexcept
 		{
 			return CompareChangeTime(m_timeChange, t2) == COMPARE_Equal;
 		}
 
-		bool IsFileEqualTo(const THIS_t& rFileStatus) const
+		bool IsFileEqualTo(const THIS_t& rFileStatus) const noexcept
 		{
 			if (cValT::Compare(m_timeCreate.get_Val(), rFileStatus.m_timeCreate.get_Val()) != COMPARE_Equal)
 				return false;
@@ -139,28 +139,28 @@ namespace Gray
 				return false;
 			return true;
 		}
-		bool IsFileEqualTo(const THIS_t* pFileStatus) const
+		bool IsFileEqualTo(const THIS_t* pFileStatus) const noexcept
 		{
 			//! do these 2 files have the same attributes.
 			if (pFileStatus == nullptr)
 				return false;
 			return IsFileEqualTo(*pFileStatus);
 		}
-		bool IsAttrMask(FILEATTR_MASK_t dwAttrMask = FILEATTR_ReadOnly) const
+		bool IsAttrMask(FILEATTR_MASK_t dwAttrMask = FILEATTR_ReadOnly) const noexcept
 		{
 			//! have this attribute? e.g. FILEATTR_ReadOnly
-			return(m_Attributes&dwAttrMask) ? true : false;
+			return(m_Attributes & dwAttrMask) ? true : false;
 		}
-		bool isAttrDir() const
+		bool isAttrDir() const noexcept
 		{
 			return IsAttrMask(FILEATTR_Directory);
 		}
-		bool isAttrHidden() const
+		bool isAttrHidden() const noexcept
 		{
 			// for __linux__ starts with .
 			return IsAttrMask(FILEATTR_Hidden);
 		}
-		FILE_SIZE_t GetFileLength() const
+		FILE_SIZE_t GetFileLength() const noexcept
 		{
 			//! get the 64 bit length of the file.
 			//! -1 = size not available for directories.
@@ -169,7 +169,8 @@ namespace Gray
 
 		static HRESULT GRAYCALL WriteFileAttributes(const FILECHAR_t* pszFilePath, FILEATTR_MASK_t dwAttributes);
 		static HRESULT GRAYCALL WriteFileTimes(const FILECHAR_t* pszFilePath, const cTimeFile* pTimeCreate, const cTimeFile* pTimeChange = nullptr);
-		static HRESULT GRAYCALL ReadFileStatus2(const FILECHAR_t* pszFilePath, cFileStatus* pFileStatus=nullptr, bool bFollowLink = false);
+		static HRESULT GRAYCALL WriteFileTimes(const FILECHAR_t* pszFilePath, const cFileStatus& rFileStatus);
+		static HRESULT GRAYCALL ReadFileStatus2(const FILECHAR_t* pszFilePath, cFileStatus* pFileStatus = nullptr, bool bFollowLink = false);
 
 		static bool GRAYCALL Exists(const FILECHAR_t* pszFilePath)
 		{

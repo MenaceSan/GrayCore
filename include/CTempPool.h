@@ -27,13 +27,13 @@ namespace Gray
 
 	public:
 		int m_iCountCur;	//!< rotate this count to re-use buffers in m_aBlocks.
-		cArrayVal2<cHeapBlock> m_aBlocks;	//!< Temporary blocks to be used on a single thread.
+		cArrayStruct<cHeapBlock> m_aBlocks;	//!< Temporary blocks to be used on a single thread.
 
 		static const int k_iCountMax = 16;	//!< Assume nested functions won't use more than m_aBlocks in a single thread. (e.g. This is the max number of args on a single sprintf)
 
 		//! Allow this to be overloaded with a version that destructs on thread close.
-		static IThreadLocal* sm_pThreadLocal;	// can use CThreadLocalTypeNew instead. 
-		static cThreadLocalSysNew<cTempPool> sm_ThreadLocalDefault;	// default for sm_pThreadLocal. set sm_pThreadLocal with CThreadLocalTypeNew in more strict applications.
+		static IThreadLocal* sm_pThreadLocal;	// can use cThreadLocalTypeNew instead. 
+		static cThreadLocalSysNew<cTempPool> sm_ThreadLocalDefault;	// default for sm_pThreadLocal. set sm_pThreadLocal with cThreadLocalTypeNew in more strict applications.
 
 	public:
 		cTempPool()

@@ -28,6 +28,7 @@ namespace Gray
 
 	cAtomRef cAtomManager::FindAtomStr(const ATOMCHAR_t* pszText) const
 	{
+		//! Get the atom that corresponds to a string. do not create it.
 		if (StrT::IsNullOrEmpty(pszText))
 			return m_aEmpty;
 		cThreadGuard lock(m_Lock);

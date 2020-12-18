@@ -22,7 +22,7 @@ namespace Gray
 	{
 		//! @enum Gray::FILESYS_TYPE
 		//! The file system type dictates what characters are allowed in names and if the names are case sensitive.
-		//! Similar to CZipFileEntry1::SYSTEM_TYPE
+		//! Similar to cZipFileEntry1::SYSTEM_TYPE
 
 		FILESYS_DEFAULT = 0,	//!< Modern OS's. >= FILESYS_FAT32
 		FILESYS_FAT,		//!< Old DOS 8.3 names. Most restrictive of chars allowed.
@@ -67,7 +67,7 @@ namespace Gray
 	public:
 		static const StrLen_t k_MaxLen = _MAX_PATH;	//!< Use _MAX_PATH for max length of a file path.
 		static const FILECHAR_t k_DirSep1 = '/';	//!< preferred for __linux__ NFS but allowed by _WIN32.
-		static const FILECHAR_t k_DirSep2 = '\\';	//!< preferred for _WIN32. Not allowed in __linux__.
+		static const FILECHAR_t k_DirSep2 = '\\';	//!< preferred for _WIN32 but NOT allowed in __linux__.
 
 #ifdef _WIN32
 		static const FILECHAR_t k_DirSep = '\\';	//!< preferred for _WIN32. Not allowed in __linux__.
@@ -82,21 +82,21 @@ namespace Gray
 #endif
 
 	public:
-		static inline bool IsCharDirSep(wchar_t ch) noexcept
+		static inline constexpr bool IsCharDirSep(wchar_t ch) noexcept
 		{
 			//! FAT honors backslash. NTFS honors both chars. NFS uses just the forward slash.
 			//! FILECHR_Dirs, like MFC IsDirSep()
-			return(ch == k_DirSep1 || ch == k_DirSep2);
+			return ch == k_DirSep1 || ch == k_DirSep2;
 		}
-		static inline bool IsCharWildcard(wchar_t ch) noexcept
+		static inline constexpr bool IsCharWildcard(wchar_t ch) noexcept
 		{
 			//! FILECHR_Wildcard
-			return (ch == '?' || ch == '*');
+			return  ch == '?' || ch == '*';
 		}
 
 		static FILECHR_TYPE_ GRAYCALL GetFileCharType(wchar_t ch, FILESYS_TYPE eSys = FILESYS_DEFAULT);
 		static bool GRAYCALL IsFileNameValid(const FILECHAR_t* pszName, FILECHR_MASK_t uCharMask = FILECHR_All, FILESYS_TYPE eSys = FILESYS_DEFAULT);
-		static bool GRAYCALL IsFileNameExt(const FILECHAR_t* pszFileName, const FILECHAR_t* pszExt);
+		static bool GRAYCALL IsFileNameExt(const FILECHAR_t* pszFileName, const FILECHAR_t* pszExt) noexcept;
 		static bool GRAYCALL HasTitleWildcards(const FILECHAR_t* pszPath);
 
 		static FILECHAR_t* GRAYCALL GetFileNameExt(const FILECHAR_t* pszName, StrLen_t iLen = k_StrLen_UNK, bool bMultiDot = false);

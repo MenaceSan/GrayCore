@@ -24,7 +24,7 @@ namespace Gray
 		//! Support class for conversion of double/float to string. Used with cFloat64
 
 	public:
-		static const double k_powersOf10[9];	//!< Table giving binary powers of 10
+		static const double k_PowersOf10[9];	//!< Table giving binary powers of 10
 
 		static const UINT32 k_Exp10[10];		//!< Table of decimal digits to fit in 32 bit space.
 

@@ -139,7 +139,7 @@ namespace Gray
 		typedef CFile SUPER_t;
 
 	protected:
-		static ITERATE_t sm_iFilesOpen;	//!< statistical count of total open files for this process.
+		static ITERATE_t sm_iFilesOpen;	//!< global count of all open files for this process.
 		OF_FLAGS_t m_nOpenFlags;		//!< MMSYSTEM uses high bits of 32 bit flags. OF_FLAGS_TYPE_ OF_READ etc
 
 	protected:
@@ -159,7 +159,7 @@ namespace Gray
 			Close();
 		}
 
-		virtual bool isValidCheck() const	//!< memory allocation and structure definitions are valid.
+		virtual bool isValidCheck() const noexcept	//!< memory allocation and structure definitions are valid.
 		{
 #ifndef _MFC_VER
 			if (!CObject::isValidCheck())
@@ -273,7 +273,7 @@ namespace Gray
 		// File Access
 		bool SetFileTime(const cTimeFile* lpCreationTime, const cTimeFile* lpAccessTime, const cTimeFile* lpLastWriteTime);
 		bool SetFileTime(cTimeInt timeCreation, cTimeInt timeLastWrite);
-		HRESULT GetFileStatus(cFileStatus& attr) const;
+		HRESULT GetFileStatus(OUT cFileStatus& attr) const;
 
 		// cStream
 		virtual HRESULT ReadX(void* pData, size_t nDataSize) override;

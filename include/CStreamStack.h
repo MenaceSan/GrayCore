@@ -27,7 +27,7 @@ namespace Gray
 		HRESULT ReadFillAligned(size_t nSizeBlockAlign = 1);
 
 	public:
-		cStreamStackInp(cStreamInput* pStreamInp = nullptr, size_t nSizeMaxBuffer = cStream::k_FILE_BLOCK_SIZE)
+		cStreamStackInp(cStreamInput* pStreamInp = nullptr, size_t nSizeMaxBuffer = cStream::k_FILE_BLOCK_SIZE) noexcept
 			: cStreamQueue(MIN(nSizeMaxBuffer / 2, 8 * 1024), nSizeMaxBuffer)	// chunk size, max size.
 			, m_pStreamInp(pStreamInp)
 		{

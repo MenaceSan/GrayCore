@@ -3,8 +3,8 @@
 //! Custom exception classes.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 
-#ifndef _INC_CException_H
-#define _INC_CException_H
+#ifndef _INC_cException_H
+#define _INC_cException_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
@@ -38,23 +38,23 @@ namespace Gray
 		bool m_bDeleteEx;	//!< i must delete this. Always true for MFC ?
 
 	public:
-		cExceptionHolder()
+		cExceptionHolder() noexcept
 			: m_bDeleteEx(false)
 		{
 		}
-		explicit cExceptionHolder(cExceptionBase* pEx, bool bDeleteEx = true)
+		explicit cExceptionHolder(cExceptionBase* pEx, bool bDeleteEx = true) noexcept
 			: cPtrFacade<cExceptionBase>(pEx)
 			, m_bDeleteEx(bDeleteEx)
 		{
 			//! Normal usage for _MFC_VER.
 		}
-		explicit cExceptionHolder(cExceptionBase& ex)
+		explicit cExceptionHolder(cExceptionBase& ex) noexcept
 			: cPtrFacade<cExceptionBase>(&ex)
 			, m_bDeleteEx(false)
 		{
 			//! Normal STL usage.
 		}
-		~cExceptionHolder()
+		~cExceptionHolder() noexcept
 		{
 			//! basically an auto_ptr
 			if (m_bDeleteEx && m_p != nullptr) // make sure DetachException() wasn't called.
@@ -103,7 +103,7 @@ namespace Gray
 		virtual ~cException() THROW_DEF
 		{
 		}
-		LOGLEV_TYPE get_Severity() const
+		LOGLEV_TYPE get_Severity() const noexcept
 		{
 			return m_eSeverity;
 		}
@@ -144,7 +144,7 @@ namespace Gray
 		virtual ~cExceptionHResult() THROW_DEF
 		{
 		}
-		HRESULT get_HResultCode() const
+		HRESULT get_HResultCode() const noexcept
 		{
 			return m_hResultCode;
 		}
@@ -152,4 +152,4 @@ namespace Gray
 	};
 };
 
-#endif // _INC_CException_H
+#endif // _INC_cException_H

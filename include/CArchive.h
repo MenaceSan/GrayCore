@@ -21,9 +21,9 @@ namespace Gray
 		//! @class Gray::cArchive
 		//! Form a bidirectional (typeless) binary stream of serialized data.
 		//! @note this is inherently dangerous to use since it contains no default/automatic typing/versioning information.
-		//! @note put CVariant into the archive if you desire typing information. (and some version change resistance)
+		//! @note put cVariant into the archive if you desire typing information. (and some version change resistance)
 		//! This is extensible to any type.
-		//! Similar to the MFC cArchive type. except << >> are overridden by the type of the Archive (store vs retrieve).
+		//! Similar to the MFC CArchive type. except << >> are overridden by the type of the Archive (store vs retrieve).
 		//! i.e. store and retrieve a particular structure can use the same code.
 	private:
 		const bool m_bStoring;		//!< What mode is this in? true = writing to the m_pStream cStreamOutput. else reading cStreamInput.

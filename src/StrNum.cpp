@@ -142,6 +142,48 @@ namespace Gray
 
 	//*************************************************************************************
 
+	StrLen_t GRAYCALL StrNum::ULtoAK(UINT64 uVal, OUT char* pszOut, StrLen_t iStrMax, UINT nKUnit, bool bSpace)
+	{
+		//! Make string describing a value in K/M/G/T/P/E/Z/Y units. (Kilo,Mega,Giga,Tera,Peta,Exa,Zetta,Yotta)
+		//! @arg nKUnit = 1024 default
+		//! @note
+		//!  Kilo=10^3,2^10, Exa=10^18,2^60, Zetta=10^21,2^70, (http://searchstorage.techtarget.com/sDefinition/0,,sid5_gci499008,00.html)
+		//! @return
+		//!  length of string created.
+
+		static const char k_chKUnits[10] = "\0KMGTPEZY";
+		if (nKUnit <= 0)	// default.
+			nKUnit = 1024;
+
+		double dVal = (double)uVal;
+		size_t i = 0;
+		for (; i < (_countof(k_chKUnits) - 2) && dVal >= nKUnit; i++)
+		{
+			dVal /= nKUnit;
+		}
+
+		StrLen_t iLenUse;
+		if (i == 0)
+		{
+			iLenUse = ULtoA(uVal, pszOut, iStrMax); // _CVTBUFSIZE
+		}
+		else
+		{
+			// limit to 2 decimal places ?
+			iLenUse = DtoAG(dVal, pszOut, iStrMax, 2, '\0');	// NOT 'inf' or NaN has no units.
+			if (iLenUse > 0 && iLenUse <= iStrMax - 3 && !StrChar::IsAlpha(pszOut[0]))
+			{
+				if (bSpace)	// insert a space or not?
+				{
+					pszOut[iLenUse++] = ' ';
+				}
+				pszOut[iLenUse++] = k_chKUnits[i];
+				pszOut[iLenUse] = '\0';
+			}
+		}
+		return iLenUse;
+	}
+
 	char* GRAYCALL StrNum::ULtoA2(UINT64 uVal, OUT char* pszOut, StrLen_t iStrMax, RADIX_t nBaseRadix, char chRadixA)
 	{
 		//! Internal function to format a number BACKWARDS as a string similar to sprintf("%u") padded from right.
@@ -218,7 +260,7 @@ namespace Gray
 
 	StrLen_t GRAYCALL StrNum::DtoAG2(double dVal, OUT char* pszOut, int iDecPlacesWanted, char chE) // static
 	{
-		//! Make a string from a double number. like _gcvt() or "%g"
+		//! Make a string from a double float number. like _gcvt() or "%g"
 		//! like dtoa(), gcvt(), fcvt(), ecvt(), _fcvt() and the opposite of toDouble(), 
 		//! @arg
 		//!  pszOut ASSUME size >= k_LEN_MAX_DIGITS
@@ -233,9 +275,8 @@ namespace Gray
 
 		// @todo implement gcvt(), fcvt(), _fcvt_s locally ? no UNICODE version of fcvt().
 
-		// Not handling NaN and inf
-		ASSERT(!cTypeFloat::IsNaN(dVal));
-		ASSERT(!cTypeFloat::IsInfinite(dVal));
+		// Not handling NaN and Infinite
+		ASSERT(cTypeFloat::IsFinite(dVal));
 
 		if (dVal < 0)
 		{
@@ -303,9 +344,9 @@ namespace Gray
 
 	StrLen_t GRAYCALL StrNum::DtoAG(double dVal, OUT char* pszOut, StrLen_t iStrMax, int iDecPlacesWanted, char chE) // static
 	{
-		if (iStrMax >= StrNum::k_LEN_MAX_DIGITS)
+		if (iStrMax >= k_LEN_MAX_DIGITS)
 		{
-			return StrNum::DtoAG2(dVal, pszOut, iDecPlacesWanted, chE);
+			return DtoAG2(dVal, pszOut, iDecPlacesWanted, chE);
 		}
 		char szTmp[StrNum::k_LEN_MAX_DIGITS + 4];
 		StrNum::DtoAG2(dVal, szTmp, iDecPlacesWanted, chE); // StrLen_t iStrLen = 

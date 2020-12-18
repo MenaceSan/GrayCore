@@ -56,10 +56,10 @@ namespace Gray
 
 		static void GRAYCALL Init(int nFlags = 0);
 		static bool GRAYCALL Check();
-		static size_t GRAYCALL GetSize(const void* pData);
-		static bool GRAYCALL IsValidHeap(const void* pData);
+		static size_t GRAYCALL GetSize(const void* pData) noexcept;
+		static bool GRAYCALL IsValidHeap(const void* pData) noexcept;
 
-		static inline bool IsCorruptHeap(const void* pData)
+		static inline bool IsCorruptHeap(const void* pData) noexcept
 		{
 			//! is this NOT a valid malloc() heap pointer?
 			//! @note this should only ever be used in debug code. and only in an ASSERT.
@@ -67,7 +67,7 @@ namespace Gray
 				return false;
 			return !IsValidHeap(pData);
 		}
-		static bool GRAYCALL IsValidInside(const void* pData, ptrdiff_t index);
+		static bool GRAYCALL IsValidInside(const void* pData, ptrdiff_t index) noexcept;
 
 		static void* GRAYCALL AllocPtr(size_t nSize);
 
@@ -100,7 +100,7 @@ namespace Gray
 		static const size_t k_SizeGap = 4;
 		static const size_t k_SizeAlignMax = 128;	// max reasonable size for alignment.
 
-		struct CATTR_PACKED CHeader
+		struct CATTR_PACKED cHeapHeader
 		{
 			//! @struct Gray::cHeapAlign::CHeader
 			//! Aligned block of memory. allocated using _aligned_malloc or malloc.
@@ -113,33 +113,35 @@ namespace Gray
 										// ASSUME memory block follows this
 		};
 
-		static CHeader* GRAYCALL GetHeader(const void* pData);
+		static const cHeapHeader* GRAYCALL GetHeader(const void* pData) noexcept;
 
-		static bool GRAYCALL IsAlignedAlloc(const void* pData, size_t iAligned);
-		static bool GRAYCALL IsValidHeap(const void* pData);
-		static size_t GRAYCALL GetSize(const void* pData);
-		static bool GRAYCALL IsValidInside(const void* pData, INT_PTR index);
+		static bool GRAYCALL IsAlignedAlloc(const void* pData, size_t iAligned) noexcept;
+		static bool GRAYCALL IsValidHeap(const void* pData) noexcept;
+		static size_t GRAYCALL GetSize(const void* pData) noexcept;
+		static bool GRAYCALL IsValidInside(const void* pData, INT_PTR index) noexcept;
+
 		static void* GRAYCALL AllocPtr(size_t nSize, size_t iAligned);
 		static void GRAYCALL FreePtr(void* pData);
 
 #else
 		// stub these out.
-		static inline bool IsAlignedAlloc(const void* pData, size_t iAligned)
+		static inline bool IsAlignedAlloc(const void* pData, size_t iAligned) noexcept
 		{
 			return false;
 		}
-		static inline bool IsValidHeap(const void* pData)
+		static inline bool IsValidHeap(const void* pData) noexcept
 		{
 			return SUPER_t::IsValidHeap(pData);
 		}
-		static inline size_t GetSize(const void* pData)
+		static inline size_t GetSize(const void* pData) noexcept
 		{
 			return SUPER_t::GetSize(pData);
 		}
-		static inline bool IsValidInside(const void* pData, INT_PTR index)
+		static inline bool IsValidInside(const void* pData, INT_PTR index) noexcept
 		{
 			return SUPER_t::IsValidInside(pData, index);
 		}
+
 		static inline void* AllocPtr(size_t nSize, size_t iAligned)
 		{
 			return SUPER_t::AllocPtr(nSize);
@@ -169,10 +171,10 @@ namespace Gray
 		}
 
 	public:
-		cHeapBlock()
+		cHeapBlock() noexcept
 		{
-			ASSERT(m_pData == nullptr);
-			ASSERT(m_nSize == 0);
+			DEBUG_CHECK(m_pData == nullptr);
+			DEBUG_CHECK(m_nSize == 0);
 		}
 		cHeapBlock(const THIS_t& ref)
 		{
@@ -214,7 +216,7 @@ namespace Gray
 			return *this;
 		}
 
-		bool isValidRead() const
+		bool isValidRead() const noexcept
 		{
 			//! Is this valid to use for read?
 			//! Must NOT be nullptr!
@@ -222,7 +224,7 @@ namespace Gray
 			//! @note this should only ever be used in debug code. and only in an ASSERT.
 			return cHeap::IsValidHeap(m_pData);
 		}
-		bool isCorrupt() const
+		bool isCorrupt() const noexcept
 		{
 			//! Is this a corrupt heap pointer?
 			//! nullptr is OK.

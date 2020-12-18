@@ -615,7 +615,7 @@ namespace Gray
 
 		va_list vargs;
 		va_start(vargs, pszBase);
-		for (int iCount = 0; iCount < 64; iCount++)
+		for (int iCount = 0; iCount < 64; iCount++)	// arbitrary max.
 		{
 			const FILECHAR_t* pszPart = va_arg(vargs, const FILECHAR_t*);
 			if (pszPart == nullptr)
@@ -846,25 +846,25 @@ namespace Gray
 		return const_cast<FILECHAR_t*>(pszName);
 	}
 
-	cStringF GRAYCALL cFilePath::GetFilePathUpDir1(const FILECHAR_t* pszName, StrLen_t iLen /*= k_StrLen_UNK*/, int iQtyDirs /*= 1*/) // static
+	cStringF GRAYCALL cFilePath::GetFilePathUpDir1(const FILECHAR_t* pszPath, StrLen_t iLen /*= k_StrLen_UNK*/, int iQtyDirs /*= 1*/) // static
 	{
-		//! Go up a single dir.
+		//! Go up a single dir. My immediate parent.
 		//! @arg iQtyDirs = -1 = for "sdf:/dir1/dir2/dir3/dir4" = "sdf:/dir1/dir2/dir3"
-		const FILECHAR_t* pszAct = GetFilePathUpDir2(pszName, iLen, iQtyDirs);
+		const FILECHAR_t* pszAct = GetFilePathUpDir2(pszPath, iLen, iQtyDirs);
 		if (pszAct == nullptr)
 			return "";
-		return cStringF(pszName, StrT::Diff(pszAct, pszName) - 1);
+		return cStringF(pszPath, StrT::Diff(pszAct, pszPath) - 1);
 	}
 
-	bool GRAYCALL cFilePath::MakeFilePathUpDir(FILECHAR_t* pszName)	// static
+	bool GRAYCALL cFilePath::MakeFilePathUpDir(FILECHAR_t* pszPath)	// static
 	{
 		//! Get the file path if the file were up one directory. in its parent dir.
 		//! Like using ExtractDir()
 
-		FILECHAR_t* pszTitle = GetFileName(pszName);
+		FILECHAR_t* pszTitle = GetFileName(pszPath);
 		if (pszTitle == nullptr)
 			return false;
-		FILECHAR_t* pszAct = GetFilePathUpDir2(pszName, StrT::Diff(pszTitle, pszName), 2);
+		FILECHAR_t* pszAct = GetFilePathUpDir2(pszPath, StrT::Diff(pszTitle, pszPath), 2);
 		if (pszAct == nullptr)
 			return false;
 		cMem::CopyOverlap(pszAct, pszTitle, (StrT::Len(pszTitle) + 1) * sizeof(FILECHAR_t));	// restore file name/title + '\0'
@@ -1003,7 +1003,7 @@ namespace Gray
 		return szPath;
 	}
 
-	bool GRAYCALL cFilePath::IsFileNameExt(const FILECHAR_t* pszFileName, const FILECHAR_t* pszExt) // static
+	bool GRAYCALL cFilePath::IsFileNameExt(const FILECHAR_t* pszFileName, const FILECHAR_t* pszExt) noexcept // static
 	{
 		//! Is this the extension for the file name ? with or without dot.
 		if (pszExt == nullptr)

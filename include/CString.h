@@ -72,12 +72,12 @@ namespace Gray
 		{
 			cHeap::FreePtr(pObj);
 		}
-		StrLen_t get_CharCount() const
+		StrLen_t get_CharCount() const noexcept
 		{
 			//! @return Number of chars. (not necessarily bytes)
 			return m_nCharCount;
 		}
-		void put_CharCount(StrLen_t nCount)
+		void put_CharCount(StrLen_t nCount) noexcept
 		{
 			//! @return Number of chars. (not necessarily bytes). NOT including '/0'
 			m_nCharCount = nCount;
@@ -100,7 +100,7 @@ namespace Gray
 		static const _TYPE_CH m_Nil;		// Use this instead of nullptr. ala MFC. also like _afxDataNil. AKA cStrConst::k_Empty ?
 
 	public:
-		CStringT()
+		CStringT() noexcept
 		{
 			Init();
 		}
@@ -130,7 +130,7 @@ namespace Gray
 			Init();
 			AssignLen(pszStr, iLenMax);
 		}
-		CStringT(const THIS_t& ref)
+		CStringT(const THIS_t& ref) noexcept
 		{
 			AssignFirst(ref);
 		}
@@ -145,47 +145,51 @@ namespace Gray
 			Empty();
 		}
 
-		CStringData* GetData() const
+		CStringData* GetData() const noexcept
 		{
 			//! like MFC
-			ASSERT(m_pchData != &m_Nil);
-			ASSERT(m_pchData != nullptr);
+			DEBUG_CHECK(m_pchData != &m_Nil);
+			DEBUG_CHECK(m_pchData != nullptr);
 			return (reinterpret_cast<CStringData*>(m_pchData)) - 1;
 		}
-		const _TYPE_CH* GetString() const
+		const _TYPE_CH* GetString() const noexcept
 		{
 			//! like MFC
-			ASSERT(isValidString());
+			DEBUG_CHECK(isValidString());
 			return m_pchData;
 		}
 
-		bool isValidString() const
+		bool isValidString() const noexcept
 		{
 			//! Is the string properly terminated?
 			if (m_pchData == &m_Nil)
 				return true;
 			CStringData* pData = GetData();
-			ASSERT(pData != nullptr);
+			if (pData == nullptr)
+				return false;		// should never happen!
 			StrLen_t iLen = pData->get_CharCount();
-			ASSERT(pData->IsValidInsideN(iLen * sizeof(_TYPE_CH)));
-			ASSERT(pData->get_RefCount() > 0);
+			if (!pData->IsValidInsideN(iLen * sizeof(_TYPE_CH)))
+				return false;		// should never happen!
+			if (pData->get_RefCount() <= 0)
+				return false;		// should never happen!
 			return m_pchData[iLen] == '\0';
 		}
-		bool IsEmpty() const
+
+		bool IsEmpty() const noexcept
 		{
 			// like MFC.
-			ASSERT(isValidString());
+			DEBUG_CHECK(isValidString());
 			return m_pchData == &m_Nil;
 		}
 
-		StrLen_t GetLength() const
+		StrLen_t GetLength() const noexcept
 		{
 			//! @return Number of chars. (not necessarily bytes)
 			if (m_pchData == &m_Nil)
 				return 0;
-			// ASSERT(isValidString());
-			CStringData* pData = GetData();
-			ASSERT(pData != nullptr);
+			// DEBUG_CHECK(isValidString());
+			const CStringData* pData = GetData();
+			DEBUG_CHECK(pData != nullptr);
 			return pData->get_CharCount();
 		}
 		void Empty()
@@ -342,7 +346,7 @@ namespace Gray
 		void Assign(const char* pszStr);
 
 	protected:
-		void Init()
+		void Init() noexcept
 		{
 			m_pchData = const_cast<_TYPE_CH*>(&m_Nil);
 		}
@@ -354,13 +358,13 @@ namespace Gray
 			Init();
 		}
 
-		void AssignFirst(const THIS_t& s)
+		void AssignFirst(const THIS_t& s) noexcept
 		{
 			m_pchData = s.m_pchData;
 			if (m_pchData == &m_Nil)
 				return;
 			GetData()->IncRefCount();
-			ASSERT(isValidString());
+			DEBUG_CHECK(isValidString());
 		}
 
 		void AllocBuffer(StrLen_t iStrLength);
@@ -389,7 +393,7 @@ namespace Gray
 
 		cStringT() noexcept
 		{}
-		cStringT(SUPER_t & str) : SUPER_t(str)
+		cStringT(SUPER_t & str) noexcept : SUPER_t(str)
 		{}
 		cStringT(const char* pszText) : SUPER_t(pszText)
 		{}
@@ -414,7 +418,7 @@ namespace Gray
 		}
 #endif
 
-		const _TYPE_CH* get_CPtr() const
+		const _TYPE_CH* get_CPtr() const noexcept
 		{
 			return SUPER_t::GetString();
 		}
@@ -433,7 +437,7 @@ namespace Gray
 			return StrT::IsPrintable(SUPER_t::m_pchData, iLen) && (SUPER_t::m_pchData[iLen] == '\0');
 #endif
 		}
-		bool isValidString() const
+		bool isValidString() const noexcept
 		{
 #ifdef _MFC_VER
 			return true;
@@ -443,7 +447,7 @@ namespace Gray
 			return SUPER_t::isValidString();
 #endif
 		}
-		bool isValidCheck() const
+		bool isValidCheck() const noexcept
 		{
 			return isValidString();
 		}
@@ -456,11 +460,11 @@ namespace Gray
 		HRESULT ReadZ(cStreamInput & File, StrLen_t iLenMax);
 		bool WriteZ(cStreamOutput & File) const;
 
-		HASHCODE_t get_HashCode() const
+		HASHCODE_t get_HashCode() const noexcept
 		{
 			//! Get a hash code good on this machine alone.
 			//! Must use something like StrT::GetHashCode32() for use on multiple machines or processes.
-			return((HASHCODE_t)(UINT_PTR)(void*)get_CPtr());	// just use the pointer.
+			return (HASHCODE_t)(UINT_PTR)(void*)get_CPtr() ;	// just use the pointer.
 		}
 		size_t GetHeapStats(OUT ITERATE_t & iAllocCount) const
 		{

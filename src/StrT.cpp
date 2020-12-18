@@ -24,6 +24,11 @@ namespace Gray
 
 namespace Gray
 {
+#ifdef GRAY_DLL // force implementation/instantiate for DLL/SO.
+	template struct GRAYCORE_LINK StrX<char>;
+	template struct GRAYCORE_LINK StrX<wchar_t>;
+#endif
+
 #define TYPE char
 #define StrTTbl(returntype, name, args) template GRAYCORE_LINK returntype GRAYCALL StrT::name<TYPE> args ;
 #include "StrT.tbl"

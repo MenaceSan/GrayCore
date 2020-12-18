@@ -66,7 +66,7 @@ namespace Gray
 		//! @note optimizations can be made if we know we are working on larger native types over treating the same things as bytes.
 
 		template <class TYPE>
-		static inline bool IsFilledQty(const TYPE* pArray, ITERATE_t nBlocks, TYPE nFillValue)
+		static inline bool IsFilledQty(const TYPE* pArray, ITERATE_t nBlocks, TYPE nFillValue) noexcept
 		{
 			//! Is this array filled with a repeating value ?
 			for (ITERATE_t i = 0; i < nBlocks; i++)
@@ -77,14 +77,14 @@ namespace Gray
 			return true;
 		}
 		template <class TYPE>
-		static inline bool IsFilledSize(const void* pArray, size_t nArraySizeBytes, TYPE nFillValue)
+		static inline bool IsFilledSize(const void* pArray, size_t nArraySizeBytes, TYPE nFillValue) noexcept
 		{
 			//! Is this array filled with a repeating value ? _countof()
 			return IsFilledQty((const TYPE*)pArray, (ITERATE_t)(nArraySizeBytes / sizeof(TYPE)), nFillValue);
 		}
 
 		template <class TYPE>
-		static inline bool IsEqualQty(const TYPE* pArray1, const TYPE* pArray2, ITERATE_t nBlocks)
+		static inline bool IsEqualQty(const TYPE* pArray1, const TYPE* pArray2, ITERATE_t nBlocks) noexcept
 		{
 			//! Test 2 arrays of a TYPE. like memcmp.
 			for (ITERATE_t i = 0; i < nBlocks; i++)
@@ -96,7 +96,7 @@ namespace Gray
 		}
 
 		template <class TYPE>
-		static inline COMPARE_t CompareQty(const TYPE* pArray1, const TYPE* pArray2, ITERATE_t nBlocks)
+		static inline COMPARE_t CompareQty(const TYPE* pArray1, const TYPE* pArray2, ITERATE_t nBlocks) noexcept
 		{
 			//! Compare 2 arrays of a TYPE. like memcmp.
 			for (ITERATE_t i = 0; i < nBlocks; i++)
@@ -108,7 +108,7 @@ namespace Gray
 		}
 
 		template <class TYPE>
-		static inline void FillQty(TYPE* pArray, ITERATE_t nBlocks, TYPE nFillValue=0)
+		static inline void FillQty(TYPE* pArray, ITERATE_t nBlocks, TYPE nFillValue=0) noexcept
 		{
 			//! fill an array with a repeating TYPE nFillValue.
 			//! Ignore negative value for nBlocks
@@ -119,7 +119,7 @@ namespace Gray
 			}
 		}
 		template <class TYPE>
-		static inline void ZeroQty(TYPE* pArray, ITERATE_t nBlocks)
+		static inline void ZeroQty(TYPE* pArray, ITERATE_t nBlocks) noexcept
 		{
 			//! fill an array with a repeating TYPE 0.
 			for (ITERATE_t i = 0; i < nBlocks; i++)
@@ -129,7 +129,7 @@ namespace Gray
 		}
 
 		template <class TYPE>
-		static inline void FillSize(void* pArray, size_t nArraySizeBytes, TYPE nFillValue)
+		static inline void FillSize(void* pArray, size_t nArraySizeBytes, TYPE nFillValue) noexcept
 		{
 			//! Fill a block of memory with a repeating TYPE nFillValue by size_t not quantity.
 			//! Similar to the native memset() FillMemory
@@ -138,7 +138,7 @@ namespace Gray
 		}
 
 		template <class TYPE>
-		static inline void CopyQty(TYPE* pDst, const TYPE* pSrc, ITERATE_t nBlocks)
+		static inline void CopyQty(TYPE* pDst, const TYPE* pSrc, ITERATE_t nBlocks) noexcept
 		{
 			//! Forward Copy array of values. like memcpy.
 			for (ITERATE_t i = 0; i < nBlocks; i++)
@@ -148,7 +148,7 @@ namespace Gray
 		}
 
 		template <class TYPE>
-		static inline void CopyQtyRev(TYPE* pDst, const TYPE* pSrc, ITERATE_t nBlocks)
+		static inline void CopyQtyRev(TYPE* pDst, const TYPE* pSrc, ITERATE_t nBlocks) noexcept
 		{
 			//! Reverse Copy array of values. like memmove.
 			for (ITERATE_t i = nBlocks; i > 0;)
@@ -159,7 +159,7 @@ namespace Gray
 		}
 
 		template <class TYPE>
-		static inline void ReverseArray(TYPE* pArray, size_t nArraySizeBytes)
+		static inline void ReverseArray(TYPE* pArray, size_t nArraySizeBytes) noexcept
 		{
 			//! reverse the order of an array of a TYPE. similar to cMem::ReverseArrayBlocks but iBlockSize==sizeof(TYPE)
 			//! TYPE = BYTE = reverse bytes in a block. similar to htonl(), etc.
@@ -176,13 +176,13 @@ namespace Gray
 	};
 
 	template <>
-	inline void cValArray::FillQty(BYTE* pData, ITERATE_t nBlocks, BYTE bFill) // static
+	inline void cValArray::FillQty<BYTE>(BYTE* pData, ITERATE_t nBlocks, BYTE bFill) noexcept // static
 	{
 		//! FillMemory BYTEs like memset()
 		::memset(pData, bFill, (size_t)nBlocks);
 	}
 	template <>
-	inline void cValArray::FillSize(void* pData, size_t nSizeBlock, BYTE bFill) // static
+	inline void cValArray::FillSize<BYTE>(void* pData, size_t nSizeBlock, BYTE bFill) noexcept // static
 	{
 		//! FillMemory BYTEs like memset()
 		::memset(pData, bFill, nSizeBlock);

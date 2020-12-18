@@ -20,7 +20,7 @@ namespace Gray
 	// Compares and searches
 
 	template< typename TYPE>
-	GRAYCORE_LINK COMPARE_t GRAYCALL StrT::Cmp(const TYPE* pszStr1, const TYPE* pszStr2)
+	COMPARE_t GRAYCALL StrT::Cmp(const TYPE* pszStr1, const TYPE* pszStr2)
 	{
 		//! replace _strcmp()
 		//! How does pszStr1 compare to pszStr2
@@ -36,11 +36,11 @@ namespace Gray
 			TYPE ch1 = pszStr1[i];
 			TYPE ch2 = pszStr2[i];
 			if (ch1 == '\0' || ch1 != ch2)
-				return(ch1 - ch2);
+				return ch1 - ch2 ;
 		}
 	}
 	template< typename TYPE>
-	GRAYCORE_LINK COMPARE_t GRAYCALL StrT::CmpN(const TYPE* pszStr1, const TYPE* pszStr2, StrLen_t iLenMaxChars)
+	COMPARE_t GRAYCALL StrT::CmpN(const TYPE* pszStr1, const TYPE* pszStr2, StrLen_t iLenMaxChars) noexcept
 	{
 		//! How does pszStr1 compare to pszStr2
 		//! replace strncmp()
@@ -52,10 +52,9 @@ namespace Gray
 			return COMPARE_Greater;
 		if (iLenMaxChars < 0)
 			return COMPARE_Less;
-		ASSERT(iLenMaxChars <= StrT::k_LEN_MAX);
+		DEBUG_ASSERT(iLenMaxChars <= StrT::k_LEN_MAX, "CmpN");
 		for (StrLen_t i = 0; i < iLenMaxChars; i++)
 		{
-			ASSERT(i < StrT::k_LEN_MAX);
 			TYPE ch1 = pszStr1[i];
 			TYPE ch2 = pszStr2[i];
 			if (ch1 == '\0' || ch1 != ch2)
@@ -65,7 +64,7 @@ namespace Gray
 	}
 
 	template< typename TYPE>
-	GRAYCORE_LINK COMPARE_t GRAYCALL StrT::CmpI(const TYPE* pszStr1, const TYPE* pszStr2)
+	COMPARE_t GRAYCALL StrT::CmpI(const TYPE* pszStr1, const TYPE* pszStr2)
 	{
 		//! @note for some reason the M$ version fails in static initializers in release mode !?
 		//! replace _strcmpi strcmpi _stricmp
@@ -86,7 +85,7 @@ namespace Gray
 	}
 
 	template< typename TYPE>
-	GRAYCORE_LINK COMPARE_t GRAYCALL StrT::CmpIN(const TYPE* pszStr1, const TYPE* pszStr2, StrLen_t iLenMaxChars)
+	COMPARE_t GRAYCALL StrT::CmpIN(const TYPE* pszStr1, const TYPE* pszStr2, StrLen_t iLenMaxChars) noexcept
 	{
 		//! Find matching string up to length iLenMaxChars. (unless '/0' is found)
 		//! replaces _strnicmp strnicmp
@@ -99,7 +98,7 @@ namespace Gray
 			return COMPARE_Greater;
 		if (iLenMaxChars < 0)
 			return COMPARE_Less;
-		ASSERT(iLenMaxChars <= StrT::k_LEN_MAX);
+		DEBUG_ASSERT(iLenMaxChars <= StrT::k_LEN_MAX, "CmpIN");
 		for (StrLen_t i = 0; i < iLenMaxChars; i++)
 		{
 			COMPARE_t iDiff = StrChar::CmpI(pszStr1[i], pszStr2[i]);
@@ -110,7 +109,7 @@ namespace Gray
 	}
 
 	template< typename TYPE>
-	GRAYCORE_LINK bool StrT::StartsWithI(const TYPE* pszStr1, const TYPE* pszPrefix)
+	bool StrT::StartsWithI(const TYPE* pszStr1, const TYPE* pszPrefix)
 	{
 		//! Compare pszStr1 up to the length of pszPrefix
 		//! Similar to .NET StartsWith() https://msdn.microsoft.com/en-us/library/system.string.startswith%28v=vs.110%29.aspx?f=255&MSPPError=-2147217396
@@ -134,7 +133,7 @@ namespace Gray
 	}
 
 	template< typename TYPE>
-	GRAYCORE_LINK bool GRAYCALL StrT::EndsWithI(const TYPE* pszStr1, const TYPE* pszPostfix, StrLen_t nLenStr)
+	bool GRAYCALL StrT::EndsWithI(const TYPE* pszStr1, const TYPE* pszPostfix, StrLen_t nLenStr)
 	{
 		//! Compare the end of pszStr1 with pszPostfix
 		//! Similar to .NET EndsWith() 
@@ -159,7 +158,7 @@ namespace Gray
 	}
 
 	template< typename TYPE>
-	GRAYCORE_LINK COMPARE_t GRAYCALL StrT::CmpHeadI(const TYPE* pszFindHead, const TYPE* pszTableElem)
+	COMPARE_t GRAYCALL StrT::CmpHeadI(const TYPE* pszFindHead, const TYPE* pszTableElem)
 	{
 		//! Does pszTabkleElem start with the prefix pszFindHead?
 		//! Compare only up to the length of pszTableElem.
@@ -193,7 +192,7 @@ namespace Gray
 	}
 
 	template< typename TYPE>
-	GRAYCORE_LINK HASHCODE32_t GRAYCALL StrT::GetHashCode32(const TYPE* pszStr, StrLen_t nLen, HASHCODE32_t nHash)
+	HASHCODE32_t GRAYCALL StrT::GetHashCode32(const TYPE* pszStr, StrLen_t nLen, HASHCODE32_t nHash) noexcept
 	{
 		//! Get a HASHCODE32_t for the string. Ignore case.
 		//! based on http://www.azillionmonkeys.com/qed/hash.html super fast hash.
@@ -206,7 +205,7 @@ namespace Gray
 		if (pszStr == nullptr)
 			return k_HASHCODE_CLEAR;
 		if (nLen <= k_StrLen_UNK)
-			nLen = StrT::Len(pszStr);
+			nLen = StrT::Len(pszStr, k_LEN_MAX);
 		if (nLen <= 0)
 			return k_HASHCODE_CLEAR;
 
@@ -242,7 +241,7 @@ namespace Gray
 	//***********************************************************
 
 	template< typename TYPE>
-	GRAYCORE_LINK StrLen_t GRAYCALL StrT::FindCharN(const TYPE* pszStr, TYPE chFind)
+	StrLen_t GRAYCALL StrT::FindCharN(const TYPE* pszStr, TYPE chFind)
 	{
 		//! Find index of the first occurrence of a single char in a string.
 		//! @return -1 = k_StrLen_UNK = not found.
@@ -261,7 +260,7 @@ namespace Gray
 	}
 
 	template< typename TYPE>
-	GRAYCORE_LINK TYPE* GRAYCALL StrT::FindChar(const TYPE* pszStr, TYPE chFind, StrLen_t iLenMax)
+	TYPE* GRAYCALL StrT::FindChar(const TYPE* pszStr, TYPE chFind, StrLen_t iLenMax) noexcept
 	{
 		//! Find first occurrence of a single char in a string.
 		//! replace strchr(), and memchr()
@@ -282,7 +281,7 @@ namespace Gray
 	}
 
 	template< typename TYPE>
-	GRAYCORE_LINK TYPE* GRAYCALL StrT::FindCharRev(const TYPE* pszStr, TYPE chFind, StrLen_t iLenMax)
+	TYPE* GRAYCALL StrT::FindCharRev(const TYPE* pszStr, TYPE chFind, StrLen_t iLenMax)
 	{
 		//! Find last occurrence of a single char in a string.
 		//! replace strrchr() or _tcsrchr(). find TYPE from end.
@@ -301,7 +300,7 @@ namespace Gray
 	}
 
 	template< typename TYPE>
-	GRAYCORE_LINK TYPE* GRAYCALL StrT::FindTokens(const TYPE* pszStr, const TYPE* pszTokens, StrLen_t iLenMaxChars)
+	TYPE* GRAYCALL StrT::FindTokens(const TYPE* pszStr, const TYPE* pszTokens, StrLen_t iLenMaxChars)
 	{
 		//! Find one of the char pszTokens in pszStr.
 		//! @return
@@ -321,7 +320,7 @@ namespace Gray
 	}
 
 	template< typename TYPE>
-	GRAYCORE_LINK TYPE* GRAYCALL StrT::FindStr(const TYPE* pszText, const TYPE* pszSubStr, StrLen_t iLenMaxChars)
+	TYPE* GRAYCALL StrT::FindStr(const TYPE* pszText, const TYPE* pszSubStr, StrLen_t iLenMaxChars)
 	{
 		//! Find pszSubStr inside pszText. (exact case match of all chars in pszSubStr)
 		//! replaces strstr(), or .NET Contains()
@@ -354,7 +353,7 @@ namespace Gray
 	}
 
 	template< typename TYPE>
-	GRAYCORE_LINK TYPE* GRAYCALL StrT::FindStrI(const TYPE* pszText, const TYPE* pszSubStr, StrLen_t iLenMaxChars)
+	TYPE* GRAYCALL StrT::FindStrI(const TYPE* pszText, const TYPE* pszSubStr, StrLen_t iLenMaxChars)
 	{
 		//! Find pszSubStr in pszText. (ignores case)
 		//! like strstr() but ignores case like stristr()
@@ -388,7 +387,7 @@ namespace Gray
 	}
 
 	template< typename TYPE>
-	GRAYCORE_LINK StrLen_t GRAYCALL StrT::FindWord(const TYPE* pszText, const TYPE* pszKeyWord, StrLen_t iLenMaxChars)
+	StrLen_t GRAYCALL StrT::FindWord(const TYPE* pszText, const TYPE* pszKeyWord, StrLen_t iLenMaxChars)
 	{
 		//! Find the pszKeyWord in the pszText string. Ignore Case.
 		//! like FindStrI() but looks for starts of words. not match mid word.
@@ -428,7 +427,7 @@ namespace Gray
 	//*************************************************************
 
 	template< typename TYPE>
-	GRAYCORE_LINK bool GRAYCALL StrT::IsWhitespace(const TYPE* pStr, StrLen_t iLenMaxChars)
+	bool GRAYCALL StrT::IsWhitespace(const TYPE* pStr, StrLen_t iLenMaxChars)
 	{
 		//! Is the whole string whitespace, empty or nullptr?
 		//! Like .NET String.IsNullOrWhiteSpace()
@@ -447,7 +446,7 @@ namespace Gray
 	}
 
 	template< typename TYPE>
-	GRAYCORE_LINK StrLen_t GRAYCALL StrT::GetWhitespaceEnd(const TYPE* pStr, StrLen_t iLenChars) // static
+	StrLen_t GRAYCALL StrT::GetWhitespaceEnd(const TYPE* pStr, StrLen_t iLenChars) // static
 	{
 		//! Walk backwards from the end of the string.
 		//! @return
@@ -470,7 +469,7 @@ namespace Gray
 	}
 
 	template< typename TYPE>
-	GRAYCORE_LINK bool GRAYCALL StrT::IsPrintable(const TYPE* pStr, StrLen_t iLenChars)
+	bool GRAYCALL StrT::IsPrintable(const TYPE* pStr, StrLen_t iLenChars)
 	{
 		//! Is this a normally printable string?
 		if (pStr == nullptr)
@@ -492,18 +491,19 @@ namespace Gray
 	//***********************************************************
 
 	template< typename TYPE >
-	GRAYCORE_LINK const TYPE* GRAYCALL StrT::GetTableElem(ITERATE_t iEnumVal, const void* ppszTableInit, ITERATE_t iCountMax, size_t iElemSize)
+	const TYPE* GRAYCALL StrX<TYPE>::GetTableElem(ITERATE_t iEnumVal, const void* ppszTableInit, ITERATE_t iCountMax, size_t nElemSize)
 	{
 		//! Get a string for an enum value.
+		//! iCountMax = I know the max.
 		if (IS_INDEX_BAD(iEnumVal, iCountMax))
 		{
 			return StrT::Cast<TYPE>(CSTRCONST("?"));
 		}
-		return GetTableElem<TYPE>(ppszTableInit, iEnumVal, iElemSize);
+		return GetTableElemU(ppszTableInit, iEnumVal, nElemSize);
 	}
 
 	template< typename TYPE>
-	GRAYCORE_LINK ITERATE_t GRAYCALL StrT::GetTableCount(const void* ppszTableInit, size_t iElemSize)
+	ITERATE_t GRAYCALL StrX<TYPE>::GetTableCount(const void* ppszTableInit, size_t nElemSize)
 	{
 		//! Count the size of a null terminated table of strings.
 		//! Don't assume sorted.
@@ -512,7 +512,7 @@ namespace Gray
 		const TYPE* const* ppszTable = (const TYPE* const*)ppszTableInit;
 		for (ITERATE_t i = 0;; i++)
 		{
-			const TYPE* pszName = GetTableElem<TYPE>(ppszTable, i, iElemSize);
+			const TYPE* pszName = GetTableElemU(ppszTable, i, nElemSize);
 			if (pszName == nullptr)
 				return i;
 		}
@@ -520,7 +520,7 @@ namespace Gray
 	}
 
 	template< typename TYPE>
-	GRAYCORE_LINK ITERATE_t GRAYCALL StrT::GetTableCountSorted(const void* ppszTableInit, size_t iElemSize)
+	ITERATE_t GRAYCALL StrX<TYPE>::GetTableCountSorted(const void* ppszTableInit, size_t nElemSize)
 	{
 		//! make sure the table actually IS sorted !
 		//! ignores case
@@ -530,10 +530,10 @@ namespace Gray
 		const TYPE* const* ppszTable = (const TYPE* const*)ppszTableInit;
 		for (ITERATE_t i = 0;; i++)
 		{
-			const TYPE* pszName1 = GetTableElem<TYPE>(ppszTable, i, iElemSize);
+			const TYPE* pszName1 = GetTableElemU(ppszTable, i, nElemSize);
 			if (pszName1 == nullptr)
 				return 0;
-			const TYPE* pszName2 = GetTableElem<TYPE>(ppszTable, i + 1, iElemSize);
+			const TYPE* pszName2 = GetTableElemU(ppszTable, i + 1, nElemSize);
 			if (pszName2 == nullptr)
 				return i + 1;
 			COMPARE_t iCompare = StrT::CmpI(pszName1, pszName2);
@@ -548,7 +548,7 @@ namespace Gray
 	//***********************************************************
 
 	template< typename TYPE>
-	GRAYCORE_LINK ITERATE_t GRAYCALL StrT::TableFindHead(const TYPE* pszFindHead, const void* ppszTableInit, size_t iElemSize)
+	ITERATE_t GRAYCALL StrT::TableFindHead(const TYPE* pszFindHead, const void* ppszTableInit, size_t nElemSize)
 	{
 		//! Find a string in a table.
 		//! Ignores case. unsorted table.
@@ -563,17 +563,17 @@ namespace Gray
 		const TYPE* const* ppszTable = (const TYPE* const*)ppszTableInit;
 		for (ITERATE_t i = 0;; i++)
 		{
-			const TYPE* pszName = StrT::GetTableElem<TYPE>(ppszTable, i, iElemSize);
+			const TYPE* pszName = StrX<TYPE>::GetTableElemU(ppszTable, i, nElemSize);
 			if (pszName == nullptr)
 				break;
 			if (!StrT::CmpHeadI(pszFindHead, pszName))
 				return(i);
 		}
-		return(k_ITERATE_BAD);
+		return k_ITERATE_BAD;
 	}
 
 	template< typename TYPE>
-	GRAYCORE_LINK ITERATE_t GRAYCALL StrT::TableFindHeadSorted(const TYPE* pszFindHead, const void* ppszTableInit, ITERATE_t iCountMax, size_t iElemSize)
+	ITERATE_t GRAYCALL StrT::TableFindHeadSorted(const TYPE* pszFindHead, const void* ppszTableInit, ITERATE_t iCountMax, size_t nElemSize)
 	{
 		//! Find a string in a table.
 		//! Do a binary search (un-cased) on a sorted table.
@@ -585,7 +585,7 @@ namespace Gray
 		if (ppszTableInit == nullptr)
 			return k_ITERATE_BAD;
 #ifdef _DEBUG
-		ASSERT(StrT::GetTableCountSorted<TYPE>(ppszTableInit, iElemSize) == iCountMax);
+		ASSERT(StrX<TYPE>::GetTableCountSorted(ppszTableInit, nElemSize) == iCountMax);
 #endif
 
 		const TYPE* const* ppszTable = (const TYPE* const*)ppszTableInit;
@@ -598,7 +598,7 @@ namespace Gray
 		while (iLow <= iHigh)
 		{
 			ITERATE_t i = (iHigh + iLow) / 2;
-			COMPARE_t iCompare = StrT::CmpHeadI(pszFindHead, StrT::GetTableElem<TYPE>(ppszTable, i, iElemSize));
+			COMPARE_t iCompare = StrT::CmpHeadI(pszFindHead, StrX<TYPE>::GetTableElemU(ppszTable, i, nElemSize));
 			if (iCompare == COMPARE_Equal)
 				return i;
 			if (iCompare > 0)
@@ -614,7 +614,7 @@ namespace Gray
 	}
 
 	template< typename TYPE>
-	GRAYCORE_LINK ITERATE_t GRAYCALL StrT::TableFind(const TYPE* pszFindThis, const void* ppszTableInit, size_t iElemSize)
+	ITERATE_t GRAYCALL StrT::TableFind(const TYPE* pszFindThis, const void* ppszTableInit, size_t nElemSize)
 	{
 		//! Find a string in a non-sorted table. Ignores case
 		//! Used with STR_TABLEFIND_N
@@ -625,7 +625,7 @@ namespace Gray
 		const TYPE* const* ppszTable = (const TYPE* const*)ppszTableInit;
 		for (ITERATE_t i = 0;; i++)
 		{
-			const TYPE* pszName = StrT::GetTableElem<TYPE>(ppszTable, i, iElemSize);
+			const TYPE* pszName = StrX<TYPE>::GetTableElemU(ppszTable, i, nElemSize);
 			if (pszName == nullptr)
 				break;
 			if (!StrT::CmpI(pszFindThis, pszName))
@@ -635,7 +635,7 @@ namespace Gray
 	}
 
 	template< typename TYPE>
-	GRAYCORE_LINK ITERATE_t GRAYCALL StrT::TableFindSorted(const TYPE* pszFindThis, const void* ppszTableInit, ITERATE_t iCountMax, size_t iElemSize)
+	ITERATE_t GRAYCALL StrT::TableFindSorted(const TYPE* pszFindThis, const void* ppszTableInit, ITERATE_t iCountMax, size_t nElemSize)
 	{
 		//! Find a string in a table.
 		//! Do a binary search (un-cased) on a sorted table.
@@ -646,7 +646,7 @@ namespace Gray
 		if (ppszTableInit == nullptr)
 			return k_ITERATE_BAD;
 #ifdef _DEBUG
-		ASSERT(StrT::GetTableCountSorted<TYPE>(ppszTableInit, iElemSize) == iCountMax);
+		ASSERT(StrX<TYPE>::GetTableCountSorted(ppszTableInit, nElemSize) == iCountMax);
 #endif
 
 		const TYPE* const* ppszTable = (const TYPE* const*)ppszTableInit;
@@ -659,7 +659,7 @@ namespace Gray
 		while (iLow <= iHigh)
 		{
 			ITERATE_t i = (iHigh + iLow) / 2;
-			const TYPE* pszName = StrT::GetTableElem<TYPE>(ppszTable, i, iElemSize);
+			const TYPE* pszName = StrX<TYPE>::GetTableElemU(ppszTable, i, nElemSize);
 			COMPARE_t iCompare = StrT::CmpI(pszFindThis, pszName);
 			if (iCompare == COMPARE_Equal)
 				return(i);
@@ -679,7 +679,7 @@ namespace Gray
 	// String Modifiers
 
 	template< typename TYPE>
-	GRAYCORE_LINK StrLen_t GRAYCALL StrT::CopyLen(TYPE* pDst, const TYPE* pSrc, StrLen_t iLenMaxChars)
+	StrLen_t GRAYCALL StrT::CopyLen(TYPE* pDst, const TYPE* pSrc, StrLen_t iLenMaxChars) noexcept
 	{
 		//! Copy a string. replaces strncpy (sort of)
 		//! @arg iLenMaxChars = _countof(Dst) = includes room for '\0'. (just like memcpy)
@@ -723,7 +723,7 @@ namespace Gray
 	//***************************************************************************************
 
 	template< typename TYPE>
-	GRAYCORE_LINK StrLen_t GRAYCALL StrT::TrimWhitespaceEnd(TYPE* pStr, StrLen_t iLenChars)
+	StrLen_t GRAYCALL StrT::TrimWhitespaceEnd(TYPE* pStr, StrLen_t iLenChars)
 	{
 		//! Trim any whitespace off the end of the string.
 		//! @return
@@ -743,7 +743,7 @@ namespace Gray
 	}
 
 	template< typename TYPE>
-	GRAYCORE_LINK TYPE* GRAYCALL StrT::TrimWhitespace(TYPE* pStr, StrLen_t iLenMax)
+	TYPE* GRAYCALL StrT::TrimWhitespace(TYPE* pStr, StrLen_t iLenMax)
 	{
 		//! Trim starting AND ending whitespace
 		TYPE* pStrStart = pStr;
@@ -754,7 +754,7 @@ namespace Gray
 	}
 
 	template< typename TYPE>
-	GRAYCORE_LINK StrLen_t GRAYCALL StrT::ReplaceX(TYPE* pDst, StrLen_t iDstLenMax, StrLen_t iDstIdx, StrLen_t iDstSegLen, const TYPE* pSrc, StrLen_t iSrcLen)
+	StrLen_t GRAYCALL StrT::ReplaceX(TYPE* pDst, StrLen_t iDstLenMax, StrLen_t iDstIdx, StrLen_t iDstSegLen, const TYPE* pSrc, StrLen_t iSrcLen)
 	{
 		//! Replace a segment of a string with pSrc, Maybe change length!
 		//! @arg
@@ -783,7 +783,7 @@ namespace Gray
 	//******************************************************************************
 
 	template< typename TYPE>
-	GRAYCORE_LINK TYPE* GRAYCALL StrT::FindBlockEnd(STR_BLOCK_TYPE eBlockType, const TYPE* pszLine, StrLen_t iLenMaxChars)
+	TYPE* GRAYCALL StrT::FindBlockEnd(STR_BLOCK_TYPE eBlockType, const TYPE* pszLine, StrLen_t iLenMaxChars)
 	{
 		//! Find the end of an STR_BLOCK_TYPE sequence. (quote,brace,bracket,parenthesis)
 		//! skip nested blocks. deal with quoted and escaped strings.
@@ -866,7 +866,7 @@ namespace Gray
 	}
 
 	template< typename TYPE>
-	GRAYCORE_LINK TYPE* GRAYCALL StrT::StripBlock(TYPE* pszText)
+	TYPE* GRAYCALL StrT::StripBlock(TYPE* pszText)
 	{
 		//! strip block based on the very first character of the string.
 		//! If the string is encased in "" or () then remove them.
@@ -882,7 +882,7 @@ namespace Gray
 	}
 
 	template< typename TYPE>
-	GRAYCORE_LINK StrLen_t GRAYCALL StrT::EscSeqRemove(TYPE* pStrOut, const TYPE* pStrIn, StrLen_t iLenOutMax, StrLen_t iLenInMax)
+	StrLen_t GRAYCALL StrT::EscSeqRemove(TYPE* pStrOut, const TYPE* pStrIn, StrLen_t iLenOutMax, StrLen_t iLenInMax)
 	{
 		//! Filter/decode out the 'C like' embedded escape sequences. "\n\r" etc
 		//! This string will shrink.
@@ -950,7 +950,7 @@ namespace Gray
 	}
 
 	template< typename TYPE>
-	GRAYCORE_LINK StrLen_t GRAYCALL StrT::EscSeqRemoveQ(TYPE* pStrOut, const TYPE* pStrIn, StrLen_t iLenOutMax, StrLen_t iLenInMax)
+	StrLen_t GRAYCALL StrT::EscSeqRemoveQ(TYPE* pStrOut, const TYPE* pStrIn, StrLen_t iLenOutMax, StrLen_t iLenInMax)
 	{
 		//! Remove the opening and closing quotes. Put enclosed string (decoded) into pStrOut.
 		//! @return the consumed length of pStrIn. NOT the length of pStrOut.
@@ -981,7 +981,7 @@ namespace Gray
 	}
 
 	template< typename TYPE>
-	GRAYCORE_LINK StrLen_t GRAYCALL StrT::EscSeqAdd(TYPE* pStrOut, const TYPE* pStrIn, StrLen_t iLenOutMax)
+	StrLen_t GRAYCALL StrT::EscSeqAdd(TYPE* pStrOut, const TYPE* pStrIn, StrLen_t iLenOutMax)
 	{
 		//! Encode/Replace odd chars with escape sequences. e.g. "\n"
 		//! This makes the string larger!
@@ -1034,7 +1034,7 @@ namespace Gray
 	}
 
 	template< typename TYPE>
-	GRAYCORE_LINK StrLen_t GRAYCALL StrT::EscSeqAddQ(TYPE* pStrOut, const TYPE* pStrIn, StrLen_t iLenOutMax)
+	StrLen_t GRAYCALL StrT::EscSeqAddQ(TYPE* pStrOut, const TYPE* pStrIn, StrLen_t iLenOutMax)
 	{
 		//! Encode the string and add quotes.
 		if (iLenOutMax <= 2)
@@ -1051,7 +1051,7 @@ namespace Gray
 	//******************************************************************************
 
 	template< typename TYPE>
-	GRAYCORE_LINK ITERATE_t GRAYCALL StrT::ParseCmds(TYPE* pszCmdLine, StrLen_t nCmdLenMax, TYPE** ppCmd, ITERATE_t iCmdQtyMax, const TYPE* pszSep, STRP_MASK_t uFlags)
+	ITERATE_t GRAYCALL StrT::ParseCmds(TYPE* pszCmdLine, StrLen_t nCmdLenMax, TYPE** ppCmd, ITERATE_t iCmdQtyMax, const TYPE* pszSep, STRP_MASK_t uFlags)
 	{
 		//! Parse a separated list of tokens/arguments to a function/command
 		//! @arg
@@ -1194,14 +1194,15 @@ namespace Gray
 				continue;
 			}
 
-			if (uFlags & STRP_CHECK_BLOCKS)
+			if ((uFlags & STRP_CHECK_BLOCKS ) && StrChar::IsAscii(ch))
 			{
 				// Special block char ?
-				// Non matching end parenthesis? Thats bad. i can't do anything.
+				// has some other block ending ? Thats weird.
 				if (StrT::HasChar(k_szBlockEnd + STR_BLOCK_QUOTE + 1, (char)ch))
 				{
-					break;	// FAIL
+					break;	// Not sure what i should do about this ?
 				}
+
 				STR_BLOCK_TYPE eBlockType = (STR_BLOCK_TYPE)StrT::FindCharN(k_szBlockStart, (char)ch);	// start block.
 				if (eBlockType >= 0)
 				{
@@ -1236,7 +1237,7 @@ namespace Gray
 	}
 
 	template< typename TYPE>
-	GRAYCORE_LINK ITERATE_t GRAYCALL StrT::ParseCmdsTmp(TYPE* pszTmp, StrLen_t iTmpSizeMax, const TYPE* pszCmdLine, TYPE** ppCmd, ITERATE_t iCmdQtyMax, const TYPE* pszSep, STRP_MASK_t uFlags)
+	ITERATE_t GRAYCALL StrT::ParseCmdsTmp(TYPE* pszTmp, StrLen_t iTmpSizeMax, const TYPE* pszCmdLine, TYPE** ppCmd, ITERATE_t iCmdQtyMax, const TYPE* pszSep, STRP_MASK_t uFlags)
 	{
 		//! Make a temporary copy of the string for parsing. 
 		//! @arg iTmpSizeMax = StrT::k_LEN_MAX
@@ -1250,7 +1251,7 @@ namespace Gray
 	//***********************************************************
 
 	template< typename TYPE>
-	GRAYCORE_LINK StrLen_t GRAYCALL StrT::MatchRegEx(const TYPE* pText, const TYPE* pPattern, bool bIgnoreCase, StrLen_t nTextMax)	// static
+	StrLen_t GRAYCALL StrT::MatchRegEx(const TYPE* pText, const TYPE* pPattern, bool bIgnoreCase, StrLen_t nTextMax)	// static
 	{
 		//! Recursive very simple regex pattern match with backtracking.
 		//! Will cope with match( "a.b.c", "*.c" )
@@ -1343,7 +1344,7 @@ namespace Gray
 	// Numerics 
 
 	template< typename TYPE>
-	GRAYCORE_LINK StrLen_t GRAYCALL StrT::ULtoAK(UINT64 uVal, OUT TYPE* pszOut, StrLen_t iStrMax, UINT nKUnit, bool bSpace)
+	StrLen_t GRAYCALL StrT::ULtoAK(UINT64 uVal, OUT TYPE* pszOut, StrLen_t iStrMax, UINT nKUnit, bool bSpace)
 	{
 		//! Make string describing a value in K/M/G/T/P/E/Z/Y units. (Kilo,Mega,Giga,Tera,Peta,Exa,Zetta,Yotta)
 		//! @arg nKUnit = 1024 default

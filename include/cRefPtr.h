@@ -38,11 +38,11 @@ namespace Gray
 		mutable cInterlockedInt m_nRefCount;	//!< count the number of refs. Multi-Thread safe. check _MT here ??
 
 	private:
-		void _InternalAddRef()
+		void _InternalAddRef() noexcept
 		{
 #ifdef _DEBUG
-			ASSERT(isValidObj());
-			ASSERT(!isDestructing());
+			DEBUG_CHECK(isValidObj());
+			DEBUG_CHECK(!isDestructing());
 			const int iRefCount = get_RefCount();
 			if (isSmartDebug())
 			{
@@ -80,7 +80,7 @@ namespace Gray
 			: m_nRefCount(iRefCount)
 		{
 		}
-		virtual ~cRefBase() 
+		virtual ~cRefBase()
 		{
 			//! ASSUME StaticDestruct() was called if needed.
 			ASSERT(get_RefCount() == 0);
@@ -88,14 +88,14 @@ namespace Gray
 
 		int get_RefCount() const noexcept
 		{
-			return m_nRefCount.get_Value() &~ k_REFCOUNT_MASK;
+			return m_nRefCount.get_Value() & ~k_REFCOUNT_MASK;
 		}
 		HASHCODE_t get_HashCode() const noexcept
 		{
-			//! Unique hash code only on this machine.
-			return ((HASHCODE_t)(UINT_PTR)(void*) this);
+			//! get a unique (only on this machine/process instance) hash code.
+			return ((HASHCODE_t)(UINT_PTR)(void*)this);
 		}
-		STDMETHOD_(HASHCODE_t, get_HashCodeX)() const
+		STDMETHOD_(HASHCODE_t, get_HashCodeX)() const noexcept 
 		{
 			//! virtualized version of get_HashCode.
 			return get_HashCode();
@@ -112,12 +112,14 @@ namespace Gray
 			delete this;
 		}
 
-		bool isValidObj() const
+		bool isValidObj() const noexcept
 		{
+			// Is this really a valid object?
+			// does it have proper vtable ?
 			if (!cMem::IsValid(this))
 				return false;
 #if defined(_DEBUG) && ! defined(__GNUC__)
-			return DYNPTR_CAST(const cRefBase, this) != nullptr;
+			return IS_TYPE_OF(cRefBase, this);
 #else
 			return true;
 #endif
@@ -170,7 +172,7 @@ namespace Gray
 		}
 #endif
 
-		bool isStaticConstruct() const
+		bool isStaticConstruct() const noexcept
 		{
 			//! Was StaticConstruct() called for this ?
 			return(m_nRefCount.get_Value() & k_REFCOUNT_STATIC) ? true : false;
@@ -189,7 +191,7 @@ namespace Gray
 			m_nRefCount.put_Value(0);
 		}
 
-		bool isDestructing()
+		bool isDestructing() noexcept
 		{
 			return(m_nRefCount.get_Value() & k_REFCOUNT_DESTRUCT) ? true : false;
 		}
@@ -203,7 +205,7 @@ namespace Gray
 		}
 
 #ifdef _DEBUG
-		bool isSmartDebug()
+		bool isSmartDebug() const
 		{
 			return(m_nRefCount.get_Value() & k_REFCOUNT_DEBUG) ? true : false;
 		}
@@ -223,7 +225,7 @@ namespace Gray
 	{
 		//! @class Gray::cRefPtr
 		//! Template for a type specific Smart Pointer
-		//! Smart pointer to an object. like "com_ptr_t" _com_ptr_t or CComPtr. https://msdn.microsoft.com/en-us/library/hh279674.aspx
+		//! Smart pointer to an object. like "com_ptr_t" _com_ptr_t or cComPtr. https://msdn.microsoft.com/en-us/library/hh279674.aspx
 		//! Just a ref to the object of some type.
 		//! TYPE must be based on cRefBase
 		//! similar to boost::shared_ptr<TYPE>
@@ -233,7 +235,7 @@ namespace Gray
 		typedef cPtrFacade<TYPE> SUPER_t;
 
 	protected:
-		void IncRefFirst()
+		void IncRefFirst()  
 		{
 			//! @note IncRefCount can throw !
 			if (this->m_p != nullptr)
@@ -247,7 +249,7 @@ namespace Gray
 		}
 
 	public:
-		cRefPtr()
+		cRefPtr() noexcept
 		{
 		}
 		cRefPtr(const TYPE* p2)
@@ -299,10 +301,10 @@ namespace Gray
 			if (this->m_p == nullptr)	// nullptr is not corrupt.
 				return false;
 			// ASSERT( DYNPTR_CAST(TYPE,this->m_p) != nullptr );
-			cRefBase* pSmart = DYNPTR_CAST(cRefBase, this->m_p);
-			if (pSmart == nullptr)
+			cRefBase* p = DYNPTR_CAST(cRefBase, this->m_p);
+			if (p == nullptr)
 				return true;
-			if (pSmart->get_RefCount() <= 0)
+			if (p->get_RefCount() <= 0)
 				return true;
 			return false;
 		}

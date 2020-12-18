@@ -39,14 +39,14 @@ namespace Gray
 
 	//**************************************************************
 
-	TIMESEC_t GRAYCALL cTimeInt::GetTimeFromDays(double dTimeDays) // static
+	TIMESEC_t GRAYCALL cTimeInt::GetTimeFromDays(double dTimeDays) noexcept // static
 	{
 		//! Set to time in seconds from time in days.
 		//! Opposite of cTimeDouble::GetTimeFromSec()
 		return (TIMESEC_t)((dTimeDays - cTimeDouble::k_nDaysDiffTimeInt) * cTimeUnits::k_nSecondsPerDay);
 	}
 
-	cTimeInt GRAYCALL cTimeInt::GetTimeNow()	// static
+	cTimeInt GRAYCALL cTimeInt::GetTimeNow() noexcept	// static
 	{
 		//! @return The current time in seconds since Jan 1 1970 GMT (NOT LOCALIZED)
 		//! @note GetCurrentTime() is "#define" by _WIN32 to GetTickCount() so i cant use that name!

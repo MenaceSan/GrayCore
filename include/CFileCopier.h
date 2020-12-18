@@ -16,7 +16,7 @@ namespace Gray
 	struct GRAYCORE_LINK DECLSPEC_NOVTABLE IFileCopier
 	{
 		//! @struct Gray::IFileCopier
-		//! An Abstract/interface to request/send a file from/to a remote source. (e.g. HTTP,FTP,etc)
+		//! An Abstract/interface to request/send a file from/to a remote source. (e.g. HTTP,FTP,another file device,etc)
 		//! And track it's progress.
 		//! similar to __linux__ curl lib
 

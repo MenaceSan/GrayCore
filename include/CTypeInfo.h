@@ -39,7 +39,7 @@ namespace Gray
 		//! @todo cTypeInfo List of virtual members from vtable.
 
 	public:
-		size_t get_HashCode() const
+		size_t get_HashCode() const noexcept
 		{
 #ifdef _MSC_VER
 			return hash_code();

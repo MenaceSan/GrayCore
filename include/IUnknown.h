@@ -12,7 +12,7 @@
 #include "HResult.h"
 
 #ifdef _WIN32
-#include <Unknwn.h>	// IUnknown
+#include <Unknwn.h>	// IUnknown __IUnknown_INTERFACE_DEFINED__ IClassFactory
 #endif
 
 #ifndef DECLSPEC_UUID

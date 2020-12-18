@@ -123,6 +123,11 @@ namespace Gray
 		return S_OK;
 	}
 
+	HRESULT GRAYCALL cFileStatus::WriteFileTimes(const FILECHAR_t* pszFilePath, const cFileStatus& rFileStatus) // static 
+	{
+		return WriteFileTimes(pszFilePath, &(rFileStatus.m_timeCreate), &(rFileStatus.m_timeChange));
+	}
+
 	HRESULT GRAYCALL cFileStatus::ReadFileStatus2(const FILECHAR_t* pszFilePath, cFileStatus* pFileStatus, bool bFollowLink) // static
 	{
 		//! get info/attributes/status on a single file or dir.
@@ -156,7 +161,7 @@ namespace Gray
 		{
 			// DEBUG_ERR(( "Can't open input dir [%s]", LOGSTR(pszFilePath)));
 			return HResult::GetLastDef(HRESULT_WIN32_C(ERROR_FILE_NOT_FOUND));
-		}
+	}
 
 #endif
 
@@ -167,5 +172,5 @@ namespace Gray
 			ASSERT(pFileStatus->isFileValid());
 		}
 		return S_OK;
-	}
+}
 }

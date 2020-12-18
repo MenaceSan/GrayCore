@@ -265,7 +265,7 @@ SOURCE=.\cThreadLockX.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\CThreadSafeLong.h
+SOURCE=.\cThreadSafeLong.h
 # End Source File
 # Begin Source File
 

@@ -105,5 +105,5 @@ namespace Gray
 			return m_pIAggOuter->QueryInterface(riid, ppv);
 		}
 	};
-};
+}
 #endif // _INC_cIUnkAgg_H

@@ -29,7 +29,7 @@ namespace Gray
 	{
 		//! @enum Gray::FILEOP_TYPE
 		//! Operations on files. for use with FILEOP_FLAGS ?
-		//! Same as WIN32 "shellapi.h" FO_MOVE, FO_COPY, FO_DELETE, FO_RENAME   for CFileDirDlg SHFileOperation
+		//! Same as WIN32 "shellapi.h" FO_MOVE, FO_COPY, FO_DELETE, FO_RENAME   for cFileDirDlg SHFileOperation
 		FILEOP_MOVE = 0x0001,	// AKA FO_MOVE
 		FILEOP_COPY = 0x0002,
 		FILEOP_DELETE = 0x0003,

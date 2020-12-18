@@ -769,7 +769,7 @@
     <ClInclude Include="cIUnkAgg.h" />
     <ClInclude Include="cIUnkPtr.h" />
     <ClInclude Include="CList.h" />
-    <ClInclude Include="cListNodeSmart.h" />
+    <ClInclude Include="cListNodeRef.h" />
     <ClInclude Include="cLocker.h" />
     <ClInclude Include="cLogAppendConsole.h" />
     <ClInclude Include="cLogAppender.h" />
@@ -802,8 +802,8 @@
     <ClInclude Include="cSystemInfo.h" />
     <ClInclude Include="cTempPool.h" />
     <ClInclude Include="cTextPos.h" />
-    <ClInclude Include="CThreadArray.h" />
-    <ClInclude Include="CThreadArrayString.h" />
+    <ClInclude Include="cThreadArray.h" />
+    <ClInclude Include="cThreadArrayString.h" />
     <ClInclude Include="cThreadLocalSys.h" />
     <ClInclude Include="cThreadLock.h" />
     <ClInclude Include="cThreadLockRW.h" />

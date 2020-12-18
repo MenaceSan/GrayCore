@@ -27,8 +27,8 @@ namespace Gray
 		ITERATE_t m_j;	//!< element inside a array/Bucket.
 	public:
 		cHashIterator(ITERATE_t nBucket = 0, ITERATE_t jj = 0) noexcept
-		: m_i(nBucket)
-		, m_j(jj)
+			: m_i(nBucket)
+			, m_j(jj)
 		{
 		}
 		void SkipRemoved() noexcept
@@ -204,7 +204,7 @@ namespace Gray
 		ITERATE_t Add(TYPE* pNew)
 		{
 			ASSERT(pNew != nullptr);
-			return(this->m_aTable[this->GetHashArray(pNew->get_HashCode())].Add(pNew));
+			return this->m_aTable[this->GetHashArray(pNew->get_HashCode())].Add(pNew);
 		}
 		bool DeleteArg(TYPE* pObj)
 		{
@@ -225,7 +225,7 @@ namespace Gray
 		}
 		void DisposeAll()
 		{
-			//! ASSUME TYPE supports DisposeThis(); like CXObject
+			//! ASSUME TYPE supports DisposeThis(); like cXObject
 			for (ITERATE_t i = 0; i < this->k_HASH_ARRAY_QTY; i++)
 			{
 				this->m_aTable[i].DisposeAll();

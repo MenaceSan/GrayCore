@@ -18,9 +18,9 @@ namespace Gray
 	{
 		//! @class Gray::cIniKeyValue
 		//! A single tuple. a key/named string and value pair. 
-		//! value/property stored as string. AKA CXmlAttribute.
+		//! value/property stored as string. AKA cXmlAttribute.
 		//! like cPair, cPairT,
-		//! similar to "std::tuple<>" or "System.Collections.Generic.KeyValuePair<>", CVarTuple
+		//! similar to "std::tuple<>" or "System.Collections.Generic.KeyValuePair<>", cVarTuple
 
 	public:
 		cAtomRef m_aKey;	//!< property key name.
@@ -33,11 +33,11 @@ namespace Gray
 		: m_aKey(aKey), m_sVal(sVal)
 		{
 		}
-		ATOMCODE_t get_HashCode() const
+		ATOMCODE_t get_HashCode() const noexcept
 		{
 			return m_aKey.get_HashCode();
 		}
-		bool operator == (const cIniKeyValue& e) const
+		bool operator == (const cIniKeyValue& e) const noexcept
 		{
 			return e.get_HashCode() == get_HashCode();
 		}
@@ -56,7 +56,7 @@ namespace Gray
 	{
 		//! @class Gray::cIniMap
 		//! A bag of tuples. A collection of key/value pairs stored as strings.
-		//! Can be used for HTTP cookie sets, CXmlAttributeSet, JSON objects.
+		//! Can be used for HTTP cookie sets, cXmlAttributeSet, JSON objects.
 		//! ASSUME NO duplicated keys.
 		//! Similar to cIniObject but props are NOT known/predefined.
 

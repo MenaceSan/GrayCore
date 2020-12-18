@@ -371,6 +371,7 @@
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <MapFileName>$(IntDir)$(TargetName)$(TargetExt).map</MapFileName>
       <MapExports>true</MapExports>
+      <Version>1.6</Version>
     </Link>
     <PostBuildEvent>
       <Command>
@@ -418,6 +419,7 @@
       <ImportLibrary>$(IntDir)$(ProjectName).lib</ImportLibrary>
       <TargetMachine>MachineX64</TargetMachine>
       <AdditionalLibraryDirectories>$(VCInstallDir)UnitTest\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <Version>1.6</Version>
     </Link>
     <PostBuildEvent>
       <Command>
@@ -456,6 +458,7 @@
       </EnableCOMDATFolding>
       <ImportLibrary>$(IntDir)$(ProjectName).lib</ImportLibrary>
       <TargetMachine>MachineX86</TargetMachine>
+      <Version>1.6</Version>
     </Link>
     <PostBuildEvent>
       <Command>
@@ -494,6 +497,7 @@
       </EnableCOMDATFolding>
       <ImportLibrary>$(IntDir)$(ProjectName).lib</ImportLibrary>
       <TargetMachine>MachineX64</TargetMachine>
+      <Version>1.6</Version>
     </Link>
     <PostBuildEvent>
       <Command>
@@ -645,7 +649,7 @@
     <ClInclude Include="include\cIUnkAgg.h" />
     <ClInclude Include="include\cIUnkPtr.h" />
     <ClInclude Include="include\cList.h" />
-    <ClInclude Include="include\cListNodeSmart.h" />
+    <ClInclude Include="include\cListNodeRef.h" />
     <ClInclude Include="include\cLocker.h" />
     <ClInclude Include="include\cLogAppendConsole.h" />
     <ClInclude Include="include\cLogAppender.h" />
@@ -673,6 +677,7 @@
     <ClInclude Include="include\cQueue.h" />
     <ClInclude Include="include\cRandom.h" />
     <ClInclude Include="include\cRefPtr.h" />
+    <ClInclude Include="include\cResourceBase.h" />
     <ClInclude Include="include\cSecurityAttributes.h" />
     <ClInclude Include="include\cSingleton.h" />
     <ClInclude Include="include\cSingletonPtr.h" />
@@ -730,7 +735,6 @@
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="cArray.cpp" />
     <ClCompile Include="GrayCore.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -752,6 +756,7 @@
     <ClCompile Include="src\cAppImpl.cpp" />
     <ClCompile Include="src\cAppState.cpp" />
     <ClCompile Include="src\cArchive.cpp" />
+    <ClCompile Include="src\cArray.cpp" />
     <ClCompile Include="src\cAtom.cpp" />
     <ClCompile Include="src\cCodeProfiler.cpp" />
     <ClCompile Include="src\cDebugAssert.cpp" />
@@ -818,7 +823,6 @@
     <ClCompile Include="src\StrNum.cpp" />
     <ClCompile Include="src\StrT.cpp" />
     <ClCompile Include="src\StrU.cpp" />
-    <ClCompile Include="src\StrXUnitTest.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="src\GrayCore.rc" />

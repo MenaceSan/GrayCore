@@ -85,7 +85,7 @@ namespace Gray
 #endif
 	}
 
-	bool GRAYCALL cHeap::IsValidInside(const void* pData, ptrdiff_t iOffset)// static
+	bool GRAYCALL cHeap::IsValidInside(const void* pData, ptrdiff_t iOffset) noexcept // static
 	{
 		//! Is this offset inside the valid heap block.
 		//! @note this should only ever be used in debug code. and only in an ASSERT.
@@ -223,7 +223,7 @@ namespace Gray
 		return bRet;
 	}
 
-	size_t GRAYCALL cHeap::GetSize(const void* pData) // static
+	size_t GRAYCALL cHeap::GetSize(const void* pData) noexcept // static
 	{
 		//! get the actual allocated size of a memory block in bytes.
 		//! @note __linux__ = Not always the size of the allocation request. maybe greater.
@@ -242,7 +242,7 @@ namespace Gray
 #endif
 	}
 
-	bool GRAYCALL cHeap::IsValidHeap(const void* pData) // static
+	bool GRAYCALL cHeap::IsValidHeap(const void* pData) noexcept // static
 	{
 		//! is this a valid malloc() heap pointer?
 		//! @note this should only ever be used in debug code. and only in an ASSERT.
@@ -264,7 +264,7 @@ namespace Gray
 
 #if defined(_MSC_VER) && (_MSC_VER >= 1300)
 
-	cHeapAlign::CHeader* GRAYCALL cHeapAlign::GetHeader(const void* pData) // static
+	const cHeapAlign::cHeapHeader* GRAYCALL cHeapAlign::GetHeader(const void* pData) noexcept// static
 	{
 		//! Get the header prefix for the align memory block.
 		//! pData = the pointer returned by cHeapAlign::Alloc
@@ -273,10 +273,10 @@ namespace Gray
 			return nullptr;
 		UINT_PTR uDataPtr = (UINT_PTR)pData;
 		uDataPtr &= ~(sizeof(UINT_PTR) - 1);
-		return((CHeader*)(uDataPtr - sizeof(CHeader)));
+		return((const cHeapHeader*)(uDataPtr - sizeof(cHeapHeader)));
 	}
 
-	bool GRAYCALL cHeapAlign::IsAlignedAlloc(const void* pData, size_t iAligned) // static
+	bool GRAYCALL cHeapAlign::IsAlignedAlloc(const void* pData, size_t iAligned) noexcept // static
 	{
 		//! Was pData created using cHeapAlign::Alloc() ?
 		//! @note _DEBUG heap is VERY different from release heap structure.
@@ -286,7 +286,7 @@ namespace Gray
 #ifdef _DEBUG
 		return cValArray::IsFilledSize<BYTE>(((BYTE*)pData) - k_SizeGap, k_SizeGap, FILL_AlignTail);
 #else
-		CHeader* pAlign = GetHeader(pData);
+		const cHeapHeader* pAlign = GetHeader(pData);
 		BYTE* pAlloc = (BYTE*)(pAlign->m_pMallocHead);
 		if (pAlloc > pData)
 			return false;
@@ -296,7 +296,7 @@ namespace Gray
 #endif
 	}
 
-	bool GRAYCALL cHeapAlign::IsValidInside(const void* pData, INT_PTR iOffset)// static
+	bool GRAYCALL cHeapAlign::IsValidInside(const void* pData, INT_PTR iOffset) noexcept // static
 	{
 		CODEPROFILEFUNC();
 		if (!IsAlignedAlloc(pData, sizeof(void*)))
@@ -304,7 +304,7 @@ namespace Gray
 			return SUPER_t::IsValidInside(pData, iOffset);
 		}
 
-		CHeader* pHdr = GetHeader(pData);
+		const cHeapHeader* pHdr = GetHeader(pData);
 
 #ifdef _DEBUG
 		if (!cValArray::IsFilledSize<BYTE>(pHdr->m_TailGap, sizeof(pHdr->m_TailGap), FILL_AlignTail)) //  seem to be aligned block
@@ -319,7 +319,7 @@ namespace Gray
 		return((size_t)iOffset < nSize);
 	}
 
-	bool GRAYCALL cHeapAlign::IsValidHeap(const void* pData)// static
+	bool GRAYCALL cHeapAlign::IsValidHeap(const void* pData) noexcept // static
 	{
 		//! is this a valid malloc() or _aligned_malloc() pointer?
 		//! May or may not be aligned.
@@ -331,9 +331,9 @@ namespace Gray
 			return SUPER_t::IsValidHeap(pData);
 		}
 
-		// get the CHeader pointer.
+		// get the cHeapHeader pointer.
 
-		CHeader* pHdr = GetHeader(pData);
+		const cHeapHeader* pHdr = GetHeader(pData);
 
 #ifdef _DEBUG
 		if (!cValArray::IsFilledSize<BYTE>(pHdr->m_TailGap, sizeof(pHdr->m_TailGap), FILL_AlignTail)) //  seem to be aligned block
@@ -345,7 +345,7 @@ namespace Gray
 		return SUPER_t::IsValidHeap(pHdr->m_pMallocHead);
 	}
 
-	size_t GRAYCALL cHeapAlign::GetSize(const void* pData)// static
+	size_t GRAYCALL cHeapAlign::GetSize(const void* pData) noexcept // static
 	{
 		CODEPROFILEFUNC();
 		if (!IsAlignedAlloc(pData, sizeof(void*)))
@@ -353,9 +353,9 @@ namespace Gray
 			return SUPER_t::GetSize(pData);
 		}
 
-		// get the CHeader pointer.
-		const CHeader* pHdr = GetHeader(pData);
-		ASSERT(SUPER_t::IsValidHeap(pHdr->m_pMallocHead));
+		// get the cHeapHeader pointer.
+		const cHeapHeader* pHdr = GetHeader(pData);
+		DEBUG_CHECK(SUPER_t::IsValidHeap(pHdr->m_pMallocHead));
 		return SUPER_t::GetSize(pHdr->m_pMallocHead);
 	}
 

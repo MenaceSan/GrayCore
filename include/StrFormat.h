@@ -46,10 +46,10 @@ namespace Gray
 			//! Find a valid spec char.
 			for (size_t i = 0; i < _countof(k_Specs) - 1; i++)
 			{
-				const char chTest = k_Specs[i];
-				if (ch > chTest)	// keep looking.
+				const char chCur = k_Specs[i];
+				if (ch > chCur)	// keep looking.
 					continue;
-				if (ch < chTest)	// they are sorted.
+				if (ch < chCur)	// they are sorted.
 					return '\0';
 				return ch;
 			}

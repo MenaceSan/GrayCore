@@ -30,7 +30,7 @@ namespace Gray
 	void cRandomBase::InitSeedDefault(size_t iSize)
 	{
 		//! Initialize random sequence randomly.
-		//! Seed the random generator with time or some mix of more random data.
+		//! Seed the random generator with time or some mix of more random data. NOT Deterministic!
 		InitSeed(cRandomNoise::get_Single(), iSize);
 	}
 

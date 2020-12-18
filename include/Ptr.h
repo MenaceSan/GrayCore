@@ -30,18 +30,20 @@ namespace Gray
 #endif
 
 	template <class _TYPE_TO, class _TYPE_FROM >
-	bool is_valid_cast(_TYPE_FROM* p)
+	inline bool is_valid_cast(_TYPE_FROM* p)
 	{
+		// will dynamic_cast work ? AKA IS_TYPE_OF() ?
 		// TODO typeid(p) == typeid(_TYPE_TO); as dynamic? or IS_TYPE_OF(_TYPE_TO)
 		if (p == nullptr)
 			return true;
 		_TYPE_TO* p2 = dynamic_cast<_TYPE_TO*>(p);
-		return(p2 != nullptr);
+		return p2 != nullptr ;
 	}
 
 	template <class _TYPE_TO, class _TYPE_FROM >
-	_TYPE_TO* check_cast(_TYPE_FROM* p)
+	inline _TYPE_TO* check_cast(_TYPE_FROM* p)
 	{
+		//! like static_cast<>() but with some extra checking.
 		//! up-casting can be dangerous. We assume it is safe in this case but check it anyhow. 
 		//! a static_cast that gets verified in _DEBUG mode. fast normal static_cast in release mode.
 		//! nullptr is valid.

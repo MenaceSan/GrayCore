@@ -333,7 +333,7 @@ namespace Gray
 	{
 	}
 
-	bool cSecurityAttributes::isValid() const
+	bool cSecurityAttributes::isValid() const noexcept
 	{
 		if (this->nLength <= 0)
 			return false;

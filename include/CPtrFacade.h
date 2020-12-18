@@ -20,6 +20,7 @@ namespace Gray
 		//! @class Gray::cPtrFacade
 		//! a class that acts like (wraps) a pointer to TYPE. Not specific to TYPE=cRefBase.
 		//! Base for: cExceptionHolder, cLockerT, cNewPtr, cRefPtr, cIUnkPtr, etc.
+		//! TODO cPtrNotNull<> // a pointer that can never be nullptr. like gsl::not_null<T>
 
 		typedef cPtrFacade<TYPE> THIS_t;
 
@@ -46,7 +47,7 @@ namespace Gray
 		TYPE** get_PPtr()
 		{
 			//! assume this will be used to set the m_p value.
-			ASSERT(m_p == nullptr);
+			ASSERT(m_p == nullptr);		// MUST not have current value.
 			return &m_p;
 		}
 		TYPE* get_Ptr() const noexcept
@@ -76,7 +77,7 @@ namespace Gray
 		{
 			//! Do not decrement the reference count when this is destroyed.
 			//! Pass the ref outside the smart pointer system. for use with COM interfaces.
-			//! same as _WIN32 ATL CComPtr Detach()
+			//! same as _WIN32 ATL cComPtr Detach()
 			TYPE* p = m_p;
 			m_p = nullptr;	// NOT ReleasePtr();
 			return p;
@@ -97,7 +98,7 @@ namespace Gray
 
 		//! Accessor ops.
 		//! @note These are dangerous ! They don't increment the reference count for use !!!
-		operator TYPE*() const noexcept
+		operator TYPE* () const noexcept
 		{
 			return m_p;
 		}
@@ -114,21 +115,21 @@ namespace Gray
 
 		TYPE* operator -> () const
 		{
-			ASSERT(m_p != nullptr); return(m_p);
+			ASSERT(m_p != nullptr); return m_p;
 		}
 
 		//! Comparison ops
 		bool operator!() const noexcept
 		{
-			return(m_p == nullptr);
+			return m_p == nullptr;
 		}
 		bool operator != ( /* const*/ TYPE* p2) const noexcept
 		{
-			return(p2 != m_p);
+			return p2 != m_p;
 		}
 		bool operator == ( /* const*/ TYPE* p2) const noexcept
 		{
-			return(p2 == m_p);
+			return p2 == m_p;
 		}
 	};
 

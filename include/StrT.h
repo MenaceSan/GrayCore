@@ -88,7 +88,7 @@ namespace Gray
 		// NON modifying methods first.
 
 		template< typename TYPE >
-		static StrLen_t Len(const TYPE* pszStr);
+		static StrLen_t Len(const TYPE* pszStr) noexcept;
 
 		template< typename TYPE >
 		static inline const TYPE* Cast(const TYPE* pszStr)
@@ -100,7 +100,7 @@ namespace Gray
 		}
 
 		template< typename TYPE >
-		static inline bool IsNullOrEmpty(const TYPE* pszStr)
+		static inline bool IsNullOrEmpty(const TYPE* pszStr) noexcept
 		{
 			//! Like .NET String.IsNullOrEmpty. Similar to IsWhitespace().
 			if (pszStr == nullptr)
@@ -111,7 +111,7 @@ namespace Gray
 		}
 
 		template< typename TYPE >
-		static inline const TYPE* CheckEmpty(const TYPE* pszStr)
+		static inline const TYPE* CheckEmpty(const TYPE* pszStr) noexcept
 		{
 			//! If this is an empty string then make it nullptr.
 			if (pszStr == nullptr)
@@ -122,7 +122,7 @@ namespace Gray
 		}
 
 		template< typename TYPE >
-		static StrLen_t Len(const TYPE* pszStr, StrLen_t iLenMax)
+		static StrLen_t Len(const TYPE* pszStr, StrLen_t iLenMax) noexcept
 		{
 			//! Get length (up to iLenMax <= k_LEN_MAX ) avoiding read errors for un-terminated sources. like strlen() but with limit. AKA strnlen().
 			//! @return the length of the string up to (including) iLenMax
@@ -149,11 +149,11 @@ namespace Gray
 		template< typename TYPE >
 		GRAYCORE_LINK static COMPARE_t GRAYCALL Cmp(const TYPE* pszStr1, const TYPE* pszStr2);
 		template< typename TYPE >
-		GRAYCORE_LINK static COMPARE_t GRAYCALL CmpN(const TYPE* pszStr1, const TYPE* pszStr2, StrLen_t iLenMaxChars);
+		GRAYCORE_LINK static COMPARE_t GRAYCALL CmpN(const TYPE* pszStr1, const TYPE* pszStr2, StrLen_t iLenMaxChars) noexcept;
 		template< typename TYPE >
 		GRAYCORE_LINK static COMPARE_t GRAYCALL CmpI(const TYPE* pszStr1, const TYPE* pszStr2);
 		template< typename TYPE >
-		GRAYCORE_LINK static COMPARE_t GRAYCALL CmpIN(const TYPE* pszStr1, const TYPE* pszStr2, StrLen_t iLenMaxChars);
+		GRAYCORE_LINK static COMPARE_t GRAYCALL CmpIN(const TYPE* pszStr1, const TYPE* pszStr2, StrLen_t iLenMaxChars) noexcept;
 		template< typename TYPE >
 		GRAYCORE_LINK static COMPARE_t GRAYCALL CmpHeadI(const TYPE* pszFind, const TYPE* pszTableElem);
 		template< typename TYPE >
@@ -162,9 +162,9 @@ namespace Gray
 		GRAYCORE_LINK static bool GRAYCALL EndsWithI(const TYPE* pszStr2, const TYPE* pszPostfix, StrLen_t nLenStr = k_StrLen_UNK);
 
 		template< typename TYPE >
-		GRAYCORE_LINK static HASHCODE32_t GRAYCALL GetHashCode32(const TYPE* pszStr, StrLen_t nLen = k_StrLen_UNK, HASHCODE32_t nHash = 0);
+		GRAYCORE_LINK static HASHCODE32_t GRAYCALL GetHashCode32(const TYPE* pszStr, StrLen_t nLen = k_StrLen_UNK, HASHCODE32_t nHash = k_HASHCODE_CLEAR) noexcept;
 		template< typename TYPE >
-		GRAYCORE_LINK static TYPE* GRAYCALL FindChar(const TYPE* pszStr, TYPE ch, StrLen_t iLen = StrT::k_LEN_MAX);
+		GRAYCORE_LINK static TYPE* GRAYCALL FindChar(const TYPE* pszStr, TYPE ch, StrLen_t iLen = StrT::k_LEN_MAX) noexcept;
 		template< typename TYPE >
 		GRAYCORE_LINK static StrLen_t GRAYCALL FindCharN(const TYPE* pszStr, TYPE ch);
 		template< typename TYPE >
@@ -185,7 +185,7 @@ namespace Gray
 		GRAYCORE_LINK static StrLen_t GRAYCALL FindWord(const TYPE* pTextSearch, const TYPE* pszKeyWord, StrLen_t iLenMax = StrT::k_LEN_MAX);
 
 		template< typename TYPE>
-		static StrLen_t GetNonWhitespaceI(const TYPE* pStr, StrLen_t iLenMax = StrT::k_LEN_MAX)
+		static StrLen_t GetNonWhitespaceI(const TYPE* pStr, StrLen_t iLenMax = StrT::k_LEN_MAX) noexcept
 		{
 			//! Skip tabs and spaces but NOT new lines. NOT '\0' either.
 			if (pStr == nullptr)
@@ -196,13 +196,13 @@ namespace Gray
 			return i;
 		}
 		template< typename TYPE>
-		static const TYPE* GetNonWhitespace(const TYPE* pStr, StrLen_t iLenMax = StrT::k_LEN_MAX)
+		static const TYPE* GetNonWhitespace(const TYPE* pStr, StrLen_t iLenMax = StrT::k_LEN_MAX) noexcept
 		{
 			// never return nullptr unless pStr = nullptr
 			return(pStr + GetNonWhitespaceI(pStr, iLenMax));
 		}
 		template< typename TYPE>
-		static TYPE* GetNonWhitespace(TYPE* pStr, StrLen_t iLenMax = StrT::k_LEN_MAX)
+		static TYPE* GetNonWhitespace(TYPE* pStr, StrLen_t iLenMax = StrT::k_LEN_MAX) noexcept
 		{
 			return(pStr + GetNonWhitespaceI(pStr, iLenMax));
 		}
@@ -216,13 +216,13 @@ namespace Gray
 
 		// String searching. const
 		template< typename TYPE >
-		GRAYCORE_LINK static ITERATE_t GRAYCALL TableFind(const TYPE* pFind, const void* ppTable, size_t iElemSize = sizeof(const TYPE*));
+		GRAYCORE_LINK static ITERATE_t GRAYCALL TableFind(const TYPE* pszFindThis, const void* ppszTableInit, size_t nElemSize = sizeof(const TYPE*));
 		template< typename TYPE >
-		GRAYCORE_LINK static ITERATE_t GRAYCALL TableFindHead(const TYPE* pFind, const void* ppTable, size_t iElemSize = sizeof(const TYPE*));
+		GRAYCORE_LINK static ITERATE_t GRAYCALL TableFindHead(const TYPE* pszFindHead, const void* ppszTableInit, size_t nElemSize = sizeof(const TYPE*));
 		template< typename TYPE >
-		GRAYCORE_LINK static ITERATE_t GRAYCALL TableFindSorted(const TYPE* pFind, const void* ppTable, ITERATE_t iCountMax, size_t iElemSize = sizeof(const TYPE*));
+		GRAYCORE_LINK static ITERATE_t GRAYCALL TableFindSorted(const TYPE* pszFindThis, const void* ppszTableInit, ITERATE_t iCountMax, size_t nElemSize = sizeof(const TYPE*));
 		template< typename TYPE >
-		GRAYCORE_LINK static ITERATE_t GRAYCALL TableFindHeadSorted(const TYPE* pFind, const void* ppTable, ITERATE_t iCountMax, size_t iElemSize = sizeof(const TYPE*));
+		GRAYCORE_LINK static ITERATE_t GRAYCALL TableFindHeadSorted(const TYPE* pszFindHead, const void* ppszTableInit, ITERATE_t iCountMax, size_t nElemSize = sizeof(const TYPE*));
 
 #define STR_TABLEFIND_N(k,t)	StrT::TableFind( k, t, sizeof(t[0]))
 #define STR_TABLEFIND_NH(k,t)	StrT::TableFindHead( k, t, sizeof(t[0]))
@@ -234,32 +234,13 @@ namespace Gray
 		GRAYCORE_LINK static StrLen_t GRAYCALL MatchRegEx(const TYPE* pText, const TYPE* pRegExPattern, bool bIgnoreCase, StrLen_t nTextMax = k_StrLen_UNK);
 
 		//**********************************************************************
-		// No TYPE arg.
-
-		// String searching. const
-		template< typename TYPE >
-		static inline const TYPE* GetTableElem(const void* ppszTableInit, ITERATE_t i, size_t nSizeElem)
-		{
-			//! @arg ppszTableInit = array of structures containing pointers to strings.
-			ASSERT(ppszTableInit != nullptr);
-			return *((const TYPE* const*)(((const BYTE*)ppszTableInit) + (i*nSizeElem)));
-		}
-
-		template< typename TYPE >
-		GRAYCORE_LINK static ITERATE_t GRAYCALL GetTableCount(const void* ppszTableInit, size_t iElemSize);
-		template< typename TYPE >
-		GRAYCORE_LINK static ITERATE_t GRAYCALL GetTableCountSorted(const void* ppszTableInit, size_t iElemSize);
-		template< typename TYPE >
-		GRAYCORE_LINK static const TYPE* GRAYCALL GetTableElem(ITERATE_t iEnumVal, const void* ppszTableInit, ITERATE_t iCountMax, size_t iElemSize = sizeof(const TYPE*));
-
-		//**********************************************************************
 		// String modifying.
 
 		template< typename TYPE >
-		GRAYCORE_LINK static StrLen_t GRAYCALL CopyLen(TYPE* pszDst, const TYPE* pSrc, StrLen_t iLenCharsMax);
+		GRAYCORE_LINK static StrLen_t GRAYCALL CopyLen(TYPE* pszDst, const TYPE* pSrc, StrLen_t iLenCharsMax) noexcept;
 
 		template< typename TYPE >
-		static void MakeUpperCase(TYPE* pszDst, StrLen_t iLenCharsMax)
+		static void MakeUpperCase(TYPE* pszDst, StrLen_t iLenCharsMax) noexcept
 		{
 			//! replaces _strupr
 			//! No portable __linux__ equiv to _strupr()?
@@ -272,7 +253,7 @@ namespace Gray
 			}
 		}
 		template< typename TYPE >
-		static void MakeLowerCase(TYPE* pszDst, StrLen_t iLenCharsMax)
+		static void MakeLowerCase(TYPE* pszDst, StrLen_t iLenCharsMax) noexcept
 		{
 			//! replaces strlwr()
 			//! No portable __linux__ equiv to strlwr()?
@@ -402,6 +383,8 @@ namespace Gray
 		GRAYCORE_LINK static double GRAYCALL toDouble(const TYPE* pszStr, const TYPE** ppszStrEnd = /*(const TYPE**)*/ nullptr);
 		template< typename TYPE >
 		GRAYCORE_LINK static StrLen_t GRAYCALL DtoA(double nVal, OUT TYPE* pszOut, StrLen_t iStrMax, int iDecPlaces = -1, char chE = -'e');
+
+		UNITTEST2_FRIEND(StrT);
 	};
 
 	template< typename TYPE = char >
@@ -413,30 +396,48 @@ namespace Gray
 
 		static const TYPE* GRAYCALL GetBoolStr(bool bVal) noexcept;
 
-		static void GRAYCALL UnitTestT(); // unit test all cases of TYPE type.
+		// String searching. const
+		static inline const TYPE* GetTableElemU(const void* ppszTableInit, ITERATE_t i, size_t nSizeElem)
+		{
+			//! U = I dont know the max yet.
+			//! @arg ppszTableInit = array of structures containing pointers to strings.
+			ASSERT(ppszTableInit != nullptr);
+			return *((const TYPE* const*)(((const BYTE*)ppszTableInit) + (i * nSizeElem)));
+		}
 
-		UNITTEST2_FRIEND(StrT);
+		static const TYPE* GRAYCALL GetTableElem(ITERATE_t iEnumVal, const void* ppszTableInit, ITERATE_t iCountMax, size_t nElemSize = sizeof(const TYPE*));
+
+		static ITERATE_t GRAYCALL GetTableCount(const void* ppszTableInit, size_t nElemSize);
+		static ITERATE_t GRAYCALL GetTableCountSorted(const void* ppszTableInit, size_t nElemSize);
 	};
 
 	// Override implementations
 
-	template<> StrLen_t inline StrT::Len<char>(const char* pszStr)	// count of chars NOT same as bytes (size_t)
+	template<> StrLen_t inline StrT::Len<char>(const char* pszStr) noexcept	// count of chars NOT same as bytes (size_t)
 	{
 		//! Get length of string not including '\0'. Like strlen()
-		//! Danger. ASSUME sane iLenMax ?? <= k_LEN_MAX
+		//! Danger. ASSUME sane iLenMax <= k_LEN_MAX ??  Dont use this function. use length limited version.
 		//! nullptr is NOT allowed by ::strlen(). ASSERT?
+#if USE_CRT
 		if (pszStr == nullptr)
 			return 0;
 		return (StrLen_t) ::strlen(pszStr);
+#else
+		return Len(pszStr, k_LEN_MAX);
+#endif
 	}
-	template<> StrLen_t inline StrT::Len<wchar_t>(const wchar_t* pszStr)
+	template<> StrLen_t inline StrT::Len<wchar_t>(const wchar_t* pszStr) noexcept
 	{
 		//! Get length of string not including '\0'
-		//! Danger. ASSUME sane iLenMax ?? <= k_LEN_MAX
+		//! Danger. ASSUME sane iLenMax <= k_LEN_MAX ??  Dont use this function. use length limited version.
 		//! nullptr is NOT allowed by wcslen. ASSERT?
+#if USE_CRT
 		if (pszStr == nullptr)
 			return 0;
 		return (StrLen_t) ::wcslen(pszStr);
+#else
+		return Len(pszStr, k_LEN_MAX);
+#endif
 	}
 
 	template<> inline UINT64 StrT::toUL<char>(const char* pszStr, const char** ppszStrEnd, RADIX_t nBaseRadix)
@@ -447,8 +448,8 @@ namespace Gray
 	{
 		char szTmp[StrNum::k_LEN_MAX_DIGITS_INT + 4];
 		StrNum::GetNumberString(szTmp, pszStr, StrNum::k_LEN_MAX_DIGITS_INT);
-		const char* ppszStrEndA;
-		UINT64 nVal = StrNum::toUL(szTmp, &ppszStrEndA, nBaseRadix);
+		const char* ppszStrEndA = nullptr;
+		const UINT64 nVal = StrNum::toUL(szTmp, &ppszStrEndA, nBaseRadix);
 		if (ppszStrEnd != nullptr)
 		{
 			*ppszStrEnd = pszStr + StrT::Diff(ppszStrEndA, szTmp);
@@ -560,6 +561,19 @@ namespace Gray
 		return StrU::UTF8toUNICODE(pszOut, iOutMax, szTmp, iStrLen);
 	}
 
+
+	template<> inline StrLen_t StrT::ULtoAK<char>(UINT64 uVal, OUT char* pszOut, StrLen_t iStrMax, UINT nKUnit, bool bSpace) // static
+	{
+		return StrNum::ULtoAK(uVal, pszOut, iStrMax, nKUnit, bSpace);
+	}
+
+	template<> inline StrLen_t StrT::ULtoAK<wchar_t>(UINT64 uVal, OUT wchar_t* pszOut, StrLen_t iStrMax, UINT nKUnit, bool bSpace) // static
+	{
+		char szTmp[StrNum::k_LEN_MAX_DIGITS + 4];
+		StrLen_t iStrLen = StrNum::ULtoAK(uVal, szTmp, _countof(szTmp), nKUnit, bSpace);
+		return StrU::UTF8toUNICODE(pszOut, iStrMax, szTmp, iStrLen);
+	}
+
 #if 1 // use the C lib. else StrFormat
 	template<> StrLen_t inline StrT::vsprintfN<char>(OUT char* pszOut, StrLen_t iLenOutMax, const char* pszFormat, va_list vlist)
 	{
@@ -588,7 +602,7 @@ namespace Gray
 		// _WIN32 System version (No floats). return ::FormatMessageA(0, pszFormat, 0, 0, pszOut, iLenOutMax, &vlist);
 		return StrFormat<char>::FormatV(pszOut, iLenOutMax, pszFormat, vlist);
 #endif
-	} 
+	}
 
 	template<> StrLen_t inline StrT::vsprintfN<wchar_t>(OUT wchar_t* pszOut, StrLen_t iLenOutMax, const wchar_t* pszFormat, va_list vlist)
 	{
@@ -628,5 +642,5 @@ namespace Gray
 
 	// #include "StrT.inl"
 	// Force instantiation of stuff for char and wchar_t for linking.
-	};
+};
 #endif // _INC_StrT_H

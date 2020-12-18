@@ -10,7 +10,7 @@
 
 namespace Gray
 {
-	const double cFloatDeco::k_powersOf10[9] =	// opposite of GetCachedPower
+	const double cFloatDeco::k_PowersOf10[9] =	// opposite of GetCachedPower
 	{
 		10.0,			// is 10^2^i.  Used to convert decimal 
 		100.0,			// exponents into floating-point numbers.
@@ -31,7 +31,7 @@ namespace Gray
 
 	cFloatDeco cFloatDeco::GetCachedPower(int nExp2, OUT int* pnExp10) // static
 	{
-		//! opposite of k_powersOf10
+		//! opposite of k_PowersOf10
 		//! 10^-348, 10^-340, ..., 10^340, stepped by 8.
 
 		static const cFloatDeco k_CachedPowers[87] = // 87
@@ -173,7 +173,7 @@ namespace Gray
 			{
 				if (nExp10 & 01)
 				{
-					if (IS_INDEX_BAD_ARRAY(i, cFloatDeco::k_powersOf10))
+					if (IS_INDEX_BAD_ARRAY(i, cFloatDeco::k_PowersOf10))
 					{
 						// VALUE IS WRONG!! OVERFLOW.
 #ifdef _INC_cLogMgr_H
@@ -182,7 +182,7 @@ namespace Gray
 #endif
 						break;
 					}
-					dblExp *= cFloatDeco::k_powersOf10[i];
+					dblExp *= cFloatDeco::k_PowersOf10[i];
 				}
 			}
 			if (bExpNegative)

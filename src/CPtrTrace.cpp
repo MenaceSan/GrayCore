@@ -9,7 +9,7 @@
 #include "cIUnkPtr.h"
 #include "cLogMgr.h"
 #include "cAppState.h"
-#include "CThreadArray.h"
+#include "cThreadArray.h"
 #include "cSingleton.h"
 
 #ifdef __linux__

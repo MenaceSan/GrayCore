@@ -64,7 +64,7 @@ namespace Gray
 		ITERATE_t get_ArgsQty() const;
 		cStringF GetArgsEnum(ITERATE_t i) const;	//!< command line arg.
 
-		void InitArgsW(const FILECHAR_t* pszCommandArgs, const FILECHAR_t* pszSep = nullptr);
+		void InitArgsF(const FILECHAR_t* pszCommandArgs, const FILECHAR_t* pszSep = nullptr);
 		void InitArgs2(int argc, APP_ARGS_t argv);
 
 		ITERATE_t FindCommandArg(const FILECHAR_t* pszCommandArg, bool bRegex = true, bool bIgnoreCase = true) const;
@@ -91,10 +91,11 @@ namespace Gray
 		friend class cSingleton < cAppState >;
 		friend class cAppImpl;
 		friend class cAppStateMain;
+		friend class cUnitTestAppState;
 
 	public:
 		const cObjectSignature<> m_Sig;		//!< Used to check for compatible build/compile config and alignments. (_INC_GrayCore_H, sizeof(cAppState))
-		cThreadLocalSysT<bool> m_ThreadModuleLoading;	//!< This thread is currently loading a DLL/SO? isInCInit(). use cAppStateModuleLoad
+		cThreadLocalSysT<bool> m_ThreadModuleLoading;	//!< any thread is currently loading a DLL/SO? isInCInit(). use cAppStateModuleLoad
 		cAppArgs m_Args;		//!< Application Command line arguments. [0] = app name.
 		cBitmask<> m_ArgsValid;			//!< Track which command line args are valid/used in m_Args. assume any left over are not.
 		static HMODULE sm_hInstance;	//!< the current applications HINSTANCE handle/base address. _IMAGE_DOS_HEADER, HMODULE=HINSTANCE
@@ -150,7 +151,7 @@ namespace Gray
 			//! use cAppStateModuleLoad for DLL/SO loading.
 			m_eAppState = eAppState;
 		}
-		void InitAppState();
+		void InitAppState() noexcept;
 
 		THREADID_t get_MainThreadId() const noexcept
 		{
@@ -208,7 +209,7 @@ namespace Gray
 		void SetArgValid(ITERATE_t i);
 		cStringF get_InvalidArgs() const;
 
-		void InitArgsW(const FILECHAR_t* pszCommandArgs);
+		void InitArgsF(const FILECHAR_t* pszCommandArgs);
 		void InitArgs2(int argc, APP_ARGS_t argv);
 
 		static void GRAYCALL AbortApp(APP_EXITCODE_t uExitCode = APP_EXITCODE_ABORT);

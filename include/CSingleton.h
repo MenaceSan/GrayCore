@@ -33,7 +33,7 @@ namespace Gray
 		//! @class Gray::cSingletonStatic
 		//! base class for a type that we want to make sure only one of these can exist at a time.
 		//! @note TYPE = cSingletonStatic based class = this
-		//! Externally created singleton. might be stack based, or abstract (e.g.CNTServiceImpl) but usually static allocated.
+		//! Externally created singleton. might be stack based, or abstract (e.g.cNTServiceImpl) but usually static allocated.
 		//! @note Assume 1. gets constructed/destructed by the C Runtime, 2. Is inherently thread safe since its not created on demand.
 		//! The BIG problem with this is that we cannot guarantee order of creation/destruction. So singletons that rely/construct on each other may be corrupt/uninitialized.
 

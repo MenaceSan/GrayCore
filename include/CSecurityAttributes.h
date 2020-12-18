@@ -137,13 +137,13 @@ namespace Gray
 		{
 			return get_Data();
 		}
-		static bool GRAYCALL IsValid(SECURITY_DESCRIPTOR* pSD)
+		static bool GRAYCALL IsValid(SECURITY_DESCRIPTOR* pSD) noexcept
 		{
 			if (pSD == nullptr) 	// null is valid.
 				return true;
 			return ::IsValidSecurityDescriptor(pSD);
 		}
-		bool isValid() const
+		bool isValid() const noexcept
 		{
 			return IsValid(get_Data());
 		}
@@ -217,7 +217,7 @@ namespace Gray
 		{
 			return static_cast<SECURITY_ATTRIBUTES*>(this);
 		}
-		bool isValid() const;
+		bool isValid() const noexcept;
 
 		UNITTEST2_FRIEND(cSecurityAttributes);
 	};

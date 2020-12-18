@@ -2477,11 +2477,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\CThreadArray.h"
+				RelativePath=".\cThreadArray.h"
 				>
 			</File>
 			<File
-				RelativePath=".\CThreadArrayString.h"
+				RelativePath=".\cThreadArrayString.h"
 				>
 			</File>
 			<File

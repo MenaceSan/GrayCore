@@ -26,7 +26,7 @@ namespace Gray
 		static const ITERATE_t k_MaxDefault = 32;	//!< default max for AddUniqueMax.
 		static const ITERATE_t k_MaxElements = 64 * 1024;	//!< Max elements. reasonable arbitrary limit.
 	public:
-		cArrayString()
+		cArrayString() noexcept
 		{
 		}
 		cArrayString(const _TYPE_CH** ppStr, ITERATE_t iCount)

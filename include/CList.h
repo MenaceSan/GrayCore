@@ -44,7 +44,7 @@ namespace Gray
 		}
 
 	protected:
-		cListNodeBase() 	// always just a base class.
+		cListNodeBase() noexcept 	// always just a base class.
 			: m_pParent(nullptr)	// not linked yet.
 			, m_pNext(nullptr)
 			, m_pPrev(nullptr)
@@ -58,15 +58,15 @@ namespace Gray
 			ASSERT(!hasParent());
 		}
 
-		cListBase* get_Parent() const
+		cListBase* get_Parent() const noexcept
 		{
 			return m_pParent;
 		}
-		cListNodeBase* get_Next() const
+		cListNodeBase* get_Next() const noexcept
 		{
 			return m_pNext;
 		}
-		cListNodeBase* get_Prev() const
+		cListNodeBase* get_Prev() const noexcept
 		{
 			return m_pPrev;
 		}
@@ -139,7 +139,7 @@ namespace Gray
 		virtual void InsertListNode(cListNodeBase* pNodeNew, cListNodeBase* pNodePrev = nullptr);
 		void InsertList(cListBase* pListSrc, cListNodeBase* pNodePrev = nullptr);
 
-		void InsertBefore(cListNodeBase* pNodeNew, cListNodeBase* pNodeNext)
+		void InsertBefore(cListNodeBase* pNodeNew, const cListNodeBase* pNodeNext)
 		{
 			//! @arg pNext = nullptr = insert last
 			InsertListNode(pNodeNew, (pNodeNext != nullptr) ? (pNodeNext->get_Prev()) : get_Tail());
@@ -170,7 +170,7 @@ namespace Gray
 		}
 		bool isEmpty() const noexcept
 		{
-			return(!get_Count());
+			return get_Count() == 0;
 		}
 
 		//! iterate the linked list.
@@ -180,7 +180,7 @@ namespace Gray
 		{
 			if (pNode == nullptr)
 				return false;
-			return(pNode->get_Parent() == this);
+			return pNode->get_Parent() == this;
 		}
 
 		UNITTEST2_FRIEND(cList);
@@ -208,13 +208,6 @@ namespace Gray
 		//! Assume this is a node (in a linked list) of type _TYPE_REC. e.g. _TYPE_REC is based on cListNodeT<> which is based on cListNodeBase.
 		typedef cListNodeBase SUPER_t;
 	public:
-		/*
-		operator _TYPE_REC*()
-		{
-			//! This shouldn't really be needed.
-			return static_cast<_TYPE_REC*>(this);
-		}
-		*/
 		_TYPE_REC* get_Next() const
 		{
 			//! _TYPE_REC cast version of get_Next
@@ -228,9 +221,9 @@ namespace Gray
 	};
 
 	template<class _TYPE_REC /* = cListNodeBase */ >
-	class CListT : public cListBase
+	class cListT : public cListBase
 	{
-		//! @class Gray::CListT
+		//! @class Gray::cListT
 		//! Hold a List of _TYPE_REC things.
 		//! @note _TYPE_REC is the type of class this list contains. _TYPE_REC is based on cListNodeT<_TYPE_REC> and/or cListNodeBase
 		typedef cListBase SUPER_t;
@@ -250,5 +243,5 @@ namespace Gray
 			return static_cast<_TYPE_REC*>(SUPER_t::get_Tail());
 		}
 	};
-};
+}
 #endif // _INC_cList_H

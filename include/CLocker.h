@@ -26,7 +26,7 @@ namespace Gray
 
 	protected:
 		cLockableBase() noexcept
-		: m_nLockCount(0)
+			: m_nLockCount(0)
 		{
 		}
 		~cLockableBase()
@@ -73,13 +73,13 @@ namespace Gray
 		//! @class Gray::cLockerT
 		//! Lock/Unlock something for the life span of this object.
 		//! Stack only based guard. Used for: cThreadLockMutex, cThreadLockCrit, cThreadLockFast, ...
-		//! Might be used for: CDXSurfaceLock, CSemaphoreLock, cWinHeap, CDXMesh, CDXBuffer
+		//! Might be used for: cDXSurfaceLock, cSemaphoreLock, cWinHeap, cDXMesh, cDXBuffer
 		//! TYPE must support Unlock() and probably Lock() or be based on cLockableBase*
 		//! m_p = the lock we are locking.
 		//! Similar to ATL CCritSecLock
 		//
 	public:
-		explicit cLockerT(TYPE* pLock, bool bLockSuccess)
+		explicit cLockerT(TYPE* pLock, bool bLockSuccess) noexcept
 			: cPtrFacade<TYPE>(bLockSuccess ? pLock : nullptr)
 		{
 			// The lock may not always work ! this->m_p == nullptr
@@ -98,6 +98,6 @@ namespace Gray
 			}
 		}
 	};
-};
+}
 
 #endif

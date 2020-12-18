@@ -17,7 +17,7 @@ namespace Gray
 
 	public:
 		typedef WINHEAPH HANDLE_t;
-		WINHEAPN(Handle)(HANDLE_t hData = HANDLE_NULL, void* pData = nullptr, size_t nSize = 0)
+		WINHEAPN(Handle)(HANDLE_t hData = HANDLE_NULL, void* pData = nullptr, size_t nSize = 0) noexcept
 			: m_hData(hData)
 			, cMemBlock(pData, nSize)	// size may not be known?
 		{
@@ -27,7 +27,7 @@ namespace Gray
 		{
 			Unlock();
 		}
-		bool isAlloc() const
+		bool isAlloc() const noexcept
 		{
 			return m_hData != HANDLE_NULL;
 		}
@@ -35,7 +35,7 @@ namespace Gray
 		{
 			return m_hData;
 		}
-		void UpdateHandle()
+		void UpdateHandle() noexcept
 		{
 			//! If i have the m_pData, make sure the m_hData matches.
 			//! Lock() does the equiv for m_pData.
@@ -44,7 +44,7 @@ namespace Gray
 				m_hData = WINHEAPF(Handle)(m_pData);
 			}
 		}
-		void AttachHandle(HANDLE_t hData, void* pData = nullptr)
+		void AttachHandle(HANDLE_t hData, void* pData = nullptr) noexcept
 		{
 			//! Attach existing handle to this class. put_Handle()
 			// ASSERT( m_hData == HANDLE_NULL );
@@ -52,15 +52,15 @@ namespace Gray
 			m_pData = pData;
 		}
 
-		SIZE_T GetSize() const
+		SIZE_T GetSize() const noexcept
 		{
 			return WINHEAPF(Size)(m_hData);
 		}
-		UINT GetFlags() const
+		UINT GetFlags() const noexcept
 		{
 			return WINHEAPF(Flags)(m_hData);
 		}
-		LPVOID Lock()
+		LPVOID Lock() noexcept
 		{
 			//! this actually does nothing on _WIN32 systems? only used for WIN16
 			if (m_hData == HANDLE_NULL)
@@ -136,7 +136,7 @@ namespace Gray
 				FreeHandle();
 			}
 		}
-		HANDLE_t DetachHandle()
+		HANDLE_t DetachHandle() noexcept
 		{
 			HANDLE_t hTmp = m_hData;
 			m_hData = HANDLE_NULL;
@@ -241,7 +241,7 @@ namespace Gray
 		//! CWinGlobalT<> or CWinLocalT<>
 		typedef WINHEAPN(V) SUPER_t;
 
-		_TYPE* get_Data() const
+		_TYPE* get_Data() const noexcept
 		{
 			return (_TYPE*)m_pData;
 		}
@@ -254,7 +254,7 @@ namespace Gray
 			//! @note Make sure you call UpdateHandle() after this.
 			return (_TYPE**)SUPER_t::get_PPtrData();
 		}
-		_TYPE* operator ->() const
+		_TYPE* operator ->() const noexcept
 		{
 			return (_TYPE*)m_pData;
 		}

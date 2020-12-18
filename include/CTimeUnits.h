@@ -22,7 +22,7 @@ namespace Gray
 	UNITTEST2_PREDEF(cTimeUnits);
 
 	// Base type used for cTimeInt Might be 64 bits ?? or _USE_32BIT_TIME_T
-	typedef time_t TIMESEC_t;	//!< absolute seconds since January 1, 1970. (signed) NOTE: Changing to __time64_t just adds more range with same values. (>2038)
+	typedef time_t TIMESEC_t;	//!< absolute seconds since January 1, 1970. (GMT?)(signed) NOTE: Changing to __time64_t just adds more range with same values. (>2038)
 	typedef int TIMESECD_t;		//!< signed delta seconds from some epoch.
 
 	typedef short TIMEUNIT_t;	//!< Arbitrary time unit. (e.g. number of minutes or seconds). Allow negative for null ? Max 16 bits.
@@ -338,11 +338,11 @@ namespace Gray
 			m_iOffsetSep = -1;
 			m_Separator = -1;	// not set yet.
 		}
-		TIMEUNIT_TYPE get_HashCode() const	// should be only one of each type.
+		TIMEUNIT_TYPE get_HashCode() const noexcept	// should be only one of each type.
 		{
 			return m_Type;
 		}
-		TIMEUNIT_t get_SortValue() const
+		TIMEUNIT_t get_SortValue() const noexcept
 		{
 			return m_nValue;
 		}

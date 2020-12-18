@@ -47,7 +47,7 @@ namespace Gray
 	struct __synch_xchg_INT32 { INT32 a[4]; };	// was a[100]
 #define __synch_xg(x)	((struct __synch_xchg_INT32 *)(x))
 
-	inline INT32 __cdecl InterlockedCompareExchange(INT32 VOLATILE* pDest, INT32 nValNew, INT32 nValComp)
+	inline INT32 __cdecl InterlockedCompareExchange(INT32 VOLATILE* pDest, INT32 nValNew, INT32 nValComp) noexcept
 	{
 		//! Place 32 bit nValNew in *pDest if ( *pDest == nValComp )
 		//! @note __linux__ only provides interlocked operations for kernel level. NOT user level!
@@ -106,14 +106,14 @@ namespace Gray
 #endif
 	}
 
-	inline bool InterlockedSetIfEqual(_Inout_ INT32 VOLATILE *pDest, INT32 nValNew, INT32 nValComp)
+	inline bool InterlockedSetIfEqual(_Inout_ INT32 VOLATILE *pDest, INT32 nValNew, INT32 nValComp) noexcept
 	{
 		//! most common use of InterlockedCompareExchange
 		//! It's more efficient to use the z flag than to do another compare
 		//! value returned in eax
 		return nValComp == InterlockedCompareExchange(pDest, nValNew, nValComp);
 	}
-	inline INT32 __cdecl InterlockedIncrement(INT32 VOLATILE *pDest)
+	inline INT32 __cdecl InterlockedIncrement(INT32 VOLATILE *pDest) noexcept
 	{
 		INT32 lValNew;
 #if defined(__GNUC__)
@@ -131,7 +131,7 @@ namespace Gray
 		return lValNew;
 #endif
 	}
-	inline INT32  __cdecl InterlockedDecrement(INT32 VOLATILE *pDest)
+	inline INT32  __cdecl InterlockedDecrement(INT32 VOLATILE *pDest) noexcept
 	{
 		INT32 lValNew;
 #if defined(__GNUC__)
@@ -149,7 +149,7 @@ namespace Gray
 		return lValNew;
 #endif
 	}
-	inline INT32  __cdecl InterlockedExchange(INT32 VOLATILE *pDest, INT32 Value)
+	inline INT32  __cdecl InterlockedExchange(INT32 VOLATILE *pDest, INT32 Value) noexcept
 	{
 		INT32 nValComp;
 		do
@@ -158,7 +158,7 @@ namespace Gray
 		} while (!InterlockedSetIfEqual(pDest, Value, nValComp));
 		return nValComp;
 	}
-	inline INT32  __cdecl InterlockedExchangeAdd(INT32 VOLATILE *pDest, INT32 Value)
+	inline INT32  __cdecl InterlockedExchangeAdd(INT32 VOLATILE *pDest, INT32 Value) noexcept
 	{
 		INT32 nValComp;
 		do
@@ -186,7 +186,7 @@ namespace Gray
 	} // "C"
 #else
 
-	inline INT64 __cdecl _InterlockedCompareExchange64(_Inout_ INT64 VOLATILE *pDest, IN INT64 nValNew, IN INT64 nValComp)
+	inline INT64 __cdecl _InterlockedCompareExchange64(_Inout_ INT64 VOLATILE *pDest, IN INT64 nValNew, IN INT64 nValComp) noexcept
 	{
 		//! No native support for interlock 64, so i must implement it myself.
 		//! Place 64 bit nValNew in *pDest if ( *pDest == nValComp )
@@ -249,7 +249,7 @@ namespace Gray
 #endif
 	}
 
-	inline bool _InterlockedSetIfEqual64(_Inout_ INT64 VOLATILE *pDest, INT64 nValNew, INT64 nValComp)
+	inline bool _InterlockedSetIfEqual64(_Inout_ INT64 VOLATILE *pDest, INT64 nValNew, INT64 nValComp) noexcept
 	{
 		//! No native support for interlock 64, so i must implement it myself.
 		//! most common use of InterlockedCompareExchange
@@ -278,7 +278,7 @@ namespace Gray
 		return nValComp == _InterlockedCompareExchange64(pDest, nValNew, nValComp);
 #endif
 	}
-	inline INT64 __cdecl _InterlockedIncrement64(_Inout_ INT64 VOLATILE *pDest)
+	inline INT64 __cdecl _InterlockedIncrement64(_Inout_ INT64 VOLATILE *pDest) noexcept
 	{
 		INT64 nValComp;
 		INT64 nValNew;
@@ -289,7 +289,7 @@ namespace Gray
 		} while (!_InterlockedSetIfEqual64(pDest, nValNew, nValComp));
 		return nValNew;
 	}
-	inline INT64 __cdecl _InterlockedDecrement64(_Inout_ INT64 VOLATILE *pDest)
+	inline INT64 __cdecl _InterlockedDecrement64(_Inout_ INT64 VOLATILE *pDest) noexcept
 	{
 		INT64 nValComp;
 		INT64 nValNew;
@@ -300,7 +300,7 @@ namespace Gray
 		} while (!_InterlockedSetIfEqual64(pDest, nValNew, nValComp));
 		return nValNew;
 	}
-	inline INT64 __cdecl _InterlockedExchange64(_Inout_ INT64 VOLATILE *pDest, IN INT64 Value)
+	inline INT64 __cdecl _InterlockedExchange64(_Inout_ INT64 VOLATILE *pDest, IN INT64 Value) noexcept
 	{
 		INT64 nValComp;
 		do
@@ -309,7 +309,7 @@ namespace Gray
 		} while (!_InterlockedSetIfEqual64(pDest, Value, nValComp));
 		return nValComp;
 	}
-	inline INT64 __cdecl _InterlockedExchangeAdd64(_Inout_ INT64 VOLATILE *pDest, IN INT64 Value)
+	inline INT64 __cdecl _InterlockedExchangeAdd64(_Inout_ INT64 VOLATILE *pDest, IN INT64 Value) noexcept
 	{
 		INT64 nValComp;
 		do
@@ -332,76 +332,76 @@ namespace Gray
 		//! namespace for interlock templates for int 32 and 64
 		//! Protected unitary operations that are safe on multi threaded/processor machines.
 		//! INT32 for 32 bit, INT64 for 64 bit.
-		//! @note unitary (single instruction) ops like ++ are NOT SAFE on multi CPU systems !! Tested in CThread.
+		//! @note unitary (single instruction) ops like ++ are NOT SAFE on multi CPU systems !! Tested in cThread.
 		//! @note The parameters for this function must be aligned on a 32-bit boundary; otherwise, the function will behave unpredictably on multiprocessor x86 systems and any non-x86 systems. See _aligned_malloc.
 		//! @note should use __DECL_ALIGN(X) to make sure we are aligned.
 
 		template< typename TYPE >
-		GRAYCORE_LINK TYPE Increment(TYPE VOLATILE* pnValue);
+		GRAYCORE_LINK TYPE Increment(TYPE VOLATILE* pnValue) noexcept;
 		template< typename TYPE >
-		GRAYCORE_LINK TYPE Decrement(TYPE VOLATILE* pnValue);
+		GRAYCORE_LINK TYPE Decrement(TYPE VOLATILE* pnValue) noexcept;
 		template< typename TYPE >
-		GRAYCORE_LINK TYPE ExchangeAdd(TYPE VOLATILE* pnValue, TYPE nValue);
+		GRAYCORE_LINK TYPE ExchangeAdd(TYPE VOLATILE* pnValue, TYPE nValue) noexcept;
 		template< typename TYPE >
-		GRAYCORE_LINK TYPE Exchange(TYPE VOLATILE* pnValue, TYPE nValue);
+		GRAYCORE_LINK TYPE Exchange(TYPE VOLATILE* pnValue, TYPE nValue) noexcept;
 		template< typename TYPE >
-		GRAYCORE_LINK TYPE CompareExchange(TYPE VOLATILE* pnValue, TYPE nValue, TYPE lComparand);
+		GRAYCORE_LINK TYPE CompareExchange(TYPE VOLATILE* pnValue, TYPE nValue, TYPE lComparand) noexcept;
 
 		// Implement 32 bits as INTER32_t
-		template<> inline INTER32_t Increment<INTER32_t>(INTER32_t VOLATILE* pnValue)
+		template<> inline INTER32_t Increment<INTER32_t>(INTER32_t VOLATILE* pnValue) noexcept
 		{
 			return InterlockedIncrement(pnValue);
 		}
-		template<> inline INTER32_t Decrement<INTER32_t>(INTER32_t VOLATILE* pnValue)
+		template<> inline INTER32_t Decrement<INTER32_t>(INTER32_t VOLATILE* pnValue) noexcept
 		{
 			return InterlockedDecrement(pnValue);
 		}
-		template<> inline INTER32_t ExchangeAdd<INTER32_t>(INTER32_t VOLATILE* pnValue, INTER32_t nValue)
+		template<> inline INTER32_t ExchangeAdd<INTER32_t>(INTER32_t VOLATILE* pnValue, INTER32_t nValue) noexcept
 		{
 			return InterlockedExchangeAdd(pnValue, nValue);
 		}
-		template<> inline INTER32_t Exchange<INTER32_t>(INTER32_t VOLATILE* pnValue, INTER32_t nValue)
+		template<> inline INTER32_t Exchange<INTER32_t>(INTER32_t VOLATILE* pnValue, INTER32_t nValue) noexcept
 		{
 			return InterlockedExchange(pnValue, nValue);
 		}
-		template<> inline INTER32_t CompareExchange<INTER32_t>(INTER32_t VOLATILE* pnValue, INTER32_t nValue, INTER32_t lComparand)
+		template<> inline INTER32_t CompareExchange<INTER32_t>(INTER32_t VOLATILE* pnValue, INTER32_t nValue, INTER32_t lComparand) noexcept
 		{
 			return InterlockedCompareExchange(pnValue, nValue, lComparand);
 		}
 
 		// Implement 64 bit as INT64
-		template<> inline INT64 Increment<INT64>(INT64 VOLATILE* pnValue)
+		template<> inline INT64 Increment<INT64>(INT64 VOLATILE* pnValue) noexcept
 		{
 			return _InterlockedIncrement64(pnValue);
 		}
-		template<> inline INT64 Decrement<INT64>(INT64 VOLATILE* pnValue)
+		template<> inline INT64 Decrement<INT64>(INT64 VOLATILE* pnValue) noexcept
 		{
 			return _InterlockedDecrement64(pnValue);
 		}
-		template<> inline INT64 ExchangeAdd<INT64>(INT64 VOLATILE* pnValue, INT64 nValue)
+		template<> inline INT64 ExchangeAdd<INT64>(INT64 VOLATILE* pnValue, INT64 nValue) noexcept
 		{
 			return _InterlockedExchangeAdd64(pnValue, nValue);
 		}
-		template<> inline INT64 Exchange<INT64>(INT64 VOLATILE* pnValue, INT64 nValue)
+		template<> inline INT64 Exchange<INT64>(INT64 VOLATILE* pnValue, INT64 nValue) noexcept
 		{
 			return _InterlockedExchange64(pnValue, nValue);
 		}
-		template<> inline INT64 CompareExchange<INT64>(INT64 VOLATILE* pnValue, INT64 nValue, INT64 lComparand)
+		template<> inline INT64 CompareExchange<INT64>(INT64 VOLATILE* pnValue, INT64 nValue, INT64 lComparand) noexcept
 		{
 			return _InterlockedCompareExchange64(pnValue, nValue, lComparand);
 		}
 
 		// Implement other native types as translations to above.
 #define INTERLOCK_REMAP(T,TI) \
-	template<> inline T Increment<T>( T VOLATILE* pnValue ) \
+	template<> inline T Increment<T>( T VOLATILE* pnValue ) noexcept \
 	{ return (T) Increment<TI>( (TI VOLATILE*) pnValue); } \
-	template<> inline T Decrement<T>( T VOLATILE* pnValue ) \
+	template<> inline T Decrement<T>( T VOLATILE* pnValue ) noexcept \
 	{ return (T) Decrement<TI>( (TI VOLATILE*) pnValue); } \
-	template<> inline T ExchangeAdd<T>( T VOLATILE* pnValue, T nValue  ) \
+	template<> inline T ExchangeAdd<T>( T VOLATILE* pnValue, T nValue  ) noexcept \
 	{ return (T) ExchangeAdd<TI>( (TI VOLATILE*) pnValue, (TI) nValue ); } \
-	template<> inline T Exchange<T>( T VOLATILE* pnValue, T nValue ) \
+	template<> inline T Exchange<T>( T VOLATILE* pnValue, T nValue ) noexcept \
 	{ return (T) Exchange<TI>( (TI VOLATILE*) pnValue,(TI)nValue); } \
-	template<> inline T CompareExchange<T>( T VOLATILE* pnValue, T nValue, T lComparand ) \
+	template<> inline T CompareExchange<T>( T VOLATILE* pnValue, T nValue, T lComparand ) noexcept \
 	{ return (T) CompareExchange<TI>( (TI VOLATILE*) pnValue, (TI)nValue, (TI)lComparand); }
 
 		INTERLOCK_REMAP(UINT, INTER32_t);
@@ -445,50 +445,50 @@ namespace Gray
 			ASSERT((((UINT_PTR)&m_nValue) % sizeof(TYPE)) == 0);	// must be aligned!!
 		}
 
-		TYPE Inc()	//! @return post increment. e.g. NEVER 0
+		TYPE Inc() noexcept	//! @return post increment. e.g. NEVER 0
 		{
 			return InterlockedN::Increment(&m_nValue);
 		}
-		void IncV()
+		void IncV() noexcept
 		{
 			InterlockedN::Increment(&m_nValue);
 		}
-		TYPE Dec()	//! @return post decrement.
+		TYPE Dec() noexcept	//! @return post decrement.
 		{
 			return InterlockedN::Decrement(&m_nValue);
 		}
-		void DecV()
+		void DecV() noexcept
 		{
 			InterlockedN::Decrement(&m_nValue);
 		}
 
-		TYPE AddX(TYPE nValue)
+		TYPE AddX(TYPE nValue) noexcept
 		{
 			//! @return pre-add value.
 			return InterlockedN::ExchangeAdd(&m_nValue, nValue);
 		}
-		TYPE Exchange(TYPE nValue)
+		TYPE Exchange(TYPE nValue) noexcept
 		{
 			return InterlockedN::Exchange(&m_nValue, nValue);
 		}
 
-		TYPE CompareExchange(TYPE nValue, TYPE lComparand = 0)
+		TYPE CompareExchange(TYPE nValue, TYPE lComparand = 0) noexcept
 		{
 			//! only if current m_nValue is lComparand set the new m_nValue to nValue
 			//! @return previous value.
 			return InterlockedN::CompareExchange(&m_nValue, nValue, lComparand);
 		}
-		bool SetIfEqual(TYPE nValue, TYPE lComparand = 0)
+		bool SetIfEqual(TYPE nValue, TYPE lComparand = 0) noexcept
 		{
 			return(lComparand == CompareExchange(nValue, lComparand));
 		}
 
-		inline TYPE operator ++()
+		inline TYPE operator ++() noexcept
 		{
 			//! @return The value post increment. e.g. NEVER 0
 			return Inc();
 		}
-		inline TYPE operator --()
+		inline TYPE operator --() noexcept
 		{
 			//! @return The value post decrement
 			return Dec();
@@ -505,7 +505,7 @@ namespace Gray
 		{
 			return m_nValue;
 		}
-		const THIS_t& operator = (TYPE nValNew)
+		const THIS_t& operator = (TYPE nValNew) noexcept
 		{
 			Exchange(nValNew);
 			return *this;
@@ -538,14 +538,14 @@ namespace Gray
 		//! Cast it as needed.
 
 	public:
-		cInterlockedPtr(TYPE* pVal) : cInterlockedVal<INT_PTR>((INT_PTR)pVal)
+		cInterlockedPtr(TYPE* pVal) noexcept : cInterlockedVal<INT_PTR>((INT_PTR)pVal)
 		{
 		}
-		operator TYPE* ()
+		operator TYPE* () noexcept
 		{
 			return (TYPE*)(this->m_nValue);
 		}
-		operator const TYPE* () const
+		operator const TYPE* () const noexcept
 		{
 			return (const TYPE*)(this->m_nValue);
 		}
@@ -572,12 +572,12 @@ namespace Gray
 		cInterlockedInt& m_rCount;	//!< pointer to the 'static' count.
 		int m_nCount;	//!< the thread stable value of the count (post increment)
 	public:
-		cInterlockedInc(cInterlockedInt& count)
+		cInterlockedInc(cInterlockedInt& count) noexcept
 			: m_rCount(count)
 			, m_nCount(count.Inc())
 		{
 		}
-		~cInterlockedInc()
+		~cInterlockedInc() noexcept
 		{
 			m_rCount.Dec();
 		}

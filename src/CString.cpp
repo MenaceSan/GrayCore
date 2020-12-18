@@ -1,5 +1,5 @@
 //
-//! @file CString.CPP
+//! @file cString.CPP
 //! similar to the MFC CString
 //! similar to the STL string and wstring, basic_string<char>
 //! @note if a string is used by 2 threads then the usage count must be thread safe.

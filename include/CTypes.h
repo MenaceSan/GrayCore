@@ -9,6 +9,7 @@
 #endif
 
 #include "GrayCore.h"
+#include <math.h>		// isnan()
 
 namespace Gray
 {
@@ -179,40 +180,35 @@ namespace Gray
 		//! @struct Gray::cTypeFloat
 		//! Basic operations for float/double type. See GrayLib::Calc class for complex operations.
 		//! See GrayLib::cFloat32 or GrayLib::cFloat64
-
-		template< typename TYPE >
-		static inline bool IsFinite(TYPE a) noexcept
-		{
-			//! Is this a valid number? NOT Nan 'Not A Number' and NOT Inf. NOT isIndeterminate()
-			//! This makes no sense for integer types.
-			//! like: std::isfinite()
-			return(a >= 0 || a < 0); // ! #NAN or #IND #INF similar to ! _isnan() but it works.
-		}
+		//! similar to _fpclass()
 
 		template< typename TYPE >
 		static inline bool IsNaN(TYPE a) noexcept
 		{
-			//! Is this 'Not A Number'? ! IsFinite()
-			//! ONLY applies to float, double. like: std::isnan() std::isinf()
-			//! ((x) != (x)) would be optimized away?
-			return !(a >= 0 || a < 0); // ! #NAN or #IND #INF similar to _isnan() but it works.
+			//! Is this 'Not A Number'? NOT exactly !IsFinite(a)
+			//! ONLY applies to float, double. like: std::isnan() 
+			// return !(a >= 0 || a < 0);
+			return ::isnan(a); // k_NaN ! #NAN or #IND #INF similar to _isnan() but it works.
 		}
 
 		template< typename TYPE >
 		static inline bool IsInfinite(TYPE a)
 		{
-			//! Does a represent infinity? Positive or negative. ! IsFinite()
-			//! ONLY applies to float, double. like: std::isnan() std::isinf()
-
-			// TODO 
-			UNREFERENCED_PARAMETER(a);
-			return false;
+			//! Does a represent INFINITY? Positive or negative. ! IsFinite() but also !k_NaN
+			//! ONLY applies to float, double. like: std::isinf()
+			return ::isinf(a);	// k_InfPos, k_InfNeg
 		}
 
-		// k_NaN
-		// k_Inf
-
+		template< typename TYPE >
+		static inline bool IsFinite(TYPE a) noexcept
+		{
+			//! Is this a valid number? NOT Nan 'Not A Number' and NOT Infinite. NOT isIndeterminate()
+			//! This makes no sense for integer types.
+			//! like: std::isnormal()
+			// return !IsNaN(a) && !IsInfinite(a);
+			return a == 0 || ::isnormal(a); // ! #NAN or #IND #INF/INFINITY similar to ! _isnan() but it works.
+		}
 	};
-};
+} 
 
 #endif

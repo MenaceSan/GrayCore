@@ -23,7 +23,7 @@
 #ifndef USE_UNICODE_FN
 #define USE_UNICODE_FN USE_UNICODE			//!< make file names UNICODE as well?
 #endif
- 
+
 namespace Gray		//!< The main namespace for all Core functions.
 {
 	//! @namespace Gray

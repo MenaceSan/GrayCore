@@ -44,30 +44,30 @@ namespace Gray
 		//! MUST Implement versions of this for each _TYPE_HAND.
 		static void inline CloseHandle(_TYPE_HAND h); // Don't use/define a default implementation! This should fail at compile time if type is not implemented explicitly.
 
-		explicit inline cHandlePtr(_TYPE_HAND h = nullptr)
+		explicit inline cHandlePtr(_TYPE_HAND h = nullptr) noexcept
 		: m_h(h)
 		{
 		}
-		inline ~cHandlePtr()
+		inline ~cHandlePtr() 
 		{
 			CloseHandleLast();
 		}
 
-		bool isValidHandle() const
+		bool isValidHandle() const noexcept
 		{
 			return m_h != nullptr;
 		}
 
-		operator _TYPE_HAND () const
+		operator _TYPE_HAND () const noexcept
 		{
 			return m_h;
 		}
-		_TYPE_HAND operator -> () const
+		_TYPE_HAND operator -> () const noexcept
 		{
 			return m_h;
 		}
 
-		_TYPE_HAND get_Handle() const
+		_TYPE_HAND get_Handle() const noexcept
 		{
 			return m_h;
 		}
@@ -92,7 +92,7 @@ namespace Gray
 				m_h = h;
 			}
 		}
-		_TYPE_HAND DetachHandle()
+		_TYPE_HAND DetachHandle() noexcept
 		{
 			_TYPE_HAND h = m_h;
 			m_h = nullptr;

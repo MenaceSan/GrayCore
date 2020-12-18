@@ -30,7 +30,7 @@ namespace Gray
 	{
 		//! @interface Gray::IThreadLocal
 		//! base for a type of thread local storage. TYPE is implied.
-		//! allows the system thread local type to get replaced by smarter thread locals. e.g. CThreadLocalTypeNew
+		//! allows the system thread local type to get replaced by smarter thread locals. e.g. cThreadLocalTypeNew
 		//! GetDataNewV = Get thread local value or create a new one if not already existing.
 		IGNORE_WARN_INTERFACE(IThreadLocal);
 		virtual void* GetDataNewV() = 0;
@@ -43,7 +43,7 @@ namespace Gray
 		//! Store a sizeof(void*) value separate/local for each thread.
 		//! @note Must manually supply PFLS_CALLBACK_FUNCTION thread destructor for this type else pointer leaks!
 		//! @note can't get data for thread other than current! NO GetDataForThreadId
-		//! similar to MFC CThreadLocalObject<> CThreadLocal<>
+		//! similar to MFC cThreadLocalObject<> cThreadLocal<>
 
 	public:
 #ifdef _WIN32
@@ -64,7 +64,7 @@ namespace Gray
 		TYPESLOT_t m_nTypeSlot;		//!< id for the type of data stored per thread. if (_WIN32_WINNT >= 0x0600)
 
 	public:
-		cThreadLocalSys(PFLS_CALLBACK_FUNCTION pDestruct = nullptr)
+		cThreadLocalSys(PFLS_CALLBACK_FUNCTION pDestruct = nullptr) noexcept
 		{
 			//! Allocate new (void*) to be stored for EACH thread. Associate this type with m_nTypeSlot
 			//! @arg pDestruct = supply a destructor if i think i need one when a thread is destroyed. (e.g. delete)
@@ -82,11 +82,11 @@ namespace Gray
 				m_nTypeSlot = TLS_OUT_OF_INDEXES;	// failed for some reason.
 			}
 #endif
-			ASSERT(isInit());
+			DEBUG_CHECK(isInit());
 		}
 		~cThreadLocalSys()
 		{
-			ASSERT(isInit());
+			DEBUG_CHECK(isInit());
 #ifdef _WIN32
 #if (_WIN32_WINNT >= 0x0600)
 			::FlsFree(m_nTypeSlot);
@@ -99,7 +99,7 @@ namespace Gray
 			UNREFERENCED_PARAMETER(iRet);
 #endif
 		}
-		bool isInit() const
+		bool isInit() const noexcept
 		{
 			//! Before static init?
 #ifdef _WIN32
@@ -111,10 +111,10 @@ namespace Gray
 			return true;
 		}
 
-		void* GetData() const
+		void* GetData() const noexcept
 		{
 			//! Get info stored for the current thread. from LPVOID
-			//! Same as MFC::CThreadLocal<>:GetData()
+			//! Same as MFC::cThreadLocal<>:GetData()
 			if (!isInit())
 			{
 				// DEBUG_CHECK(0);
@@ -131,10 +131,10 @@ namespace Gray
 #endif
 		}
 
-		bool PutData(void* pData)
+		bool PutData(void* pData) noexcept
 		{
 			//! Store something unique to this thread. from LPVOID
-			ASSERT(isInit()); // Before static init!
+			DEBUG_CHECK(isInit()); // Before static init!
 #ifdef _WIN32
 #if (_WIN32_WINNT >= 0x0600)
 			return ::FlsSetValue(m_nTypeSlot, pData) ? true : false;
@@ -143,7 +143,7 @@ namespace Gray
 #endif
 #else // __linux__
 			int iRet = ::pthread_setspecific(m_nTypeSlot, pData );
-			return( iRet == 0 );
+			return iRet == 0 ;
 #endif
 		}
 	};
@@ -164,11 +164,11 @@ namespace Gray
 		{
 			STATIC_ASSERT(sizeof(TYPE) <= sizeof(void*), cThreadLocalSysT); // ?
 		}
-		TYPE GetData() const // GetData
+		TYPE GetData() const noexcept
 		{
 			return (TYPE)SUPER_t::GetData();
 		}
-		bool PutData(TYPE nData)
+		bool PutData(TYPE nData) noexcept
 		{
 			return SUPER_t::PutData((void*)nData);
 		}
@@ -192,7 +192,7 @@ namespace Gray
 		}
 
 	public:
-		cThreadLocalSysNew()
+		cThreadLocalSysNew() noexcept
 			: cThreadLocalSysT<TYPE*>(OnThreadClose)
 		{
 		}

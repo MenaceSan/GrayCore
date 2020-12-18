@@ -22,6 +22,7 @@ namespace Gray
 	{
 		//! @class Gray::cQueueBase
 		//! All types of queues have this in common. read index and write index.
+		//! This might be grow-able, static vs dynamic memory, fixed size, wrappable, etc.
 		//! Base class for all Queues.
 
 	protected:
@@ -29,31 +30,31 @@ namespace Gray
 		ITERATE_t m_iWriteLast;	//!< new items added/written here. end of read.
 
 	public:
-		cQueueBase(ITERATE_t iReadLast = 0, ITERATE_t iWriteLast = 0)
+		cQueueBase(ITERATE_t iReadLast = 0, ITERATE_t iWriteLast = 0) noexcept
 			: m_iReadLast(iReadLast)
 			, m_iWriteLast(iWriteLast)
 		{
 		}
-		void InitQ(ITERATE_t iReadLast = 0, ITERATE_t iWriteLast = 0)
+		void InitQ(ITERATE_t iReadLast = 0, ITERATE_t iWriteLast = 0) noexcept
 		{
 			m_iReadLast = iReadLast;
 			m_iWriteLast = iWriteLast;	// put new data here.
 		}
-		bool isEmptyQ() const
+		bool isEmptyQ() const noexcept
 		{
-			return(m_iReadLast == m_iWriteLast);
+			return m_iReadLast == m_iWriteLast;
 		}
-		void EmptyQ()
+		void EmptyQ() noexcept
 		{
 			m_iReadLast = m_iWriteLast = 0;
 		}
 
-		ITERATE_t get_ReadIndex() const
+		ITERATE_t get_ReadIndex() const noexcept
 		{
 			//! @return Next read position.
 			return m_iReadLast;
 		}
-		ITERATE_t get_WriteIndex() const
+		ITERATE_t get_WriteIndex() const noexcept
 		{
 			//! @return Next write position.
 			return m_iWriteLast;
@@ -63,7 +64,7 @@ namespace Gray
 			//! How much data is avail to read? // Assume will not will wrap to fill.
 			//! @return Quantity of TYPE COUNT_t
 			ASSERT(m_iWriteLast >= m_iReadLast);	// Assume will not will wrap to fill.
-			return(m_iWriteLast - m_iReadLast);
+			return m_iWriteLast - m_iReadLast;
 		}
 
 		inline void AdvanceRead(ITERATE_t iCount = 1)
@@ -81,6 +82,41 @@ namespace Gray
 	//*********************************************************************
 
 	template<class TYPE = BYTE, ITERATE_t _QTY = 1024>
+	class cStackStatic
+	{
+		//! @class Gray::cStackStatic
+		//! Create a generic thread/multi process safe (static sized) stack.
+
+		TYPE m_Data[_QTY];		//!< Not heap allocation. static/inline allocated
+		ITERATE_t m_iWriteNext;	//!< last .
+
+	public:
+		inline cStackStatic() noexcept
+			: m_iWriteNext(0)
+		{
+			STATIC_ASSERT(_QTY > 0, cStackStatic);
+		}
+		inline bool isEmpty() const noexcept
+		{
+			return m_iWriteNext == 0;
+		}
+		inline bool isFull() const noexcept
+		{
+			return m_iWriteNext >= _QTY;
+		}
+		inline TYPE Pop()
+		{
+			ASSERT(m_iWriteNext >= 1);
+			return m_Data[--m_iWriteNext];
+		}
+		inline void Push(TYPE v)
+		{
+			ASSERT(m_iWriteNext < _QTY);
+			m_Data[m_iWriteNext++] = v;
+		}
+	};
+
+	template<class TYPE = BYTE, ITERATE_t _QTY = 1024>
 	class GRAYCORE_LINK cQueueStatic : public cQueueBase
 	{
 		//! @class Gray::cQueueStatic
@@ -93,9 +129,9 @@ namespace Gray
 		TYPE m_Data[_QTY];		// Not heap allocation.
 
 	protected:
-		ITERATE_t GetWrapIndex(ITERATE_t i) const
+		inline ITERATE_t GetWrapIndex(ITERATE_t i) const noexcept
 		{
-			return(i % _QTY);
+			return i % _QTY;
 		}
 
 	private:
@@ -106,45 +142,45 @@ namespace Gray
 		}
 
 	public:
-		cQueueStatic()
+		cQueueStatic() noexcept
 		{
-			ASSERT(_QTY > 0);
+			STATIC_ASSERT(_QTY > 0, _QTY);
 #if defined(_DEBUG)
 			cMem::Zero(m_Data, sizeof(m_Data));
 #endif
 		}
-		bool isFullQ() const
+		bool isFullQ() const noexcept
 		{
-			return(GetWrapIndex(m_iWriteLast + 1) == m_iReadLast);
+			return GetWrapIndex(m_iWriteLast + 1) == m_iReadLast;
 		}
-		void EmptyQ()
+		void EmptyQ() noexcept
 		{
 			//! thread safe. single instruction operations cannot be time sliced.
 			//! @note Should NOT be called by the Put thread !
 			m_iReadLast = m_iWriteLast;
 		}
-		ITERATE_t get_ReadQtyT() const
+		ITERATE_t get_ReadQtyT() const noexcept
 		{
-			//! How much Total data is in the Queue ? Thread safe.
+			//! How much Total data is in the Queue ? may be wrapped. Thread safe.
 			ITERATE_t iWrite = m_iWriteLast;
 			ITERATE_t iRead = m_iReadLast;
 			if (iRead > iWrite)	// wrap
 			{
 				iWrite += _QTY;
-				DEBUG_ASSERT(iWrite > iRead, "get_ReadQtyT");
+				DEBUG_ASSERT(iWrite > iRead, "get_ReadQtyT");	// sanity check. should never happen!
 			}
-			return(iWrite - iRead);
+			return iWrite - iRead;
 		}
-		ITERATE_t get_ReadQtyC() const
+		ITERATE_t get_ReadQtyC() const noexcept
 		{
-			//! Max we can get in a single contiguous block peek/read. For use with get_ReadPtr().
+			//! Max we can get in a single CONTIGUOUS block peek/read. For use with get_ReadPtr().
 			ITERATE_t iTop = (m_iWriteLast >= m_iReadLast) ? m_iWriteLast : _QTY;
 			return iTop - m_iReadLast;
 		}
 		const TYPE* get_ReadPtr() const
 		{
 			//! use get_ReadQtyC() to get the allowed size.
-			ASSERT(!isEmptyQ());
+			ASSERT(!isEmptyQ());	// ONLY call this if there is data to read.
 			return &m_Data[m_iReadLast];
 		}
 		void AdvanceRead(ITERATE_t iCount = 1)
@@ -155,14 +191,14 @@ namespace Gray
 			m_iReadLast = GetWrapIndex(m_iReadLast + iCount);
 		}
 
-		ITERATE_t get_WriteQtyT() const
+		ITERATE_t get_WriteQtyT() const noexcept
 		{
 			//! total available space to write - not contiguous
 			//! @note since read=write=empty we can only use QTY-1 to write.
-			return((_QTY - 1) - get_ReadQtyT());
+			return (_QTY - 1) - get_ReadQtyT();
 		}
 
-		TYPE ReadQ()
+		TYPE Read1()
 		{
 			//! Read a single TYPE element. Thread safe against Write.
 			//! @note This is NOT reentrant safe. i.e. multi calls to Read().
@@ -183,7 +219,7 @@ namespace Gray
 			ITERATE_t i = 0;
 			for (; !isEmptyQ() && i < nCountMax; i++)
 			{
-				pBuf[i] = ReadQ();
+				pBuf[i] = Read1();
 			}
 			return i;
 		}
@@ -193,7 +229,7 @@ namespace Gray
 			ITERATE_t i = 0;
 			for (; !isEmptyQ() && i < nCountMax; i++)
 			{
-				pBuf[i] = ReadQ();
+				pBuf[i] = Read1();
 			}
 			return i;
 		}
@@ -237,7 +273,7 @@ namespace Gray
 				CopyElements(m_Data + iWrite, pVal, iLengthMin);
 				m_iWriteLast = iWrite + iLengthMin;
 			}
-			return((HRESULT)iLengthMin);
+			return (HRESULT)iLengthMin;
 		}
 
 		HRESULT WriteQtySafe(const TYPE* pVal, ITERATE_t iLength)
@@ -264,7 +300,7 @@ namespace Gray
 		TYPE* m_pData;			//!< NOT owned/managed block of memory I read from. not freed on destruct.
 
 	public:
-		cQueueRead(const TYPE* pData = nullptr, ITERATE_t iReadLast = 0, ITERATE_t iWriteLast = 0)
+		cQueueRead(const TYPE* pData = nullptr, ITERATE_t iReadLast = 0, ITERATE_t iWriteLast = 0) noexcept
 			: cQueueBase(iReadLast, iWriteLast)
 			, m_pData(const_cast<TYPE*>(pData))
 		{
@@ -285,11 +321,10 @@ namespace Gray
 		void SetQueueRead(const TYPE* pData, ITERATE_t iReadLast = 0, ITERATE_t iWriteLast = 0)
 		{
 			m_pData = const_cast<TYPE*>(pData);
-			m_iReadLast = iReadLast;
-			m_iWriteLast = iWriteLast;
+			InitQ(iReadLast, iWriteLast);
 		}
 
-		TYPE ReadQ(void)
+		TYPE Read1(void)
 		{
 			//! get a single TYPE element.
 			ASSERT(!isEmptyQ());
@@ -316,7 +351,8 @@ namespace Gray
 			//! Just read a block. like ReadX but for TYPE
 			//! @arg iDataMaxQty = max qty of TYPE units i can fit in pData.
 			//! @return iQty i actually read.
-			ITERATE_t iQtyAvail = get_ReadQty();
+
+			const ITERATE_t iQtyAvail = get_ReadQty();
 			if (iDataMaxQty > iQtyAvail)
 				iDataMaxQty = iQtyAvail;
 			if (pData != nullptr)
@@ -364,9 +400,9 @@ namespace Gray
 	protected:
 		ITERATE_t m_iDataSizeAlloc;		//!< The max qty we can write into m_pData. Maybe NOT exactly same as m_pData true OS allocated size?
 		ITERATE_t m_iAutoReadCommit;	//!< Read data is destroyed once read more than this amount. make more room for writing. 0 = don't do this, just fail write if we run out of space.
-	
+
 	public:
-		cQueueRW()
+		cQueueRW() noexcept
 			: cQueueRead<TYPE>(nullptr, 0, 0)
 			, m_iDataSizeAlloc(0)
 			, m_iAutoReadCommit(0)
@@ -623,10 +659,10 @@ namespace Gray
 			if (iRem != 0)
 				iChunksGrow++;
 
-			ITERATE_t iTotalSize = this->m_iDataSizeAlloc + iChunksGrow*m_nGrowSizeChunk;
+			ITERATE_t iTotalSize = this->m_iDataSizeAlloc + iChunksGrow * m_nGrowSizeChunk;
 			if (iTotalSize > m_nGrowSizeMax)	// too big !
 				iTotalSize = m_nGrowSizeMax;
-				
+
 			if (iTotalSize - this->m_iWriteLast <= 0)		// can i get any?
 				return false;	// Got no more space. we must wait?
 
@@ -700,7 +736,7 @@ namespace Gray
 
 		typedef cQueueDyn<BYTE> SUPER_t;
 	public:
-		explicit cQueueBytes(size_t nGrowSizeChunk = 8 * 1024, size_t nGrowSizeMax = cHeap::k_ALLOC_MAX)
+		explicit cQueueBytes(size_t nGrowSizeChunk = 8 * 1024, size_t nGrowSizeMax = cHeap::k_ALLOC_MAX) noexcept
 			: cQueueDyn<BYTE>((ITERATE_t)nGrowSizeChunk, (ITERATE_t)nGrowSizeMax)
 		{
 			//! @arg nGrowSizeMax = 0 = not used. write only ? total size < nGrowSizeMax.
@@ -871,7 +907,7 @@ namespace Gray
 			m_nTotalQty += iCount;
 		}
 
-		TYPE ReadQ(void)
+		TYPE Read1(void)
 		{
 			ASSERT(m_pFirst != nullptr);
 			const TYPE* pBuf = get_ReadPtrC();
@@ -885,7 +921,7 @@ namespace Gray
 			ITERATE_t i = 0;
 			for (; !isEmptyQ() && i < nCountMax; i++)
 			{
-				pBuf[i] = ReadQ();
+				pBuf[i] = Read1();
 			}
 			return i;
 		}

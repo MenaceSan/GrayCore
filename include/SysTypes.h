@@ -180,7 +180,7 @@
 #include <windows.h>
 #endif	// ! _AFXDLL
 
-#include <unknwn.h>	// IUnknown __IUnknown_INTERFACE_DEFINED__ IClassFactory
+// TODO : Include SysRes.h from here !?????
 
 #if defined(_WIN32) && ! defined(_WINDOWS_)
 #ifdef _WINDOWS_H			// __GNUC__ version of "windows.h"
@@ -318,7 +318,7 @@
 #define UNREFERENCED_REFERENCE(x)  ((void)(&x)) // x doesn't work for VS2010 if type is not fully defined! ( _MSC_VER > 1600 )
 #endif
 
-#ifndef DECLSPEC_NOVTABLE	// __GNUC__ has no such concept. Maybe use pragma ?
+#ifndef DECLSPEC_NOVTABLE	// __GNUC__ has no such concept. Maybe use pragma ? AFX_NOVTABLE
 #define DECLSPEC_NOVTABLE		//__declspec(novtable)	// This is a abstract class or an interface the may not be instantiated directly.
 #endif
 
@@ -416,7 +416,7 @@ typedef unsigned long	DWORD_PTR;	// Same as ULONG_PTR
 #define nullptr		__null		// This is a void* not an int value.
 #elif defined(_MSC_VER) && ( _MSC_VER < 1700 ) && ! defined(__cplusplus_cli)
 //!< Don't define if M$ '/clr' switch is used. __cplusplus_cli
-#define nullptr		NULL
+#define nullptr		NULL		//  
 #endif
 
 #ifndef _MAX_PATH

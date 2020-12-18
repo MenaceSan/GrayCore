@@ -21,8 +21,9 @@ namespace Gray
 
 	cString cUInt64::GetStr(RADIX_t uRadixBase) const
 	{
-		//! @note We can estimate the string size via get_Highest1Bit()
-		char szTmp[StrT::k_LEN_MAX];
+		//! encode value as string.
+		//! @note We can estimate the max string size via get_Highest1Bit()
+		char szTmp[StrNum::k_LEN_MAX_DIGITS_INT];
 		GetStr(szTmp, _countof(szTmp), uRadixBase);
 		return szTmp;
 	}
