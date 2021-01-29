@@ -1,10 +1,11 @@
 //
-//! @file Ptr.h
+//! @file PtrCast.h
+//! A pointer to some struct or class. Not used for pointers to basic/intrinsic types.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_Ptr_H
-#define _INC_Ptr_H
+#ifndef _INC_PtrCast_H
+#define _INC_PtrCast_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
@@ -13,13 +14,6 @@
 
 namespace Gray
 {
-
-#ifdef USE_64BIT
-#define _SIZEOF_PTR 8	//!< bytes = sizeof(void*) for __DECL_ALIGN macro. Can't do sizeof(x). uintptr_t
-#define USE_FILE_POS64
-#else
-#define _SIZEOF_PTR 4	//!< bytes = sizeof(void*) for __DECL_ALIGN macro. Can't do sizeof(x). uintptr_t
-#endif
 
 #ifdef _CPPRTTI
 #define DYNPTR_CAST(t,p)		(dynamic_cast <t*>(p))		// typically used for safer down-casting.
@@ -32,7 +26,7 @@ namespace Gray
 	template <class _TYPE_TO, class _TYPE_FROM >
 	inline bool is_valid_cast(_TYPE_FROM* p)
 	{
-		// will dynamic_cast work ? AKA IS_TYPE_OF() ?
+		// will dynamic_cast work ? AKA IS_TYPE_OF() ? std::is_base_of()
 		// TODO typeid(p) == typeid(_TYPE_TO); as dynamic? or IS_TYPE_OF(_TYPE_TO)
 		if (p == nullptr)
 			return true;

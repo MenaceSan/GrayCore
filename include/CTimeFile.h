@@ -25,7 +25,6 @@ struct FILETIME //!< 64-bit value representing the number of 100-nanosecond inte
 
 namespace Gray
 {
-	UNITTEST2_PREDEF(cTimeFile);
 	typedef UINT64 FILETIME_t;	//!< replace FILETIME for 64 bit math. Absolute 64-bit 100-nanosecond since January 1, 1601 GMT
 
 	class GRAYCORE_LINK cTimeFile : public FILETIME
@@ -41,11 +40,11 @@ namespace Gray
 		static const int k_nFreq = 10 * 1000000;	//!< 100-nanosecond intervals per second = 10th of a micro second.
 
 	public:
-		cTimeFile(FILETIME_t t = 0)
+		cTimeFile(FILETIME_t t = 0) noexcept
 		{
 			InitTime(t);
 		}
-		cTimeFile(const FILETIME& t)
+		cTimeFile(const FILETIME& t) noexcept
 		{
 			*static_cast<FILETIME*>(this) = t;
 		}
@@ -133,7 +132,7 @@ namespace Gray
 			return true;
 		}
 
-		void InitTime(FILETIME_t t = 0)
+		void InitTime(FILETIME_t t = 0) noexcept
 		{
 			ref_Val() = t;
 		}
@@ -152,7 +151,7 @@ namespace Gray
 
 		cString GetTimeFormStr(const GChar_t* pszFormat, TZ_TYPE nTimeZoneOffset = TZ_LOCAL) const;
 
-		UNITTEST2_FRIEND(cTimeFile);
+		UNITTEST_FRIEND(cTimeFile);
 	};
 
 	template <>

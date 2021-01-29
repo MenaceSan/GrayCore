@@ -341,7 +341,7 @@
     <ClInclude Include="include\IUnkObject.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="include\Ptr.h">
+    <ClInclude Include="include\PtrCast.h">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="include\resource.h">

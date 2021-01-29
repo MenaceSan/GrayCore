@@ -15,8 +15,6 @@
 
 namespace Gray
 {
-	UNITTEST2_PREDEF(StrArg);
-
 	// Convert some type into a string. ALA ToString()
 	// Define temporary string values for use as sprintf() arguments.
 	// Use cTempPool

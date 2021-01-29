@@ -58,7 +58,7 @@ namespace Gray
 
 #ifdef _DEBUG
 		ASSERT(cMem::IsValid(pElements, nCount * sizeof(TYPE), true));
-		ITERATE_t nCountPrev = nCount;	// just for debug
+		const ITERATE_t nCountPrev = nCount;	// just for debug
 		UNREFERENCED_PARAMETER(nCountPrev);
 #endif
 

@@ -78,7 +78,7 @@ namespace Gray
 		const FILECHAR_t* get_TestInpDir() const;
 
 		//! Run the test.
-		virtual void RunUnitTest() = 0;	// UNITTEST_METHOD()
+		virtual void RunUnitTest() = 0;	 
 	};
 
 	class GRAYCORE_LINK cUnitTestRegister
@@ -134,7 +134,7 @@ namespace Gray
 		cUnitTestAppState()
 			: m_AppState(cAppState::I())
 		{
-			// called in UNITTEST_METHOD for M$ tests.
+			// called for M$ tests.
 			m_eAppStatePrev = m_AppState.get_AppState();
 			m_nMainThreadPrev = m_AppState.get_MainThreadId();
 			m_AppState.InitAppState();	// set to APPSTATE_Run
@@ -201,17 +201,15 @@ namespace Gray
 #define UNITTEST_TRUE2(x,d)		ASSERT(x)	// UNITTEST_TRUE with a description
 
 	// Deprecate all below in favor of UNITTEST2_*
-
-#define UNITTEST_CLASS(n)		class UNITTEST_N(n) : public cUnitTest //!< define and implement class. TEST_CLASS(n)
-#define UNITTEST_METHOD(x)		public: virtual void RunUnitTest() override				// call the public virtual as a test. TEST_METHOD(x)
-
-#define UNITTEST_REGISTER_NAME(n) g_UnitTest_##n
-#define UNITTEST_REGISTER(n,l)	::Gray::cUnitTestRegisterT< UNITTEST_N(n) > UNITTEST_REGISTER_NAME(n)( #n, l );	// instantiate to register UNITTEST_CLASS.
+ 
+#define UNITTEST_REGISTER_NAME(n)	g_UnitTest_##n
+#define UNITTEST_REGISTER(n,l)		::Gray::cUnitTestRegisterT< UNITTEST_N(n) > UNITTEST_REGISTER_NAME(n)( #n, l );	// instantiate to register cUnitTest  .
 
 	// Allow an external hard link. optional.
-#define UNITTEST_REGISTER_EXT(n)	cUnitTestRegister* UNITTEST_EXT(n) = &UNITTEST_REGISTER_NAME(n);
+#define UNITTEST_EXT_NAME(n)		g_pUnitTest_##n		//!< a base pointer to cUnitTestRegister for UNITTEST_N(n)
+#define UNITTEST_EXT_DEF(n)			cUnitTestRegister* UNITTEST_EXT_NAME(n) = &UNITTEST_REGISTER_NAME(n);
 
-};	// namespace
+} 	// namespace
 
 using namespace Gray;	// Since this header is typically only included right before the unit test.
 

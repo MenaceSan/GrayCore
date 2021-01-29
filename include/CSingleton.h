@@ -21,8 +21,6 @@
 
 namespace Gray
 {
-	UNITTEST2_PREDEF(cSingleton);
-
 #ifdef _MSC_VER	
 #pragma warning(disable:4355)	// disable the warning regarding 'this' pointers being used in base member initializer list. Singletons rely on this action
 #endif
@@ -121,7 +119,7 @@ namespace Gray
 		void RegisterSingleton();
 	public:
 		static void GRAYCALL ReleaseModule(HMODULE hMod);
-		UNITTEST2_FRIEND(cSingleton);
+		UNITTEST_FRIEND(cSingleton);
 	};
 
 	template <class TYPE>

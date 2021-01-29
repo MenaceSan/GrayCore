@@ -10,15 +10,13 @@
 #pragma once
 #endif
  
-#include "Ptr.h"
+#include "PtrCast.h"
 #include "cDebugAssert.h"
 #include "cTypeInfo.h"
 #include "cUnitTestDecl.h"
 
 namespace Gray
 {
-	UNITTEST2_PREDEF(cPtrTrace);
-
 	class GRAYCORE_LINK cPtrTrace
 	{
 		//! @class Gray::cPtrTrace
@@ -46,7 +44,7 @@ namespace Gray
 		void TraceOpen(void* p);
 		void TraceClose(void* p);
 
-		UNITTEST2_FRIEND(cPtrTrace);
+		UNITTEST_FRIEND(cPtrTrace);
 	};
 }
 

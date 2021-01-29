@@ -14,7 +14,6 @@
 
 namespace Gray
 {
-
 	class GRAYCORE_LINK cThreadLockableRef
 		: public cRefBase
 		, public cThreadLockCount
@@ -182,7 +181,6 @@ namespace Gray
 	};
 
 	typedef cThreadLockRef<cThreadLockableRef> cThreadLockRefX;
-};
+}
 
-#endif // _INC_cThreadLock_H
-
+#endif // _INC_cThreadLockRef_H

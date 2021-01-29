@@ -9,7 +9,7 @@
 #pragma once
 #endif
 
-#include "Ptr.h"
+#include "PtrCast.h"
 #include "cDebugAssert.h"
 
 namespace Gray

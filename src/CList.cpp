@@ -89,7 +89,7 @@ namespace Gray
 
 		if (pNodeNew == nullptr)
 			return;
-		ASSERT(pNodePrev != pNodeNew);
+		DEBUG_CHECK(pNodePrev != pNodeNew);
 		if (pNodeNew->hasParent())	// currently in a list.
 		{
 			if (IsMyChild(pNodeNew))	// already here.
@@ -98,13 +98,13 @@ namespace Gray
 				return;
 			}
 			pNodeNew->RemoveFromParent();	// Get out of any previous list first.
-			ASSERT(!pNodeNew->hasParent());
+			DEBUG_CHECK(!pNodeNew->hasParent());
 		}
 
 		cListNodeBase* pNodeNext;
 		if (pNodePrev != nullptr)		// put after some other node?
 		{
-			ASSERT(IsMyChild(pNodePrev));
+			DEBUG_CHECK(IsMyChild(pNodePrev));
 			pNodeNext = pNodePrev->get_Next();
 			pNodePrev->m_pNext = pNodeNew;
 		}
@@ -119,7 +119,7 @@ namespace Gray
 
 		if (pNodeNext != nullptr)
 		{
-			ASSERT(IsMyChild(pNodeNext));
+			DEBUG_CHECK(IsMyChild(pNodeNext));
 			pNodeNext->m_pPrev = pNodeNew;
 		}
 		else
@@ -130,8 +130,8 @@ namespace Gray
 		pNodeNew->m_pNext = pNodeNext;
 		pNodeNew->put_Parent(this);
 		m_iCount++;
-		ASSERT(pNodeNew->hasParent());
-		// ASSERT(pNodeNew->isValidCheck());
+		DEBUG_CHECK(pNodeNew->hasParent());
+		// DEBUG_CHECK(pNodeNew->isValidCheck());
 	}
 
 	void cListBase::InsertList(cListBase* pListSrc, cListNodeBase* pNodePrev)

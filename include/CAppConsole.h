@@ -10,11 +10,11 @@
 #endif
 
 #include "cSingleton.h"
-
-#if ! defined(UNDER_CE) 
 #include "cStream.h"
 #include "StrArg.h"
 #include "cUnitTestDecl.h"
+
+#if ! defined(UNDER_CE) 
 
 namespace Gray
 {
@@ -46,7 +46,7 @@ namespace Gray
 		, public cStreamOutput
 	{
 		//! @class Gray::cAppConsole
-		//! Manage console output/input for this app. use of printf() etc
+		//! Singleton to Manage console output/input for this app. use of printf() etc
 		//! This allows apps not compiled in _CONSOLE mode to attach to a console if they are started in one (or create one if not).
 
 		friend class cSingleton < cAppConsole >;
@@ -72,12 +72,12 @@ namespace Gray
 
 	protected:
 		cAppConsole();
-		virtual ~cAppConsole();
-
 		void CheckConsoleMode() noexcept;
 		bool AttachConsoleSync();
 
 	public:
+		virtual ~cAppConsole();
+
 		bool HasConsoleParent() noexcept
 		{
 			//! started from command line ? Call AllocConsole to start using console.
@@ -108,27 +108,27 @@ namespace Gray
 		int ReadKeyWait();		//!< Get a single char. -1 = block/wait for char failed.
 		int ReadKey();			//!< Get a single char. -1 = none avail. non blocking,.
 
-		virtual HRESULT WriteString(const char* pszStr) override
+		HRESULT WriteString(const char* pszStr) override
 		{
 			//! support cStreamOutput
 			//! Do not assume line termination with \n
-			HRESULT hRes = WriteStrOut(pszStr);
+			const HRESULT hRes = WriteStrOut(pszStr);
 			if (FAILED(hRes))
 				return hRes;
 			return 1;
 		}
-		virtual HRESULT WriteString(const wchar_t* pszStr) override
+		HRESULT WriteString(const wchar_t* pszStr) override
 		{
 			//! support cStreamOutput
 			//! Do not assume line termination with \n
-			HRESULT hRes = WriteStrOut(StrArg<char>(pszStr));
+			const HRESULT hRes = WriteStrOut(StrArg<char>(pszStr));
 			if (FAILED(hRes))
 				return HRESULT_WIN32_C(ERROR_WRITE_FAULT);
 			return 1;
 		}
 
 		CHEAPOBJECT_IMPL;
-		UNITTEST2_FRIEND(cAppConsole);
+		UNITTEST_FRIEND(cAppConsole);
 	};
 }
 #endif	// UNDER_CE

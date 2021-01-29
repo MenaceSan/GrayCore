@@ -122,7 +122,7 @@ namespace Gray
 #ifndef UNDER_CE
 	HRESULT GRAYCALL HResult::GetPOSIXLast() noexcept // static 
 	{
-		//! Get last POSIX error code. 'errno'
+		//! Get last POSIX error code. 'errno' converted to HRESULT
 		return FromPOSIX(errno);
 	}
 #endif

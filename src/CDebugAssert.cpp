@@ -92,7 +92,7 @@ namespace Gray
 #endif
 	}
 
-	bool GRAYCALL cDebugAssert::Debug_Fail(const char* pszExp, const cDebugSourceLine src) // static
+	bool GRAYCALL cDebugAssert::Debug_Fail(const char* pszExp, const cDebugSourceLine src) noexcept // static
 	{
 		//! A 'softer' version of assert. non-fatal checks. for use in constructors, etc.
 		//! @note: always return false to indicate something failed. (for macro)

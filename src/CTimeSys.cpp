@@ -11,37 +11,40 @@ namespace Gray
 {
 
 #ifdef _WIN32
-	TIMEPERF_t cTimePerf::k_nFreq = 0;	//!< MUST call InitFreq()
+	TIMEPERF_t cTimePerf::sm_nFreq = 0;	//!< MUST call static InitFreq()  GRAYCORE_LINK
 #endif
 
-	void GRAYCALL cTimePerf::InitFreq() // static
+	bool GRAYCALL cTimePerf::InitFreq() noexcept // static
 	{
 		//! need to call this once in _WIN32 to capture the k_nFreq
+		if (sm_nFreq != 0)
+			return true;
 #if 0	// UNDER_CE
 		::timeBeginPeriod(1);
 #endif
 #ifdef _WIN32
-		if (k_nFreq != 0)
-			return;
-		if (!::QueryPerformanceFrequency(reinterpret_cast<LARGE_INTEGER*>(&k_nFreq)))
+		if (!::QueryPerformanceFrequency(reinterpret_cast<LARGE_INTEGER*>(&sm_nFreq)))
 		{
-			k_nFreq = cTimeSys::k_FREQ;	// milliSec freq = default.
+			sm_nFreq = cTimeSys::k_FREQ;	// milliSec freq = default.
+			return false;
 		}
 #endif
+		return true;
 	}
 
-	double GRAYCALL cTimePerf::ToDays(TIMEPERF_t t) // static
+	double GRAYCALL cTimePerf::ToDays(TIMEPERF_t t) noexcept // static
 	{
 		//! Convert cTimePerf to double days (from arbitrary start time).
 		//! @return time in days since some unknown/arbitrary starting point
-		ASSERT(k_nFreq > 0);	// MUST call cTimePerf::InitFreq()
-		const double dFreq = (double)k_nFreq * (double)cTimeUnits::k_nSecondsPerDay;
+		
+		DEBUG_CHECK(sm_nFreq > 0);	// ASSUME cTimePerf::InitFreq();
+		const double dFreq = (double)sm_nFreq * (double)cTimeUnits::k_nSecondsPerDay;
 		double dCount = (double)t;
 		double dVal = dCount / dFreq;
 		return dVal;
 	}
 
-	void cTimePerf::InitTimeNow()
+	void cTimePerf::InitTimeNow() noexcept
 	{
 		//! QueryPerformanceCounter() is better than 'rdtsc' for multi core.
 		//! available >= Windows 2000

@@ -113,7 +113,7 @@ namespace Gray
 		ASSERT(isValidTimeUnits());
 	}
 
-	bool cTimeUnits::GetSys(SYSTEMTIME& sysTime) const
+	bool cTimeUnits::GetSys(SYSTEMTIME& sysTime) const noexcept
 	{
 		sysTime.wYear = m_wYear;
 		sysTime.wMonth = m_wMonth;		// 1 based.
@@ -254,7 +254,7 @@ namespace Gray
 		return iDays;
 	}
 
-	TIMEDOW_TYPE GRAYCALL cTimeUnits::GetDOW(TIMEUNIT_t wYear, TIMEUNIT_t wMonth, TIMEUNIT_t wDay) // static
+	TIMEDOW_TYPE GRAYCALL cTimeUnits::GetDOW(TIMEUNIT_t wYear, TIMEUNIT_t wMonth, TIMEUNIT_t wDay)  // static
 	{
 		//! @return day of week for a particular date.  TIMEDOW_TYPE
 		//! wMonth = 1 based

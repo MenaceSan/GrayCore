@@ -29,7 +29,7 @@ namespace Gray
 		virtual const void* get_HeapPtr() const noexcept = 0;	//!< Get the top level (outermost, freeable) class pointer. I can delete get_HeapPtr().
 
 		// Add this to each IHeapObject rooted object to get the base heap allocation pointer. Avoids problems with multiple inheritance and heap allocated objects.
-#define CHEAPOBJECT_IMPL virtual const void* get_HeapPtr() const noexcept override { return this; }
+#define CHEAPOBJECT_IMPL const void* get_HeapPtr() const noexcept override { return this; }
 	};
 
 	//*************************************************

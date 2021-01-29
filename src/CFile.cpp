@@ -10,7 +10,7 @@
 #include "cLogMgr.h"
 #include "cFileDir.h"
 #include "cTimeSys.h"
-#include "Ptr.h"
+#include "PtrCast.h"
 
 #ifdef __linux__
 #include "cTimeVal.h"
@@ -163,6 +163,19 @@ namespace Gray
 		return m_hFile.Seek(0, SEEK_Cur);
 	}
 
+#if defined(__linux__)
+	HRESULT CFile::GetStatusSys(OUT cFileStatusSys& statusSys)
+	{
+		// https://man7.org/linux/man-pages/man2/stat.2.html
+		int iRet = ::fstat(m_hFile, &statusSys);
+		if (iRet != 0)
+		{
+			return HResult::GetPOSIXLastDef(E_HANDLE);
+		}
+		return S_OK;
+	}
+#endif
+
 	STREAM_POS_t CFile::GetLength() const // virtual
 	{
 		//! Get the size of the open file in bytes. like MFC
@@ -185,12 +198,11 @@ namespace Gray
 #endif // defined(_MFC_VER) && ( _MFC_VER > 0x0600 )
 
 #elif defined(__linux__)
-		CFileStatusSys filedata;
-		if (::fstat(m_hFile, &filedata) != 0)
-		{
-			return HResult::GetLastDef(E_HANDLE);
-		}
-		return(filedata.st_size);
+		cFileStatusSys statusSys;
+		HRESULT hRes = GetStatusSys(statusSys);
+		if (FAILED(hRes))
+			return hRes;
+		return statusSys.st_size;
 #endif
 	}
 
@@ -214,7 +226,7 @@ namespace Gray
 #elif defined(__linux__)
 		::ftruncate(m_hFile, dwNewLen);
 #endif
-	}
+		}
 
 	HRESULT CFile::Write(const void* pData, size_t nDataSize)
 	{
@@ -317,7 +329,7 @@ namespace Gray
 		if (!CFile::Open(m_strFileName, nOpenFlags))	// doesn't use pSa
 		{
 			hRes = HResult::GetLastDef(HRESULT_WIN32_C(ERROR_FILE_NOT_FOUND));
-		}
+	}
 #else
 		hRes = CFile::OpenCreate(m_strFileName, nOpenFlags, nullptr);
 #endif
@@ -331,12 +343,12 @@ namespace Gray
 				if (!CFile::Open(m_strFileName, nOpenFlags))
 				{
 					hRes = HResult::GetLastDef(HRESULT_WIN32_C(ERROR_FILE_NOT_FOUND));
-				}
+		}
 #else
 				hRes = CFile::OpenCreate(m_strFileName, nOpenFlags, nullptr);
 #endif
-			}
-		}
+	}
+}
 		if (FAILED(hRes))
 		{
 			return hRes;
@@ -444,12 +456,13 @@ namespace Gray
 		if (lpAccessTime == nullptr || lpLastWriteTime == nullptr)
 		{
 			// must get defaults.
-			CFileStatusSys st;
-			if (!::fstat(m_hFile, &st))
+			cFileStatusSys statusSys;
+			HRESULT hRes = GetStatusSys(statusSys);
+			if (SUCCEEDED(hRes))
 			{
-				tv[0].tv_sec = st.st_atime;
-				tv[1].tv_sec = st.st_mtime;
-				// st.st_ctime; // ??
+				tv[0].tv_sec = statusSys.st_atime;
+				tv[1].tv_sec = statusSys.st_mtime;
+				// statusSys.st_ctime; // ??
 			}
 		}
 		if (lpAccessTime != nullptr)
@@ -517,12 +530,13 @@ namespace Gray
 
 #elif defined(__linux__)
 
-		CFileStatusSys filestat;
-		if (::fstat(m_hFile, &filestat) != 0)
+		cFileStatusSys statusSys;
+		HRESULT hRes = GetStatusSys(statusSys);
+		if (FAILED(hRes))
 		{
-			return HResult::GetLastDef(E_HANDLE);
+			return hRes;
 		}
-		attr.InitFileStatus(filestat);
+		attr.InitFileStatus(statusSys);
 #endif
 
 		return S_OK;
@@ -589,7 +603,7 @@ namespace Gray
 #else
 		return CFile::Write(pData, nDataSize);
 #endif
-	}
+		}
 
 	HRESULT cFile::FlushX() // virtual
 	{
@@ -669,12 +683,11 @@ namespace Gray
 		if (FAILED(hRes))
 			return hRes;
 		// Zero the extra (if any);
-		ASSERT(hRes == (HRESULT)(block.get_Size() - nSizeExtra));
+		ASSERT(hRes == (HRESULT)(block.get_DataSize() - nSizeExtra));
 		if (nSizeExtra > 0)
 		{
 			block.get_DataBytes()[hRes] = 0;	// terminator.
 		}
 		return hRes;
 	}
-}
- 
+	}

@@ -18,8 +18,6 @@
 
 namespace Gray
 {
-	UNITTEST2_PREDEF(cHeap);
-
 	struct GRAYCORE_LINK cHeap	// static class
 	{
 		//! @struct Gray::cHeap
@@ -84,7 +82,7 @@ namespace Gray
 		static void GRAYCALL FreePtr(void* pData);
 		static void* GRAYCALL ReAllocPtr(void* pData, size_t nSize);
 
-		UNITTEST2_FRIEND(cHeap);
+		UNITTEST_FRIEND(cHeap);
 	};
 
 	struct GRAYCORE_LINK cHeapAlign : public cHeap	// static
@@ -205,7 +203,7 @@ namespace Gray
 		THIS_t& operator = (const THIS_t& ref)
 		{
 			//! copy assignment operator. Allocate a new copy.
-			Alloc(ref.m_pData, ref.get_Size());
+			Alloc(ref.m_pData, ref.get_DataSize());
 			return *this;
 		}
 		THIS_t& operator = (THIS_t&& ref)
@@ -259,7 +257,7 @@ namespace Gray
 		{
 			if (!isValidPtr())
 				return;
-			cMem::ZeroSecure(m_pData, get_Size());
+			cMem::ZeroSecure(m_pData, get_DataSize());
 			cHeap::FreePtr(m_pData);
 			SetEmptyBlock();	// m_pData = nullptr
 		}
@@ -359,39 +357,44 @@ namespace Gray
 			//! Copy from h into me. 
 			if (&rSrc == this)
 				return true;
-			return Alloc(rSrc.get_Data(), rSrc.get_Size());
+			return Alloc(rSrc.get_Data(), rSrc.get_DataSize());
 		}
 
-		void* get_Data() const
+		void* get_Data() const noexcept
 		{
 			//! Might be nullptr. that's OK.
+			//! NOTE: This hides the cMemBlock implimentation so call isCorrupt()
 #ifdef _DEBUG
-			ASSERT(!isCorrupt());
+			DEBUG_CHECK(!isCorrupt());
 #endif
-			return m_pData;	// get_Start();
+			return m_pData;	
 		}
-		BYTE* get_DataBytes() const
+		inline BYTE* get_DataBytes() const noexcept
 		{
+			//! Get as a BYTE pointer.
 			//! possibly nullptr.
-			return((BYTE*)get_Data());
+			return (BYTE*)get_Data();
 		}
-		char* get_DataA() const
+		inline char* get_DataA() const noexcept
 		{
-			return((char*)get_Data());
+			//! Get as a char pointer.
+			return (char*)get_Data();
 		}
-		wchar_t* get_DataW() const
+		inline wchar_t* get_DataW() const noexcept
 		{
-			return((wchar_t*)get_Data());
+			//! Get as a wchar_t pointer.
+			return (wchar_t*)get_Data();
 		}
-		operator void* () const
+
+		operator void* () const noexcept
 		{
 			return get_Data();
 		}
-		operator BYTE* () const
+		operator BYTE* () const noexcept
 		{
 			return get_DataBytes();	// for use with []
 		}
-		operator char* () const
+		operator char* () const noexcept
 		{
 			return get_DataA();	// for use with []
 		}

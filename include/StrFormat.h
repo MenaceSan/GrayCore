@@ -15,8 +15,6 @@
 
 namespace Gray
 {
-	UNITTEST2_PREDEF(StrFormat);
-
 	struct GRAYCORE_LINK StrFormatBase
 	{
 		//! @class Gray::StrFormatBase
@@ -78,7 +76,7 @@ namespace Gray
 		static StrLen_t GRAYCALL FormatV(TYPE* pszOut, StrLen_t nLenOutMax, const TYPE* pszFormat, va_list vlist);
 		static StrLen_t _cdecl FormatF(TYPE* pszOut, StrLen_t nLenOutMax, const TYPE* pszFormat, ...);
 
-		UNITTEST2_FRIEND(StrFormat);
+		UNITTEST_FRIEND(StrFormat);
 	};
 }
 

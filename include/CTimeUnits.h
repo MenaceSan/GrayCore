@@ -19,8 +19,6 @@
 
 namespace Gray
 {
-	UNITTEST2_PREDEF(cTimeUnits);
-
 	// Base type used for cTimeInt Might be 64 bits ?? or _USE_32BIT_TIME_T
 	typedef time_t TIMESEC_t;	//!< absolute seconds since January 1, 1970. (GMT?)(signed) NOTE: Changing to __time64_t just adds more range with same values. (>2038)
 	typedef int TIMESECD_t;		//!< signed delta seconds from some epoch.
@@ -193,7 +191,7 @@ namespace Gray
 	public:
 #ifdef _WIN32
 		cTimeUnits(const SYSTEMTIME& sysTime);
-		bool GetSys(SYSTEMTIME& sysTime) const;
+		bool GetSys(SYSTEMTIME& sysTime) const noexcept;
 		void SetSys(const SYSTEMTIME& sysTime);
 #endif
 		void SetZeros();
@@ -207,7 +205,7 @@ namespace Gray
 			return !isTimeFuture();
 		}
 
-		TIMEDOW_TYPE get_DOW() const
+		TIMEDOW_TYPE get_DOW() const  
 		{
 			//! Calculated Day of Week
 			//! @return TIMEDOW_Sun = 0
@@ -317,7 +315,7 @@ namespace Gray
 		{
 		}
 
-		UNITTEST2_FRIEND(cTimeUnits);
+		UNITTEST_FRIEND(cTimeUnits);
 	};
 
 	//*******************************************************

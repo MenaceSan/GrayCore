@@ -16,7 +16,6 @@
 
 namespace Gray
 {
-	UNITTEST2_PREDEF(cOSProcess);
 	class cFile;
 
 #ifdef _WIN32
@@ -271,7 +270,7 @@ namespace Gray
 		static HWND GRAYCALL FindWindowForProcessID(PROCESSID_t nProcessID, DWORD dwStyleFlags, const GChar_t* pszClassName = nullptr); // WS_VISIBLE
 #endif // _WIN32
 
-		UNITTEST2_FRIEND(cOSProcess);
+		UNITTEST_FRIEND(cOSProcess);
 	};
 }
 

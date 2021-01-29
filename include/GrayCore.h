@@ -64,7 +64,7 @@ namespace Gray		//!< The main namespace for all Core functions.
 #define override	// tell the compiler this is an intentional override
 #define IS_DELETE
 #else
-#define IS_DELETE = delete
+#define IS_DELETE = delete		// get rid of this normally default supplied method.
 #endif
 
 #ifdef __GNUC__
@@ -74,42 +74,12 @@ namespace Gray		//!< The main namespace for all Core functions.
 #endif	// __GNUC__
 #define IGNORE_WARN_ABSTRACT(c)			virtual ~c() {}		// quiet this warning for abstract base classes
 
-	typedef UINT_PTR	HASHCODE_t;				//!< could hold a pointer converted to a number? maybe 64 or 32 bit ?
-	typedef UINT32		HASHCODE32_t;			//!< always 32 bits.
-	const HASHCODE_t	k_HASHCODE_CLEAR = 0;		//!< not a valid index.
-
-#if (_MFC_VER > 0x0600)
-	typedef INT_PTR ITERATE_t;		//!< MFC 6 uses INT_PTR for array indexes.
-#else
-	typedef int ITERATE_t;		//!< like size_t but signed
-#endif
-	const ITERATE_t k_ITERATE_BAD = -1;
-
-	typedef size_t COUNT_t;		//!< like size_t but a count of things that might NOT be bytes. ASSUME unsigned. _countof(x)
-
-#define IS_INDEX_BAD(i,q)		((COUNT_t)(i)>=(COUNT_t)(q))	//!< cast the (likely) int to unsigned to check for negatives.
-#define IS_INDEX_GOOD(i,q)		((COUNT_t)(i)<(COUNT_t)(q))		//!< cast the (likely) int to unsigned to check for negatives.
-
-#define IS_INDEX_BAD_ARRAY(i,a)		IS_INDEX_BAD(i,_countof(a))
-#define IS_INDEX_GOOD_ARRAY(i,a)	IS_INDEX_GOOD(i,_countof(a))
-
-	template< typename TYPE >
-	static inline INT_PTR GET_INDEX_IN(TYPE a, TYPE b)
-	{
-		//! diff 2 pointers of the same type to get index diff. ITERATE_t
-		//! Is b an element in array a?
-		return(b - a);
-	}
-
 	// a structure should be byte packed and not aligned ? use #pragma pack(push,1) as well
 #if defined(__MINGW32__) 
 #define CATTR_PACKED __attribute__((packed))	// MING compiler uses this to indicate structure packing required.
 #else
 #define CATTR_PACKED	// _MSC_VER and __GNUC__ use #pragma pack(1) to indicate packing required.
 #endif
-
-#define _sizeofm(s,m)	sizeof(((s *)0)->m)	//!< size_t of a structure member/field (like offsetof()) nullptr
-};
 
 #ifdef _MSC_VER
 #define CATTR_NORETURN __declspec(noreturn)
@@ -136,5 +106,11 @@ namespace Gray		//!< The main namespace for all Core functions.
 #define CATTR_DEPRECATEDAT(versionNumber, alternative)
 #define CATTR_DEPRECATED
 #endif // _WIN32 && MSVS2005
+
+	typedef UINT_PTR	HASHCODE_t;				//!< could hold a pointer converted to a number? maybe 64 or 32 bit ? same as size_t.
+	typedef UINT32		HASHCODE32_t;			//!< always 32 bits.
+	const HASHCODE_t	k_HASHCODE_CLEAR = 0;		//!< not a valid index.
+
+};
 
 #endif	// _INC_GRAYCORE

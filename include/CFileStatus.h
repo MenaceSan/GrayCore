@@ -17,10 +17,10 @@
 #include "HResult.h"
 
 #ifdef _WIN32
-typedef WIN32_FIND_DATAW CFileStatusSys;	// or BY_HANDLE_FILE_INFORMATION ?
+typedef WIN32_FIND_DATAW cFileStatusSys;	// or BY_HANDLE_FILE_INFORMATION ?
 #else
 struct stat;
-typedef struct stat CFileStatusSys;
+typedef struct stat cFileStatusSys;		// from stat(), lstat() or fstat() 
 #endif
 
 namespace Gray
@@ -76,7 +76,11 @@ namespace Gray
 		cFileStatus(const FILECHAR_t* pszFilePath);
 
 		void InitFileStatus();
-		void InitFileStatus(const CFileStatusSys& filestat);
+		void InitFileStatus(const cFileStatusSys& statusSys);
+
+#if defined(__linux__)
+		static HRESULT GRAYCALL GetStatusSys(OUT cFileStatusSys& statusSys, const FILECHAR_t* pszName, bool bFollowLinks = false);
+#endif
 
 		static bool IsLinuxHidden(const FILECHAR_t* pszName) noexcept
 		{

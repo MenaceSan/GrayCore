@@ -57,7 +57,7 @@ namespace Gray
 #else
 		static void __cdecl SignalHandler(SYSCODE_t iSignal);
 #endif
-		UNITTEST2_FRIEND(cException);
+		UNITTEST_FRIEND(cException);
 	};
 }
 #endif

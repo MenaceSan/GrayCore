@@ -24,7 +24,6 @@
 
 namespace Gray
 {
-	UNITTEST2_PREDEF(StrChar);
 	typedef WORD RADIX_t;		//!< Base for convert of numbers to strings. e.g. 10 base vs 16 base hex numbers.
 
 #ifdef _WIN32
@@ -64,35 +63,35 @@ namespace Gray
 
 		static const char k_Vowels[5];	//!< Does not include Y. AEIOU
 
-		static inline bool IsAscii(wchar_t ch) noexcept
+		static constexpr bool IsAscii(wchar_t ch) noexcept
 		{
 			//! like POSIX isascii()
-			return (((unsigned)(ch)) <= k_ASCII);
+			return ((unsigned)ch) <= k_ASCII;
 		}
 
-		static inline bool IsPrint(wchar_t ch) noexcept
+		static constexpr bool IsPrint(wchar_t ch) noexcept
 		{
 			//! printable?  k_ASCII is not printable = DEL.
-			return ((ch) >= k_Space && (ch) < k_ASCII);
+			return ch >= k_Space && ch < k_ASCII;
 		}
-		static inline bool IsAlNum(wchar_t ch)
+		static inline bool IsAlNum(wchar_t ch) noexcept
 		{
 			//! a-z, 0-9
-			return (IsAlphaA(ch) || IsDigit(ch));
+			return IsAlphaA(ch) || IsDigit(ch);
 		}
 
 		// single space, tab, vertical tab, form feed, carriage return, or newline
 		static inline bool IsNL(wchar_t ch) noexcept
 		{
 			//! is newline.
-			return ((ch) == k_NL || (ch) == k_CR);
+			return ch == k_NL || ch == k_CR;
 		}
 		static inline bool IsSpace(wchar_t ch) noexcept
 		{
 			//! is a horizontal separator space. not newline.
-			return ((ch) == k_HT || (ch) == k_Space);
+			return ch == k_HT || ch == k_Space;
 		}
-		static inline bool IsSpaceX(wchar_t ch)
+		static inline bool IsSpaceX(wchar_t ch) noexcept
 		{
 			//! Is this any sort of spacer ? Horizontal or vertical space or new lines.
 			//! almost same as C isspace() = "' ','\t','\n'" etc. but we also include "'\b'"
@@ -101,28 +100,28 @@ namespace Gray
 			//! LS : Line Separator, U + 2028
 			//! PS : Paragraph Separator, U + 2029
 
-			return (ch == k_Space || (ch >= k_BS && ch <= k_CR));
+			return ch == k_Space || (ch >= k_BS && ch <= k_CR);
 		}
 
 		static inline bool IsDigit(wchar_t ch) noexcept
 		{
 			//! same as C isdigit()
-			return (ch >= '0' && ch <= '9');
+			return ch >= '0' && ch <= '9';
 		}
 		static inline bool IsUpperA(wchar_t ch) noexcept
 		{
 			//! isupper(ch) in base ASCII set
-			return (ch >= 'A' && ch <= 'Z');
+			return  ch >= 'A' && ch <= 'Z';
 		}
 		static inline bool IsLowerA(wchar_t ch) noexcept
 		{
 			//! islower(ch) in base ASCII set
-			return (ch >= 'a' && ch <= 'z');
+			return ch >= 'a' && ch <= 'z';
 		}
 		static inline bool IsAlphaA(wchar_t ch) noexcept
 		{
 			//! _isalpha() isalpha()
-			return (IsUpperA(ch) || IsLowerA(ch));
+			return IsUpperA(ch) || IsLowerA(ch);
 		}
 
 		static const BYTE k_AXU = 0xC0;		//!< extended ASCII Upper. NOT UTF8
@@ -132,39 +131,39 @@ namespace Gray
 		static inline bool IsUpperAXSet(wchar_t ch) noexcept
 		{
 			//! isupper(ch) = 'À' 'Ý' // extended ASCII. NOT UTF8
-			return (((unsigned)(ch)) >= k_AXU && ((unsigned)(ch)) <= 0xDF);
+			return ((unsigned)ch) >= k_AXU && ((unsigned)ch) <= 0xDF;
 		}
 		static inline bool IsLowerAXSet(wchar_t ch) noexcept
 		{
 			//! islower(ch) = 'à' 'ý' // extended ASCII. NOT UTF8
-			return (((unsigned)(ch)) >= k_AXL && ((unsigned)(ch)) <= 0xFF);
+			return ((unsigned)ch) >= k_AXL && ((unsigned)ch) <= 0xFF;
 		}
 
 		static inline bool IsAlphaUSet(wchar_t ch) noexcept
 		{
 			//! _isalpha() UNICODE set
-			return (((unsigned)(ch)) >= 0x100 && ((unsigned)(ch)) <= 0x1FF);
+			return ((unsigned)ch) >= 0x100 && ((unsigned)ch) <= 0x1FF;
 		}
 		static inline bool IsUpperUSet(wchar_t ch) noexcept
 		{
 			//! Unicode set. even is upper case.
-			return (IsAlphaUSet(ch) && ((ch & 1) == 0));
+			return IsAlphaUSet(ch) && (ch & 1) == 0;
 		}
 		static inline bool IsLowerUSet(wchar_t ch) noexcept
 		{
 			//! Unicode set. odd if lower case.
-			return (IsAlphaUSet(ch) && ((ch & 1) == 1));
+			return IsAlphaUSet(ch) && (ch & 1) == 1;
 		}
 
 		static inline bool IsUpperAX(wchar_t ch) noexcept
 		{
 			//! isupper(ch) in extended ASCII set.
-			return (IsUpperA(ch) || IsUpperAXSet(ch));
+			return IsUpperA(ch) || IsUpperAXSet(ch);
 		}
 		static inline bool IsLowerAX(wchar_t ch) noexcept
 		{
 			//! islower(ch) in extended ASCII set.
-			return (IsLowerA(ch) || IsLowerAXSet(ch));
+			return IsLowerA(ch) || IsLowerAXSet(ch);
 		}
 
 		static inline bool IsUpper(wchar_t ch) noexcept
@@ -174,7 +173,7 @@ namespace Gray
 			{
 				return IsUpperA(ch);
 			}
-			return (IsUpperAXSet(ch) || IsUpperUSet(ch));
+			return IsUpperAXSet(ch) || IsUpperUSet(ch);
 		}
 		static inline bool IsLower(wchar_t ch) noexcept
 		{
@@ -183,33 +182,33 @@ namespace Gray
 			{
 				return IsLowerA(ch);
 			}
-			return (IsLowerAXSet(ch) || IsLowerUSet(ch));
+			return IsLowerAXSet(ch) || IsLowerUSet(ch);
 		}
 
 		static inline bool IsAlpha(wchar_t ch) noexcept
 		{
 			//! _isalpha() isalpha() for English/ASCII set. NOT numeric or other.
 			//! _WIN32 IsCharAlpha()
-			return (IsLowerAX(ch) || IsUpperAX(ch) || IsAlphaUSet(ch));
+			return IsLowerAX(ch) || IsUpperAX(ch) || IsAlphaUSet(ch);
 		}
 		static inline bool IsCSymF(wchar_t ch) noexcept
 		{
 			//! Would this be a valid 'c' symbolic name ?
 			//! __iscsym or __iscsymf (first char)
-			return (IsAlphaA(ch) || (ch) == '_');
+			return IsAlphaA(ch) || ch == '_';
 		}
 		static inline bool IsCSym(wchar_t ch) noexcept
 		{
 			//! Would this be a valid 'c' symbolic name ?
 			//! __iscsym or __iscsymf
-			return (IsAlphaA(ch) || (ch) == '_' || IsDigit(ch));
+			return IsAlphaA(ch) || ch == '_' || IsDigit(ch);
 		}
 
 		static inline wchar_t ToUpperA(wchar_t ch) noexcept
 		{
 			//! replace std::toupper() for ASCII
 			if (IsLowerA(ch))
-				return (((ch)-'a') + 'A');
+				return ((ch)-'a') + 'A';
 			return ch;
 		}
 		static inline wchar_t ToUpperW(wchar_t ch) noexcept
@@ -218,12 +217,12 @@ namespace Gray
 			if (IsAscii(ch))
 			{
 				if (IsLowerA(ch))
-					return (((ch)-'a') + 'A');
+					return ((ch)-'a') + 'A';
 			}
 			else
 			{
 				if (IsLowerAXSet(ch))
-					return (((ch)-k_AXL) + k_AXU);
+					return ((ch)-k_AXL) + k_AXU;
 				if (IsLowerUSet(ch))
 					return (wchar_t)(ch + 1);
 			}
@@ -233,7 +232,7 @@ namespace Gray
 		{
 			//! replace std::tolower() for ASCII // ch|0x20 sort of
 			if (IsUpperA(ch))
-				return (((ch)-'A') + 'a');
+				return ((ch)-'A') + 'a';
 			return ch;
 		}
 		static inline wchar_t ToLowerW(wchar_t ch) noexcept
@@ -242,12 +241,12 @@ namespace Gray
 			if (IsAscii(ch))
 			{
 				if (IsUpperA(ch))
-					return (((ch)-'A') + 'a');
+					return ((ch)-'A') + 'a';
 			}
 			else
 			{
 				if (IsUpperAXSet(ch))
-					return (((ch)-k_AXU) + k_AXL);
+					return ((ch)-k_AXU) + k_AXL;
 				else if (IsUpperUSet(ch))
 					return (wchar_t)(ch - 1);
 			}
@@ -293,8 +292,7 @@ namespace Gray
 		static char GRAYCALL U2Radix(UINT uVal, RADIX_t uRadix = 10);
 		static int GRAYCALL Radix2U(wchar_t ch, RADIX_t uRadix = 10);
 
-		UNITTEST2_FRIEND(StrChar);
+		UNITTEST_FRIEND(StrChar);
 	};
-
 }
 #endif // StrChar

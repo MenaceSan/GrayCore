@@ -28,8 +28,6 @@ enum WELL_KNOWN_SID_TYPE
 
 namespace Gray
 {
-	UNITTEST2_PREDEF(cSecurityAttributes);
-
 	class GRAYCORE_LINK cSecurityId : private CWinLocalT < SID >
 	{
 		//! @class GrayLib::cSecurityId
@@ -219,7 +217,7 @@ namespace Gray
 		}
 		bool isValid() const noexcept;
 
-		UNITTEST2_FRIEND(cSecurityAttributes);
+		UNITTEST_FRIEND(cSecurityAttributes);
 	};
 
 	class GRAYCORE_LINK cSecurityAttribsLowIntegrity : public cSecurityAttributes

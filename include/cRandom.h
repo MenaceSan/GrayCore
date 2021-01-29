@@ -15,8 +15,6 @@
 
 namespace Gray
 {
-	UNITTEST2_PREDEF(cRandom);
-
 	DECLARE_INTERFACE(IRandomNoise)
 	{
 		//! @interface Gray::IRandomNoise
@@ -30,7 +28,7 @@ namespace Gray
 		//! @class Gray::cRandomBase
 		//! Generic abstract base class for a integer/binary (pseudo) random number generator.
 		//! Similar to .NET System.Random
-		//! @note derived class MUST implement get_RandUns or GetRandUX
+		//! @note derived class MUST implement get_RandUns or GetRandUX to generate at least 32 bits or 31 bits of random data.
 
 	public:
 		typedef UINT SEED_t;		//!< default seed size might be 32 or 64 bit depending on k_RAND_MAX.
@@ -54,7 +52,7 @@ namespace Gray
 		bool GetRandBool()
 		{
 			//! flip a coin.
-			return(GetRandUX(2) == 1);
+			return GetRandUX(2) == 1 ;
 		}
 
 		//! Get random number in scale. 0 to scale.
@@ -62,12 +60,27 @@ namespace Gray
 		virtual UINT GetRandUX(UINT nScale); // get integer random number in desired interval. (Non inclusive)
 		int GetRandIRange(int iRangeLo, int iRangeHi);    // output random int
 
-		UNITTEST2_FRIEND(cRandom);
+		UNITTEST_FRIEND(cRandom);
 	};
 
-	class GRAYCORE_LINK cRandomNoise : public cRandomBase, public cSingleton < cRandomNoise >
+	class GRAYCORE_LINK cRandomPerf : public IRandomNoise, public cSingleton < cRandomPerf >
 	{
-		//! @class Gray::cRandomNoise
+		//! @class GraySSL::cRandomPerf
+		//! prefer cRandomOS but use this as fallback
+
+	public:
+		cRandomPerf();
+		static void GRAYCALL GetNoisePerf(void* pData, size_t iSize);
+		virtual HRESULT GetNoise(void* pData, size_t iSize) override	// fill array with random. return # filled.
+		{
+			GetNoisePerf(pData, iSize);
+			return (HRESULT)iSize;
+		}
+	};
+
+	class GRAYCORE_LINK cRandomOS : public cRandomBase, public cSingleton < cRandomOS >
+	{
+		//! @class Gray::cRandomOS
 		//! Get Low level Hardware based noise supplied by the OS. NO SEED. NOT Deterministic (in theory)
 		//! __linux__ use "/dev/urandom" as a get_RandomSeed().
 	private:
@@ -79,11 +92,10 @@ namespace Gray
 		}
 
 	public:
-		cRandomNoise();
-		virtual ~cRandomNoise();
+		cRandomOS();
+		virtual ~cRandomOS();
 
 		static HRESULT GRAYCALL GetNoiseOS(void* pData, size_t iSize);
-		static void GRAYCALL GetNoisePerf(void* pData, size_t iSize);
 
 		virtual HRESULT GetNoise(void* pData, size_t iSize) override;	// fill array with random. return # filled.
 		virtual UINT get_RandUns();		// UINT_MAX
@@ -99,18 +111,18 @@ namespace Gray
 
 	public:
 		cMemBlock m_Src;		// a block of 'random' test data. 
-		size_t m_nOffset;		// How far have we read in m_Src?
+		size_t m_nOffset;		// How far have we read in m_Src? recycle when at end ?
 
 	public:
 		cRandomBlock(const void* pData, size_t nSize) noexcept
-			: m_Src(nSize, pData)
+			: m_Src(pData, nSize)
 			, m_nOffset(0)
 		{
 		}
 		virtual HRESULT GetNoise(void* pData, size_t len) override	// IRandomNoise
 		{
 			//! Get sample random data bytes
-			if (m_Src.get_Start() == nullptr)
+			if (m_Src.get_Data() == nullptr)
 			{
 				// No m_Src supplied so fill with fixed data.
 				cMem::Fill(pData, len, 0x2a);
@@ -136,7 +148,7 @@ namespace Gray
 		//! RESOLUTION = k_RAND_MAX
 
 	public:
-		static const SEED_t k_RAND_MAX = 0x7fff;	//!< 0x7fff = RAND_MAX
+		static const SEED_t k_RAND_MAX = 0x7fff;	//!< 0x7fff = RAND_MAX, 31 bits of random.
 
 	private:
 		SEED_t m_nSeed;	//!< Control the pattern of random numbers via the seed. may be globally/thread shared.
@@ -148,7 +160,7 @@ namespace Gray
 		SEED_t GetRandNext();
 
 		virtual void InitSeed(const void* pData, size_t iSize) override;	// Start a repeatable seeded series
-		virtual UINT GetRandUX(UINT nScale) override; // k_RAND_MAX is not the same as UINT.
+		virtual UINT GetRandUX(UINT nScale) override; // k_RAND_MAX is not always the same as UINT.
 	};
 
 	extern GRAYCORE_LINK cRandomDef g_Rand;	//!< the global random number generator. NOT thread safe. but does that matter?

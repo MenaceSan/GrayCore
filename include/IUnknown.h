@@ -88,7 +88,7 @@ MIDL_INTERFACE("00000000-0000-0000-C000-000000000046") IUnknown
 	STDMETHOD_(ULONG, Release)(void) override /* disambiguate.*/\
 	{ return TYPE::Release(); }
 
-// IUNKNOWN_DISAMBIG_R and the QueryInterface() call
+// IUNKNOWN_DISAMBIG_R and the QueryInterface() call. use this TYPE.
 #define IUNKNOWN_DISAMBIG(TYPE) STDMETHOD(QueryInterface)( /* [in] */ const IID& riid, /* [iid_is][out] */ void __RPC_FAR* __RPC_FAR* ppvObject ) override \
 	{ return TYPE::QueryInterface(riid,ppvObject); } \
 	IUNKNOWN_DISAMBIG_R(TYPE);

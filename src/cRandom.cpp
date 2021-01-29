@@ -1,5 +1,5 @@
 //
-//! @file cRandomDef.cpp
+//! @file cRandom.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 #include "pch.h"
@@ -31,7 +31,7 @@ namespace Gray
 	{
 		//! Initialize random sequence randomly.
 		//! Seed the random generator with time or some mix of more random data. NOT Deterministic!
-		InitSeed(cRandomNoise::get_Single(), iSize);
+		InitSeed(cRandomOS::get_Single(), iSize);
 	}
 
 	void cRandomBase::InitSeedUns(UINT nSeed)
@@ -97,16 +97,44 @@ namespace Gray
 	}
 
 	//*************************************************************
-
-	cRandomNoise::cRandomNoise()
-		: cSingleton<cRandomNoise>(this, typeid(cRandomNoise))
+	cRandomPerf::cRandomPerf()
+		: cSingleton<cRandomPerf>(this, typeid(cRandomPerf))
 	{
 	}
-	cRandomNoise::~cRandomNoise()
+	void GRAYCALL cRandomPerf::GetNoisePerf(void* pData, size_t iSize) // static
+	{
+		//! Get noise via low bits of cTimePerf
+		//! Prefer GetNoiseOS noise over this, but use this as a fallback or XOR.
+
+		UINT* puData = (UINT*)pData;
+		size_t iSizeLeft = iSize;
+		while (iSizeLeft > 0)
+		{
+			cTimePerf tStart(true);		// the low bits of high performance timer should be random-ish.
+			UINT32 uVal = (UINT32)(tStart.m_nTime ^ 3141592654UL);	// use PI as default XOR pattern
+			if (iSizeLeft < sizeof(uVal))
+			{
+				// running out of room.
+				::memcpy(puData, &uVal, iSizeLeft);
+				break;	// done.
+			}
+			puData[0] = uVal;
+			puData++;
+			iSizeLeft -= sizeof(uVal);
+		}
+	}
+
+	//*************************************************************
+
+	cRandomOS::cRandomOS()
+		: cSingleton<cRandomOS>(this, typeid(cRandomOS))
+	{
+	}
+	cRandomOS::~cRandomOS()
 	{
 	}
 
-	HRESULT GRAYCALL cRandomNoise::GetNoiseOS(void* pData, size_t iSize)	// static. fill array with random. return # filled.
+	HRESULT GRAYCALL cRandomOS::GetNoiseOS(void* pData, size_t iSize)	// static. fill array with random. return # filled.
 	{
 		//! Try to use the OS supplied noise generator. It may not work.
 #ifdef __linux__
@@ -132,13 +160,13 @@ namespace Gray
 		{
 			int iSizeRet = fd.ReadX(pData, iSize);
 			if (iSizeRet != (int)iSize)
-				return 0;
+				return E_FAIL;
 			return iSize;
 		}
 
 #elif defined(_WIN32) && defined(_MSC_VER) && defined(WINCRYPT32API)
 		// WinCrypt
-		HCRYPTPROV hProvider;	// NOT a pointer ? cHandlePtr
+		HCRYPTPROV hProvider;	// NOT a pointer so its not a type-ablefor cOSHandle or cHandlePtr
 		if (_FNF(::CryptAcquireContext)(&hProvider, nullptr, nullptr, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT))
 		{
 			bool bRet = ::CryptGenRandom(hProvider, (DWORD)iSize, (BYTE*)pData);
@@ -149,33 +177,11 @@ namespace Gray
 			}
 		}
 #endif
-		return 0;	// OS noise not available. Try some other pseudo random source.
+		return E_NOTIMPL;	// OS noise not available. Try some other pseudo random source.
 	}
 
-	void GRAYCALL cRandomNoise::GetNoisePerf(void* pData, size_t iSize) // static
-	{
-		//! Get noise via low bits of cTimePerf
-		//! Prefer GetNoiseOS noise over this, but use this as a fallback or XOR.
 
-		UINT* puData = (UINT*)pData;
-		size_t iSizeLeft = iSize;
-		while (iSizeLeft > 0)
-		{
-			cTimePerf tStart(true);		// the low bits of high performance timer should be random-ish.
-			UINT32 uVal = (UINT32)(tStart.m_nTime ^ 3141592654UL);	// use PI as default XOR pattern
-			if (iSizeLeft < sizeof(uVal))
-			{
-				// running out of room.
-				::memcpy(puData, &uVal, iSizeLeft);
-				break;	// done.
-			}
-			puData[0] = uVal;
-			puData++;
-			iSizeLeft -= sizeof(uVal);
-		}
-	}
-
-	HRESULT cRandomNoise::GetNoise(void* pData, size_t iSize)	// override. fill array with random. return # filled.
+	HRESULT cRandomOS::GetNoise(void* pData, size_t iSize)	// override. fill array with random. return # filled.
 	{
 		//! Get the best source or random noise the system can supply.
 		//! Make a random seed from the most random source we can find.
@@ -185,11 +191,11 @@ namespace Gray
 		if (hRes >= (HRESULT)iSize)
 			return hRes;
 		// else fallback to try the high perf timer.
-		GetNoisePerf(pData, iSize);
+		cRandomPerf::GetNoisePerf(pData, iSize);
 		return (HRESULT)iSize;
 	}
 
-	UINT cRandomNoise::get_RandUns() // virtual
+	UINT cRandomOS::get_RandUns() // virtual
 	{
 		// UINT_MAX
 		UINT uVal = 0;
@@ -204,7 +210,7 @@ namespace Gray
 	TYPE rand_range(TYPE min_, TYPE max_)
 	{
 		//! @todo implement a template<> for getting random of correct type ??
-		return static_cast<TYPE>(((static_cast<float>(g_Rand.GetRandNext()) / static_cast<float>(k_RAND_MAX)))*(max_ - min_) + min_);
+		return static_cast<TYPE>(((static_cast<float>(g_Rand.GetRandNext()) / static_cast<float>(k_RAND_MAX))) * (max_ - min_) + min_);
 	}
 #endif
 
@@ -266,7 +272,7 @@ namespace Gray
 				uScaleCur /= k_RAND_MAX;
 			} while (uScaleCur > k_RAND_MAX);
 		}
-		return(uRand % nScale);	// chop off extra junk high bits.
+
+		return uRand % nScale ;	// chop off extra junk high bits.
 	}
 }
- 

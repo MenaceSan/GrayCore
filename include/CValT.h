@@ -10,7 +10,7 @@
 #pragma once
 #endif
 
-#include "GrayCore.h"
+#include "Index.h"
 
 namespace Gray
 {

@@ -17,7 +17,6 @@
 
 namespace Gray
 {
-	UNITTEST2_PREDEF(cList);
 	class cListBase;
 
 	class GRAYCORE_LINK cListNodeBase : public cHeapObject
@@ -71,15 +70,15 @@ namespace Gray
 			return m_pPrev;
 		}
 
-		bool hasParent() const
+		bool hasParent() const noexcept
 		{
 			//! is this in a list?
 			if (m_pParent != nullptr)
 			{
 				return true;
 			}
-			ASSERT(m_pNext == nullptr);
-			ASSERT(m_pPrev == nullptr);
+			// If i have no parent i shouldnt have any siblings either.
+			DEBUG_CHECK(m_pNext == nullptr && m_pPrev == nullptr);		 
 			return false;
 		}
 
@@ -176,14 +175,14 @@ namespace Gray
 		//! iterate the linked list.
 		cListNodeBase* GetAt(ITERATE_t index) const;
 
-		bool IsMyChild(const cListNodeBase* pNode) const
+		bool IsMyChild(const cListNodeBase* pNode) const noexcept
 		{
 			if (pNode == nullptr)
 				return false;
 			return pNode->get_Parent() == this;
 		}
 
-		UNITTEST2_FRIEND(cList);
+		UNITTEST_FRIEND(cList);
 	};
 
 	//*************************************************

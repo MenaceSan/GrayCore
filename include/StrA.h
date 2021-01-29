@@ -14,7 +14,6 @@
 
 namespace Gray
 {
-	UNITTEST2_PREDEF(StrA);
 	DECLARE_INTERFACE(IIniBaseGetter);
 
 	struct GRAYCORE_LINK StrA // : public StrT // static
@@ -35,7 +34,7 @@ namespace Gray
 		static StrLen_t GRAYCALL MakeNamedBitmask(char* pszOut, StrLen_t iOutSizeMax, UINT dwFlags, const char** ppszNames, ITERATE_t iMaxNames, char chSep = '\0');
 
 		static StrLen_t GRAYCALL BlockReplacement(char* pszOut, StrLen_t iOutSizeMax, const char* pszInp, IIniBaseGetter* pBlockReq, bool bRecursing = false);
-		UNITTEST2_FRIEND(StrA);
+		UNITTEST_FRIEND(StrA);
 	};
 };
 

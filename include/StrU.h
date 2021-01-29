@@ -15,8 +15,6 @@
 
 namespace Gray
 {
-	UNITTEST2_PREDEF(StrU);
-
 	struct GRAYCORE_LINK StrU // : public StrT // static
 	{
 		//! @struct Gray::StrU
@@ -52,7 +50,7 @@ namespace Gray
 		static StrLen_t GRAYCALL UTF8toUNICODE(OUT wchar_t* pOut, StrLen_t iSizeOutMaxChars, const char* pInp, StrLen_t iSizeInpBytes = k_StrLen_UNK);
 		static StrLen_t GRAYCALL UNICODEtoUTF8(OUT char* pOut, StrLen_t iSizeOutMaxBytes, const wchar_t* pInp, StrLen_t iSizeInpChars = k_StrLen_UNK);
 
-		UNITTEST2_FRIEND(StrU);
+		UNITTEST_FRIEND(StrU);
 	};
 }
 

@@ -241,7 +241,7 @@ namespace Gray
 	//***********************************************************
 
 	template< typename TYPE>
-	StrLen_t GRAYCALL StrT::FindCharN(const TYPE* pszStr, TYPE chFind)
+	StrLen_t GRAYCALL StrT::FindCharN(const TYPE* pszStr, TYPE chFind) noexcept
 	{
 		//! Find index of the first occurrence of a single char in a string.
 		//! @return -1 = k_StrLen_UNK = not found.

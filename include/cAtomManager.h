@@ -51,7 +51,7 @@ namespace Gray
 		HRESULT DebugDumpFile(cStreamOutput& o) const;
 
  		CHEAPOBJECT_IMPL;
-		UNITTEST2_FRIEND(cAtom)
+		UNITTEST_FRIEND(cAtom)
 	};
 }
 

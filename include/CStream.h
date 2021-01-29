@@ -19,8 +19,6 @@
 
 namespace Gray
 {
-	UNITTEST2_PREDEF(cStream);
-
 #ifdef _WIN32
 #define FILE_EOL	STR_CRLF	//!< CRLF for DOS/Windows format text files. (13,10)
 #else
@@ -486,7 +484,7 @@ namespace Gray
 			return cStreamInput::SeekToEnd();
 		}
 
-		UNITTEST2_FRIEND(cStream);
+		UNITTEST_FRIEND(cStream);
 	};
 
 	class GRAYCORE_LINK cStreamTransaction

@@ -21,7 +21,6 @@
 
 namespace Gray
 {
-	UNITTEST2_PREDEF(StrT);
 	class cLogProcessor;
 
 	enum STR_BLOCK_TYPE	//!< quotes/brackets and parenthesis must be matched.
@@ -166,9 +165,9 @@ namespace Gray
 		template< typename TYPE >
 		GRAYCORE_LINK static TYPE* GRAYCALL FindChar(const TYPE* pszStr, TYPE ch, StrLen_t iLen = StrT::k_LEN_MAX) noexcept;
 		template< typename TYPE >
-		GRAYCORE_LINK static StrLen_t GRAYCALL FindCharN(const TYPE* pszStr, TYPE ch);
+		GRAYCORE_LINK static StrLen_t GRAYCALL FindCharN(const TYPE* pszStr, TYPE ch) noexcept;
 		template< typename TYPE >
-		static bool HasChar(const TYPE* pszStr, TYPE ch)
+		static bool HasChar(const TYPE* pszStr, TYPE ch) noexcept
 		{
 			return FindCharN(pszStr, ch) >= 0;
 		}
@@ -273,7 +272,7 @@ namespace Gray
 		template< typename TYPE >
 		static StrLen_t _cdecl sprintfN(OUT TYPE* pszOut, StrLen_t iLenOutMax, const TYPE* pszFormat, ...)
 		{
-			//! Format a string with variadic arguments.
+			//! Format a string with variadic arguments. Truncate at iLenOutMax if necessary.
 			//! @arg
 			//!  iLenOutMax = max output size in characters. (Not Bytes) Must allow space for '\0'
 			//! @return
@@ -384,7 +383,7 @@ namespace Gray
 		template< typename TYPE >
 		GRAYCORE_LINK static StrLen_t GRAYCALL DtoA(double nVal, OUT TYPE* pszOut, StrLen_t iStrMax, int iDecPlaces = -1, char chE = -'e');
 
-		UNITTEST2_FRIEND(StrT);
+		UNITTEST_FRIEND(StrT);
 	};
 
 	template< typename TYPE = char >
@@ -599,7 +598,7 @@ namespace Gray
 		// OLD CRT version.
 		return ::_vsnprintf(pszOut, iLenOutMax, pszFormat, vlist);
 #else // _WIN32
-		// _WIN32 System version (No floats). return ::FormatMessageA(0, pszFormat, 0, 0, pszOut, iLenOutMax, &vlist);
+		// dont use _WIN32 System version (No floats). return ::FormatMessageA(0, pszFormat, 0, 0, pszOut, iLenOutMax, &vlist);
 		return StrFormat<char>::FormatV(pszOut, iLenOutMax, pszFormat, vlist);
 #endif
 	}
@@ -622,7 +621,7 @@ namespace Gray
 		// OLD CRT version.
 		return ::_vsnwprintf(pszOut, iLenOutMax, pszFormat, vlist);
 #else // _WIN32
-		// _WIN32 System version (No floats)  return ::FormatMessageW(0, pszFormat, 0, 0, pszOut, iLenOutMax, &vlist);
+		// @note dont use _WIN32 System version (No floats)  return ::FormatMessageW(0, pszFormat, 0, 0, pszOut, iLenOutMax, &vlist);
 		return StrFormat<wchar_t>::FormatV(pszOut, iLenOutMax, pszFormat, vlist);
 #endif
 	}

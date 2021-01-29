@@ -139,7 +139,7 @@ namespace Gray
 
 		bool bRet;
 #if defined(__linux__)
-		bRet = (::rename(lpszOldName, lpszNewName) == 0);
+		bRet = (::rename(lpszOldName, lpszNewName) == 0);	// POSIX
 #elif defined(UNDER_CE) || defined(__GNUC__)
 		bRet = ::MoveFileW(StrArg<wchar_t>(lpszOldName), StrArg<wchar_t>(lpszNewName));
 #else

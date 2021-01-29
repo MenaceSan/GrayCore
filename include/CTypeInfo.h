@@ -13,12 +13,11 @@
 #include "cUnitTestDecl.h"
 
 #ifndef UNDER_CE
-#include <typeinfo>		// type_info& typeid(class type) std::
+#include <typeinfo>		// type_info& typeid(class type) std:: // doe sthis always need _CPPRTTI ??
 #endif
 
 namespace Gray
 {
-	UNITTEST2_PREDEF(cTypeInfo);
 
 #ifdef UNDER_CE // no TYPEINFO_t in UNDER_CE. stub this out.
 	typedef struct TYPEINFO_t { BYTE notused; };
@@ -41,6 +40,7 @@ namespace Gray
 	public:
 		size_t get_HashCode() const noexcept
 		{
+			// HASHCODE_t
 #ifdef _MSC_VER
 			return hash_code();
 #else
@@ -55,7 +55,7 @@ namespace Gray
 
 		const char* GetMemberName(int i) const;
 
-		UNITTEST2_FRIEND(cTypeInfo);
+		UNITTEST_FRIEND(cTypeInfo);
 	};
 }
 #endif

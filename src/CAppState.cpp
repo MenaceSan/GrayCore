@@ -23,14 +23,14 @@ namespace Gray
 {
 	HMODULE cAppState::sm_hInstance = HMODULE_NULL; //!< the current applications HINSTANCE handle/base address. _IMAGE_DOS_HEADER
 
-	cStringF cAppArgs::get_ArgsStr() const
+	cStringF cAppArgs::get_ArgsStr() const noexcept
 	{
 		//! Unparsed Command line args as a single line/string. might be used for cOSProcess.
 		//! Does not contain App.exe name.
 		return m_sArguments;
 	}
 
-	ITERATE_t cAppArgs::get_ArgsQty() const
+	ITERATE_t cAppArgs::get_ArgsQty() const noexcept
 	{
 		//! @return 1 = just app path. 2 = app has 1 argument value. etc.
 		return m_asArgs.GetSize();

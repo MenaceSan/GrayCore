@@ -18,8 +18,6 @@
 
 namespace Gray
 {
-	UNITTEST2_PREDEF(cOSHandle);
-
 #define HANDLE_NULL		NULL	//!< Invalid OS handle for _WIN32. Not invalid OS handle for __linux__.
 
 #define WINHANDLE_NULL	NULL	//!< HWND, HPEN, etc are NOT OS Handles. like HWND_DESKTOP. like HANDLEPTR_NULL. This is a WINAPI void* handle via DECLARE_HANDLE like HWND, HPEN, HINSTANCE, etc. can't call CloseHandle() on it.
@@ -187,7 +185,7 @@ namespace Gray
 				return S_OK;
 #if defined(_WIN32)
 			DWORD nLengthWritten;
-			bool bRet = ::WriteFile(m_h, pData, (DWORD)nDataSize, &nLengthWritten, nullptr);
+			const bool bRet = ::WriteFile(m_h, pData, (DWORD)nDataSize, &nLengthWritten, nullptr);
 			if (!bRet)
 #elif defined(__linux__)
 			int nLengthWritten = ::write(m_h, (const char*)pData, (long)nDataSize);
@@ -206,7 +204,7 @@ namespace Gray
 				return S_OK;
 #ifdef _WIN32
 			DWORD nLengthRead;
-			bool bRet = ::ReadFile(m_h, pData, (DWORD)nDataSize, &nLengthRead, nullptr);
+			const bool bRet = ::ReadFile(m_h, pData, (DWORD)nDataSize, &nLengthRead, nullptr);
 			if (!bRet)
 #elif defined(__linux__)
 			int nLengthRead = ::read(m_h, pData, (long)nDataSize);
@@ -309,7 +307,7 @@ namespace Gray
 		}
 #endif
 
-		UNITTEST2_FRIEND(cOSHandle);
+		UNITTEST_FRIEND(cOSHandle);
 	};
 
 };

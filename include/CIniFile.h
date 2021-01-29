@@ -17,8 +17,6 @@
 
 namespace Gray
 {
-	UNITTEST2_PREDEF(cIniFile);
-
 	class GRAYCORE_LINK cIniFile
 		: public IIniBaseEnumerator	// enumerate the sections.
 	{
@@ -55,7 +53,7 @@ namespace Gray
 		HRESULT SetKeyLine(const IniChar_t* pszSectionTitle, const IniChar_t* pszKey, const IniChar_t* pszLine);
 		HRESULT SetKeyArg(const IniChar_t* pszSectionTitle, const IniChar_t* pszKey, const IniChar_t* pszArg);
 
-		UNITTEST2_FRIEND(cIniFile);
+		UNITTEST_FRIEND(cIniFile);
 	};
 };
 

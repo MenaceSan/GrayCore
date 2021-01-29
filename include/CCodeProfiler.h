@@ -50,7 +50,7 @@ namespace Gray
 				StopTime();
 		}
 
-		UNITTEST2_FRIEND(cCodeProfiler);
+		UNITTEST_FRIEND(cCodeProfiler);
 	};
 
 	// cCodeProfileFunc usage requires only single declaration at beginning of function

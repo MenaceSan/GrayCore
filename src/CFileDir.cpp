@@ -387,14 +387,14 @@ namespace Gray
 		if (m_bReadStats)	// some dirs don't have stat() ability. e.g. "/proc"
 		{
 			// dirent() doesn't have this stuff...it's in stat()
-			CFileStatusSys fileStatus;
 			cString sFileName = GetFilePath(m_FileEntry.m_sFileName);
-			int iRet = (this->m_nFileFlags&FOF_X_FollowLinks) ? ::lstat(sFileName, &fileStatus) : ::stat(sFileName, &fileStatus);
-			if (iRet != 0)
+			cFileStatusSys statusSys;
+			HRESULT hRes = GetStatusSys(statusSys, sFileName, this->m_nFileFlags & FOF_X_FollowLinks);
+			if (FAILED(hRes))
 			{
-				return HResult::GetLastDef(HRESULT_WIN32_C(ERROR_FILE_NOT_FOUND));
+				return hRes;
 			}
-			m_FileEntry.InitFileStatus(fileStatus);
+			m_FileEntry.InitFileStatus(statusSys);
 		}
 #endif
 

@@ -23,8 +23,6 @@
 
 namespace Gray
 {
-	UNITTEST2_PREDEF(cString);
-
 	class GRAYCORE_LINK cStreamInput;
 	class GRAYCORE_LINK cStreamOutput;
 	class GRAYCORE_LINK cArchive;
@@ -630,7 +628,7 @@ namespace Gray
 
 		static THIS_t GRAYCALL GetSizeK(UINT64 uVal, UINT nKUnit = 1024, bool bSpace = false);
 
-		UNITTEST2_FRIEND(cString);
+		UNITTEST_FRIEND(cString);
 	};
 
 	typedef cStringT< wchar_t > cStringW;

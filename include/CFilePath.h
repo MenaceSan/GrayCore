@@ -151,7 +151,7 @@ namespace Gray
 		static const wchar_t* GRAYCALL GetFileNameLongW(const FILECHAR_t* pszFileName);
 #endif
 
-		UNITTEST2_FRIEND(cFilePath);
+		UNITTEST_FRIEND(cFilePath);
 	};
 
 };

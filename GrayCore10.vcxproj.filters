@@ -198,7 +198,7 @@
     <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="StdAfx.h">
+    <ClInclude Include="pch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="StrA.h">
@@ -249,7 +249,7 @@
     <ClInclude Include="StrArg.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Ptr.h">
+    <ClInclude Include="PtrCast.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="SysDefs.h">
@@ -482,7 +482,7 @@
     <ClCompile Include="HResult.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="StdAfx.cpp">
+    <ClCompile Include="pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="StrA.cpp">

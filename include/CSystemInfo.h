@@ -19,8 +19,6 @@
 namespace Gray
 {
 	//! OS build type name. OS target known at compile time. Actually run environment may vary of course.
-	UNITTEST2_PREDEF(cSystemInfo);
-
 #ifdef _MFC_VER
 #if defined(USE_64BIT)
 #define GRAY_BUILD_NAME "WinMFC64"
@@ -94,8 +92,8 @@ namespace Gray
 		static void GRAYCALL SystemBeep();
 
 		CHEAPOBJECT_IMPL;
-		UNITTEST2_FRIEND(cSystemInfo);
+		UNITTEST_FRIEND(cSystemInfo);
 	};
-};
+} 
 
 #endif // _INC_cSystemInfo_H

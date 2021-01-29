@@ -28,7 +28,7 @@ namespace Gray
 		{
 			if (((UINT)nLen) >= (UINT)m_nLenLeft)
 			{
-				m_pCur = ((char*)get_End()) - 1;
+				m_pCur = ((char*)get_DataEnd()) - 1;
 				m_nLenLeft = 0;
 			}
 			else
@@ -52,8 +52,8 @@ namespace Gray
 		}
 		StrBuilder(cMemBlock& m)
 			: cMemBlock(m)
-			, m_pCur((char*)(m.get_Start()))
-			, m_nLenLeft((StrLen_t)m.get_Size())
+			, m_pCur(m.get_DataA())
+			, m_nLenLeft((StrLen_t)m.get_DataSize())
 		{
 			// nSize = sizeof(*p);
 			ASSERT(m_nLenLeft > 0);
@@ -63,19 +63,19 @@ namespace Gray
 
 		void ResetStr()
 		{
-			m_pCur = (char*)get_Start();
-			m_nLenLeft = (StrLen_t)get_Size();
+			m_pCur = get_DataA();
+			m_nLenLeft = (StrLen_t)get_DataSize();
 			*m_pCur = '\0';
 		}
 		StrLen_t get_Length() const
 		{
 			//! get Length used.
-			return StrT::Diff(m_pCur, (const char*)get_Start());
+			return StrT::Diff(m_pCur, get_DataA());
 		}
 		const char* get_Str() const noexcept
 		{
 			// get_StrA();
-			return (const char*)get_Start();
+			return get_DataA();
 		}
 		StrLen_t get_LenLeft() const
 		{

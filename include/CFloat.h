@@ -17,8 +17,6 @@
 
 namespace Gray
 {
-	UNITTEST2_PREDEF(cFloat);
-
 	class GRAYCORE_LINK cFloat32
 	{
 		//! @class Gray::cFloat32
@@ -78,7 +76,7 @@ namespace Gray
 			return (m_v.u_dw & k_MANT_MASK);
 		}
 
-		UNITTEST2_FRIEND(cFloat);
+		UNITTEST_FRIEND(cFloat);
 	};
 
 	class GRAYCORE_LINK cFloat64

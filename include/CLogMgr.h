@@ -28,8 +28,6 @@
 
 namespace Gray
 {
-	UNITTEST2_PREDEF(cLogMgr);
-
 	class GRAYCORE_LINK cLogSubject : public cLogProcessor
 	{
 		//! @class Gray::cLogSubject
@@ -134,7 +132,7 @@ namespace Gray
 		virtual HRESULT WriteString(const wchar_t* pszStr) override;
 
 		CHEAPOBJECT_IMPL;
-		UNITTEST2_FRIEND(cLogMgr);
+		UNITTEST_FRIEND(cLogMgr);
 	};
 
 	//***********************************************************************************

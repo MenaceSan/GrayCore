@@ -20,8 +20,6 @@
 
 namespace Gray
 {
-	UNITTEST2_PREDEF(cTimeInt);
-
 #ifndef _MFC_VER
 	class GRAYCORE_LINK CTime
 	{
@@ -221,7 +219,7 @@ namespace Gray
 		static cString GRAYCALL GetTimeDeltaBriefStr(TIMESECD_t dwSeconds);
 		static cString GRAYCALL GetTimeDeltaSecondsStr(TIMESECD_t dwSeconds);
 
-		UNITTEST2_FRIEND(cTimeInt);
+		UNITTEST_FRIEND(cTimeInt);
 	};
 
 };

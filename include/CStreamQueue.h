@@ -100,7 +100,7 @@ namespace Gray
 			//! Read Only iDataMax.
 		}
 		explicit cStreamStatic(const cMemBlock& m)
-			: cQueueRW<BYTE>((const BYTE*)m.get_Start(), (ITERATE_t)m.get_Size())
+			: cQueueRW<BYTE>((const BYTE*)m.get_DataBytes(), (ITERATE_t)m.get_DataSize())
 		{
 			//! Used to serve a memory string as a cStream. AKA StringStream or StreamString.
 			//! Read Only m.get_Size().

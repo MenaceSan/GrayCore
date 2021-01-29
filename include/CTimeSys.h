@@ -16,8 +16,6 @@
 
 namespace Gray
 {
-	UNITTEST2_PREDEF(cTimeSys);
-
 	typedef int TIMESECD_t;			//!< signed delta seconds. like TIMESEC_t. redefined in TimeUnits.h.
 	typedef float TIMESECF_t;		//!< delta float seconds.
 
@@ -42,45 +40,45 @@ namespace Gray
 	public:
 		static const UINT k_FREQ = 1000000000;	// billionths of a sec.
 
-		cTimeSpec()
+		cTimeSpec() noexcept
 		{
 			// undefined. may use clock_gettime() on it.
 		}
-		cTimeSpec(TIMESYSD_t nMilliSeconds)
+		cTimeSpec(TIMESYSD_t nMilliSeconds) noexcept
 		{
 			put_mSec(nMilliSeconds);
 		}
-		cTimeSpec(TIMESECD_t iSeconds, int iNanoSec)
+		cTimeSpec(TIMESECD_t iSeconds, int iNanoSec) noexcept
 		{
 			this->tv_sec = iSeconds;
 			this->tv_nsec = iNanoSec;	// nano = billionths of a sec.
 		}
-		void put_mSec(TIMESYSD_t nMilliSeconds)
+		void put_mSec(TIMESYSD_t nMilliSeconds) noexcept
 		{
 			// milliSeconds.
 			this->tv_sec = nMilliSeconds / 1000;
 			this->tv_nsec = (nMilliSeconds % 1000) * 1000000;	// mSec to nano = billionths of a sec.
 		}
-		TIMESYS_t get_mSec() const
+		TIMESYS_t get_mSec() const noexcept
 		{
 			//! Get the time as total number of milliSeconds.
 			TIMESYS_t nTicks = this->tv_sec * 1000;
 			nTicks += this->tv_nsec / 1000000;	// to mSec from nSec
-			return(nTicks);
+			return nTicks;
 		}
-		UINT64 get_nSec() const
+		UINT64 get_nSec() const noexcept
 		{
 			//! Get the time as UINT64 value in nanoseconds (billionths)
-			return (((UINT64)this->tv_sec)*cTimeSpec::k_FREQ) + this->tv_nsec;
+			return (((UINT64)this->tv_sec) * cTimeSpec::k_FREQ) + this->tv_nsec;
 		}
-		void InitTimeNow()
+		void InitTimeNow() noexcept
 		{
 			//! Arbitrary time since system start.
 			//! NOT affected by changes to the system time.
 			//! @note ASSUME this is FAST!
 			::clock_gettime(CLOCK_MONOTONIC, this);
 		}
-		void InitTimeNow1()
+		void InitTimeNow1() noexcept
 		{
 			//! Realtime from 1970-01-01 UTC
 			//! Might be affected by changes to the system time.
@@ -144,7 +142,7 @@ namespace Gray
 
 		bool isTimeValid() const noexcept
 		{
-			return(m_TimeSys > k_CLEAR);
+			return m_TimeSys > k_CLEAR;
 		}
 		TIMESYS_t get_TimeSys() const noexcept
 		{
@@ -169,7 +167,7 @@ namespace Gray
 		}
 		bool isTimeFuture() const noexcept
 		{
-			return(m_TimeSys > GetTimeNow()); // GetTimeNow
+			return m_TimeSys > GetTimeNow(); // GetTimeNow
 		}
 
 		TIMESYSD_t get_TimeTilSys() const noexcept
@@ -180,7 +178,7 @@ namespace Gray
 				return -k_DMAX;
 			if (m_TimeSys == k_INF)
 				return k_DMAX;
-			return((TIMESYSD_t)(m_TimeSys - GetTimeNow()));
+			return (TIMESYSD_t)(m_TimeSys - GetTimeNow());
 		}
 		TIMESYSD_t get_AgeSys() const noexcept
 		{
@@ -192,27 +190,27 @@ namespace Gray
 				return k_DMAX;
 			if (m_TimeSys == k_INF)
 				return -k_DMAX;
-			return((TIMESYSD_t)(GetTimeNow() - m_TimeSys));
+			return (TIMESYSD_t)(GetTimeNow() - m_TimeSys);
 		}
 
 		TIMESECF_t get_TimeTilSecF() const noexcept
 		{
 			//! in float seconds.
-			return(get_TimeTilSys() / (TIMESECF_t)k_FREQ);
+			return get_TimeTilSys() / (TIMESECF_t)k_FREQ;
 		}
 		TIMESECF_t get_AgeSecF() const noexcept
 		{
 			//! in float seconds.
-			return(get_AgeSys() / (TIMESECF_t)k_FREQ);
+			return get_AgeSys() / (TIMESECF_t)k_FREQ;
 		}
 		TIMESECD_t get_AgeSec() const noexcept
 		{
 			//! How old is this? (in seconds)
 			//! current time - this time.
-			return(get_AgeSys() / k_FREQ);
+			return get_AgeSys() / k_FREQ;
 		}
 
-		UNITTEST2_FRIEND(cTimeSys);
+		UNITTEST_FRIEND(cTimeSys);
 	};
 
 	//****************************************************************************
@@ -232,81 +230,81 @@ namespace Gray
 	public:
 		TIMEPERF_t m_nTime;				//!< Arbitrary start time in k_nFreq units. 64 byte unsigned type.
 #ifdef _WIN32
-		static TIMEPERF_t k_nFreq;		//!< The frequency might change depending on the machine. Must call InitFreq()
+		static TIMEPERF_t sm_nFreq;		//!< The frequency might change depending on the machine. Must call InitFreq()
 #else // __linux__
-		static const TIMEPERF_t k_nFreq = cTimeSpec::k_FREQ;	//!< nanosecond accurate. for __linux__ using cTimeSpec
+		static const TIMEPERF_t sm_nFreq = cTimeSpec::k_FREQ;	//!< nanosecond accurate. for __linux__ using cTimeSpec
 #endif
 
 	public:
-		cTimePerf(TIMEPERF_t nTime = 0)
+		cTimePerf(TIMEPERF_t nTime = 0) noexcept
 			: m_nTime(nTime)
 		{
 			//! default = init to 0.
 		}
-		cTimePerf(int nTime)
+		cTimePerf(int nTime) noexcept
 			: m_nTime(nTime)
 		{
 			//! default = init to 0. Allow constants to not have a convert.
 		}
-		cTimePerf(bool bTrue)
+		cTimePerf(bool bTrue) noexcept
 		{
 			// Indicate I want the current time.
 			if (bTrue)
 				InitTimeNow();
 			else
-				m_nTime = 0;
+				m_nTime = 0;	// The test is turned off. don't record time.
 		}
 
-		bool isTimeValid() const
+		bool isTimeValid() const noexcept
 		{
 			return m_nTime != 0;
 		}
 
-		static void GRAYCALL InitFreq();
-		void InitTimeNow();
+		static bool GRAYCALL InitFreq() noexcept;
+		void InitTimeNow() noexcept;
 
-		TIMEPERF_t get_Perf() const
+		TIMEPERF_t get_Perf() const noexcept
 		{
 			//! Get the time stamp.
 			return m_nTime;
 		}
-		TIMEPERF_t GetAgeDiff(cTimePerf tStop) const
+		TIMEPERF_t GetAgeDiff(cTimePerf tStop) const noexcept
 		{
 			//! how long ago was this ?
 			return tStop.m_nTime - this->m_nTime;
 		}
-		TIMEPERF_t get_AgePerf() const
+		TIMEPERF_t get_AgePerf() const noexcept
 		{
 			//! how long ago was this ?
 			cTimePerf tStop(true);
 			return GetAgeDiff(tStop);
 		}
 
-		static inline double GRAYCALL ToSeconds(TIMEPERF_t t)
+		static inline double GRAYCALL ToSeconds(TIMEPERF_t t) noexcept
 		{
-			return ((double)t) / ((double)k_nFreq);
+			return ((double)t) / ((double)sm_nFreq);
 		}
-		double get_Seconds() const
+		double get_Seconds() const noexcept
 		{
 			//! convert arbitrary start time to seconds (type = double) TIMESECF_t
 			// ASSERT( k_nFreq != 0 );
 			return ToSeconds(m_nTime);
 		}
-		double get_AgeSeconds() const
+		double get_AgeSeconds() const noexcept
 		{
 			//! how long ago was this ? TIMESECF_t
-			TIMEPERF_t tDiff = get_AgePerf();
+			const TIMEPERF_t tDiff = get_AgePerf();
 			// ASSERT( k_nFreq != 0 );
 			return ToSeconds(tDiff);
 		}
 
-		static double GRAYCALL ToDays(TIMEPERF_t t);
-		double get_Days() const
+		static double GRAYCALL ToDays(TIMEPERF_t t) noexcept;
+		double get_Days() const noexcept
 		{
 			//! Convert cTimePerf to double days (from arbitrary start time).
 			//! @return time in days since some unknown/arbitrary starting point
 			return ToDays(m_nTime);
 		}
 	};
-};
+}
 #endif // _INC_cTimeSys_H

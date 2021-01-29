@@ -60,8 +60,8 @@ namespace Gray
 			return ((ch) == '-' || (ch) == '/');
 		}
 
-		cStringF get_ArgsStr() const;
-		ITERATE_t get_ArgsQty() const;
+		cStringF get_ArgsStr() const noexcept;
+		ITERATE_t get_ArgsQty() const noexcept;
 		cStringF GetArgsEnum(ITERATE_t i) const;	//!< command line arg.
 
 		void InitArgsF(const FILECHAR_t* pszCommandArgs, const FILECHAR_t* pszSep = nullptr);
@@ -215,7 +215,7 @@ namespace Gray
 		static void GRAYCALL AbortApp(APP_EXITCODE_t uExitCode = APP_EXITCODE_ABORT);
 
 		CHEAPOBJECT_IMPL;
-		UNITTEST2_FRIEND(cAppState);
+		UNITTEST_FRIEND(cAppState);
 	};
 
 	class GRAYCORE_LINK cAppStateMain

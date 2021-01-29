@@ -13,7 +13,6 @@
 
 namespace Gray
 {
-
 	enum CTYPE_FLAG_TYPE_
 	{
 		//! @enum Gray::CTYPE_FLAG_TYPE_

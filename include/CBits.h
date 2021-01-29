@@ -16,6 +16,7 @@ namespace Gray
 {
 	UNITTEST2_PREDEF(cBits);
 
+	typedef unsigned short BIT_SIZE_t;	//!< number of bits in some intrinsic type. <= 256 ?
 	typedef unsigned int BIT_ENUM_t;	//!< Enumerate number of bits or address a single bit in some array of bits.
 	enum BITOP_TYPE
 	{
@@ -50,7 +51,7 @@ namespace Gray
 
 		static const BYTE k_8 = 8;	//!< represent the 8 bits in a byte. BIT_ENUM_t
 
-		static constexpr size_t GetSizeBytes(BIT_ENUM_t nBits)
+		static constexpr size_t GetSizeBytes(BIT_ENUM_t nBits) noexcept
 		{
 			//! How many bytes to hold these bits. Round up to next byte.
 #define GETSIZEBYTES(nBits) (((nBits)+7)/8)		// equiv for use in const
@@ -58,53 +59,53 @@ namespace Gray
 		}
 
 		template <typename TYPE>
-		static constexpr TYPE Mask1(BIT_ENUM_t nBit)
+		static constexpr TYPE Mask1(BIT_ENUM_t nBit) noexcept
 		{
 			//! Create a 1 bit mask of a given TYPE. Overflow/Underflow is just lost.
 			//! _1BITMASK(nBit) = cBits::Mask1<size_t>(nBit).
 			//! default TYPE = size_t
-			return(((TYPE)1) << nBit);
+			return ((TYPE)1) << nBit;
 		}
 		template <typename TYPE>
-		static constexpr bool IsMask1(TYPE nVal)
+		static constexpr bool IsMask1(TYPE nVal) noexcept
 		{
 			//! Does this just have a single bit on ? Is power of 2 ?
-			return ((nVal != 0) && ((nVal & (nVal - 1)) == 0));
+			return (nVal != 0) && ((nVal & (nVal - 1)) == 0) ;
 		}
 
 		template <typename TYPE>
-		static constexpr bool IsSet(TYPE nVal, BIT_ENUM_t nBit)
+		static constexpr bool IsSet(TYPE nVal, BIT_ENUM_t nBit) noexcept
 		{
 			//! Test if a bit is set.
-			return((nVal & Mask1<TYPE>(nBit)) ? true : false);
+			return (nVal & Mask1<TYPE>(nBit)) ? true : false ;
 		}
 		template <typename TYPE>
-		static constexpr bool IsClear(TYPE nVal, BIT_ENUM_t nBit)
+		static constexpr bool IsClear(TYPE nVal, BIT_ENUM_t nBit) noexcept
 		{
 			//! Test if a bit is NOT set.
-			return((nVal & Mask1<TYPE>(nBit)) ? false : true);
+			return (nVal & Mask1<TYPE>(nBit)) ? false : true ;
 		}
 
 		template <typename TYPE>
-		static constexpr TYPE SetBit(TYPE nVal, BIT_ENUM_t nBit)
+		static constexpr TYPE SetBit(TYPE nVal, BIT_ENUM_t nBit) noexcept
 		{
 			return nVal | Mask1<TYPE>(nBit);
 		}
 		template <typename TYPE>
-		static constexpr TYPE ClearBit(TYPE nVal, BIT_ENUM_t nBit)
+		static constexpr TYPE ClearBit(TYPE nVal, BIT_ENUM_t nBit) noexcept
 		{
 			return nVal & ~Mask1<TYPE>(nBit);
 		}
 
 		template <typename TYPE>
-		static constexpr bool HasMask(TYPE nVal, TYPE nMask)
+		static constexpr bool HasMask(TYPE nVal, TYPE nMask) noexcept
 		{
 			//! Any nMask bits set ?
-			return (nVal & nMask) != 0 ;
+			return (nVal & nMask) != 0;
 		}
 
 		template <typename TYPE>
-		static inline BIT_ENUM_t Highest1Bit(TYPE nMask)
+		static inline BIT_ENUM_t Highest1Bit(TYPE nMask) noexcept
 		{
 			//! What is the highest set bit in this primitive TYPE. 1 based. MSB.
 			//! @return 1 for value of 1. 0 = no bits.
@@ -123,7 +124,7 @@ namespace Gray
 		}
 
 		template <typename TYPE>
-		static inline BIT_ENUM_t Count1Bits(TYPE nMask)
+		static inline BIT_ENUM_t Count1Bits(TYPE nMask) noexcept
 		{
 			//! Count total number of 1 bits.
 			//! like: __builtin_popcount()
@@ -137,21 +138,21 @@ namespace Gray
 		}
 
 		template <typename TYPE>
-		static inline TYPE Rotl(TYPE nVal, BIT_ENUM_t nBits)
+		static inline TYPE Rotl(TYPE nVal, BIT_ENUM_t nBits) noexcept
 		{
 			//! Rotate bits left.
 			//! If system doesn't have an inline rotate left function for X bits.
 			return (nVal << nBits) | (nVal >> ((sizeof(nVal) * k_8) - nBits));
 		}
 		template <typename TYPE>
-		static inline TYPE Rotr(TYPE nVal, BIT_ENUM_t nBits)
+		static inline TYPE Rotr(TYPE nVal, BIT_ENUM_t nBits) noexcept
 		{
 			//! Rotate bits right.
 			return (nVal >> nBits) | (nVal << ((sizeof(nVal) * k_8) - nBits));
 		}
 
 		template <typename TYPE>
-		static inline TYPE Reverse(TYPE nVal)
+		static inline TYPE Reverse(TYPE nVal) noexcept
 		{
 			//! Reverse the order of the bits. ASSUME not signed?
 
@@ -172,7 +173,7 @@ namespace Gray
 			// TODO or,and,xor/not // 
 		}
 #endif
-		UNITTEST2_FRIEND(cBits);
+		UNITTEST_FRIEND(cBits);
 	};
 
 	// Override implementations of templates.
@@ -211,7 +212,7 @@ namespace Gray
 #else
 
 	template <>
-	inline BIT_ENUM_t cBits::Count1Bits<UINT32>(UINT32 nVal)
+	inline BIT_ENUM_t cBits::Count1Bits<UINT32>(UINT32 nVal) noexcept
 	{
 		//! A math trick for counting 1 bits in 32 bit numbers.
 		nVal = (nVal & 0x55555555) + ((nVal & 0xAAAAAAAA) >> 1);
@@ -226,19 +227,19 @@ namespace Gray
 
 #ifdef _MSC_VER
 	template <>
-	inline UINT32 cBits::Rotl<UINT32>(UINT32 nVal, BIT_ENUM_t nBits)
+	inline UINT32 cBits::Rotl<UINT32>(UINT32 nVal, BIT_ENUM_t nBits) noexcept
 	{
 		return ::_rotl(nVal, (int)nBits);	//!< use the _WIN32 intrinsic _rotl function.
 	}
 	template <>
-	inline UINT32 cBits::Rotr<UINT32>(UINT32 nVal, BIT_ENUM_t nBits)
+	inline UINT32 cBits::Rotr<UINT32>(UINT32 nVal, BIT_ENUM_t nBits) noexcept
 	{
 		return ::_rotr(nVal, (int)nBits);	//!< use the _WIN32 intrinsic _rotr function.
 	}
 
 #if !defined(_MANAGED)
 	template <>
-	inline BIT_ENUM_t cBits::Highest1Bit<UINT32>(UINT32 nMask)
+	inline BIT_ENUM_t cBits::Highest1Bit<UINT32>(UINT32 nMask) noexcept
 	{
 		// Use intrinsic function
 		DWORD nRet;
@@ -251,7 +252,7 @@ namespace Gray
 #if defined(USE_INT64) && ! defined(UNDER_CE) && defined(_MSC_VER)	// _INTEGRAL_MAX_BITS >= 64
 #ifdef USE_64BIT
 	template <>
-	inline BIT_ENUM_t cBits::Highest1Bit<UINT64>(UINT64 nMask)
+	inline BIT_ENUM_t cBits::Highest1Bit<UINT64>(UINT64 nMask) noexcept
 	{
 		// Use intrinsic function
 		DWORD nRet;
@@ -261,12 +262,12 @@ namespace Gray
 	}
 #endif
 	template <>
-	inline UINT64 cBits::Rotl<UINT64>(UINT64 nVal, BIT_ENUM_t nBits)
+	inline UINT64 cBits::Rotl<UINT64>(UINT64 nVal, BIT_ENUM_t nBits) noexcept
 	{
 		return ::_rotl64(nVal, (int)nBits);	//!< use the _WIN32 intrinsic _rotl function.
 	}
 	template <>
-	inline UINT64 cBits::Rotr<UINT64>(UINT64 nVal, BIT_ENUM_t nBits)
+	inline UINT64 cBits::Rotr<UINT64>(UINT64 nVal, BIT_ENUM_t nBits) noexcept
 	{
 		return ::_rotr64(nVal, (int)nBits);	//!< use the _WIN32 intrinsic _rotr function.
 	}
@@ -274,7 +275,7 @@ namespace Gray
 #endif	// _MSC_VER
 
 	template <>
-	inline BYTE cBits::Reverse<BYTE>(BYTE nVal)
+	inline BYTE cBits::Reverse<BYTE>(BYTE nVal) noexcept
 	{
 		//! Reverse the order of the 8 bits. using 32 or 64 bit temporary.
 		//! http://graphics.stanford.edu/~seander/bithacks.html#ReverseByteWith32Bits
@@ -285,7 +286,7 @@ namespace Gray
 #endif
 	}
 	template <>
-	inline UINT32 cBits::Reverse<UINT32>(UINT32 nVal)
+	inline UINT32 cBits::Reverse<UINT32>(UINT32 nVal) noexcept
 	{
 		//! Reverse the order of the 32 bits.
 		nVal = (((nVal & 0xaaaaaaaa) >> 1) | ((nVal & 0x55555555) << 1));
@@ -296,7 +297,7 @@ namespace Gray
 	}
 
 	template <>
-	inline ULONG cBits::Reverse<ULONG>(ULONG nVal) // static
+	inline ULONG cBits::Reverse<ULONG>(ULONG nVal) noexcept // static
 	{
 		//! ULONG may be equiv to UINT32 or UINT64
 #ifdef USE_LONG_AS_INT64
@@ -314,22 +315,22 @@ namespace Gray
 	protected:
 		TYPE m_uVal;
 	public:
-		cBitmask(TYPE uVal = 0) : m_uVal(uVal)
+		cBitmask(TYPE uVal = 0) noexcept : m_uVal(uVal)
 		{
 		}
-		void SetBit(BIT_ENUM_t nBit)
+		void SetBit(BIT_ENUM_t nBit) noexcept
 		{
 			m_uVal = cBits::SetBit(m_uVal, nBit);
 		}
-		void ClearBit(BIT_ENUM_t nBit)
+		void ClearBit(BIT_ENUM_t nBit) noexcept
 		{
 			m_uVal = cBits::ClearBit(m_uVal, nBit);
 		}
-		bool IsSet(BIT_ENUM_t nBit) const
+		bool IsSet(BIT_ENUM_t nBit) const noexcept
 		{
 			return cBits::IsSet(m_uVal, nBit);
 		}
-		operator TYPE () const
+		operator TYPE () const noexcept
 		{
 			return m_uVal;
 		}

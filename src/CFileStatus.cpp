@@ -44,36 +44,36 @@ namespace Gray
 		ASSERT(!isFileValid());
 	}
 
-	void cFileStatus::InitFileStatus(const CFileStatusSys& fileStatus)
+	void cFileStatus::InitFileStatus(const cFileStatusSys& statusSys)
 	{
 		//! convert from OS native format.
 #ifdef _WIN32
-		m_timeCreate = fileStatus.ftCreationTime; // cTimeFile
-		m_timeChange = fileStatus.ftLastWriteTime;
-		m_timeLastAccess = fileStatus.ftLastAccessTime;
-		m_Size = fileStatus.nFileSizeLow;
-		if (fileStatus.nFileSizeHigh != 0)
+		m_timeCreate = statusSys.ftCreationTime; // cTimeFile
+		m_timeChange = statusSys.ftLastWriteTime;
+		m_timeLastAccess = statusSys.ftLastAccessTime;
+		m_Size = statusSys.nFileSizeLow;
+		if (statusSys.nFileSizeHigh != 0)
 		{
-			m_Size |= ((FILE_SIZE_t)fileStatus.nFileSizeHigh) << 32;
+			m_Size |= ((FILE_SIZE_t)statusSys.nFileSizeHigh) << 32;
 		}
-		m_Attributes = (FILEATTR_MASK_t)fileStatus.dwFileAttributes; // truncated!
+		m_Attributes = (FILEATTR_MASK_t)statusSys.dwFileAttributes; // truncated!
 #elif defined(__linux__)
 		// http://linux.die.net/man/2/stat
 		// hidden file start with .
-		m_timeCreate = cTimeInt(fileStatus.st_ctime).GetAsFileTime(); // time_t
-		m_timeChange = cTimeInt(fileStatus.st_mtime).GetAsFileTime();
-		m_timeLastAccess = cTimeInt(fileStatus.st_atime).GetAsFileTime();
-		m_Size = fileStatus.st_size;
+		m_timeCreate = cTimeInt(statusSys.st_ctime).GetAsFileTime(); // time_t
+		m_timeChange = cTimeInt(statusSys.st_mtime).GetAsFileTime();
+		m_timeLastAccess = cTimeInt(statusSys.st_atime).GetAsFileTime();
+		m_Size = statusSys.st_size;
 		m_Attributes = 0; // check the read,write,execute bits?
-		if (S_ISREG(fileStatus.st_mode))
+		if (S_ISREG(statusSys.st_mode))
 		{
 			m_Attributes |= FILEATTR_Normal;
 		}
-		else if (S_ISDIR(fileStatus.st_mode))
+		else if (S_ISDIR(statusSys.st_mode))
 		{
 			m_Attributes |= FILEATTR_Directory;
 		}
-		else if (S_ISLNK(fileStatus.st_mode))
+		else if (S_ISLNK(statusSys.st_mode))
 		{
 			m_Attributes |= FILEATTR_Link;
 		}
@@ -83,6 +83,19 @@ namespace Gray
 		}
 #endif
 	}
+
+#if defined(__linux__)
+	HRESULT GRAYCALL cFileStatus::GetStatusSys(OUT cFileStatusSys& statusSys, const FILECHAR_t* pszName, bool bFollowLinks) // static 
+	{
+		// https://man7.org/linux/man-pages/man2/stat.2.html
+		int iRet = (bFollowLinks) ? ::lstat(sFileName, &statusSys) : ::stat(sFileName, &statusSys);
+		if (iRet != 0)
+		{
+			return HResult::GetPOSIXLastDef(HRESULT_WIN32_C(ERROR_FILE_NOT_FOUND));
+		}
+		return S_OK;
+	}
+#endif
 
 	HRESULT GRAYCALL cFileStatus::WriteFileAttributes(const FILECHAR_t* pszFilePath, FILEATTR_MASK_t dwAttributes) // static
 	{
@@ -138,8 +151,8 @@ namespace Gray
 
 #ifdef _WIN32
 		// NOTE: same as _WIN32 GetFileAttributesEx()
-		WIN32_FIND_DATAW fileStatus;	// CFileStatusSys
-		HANDLE hContext = ::FindFirstFileW(cFilePath::GetFileNameLongW(pszFilePath), &fileStatus);
+		WIN32_FIND_DATAW statusSys;	// cFileStatusSys
+		HANDLE hContext = ::FindFirstFileW(cFilePath::GetFileNameLongW(pszFilePath), &statusSys);
 		if (hContext == INVALID_HANDLE_VALUE)
 		{
 			// DEBUG_ERR(( "Can't open input dir [%s]", LOGSTR(pszFilePath) ));
@@ -147,7 +160,7 @@ namespace Gray
 		}
 
 		// Was this a link ? FILEATTR_Link
-		if (bFollowLink && (fileStatus.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT))
+		if (bFollowLink && (statusSys.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT))
 		{
 		}
 
@@ -155,22 +168,18 @@ namespace Gray
 
 #elif defined(__linux__)
 
-		CFileStatusSys fileStatus;
-		int iRet = bFollowLink ? ::lstat(pszFilePath, &fileStatus) : ::stat(pszFilePath, &fileStatus);
-		if (iRet != 0)
-		{
-			// DEBUG_ERR(( "Can't open input dir [%s]", LOGSTR(pszFilePath)));
-			return HResult::GetLastDef(HRESULT_WIN32_C(ERROR_FILE_NOT_FOUND));
-	}
-
+		cFileStatusSys statusSys;
+		HRESULT hRes = cFileStatus::GetStatusSys(statusSys, pszFilePath, bFollowLink);
+		if (FAILED(hRes))
+			return hRes;
 #endif
 
 		if (pFileStatus != nullptr)
 		{
-			pFileStatus->InitFileStatus(fileStatus);
+			pFileStatus->InitFileStatus(statusSys);
 			pFileStatus->UpdateLinuxHidden(cFilePath::GetFileName(pszFilePath));
 			ASSERT(pFileStatus->isFileValid());
 		}
 		return S_OK;
-}
+	}
 }

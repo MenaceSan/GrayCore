@@ -18,8 +18,6 @@
 
 namespace Gray
 {
-	UNITTEST2_PREDEF(cThreadLockRW);
-
 	class GRAYCORE_LINK cThreadLockRWS : protected cNonCopyable
 	{
 		//! @class Gray::cThreadLockRWS
@@ -133,7 +131,7 @@ namespace Gray
 		inline void DecReadLockCount()
 		{
 		}
-		UNITTEST2_FRIEND(cThreadLockRW);
+		UNITTEST_FRIEND(cThreadLockRW);
 	};
 
 	class cThreadGuardRead : public cLockerT < cThreadLockRW >

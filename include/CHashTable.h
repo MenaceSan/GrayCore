@@ -16,8 +16,6 @@
 
 namespace Gray
 {
-	UNITTEST2_PREDEF(cHashTable);
-
 	class cHashIterator	// inline
 	{
 		//! @class Gray::cHashIterator
@@ -135,7 +133,7 @@ namespace Gray
 			RemoveAll();
 		}
 
-		UNITTEST2_FRIEND(cHashTable);
+		UNITTEST_FRIEND(cHashTable);
 	};
 
 	template<class TYPE, typename TYPE_HASHCODE = HASHCODE_t, int TYPE_HASHBITS = 5 >
@@ -189,9 +187,9 @@ namespace Gray
 	};
 
 	template<class TYPE, typename TYPE_HASHCODE = HASHCODE_t, int TYPE_HASHBITS = 5 >
-	class cHashTableSmart : public cHashTableT < cArraySortHash<TYPE, TYPE_HASHCODE>, TYPE, TYPE_HASHCODE, TYPE_HASHBITS >
+	class cHashTableRef : public cHashTableT < cArraySortHash<TYPE, TYPE_HASHCODE>, TYPE, TYPE_HASHCODE, TYPE_HASHBITS >
 	{
-		//! @class Gray::cHashTableSmart
+		//! @class Gray::cHashTableRef
 		//! ASSUME TYPE is cRefBase and implements get_HashCode()
 	protected:
 		typedef cRefPtr<TYPE> PTR_t;

@@ -23,8 +23,6 @@
 
 namespace Gray
 {
-	UNITTEST2_PREDEF(cThreadLock);
-
 #ifdef _WIN32
 	typedef DWORD		THREADID_t;		//!< CreateThread uses LPDWORD even in 64 bit code.
 #define _SIZEOF_THREADID 4	// sizeof(THREADID_t)
@@ -132,7 +130,7 @@ namespace Gray
 #endif
 		};
 
-		UNITTEST2_FRIEND(cThreadLock);
+		UNITTEST_FRIEND(cThreadLock);
 	};
 
 	class GRAYCORE_LINK cThreadState

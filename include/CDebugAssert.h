@@ -62,7 +62,7 @@ namespace Gray
 		static bool CALLBACK Assert_System(const char* pszExp, const cDebugSourceLine& src);
 		static bool GRAYCALL Assert_Fail(const char* pszExp, const cDebugSourceLine src);
 		static CATTR_NORETURN void GRAYCALL Assert_Throw(const char* pszExp, const cDebugSourceLine src);
-		static bool GRAYCALL Debug_Fail(const char* pszExp, const cDebugSourceLine src);
+		static bool GRAYCALL Debug_Fail(const char* pszExp, const cDebugSourceLine src) noexcept;
 	};
 
 #define ASSERT_THROW(exp)		if (!(exp)) { ::Gray::cDebugAssert::Assert_Throw(#exp, DEBUGSOURCELINE ); } // Show the compiler that we wont proceed.

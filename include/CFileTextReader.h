@@ -15,8 +15,6 @@
 
 namespace Gray
 {
-	UNITTEST2_PREDEF(cFileTextReader);
-
 	class GRAYCORE_LINK cStreamTextReader : public cStreamStackInp
 	{
 		//! @class Gray::cFileTextReader 
@@ -91,7 +89,7 @@ namespace Gray
 			return m_File.GetPosition() - this->get_ReadQty();
 		}
 
-		UNITTEST2_FRIEND(cFileTextReader);
+		UNITTEST_FRIEND(cFileTextReader);
 	};
 }
 

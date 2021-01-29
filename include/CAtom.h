@@ -32,7 +32,7 @@ namespace Gray
 
 		friend class cAtomRef;
 		friend class cAtomManager;
-		UNITTEST2_FRIEND(cAtom);
+		UNITTEST_FRIEND(cAtom);
 
 	private:
 		cStringA m_s;				//!< the string being represented.
@@ -69,7 +69,7 @@ namespace Gray
 		friend class cAtomManager;
 		typedef cStringA STR_t;
 		typedef cAtomRef THIS_t;
-		UNITTEST2_FRIEND(cAtom);
+		UNITTEST_FRIEND(cAtom);
 
 	private:
 		cAtomDefPtr	m_pDef;		//!< a counted reference to an atom. NOT allowed to be nullptr!

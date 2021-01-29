@@ -18,7 +18,6 @@ namespace Gray
 {
 #define INI_CR "\r\n"	//!< use "\n" or "\r\n" like FILE_EOL, STR_NL? M$ likes Windows format ("\r\n") to work with notepad.
 
-	UNITTEST2_PREDEF(cIniSection);
 	class cStreamOutput;
 
 	class GRAYCORE_LINK cIniWriter
@@ -108,37 +107,37 @@ namespace Gray
 		IniChar_t* AllocBeginMin(StrLen_t nSizeChars);
 
 	public:
-		cIniSectionData(bool bStripComments = false);
+		cIniSectionData(bool bStripComments = false) noexcept;
 		virtual ~cIniSectionData();
 		void DisposeThis();
 
-		bool isStripped() const
+		bool isStripped() const noexcept
 		{
 			//! has been stripped of blank lines, comments, leading and trailing line spaces.
 			return m_bStripComments;
 		}
 
-		StrLen_t get_BufferUsed() const
+		StrLen_t get_BufferUsed() const noexcept
 		{
 			//! @return actual buffer size used.
 			if (m_iLinesUsed <= 0)
 				return 0;
 			return m_iBufferUsed;
 		}
-		StrLen_t get_BufferSize() const
+		StrLen_t get_BufferSize() const noexcept
 		{
 			//! @return total buffer size allocated.
 			if (m_iLinesUsed <= 0)
 				return 0;
-			return (StrLen_t)m_Buffer.get_Size();
+			return (StrLen_t)m_Buffer.get_DataSize();
 		}
 
-		ITERATE_t get_LineQty() const
+		ITERATE_t get_LineQty() const noexcept
 		{
 			//! @return index of the nullptr entry. at the end.
 			return m_iLinesUsed;
 		}
-		IniChar_t* GetLineEnum(ITERATE_t iLine = 0) const
+		IniChar_t* GetLineEnum(ITERATE_t iLine = 0) const noexcept
 		{
 			//! enum the lines in the section.
 			//! @arg iLine = line in this section. 0 based.
@@ -202,7 +201,7 @@ namespace Gray
 		cStringI m_sSectionTitle;	//!< "SECTIONTYPE SECTIONNAME" = everything that was inside [] without the []
 
 	public:
-		cIniSection(bool bStripComments = false)
+		cIniSection(bool bStripComments = false) noexcept
 			: cIniSectionData(bStripComments)
 		{
 		}
@@ -213,32 +212,32 @@ namespace Gray
 		}
 		cIniSection(const cIniSection& rSectionCopy);
 
-		const cStringI& get_SectionTitle() const
+		const cStringI& get_SectionTitle() const noexcept
 		{
 			//! @return everything that was inside [] without the []. Not parsed.
 			return m_sSectionTitle;
 		}
-		cString get_Name() const
+		cString get_Name() const noexcept
 		{
 			return cString(get_SectionTitle());
 		}
 
 		static cStringI GRAYCALL GetSectionTitleParse(cStringI sSectionTitle, cStringI* psPropTag);
 
-		static bool GRAYCALL IsSectionTypeRoot(const IniChar_t* pszSection)
+		static bool GRAYCALL IsSectionTypeRoot(const IniChar_t* pszSection) noexcept
 		{
 			//! stuff at the top of the file with no [section] header.
 			return StrT::IsNullOrEmpty(pszSection);
 		}
-		static bool GRAYCALL IsSectionTypeMatch(const IniChar_t* pszSection1, const IniChar_t* pszSection2);
+		static bool GRAYCALL IsSectionTypeMatch(const IniChar_t* pszSection1, const IniChar_t* pszSection2) noexcept;
 
 		HRESULT WriteSection(cStreamOutput& file);
 
-		bool IsSectionType(const IniChar_t* pszSectionType) const
+		bool IsSectionType(const IniChar_t* pszSectionType) const noexcept
 		{
 			return IsSectionTypeMatch(m_sSectionTitle, pszSectionType);
 		}
-		UNITTEST2_FRIEND(cIniSection);
+		UNITTEST_FRIEND(cIniSection);
 	};
 
 	class GRAYCORE_LINK cIniSectionEntry : public cRefBase, public cIniSection

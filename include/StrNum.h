@@ -15,8 +15,6 @@
 
 namespace Gray
 {
-	UNITTEST2_PREDEF(StrNum);
-
 	struct GRAYCORE_LINK StrNum	// static
 	{
 		//! @struct Gray::StrNum
@@ -80,7 +78,7 @@ namespace Gray
 		template < typename _TYPE >
 		static StrLen_t _cdecl ValArrayToAF(OUT char* pszDst, StrLen_t iSizeDstMax, size_t nSrcQty, ...);
 
-		UNITTEST2_FRIEND(StrNum);
+		UNITTEST_FRIEND(StrNum);
 	};
 
 	template<> inline INT32 StrNum::toValue<INT32>(const char* pszInp, const char** ppszInpEnd)

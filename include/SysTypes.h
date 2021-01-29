@@ -154,7 +154,7 @@
 #endif // ! UNDER_CE
 
 #define _WINSOCKAPI_		// prevent _WINSOCKAPI_ from loading because i want _WINSOCK2API_
-#define WINBASE_DECLARE_GET_MODULE_HANDLE_EX	// allow GetModuleHandleEx
+// #define WINBASE_DECLARE_GET_MODULE_HANDLE_EX	// allow GetModuleHandleEx
 #ifndef STRICT
 #define STRICT	1	// Make sure DECLARE_HANDLE has type info.
 #endif
@@ -325,7 +325,7 @@
 // NOTE: __interface seems to imply base on IUnknown in M$. DONT use it! Use MIDL_INTERFACE(a) instead.
 // _MSC_VER has a bug __declspec(dllexport) a class based on a __interface. can't create = operator ?
 
-#ifndef DECLARE_INTERFACE // for __GNUC__
+#ifndef DECLARE_INTERFACE // for __GNUC__ (or CINTERFACE)
 #define interface struct DECLSPEC_NOVTABLE		// a plain interface that may not support IUnknown. For use with DirectX defs.
 #define DECLARE_INTERFACE(iface)	interface iface 
 #define DECLARE_INTERFACE_(iface, baseiface)	interface iface : public baseiface

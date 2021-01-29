@@ -332,7 +332,7 @@ namespace Gray
 		HRESULT ReadDirAnyExt(const FILECHAR_t* pszFilePath, ITERATE_t iFilesMax = k_FilesMax);
 		HRESULT ReadDirPreferredExt(const FILECHAR_t* pszFilePath, const FILECHAR_t* const* pszExtTable);
 
-		UNITTEST2_FRIEND(cFileDir);
+		UNITTEST_FRIEND(cFileDir);
 	};
 
 #ifdef GRAY_DLL // force implementation/instantiate for DLL/SO.

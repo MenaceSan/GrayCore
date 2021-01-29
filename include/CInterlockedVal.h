@@ -11,12 +11,11 @@
 #pragma once
 #endif
 
-#include "Ptr.h"
+#include "Index.h"
 #include "cUnitTestDecl.h"
 
 namespace Gray
 {
-	UNITTEST2_PREDEF(cInterlockedVal);
 
 #define _SIZEOF_INT 4	//! sizeof(int) seems to be 32 bits in all tested configurations. _MSC_VER and __GNUC__, 32 and 64 bit.
 #if defined(USE_64BIT) && defined(__GNUC__)
@@ -587,7 +586,7 @@ namespace Gray
 			return m_nCount;	//!< get the count as it was when we created this.
 		}
 
-		UNITTEST2_FRIEND(cInterlockedVal);
+		UNITTEST_FRIEND(cInterlockedVal);
 	};
 
 #ifdef GRAY_DLL // force implementation/instantiate for DLL/SO.

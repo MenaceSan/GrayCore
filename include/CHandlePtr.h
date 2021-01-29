@@ -99,5 +99,5 @@ namespace Gray
 			return h;
 		}
 	};
-};
+} 
 #endif // _INC_cHandlePtr_H

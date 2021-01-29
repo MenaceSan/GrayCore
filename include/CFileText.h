@@ -121,7 +121,7 @@ namespace Gray
 		}
 		// operator FILE* () const { return m_pStream; }	// Dangerous.
 
-		UNITTEST2_FRIEND(cFileText);
+		UNITTEST_FRIEND(cFileText);
 	};
 }
 

@@ -109,7 +109,7 @@ namespace Gray
 #include "cTypes.tbl"
 #undef CTYPE_DEF
 
-		UNITTEST2_FRIEND(cArchive);
+		UNITTEST_FRIEND(cArchive);
 	};
 }
 

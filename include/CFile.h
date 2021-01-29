@@ -92,7 +92,7 @@ namespace Gray
 		cStringF m_strFileName;		//!< store a copy of the full file path. MFC defined name. 
 
 	protected:
-		bool isFileOpen() const
+		bool isFileOpen() const noexcept
 		{
 			return m_hFile.isValidHandle();
 		}
@@ -106,6 +106,10 @@ namespace Gray
 		}
 
 		// virtual CString GetFilePath() const	// DO NOT USE this. It conflicts with the messed up version of MFC. 
+
+#if defined(__linux__)
+		HRESULT GetStatusSys(OUT cFileStatusSys& statusSys);
+#endif
 
 		// File Access
 		virtual STREAM_SEEKRET_t Seek(STREAM_OFFSET_t lOffset = 0, SEEK_ORIGIN_TYPE eSeekOrigin = SEEK_Set);	// should be const ? but not in MFC !
@@ -284,7 +288,7 @@ namespace Gray
 		static HRESULT GRAYCALL DeletePathX(const FILECHAR_t* pszFilePath, DWORD nFileFlags = 0);
 		static HRESULT GRAYCALL LoadFile(const FILECHAR_t* pszFilePath, OUT cHeapBlock& block, size_t nSizeExtra = 0);
 
-		UNITTEST2_FRIEND(cFile);
+		UNITTEST_FRIEND(cFile);
 	};	
 } 
 

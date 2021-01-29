@@ -685,7 +685,7 @@
     <ClCompile Include="cUnitTest.cpp" />
     <ClCompile Include="GrayCore.cpp" />
     <ClCompile Include="HResult.cpp" />
-    <ClCompile Include="StdAfx.cpp">
+    <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='DebugDLL|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='DebugDLL|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='DebugMFC|Win32'">Create</PrecompiledHeader>
@@ -824,9 +824,9 @@
     <ClInclude Include="HResult.h" />
     <ClInclude Include="IUnknown.h" />
     <ClInclude Include="IUnkObject.h" />
-    <ClInclude Include="Ptr.h" />
+    <ClInclude Include="PtrCast.h" />
     <ClInclude Include="resource.h" />
-    <ClInclude Include="StdAfx.h" />
+    <ClInclude Include="pch.h" />
     <ClInclude Include="StrA.h" />
     <ClInclude Include="StrArg.h" />
     <ClInclude Include="StrBuilder.h" />

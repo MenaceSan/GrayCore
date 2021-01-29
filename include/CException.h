@@ -123,7 +123,7 @@ namespace Gray
 		}
 #endif // ! _MFC_VER
 
-		UNITTEST2_FRIEND(cException);
+		UNITTEST_FRIEND(cException);
 	};
 
 	class GRAYCORE_LINK cExceptionHResult : public cException

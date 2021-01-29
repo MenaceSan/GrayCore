@@ -317,7 +317,7 @@ namespace Gray
 
 	//**************************************************************
 
-	cIniSectionData::cIniSectionData(bool bStripComments)
+	cIniSectionData::cIniSectionData(bool bStripComments) noexcept
 		: m_bStripComments(bStripComments)
 		, m_iBufferUsed(0)
 		, m_ppLines(nullptr)
@@ -419,10 +419,10 @@ namespace Gray
 			DEBUG_CHECK(0);
 			return nullptr;
 		}
-		if (m_Buffer.get_Size() == (size_t)nSizeChars)
+		if (m_Buffer.get_DataSize() == (size_t)nSizeChars)
 		{
 			// No change.
-			ASSERT(m_Buffer.isValidPtr() || m_Buffer.get_Size() == 0);
+			ASSERT(m_Buffer.isValidPtr() || m_Buffer.get_DataSize() == 0);
 			return m_Buffer.get_DataA();
 		}
 		const IniChar_t* pszBufferPrev = m_Buffer.get_DataA();
@@ -473,7 +473,7 @@ namespace Gray
 		//! Meant to be used with ProcessBuffer
 		//! ASSUME AllocComplete() will be called later.
 		CODEPROFILEFUNC();
-		if (nSizeChars > (StrLen_t)m_Buffer.get_Size())
+		if (nSizeChars > (StrLen_t)m_Buffer.get_DataSize())
 		{
 			AllocBuffer(nSizeChars);
 		}
@@ -516,7 +516,7 @@ namespace Gray
 		m_iBufferUsed = section.get_BufferUsed();
 
 		cMem::Copy(m_ppLines, section.m_ppLines, m_iLinesUsed * sizeof(IniChar_t*));
-		cMem::Copy(m_Buffer.get_Data(), section.m_Buffer.get_Data(), m_Buffer.get_Size());
+		cMem::Copy(m_Buffer.get_Data(), section.m_Buffer.get_Data(), m_Buffer.get_DataSize());
 
 		MoveLineOffsets(0, StrT::Diff(m_Buffer.get_DataA(), section.m_Buffer.get_DataA()));
 	}
@@ -625,7 +625,7 @@ namespace Gray
 		CODEPROFILEFUNC();
 
 		// copy pszLine into m_Buffer space.
-		StrLen_t iBufferAlloc = (StrLen_t)m_Buffer.get_Size();
+		StrLen_t iBufferAlloc = (StrLen_t)m_Buffer.get_DataSize();
 		if (m_iBufferUsed + k_LINE_LEN_MAX > iBufferAlloc)
 		{
 			iBufferAlloc = m_iBufferUsed + (2 * k_LINE_LEN_MAX);
@@ -699,7 +699,7 @@ namespace Gray
 
 		// Move above data to make room.
 		StrLen_t iBufferNew = m_iBufferUsed + iLenDiff;
-		if (iBufferNew + 1 >= (StrLen_t)m_Buffer.get_Size())
+		if (iBufferNew + 1 >= (StrLen_t)m_Buffer.get_DataSize())
 		{
 			AllocBuffer(iBufferNew + k_LINE_LEN_MAX);
 			pszDst = m_ppLines[iLine];
@@ -962,7 +962,7 @@ namespace Gray
 		SetLinesCopy(rSectionCopy);
 	}
 
-	bool GRAYCALL cIniSection::IsSectionTypeMatch(const IniChar_t* pszSection1, const IniChar_t* pszSection2) // static
+	bool GRAYCALL cIniSection::IsSectionTypeMatch(const IniChar_t* pszSection1, const IniChar_t* pszSection2) noexcept // static
 	{
 		bool bRoot1 = IsSectionTypeRoot(pszSection1);
 		bool bRoot2 = IsSectionTypeRoot(pszSection2);
@@ -974,7 +974,7 @@ namespace Gray
 		}
 		if (bRoot2)
 			return false;
-		return(!StrT::CmpHeadI(pszSection1, pszSection2));
+		return !StrT::CmpHeadI(pszSection1, pszSection2);
 	}
 
 	HRESULT cIniSection::WriteSection(cStreamOutput& file)
@@ -1008,4 +1008,3 @@ namespace Gray
 		return cStringI(pszSep + 1);
 	}
 }
- 

@@ -14,7 +14,6 @@
 
 namespace Gray
 {
-	UNITTEST2_PREDEF(cIniObject);
 	class cStreamOutput;
 
 	DECLARE_INTERFACE(IIniObjectDef)
@@ -80,7 +79,7 @@ namespace Gray
 		HRESULT FileWrite(cStreamOutput& sOut, const IniChar_t* pszProp);
 		HRESULT FileWriteAll(cStreamOutput& sOut);
 
-		UNITTEST2_FRIEND(cIniObject);
+		UNITTEST_FRIEND(cIniObject);
 	};
 };
 #endif // _INC_cIniObject_H

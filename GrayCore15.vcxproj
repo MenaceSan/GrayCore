@@ -725,7 +725,7 @@
     <ClInclude Include="include\HResult.h" />
     <ClInclude Include="include\IUnknown.h" />
     <ClInclude Include="include\IUnkObject.h" />
-    <ClInclude Include="include\Ptr.h" />
+    <ClInclude Include="include\PtrCast.h" />
     <ClInclude Include="include\resource.h" />
     <ClInclude Include="include\StrA.h" />
     <ClInclude Include="include\StrArg.h" />

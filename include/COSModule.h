@@ -28,8 +28,6 @@ typedef int (GRAYCALL * FARPROC)();
 
 namespace Gray
 {
-	UNITTEST2_PREDEF(cOSModule);
-
 #define HMODULE_NULL ((HMODULE)nullptr)	// This sometimes means the current process module.
  
 	class GRAYCORE_LINK cOSModule
@@ -150,7 +148,7 @@ namespace Gray
 #ifdef _WIN32
 		// Load or enum resources ?? cWinResource, cAppRes
 #endif
-		UNITTEST2_FRIEND(cOSModule);
+		UNITTEST_FRIEND(cOSModule);
 	};
 
 	template<class TYPE = FARPROC>

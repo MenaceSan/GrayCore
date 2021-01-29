@@ -16,8 +16,6 @@
 
 namespace Gray
 {
-	UNITTEST2_PREDEF(cWinHeap);
-
 	class GRAYCORE_LINK cWinHeap
 	{
 		//! @class GrayLib::cWinHeap
@@ -126,7 +124,7 @@ namespace Gray
 			return ::HeapSize(m_hHeap, dwFlags, pMem);
 		}
 
-		UNITTEST2_FRIEND(cWinHeap);
+		UNITTEST_FRIEND(cWinHeap);
 	};
 }
 

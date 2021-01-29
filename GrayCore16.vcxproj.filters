@@ -182,9 +182,6 @@
     <ClInclude Include="include\IUnkObject.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="include\Ptr.h">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="include\resource.h">
       <Filter>include</Filter>
     </ClInclude>
@@ -381,6 +378,12 @@
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="include\cListNodeRef.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Index.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\PtrCast.h">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>

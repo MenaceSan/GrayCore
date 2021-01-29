@@ -10,15 +10,14 @@
 #pragma once
 #endif
 
-#include "Ptr.h"
+#include "Index.h"
 #include "StrConst.h"
 #include "cValT.h"
 #include "cUnitTestDecl.h"
+#include "cDebugAssert.h"
 
 namespace Gray
 {
-	UNITTEST2_PREDEF(cMem);
-
 	struct GRAYCORE_LINK cMem	// static cSingleton
 	{
 		//! @struct Gray::cMem
@@ -34,7 +33,7 @@ namespace Gray
 
 		static ptrdiff_t inline Diff(const void* pEnd, const void* pStart) noexcept
 		{
-			//! @return Difference in bytes. Assume it is a reasonable sized block?
+			//! @return Difference in bytes. Assume it is a reasonable sized block? like GET_INDEX_IN()
 			ptrdiff_t i = ((const BYTE*)pEnd - (const BYTE*)pStart);	// like INT_PTR
 			// ASSERT(i > -(INT_PTR)(cHeap::k_ALLOC_MAX) && i < (INT_PTR)(cHeap::k_ALLOC_MAX));	// k_ALLOC_MAX
 			return i;
@@ -111,7 +110,7 @@ namespace Gray
 		static inline void ZeroSecure(void* pData, size_t nSizeBlock) noexcept
 		{
 			//! This is for security purposes. Not for initialization. Zero destructed values so they leave no trace. 
-			//! like SecureZeroMeory() and RtlSecureZeroMemory(). ensure it doesn't get optimized out.
+			//! like SecureZeroMeory() and RtlSecureZeroMemory(). ensure it doesn't get optimized out. (like in an inline destructor)
 			VOLATILE BYTE* p2 = (BYTE*)pData;	// 'volatile' will ensure it doesn't get optimized out.
 			while (nSizeBlock--)
 				*p2++ = 0;
@@ -172,7 +171,7 @@ namespace Gray
 			}
 		}
 
-		static inline void Fill(void* pDst, size_t nSize, BYTE bVal)
+		static inline void Fill(void* pDst, size_t nSize, BYTE bVal) noexcept
 		{
 			//! Same as memset(). but with argument order change.
 			for (size_t j = 0; j < nSize; j++)
@@ -242,7 +241,7 @@ namespace Gray
 		static StrLen_t GRAYCALL GetHexDigest(OUT char* pszHexString, const BYTE* pData, size_t nSizeData);
 		static HRESULT GRAYCALL SetHexDigest(const char* pszHexString, OUT BYTE* pData, size_t nSizeData);
 
-		UNITTEST2_FRIEND(cMem);
+		UNITTEST_FRIEND(cMem);
 	};
 
 	template <UINT32 _SIGVALID = 0xCA11AB1E>
@@ -311,7 +310,7 @@ namespace Gray
 	class GRAYCORE_LINK cMemBlock
 	{
 		//! @class Gray::cMemBlock
-		//! A pointer to memory block/blob in heap, stack or const. Unknown ownership. don't free on destruct.
+		//! A pointer to memory block/blob with unknown ownership. heap, stack or const. don't free on destruct.
 		//! May be static init?
 
 	protected:
@@ -322,21 +321,6 @@ namespace Gray
 		cMemBlock() noexcept
 			: m_nSize(0)
 			, m_pData(nullptr)
-		{
-		}
-		cMemBlock(size_t nSize, void* pData) noexcept
-			: m_nSize(nSize)
-			, m_pData(pData)
-		{
-		}
-		cMemBlock(size_t nSize, const void* pData) noexcept
-			: m_nSize(nSize)
-			, m_pData(const_cast<void*>(pData))	// just assume we don't modify it?
-		{
-		}
-		cMemBlock(void* pData, size_t nSize) noexcept
-			: m_nSize(nSize)
-			, m_pData(pData)
 		{
 		}
 		cMemBlock(const void* pData, size_t nSize) noexcept
@@ -357,19 +341,40 @@ namespace Gray
 			// Just shared pointers. This may be dangerous!
 		}
 
-		void* get_Data() const noexcept
+		inline size_t get_DataSize() const noexcept
+		{
+			return m_nSize;
+		}
+
+		inline void* get_Data() const noexcept
 		{
 			//! Might be nullptr. that's OK.
 			return m_pData;
 		}
+		inline BYTE* get_DataBytes() const noexcept
+		{
+			//! Get as a BYTE pointer.
+			return (BYTE*)m_pData;
+		}
+		inline char* get_DataA() const noexcept
+		{
+			//! Get as a char pointer.
+			return (char*)m_pData;
+		}
 
-		bool isValidPtr() const noexcept
+		operator const BYTE* () const noexcept
+		{
+			//! Get as a BYTE pointer.
+			return get_DataBytes();
+		}
+
+		inline bool isValidPtr() const noexcept
 		{
 			//! Is this (probably) valid to use/read/write. not nullptr.
 			//! Use cMem::IsValid to know more.
 			return m_pData != nullptr;
 		}
-		bool IsValidIndex(size_t i) const noexcept
+		inline bool IsValidIndex(size_t i) const noexcept
 		{
 			//! Is i inside the known valid range for the block?
 			return IS_INDEX_GOOD(i, m_nSize);
@@ -381,23 +386,15 @@ namespace Gray
 				return true;
 			return IS_INDEX_GOOD(i, m_nSize);
 		}
-		bool IsValidPtrI(const void* p) const
-		{
-			//! Is p inside the known valid range for the block? Inclusive = Can be equal to end.
-			if (p < get_Start())
-				return false;
-			if (p > get_End())
-				return false;
-			return true;
-		}
 		bool IsValidPtr(const void* p) const noexcept
 		{
+			//! Is p inside the known valid range for the block? Inclusive = Can be equal to end.
+			return IsValidIndex(cMem::Diff(p, get_Data()));
+		}
+		bool IsValidPtr2(const void* p) const noexcept
+		{
 			//! Is p inside the known valid range for the block? Exclusive = Cant be equal to end!
-			if (p < get_Start())
-				return false;
-			if (p >= get_End())
-				return false;
-			return true;
+			return IsValidIndex2(cMem::Diff(p, get_Data()));
 		}
 
 		bool IsZeros() const noexcept
@@ -405,19 +402,19 @@ namespace Gray
 			return cMem::IsZeros(m_pData, m_nSize);
 		}
 
-		bool IsEqualData(const void* pData, size_t nSize) const
+		bool IsEqualData(const void* pData, size_t nSize) const noexcept
 		{
 			//! compare blocks of data.
 			return m_nSize == nSize && !::memcmp(m_pData, pData, nSize);
 		}
-		bool IsEqualData(const cMemBlock* pData) const
+		bool IsEqualData(const cMemBlock* pData) const noexcept
 		{
 			//! compare blocks of data.
 			if (pData == nullptr)
 				return false;
 			return IsEqualData(pData->m_pData, pData->m_nSize);
 		}
-		bool IsEqualData(const cMemBlock& data) const
+		bool IsEqualData(const cMemBlock& data) const noexcept
 		{
 			//! compare blocks of data.
 			return IsEqualData(data.m_pData, data.m_nSize);
@@ -427,71 +424,48 @@ namespace Gray
 		//! @note ONLY works for literal "static string", or BYTE[123] you cannot use a 'BYTE* x' here!
 #define IsEqualLiteral(x) IsEqualData( STRLIT2(x))
 
-		size_t get_Size() const noexcept
-		{
-			return m_nSize;
-		}
-		BYTE* get_Start() const noexcept
-		{
-			//! Get as a byte pointer.
-			return (BYTE*)m_pData;
-		}
-		char* get_StartStr() const noexcept
-		{
-			//! Get as a byte pointer.
-			return (char*)m_pData;
-		}
-
-		operator const BYTE* () const noexcept
-		{
-			return get_Start();
-		}
-
 		BYTE* GetOffset(size_t nOffset) const
 		{
 			//! Get as a byte pointer.
 			ASSERT(IsValidIndex(nOffset));
-			return get_Start() + nOffset;
+			return get_DataBytes() + nOffset;
 		}
-		BYTE* get_End() const noexcept
+		const void* get_DataEnd() const noexcept
 		{
-			return ((BYTE*)m_pData) + m_nSize;
+			//! Never write to this pointer.
+			return get_DataBytes() + m_nSize;
 		}
 
-		void put_Start(void* pStart) noexcept
+		void put_DataPtr(void* pStart) noexcept
 		{
+			// Set Data pointer but leave size.
 			m_pData = pStart;
 			// ASSERT(is pStart reasonable?)
 		}
 		void put_Size(size_t nSize) noexcept
 		{
+			// Set size but leave data pointer.
 			m_nSize = nSize;
 		}
-		void put_End(const BYTE* pEnd)
-		{
-			//! ASSUME pEnd is related to m_pData
-			// ASSERT(is pEnd reasonable?)
-			m_nSize = pEnd - get_Start();
-		}
 
-		void SetEmptyBlock() noexcept
-		{
-			m_pData = nullptr;
-			m_nSize = 0;
-		}
 		void SetBlock(void* pData, size_t nSize) noexcept
 		{
 			m_pData = pData;
 			m_nSize = nSize;	// size does not apply if nullptr.
 		}
+		void SetEmptyBlock() noexcept
+		{
+			m_pData = nullptr;
+			m_nSize = 0;
+		}
 
-		void InitZeros()
+		void InitZeros() noexcept
 		{
 			cMem::ZeroSecure(m_pData, m_nSize);
 		}
 		StrLen_t ConvertToString(char* pszDst, StrLen_t iDstSizeMax) const
 		{
-			return cMem::ConvertToString(pszDst, iDstSizeMax, get_Start(), m_nSize);
+			return cMem::ConvertToString(pszDst, iDstSizeMax, get_DataBytes(), m_nSize);
 		}
 
 		static COMPARE_t GRAYCALL Compare(const void* pData1, size_t iLen1, const void* pData2, size_t iLen2);

@@ -17,8 +17,6 @@
 
 namespace Gray
 {
-	UNITTEST2_PREDEF(cTimeDouble);
-
 	class GRAYCORE_LINK cTimeDouble
 	{
 		//! @class Gray::cTimeDouble
@@ -230,7 +228,7 @@ namespace Gray
 
 		static cString GRAYCALL GetTimeSpanStr(double dDays, TIMEUNIT_TYPE eUnitHigh = TIMEUNIT_Day, int iUnitsDesired = 2, bool bShortText = false);
 
-		UNITTEST2_FRIEND(cTimeDouble);
+		UNITTEST_FRIEND(cTimeDouble);
 	};
 
 	bool inline operator < (const cTimeDouble &dt1, const cTimeDouble &dt2)

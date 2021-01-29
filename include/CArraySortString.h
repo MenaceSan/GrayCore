@@ -105,7 +105,7 @@ namespace Gray
 			return k_ITERATE_BAD;
 		}
 
-		UNITTEST2_FRIEND(cArraySortString);
+		UNITTEST_FRIEND(cArraySortString);
 	};
 
 	typedef cArraySortString<char> cArraySortStringA;
