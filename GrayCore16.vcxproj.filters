@@ -386,6 +386,9 @@
     <ClInclude Include="include\PtrCast.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="include\cRegKey.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.md" />

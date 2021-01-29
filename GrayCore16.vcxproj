@@ -677,6 +677,7 @@
     <ClInclude Include="include\cQueue.h" />
     <ClInclude Include="include\cRandom.h" />
     <ClInclude Include="include\cRefPtr.h" />
+    <ClInclude Include="include\cRegKey.h" />
     <ClInclude Include="include\cResourceBase.h" />
     <ClInclude Include="include\cSecurityAttributes.h" />
     <ClInclude Include="include\cSingleton.h" />

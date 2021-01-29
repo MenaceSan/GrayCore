@@ -71,7 +71,7 @@ namespace Gray
 		{
 			return m_h;
 		}
-		_TYPE_HAND& ref_Handle()
+		_TYPE_HAND& ref_Handle() noexcept
 		{
 			return m_h;
 		}
