@@ -87,9 +87,9 @@ namespace Gray
 			return Serialize(pData, nSize);
 		}
 
-		size_t ReadCount()
+		COUNT_t ReadCount()
 		{
-			// Emulate MFC
+			// Emulate MFC. return size_t
 			ASSERT(IsLoading());
 			size_t n;
 			SerializeSize(n);

@@ -14,7 +14,7 @@
 #define GRAY_COMPANY		"Menasoft"
 #define GRAY_COPYRIGHT		"Copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)"
 
-#define GRAY_VERSION_N		1602			//!< numeric version id. used for easy compares.
-#define GRAY_VERSION_S		"1.603"			//!< share string version with all files.
-#define GRAY_VERSION_RC		1,6,0,3			//!< RC version id. *.rc FILEVERSION wants this format.
+#define GRAY_VERSION_N		1604			//!< numeric version id. used for easy compares.
+#define GRAY_VERSION_S		"1.604"			//!< share string version with all files.
+#define GRAY_VERSION_RC		1,6,0,4			//!< RC version id. *.rc FILEVERSION wants this format.
 

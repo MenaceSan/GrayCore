@@ -2,7 +2,7 @@
 # GrayCore
 C++ core library providing very basic utility functionality without using any STL. Minimal dependencies.
 
-Version 1.603
+GRAY_VERSION_S = Version 1.604
 
 https://www.menasoft.com/graydox/index.html#graycore
 https://github.com/MenaceSan/GrayCore
