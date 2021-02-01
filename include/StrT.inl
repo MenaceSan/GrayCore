@@ -40,7 +40,7 @@ namespace Gray
 		}
 	}
 	template< typename TYPE>
-	COMPARE_t GRAYCALL StrT::CmpN(const TYPE* pszStr1, const TYPE* pszStr2, StrLen_t iLenMaxChars) noexcept
+	COMPARE_t GRAYCALL StrT::CmpN(const TYPE* pszStr1, const TYPE* pszStr2, StrLen_t iLenMaxChars) NOEXCEPT
 	{
 		//! How does pszStr1 compare to pszStr2
 		//! replace strncmp()
@@ -85,7 +85,7 @@ namespace Gray
 	}
 
 	template< typename TYPE>
-	COMPARE_t GRAYCALL StrT::CmpIN(const TYPE* pszStr1, const TYPE* pszStr2, StrLen_t iLenMaxChars) noexcept
+	COMPARE_t GRAYCALL StrT::CmpIN(const TYPE* pszStr1, const TYPE* pszStr2, StrLen_t iLenMaxChars) NOEXCEPT
 	{
 		//! Find matching string up to length iLenMaxChars. (unless '/0' is found)
 		//! replaces _strnicmp strnicmp
@@ -192,7 +192,7 @@ namespace Gray
 	}
 
 	template< typename TYPE>
-	HASHCODE32_t GRAYCALL StrT::GetHashCode32(const TYPE* pszStr, StrLen_t nLen, HASHCODE32_t nHash) noexcept
+	HASHCODE32_t GRAYCALL StrT::GetHashCode32(const TYPE* pszStr, StrLen_t nLen, HASHCODE32_t nHash) NOEXCEPT
 	{
 		//! Get a HASHCODE32_t for the string. Ignore case.
 		//! based on http://www.azillionmonkeys.com/qed/hash.html super fast hash.
@@ -241,7 +241,7 @@ namespace Gray
 	//***********************************************************
 
 	template< typename TYPE>
-	StrLen_t GRAYCALL StrT::FindCharN(const TYPE* pszStr, TYPE chFind) noexcept
+	StrLen_t GRAYCALL StrT::FindCharN(const TYPE* pszStr, TYPE chFind) NOEXCEPT
 	{
 		//! Find index of the first occurrence of a single char in a string.
 		//! @return -1 = k_StrLen_UNK = not found.
@@ -260,7 +260,7 @@ namespace Gray
 	}
 
 	template< typename TYPE>
-	TYPE* GRAYCALL StrT::FindChar(const TYPE* pszStr, TYPE chFind, StrLen_t iLenMax) noexcept
+	TYPE* GRAYCALL StrT::FindChar(const TYPE* pszStr, TYPE chFind, StrLen_t iLenMax) NOEXCEPT
 	{
 		//! Find first occurrence of a single char in a string.
 		//! replace strchr(), and memchr()
@@ -679,7 +679,7 @@ namespace Gray
 	// String Modifiers
 
 	template< typename TYPE>
-	StrLen_t GRAYCALL StrT::CopyLen(TYPE* pDst, const TYPE* pSrc, StrLen_t iLenMaxChars) noexcept
+	StrLen_t GRAYCALL StrT::CopyLen(TYPE* pDst, const TYPE* pSrc, StrLen_t iLenMaxChars) NOEXCEPT
 	{
 		//! Copy a string. replaces strncpy (sort of)
 		//! @arg iLenMaxChars = _countof(Dst) = includes room for '\0'. (just like memcpy)

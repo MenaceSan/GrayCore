@@ -263,6 +263,7 @@
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <StringPooling>true</StringPooling>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <ProgramDataBaseFileName>$(OutDir)$(ProjectName).pdb</ProgramDataBaseFileName>
     </ClCompile>
     <Lib>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
@@ -282,7 +283,7 @@
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <StringPooling>true</StringPooling>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <ProgramDataBaseFileName>$(IntDir)$(ProjectName).pdb</ProgramDataBaseFileName>
+      <ProgramDataBaseFileName>$(OutDir)$(ProjectName).pdb</ProgramDataBaseFileName>
     </ClCompile>
     <Lib>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
@@ -307,6 +308,7 @@
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <ProgramDataBaseFileName>$(OutDir)$(ProjectName).pdb</ProgramDataBaseFileName>
     </ClCompile>
     <Lib>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
@@ -328,7 +330,7 @@
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <ProgramDataBaseFileName>$(IntDir)$(ProjectName).pdb</ProgramDataBaseFileName>
+      <ProgramDataBaseFileName>$(OutDir)$(ProjectName).pdb</ProgramDataBaseFileName>
     </ClCompile>
     <Lib>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
@@ -355,6 +357,7 @@
       <StringPooling>true</StringPooling>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <ProgramDataBaseFileName>$(OutDir)$(ProjectName).pdb</ProgramDataBaseFileName>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseStat|x64'">
@@ -369,6 +372,7 @@
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <ProgramDataBaseFileName>$(OutDir)$(ProjectName).pdb</ProgramDataBaseFileName>
     </ClCompile>
     <Lib>
       <TargetMachine>MachineX64</TargetMachine>
@@ -384,7 +388,7 @@
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
-      <ProgramDataBaseFileName>$(IntDir)$(ProjectName).pdb</ProgramDataBaseFileName>
+      <ProgramDataBaseFileName>$(OutDir)$(ProjectName).pdb</ProgramDataBaseFileName>
       <GenerateXMLDocumentationFiles>true</GenerateXMLDocumentationFiles>
       <BrowseInformation>true</BrowseInformation>
       <WarningLevel>Level4</WarningLevel>
@@ -435,7 +439,7 @@
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
-      <ProgramDataBaseFileName>$(IntDir)$(ProjectName).pdb</ProgramDataBaseFileName>
+      <ProgramDataBaseFileName>$(OutDir)$(ProjectName).pdb</ProgramDataBaseFileName>
       <BrowseInformation>true</BrowseInformation>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
@@ -470,7 +474,7 @@
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
-      <ProgramDataBaseFileName>$(IntDir)$(ProjectName).pdb</ProgramDataBaseFileName>
+      <ProgramDataBaseFileName>$(OutDir)$(ProjectName).pdb</ProgramDataBaseFileName>
       <BrowseInformation>true</BrowseInformation>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -510,7 +514,7 @@
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
-      <ProgramDataBaseFileName>$(IntDir)$(ProjectName).pdb</ProgramDataBaseFileName>
+      <ProgramDataBaseFileName>$(OutDir)$(ProjectName).pdb</ProgramDataBaseFileName>
       <BrowseInformation>true</BrowseInformation>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -544,6 +548,7 @@
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <ShowIncludes>false</ShowIncludes>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <ProgramDataBaseFileName>$(OutDir)$(ProjectName).pdb</ProgramDataBaseFileName>
     </ClCompile>
     <ResourceCompile>
       <SuppressStartupBanner>false</SuppressStartupBanner>
@@ -562,6 +567,7 @@
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <ProgramDataBaseFileName>$(OutDir)$(ProjectName).pdb</ProgramDataBaseFileName>
     </ClCompile>
     <Lib>
       <TargetMachine>MachineX64</TargetMachine>
@@ -575,6 +581,7 @@
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <ProgramDataBaseFileName>$(OutDir)$(ProjectName).pdb</ProgramDataBaseFileName>
     </ClCompile>
     <ResourceCompile>
       <SuppressStartupBanner>false</SuppressStartupBanner>
@@ -591,6 +598,7 @@
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <ProgramDataBaseFileName>$(OutDir)$(ProjectName).pdb</ProgramDataBaseFileName>
     </ClCompile>
     <Lib>
       <TargetMachine>MachineX64</TargetMachine>

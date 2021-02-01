@@ -87,7 +87,7 @@ namespace Gray
 		// NON modifying methods first.
 
 		template< typename TYPE >
-		static StrLen_t Len(const TYPE* pszStr) noexcept;
+		static StrLen_t Len(const TYPE* pszStr) NOEXCEPT;
 
 		template< typename TYPE >
 		static inline const TYPE* Cast(const TYPE* pszStr)
@@ -99,7 +99,7 @@ namespace Gray
 		}
 
 		template< typename TYPE >
-		static inline bool IsNullOrEmpty(const TYPE* pszStr) noexcept
+		static inline bool IsNullOrEmpty(const TYPE* pszStr) NOEXCEPT
 		{
 			//! Like .NET String.IsNullOrEmpty. Similar to IsWhitespace().
 			if (pszStr == nullptr)
@@ -110,7 +110,7 @@ namespace Gray
 		}
 
 		template< typename TYPE >
-		static inline const TYPE* CheckEmpty(const TYPE* pszStr) noexcept
+		static inline const TYPE* CheckEmpty(const TYPE* pszStr) NOEXCEPT
 		{
 			//! If this is an empty string then make it nullptr.
 			if (pszStr == nullptr)
@@ -121,7 +121,7 @@ namespace Gray
 		}
 
 		template< typename TYPE >
-		static StrLen_t Len(const TYPE* pszStr, StrLen_t iLenMax) noexcept
+		static StrLen_t Len(const TYPE* pszStr, StrLen_t iLenMax) NOEXCEPT
 		{
 			//! Get length (up to iLenMax <= k_LEN_MAX ) avoiding read errors for un-terminated sources. like strlen() but with limit. AKA strnlen().
 			//! @return the length of the string up to (including) iLenMax
@@ -148,11 +148,11 @@ namespace Gray
 		template< typename TYPE >
 		GRAYCORE_LINK static COMPARE_t GRAYCALL Cmp(const TYPE* pszStr1, const TYPE* pszStr2);
 		template< typename TYPE >
-		GRAYCORE_LINK static COMPARE_t GRAYCALL CmpN(const TYPE* pszStr1, const TYPE* pszStr2, StrLen_t iLenMaxChars) noexcept;
+		GRAYCORE_LINK static COMPARE_t GRAYCALL CmpN(const TYPE* pszStr1, const TYPE* pszStr2, StrLen_t iLenMaxChars) NOEXCEPT;
 		template< typename TYPE >
 		GRAYCORE_LINK static COMPARE_t GRAYCALL CmpI(const TYPE* pszStr1, const TYPE* pszStr2);
 		template< typename TYPE >
-		GRAYCORE_LINK static COMPARE_t GRAYCALL CmpIN(const TYPE* pszStr1, const TYPE* pszStr2, StrLen_t iLenMaxChars) noexcept;
+		GRAYCORE_LINK static COMPARE_t GRAYCALL CmpIN(const TYPE* pszStr1, const TYPE* pszStr2, StrLen_t iLenMaxChars) NOEXCEPT;
 		template< typename TYPE >
 		GRAYCORE_LINK static COMPARE_t GRAYCALL CmpHeadI(const TYPE* pszFind, const TYPE* pszTableElem);
 		template< typename TYPE >
@@ -161,13 +161,13 @@ namespace Gray
 		GRAYCORE_LINK static bool GRAYCALL EndsWithI(const TYPE* pszStr2, const TYPE* pszPostfix, StrLen_t nLenStr = k_StrLen_UNK);
 
 		template< typename TYPE >
-		GRAYCORE_LINK static HASHCODE32_t GRAYCALL GetHashCode32(const TYPE* pszStr, StrLen_t nLen = k_StrLen_UNK, HASHCODE32_t nHash = k_HASHCODE_CLEAR) noexcept;
+		GRAYCORE_LINK static HASHCODE32_t GRAYCALL GetHashCode32(const TYPE* pszStr, StrLen_t nLen = k_StrLen_UNK, HASHCODE32_t nHash = k_HASHCODE_CLEAR) NOEXCEPT;
 		template< typename TYPE >
-		GRAYCORE_LINK static TYPE* GRAYCALL FindChar(const TYPE* pszStr, TYPE ch, StrLen_t iLen = StrT::k_LEN_MAX) noexcept;
+		GRAYCORE_LINK static TYPE* GRAYCALL FindChar(const TYPE* pszStr, TYPE ch, StrLen_t iLen = StrT::k_LEN_MAX) NOEXCEPT;
 		template< typename TYPE >
-		GRAYCORE_LINK static StrLen_t GRAYCALL FindCharN(const TYPE* pszStr, TYPE ch) noexcept;
+		GRAYCORE_LINK static StrLen_t GRAYCALL FindCharN(const TYPE* pszStr, TYPE ch) NOEXCEPT;
 		template< typename TYPE >
-		static bool HasChar(const TYPE* pszStr, TYPE ch) noexcept
+		static bool HasChar(const TYPE* pszStr, TYPE ch) NOEXCEPT
 		{
 			return FindCharN(pszStr, ch) >= 0;
 		}
@@ -184,7 +184,7 @@ namespace Gray
 		GRAYCORE_LINK static StrLen_t GRAYCALL FindWord(const TYPE* pTextSearch, const TYPE* pszKeyWord, StrLen_t iLenMax = StrT::k_LEN_MAX);
 
 		template< typename TYPE>
-		static StrLen_t GetNonWhitespaceI(const TYPE* pStr, StrLen_t iLenMax = StrT::k_LEN_MAX) noexcept
+		static StrLen_t GetNonWhitespaceI(const TYPE* pStr, StrLen_t iLenMax = StrT::k_LEN_MAX) NOEXCEPT
 		{
 			//! Skip tabs and spaces but NOT new lines. NOT '\0' either.
 			if (pStr == nullptr)
@@ -195,13 +195,13 @@ namespace Gray
 			return i;
 		}
 		template< typename TYPE>
-		static const TYPE* GetNonWhitespace(const TYPE* pStr, StrLen_t iLenMax = StrT::k_LEN_MAX) noexcept
+		static const TYPE* GetNonWhitespace(const TYPE* pStr, StrLen_t iLenMax = StrT::k_LEN_MAX) NOEXCEPT
 		{
 			// never return nullptr unless pStr = nullptr
 			return(pStr + GetNonWhitespaceI(pStr, iLenMax));
 		}
 		template< typename TYPE>
-		static TYPE* GetNonWhitespace(TYPE* pStr, StrLen_t iLenMax = StrT::k_LEN_MAX) noexcept
+		static TYPE* GetNonWhitespace(TYPE* pStr, StrLen_t iLenMax = StrT::k_LEN_MAX) NOEXCEPT
 		{
 			return(pStr + GetNonWhitespaceI(pStr, iLenMax));
 		}
@@ -236,10 +236,10 @@ namespace Gray
 		// String modifying.
 
 		template< typename TYPE >
-		GRAYCORE_LINK static StrLen_t GRAYCALL CopyLen(TYPE* pszDst, const TYPE* pSrc, StrLen_t iLenCharsMax) noexcept;
+		GRAYCORE_LINK static StrLen_t GRAYCALL CopyLen(TYPE* pszDst, const TYPE* pSrc, StrLen_t iLenCharsMax) NOEXCEPT;
 
 		template< typename TYPE >
-		static void MakeUpperCase(TYPE* pszDst, StrLen_t iLenCharsMax) noexcept
+		static void MakeUpperCase(TYPE* pszDst, StrLen_t iLenCharsMax) NOEXCEPT
 		{
 			//! replaces _strupr
 			//! No portable __linux__ equiv to _strupr()?
@@ -252,7 +252,7 @@ namespace Gray
 			}
 		}
 		template< typename TYPE >
-		static void MakeLowerCase(TYPE* pszDst, StrLen_t iLenCharsMax) noexcept
+		static void MakeLowerCase(TYPE* pszDst, StrLen_t iLenCharsMax) NOEXCEPT
 		{
 			//! replaces strlwr()
 			//! No portable __linux__ equiv to strlwr()?
@@ -393,7 +393,7 @@ namespace Gray
 		//! Type cannot be derived from arguments. we must declare char type specifically.
 		//! @todo GetTableElem move here.
 
-		static const TYPE* GRAYCALL GetBoolStr(bool bVal) noexcept;
+		static const TYPE* GRAYCALL GetBoolStr(bool bVal) NOEXCEPT;
 
 		// String searching. const
 		static inline const TYPE* GetTableElemU(const void* ppszTableInit, ITERATE_t i, size_t nSizeElem)
@@ -412,7 +412,7 @@ namespace Gray
 
 	// Override implementations
 
-	template<> StrLen_t inline StrT::Len<char>(const char* pszStr) noexcept	// count of chars NOT same as bytes (size_t)
+	template<> StrLen_t inline StrT::Len<char>(const char* pszStr) NOEXCEPT	// count of chars NOT same as bytes (size_t)
 	{
 		//! Get length of string not including '\0'. Like strlen()
 		//! Danger. ASSUME sane iLenMax <= k_LEN_MAX ??  Dont use this function. use length limited version.
@@ -425,7 +425,7 @@ namespace Gray
 		return Len(pszStr, k_LEN_MAX);
 #endif
 	}
-	template<> StrLen_t inline StrT::Len<wchar_t>(const wchar_t* pszStr) noexcept
+	template<> StrLen_t inline StrT::Len<wchar_t>(const wchar_t* pszStr) NOEXCEPT
 	{
 		//! Get length of string not including '\0'
 		//! Danger. ASSUME sane iLenMax <= k_LEN_MAX ??  Dont use this function. use length limited version.
@@ -629,12 +629,12 @@ namespace Gray
 
 	// Override implementations
 
-	template<> inline const char* StrX<char>::GetBoolStr(bool bVal) noexcept // static
+	template<> inline const char* StrX<char>::GetBoolStr(bool bVal) NOEXCEPT // static
 	{
 		// Simpler than using "true" : "false"
 		return bVal ? "1" : "0";
 	}
-	template<> inline const wchar_t* StrX<wchar_t>::GetBoolStr(bool bVal) noexcept // static
+	template<> inline const wchar_t* StrX<wchar_t>::GetBoolStr(bool bVal) NOEXCEPT // static
 	{
 		return bVal ? L"1" : L"0";
 	}

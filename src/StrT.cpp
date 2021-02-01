@@ -27,7 +27,9 @@ namespace Gray
 #ifdef GRAY_DLL // force implementation/instantiate for DLL/SO.
 	template struct GRAYCORE_LINK StrX<char>;
 	template struct GRAYCORE_LINK StrX<wchar_t>;
+#endif
 
+	// even GRAY_STATICLIB needs this to expose the symbols. but only in vs2019.
 #define TYPE char
 #define StrTTbl(returntype, name, args) template GRAYCORE_LINK returntype GRAYCALL StrT::name<TYPE> args ;
 #include "StrT.tbl"
@@ -37,6 +39,5 @@ namespace Gray
 #include "StrT.tbl"
 #undef TYPE
 #undef StrTTbl
-#endif
 
 }

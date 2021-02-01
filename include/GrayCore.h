@@ -67,6 +67,12 @@ namespace Gray		//!< The main namespace for all Core functions.
 #define IS_DELETE = delete		// get rid of this normally default supplied method.
 #endif
 
+#if defined(_MSC_VER) && _MSC_VER <= 1916 // VS2017 has internal errors when noexcept is used.
+#define NOEXCEPT  
+#else
+#define NOEXCEPT noexcept 
+#endif
+
 #ifdef __GNUC__
 #define IGNORE_WARN_INTERFACE(c)		virtual ~c() {}		// quiet this warning for interfaces. should we do this ?
 #else

@@ -17,7 +17,7 @@ StrTTbl(bool,EndsWithI,(const TYPE* pszStr1, const TYPE* pszPostfix, StrLen_t iL
 
 StrTTbl(HASHCODE32_t,GetHashCode32,(const TYPE* pszStr, StrLen_t nLen, HASHCODE32_t nHash))
 StrTTbl(TYPE*,FindChar,(const TYPE* pszStr, TYPE chFind, StrLen_t iLenMax))
-StrTTbl(StrLen_t,FindCharN,(const TYPE* pszStr, TYPE ch))	// noexcept
+StrTTbl(StrLen_t,FindCharN,(const TYPE* pszStr, TYPE ch))	// NOEXCEPT
 StrTTbl(TYPE*,FindCharRev,(const TYPE* pszStr, TYPE chFind, StrLen_t iLenMax))
 StrTTbl(TYPE*,FindTokens,(const TYPE* pszStr, const TYPE* pszTokens, StrLen_t iLenMaxChars))
 StrTTbl(TYPE*,FindStr,(const TYPE* pszText, const TYPE* pszSubStr, StrLen_t iLenMaxChars))
@@ -35,7 +35,7 @@ StrTTbl(ITERATE_t,TableFindHeadSorted,(const TYPE* pszFindHead, const void* ppsz
 
 // String modifiers
 
-StrTTbl(StrLen_t,CopyLen,(TYPE* pDst, const TYPE* pSrc, StrLen_t iLenMaxChars))		// noexcept
+StrTTbl(StrLen_t,CopyLen,(TYPE* pDst, const TYPE* pSrc, StrLen_t iLenMaxChars))		// NOEXCEPT
 
 StrTTbl(StrLen_t,EscSeqRemove,(TYPE* pStrOut, const TYPE* pStrIn, StrLen_t iLenOutMax, StrLen_t iLenInMax))
 StrTTbl(StrLen_t,EscSeqRemoveQ,(TYPE* pStrOut, const TYPE* pStrIn, StrLen_t iLenOutMax, StrLen_t iLenInMax))
