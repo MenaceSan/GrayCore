@@ -51,7 +51,7 @@ namespace Gray
 		}
 	};
 
-	class cRegKey
+	class cRegKey	// not GRAYCORE_LINK since its inline
 		: public cHandlePtr < HKEY >
 	{
 		//! @class GrayLib::cRegKey
@@ -102,7 +102,7 @@ namespace Gray
 		{
 			SUPER_t::AttachHandle(hKey);
 		}
-		HKEY Detach()
+		HKEY Detach() noexcept
 		{
 			//! like SUPER_t::DetachHandle()
 			HKEY h = get_HKey();
@@ -130,7 +130,7 @@ namespace Gray
 			return Open(get_HKey(), pszSubKey, samDesired);
 		}
 
-		HRESULT FlushX()
+		HRESULT FlushX() noexcept
 		{
 			const LSTATUS lRet = ::RegFlushKey(get_Handle());
 			return HResult::FromWin32(lRet);
@@ -138,7 +138,7 @@ namespace Gray
 
 		// Keys
 
-		HRESULT DeleteKey(const FILECHAR_t* pszSubKey)
+		HRESULT DeleteKey(const FILECHAR_t* pszSubKey) noexcept
 		{
 			//! @return 0 = S_OK, 2=ERROR_FILE_NOT_FOUND
 			//! @note This is for keys not values. delete values using RegDeleteValue.
@@ -147,7 +147,7 @@ namespace Gray
 			return HResult::FromWin32(lRet);
 		}
 
-		HRESULT EnumKey(DWORD dwIndex, OUT FILECHAR_t* pszNameRet, DWORD& dwSizeName)
+		HRESULT EnumKey(DWORD dwIndex, OUT FILECHAR_t* pszNameRet, DWORD& dwSizeName) noexcept
 		{
 			//! Walk the list of child keys by name for a registry key.
 			//! @arg dwSizeName = the max size of the buffer and the size of the name returned.
@@ -161,7 +161,7 @@ namespace Gray
 
 		// Values
 
-		HRESULT EnumValue(DWORD dwIndex, FILECHAR_t* pszNameRet, DWORD& dwSizeName, DWORD* pdwTypeRet = nullptr, void* pDataRet = nullptr, DWORD* pdwSizeData = nullptr)
+		HRESULT EnumValue(DWORD dwIndex, FILECHAR_t* pszNameRet, DWORD& dwSizeName, DWORD* pdwTypeRet = nullptr, void* pDataRet = nullptr, DWORD* pdwSizeData = nullptr) noexcept
 		{
 			//! Walk the list of values for a registry key.
 			//! @note strings will always be of type FILECHAR_t
@@ -171,13 +171,13 @@ namespace Gray
 				pdwTypeRet, (LPBYTE)pDataRet, pdwSizeData);
 			return HResult::FromWin32(lRet);
 		}
-		HRESULT DeleteValue(const FILECHAR_t* pszSubKey)
+		HRESULT DeleteValue(const FILECHAR_t* pszSubKey) noexcept
 		{
 			//! @return 0 = S_OK, 2=ERROR_FILE_NOT_FOUND
 			const LSTATUS lRet = _FNF(::RegDeleteValue)(get_HKey(), pszSubKey);
 			return HResult::FromWin32(lRet);
 		}
-		HRESULT SetValue(const FILECHAR_t* pszValueName, DWORD dwType, const void* pData, DWORD dwDataSize)
+		HRESULT SetValue(const FILECHAR_t* pszValueName, DWORD dwType, const void* pData, DWORD dwDataSize) noexcept
 		{
 			//! Raw Write.
 			//! @arg pszValueName = nullptr = default value for the key.
@@ -189,7 +189,7 @@ namespace Gray
 			return HResult::FromWin32(lRet);
 		}
 
-		HRESULT QueryValue(const FILECHAR_t* pszValueName, OUT DWORD& rdwType, OUT void* pData, OUT DWORD& rdwDataSize)
+		HRESULT QueryValue(const FILECHAR_t* pszValueName, OUT DWORD& rdwType, OUT void* pData, OUT DWORD& rdwDataSize) noexcept
 		{
 			//! Raw Read.
 			//! @arg pszValueName = key name. nullptr = default key.
@@ -198,7 +198,7 @@ namespace Gray
 			//! @return
 			//!  0 = S_OK, 2=ERROR_FILE_NOT_FOUND
 			//!  rdwType=REG_DWORD, REG_SZ, etc.
-			LSTATUS lRet = _FNF(::RegQueryValueEx)(get_HKey(), pszValueName, nullptr, &rdwType, (LPBYTE)pData, &rdwDataSize);
+			const LSTATUS lRet = _FNF(::RegQueryValueEx)(get_HKey(), pszValueName, nullptr, &rdwType, (LPBYTE)pData, &rdwDataSize);
 			return HResult::FromWin32(lRet);
 		}
 
@@ -215,11 +215,11 @@ namespace Gray
 		HRESULT OpenQuerySubKey(HKEY hKeyBase, const FILECHAR_t* pszSubKey, FILECHAR_t* pData, DWORD dwDataSize = _MAX_PATH - 1)
 		{
 			//! This is always a string type data.
-			HRESULT hRes = Open(hKeyBase, pszSubKey, KEY_QUERY_VALUE);
+			const HRESULT hRes = Open(hKeyBase, pszSubKey, KEY_QUERY_VALUE);
 			if (FAILED(hRes))
 				return hRes;
 			DWORD dwType = REG_SZ;	// always REG_SZ or REG_EXPAND_SZ
-			return QueryValue(nullptr, dwType, pData, dwDataSize);
+			return QueryValue(nullptr, dwType, pData, OUT dwDataSize);
 		}
 	};
 

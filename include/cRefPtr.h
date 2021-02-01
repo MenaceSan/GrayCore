@@ -224,10 +224,9 @@ namespace Gray
 		: public cPtrFacade < TYPE >
 	{
 		//! @class Gray::cRefPtr
-		//! Template for a type specific Smart Pointer
+		//! Template for a type specific Smart (reference counted) Pointer
 		//! Smart pointer to an object. like "com_ptr_t" _com_ptr_t or cComPtr. https://msdn.microsoft.com/en-us/library/hh279674.aspx
-		//! Just a ref to the object of some type.
-		//! TYPE must be based on cRefBase
+		//! Just a ref to the object of some type. TYPE must be based on cRefBase
 		//! similar to boost::shared_ptr<TYPE>
 		//! @todo something like USE_IUNK_TRACE ??
 

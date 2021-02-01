@@ -48,7 +48,7 @@ struct CATTR_PACKED _PROCESS_BASIC_INFORMATION
 
 namespace Gray
 {
-	cOSProcess::cOSProcess()
+	cOSProcess::cOSProcess() noexcept
 		: m_nPid(PROCESSID_BAD)
 	{
 		// _WIN32 = ::GetCurrentProcess() = 0xFFFFFFFF as a shortcut.
@@ -79,10 +79,9 @@ namespace Gray
 		//! @arg pszExeName = the app file to start. 
 		//! @arg pszCurrentDir = cFilePath::GetFileDir( pszExeName )
 		//! similar to POSIX execvp()
-		// 
-
+ 
 		if (pszExeName == nullptr)
-			return E_POINTER;
+			return E_INVALIDARG;
 
 #ifdef _WIN32
 		_FNF(STARTUPINFO) startInfo;
@@ -106,7 +105,7 @@ namespace Gray
 		PROCESS_INFORMATION procInf;
 		cMem::Zero(&procInf, sizeof(procInf));
 
-		// @note The Unicode version of this function, CreateProcessW, can modify the contents of lpCommandLine.
+		// @note The Unicode version of this function, CreateProcessW, can modify the contents of lpCommandLine!?
 		// https://msdn.microsoft.com/en-us/library/windows/desktop/ms682425(v=vs.85).aspx
 #if USE_UNICODE_FN 
 		FILECHAR_t sCommandLine[_MAX_PATH];

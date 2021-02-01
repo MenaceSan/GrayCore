@@ -837,7 +837,7 @@ namespace Gray
 			}
 
 			// Allow nested blocks of some STR_BLOCK_TYPE.
-			STR_BLOCK_TYPE eBlockType2 = (STR_BLOCK_TYPE)StrT::FindCharN(k_szBlockStart, (char)ch);	// cast away wchar_t
+			STR_BLOCK_TYPE eBlockType2 = (STR_BLOCK_TYPE)StrT::FindCharN<char>(k_szBlockStart, (char)ch);	// cast away wchar_t
 			if (eBlockType2 >= 0)
 			{
 				const TYPE* pszBlockEnd = StrT::FindBlockEnd(eBlockType2, pszLine + i + 1);
@@ -871,7 +871,7 @@ namespace Gray
 		//! strip block based on the very first character of the string.
 		//! If the string is encased in "" or () then remove them.
 
-		STR_BLOCK_TYPE eBlockType = (STR_BLOCK_TYPE)StrT::FindCharN(k_szBlockStart, (char)pszText[0]);	// start block.
+		STR_BLOCK_TYPE eBlockType = (STR_BLOCK_TYPE)StrT::FindCharN<char>(k_szBlockStart, (char)pszText[0]);	// start block.
 		if (eBlockType < 0)	// not blocked, at least not a type I recognize.
 			return pszText;
 		TYPE* pszBlockEnd = StrT::FindBlockEnd(eBlockType, pszText + 1); // const_cast
@@ -909,7 +909,7 @@ namespace Gray
 			if (ch == '\\')
 			{
 				ch = pStrIn[++i];
-				int iEsc = StrT::FindCharN(k_szEscEncode, (char)ch);
+				int iEsc = StrT::FindCharN<char>(k_szEscEncode, (char)ch);
 				if (iEsc >= 0 && StrChar::IsAscii(ch))
 				{
 					ch = k_szEscDecode[iEsc];
@@ -962,7 +962,7 @@ namespace Gray
 		if (pStrIn[0] != '"')
 		{
 			// Just copy the string untranslated.
-			return StrT::CopyLen(pStrOut, pStrIn, MIN(iLenOutMax, iLenInMax));
+			return StrT::CopyLen<TYPE>(pStrOut, pStrIn, MIN(iLenOutMax, iLenInMax));
 		}
 
 		TYPE* pszBlockEnd = StrT::FindBlockEnd<TYPE>(STR_BLOCK_QUOTE, pStrIn + 1, iLenInMax - 1);
@@ -1002,7 +1002,7 @@ namespace Gray
 			if (ch == '\0')
 				break;
 			// Why encode a question mark ?
-			int iEsc = StrT::FindCharN(k_szEscDecode, (char)ch);
+			int iEsc = StrT::FindCharN<char>(k_szEscDecode, (char)ch);
 			if (iEsc >= 0 && StrChar::IsAscii(ch))
 			{
 				if (pStrOut == nullptr)
@@ -1203,7 +1203,7 @@ namespace Gray
 					break;	// Not sure what i should do about this ?
 				}
 
-				STR_BLOCK_TYPE eBlockType = (STR_BLOCK_TYPE)StrT::FindCharN(k_szBlockStart, (char)ch);	// start block.
+				STR_BLOCK_TYPE eBlockType = (STR_BLOCK_TYPE)StrT::FindCharN<char>(k_szBlockStart, (char)ch);	// start block.
 				if (eBlockType >= 0)
 				{
 					const TYPE* pszBlockEnd = StrT::FindBlockEnd(eBlockType, pszCmdLine + i + 1); // const_cast
@@ -1243,7 +1243,7 @@ namespace Gray
 		//! @arg iTmpSizeMax = StrT::k_LEN_MAX
 		//! @arg uFlags = deal with quoted and escaped strings.
 		//! @return Quantity of arguments
-		StrLen_t iLenChars = StrT::CopyLen(pszTmp, pszCmdLine, iTmpSizeMax);
+		StrLen_t iLenChars = StrT::CopyLen<TYPE>(pszTmp, pszCmdLine, iTmpSizeMax);
 		UNREFERENCED_PARAMETER(iLenChars);
 		return ParseCmds(pszTmp, iTmpSizeMax, ppCmd, iCmdQtyMax, pszSep, uFlags);
 	}

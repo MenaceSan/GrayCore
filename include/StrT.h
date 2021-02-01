@@ -641,5 +641,5 @@ namespace Gray
 
 	// #include "StrT.inl"
 	// Force instantiation of stuff for char and wchar_t for linking.
-};
+}
 #endif // _INC_StrT_H

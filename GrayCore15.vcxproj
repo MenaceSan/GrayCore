@@ -684,6 +684,7 @@
     <ClInclude Include="include\cQueue.h" />
     <ClInclude Include="include\cRandom.h" />
     <ClInclude Include="include\cRefPtr.h" />
+    <ClInclude Include="include\cRegKey.h" />
     <ClInclude Include="include\cResourceBase.h" />
     <ClInclude Include="include\cSecurityAttributes.h" />
     <ClInclude Include="include\cSingleton.h" />
@@ -723,6 +724,7 @@
     <ClInclude Include="include\GrayCore.h" />
     <ClInclude Include="include\GrayVersion.h" />
     <ClInclude Include="include\HResult.h" />
+    <ClInclude Include="include\Index.h" />
     <ClInclude Include="include\IUnknown.h" />
     <ClInclude Include="include\IUnkObject.h" />
     <ClInclude Include="include\PtrCast.h" />
@@ -830,7 +832,6 @@
     <ClCompile Include="src\StrNum.cpp" />
     <ClCompile Include="src\StrT.cpp" />
     <ClCompile Include="src\StrU.cpp" />
-    <ClCompile Include="src\StrXUnitTest.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="src\GrayCore.rc" />

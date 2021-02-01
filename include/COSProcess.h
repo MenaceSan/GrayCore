@@ -54,7 +54,7 @@ namespace Gray
 		APP_EXITCODE_OK = EXIT_SUCCESS,		//!< 0=EXIT_SUCCESS (stdlib.h).  App closed.
 		APP_EXITCODE_FAIL = EXIT_FAILURE,	//!< 1=EXIT_FAILURE = generic error. App closed.
 		APP_EXITCODE_ABORT = 3,				//!< 3=Default error returned if "abort()" used (arbitrary?)  App closed.
-		
+
 		// .. some other condition.
 #ifdef _WIN32
 		APP_EXITCODE_STILL_ACTIVE = STILL_ACTIVE,	//!< _WIN32 Process has not exited yet. STATUS_PENDING
@@ -64,7 +64,7 @@ namespace Gray
 		APP_EXITCODE_UNK = SHRT_MAX,		//!< handle not valid ?
 	};
 
-	class GRAYCORE_LINK cOSProcess 
+	class GRAYCORE_LINK cOSProcess
 	{
 		//! @class Gray::cOSProcess
 		//! A running process in the system. May or may not be the current process. 
@@ -86,10 +86,16 @@ namespace Gray
 #endif
 
 	public:
-		cOSProcess();
+		cOSProcess() noexcept;
 		virtual ~cOSProcess();
 
 #ifdef _WIN32
+		cOSProcess(PROCESSID_t nPid, HANDLE h) noexcept
+			: m_nPid(nPid)
+			, m_hProcess(h)
+		{
+			// _WIN32 = ::GetCurrentProcess() = 0xFFFFFFFF as a shortcut.
+		}
 		HANDLE get_ProcessHandle() const noexcept
 		{
 			return m_hProcess.get_Handle();
@@ -117,7 +123,7 @@ namespace Gray
 #elif defined(__linux__)
 			return m_nPid != 0;
 #endif
-		}
+	}
 
 		PROCESSID_t get_ProcessId() const noexcept
 		{
@@ -128,7 +134,7 @@ namespace Gray
 		HRESULT OpenProcessId(PROCESSID_t dwProcessID, DWORD dwDesiredAccess = 0, bool bInheritHandle = false);
 
 #ifdef _WIN32
-		HRESULT GetProcessCommandLine( OUT wchar_t* pwText, _Inout_ size_t* pdwTextSize) const;
+		HRESULT GetProcessCommandLine(OUT wchar_t* pwText, _Inout_ size_t* pdwTextSize) const;
 #endif
 		cStringF get_CommandLine() const;
 
@@ -175,7 +181,7 @@ namespace Gray
 			// TODO __linux__
 			return 0;
 #endif
-		}
+}
 		bool put_PriorityClass(DWORD dwPriorityClass) noexcept
 		{
 			//! Set the threads priority.
@@ -190,7 +196,7 @@ namespace Gray
 		}
 
 #ifdef _WIN32
-		
+
 		HRESULT CreateRemoteThread(THREAD_FUNC_t pvFunc, const void* pvArgs, OUT cOSHandle& thread);
 
 		void* AllocMemory(size_t nSize)

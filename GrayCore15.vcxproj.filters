@@ -383,6 +383,12 @@
     <ClInclude Include="include\SysTypes.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="include\cRegKey.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Index.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.md" />
@@ -417,6 +423,7 @@
     <None Include="include\StrT.tbl">
       <Filter>include</Filter>
     </None>
+    <None Include="test\cIniFileUnitTest.ini" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">
@@ -640,9 +647,6 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\StrU.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\StrXUnitTest.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
