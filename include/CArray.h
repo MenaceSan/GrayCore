@@ -455,7 +455,7 @@ namespace Gray
 			//! ASSUME this is the same as comparing keys. Otherwise you must overload this.
 			//! Default implementation. Override this for proper implementation. This probably won't work for most cases.
 			// return cValT::Compare(Data1,Data2);
-			return cMem::Compare(&Data1, &Data2, sizeof(REF_t));	// should we use use cValT::Compare()??
+			return cMem::Compare(&Data1, &Data2, sizeof(Data1));	// should we use use cValT::Compare()??
 		}
 
 		ITERATE_t QSortPartition(ITERATE_t iLeft, ITERATE_t iRight);

@@ -131,7 +131,7 @@ namespace Gray
 		//! @note InitForCurrentThread must be called for each thread that wants to handle exceptions this way.
 #if defined(_MSC_VER)
 #if defined(_CPPUNWIND) && ! defined(_M_CEE_PURE) && ! defined(_MFC_VER)
-		::_set_se_translator(CatchException); // warning C4535: calling _set_se_translator() requires /EHa ??
+		::_set_se_translator(CatchException); // warning C4535: calling _set_se_translator() requires /EHa ?? (C++->Code Generation->Enable C++ Exceptions = Yes with SEH Exceptions)
 #endif
 		::set_terminate(CatchTerminate);
 #else

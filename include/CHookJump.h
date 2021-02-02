@@ -118,10 +118,7 @@ namespace Gray
 			: cThreadGuardFast(rJump.m_Lock)	// MUST lock while we do this. single thread.
 			, m_rJump(rJump)
 		{
-			if (swap)
-			{
-				m_bSwapOld = m_rJump.SwapOld();
-			}
+			m_bSwapOld = swap ? m_rJump.SwapOld() : false;
 		}
 		~cHookSwapLock() noexcept
 		{

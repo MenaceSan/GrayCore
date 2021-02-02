@@ -184,7 +184,7 @@ namespace Gray
 			if (nDataSize <= 0)	// Do nothing.
 				return S_OK;
 #if defined(_WIN32)
-			DWORD nLengthWritten;
+			DWORD nLengthWritten = 0;
 			const bool bRet = ::WriteFile(m_h, pData, (DWORD)nDataSize, &nLengthWritten, nullptr);
 			if (!bRet)
 #elif defined(__linux__)

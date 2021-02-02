@@ -7,6 +7,8 @@
 //! @note Obscure rule in .MSI forces use of versions >= 1.0.0. NO version 0. allowed.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
+
+#ifndef GRAY_VERSION_N
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
@@ -18,3 +20,4 @@
 #define GRAY_VERSION_S		"1.604"			//!< share string version with all files.
 #define GRAY_VERSION_RC		1,6,0,4			//!< RC version id. *.rc FILEVERSION wants this format.
 
+#endif

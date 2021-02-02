@@ -5,6 +5,7 @@
 
 #include "pch.h"
 #include "GrayCore.h"
+#include "GrayVersion.h"
 #include "cLogMgr.h"
 #include "cUnitTest.h"
 #include "cOSModImpl.h"
