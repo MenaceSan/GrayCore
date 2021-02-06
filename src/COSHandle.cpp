@@ -28,7 +28,8 @@ namespace Gray
 	{
 		//! Wait for the handle m_h to be signaled.
 		//! HRESULT_WIN32_C(ERROR_WAIT_TIMEOUT) = after dwMilliseconds
-
+		if (!isValidHandle())
+			return E_HANDLE;
 #ifdef __linux__ 
 		cOSHandleSet hset(m_h);
 		return hset.WaitForObjects(dwMilliseconds);

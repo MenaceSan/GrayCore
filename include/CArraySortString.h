@@ -15,8 +15,6 @@
 
 namespace Gray
 {
-	UNITTEST2_PREDEF(cArraySortString);
-
 	template< typename _TYPE_CH = TCHAR >
 	class GRAYCORE_LINK cArraySortString : public cArraySorted < cStringT<_TYPE_CH>, cStringT<_TYPE_CH>, const _TYPE_CH* >
 	{

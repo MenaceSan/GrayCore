@@ -41,7 +41,6 @@ enum FOF_TYPE_
 
 namespace Gray
 {
-	UNITTEST2_PREDEF(cFileDir);
 
 #ifdef _WIN32
 #define FILEDEVICE_PREFIX	"\\\\.\\"	// usually _FN(FILEDEVICE_PREFIX). similar to "\\Device\\"

@@ -123,6 +123,38 @@ namespace Gray
 			return HResult::FromWin32(lRet);
 		}
 
+		HRESULT OpenCreate(HKEY hKeyBase, const FILECHAR_t* pszSubKey, DWORD dwOptions = REG_OPTION_NON_VOLATILE,
+			REGSAM samDesired = KEY_ALL_ACCESS, SECURITY_ATTRIBUTES* pSa = nullptr)
+		{
+			//! Open the key for writing. Create it if it does not exist.
+			//! @arg hKeyBase = HKEY_LOCAL_MACHINE, HKEY_CURRENT_USER
+			//! @arg dwOptions = REG_OPTION_NON_VOLATILE
+			//! @arg samDesired = 0
+			//! @arg pSa = the security attributes to be assigned to the new key i am creating.
+			//! @return
+			//!  0 = S_OK, 1=S_FALSE=was already existing.
+			//!  E_INVALIDARGS = you used samDesired in place of dwOptions
+			//!  HRESULT_WIN32_C(ERROR_INVALID_HANDLE)
+			//! @note function creates all missing keys in the specified path.
+
+			DWORD dwDisposition = 0;
+			// bool bRetried = false;	do_retry:
+			CloseHandle();
+			const LSTATUS lRet = _FNF(::RegCreateKeyEx)(hKeyBase, pszSubKey, 0,
+				nullptr,	// class
+				dwOptions,
+				samDesired,
+				pSa,
+				&ref_Handle(),
+				&dwDisposition	// pointer to return disposition.
+				);
+			if (lRet == NO_ERROR)
+			{
+				return (dwDisposition == REG_OPENED_EXISTING_KEY) ? S_FALSE : S_OK;
+			}
+			return HResult::FromWin32(lRet);
+		}
+
 		HRESULT OpenBase(const FILECHAR_t* pszSubKey, REGSAM samDesired = KEY_READ)
 		{
 			//! open sub key from base key. Replaces get_HKey which is usually a base.
@@ -179,7 +211,7 @@ namespace Gray
 		}
 		HRESULT SetValue(const FILECHAR_t* pszValueName, DWORD dwType, const void* pData, DWORD dwDataSize) noexcept
 		{
-			//! Raw Write.
+			//! Raw Write. REG_SZ must include size for '\0'.
 			//! @arg pszValueName = nullptr = default value for the key.
 			//! @return 0 = S_OK
 			//! @note strings will always be of type FILECHAR_t
@@ -219,7 +251,7 @@ namespace Gray
 			if (FAILED(hRes))
 				return hRes;
 			DWORD dwType = REG_SZ;	// always REG_SZ or REG_EXPAND_SZ
-			return QueryValue(nullptr, dwType, pData, OUT dwDataSize);
+			return QueryValue(nullptr, OUT dwType, pData, OUT dwDataSize);
 		}
 	};
 

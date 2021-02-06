@@ -17,8 +17,6 @@
 
 namespace Gray
 {
-	UNITTEST2_PREDEF(cException);
-
 	typedef cStringT<LOGCHAR_t> cStringL;	//!< Log string.
 
 #if defined(_MSC_VER)

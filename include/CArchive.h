@@ -14,8 +14,6 @@
 
 namespace Gray
 {
-	UNITTEST2_PREDEF(cArchive);
-
 	class GRAYCORE_LINK cArchive
 	{
 		//! @class Gray::cArchive

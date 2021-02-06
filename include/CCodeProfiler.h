@@ -17,8 +17,6 @@
 
 namespace Gray
 {
-	UNITTEST2_PREDEF(cCodeProfiler);
-
 	class GRAYCORE_LINK cCodeProfileFunc
 	{
 		//! @class Gray::cCodeProfileFunc

@@ -14,8 +14,6 @@
 
 namespace Gray
 {
-	UNITTEST2_PREDEF(cBits);
-
 	typedef unsigned short BIT_SIZE_t;	//!< number of bits in some intrinsic type. <= 256 ?
 	typedef unsigned int BIT_ENUM_t;	//!< Enumerate number of bits or address a single bit in some array of bits.
 	enum BITOP_TYPE

@@ -30,7 +30,7 @@ namespace Gray
 #define _GTNPST(c,p)		_GTN(c)##p		//!< add a postfix.
 
 	typedef int StrLen_t;	//!< the length of a string in chars (bytes for UTF8, wchar_t for UNICODE). or offset in characters. NOT always valid for (p1-p2) for 32vs64 bit code.
-#define STRMAX(x) ((StrLen_t)(_countof(x)-1))	//!< Get Max size of static string space. minus the '\0' terminator character.
+#define STRMAX(x) ((::Gray::StrLen_t)(_countof(x)-1))	//!< Get Max size of static string space. minus the '\0' terminator character.
 	const StrLen_t k_StrLen_UNK = -1;		//!< use the default/current length of the string argument.
 
 #define STRLIT2(s)	(s), STRMAX(s)		//!< Macro to automatically add the size of literal string or fixed size buffer.
@@ -86,6 +86,6 @@ namespace Gray
 		}
 	};
 
-#define CSTRCONST(t) cStrConst(t,__TOW(t))	//!< define a const for both Unicode and UTF8 in templates. used at run-time not just compile time.
+#define CSTRCONST(t) ::Gray::cStrConst(t,__TOW(t))	//!< define a const for both Unicode and UTF8 in templates. used at run-time not just compile time.
 };
 #endif

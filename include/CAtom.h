@@ -15,8 +15,6 @@
 
 namespace Gray
 {
-	UNITTEST2_PREDEF(cAtom);
-
 	typedef HASHCODE32_t ATOMCODE_t;	//!< Encode a atom as a 32 bit hashcode instead of using its name/pointer. StrT::GetHashCode32()
 
 #define CATOM_STR(a)		a	//!< Part of a static atom quoted string. for concatenate use. e.g. "Tag_XX"

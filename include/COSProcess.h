@@ -94,7 +94,7 @@ namespace Gray
 			: m_nPid(nPid)
 			, m_hProcess(h)
 		{
-			// _WIN32 = ::GetCurrentProcess() = 0xFFFFFFFF as a shortcut.
+			// _WIN32 = ::GetCurrentProcess() = 0xFFFFFFFF as a shortcut. HMODULE_CURPROC
 		}
 		HANDLE get_ProcessHandle() const noexcept
 		{

@@ -18,8 +18,6 @@
 
 namespace Gray
 {
-	UNITTEST2_PREDEF(cAppConsole);
-
 	enum AppStd_TYPE
 	{
 		//! @enum Gray::AppStd_TYPE

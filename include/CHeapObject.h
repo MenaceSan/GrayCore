@@ -10,6 +10,7 @@
 #endif
 
 #include "cHeap.h" // cHeap
+#include "IUnknown.h"	// DECLARE_INTERFACE
 
 #if defined(_DEBUG) || defined(_DEBUG_FAST)
 #define USE_HEAPSIG

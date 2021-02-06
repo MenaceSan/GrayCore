@@ -16,8 +16,6 @@
 
 namespace Gray
 {
-	UNITTEST2_PREDEF(cException);
-
 	class GRAYCORE_LINK cExceptionSystem : public cException
 	{
 		//! @class Gray::cExceptionSystem

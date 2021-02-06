@@ -22,8 +22,6 @@
 
 namespace Gray
 {
-	UNITTEST2_PREDEF(cAppState);
-
 	enum APPSTATE_TYPE_
 	{
 		//! @enum Gray::APPSTATE_TYPE_
@@ -54,10 +52,10 @@ namespace Gray
 		void InitArgsInt(ITERATE_t argc, APP_ARGS_t ppszArgs);
 
 	public:
-		static inline bool IsArgSwitch(wchar_t ch) noexcept
+		static constexpr bool IsArgSwitch(wchar_t ch) noexcept
 		{
 			//! Is FILECHAR_t char 'ch' a command line switch char?
-			return ((ch) == '-' || (ch) == '/');
+			return ch == '-' || ch == '/';
 		}
 
 		cStringF get_ArgsStr() const noexcept;
@@ -73,8 +71,8 @@ namespace Gray
 		bool HasCommandArg(const FILECHAR_t* pszCommandArg, bool bRegex = true, bool bIgnoreCase = true) const
 		{
 			//! Do we have a particular argument? pszCommandArg
-			ITERATE_t iRet = FindCommandArg(pszCommandArg, bRegex, bIgnoreCase);
-			return (iRet >= 0);
+			const ITERATE_t iRet = FindCommandArg(pszCommandArg, bRegex, bIgnoreCase);
+			return iRet >= 0;
 		}
 	};
 
@@ -172,7 +170,7 @@ namespace Gray
 		static cString GRAYCALL GetCurrentUserName(bool bForce = false);
 		static cStringF GRAYCALL GetCurrentUserDir(const FILECHAR_t* pszSubFolder = nullptr, bool bCreate = true);		//!< Get Root folder the user has write access to.
 
-		static PROCESSID_t GRAYCALL get_CurrentProcessId()
+		static PROCESSID_t GRAYCALL get_CurrentProcessId() noexcept
 		{
 			//! similar to cOSProcess
 #ifdef _WIN32

@@ -19,6 +19,17 @@
 #define DECLSPEC_UUID(x)
 #endif
 
+// NOTE: __interface seems to imply base on IUnknown in M$. DONT use it!
+// DECLARE_INTERFACE(x) is a bare interface with no vtable.
+// MIDL_INTERFACE(a) is like DECLARE_INTERFACE but includes DECLSPEC_UUID(x)
+// _MSC_VER has a bug __declspec(dllexport) a class based on a __interface. can't create = operator ?
+
+#if 0 // ndef DECLARE_INTERFACE // for __GNUC__ (or CINTERFACE)
+#define CINTERFACE	// combaseapi.h looks for this.
+#define DECLARE_INTERFACE(iface)	interface iface // interface DECLSPEC_NOVTABLE iface
+#define DECLARE_INTERFACE_(iface, baseiface)	interface iface : public baseiface
+#endif
+
 #ifdef __GNUC__
 #define __uuidof(x) IID_##x	// IID_IUnknown == __uuidof(IUnknown) . This doesn't work in templates of course.
 #ifndef MIDL_INTERFACE

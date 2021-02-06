@@ -16,8 +16,6 @@
 
 namespace Gray
 {
-	UNITTEST2_PREDEF(cFileText);
-
 #if defined(UNDER_CE) || defined(__linux__)
 	typedef HANDLE FILEDESC_t;		//!< Posix file descriptor id. _fileno is same as HANDLE in __linux__ and UNDER_CE
 #else

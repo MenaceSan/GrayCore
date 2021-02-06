@@ -80,7 +80,7 @@ namespace Gray
 		//! @arg pszCurrentDir = cFilePath::GetFileDir( pszExeName )
 		//! similar to POSIX execvp()
  
-		if (pszExeName == nullptr)
+		if (StrT::IsWhitespace(pszExeName))
 			return E_INVALIDARG;
 
 #ifdef _WIN32
@@ -107,16 +107,19 @@ namespace Gray
 
 		// @note The Unicode version of this function, CreateProcessW, can modify the contents of lpCommandLine!?
 		// https://msdn.microsoft.com/en-us/library/windows/desktop/ms682425(v=vs.85).aspx
-#if USE_UNICODE_FN 
 		FILECHAR_t sCommandLine[_MAX_PATH];
-		StrT::CopyLen(sCommandLine, pszArgs, STRMAX(sCommandLine));
-#else
-		FILECHAR_t* sCommandLine = const_cast<FILECHAR_t*>(pszArgs);
-#endif
+		sCommandLine[0] = '\0';
+		if (!StrT::IsWhitespace(pszArgs))
+		{
+			StrLen_t len = StrT::CopyLen(sCommandLine, pszExeName, STRMAX(sCommandLine));
+			len += StrT::CopyLen(sCommandLine + len, " ", STRMAX(sCommandLine) - len);
+			StrT::CopyLen(sCommandLine + len, pszArgs, STRMAX(sCommandLine) - len);
+			pszArgs = sCommandLine;
+		}
 
 		BOOL bRet = _FNF(::CreateProcess)(
 			pszExeName,		// lpApplicationName, = pszExeName
-			sCommandLine,	//  lpCommandLine,
+			pszArgs != nullptr ? sCommandLine : nullptr,	//  lpCommandLine,
 			nullptr,		// LPSECURITY_ATTRIBUTES lpProcessAttributes,
 			nullptr,		// LPSECURITY_ATTRIBUTES lpThreadAttributes,
 			bInheritHandles,		// BOOL bInheritHandles,

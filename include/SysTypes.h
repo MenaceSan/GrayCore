@@ -321,15 +321,7 @@
 #ifndef DECLSPEC_NOVTABLE	// __GNUC__ has no such concept. Maybe use pragma ? AFX_NOVTABLE
 #define DECLSPEC_NOVTABLE		//__declspec(novtable)	// This is a abstract class or an interface the may not be instantiated directly.
 #endif
-
-// NOTE: __interface seems to imply base on IUnknown in M$. DONT use it! Use MIDL_INTERFACE(a) instead.
-// _MSC_VER has a bug __declspec(dllexport) a class based on a __interface. can't create = operator ?
-
-#ifndef DECLARE_INTERFACE // for __GNUC__ (or CINTERFACE)
-#define interface struct DECLSPEC_NOVTABLE		// a plain interface that may not support IUnknown. For use with DirectX defs.
-#define DECLARE_INTERFACE(iface)	interface iface 
-#define DECLARE_INTERFACE_(iface, baseiface)	interface iface : public baseiface
-#endif
+// #define DECLSPEC_NOVTABLE interface struct 		// a plain interface that may not support IUnknown. For use with DirectX defs.
 
 #if defined(_MSC_VER) && ( _MSC_VER < 1100 )	// MSC Version 5.0 defines these from the ANSI spec. MSC 4.1 does not.
 #define bool	int

@@ -26,8 +26,6 @@ struct _SECURITY_ATTRIBUTES;	// stub this out
 
 namespace Gray
 {
-	UNITTEST2_PREDEF(cFile);
-
 	enum OF_FLAGS_TYPE_
 	{
 		//! @enum Gray::OF_FLAGS_TYPE_
