@@ -23,6 +23,7 @@
 #include "cFilePath.h"
 #include "cAppState.h"
 #include "cOSModImpl.h"
+#include "cObjectFactory.h"
 
 namespace Gray
 {
@@ -81,19 +82,17 @@ namespace Gray
 		virtual void RunUnitTest() = 0;	 
 	};
 
-	class GRAYCORE_LINK cUnitTestRegister
+ 	class GRAYCORE_LINK cUnitTestRegister : public cObjectFactory<cUnitTest>
 	{
 		//! @class Gray::cUnitTestRegister
 		//! Hold the registration for a type of cUnitTest.
 		//! ALWAYS constructed in 'C' static init code. The cUnitTest itself is constructed on run demand.
 		//! Assume static init is NOT multi threaded so no thread locking is required.
 	public:
-		const LOGCHAR_t* m_pszTestName;			//!< Display Name for the unit test.
 		const UNITTEST_LEVEL_TYPE m_nTestLevel;	//!< at what level does this test run?
 	protected:
-		cUnitTestRegister(const LOGCHAR_t* pszTestName, UNITTEST_LEVEL_TYPE nTestLevel = UNITTEST_LEVEL_Core);
+		cUnitTestRegister(const ATOMCHAR_t* pszTestName, UNITTEST_LEVEL_TYPE nTestLevel = UNITTEST_LEVEL_Core);
 		virtual ~cUnitTestRegister();
-		virtual cUnitTest* CreateUnitTest() = 0;	//!< must implement this.
 	public:
 		void RunUnitTest();	//!< Create and run the unit test cUnitTest.
 	};
@@ -111,7 +110,7 @@ namespace Gray
 			, cSingletonStatic< cUnitTestRegisterT<T> >(this)
 		{
 		}
-		virtual cUnitTest* CreateUnitTest() override
+		cUnitTest* CreateObject() const override
 		{
 			//! create derived version of cUnitTest
 			//! Never create pure virtual cUnitTest directly of course.

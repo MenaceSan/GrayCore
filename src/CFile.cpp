@@ -266,7 +266,7 @@ namespace Gray
 		return(cFilePath::GetFileNameExt(get_FilePath(), get_FilePath().GetLength()));
 	}
 
-	bool cFile::IsFileExt(const FILECHAR_t* pszExt) const
+	bool cFile::IsFileExt(const FILECHAR_t* pszExt) const noexcept
 	{
 		//! is the pszExt a match?
 		return cFilePath::IsFileNameExt(get_FilePath(), pszExt);

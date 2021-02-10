@@ -242,8 +242,8 @@ do ordain and establish this constitution of the United States of America\n\n");
 
 	//****************************************************************************
 
-	cUnitTestRegister::cUnitTestRegister(const LOGCHAR_t* pszTestName, UNITTEST_LEVEL_TYPE nTestLevel)
-		: m_pszTestName(pszTestName)
+	cUnitTestRegister::cUnitTestRegister(const ATOMCHAR_t* pszTestName, UNITTEST_LEVEL_TYPE nTestLevel)
+		: cObjectFactory(pszTestName, typeid(cUnitTest))
 		, m_nTestLevel(nTestLevel)
 	{
 		//! May be constructed in 'C' static init code.
@@ -263,7 +263,7 @@ do ordain and establish this constitution of the United States of America\n\n");
 	{
 		//! Create the cUnitTest object and run the cUnitTest.
 		ASSERT(this != nullptr);
-		cNewPtr<cUnitTest> pUnitTest(CreateUnitTest());
+		cNewPtr<cUnitTest> pUnitTest(CreateObject());
 		pUnitTest->RunUnitTest();
 	}
 
@@ -348,7 +348,7 @@ do ordain and establish this constitution of the United States of America\n\n");
 		for (ITERATE_t i = 0; i < m_aUnitTests.GetSize(); i++)
 		{
 			cUnitTestRegister* pUt = m_aUnitTests[i];
-			if (!StrT::Cmp(pUt->m_pszTestName, pszName))
+			if (!StrT::Cmp(pUt->m_pszName, pszName))
 				return pUt;
 		}
 		return nullptr;
@@ -394,7 +394,7 @@ do ordain and establish this constitution of the United States of America\n\n");
 		{
 			for (int j = 0; j < m_aTestNames.GetSize(); j++)
 			{
-				if (StrT::MatchRegEx<LOGCHAR_t>(pUnitTest->m_pszTestName, m_aTestNames[j], true) > 0)
+				if (StrT::MatchRegEx<LOGCHAR_t>(pUnitTest->m_pszName, m_aTestNames[j], true) > 0)
 				{
 					if (remove)
 					{
@@ -528,11 +528,11 @@ do ordain and establish this constitution of the United States of America\n\n");
 			if (!TestActive(pUnitTest, true))
 				continue;
 
-			StrLen_t iLenName = StrT::Len(pUnitTest->m_pszTestName) + 1;
+			StrLen_t iLenName = StrT::Len(pUnitTest->m_pszName) + 1;
 			UNITTEST_TRUE(iLenName > 0 && iLenName < STRMAX(szDashes));
 			szDashes[_countof(szDashes) - iLenName] = '\0';
 
-			m_pLog->addDebugInfoF("cUnitTest '%s' run  %s", LOGSTR(pUnitTest->m_pszTestName), szDashes);
+			m_pLog->addDebugInfoF("cUnitTest '%s' run  %s", LOGSTR(pUnitTest->m_pszName), szDashes);
 			szDashes[_countof(szDashes) - iLenName] = '-';
 
 			cTimePerf tPerfStart(true);		// Time a single test for performance changes.
@@ -544,7 +544,7 @@ do ordain and establish this constitution of the United States of America\n\n");
 			if (m_iFailures > 0)
 			{
 				// Assume cDebugAssert::Assert_Fail was also called.
-				m_pLog->addDebugInfoF("cUnitTest FAILED '%s' Test %d", LOGSTR(pUnitTest->m_pszTestName), iTestsRun);
+				m_pLog->addDebugInfoF("cUnitTest FAILED '%s' Test %d", LOGSTR(pUnitTest->m_pszName), iTestsRun);
 				return E_FAIL;
 			}
 
@@ -555,7 +555,7 @@ do ordain and establish this constitution of the United States of America\n\n");
 			if (!bHeapCheck && !::Gray::cDebugAssert::Assert_Fail("cHeap::Check", DEBUGSOURCELINE))
 			{
 				// Assume cDebugAssert::Assert_Fail was also called.
-				m_pLog->addDebugInfoF("cUnitTest FAILED '%s' Heap Corruption.", LOGSTR(pUnitTest->m_pszTestName));
+				m_pLog->addDebugInfoF("cUnitTest FAILED '%s' Heap Corruption.", LOGSTR(pUnitTest->m_pszName));
 				return E_FAIL;
 			}
 
@@ -569,7 +569,7 @@ do ordain and establish this constitution of the United States of America\n\n");
 			if (nLenText > STRMAX(szDashes))
 				nLenText = STRMAX(szDashes);
 			szDashes[_countof(szDashes) - nLenText] = '\0';
-			m_pLog->addDebugInfoF("cUnitTest '%s' complete in %s %s", LOGSTR(pUnitTest->m_pszTestName), LOGSTR(sTimeSpan), szDashes);
+			m_pLog->addDebugInfoF("cUnitTest '%s' complete in %s %s", LOGSTR(pUnitTest->m_pszName), LOGSTR(sTimeSpan), szDashes);
 			szDashes[_countof(szDashes) - nLenText] = '-';
 		}
 

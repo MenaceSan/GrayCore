@@ -11,6 +11,7 @@
 
 #include "cThreadLock.h"
 #include "cUnitTestDecl.h"
+#include "cMem.h"
 
 namespace Gray
 {

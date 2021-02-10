@@ -35,7 +35,7 @@ namespace Gray
 		{
 			//! @return Difference in bytes. Assume it is a reasonable sized block? like GET_INDEX_IN()
 			ptrdiff_t i = ((const BYTE*)pEnd - (const BYTE*)pStart);	// like INT_PTR
-			// ASSERT(i > -(INT_PTR)(cHeap::k_ALLOC_MAX) && i < (INT_PTR)(cHeap::k_ALLOC_MAX));	// k_ALLOC_MAX
+			// DEBUG_CHECK(i > -(INT_PTR)(cHeap::k_ALLOC_MAX) && i < (INT_PTR)(cHeap::k_ALLOC_MAX));	// k_ALLOC_MAX
 			return i;
 		}
 

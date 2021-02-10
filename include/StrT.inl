@@ -427,7 +427,7 @@ namespace Gray
 	//*************************************************************
 
 	template< typename TYPE>
-	bool GRAYCALL StrT::IsWhitespace(const TYPE* pStr, StrLen_t iLenMaxChars)
+	bool GRAYCALL StrT::IsWhitespace(const TYPE* pStr, StrLen_t iLenMaxChars) NOEXCEPT
 	{
 		//! Is the whole string whitespace, empty or nullptr?
 		//! Like .NET String.IsNullOrWhiteSpace()
@@ -469,7 +469,7 @@ namespace Gray
 	}
 
 	template< typename TYPE>
-	bool GRAYCALL StrT::IsPrintable(const TYPE* pStr, StrLen_t iLenChars)
+	bool GRAYCALL StrT::IsPrintable(const TYPE* pStr, StrLen_t iLenChars) NOEXCEPT
 	{
 		//! Is this a normally printable string?
 		if (pStr == nullptr)

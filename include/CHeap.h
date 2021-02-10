@@ -79,7 +79,7 @@ namespace Gray
 			}
 			return pData;
 		}
-		static void GRAYCALL FreePtr(void* pData);
+		static void GRAYCALL FreePtr(void* pData) noexcept;
 		static void* GRAYCALL ReAllocPtr(void* pData, size_t nSize);
 
 		UNITTEST_FRIEND(cHeap);

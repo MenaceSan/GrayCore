@@ -389,6 +389,9 @@
     <ClInclude Include="include\cRegKey.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="include\cObjectService.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.md" />
@@ -423,6 +426,18 @@
     <None Include="include\cLogLevel.tbl">
       <Filter>include</Filter>
     </None>
+    <None Include="build\BuildNuGetImage.bat">
+      <Filter>build</Filter>
+    </None>
+    <None Include="build\GrayCore.nuget.props">
+      <Filter>build</Filter>
+    </None>
+    <None Include="build\graycore-v141.nuspec">
+      <Filter>build</Filter>
+    </None>
+    <None Include="build\graycore-v142.nuspec">
+      <Filter>build</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">
@@ -430,6 +445,9 @@
     </Filter>
     <Filter Include="include">
       <UniqueIdentifier>{17d5e6aa-3bd2-4aff-85ac-b1d8b35bb64f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="build">
+      <UniqueIdentifier>{7a7384f9-75f5-4e54-a16d-a9c50af94453}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -639,13 +657,13 @@
     <ClCompile Include="src\cList.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\cObjectFactory.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\cRandom.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\cArray.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cObjectService.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

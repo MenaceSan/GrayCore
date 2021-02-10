@@ -46,7 +46,7 @@ namespace Gray
 		// BaseType m_nullchar;	// terminated with '\0' char
 
 	public:
-		void* GetString() const          // char/wchar_* to managed data
+		void* GetString() const noexcept          // char/wchar_* to managed data
 		{
 			//! Get a pointer to the characters of the string. Stored in the space allocated after this class.
 			return (void*)(this + 1); // const_cast
@@ -94,8 +94,8 @@ namespace Gray
 		typedef CStringT<_TYPE_CH> THIS_t;
 
 	protected:
-		_TYPE_CH* m_pchData;	// points into CStringData[1]
-		static const _TYPE_CH m_Nil;		// Use this instead of nullptr. ala MFC. also like _afxDataNil. AKA cStrConst::k_Empty ?
+		_TYPE_CH* m_pchData;	//!< points into CStringData[1]
+		static const _TYPE_CH m_Nil;		//!< Use this instead of nullptr. ala MFC. also like _afxDataNil. AKA cStrConst::k_Empty ?
 
 	public:
 		CStringT() noexcept
@@ -148,7 +148,7 @@ namespace Gray
 			//! like MFC
 			DEBUG_CHECK(m_pchData != &m_Nil);
 			DEBUG_CHECK(m_pchData != nullptr);
-			return (reinterpret_cast<CStringData*>(m_pchData)) - 1;
+			return (reinterpret_cast<CStringData*>(m_pchData)) - 1;	// the block before this pointer.
 		}
 		const _TYPE_CH* GetString() const noexcept
 		{
@@ -162,10 +162,10 @@ namespace Gray
 			//! Is the string properly terminated?
 			if (m_pchData == &m_Nil)
 				return true;
-			CStringData* pData = GetData();
+			CStringData* const pData = GetData();
 			if (pData == nullptr)
 				return false;		// should never happen!
-			StrLen_t iLen = pData->get_CharCount();
+			const StrLen_t iLen = pData->get_CharCount();
 			if (!pData->IsValidInsideN(iLen * sizeof(_TYPE_CH)))
 				return false;		// should never happen!
 			if (pData->get_RefCount() <= 0)
@@ -351,7 +351,7 @@ namespace Gray
 		void EmptyValid()
 		{
 			// Use m_Nil for empty.
-			ASSERT(isValidString());
+			DEBUG_CHECK(isValidString());
 			GetData()->DecRefCount();
 			Init();
 		}
@@ -421,7 +421,7 @@ namespace Gray
 			return SUPER_t::GetString();
 		}
 
-		bool isPrintableString() const
+		bool isPrintableString() const noexcept
 		{
 #if defined(_MFC_VER)
 			return true;

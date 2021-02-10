@@ -208,10 +208,10 @@ namespace Gray
 		template< typename TYPE >
 		GRAYCORE_LINK static StrLen_t GRAYCALL GetWhitespaceEnd(const TYPE* pStr, StrLen_t iLenChars = k_StrLen_UNK);
 		template< typename TYPE >
-		GRAYCORE_LINK static bool GRAYCALL IsWhitespace(const TYPE* pStr, StrLen_t iLenChars = StrT::k_LEN_MAX);
+		GRAYCORE_LINK static bool GRAYCALL IsWhitespace(const TYPE* pStr, StrLen_t iLenChars = StrT::k_LEN_MAX) NOEXCEPT;
 
 		template< typename TYPE >
-		GRAYCORE_LINK static bool GRAYCALL IsPrintable(const TYPE* pStr, StrLen_t iLenChars = StrT::k_LEN_MAX);
+		GRAYCORE_LINK static bool GRAYCALL IsPrintable(const TYPE* pStr, StrLen_t iLenChars = StrT::k_LEN_MAX) NOEXCEPT;
 
 		// String searching. const
 		template< typename TYPE >

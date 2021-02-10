@@ -1,6 +1,6 @@
 //
 //! @file cWinHeap.inl
-//! macro template for CWinLocalHandle, CWinLocalV, CWinLocalT<> etc
+//! macro template for cWinLocalHandle, cWinLocalV, cWinLocalT<> etc
 //! @note requires proper #define set up. DON'T include this directly!
 //! "#define WINHEAPN(), WINHEAPM(), WINHEAPH, WINHEAPF()"
 //
@@ -9,7 +9,7 @@ namespace Gray
 {
 	class WINHEAPN(Handle) : public cMemBlock
 	{
-		//! CWinLocalHandle or CWinGlobalHandle
+		//! cWinLocalHandle or cWinGlobalHandle
 		//! Wrap the HANDLE_t heap/memory object for lock/unlock of an instance. (HLOCAL or HGLOBAL)
 		//! manage lock and unlock. yes i know lock/unlock doesn't do anything in _WIN32
 		//! Does NOT free on destruct. just unlock.
@@ -168,7 +168,7 @@ namespace Gray
 
 	class WINHEAPN(V) : public WINHEAPN(Handle)
 	{
-		//! CWinLocalV or CWinGlobalV
+		//! cWinLocalV or cWinGlobalV
 		//! Wrap the HANDLE_t heap/memory allocation object.
 		//! Similar to MFC CGlobalHeap or CWin32Heap
 		//! Similar to cHeapBlock
@@ -238,7 +238,7 @@ namespace Gray
 	struct WINHEAPN(T) : public WINHEAPN(V)
 	{
 		//! A type cast windows heap pointer/handle pair. like cMemBlockT<>
-		//! CWinGlobalT<> or CWinLocalT<>
+		//! cWinGlobalT<> or cWinLocalT<>
 		typedef WINHEAPN(V) SUPER_t;
 
 		_TYPE* get_Data() const noexcept

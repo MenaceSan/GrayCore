@@ -100,7 +100,7 @@ namespace Gray
 		return true;
 	}
 
-	void GRAYCALL cHeap::FreePtr(void* pData) // static
+	void GRAYCALL cHeap::FreePtr(void* pData) noexcept // static
 	{
 		//! free a pointer to a block allocated on the heap.
 		//! Same footprint as C free()
@@ -108,7 +108,7 @@ namespace Gray
 		if (pData == nullptr)
 			return;
 #if defined(_DEBUG)
-		ASSERT(cHeap::IsValidHeap(pData));
+		DEBUG_CHECK(cHeap::IsValidHeap(pData));
 #endif
 		cHeap::sm_nAllocs--;
 #ifdef USE_HEAP_STATS

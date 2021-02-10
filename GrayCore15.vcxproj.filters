@@ -424,6 +424,18 @@
       <Filter>include</Filter>
     </None>
     <None Include="test\cIniFileUnitTest.ini" />
+    <None Include="build\BuildNuGetImage.bat">
+      <Filter>build</Filter>
+    </None>
+    <None Include="build\GrayCore.nuget.props">
+      <Filter>build</Filter>
+    </None>
+    <None Include="build\graycore-v141.nuspec">
+      <Filter>build</Filter>
+    </None>
+    <None Include="build\graycore-v142.nuspec">
+      <Filter>build</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">
@@ -431,6 +443,9 @@
     </Filter>
     <Filter Include="include">
       <UniqueIdentifier>{17d5e6aa-3bd2-4aff-85ac-b1d8b35bb64f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="build">
+      <UniqueIdentifier>{f0f185ec-474f-4392-b4b8-d13f7d162760}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -533,9 +548,6 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\cMime.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\cObjectFactory.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\cOSHandle.cpp">
@@ -647,6 +659,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\StrU.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cObjectService.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

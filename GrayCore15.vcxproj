@@ -452,7 +452,8 @@
       <ProgramDatabaseFile>$(OutDir)$(TargetName).pdb</ProgramDatabaseFile>
       <GenerateMapFile>true</GenerateMapFile>
       <SubSystem>Windows</SubSystem>
-      <ImportLibrary>$(IntDir)$(ProjectName).lib</ImportLibrary>
+      <ImportLibrary>
+      </ImportLibrary>
       <TargetMachine>MachineX64</TargetMachine>
       <AdditionalLibraryDirectories>$(VCInstallDir)UnitTest\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
@@ -491,7 +492,8 @@
       </OptimizeReferences>
       <EnableCOMDATFolding>
       </EnableCOMDATFolding>
-      <ImportLibrary>$(IntDir)$(ProjectName).lib</ImportLibrary>
+      <ImportLibrary>
+      </ImportLibrary>
       <TargetMachine>MachineX86</TargetMachine>
     </Link>
     <PostBuildEvent>
@@ -529,7 +531,8 @@
       </OptimizeReferences>
       <EnableCOMDATFolding>
       </EnableCOMDATFolding>
-      <ImportLibrary>$(IntDir)$(ProjectName).lib</ImportLibrary>
+      <ImportLibrary>
+      </ImportLibrary>
       <TargetMachine>MachineX64</TargetMachine>
     </Link>
     <PostBuildEvent>
@@ -605,6 +608,10 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <None Include="build\BuildNuGetImage.bat" />
+    <None Include="build\graycore-v141.nuspec" />
+    <None Include="build\graycore-v142.nuspec" />
+    <None Include="build\GrayCore.nuget.props" />
     <None Include="include\cLogLevel.tbl" />
     <None Include="include\cMimeExts.tbl" />
     <None Include="include\cMimeTypes.tbl" />
@@ -802,7 +809,7 @@
     <ClCompile Include="src\cMem.cpp" />
     <ClCompile Include="src\cMemPage.cpp" />
     <ClCompile Include="src\cMime.cpp" />
-    <ClCompile Include="src\cObjectFactory.cpp" />
+    <ClCompile Include="src\cObjectService.cpp" />
     <ClCompile Include="src\cOSHandle.cpp" />
     <ClCompile Include="src\cOSHandleSet.cpp" />
     <ClCompile Include="src\cOSModImpl.cpp" />

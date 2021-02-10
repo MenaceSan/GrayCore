@@ -1,6 +1,6 @@
 //
 //! @file GrayCore.cpp
-//! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
+//! @copyright (c) 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
 #include "pch.h"
@@ -17,7 +17,7 @@ namespace Gray
 #ifdef GRAY_DLL // force implementation/instantiate for DLL/SO.
 	template class GRAYCORE_LINK cInterlockedVal<int>;		// Force Instantiation
 #ifdef USE_INT64
-	template class GRAYCORE_LINK cInterlockedVal<INT64>;		// Force Instantiation 
+	template class GRAYCORE_LINK cInterlockedVal<INT64>;	// Force Instantiation 
 #endif
 #endif
 }

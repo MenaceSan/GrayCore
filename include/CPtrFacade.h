@@ -127,6 +127,10 @@ namespace Gray
 		{
 			return p2 != m_p;
 		}
+		bool IsEqual(const TYPE* p2)  const noexcept
+		{
+			return p2 == m_p;
+		}
 		bool operator == ( /* const*/ TYPE* p2) const noexcept
 		{
 			return p2 == m_p;

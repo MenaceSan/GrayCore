@@ -1,6 +1,6 @@
 //
 //! @file cWinHeap2.h
-//! define inline headers.
+//! define inline headers for Global vs Local Heap variations. This doesnt matter anymore ?
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
@@ -14,8 +14,8 @@
 #include "cLogMgr.h"
 
 #ifdef _WIN32
-	// CWinGlobalHandle or CWinGlobalV will create CWinGlobalT<X> use GMEM_*
-#define WINHEAPN(n)	CWinGlobal##n
+	// cWinGlobalHandle or cWinGlobalV will create cWinGlobalT<X> use GMEM_*
+#define WINHEAPN(n)	cWinGlobal##n
 #define WINHEAPM(n)	GMEM_##n
 #define WINHEAPH	HGLOBAL
 #ifdef UNDER_CE
@@ -29,8 +29,8 @@
 #undef WINHEAPH
 #undef WINHEAPF
 
-	// CWinLocalHandle, CWinLocalV, CWinLocalT<> use LMEM_*
-#define WINHEAPN(n)	CWinLocal##n
+	// cWinLocalHandle, cWinLocalV, cWinLocalT<> use LMEM_*
+#define WINHEAPN(n)	cWinLocal##n
 #define WINHEAPM(n)	LMEM_##n
 #define WINHEAPH	HLOCAL
 #define WINHEAPF(x)	::Local##x

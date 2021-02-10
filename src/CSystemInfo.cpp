@@ -461,8 +461,8 @@ namespace Gray
 #error NOOS
 #endif
 
-		FILECHAR_t szNodeName[kSizeSystemName + 1];
-		HRESULT hRes = cSystemInfo::GetSystemName(szNodeName, kSizeSystemName);
+		FILECHAR_t szNodeName[kSizeSystemName + 2];
+		HRESULT hRes = cSystemInfo::GetSystemName(szNodeName, STRMAX(szNodeName));
 		if (FAILED(hRes))
 		{
 			// NO NAME? I've seen this fail on some machines. don't know why.

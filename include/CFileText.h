@@ -40,7 +40,7 @@ namespace Gray
 		const FILECHAR_t* get_ModeCPtr() const;
 		HRESULT OpenCreate(cStringF sFilePath, OF_FLAGS_t nOpenFlags = OF_CREATE | OF_WRITE, _SECURITY_ATTRIBUTES* pSa = nullptr)
 		{
-			//! Don't use this.
+			//! Don't use this. deleted.
 			ASSERT(0);
 			UNREFERENCED_PARAMETER(sFilePath);
 			UNREFERENCED_PARAMETER(nOpenFlags);
@@ -53,7 +53,7 @@ namespace Gray
 		cFileText(cStringF sFilePath, OF_FLAGS_t nOpenFlags);
 		virtual ~cFileText();
 
-		virtual bool isFileOpen() const override
+		virtual bool isFileOpen() const noexcept override
 		{
 			return m_pStream != nullptr;
 		}

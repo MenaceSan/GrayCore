@@ -2,9 +2,9 @@
 # GrayCore
 C++ core library providing very basic utility functionality without using any STL. Minimal dependencies.
 
-GRAY_VERSION_S = Version 1.604
+GRAY_VERSION_S = Version 1.6.4
 
-https://www.menasoft.com/graydox/index.html#graycore
+https://www.menasoft.com/graydox/d8/df5/namespaceGray.html
 https://github.com/MenaceSan/GrayCore
 
 The Gray libraries are a set of source code modules written mostly in C++ over 10 years or so and used in a variety of projects.
@@ -97,15 +97,28 @@ Any function named IsValid* should never throw. use noexcept.
 C++11 keywords used: override, final, auto, decltype, static_assert, nullptr
 
 Doxygen Help:
+https://www.menasoft.com/graydox/d8/df5/namespaceGray.html
 http://www.stack.nl/~dimitri/doxygen/commands.html#cmdfile
 use http://www.die.net for Linux man docs.
 
 Build for Linux:
+
 Needs dl, pthread
 g++ -std=c++0x -D_DEBUG -O2 -g -Wall -c -fmessage-length=0 -fPIC -pthread -o *
 
+NuGet packages:
+Build native NuGet package for *Release  and *debug configs and multiple tool chains/CRT versions and platforms
+
+graycore-v141.1.6.4 = seperate package for the v141 tool chain. VS2017
+graycore-v142.1.6.4 = seperate package for the v142 tool chain. VS2019
+
+Contains options for:
+Configuration = *release* or *debug*  
+Platform = Win32 or x64
+GRAY_DLL = as DLL.
+GRAY_STATICLIB = Static lib (default) else DLL if GRAY_DLL 
+
 @todo
-Build native NuGet package for *Release  and *debug configs and multiple platforms/tool chains/CRT versions
 USE_CRT = 0 = minimize use of CRT MSVCRTD . remove or wrap -> sprintf, strtod, rand, malloc ?
 Timeunits : span merge duplicated code.
 ThreadLock RW,

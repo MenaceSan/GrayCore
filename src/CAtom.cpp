@@ -17,8 +17,9 @@ namespace Gray
 		, m_aEmpty(new cAtomDef(""))
 	{
 		//! created on demand to prevent any race conditions at static create time.
-		m_aName.Add(m_aEmpty.m_pDef);
-		m_aHash.Add(m_aEmpty.m_pDef);
+		m_aName.Add(m_aEmpty.m_p);
+		m_aHash.Add(m_aEmpty.m_p);
+		SetAtomStatic(m_aEmpty);
 	}
 
 	cAtomManager::~cAtomManager()
@@ -32,8 +33,8 @@ namespace Gray
 		if (StrT::IsNullOrEmpty(pszText))
 			return m_aEmpty;
 		cThreadGuard lock(m_Lock);
-		cAtomDefPtr pDef = m_aName.FindArgForKey(pszText);
-		if (pDef == nullptr)
+		cAtomRef pDef(m_aName.FindArgForKey(pszText));
+		if (!pDef.isValidPtr())
 			return m_aEmpty;
 		return cAtomRef(pDef);
 	}
@@ -44,15 +45,15 @@ namespace Gray
 		if (idAtom == k_HASHCODE_CLEAR)
 			return m_aEmpty;
 		cThreadGuard lock(m_Lock);
-		cAtomDefPtr pDef = m_aHash.FindArgForKey(idAtom);
-		if (pDef == nullptr)
+		cAtomRef pDef(m_aHash.FindArgForKey(idAtom));
+		if (!pDef.isValidPtr())
 			return m_aEmpty;
 		return cAtomRef(pDef);
 	}
 
 	bool cAtomManager::RemoveAtom(cAtomDef* pDef)
 	{
-		// kRefsBase
+		// below kRefsBase
 
 		if (pDef == nullptr)
 			return false;
@@ -68,12 +69,12 @@ namespace Gray
 		return bRetRemove;
 	}
 
-	cAtomDefPtr cAtomManager::CreateAtom(ITERATE_t index, COMPARE_t iCompareRes, cStringA sVal)
+	cAtomRef cAtomManager::CreateAtom(ITERATE_t index, COMPARE_t iCompareRes, cStringA sVal)
 	{
 		//! Insertion sort.
 		ASSERT(sVal.get_RefCount() >= 1);
 		ASSERT(!sVal.IsEmpty());
-		cAtomDefPtr pDef(new cAtomDef(sVal));
+		cAtomRef pDef(new cAtomDef(sVal));
 		ASSERT(sVal.get_RefCount() >= 2);
 		m_aName.AddPresorted(index, iCompareRes, pDef);
 		ITERATE_t iHashRet = m_aHash.Add(pDef);
@@ -82,13 +83,14 @@ namespace Gray
 		return pDef;
 	}
 
-	cAtomDefPtr cAtomManager::FindorCreateAtomStr(const cStringA& sName)
+	cAtomRef cAtomManager::FindorCreateAtomStr(const cStringA& sName) noexcept
 	{
 		//! Find the atom in the atom table if it exists else create a new one.
 		//! Does NOT return nullptr
 
 		if (sName.IsEmpty())
-			return m_aEmpty.m_pDef;
+			return m_aEmpty;
+
 		cThreadGuard lock(m_Lock);
 
 		COMPARE_t iCompareRes;
@@ -96,16 +98,17 @@ namespace Gray
 		if (iCompareRes == COMPARE_Equal)
 		{
 			// already here.
-			return cAtomDefPtr(m_aName.GetAt(index));
+			return cAtomRef(m_aName.GetAt(index));
 		}
 		return CreateAtom(index, iCompareRes, sName);
 	}
 
-	cAtomDefPtr cAtomManager::FindorCreateAtomStr(const ATOMCHAR_t* pszName)
+	cAtomRef cAtomManager::FindorCreateAtomStr(const ATOMCHAR_t* pszName) noexcept
 	{
 		//! Find the atom in the atom table if it exists else create a new one.
 		if (StrT::IsNullOrEmpty(pszName))
-			return m_aEmpty.m_pDef;
+			return m_aEmpty;
+
 		cThreadGuard lock(m_Lock);
 
 		COMPARE_t iCompareRes;
@@ -113,7 +116,7 @@ namespace Gray
 		if (iCompareRes == COMPARE_Equal)
 		{
 			// already here.
-			return cAtomDefPtr(m_aName.GetAt(index));
+			return cAtomRef(m_aName.GetAt(index));
 		}
 		return CreateAtom(index, iCompareRes, pszName);
 	}
@@ -156,16 +159,15 @@ namespace Gray
 		cAtomManager& rAM = cAtomManager::I();
 
 		// Remove the cAtomRef from the tables if last use.
-		int iRefCount = m_pDef->get_RefCount();
+		int iRefCount = get_RefCount();
 		if (iRefCount <= cAtomManager::kRefsBase)
 		{
-			// Remove me from the tables.
-			// NOTE: This can leak if there are outstanding cString referenced versions ?
-			rAM.RemoveAtom(m_pDef);
+			// Remove me from the cAtomManager tables.
+			rAM.RemoveAtom(m_p);
 		}
 
-		// Assume caller will replace m_pDef. or we are in destruct.
-		m_pDef = isLast ? nullptr : rAM.m_aEmpty.m_pDef;
+		// if nullptr then caller will free ref. or we are in destruct.
+		put_Ptr(isLast ? nullptr : rAM.m_aEmpty.m_p);
 	}
 
 	size_t cAtomRef::GetHeapStats(OUT ITERATE_t& iAllocCount) const
@@ -175,9 +177,9 @@ namespace Gray
 		CODEPROFILEFUNC();
 		if (IsEmpty())	// already empty
 			return 0;
-		int iRefs = m_pDef->get_RefCount();
+		int iRefs = get_RefCount();
 		ASSERT(iRefs >= 2);
-		return(m_pDef->m_s.GetHeapStats(iAllocCount) / (iRefs - 1));
+		return get_Ptr()->m_s.GetHeapStats(iAllocCount) / (iRefs - 1);
 	}
 
 	cAtomRef GRAYCALL cAtomRef::FindAtomStr(const ATOMCHAR_t* pszText) // static
@@ -186,7 +188,8 @@ namespace Gray
 		//! @note DO NOT CREATE IT!
 		//! @return m_aEmpty atom if not found.
 		CODEPROFILEFUNC();
-		return cAtomManager::I().FindAtomStr(pszText);
+		cAtomManager& i = cAtomManager::I();
+		return i.FindAtomStr(pszText);
 	}
 
 	cAtomRef GRAYCALL cAtomRef::FindAtomHashCode(ATOMCODE_t idAtom) // static
@@ -200,30 +203,15 @@ namespace Gray
 	void cAtomRef::SetAtomStatic()
 	{
 		//! Make this atom permanent. never removed from the atom table.
-		cAtomManager::I().SetAtomStatic(m_pDef);
+		cAtomManager::I().SetAtomStatic(get_Ptr());
 	}
 
-	void GRAYCALL cAtomRef::CreateStaticAtoms(const ATOMCHAR_t** ppAtoms) // static
-	{
-		//! For use with CATOM_STATIC()
-		//! @arg ppAtoms = A nullptr terminated array of static text to make into atoms.
-
-		CODEPROFILEFUNC();
-		if (ppAtoms == nullptr)
-			return;
-		for (ITERATE_t i = 0; ppAtoms[i] != nullptr; i++)
-		{
-			cAtomRef aTmp(ppAtoms[i]);
-			aTmp.SetAtomStatic();	// Make this permanent.
-		}
-	}
-
-	cAtomDefPtr GRAYCALL cAtomRef::FindorCreateAtomStr(const ATOMCHAR_t* pszText) // static
+	cAtomRef GRAYCALL cAtomRef::FindorCreateAtomStr(const ATOMCHAR_t* pszText) noexcept // static
 	{
 		return cAtomManager::I().FindorCreateAtomStr(pszText);
 	}
 
-	cAtomDefPtr GRAYCALL cAtomRef::FindorCreateAtomStr(const STR_t& sText) // static
+	cAtomRef GRAYCALL cAtomRef::FindorCreateAtomStr(const STR_t& sText) noexcept // static
 	{
 		return cAtomManager::I().FindorCreateAtomStr(sText);
 	}

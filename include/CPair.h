@@ -10,7 +10,7 @@
 #pragma once
 #endif
 
-#include "cMem.h"
+#include "Index.h" // ITERATE_t
 #include "cDebugAssert.h"
 
 namespace Gray
@@ -167,7 +167,7 @@ namespace Gray
 
 	public:
 		_TYPE_A m_a;	//!< nullptr or 0 = last in array. (typically sorted by A as primary key)
-		_TYPE_B m_b;	//!< nullptr or 0 = last in array.
+		_TYPE_B m_b;	//!< nullptr or 0 = last in array. (value of a keyvalue pair)
 
 	public:
 		_TYPE_A get_A() const noexcept
@@ -336,5 +336,5 @@ namespace Gray
 			return(this[i - 1].m_b);
 		}
 	};
-};
+}
 #endif // _INC_cPair_H

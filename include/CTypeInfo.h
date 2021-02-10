@@ -29,6 +29,8 @@ namespace Gray
 	typedef std::type_info TYPEINFO_t;	// Info from typeid()
 #endif
 
+#define GETTYPEINFO(TYPE) (const cTypeInfo&) typeid(TYPE)
+
 	class GRAYCORE_LINK cTypeInfo : public TYPEINFO_t
 	{
 		//! @class Gray::cTypeInfo

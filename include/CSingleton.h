@@ -156,7 +156,6 @@ namespace Gray
 		{
 			//! get (or create) a pointer to the singleton object.
 			//! @note This ensures proper creation order for singletons (Statics) that ref each other!
-			//! @todo use CreateObject from cObjectFactory Like the MFC CreateObject() and "CRuntime?"
 
 			if (!SUPER_t::isSingleCreated())
 			{
@@ -165,6 +164,7 @@ namespace Gray
 				if (!SUPER_t::isSingleCreated())
 				{
 					DEBUG_CHECK(!TYPE::isSingleCreated());	// SUPER_t::sm_pThe
+					// similar to CreateObject from cObjectFactory Like the MFC CreateObject() and "CRuntime?"
 					new TYPE(); // assume it calls its constructor properly and sets sm_pThe
 					DEBUG_CHECK(TYPE::isSingleCreated());	// SUPER_t::sm_pThe
 					SUPER_t::sm_pThe->RegisterSingleton();	// Register only if i know it is dynamic. Not static.

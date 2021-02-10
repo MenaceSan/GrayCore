@@ -28,7 +28,7 @@ enum WELL_KNOWN_SID_TYPE
 
 namespace Gray
 {
-	class GRAYCORE_LINK cSecurityId : private CWinLocalT < SID >
+	class GRAYCORE_LINK cSecurityId : private cWinLocalT < SID >
 	{
 		//! @class GrayLib::cSecurityId
 		//! A users id; or id group. http://msdn.microsoft.com/en-us/library/aa379594%28v=VS.85%29.aspx
@@ -42,26 +42,26 @@ namespace Gray
 		//! The forth set of numbers is the domain identifier, up to 500
 		//! The remainder is the account or group identifier. "HKEY_USERS\S-1-5-21-3686267286-921206174-156832652-1000"
 
-		typedef CWinLocalT<SID> SUPER_t;
+		typedef cWinLocalT<SID> SUPER_t;
 	public:
 		cSecurityId();
 		cSecurityId(WELL_KNOWN_SID_TYPE eWellKnownSidType);
 		~cSecurityId();
 
-		SID* get_SID() const
+		SID* get_SID() const noexcept
 		{
 			// like PSID and PISID // variable length?
 			return SUPER_t::get_Data();
 		}
-		operator SID*()
+		operator SID*() const noexcept
 		{
 			return get_SID();
 		}
-		bool isValid() const
+		bool isValid() const noexcept
 		{
-			if (get_Data() == nullptr)
+			if (get_SID() == nullptr)
 				return false;
-			return ::IsValidSid(get_Data());
+			return ::IsValidSid(get_SID());
 		}
 
 		size_t get_Length() const
@@ -76,7 +76,7 @@ namespace Gray
 		HRESULT SetByUserName(const GChar_t* pszUserName);
 	};
 
-	class GRAYCORE_LINK cSecurityACL : private CWinLocalT < ACL >
+	class GRAYCORE_LINK cSecurityACL : private cWinLocalT < ACL >
 	{
 		//! @class GrayLib::cSecurityACL
 		//! "Discretionary access-control list" (Dacl) or (Sacl)
@@ -84,7 +84,7 @@ namespace Gray
 		//! Variable Sized array of ACE. No real need to use  LocalAlloc(), LocalFree()
 		//! @note This is a mess. AddAce uses this without knowing the size of the allocated array.
 
-		typedef CWinLocalT<ACL> SUPER_t;
+		typedef cWinLocalT<ACL> SUPER_t;
 	public:
 		cSecurityACL(SID* pSidFirst = nullptr, DWORD dwAccessMask = GENERIC_ALL);
 		~cSecurityACL();
@@ -113,7 +113,7 @@ namespace Gray
 		bool AddAllowedAce(SID* pSid, DWORD dwAccessMask = GENERIC_ALL);
 	};
 
-	class GRAYCORE_LINK cSecurityDesc : public CWinLocalT < SECURITY_DESCRIPTOR >
+	class GRAYCORE_LINK cSecurityDesc : public cWinLocalT < SECURITY_DESCRIPTOR >
 	{
 		//! @class GrayLib::cSecurityDesc
 		//! Windows security descriptor is added to SECURITY_ATTRIBUTES

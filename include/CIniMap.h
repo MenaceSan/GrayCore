@@ -19,7 +19,7 @@ namespace Gray
 		//! @class Gray::cIniKeyValue
 		//! A single tuple. a key/named string and value pair. 
 		//! value/property stored as string. AKA cXmlAttribute.
-		//! like cPair, cPairT,
+		//! like cPair, cPairT but more complex (dynamic types)
 		//! similar to "std::tuple<>" or "System.Collections.Generic.KeyValuePair<>", cVarTuple
 
 	public:

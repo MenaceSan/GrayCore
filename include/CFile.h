@@ -217,7 +217,7 @@ namespace Gray
 		}
 #endif
 
-		cStringF get_FilePath() const
+		cStringF get_FilePath() const noexcept
 		{
 			//! like _MFC_VER CFile::GetFilePath(); but cStringF
 			//! @note Don't use GetFilePath() as it has some weird side effects in MFC.
@@ -227,7 +227,7 @@ namespace Gray
 		}
 		cStringF get_FileTitleX() const;	// MFC is CString return
 		cStringF get_FileExt() const;
-		bool IsFileExt(const FILECHAR_t* pszExt) const;
+		bool IsFileExt(const FILECHAR_t* pszExt) const noexcept;
 
 		// File Mode stuff.
 		OF_FLAGS_t get_Mode() const noexcept
@@ -254,7 +254,7 @@ namespace Gray
 		}
 
 		// File Open/Close
-		virtual bool isFileOpen() const
+		virtual bool isFileOpen() const noexcept
 		{
 #ifdef _MFC_VER
 			return m_hFile != CFile::hFileNull;

@@ -52,7 +52,7 @@ namespace Gray
 #endif
 
 	public:
-		cHeapObject()
+		cHeapObject() noexcept
 		{
 			//! @note virtuals don't work in constructors or destructors !
 		}
@@ -61,7 +61,7 @@ namespace Gray
 			//! @note virtuals do not work in destructors ! get_HeapPtr?
 			//! so isValidCheck() not possible here !
 		}
-		bool IsValidInsideN(INT_PTR index) const
+		bool IsValidInsideN(INT_PTR index) const noexcept
 		{
 			//! Is index a valid offset inside this object?
 #ifdef USE_HEAPSIG
@@ -71,7 +71,7 @@ namespace Gray
 			const void* pBase = get_HeapPtr();
 			return cHeapAlign::IsValidInside(pBase, index);
 		}
-		bool IsValidInsidePtr(void const* pTest) const
+		bool IsValidInsidePtr(void const* pTest) const noexcept
 		{
 			//! Is pTest a valid pointer inside the this object ?
 			if (pTest == nullptr)

@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
+  <metadata>
+    <id>graycore-v142</id>
+    <version>1.6.4</version>
+    <authors>Dennis Robinson</authors>
+    <owners>menasoft.com</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <licenseUrl>https://github.com/MenaceSan/GrayCore/blob/master/LICENSE.txt</licenseUrl>
+    <projectUrl>https://github.com/MenaceSan/GrayCore</projectUrl>
+    <iconUrl>https://www.menasoft.com/graydox/GrayWorldLogoSm.jpg</iconUrl>
+    <title>GrayCore C++ Library for cruntime v142</title>
+    <summary>GrayCore C++ Library for cruntime v142</summary>
+    <description>Binaries and developer files (headers/libraries) for GrayCore C++ Library.</description>
+    <copyright>Copyright 2020 Dennis Robinson (menasoft.com)</copyright>
+    <tags>native nativepackage CoApp</tags>
+  </metadata>
+</package>

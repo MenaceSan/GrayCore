@@ -95,7 +95,7 @@ namespace Gray
 			//! get a unique (only on this machine/process instance) hash code.
 			return ((HASHCODE_t)(UINT_PTR)(void*)this);
 		}
-		STDMETHOD_(HASHCODE_t, get_HashCodeX)() const noexcept 
+		STDMETHOD_(HASHCODE_t, get_HashCodeX)() const noexcept
 		{
 			//! virtualized version of get_HashCode.
 			return get_HashCode();
@@ -162,11 +162,11 @@ namespace Gray
 			Release();
 		}
 #else
-		void IncRefCount()
+		inline void IncRefCount() noexcept
 		{
 			_InternalAddRef();
 		}
-		void DecRefCount()
+		inline void DecRefCount()
 		{
 			_InternalRelease();
 		}
@@ -234,7 +234,7 @@ namespace Gray
 		typedef cPtrFacade<TYPE> SUPER_t;
 
 	protected:
-		void IncRefFirst()  
+		void IncRefFirst() noexcept
 		{
 			//! @note IncRefCount can throw !
 			if (this->m_p != nullptr)
@@ -242,7 +242,7 @@ namespace Gray
 				cRefBase* p = this->m_p;
 				p->IncRefCount();
 #ifdef _DEBUG
-				ASSERT(!isCorruptPtr());
+				DEBUG_CHECK(!isCorruptPtr());
 #endif
 			}
 		}
@@ -251,13 +251,13 @@ namespace Gray
 		cRefPtr() noexcept
 		{
 		}
-		cRefPtr(const TYPE* p2)
+		cRefPtr(const TYPE* p2) noexcept
 			: cPtrFacade<TYPE>(const_cast<TYPE*>(p2))
 		{
 			//! @note default = assignment will auto destroy previous and use this constructor.
 			IncRefFirst();
 		}
-		cRefPtr(const THIS_t& ref)
+		cRefPtr(const THIS_t& ref) noexcept
 			: cPtrFacade<TYPE>(ref.get_Ptr())
 		{
 			//! create my own copy constructor.
@@ -265,10 +265,10 @@ namespace Gray
 		}
 
 #if 0
-		cRefPtr(THIS_t&& ref)
+		cRefPtr(THIS_t&& ref) noexcept
 			: cPtrFacade<TYPE>(ref)
 		{
-			//! move constructor
+			//! move constructor from cPtrFacade
 		}
 #endif
 
@@ -285,15 +285,15 @@ namespace Gray
 			ReleasePtr();
 		}
 
-		bool isValidPtr() const
+		bool isValidPtr() const noexcept
 		{
 			//! Not nullptr?
 #ifdef _DEBUG
-			ASSERT(!isCorruptPtr());
+			DEBUG_CHECK(!isCorruptPtr());
 #endif
 			return this->m_p != nullptr;
 		}
-		bool isCorruptPtr() const
+		bool isCorruptPtr() const noexcept
 		{
 			//! is this really pointing to what it is supposed to be pointing to. type check.
 			//! Mostly just for _DEBUG usage.
@@ -310,7 +310,7 @@ namespace Gray
 		void put_Ptr(TYPE* p)
 		{
 			//! Attach the pointer and add a ref.
-			if (p != this->m_p)
+			if (!IsEqual(p))
 			{
 				ReleasePtr();
 				this->AttachPtr(p);
@@ -324,7 +324,7 @@ namespace Gray
 			if (p2 != nullptr)
 			{
 #ifdef _DEBUG
-				ASSERT(!isCorruptPtr());
+				DEBUG_CHECK(!isCorruptPtr());
 #endif
 				this->m_p = nullptr;	// make sure possible destructors called in DecRefCount don't reuse this.
 				p2->DecRefCount();	// this might delete this ?

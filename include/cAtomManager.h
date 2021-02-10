@@ -21,6 +21,9 @@ namespace Gray
 	{
 		//! @class Gray::cAtomManager
 		//! an alpha sorted string lookup table. CASE IGNORED !
+		//! @note Internal collection for the atoms. Don't use this publicly. Use cAtomRef.
+		//! @note cAtomRef can be defined in the C++ init code. So the cAtomManager must be safe to run at init time.
+		//! e.g. static const cAtomRef a_Root("Root");
 
 		friend class cSingleton < cAtomManager >;
 		friend class cAtomRef;
@@ -36,9 +39,9 @@ namespace Gray
 
 	protected:
 		bool RemoveAtom(cAtomDef* pDef);
-		cAtomDefPtr CreateAtom(ITERATE_t index, COMPARE_t iCompareRes, cStringA sVal);
-		cAtomDefPtr FindorCreateAtomStr(const cStringA& sName);
-		cAtomDefPtr FindorCreateAtomStr(const ATOMCHAR_t* pszName);
+		cAtomRef CreateAtom(ITERATE_t index, COMPARE_t iCompareRes, cStringA sVal);
+		cAtomRef FindorCreateAtomStr(const cStringA& sName) noexcept;
+		cAtomRef FindorCreateAtomStr(const ATOMCHAR_t* pszName) noexcept;
 		void SetAtomStatic(cAtomDef* pDef);
 
 	public:
@@ -50,7 +53,7 @@ namespace Gray
 
 		HRESULT DebugDumpFile(cStreamOutput& o) const;
 
- 		CHEAPOBJECT_IMPL;
+		CHEAPOBJECT_IMPL;
 		UNITTEST_FRIEND(cAtom)
 	};
 }
