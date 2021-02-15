@@ -71,19 +71,24 @@ namespace Gray
 		//! May be base for stack or heap allocated object.
 
 	public:
-		virtual ~CObject()
+		virtual ~CObject() noexcept 
 		{
 		}
 		virtual bool isValidCheck() const noexcept	//!< memory allocation and structure definitions are valid.
 		{
 			//! NOT in MFC so use COBJECT_IsValidCheck to call.
 			//! @note This can't be called in constructors and destructors of course !
-			if (!cMem::IsValid(this, 4))	// at least not null. (or near it)
+			if (!cMem::IsValidApp(this))	// at least not null. (or near it)
 			{
 				DEBUG_CHECK(false);
 				return false;
 			}
-			if (!IS_TYPE_OF(CObject, this))	// structure definitions are valid..
+			if (cMem::IsCorrupt(this, 4))	// no write privs ? _DEBUG only ?
+			{
+				DEBUG_CHECK(false);
+				return false;
+			}
+			if (!IS_TYPE_OF(CObject, this))	// structure definitions are valid. use _CPPRTTI.
 			{
 				DEBUG_CHECK(false);
 				return false;
@@ -101,7 +106,7 @@ namespace Gray
 #endif // _MFC_VER
 
 #ifndef _MFC_VER
-	// Dynamic cObject is one that can be created knowing only its name and perhaps some interface that it supports. using cObjectFactory<T>
+	// Dynamic cObject is one that can be created knowing only its name and perhaps some interface that it supports. using cObjectFactoryT<T>
 #define DECLARE_DYNAMIC(c)			//__noop
 #define IMPLEMENT_DYNAMIC(c, cb)	//__noop
 #endif // _MFC_VER

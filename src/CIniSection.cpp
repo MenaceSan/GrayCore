@@ -257,9 +257,9 @@ namespace Gray
 			}
 			else
 			{
-				if (ch == '/' && pszLine[iLenChars + 1] == '/' && StrChar::IsSpace(pszLine[iLenChars + 2]))
+				if (ch == '/' && pszLine[iLenChars + 1] == '/' && !StrChar::IsAlNum(pszLine[iLenChars + 2]))
 				{
-					// Remove comment at end of line.
+					// Remove comment at end of line. try to avoid eating http://stuff.
 					break;
 				}
 			}
@@ -447,7 +447,7 @@ namespace Gray
 
 		for (int i = 0; i < m_iLinesUsed; i++)
 		{
-			if (!m_Buffer.IsValidPtr(m_ppLines[i]))
+			if (!m_Buffer.IsInternalPtr(m_ppLines[i]))
 				return false;
 		}
 		return true;
@@ -616,8 +616,8 @@ namespace Gray
 	ITERATE_t cIniSectionData::AddLine(const IniChar_t* pszLine)
 	{
 		//! add a text line to the end of this section.
-		//! ASSUME m_bStripped has already been applied if used.
-		//! Allow IsLineComment() and blank lines if NOT m_bStripped.
+		//! ASSUME m_bStripComments has already been applied if used.
+		//! Allow IsLineComment() and blank lines if NOT m_bStripComments.
 		//! strip newlines off.
 		//! strip extra spaces off the end.
 		//! allow leading spaces
@@ -857,7 +857,7 @@ namespace Gray
 
 		ASSERT(rsSectionNext.IsEmpty() || rsSectionNext[0] != '[');
 
-		rsSectionNext.Empty();	// don't care about the name of the section here.
+		rsSectionNext.Empty();	// don't know the next section yet. til we get to it.
 		m_bStripComments = bStripComments;
 		ClearLineQty();
 
@@ -916,7 +916,7 @@ namespace Gray
 				const char* pszLineStart = pszLine;
 				pszLine = StrT::GetNonWhitespace(pszLine);	// TODO Actually cMem::CopyOverlap the leading spaces out!
 				i += StrT::Diff(pszLine, pszLineStart);
-				iLen = cIniReader::FindScriptLineEnd(pszLine);	// kill comments. try not to strip http://xx ?
+				iLen = cIniReader::FindScriptLineEnd(pszLine);	// kill // comments. try not to strip http://xx ?
 				pszLine[iLen] = '\0';
 				// leave blank lines to keep the line count consistent.
 			}

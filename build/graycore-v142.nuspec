@@ -3,15 +3,16 @@
   <metadata>
     <id>graycore-v142</id>
     <version>1.6.4</version>
+    <description>Binaries and developer files (headers/libraries) for GrayCore C++ Library CRT v142.</description>
     <authors>Dennis Robinson</authors>
+    
     <owners>menasoft.com</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <licenseUrl>https://github.com/MenaceSan/GrayCore/blob/master/LICENSE.txt</licenseUrl>
     <projectUrl>https://github.com/MenaceSan/GrayCore</projectUrl>
-    <iconUrl>https://www.menasoft.com/graydox/GrayWorldLogoSm.jpg</iconUrl>
+    <license type="expression">MIT</license>
+    <icon>GrayWorldLogoSm.jpg</icon>
     <title>GrayCore C++ Library for cruntime v142</title>
     <summary>GrayCore C++ Library for cruntime v142</summary>
-    <description>Binaries and developer files (headers/libraries) for GrayCore C++ Library.</description>
     <copyright>Copyright 2020 Dennis Robinson (menasoft.com)</copyright>
     <tags>native nativepackage CoApp</tags>
   </metadata>

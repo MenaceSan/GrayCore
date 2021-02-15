@@ -144,6 +144,6 @@ namespace Gray
 	};
 
 	// class cFloat80 // long double or "double double" NOT in M$?
-};
+}
 
 #endif // _INC_cFloat_H

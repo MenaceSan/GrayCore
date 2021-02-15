@@ -84,6 +84,8 @@ namespace Gray
 			m_nOSVer |= StrT::toU(pszVer2 + 1);
 		}
 
+		m_nPageSize = cMem::k_PageSizeMin;
+
 #if ! defined(USE_64BIT) 
 		// file /sbin/init // uname -a // m_utsname.machine
 		m_bOS64Bit = (StrT::FindStrI(m_utsname.release, "x86_64") != nullptr);
@@ -106,13 +108,15 @@ namespace Gray
 #else
 #error NOOS
 #endif
+
+		ASSERT(get_PageSize() >= cMem::k_PageSizeMin);
 	}
 
 	cSystemInfo::~cSystemInfo()
 	{
 	}
 
-	UINT cSystemInfo::get_NumberOfProcessors() const
+	UINT cSystemInfo::get_NumberOfProcessors() const noexcept
 	{
 		//! Is SMP an issue? Do i need to worry about multiple processors ?
 		//! Creating more worker threads than CPU's might not help you if its a CPU heavy task.
@@ -123,7 +127,7 @@ namespace Gray
 #endif
 	}
 
-	bool cSystemInfo::isOS64Bit() const
+	bool cSystemInfo::isOS64Bit() const noexcept
 	{
 		//! can both the OS and CPU handle 64 bit apps.
 		//! A 32 bit app can run on 64 bit system.
@@ -134,7 +138,7 @@ namespace Gray
 #endif
 	}
 
-	UINT cSystemInfo::get_OSVer() const
+	UINT cSystemInfo::get_OSVer() const noexcept
 	{
 		//! from http://msdn.microsoft.com/en-us/library/ms724429(VS.85).aspx
 		//! @return
@@ -148,14 +152,24 @@ namespace Gray
 		//! 6.2 = Windows 8 or Server 2012
 
 #ifdef _WIN32
-		return(m_OsInfo.dwMajorVersion << 8 | m_OsInfo.dwMinorVersion);
+		return m_OsInfo.dwMajorVersion << 8 | m_OsInfo.dwMinorVersion ;
 #else
 		return m_nOSVer;
 #endif
 	}
 
+	size_t cSystemInfo::get_PageSize() const noexcept
+	{
+		// cMem::k_PageSizeMin
 #ifdef _WIN32
-	bool cSystemInfo::isOSNTAble() const
+		return m_SystemInfo.dwPageSize;
+#else
+		return m_nPageSize;
+#endif
+	}
+
+#ifdef _WIN32
+	bool cSystemInfo::isOSNTAble() const noexcept
 	{
 		//! Does this OS support NT services ? _WIN32 only of course.
 		if (m_OsInfo.dwPlatformId < VER_PLATFORM_WIN32_NT)
@@ -163,7 +177,7 @@ namespace Gray
 		return(this->get_OSVer() >= 0x400);
 	}
 
-	bool cSystemInfo::isOSXPAble() const
+	bool cSystemInfo::isOSXPAble() const noexcept
 	{
 		//! Does this OS have XP Dll's. _WIN32 only of course.
 		if (m_OsInfo.dwPlatformId < VER_PLATFORM_WIN32_NT)
@@ -173,7 +187,7 @@ namespace Gray
 #endif
 
 #ifdef __linux__
-	bool cSystemInfo::isVer3_17_plus() const
+	bool cSystemInfo::isVer3_17_plus() const noexcept
 	{
 		//! is version at least 3.17.0 or greater.
 		return(this->get_OSVer() >= 0x0311);

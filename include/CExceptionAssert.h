@@ -26,6 +26,6 @@ namespace Gray
 		virtual BOOL GetErrorMessage(GChar_t* lpszError, UINT nMaxError, UINT* pnHelpContext) override;
 		static void GRAYCALL Throw(const LOGCHAR_t* pExp, const cDebugSourceLine& src);
 	};
-};
+}
 
 #endif

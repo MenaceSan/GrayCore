@@ -75,6 +75,6 @@ namespace Gray
 #define GRAY_TRY_END			}
 #endif
 
-};
+} 
 
 #endif // _INC_cExceptionBase_H

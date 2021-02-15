@@ -78,43 +78,43 @@ namespace Gray
 		LOGLEV_TYPE m_eLogLevel;			//!< Min Importance level to see. 0 = LOGLEV_ANY = not important.
 
 	public:
-		cLogEventParams(LOG_ATTR_MASK_t uAttrMask = LOG_ATTR_0, LOGLEV_TYPE eLogLevel = LOGLEV_TRACE)
+		cLogEventParams(LOG_ATTR_MASK_t uAttrMask = LOG_ATTR_0, LOGLEV_TYPE eLogLevel = LOGLEV_TRACE) noexcept
 			: m_uAttrMask(uAttrMask)		// Level of log detail messages. IsLogMsg()
 			, m_eLogLevel(eLogLevel)		// Importance level.
 		{
 		}
 
-		LOG_ATTR_MASK_t get_LogAttrMask() const
+		LOG_ATTR_MASK_t get_LogAttrMask() const noexcept
 		{
 			return m_uAttrMask;
 		}
-		void put_LogAttrMask(LOG_ATTR_MASK_t uAttrMask)
+		void put_LogAttrMask(LOG_ATTR_MASK_t uAttrMask) noexcept
 		{
 			//! What types of info do we want to filter for.
 			m_uAttrMask = uAttrMask;
 		}
-		bool IsLogAttrMask(LOG_ATTR_MASK_t uAttrMask) const
+		bool IsLogAttrMask(LOG_ATTR_MASK_t uAttrMask) const noexcept
 		{
-			return((m_uAttrMask & uAttrMask) ? true : false);
+			return (m_uAttrMask & uAttrMask) ? true : false ;
 		}
 
-		LOGLEV_TYPE get_LogLevel() const
+		LOGLEV_TYPE get_LogLevel() const noexcept
 		{
 			//! Min level to show.
 			return m_eLogLevel;
 		}
-		void put_LogLevel(LOGLEV_TYPE eLogLevel)
+		void put_LogLevel(LOGLEV_TYPE eLogLevel) noexcept
 		{
 			//! What level of importance do we want to filter for.
 			m_eLogLevel = eLogLevel;
 		}
-		bool IsLoggedLevel(LOGLEV_TYPE eLogLevel) const
+		bool IsLoggedLevel(LOGLEV_TYPE eLogLevel) const noexcept
 		{
 			//! level = LOGLEV_INFO (higher is more important
-			return(eLogLevel >= m_eLogLevel);
+			return eLogLevel >= m_eLogLevel ;
 		}
 
-		bool IsLogged(LOG_ATTR_MASK_t uAttrMask, LOGLEV_TYPE eLogLevel) const
+		bool IsLogged(LOG_ATTR_MASK_t uAttrMask, LOGLEV_TYPE eLogLevel) const noexcept
 		{
 			// Would this message be logged?
 			if (!IsLoggedLevel(eLogLevel))
@@ -140,7 +140,7 @@ namespace Gray
 		cLogThrottle();
 		~cLogThrottle();
 
-		float get_LogThrottle() const
+		float get_LogThrottle() const noexcept
 		{
 			//! messages/sec
 			return m_fLogThrottle;
@@ -178,7 +178,7 @@ namespace Gray
 			//! Is this a cLogNexus or just a cLogProcessor? like dynamic_cast<>
 			return nullptr;
 		}
-		virtual bool IsLogged(LOG_ATTR_MASK_t uAttrMask, LOGLEV_TYPE eLogLevel) const override // fast pre-check.
+		bool IsLogged(LOG_ATTR_MASK_t uAttrMask, LOGLEV_TYPE eLogLevel) const override // fast pre-check.
 		{
 			//! would this message be logged? should i bother building it ? fast.
 			UNREFERENCED_PARAMETER(uAttrMask);
@@ -202,7 +202,7 @@ namespace Gray
 			//! @return <0 = failed, 0=not processed by anyone, # = number of processors.
 			va_list vargs;
 			va_start(vargs, pszFormat);
-			HRESULT hRes = addEventV(uAttrMask, eLogLevel, pszFormat, vargs);
+			const HRESULT hRes = addEventV(uAttrMask, eLogLevel, pszFormat, vargs);
 			va_end(vargs);
 			return(hRes);
 		}
@@ -212,7 +212,7 @@ namespace Gray
 			//! @return <0 = failed, 0=not processed by anyone, # = number of processors.
 			va_list vargs;
 			va_start(vargs, pszFormat);
-			HRESULT hRes = addEventV(LOG_ATTR_0, LOGLEV_INFO, pszFormat, vargs);
+			const HRESULT hRes = addEventV(LOG_ATTR_0, LOGLEV_INFO, pszFormat, vargs);
 			va_end(vargs);
 			return(hRes);
 		}
@@ -223,7 +223,7 @@ namespace Gray
 			//! @return <0 = failed, 0=not processed by anyone, # = number of processors.
 			va_list vargs;
 			va_start(vargs, pszFormat);
-			HRESULT hRes = addEventV(LOG_ATTR_DEBUG, LOGLEV_ERROR, pszFormat, vargs);
+			const HRESULT hRes = addEventV(LOG_ATTR_DEBUG, LOGLEV_ERROR, pszFormat, vargs);
 			va_end(vargs);
 			return(hRes);
 		}
@@ -231,7 +231,7 @@ namespace Gray
 		{
 			va_list vargs;
 			va_start(vargs, pszFormat);
-			HRESULT hRes = addEventV(LOG_ATTR_DEBUG, LOGLEV_WARN, pszFormat, vargs);
+			const HRESULT hRes = addEventV(LOG_ATTR_DEBUG, LOGLEV_WARN, pszFormat, vargs);
 			va_end(vargs);
 			return(hRes);
 		}
@@ -239,7 +239,7 @@ namespace Gray
 		{
 			va_list vargs;
 			va_start(vargs, pszFormat);
-			HRESULT hRes = addEventV(LOG_ATTR_DEBUG, LOGLEV_INFO, pszFormat, vargs);
+			const HRESULT hRes = addEventV(LOG_ATTR_DEBUG, LOGLEV_INFO, pszFormat, vargs);
 			va_end(vargs);
 			return(hRes);
 		}
@@ -247,7 +247,7 @@ namespace Gray
 		{
 			va_list vargs;
 			va_start(vargs, pszFormat);
-			HRESULT hRes = addEventV(LOG_ATTR_DEBUG, LOGLEV_TRACE, pszFormat, vargs);
+			const HRESULT hRes = addEventV(LOG_ATTR_DEBUG, LOGLEV_TRACE, pszFormat, vargs);
 			va_end(vargs);
 			return(hRes);
 		}
@@ -261,7 +261,7 @@ namespace Gray
 		//! overload these to implement which messages go here.
 		friend class cLogNexus;
 	protected:
-		virtual HRESULT WriteString(const LOGCHAR_t* pszMsg) override
+		HRESULT WriteString(const LOGCHAR_t* pszMsg) override
 		{
 			//! override this. should never call this directly. for optimizing use of get_FormattedDefault()
 			//! Do not assume FILE_EOL.
@@ -270,7 +270,7 @@ namespace Gray
 			return E_NOTIMPL;
 		}
 
-		virtual HRESULT WriteString(const wchar_t* pszMsg) override;
+		HRESULT WriteString(const wchar_t* pszMsg) override;
 
 	public:
 		cLogAppender();
@@ -279,7 +279,7 @@ namespace Gray
 		//! Remove myself from the list of valid appenders.
 		bool RemoveAppenderThis();
 
-		virtual HRESULT addEvent(cLogEvent* pEvent) override
+		HRESULT addEvent(cLogEvent* pEvent) override
 		{
 			//! Push the message where it is supposed to go.
 			//! ILogProcessor
@@ -305,7 +305,7 @@ namespace Gray
 		virtual ~cLogAppendDebug();
 
 		static HRESULT GRAYCALL AddAppenderCheck(cLogNexus* pLogger = nullptr);
-		virtual HRESULT WriteString(const LOGCHAR_t* pszMsg) override;
+		HRESULT WriteString(const LOGCHAR_t* pszMsg) override;
 
 		IUNKNOWN_DISAMBIG(cRefBase);
 	};

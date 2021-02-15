@@ -12,31 +12,30 @@
 
 #include "cLogAppender.h"
 #include "cArrayString.h"
-#include "cSingletonPtr.h"
-
+ 
 #if !defined(UNDER_CE) && USE_CRT
 
 namespace Gray
 {
-	class GRAYCORE_LINK cLogAppendConsole : public cLogAppender, public cSingletonSmart<cLogAppendConsole>
+	class GRAYCORE_LINK cLogAppendConsole : public cLogAppender, public cRefBase
 	{
 		//! @class Gray::cLogAppendConsole
 		//! Forward debug statements to the console (cAppConsole) (if i have one)
 		//! No filter and take default formatted string
-	public:
+	protected:
 		cLogAppendConsole();
 		virtual ~cLogAppendConsole();
 
+	public:
 		virtual HRESULT WriteString(const LOGCHAR_t* pszMsg) override;
 
-		static HRESULT GRAYCALL AddAppenderCheck(cLogNexus* pLogger = nullptr, bool bAttachElseAlloc = false);
+		static cLogAppendConsole* GRAYCALL AddAppenderCheck(cLogNexus* pLogger = nullptr, bool bAttachElseAlloc = false);
 		static bool GRAYCALL RemoveAppenderCheck(cLogNexus* pLogger, bool bOnlyIfParent);
 
 		static HRESULT GRAYCALL ShowMessageBox(cString sMsg, UINT uFlags = 1);	// 1= MB_OKCANCEL
-		static HRESULT GRAYCALL WaitForDebugger();
+		static HRESULT GRAYCALL WaitForDebugger(); 
 
-		CHEAPOBJECT_IMPL;
-		IUNKNOWN_DISAMBIG(cSingletonSmart<cLogAppendConsole>);
+		IUNKNOWN_DISAMBIG(cRefBase);
 	};
 
 	class GRAYCORE_LINK cLogAppendTextArray : public cLogAppender, public cRefBase
@@ -48,11 +47,14 @@ namespace Gray
 		const ITERATE_t m_iMax;				//!< Store this many messages.
 
 	public:
-		cLogAppendTextArray(ITERATE_t iMax = SHRT_MAX)
+		cLogAppendTextArray(ITERATE_t iMax = SHRT_MAX) noexcept
 			: m_iMax(iMax)
 		{
 		}
-		virtual HRESULT WriteString(const LOGCHAR_t* pszMsg) override
+		~cLogAppendTextArray() noexcept
+		{
+		}
+		HRESULT WriteString(const LOGCHAR_t* pszMsg) override
 		{
 			if (StrT::IsNullOrEmpty(pszMsg))
 				return 0;

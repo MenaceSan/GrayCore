@@ -391,7 +391,6 @@ namespace Gray
 	{
 		//! @struct Gray::StrX
 		//! Type cannot be derived from arguments. we must declare char type specifically.
-		//! @todo GetTableElem move here.
 
 		static const TYPE* GRAYCALL GetBoolStr(bool bVal) NOEXCEPT;
 

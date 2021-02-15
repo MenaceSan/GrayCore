@@ -152,5 +152,5 @@ namespace Gray
 		UNITTEST_FRIEND(cFilePath);
 	};
 
-};
+}
 #endif // _INC_cFilePath_H

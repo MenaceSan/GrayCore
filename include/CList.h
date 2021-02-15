@@ -11,15 +11,12 @@
 
 #include "GrayCore.h"
 #include "HResult.h"
-#include "cUnitTestDecl.h"
+// #include "cUnitTestDecl.h"
 #include "cDebugAssert.h"
-#include "cHeapObject.h"
-
+ 
 namespace Gray
 {
-	class cListBase;
-
-	class GRAYCORE_LINK cListNodeBase : public cHeapObject
+	class GRAYCORE_LINK cListNodeBase 
 	{
 		//! @class Gray::cListNodeBase
 		//! base class for a single node in a cListBase.
@@ -27,12 +24,13 @@ namespace Gray
 		//! Single owner = This item belongs to JUST ONE cListBase (m_pParent)
 		//! Double linked list.
 		//! NOT circular. head and tail are nullptr.
+		
 		friend class cListBase; // so m_pNext and m_pPrev can be manipulated directly.
 
 	private:
 		cListBase* m_pParent;		//!< link me back to my parent object.
-		cListNodeBase* m_pNext;	//!< next sibling
-		cListNodeBase* m_pPrev;	//!< previous sibling
+		cListNodeBase* m_pNext;		//!< next sibling
+		cListNodeBase* m_pPrev;		//!< previous sibling
 
 	protected:
 		virtual void put_Parent(cListBase* pParent)
@@ -51,10 +49,10 @@ namespace Gray
 		}
 
 	public:
-		virtual ~cListNodeBase()
+		virtual ~cListNodeBase() noexcept
 		{
 			//! ASSUME: RemoveFromParent() was already called! (virtuals don't work in destruct!)
-			ASSERT(!hasParent());
+			DEBUG_CHECK(!hasParent());
 		}
 
 		cListBase* get_Parent() const noexcept
@@ -155,11 +153,11 @@ namespace Gray
 		void DisposeAll();
 		void Empty();
 
-		cListNodeBase* get_Head(void) const noexcept
+		cListNodeBase* get_Head() const noexcept
 		{
 			return m_pHead;
 		}
-		cListNodeBase* get_Tail(void) const noexcept
+		cListNodeBase* get_Tail() const noexcept
 		{
 			return m_pTail;
 		} 
@@ -182,7 +180,7 @@ namespace Gray
 			return pNode->get_Parent() == this;
 		}
 
-		UNITTEST_FRIEND(cList);
+		// UNITTEST_FRIEND(cList);
 	};
 
 	//*************************************************

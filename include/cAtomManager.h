@@ -46,7 +46,7 @@ namespace Gray
 
 	public:
 		cAtomManager();
-		~cAtomManager();
+		~cAtomManager() noexcept;
 
 		cAtomRef FindAtomStr(const ATOMCHAR_t* pszText) const;
 		cAtomRef FindAtomHashCode(ATOMCODE_t idAtom) const;

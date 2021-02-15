@@ -41,7 +41,7 @@ namespace Gray
 	{
 	}
 
-	cLogNexus::~cLogNexus()
+	cLogNexus::~cLogNexus() noexcept
 	{
 	}
 
@@ -160,6 +160,8 @@ namespace Gray
 		//! Newest first.
 		if (pAppenderAdd == nullptr)
 			return E_POINTER;
+		if (HasAppender(pAppenderAdd, true))	// no dupes.
+			return S_FALSE;
 		cThreadGuard lock(m_LockLog);
 		m_aAppenders.AddHead(pAppenderAdd);
 		return S_OK;

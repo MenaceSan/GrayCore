@@ -20,7 +20,7 @@ namespace Gray
 	{
 		//! @class Gray::cSingletonSmart
 		//! Base class for a cSingleton that is reference counted and lazy loaded.
-		//! This will be destroyed when the last reference is released. recreated on demand.
+		//! This will be destroyed when the last reference is released. recreated again on demand.
 		//! e.g. a public service (shared by all) that is loaded on demand and released when no one needs it.
 		//! @note These objects are normally cHeapObject, but NOT ALWAYS ! (allow static versions using StaticConstruct() and k_REFCOUNT_STATIC)
 
@@ -74,5 +74,5 @@ namespace Gray
 		}
 #endif
 	};
-};
+}
 #endif

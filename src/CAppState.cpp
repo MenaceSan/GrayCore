@@ -194,7 +194,7 @@ namespace Gray
 		ASSERT(m_ThreadModuleLoading.isInit());
 	}
 
-	cAppState::~cAppState()
+	cAppState::~cAppState() noexcept
 	{
 	}
 

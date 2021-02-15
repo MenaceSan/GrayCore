@@ -90,9 +90,10 @@ namespace Gray
 		virtual ~cOSProcess();
 
 #ifdef _WIN32
-		cOSProcess(PROCESSID_t nPid, HANDLE h) noexcept
+		cOSProcess(PROCESSID_t nPid, HANDLE hProc, HANDLE hThread) noexcept
 			: m_nPid(nPid)
-			, m_hProcess(h)
+			, m_hProcess(hProc)
+			, m_hThread(hThread)	
 		{
 			// _WIN32 = ::GetCurrentProcess() = 0xFFFFFFFF as a shortcut. HMODULE_CURPROC
 		}

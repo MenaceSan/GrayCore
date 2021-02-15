@@ -12,7 +12,7 @@
 #include "StrConst.h"
 #include "cPair.h"
 #include "FileName.h"		// FILECHAR_t
-#include "cUnitTestDecl.h"
+
 #ifdef _WIN32
 #include <winerror.h>
 #endif
@@ -29,8 +29,6 @@ namespace Gray
 #define SUCCEEDED(x)		(((HRESULT)(x)) >= S_OK)
 #define FAILED(x)			(((HRESULT)(x)) < S_OK)
 #endif // __linux__
-
-	extern GRAYCORE_LINK va_list k_va_list_empty;	// For faking out the va_list. __GNUC__ doesn't allow a pointer to va_list. So use this to simulate nullptr.
 
 	enum FACILITY_TYPE
 	{
@@ -261,13 +259,13 @@ namespace Gray
 		static HRESULT GRAYCALL AddCodesText(const char* pszText);
 		static HRESULT GRAYCALL AddCodesFile(const FILECHAR_t* pszFilePath);
 
+		static const va_list k_va_list_empty;	// For faking out the va_list. __GNUC__ doesn't allow a pointer to va_list. So use this to simulate nullptr.
+
 		static const char* GRAYCALL GetTextBase(HRESULT hRes);
 		static StrLen_t GRAYCALL GetTextSys(HRESULT hRes, GChar_t* lpszError, StrLen_t nLenMaxError, void* pSource = nullptr, va_list vargs = k_va_list_empty);
 		static StrLen_t GRAYCALL GetTextV(HRESULT hRes, GChar_t* lpszError, StrLen_t nLenMaxError, void* pSource = nullptr, va_list vargs = k_va_list_empty);
 
 		static HRESULT GRAYCALL GetHResFromStr(const GChar_t* pszError, StrLen_t nLenError = -1);
-
-		UNITTEST_FRIEND(HResult);
 	};
 }
 

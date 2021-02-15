@@ -51,7 +51,7 @@ namespace Gray
 		}
 	};
 
-	class cRegKey	// not GRAYCORE_LINK since its inline
+	class GRAYCORE_LINK cRegKey	// not GRAYCORE_LINK since its inline?
 		: public cHandlePtr < HKEY >
 	{
 		//! @class GrayLib::cRegKey
@@ -60,6 +60,9 @@ namespace Gray
 		//! can use IIniBaseSetter and IIniBaseGetter ?
 		//! @note Key names are not case sensitive.
 		typedef cHandlePtr<HKEY> SUPER_t;
+
+	public:
+		static const cRegKeyName k_aNames[];	// map default HKEY values to names.
 
 	public:
 		cRegKey(HKEY hKey = HKEY_LOCAL_MACHINE) noexcept
@@ -71,11 +74,6 @@ namespace Gray
 		~cRegKey() noexcept
 		{
 		}
-
-		HKEY get_HKey() const noexcept
-		{
-			return get_Handle();
-		}
  
 		static inline bool IsKeyBase(HKEY hKey) noexcept
 		{
@@ -83,11 +81,11 @@ namespace Gray
 			//! e.g. HKEY_CLASSES_ROOT, HKEY_LOCAL_MACHINE
 			return (((size_t)hKey) & ((size_t)HKEY_CLASSES_ROOT)) == ((size_t)HKEY_CLASSES_ROOT);
 		}
-		bool isKeyBase() const noexcept
+		inline bool isKeyBase() const noexcept
 		{
 			//! is it a base HKEY_* predefined key?
 			//! e.g. HKEY_CLASSES_ROOT, HKEY_LOCAL_MACHINE
-			return IsKeyBase(get_HKey());
+			return IsKeyBase(get_Handle());
 		}
 
 		bool isKeyOpen() const noexcept
@@ -98,16 +96,19 @@ namespace Gray
 			return SUPER_t::isValidHandle();
 		}
 
-		void Attach(HKEY hKey)
+ 		HKEY DetachHandle() noexcept
 		{
-			SUPER_t::AttachHandle(hKey);
-		}
-		HKEY Detach() noexcept
-		{
-			//! like SUPER_t::DetachHandle()
-			HKEY h = get_HKey();
+			//! like SUPER_t::DetachHandle() but use HKEY_LOCAL_MACHINE not NULL
+			HKEY h = get_Handle();
 			ref_Handle() = HKEY_LOCAL_MACHINE;
 			return h;
+		}
+
+		static const FILECHAR_t* GRAYCALL GetNameBase(HKEY hKey) noexcept;
+
+		const FILECHAR_t* get_NameBase() const noexcept
+		{
+			return GetNameBase(get_Handle());
 		}
 
 		HRESULT Open(HKEY hKeyBase, const FILECHAR_t* pszSubKey, REGSAM samDesired = KEY_READ)
@@ -159,7 +160,7 @@ namespace Gray
 		{
 			//! open sub key from base key. Replaces get_HKey which is usually a base.
 			ASSERT(isKeyBase());
-			return Open(get_HKey(), pszSubKey, samDesired);
+			return Open(get_Handle(), pszSubKey, samDesired);
 		}
 
 		HRESULT FlushX() noexcept
@@ -175,7 +176,7 @@ namespace Gray
 			//! @return 0 = S_OK, 2=ERROR_FILE_NOT_FOUND
 			//! @note This is for keys not values. delete values using RegDeleteValue.
 			//! this does not delete subkeys, use DeleteKeyTree().
-			const LSTATUS lRet = _FNF(::RegDeleteKey)(get_HKey(), pszSubKey);
+			const LSTATUS lRet = _FNF(::RegDeleteKey)(get_Handle(), pszSubKey);
 			return HResult::FromWin32(lRet);
 		}
 
@@ -186,7 +187,7 @@ namespace Gray
 			//! @return
 			//!  0 = S_OK
 			//!  ERROR_NO_MORE_ITEMS = no more entries.
-			const LSTATUS lRet = _FNF(::RegEnumKeyEx)(get_HKey(), dwIndex, pszNameRet, &dwSizeName,
+			const LSTATUS lRet = _FNF(::RegEnumKeyEx)(get_Handle(), dwIndex, pszNameRet, &dwSizeName,
 				nullptr, nullptr, nullptr, nullptr);
 			return HResult::FromWin32(lRet);
 		}
@@ -199,14 +200,14 @@ namespace Gray
 			//! @note strings will always be of type FILECHAR_t
 			//! @return 0 = S_OK
 			//!  HRESULT_WIN32_C(ERROR_NO_MORE_ITEMS) = no more entries. (0x80070103)
-			const LSTATUS lRet = _FNF(::RegEnumValue)(get_HKey(), dwIndex, pszNameRet, &dwSizeName, nullptr,
+			const LSTATUS lRet = _FNF(::RegEnumValue)(get_Handle(), dwIndex, pszNameRet, &dwSizeName, nullptr,
 				pdwTypeRet, (LPBYTE)pDataRet, pdwSizeData);
 			return HResult::FromWin32(lRet);
 		}
 		HRESULT DeleteValue(const FILECHAR_t* pszSubKey) noexcept
 		{
 			//! @return 0 = S_OK, 2=ERROR_FILE_NOT_FOUND
-			const LSTATUS lRet = _FNF(::RegDeleteValue)(get_HKey(), pszSubKey);
+			const LSTATUS lRet = _FNF(::RegDeleteValue)(get_Handle(), pszSubKey);
 			return HResult::FromWin32(lRet);
 		}
 		HRESULT SetValue(const FILECHAR_t* pszValueName, DWORD dwType, const void* pData, DWORD dwDataSize) noexcept
@@ -216,7 +217,7 @@ namespace Gray
 			//! @return 0 = S_OK
 			//! @note strings will always be of type FILECHAR_t
 
-			const LSTATUS lRet = _FNF(::RegSetValueEx)(get_HKey(), pszValueName,
+			const LSTATUS lRet = _FNF(::RegSetValueEx)(get_Handle(), pszValueName,
 				0, dwType, (LPBYTE)pData, dwDataSize);
 			return HResult::FromWin32(lRet);
 		}
@@ -230,7 +231,7 @@ namespace Gray
 			//! @return
 			//!  0 = S_OK, 2=ERROR_FILE_NOT_FOUND
 			//!  rdwType=REG_DWORD, REG_SZ, etc.
-			const LSTATUS lRet = _FNF(::RegQueryValueEx)(get_HKey(), pszValueName, nullptr, &rdwType, (LPBYTE)pData, &rdwDataSize);
+			const LSTATUS lRet = _FNF(::RegQueryValueEx)(get_Handle(), pszValueName, nullptr, &rdwType, (LPBYTE)pData, &rdwDataSize);
 			return HResult::FromWin32(lRet);
 		}
 

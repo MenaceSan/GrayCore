@@ -102,5 +102,5 @@ namespace Gray
 		static const char* const k_aszMimeType[MIME_QTY + 1];	//!< Predefined known types.
 		static const char* const k_aszMimeExt[(MIME_QTY * 2) + 1];
 	};
-};
+}
 #endif

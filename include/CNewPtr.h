@@ -179,6 +179,5 @@ namespace Gray
 			return *this;
 		}
 	};
-
-};
+}
 #endif // _INC_cNewPtr_H

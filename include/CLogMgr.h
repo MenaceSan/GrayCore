@@ -67,20 +67,20 @@ namespace Gray
 
 	public:
 		cLogNexus(LOG_ATTR_MASK_t uAttrMask = LOG_ATTR_ALL_MASK, LOGLEV_TYPE eLogLevel = LOGLEV_ANY);
-		virtual ~cLogNexus();
+		virtual ~cLogNexus() noexcept;
 
-		virtual const cLogNexus* get_ThisLogNexus() const override
+		const cLogNexus* get_ThisLogNexus() const override
 		{
 			//! Is this a log nexus or just a processor?
 			return this;
 		}
-		virtual bool IsLogged(LOG_ATTR_MASK_t uAttrMask, LOGLEV_TYPE eLogLevel) const override // fast pre-check.
+		bool IsLogged(LOG_ATTR_MASK_t uAttrMask, LOGLEV_TYPE eLogLevel) const override // fast pre-check.
 		{
 			//! @note Check IsLogged(x) before generating the message! for speed
 			return m_LogFilter.IsLogged(uAttrMask, eLogLevel);
 		}
-		virtual HRESULT addEvent(cLogEvent* pEvent) override;
-		virtual HRESULT FlushLogs() override;
+		HRESULT addEvent(cLogEvent* pEvent) override;
+		HRESULT FlushLogs() override;
 
 		// manage appenders
 		cLogAppender* EnumAppender(ITERATE_t i)
@@ -176,5 +176,5 @@ namespace Gray
 #define GEXCEP_CATCH_LOG(desc) GRAY_TRY_CATCH( ::Gray::cExceptionBase, ex )
 #define GEXCEP_CATCH_LOG1(desc,arg) GRAY_TRY_CATCH( ::Gray::cExceptionBase, ex )
 #endif
-};
+}
 #endif	// _INC_cLogMgr_H

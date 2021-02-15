@@ -34,5 +34,5 @@ namespace Gray
 		static const LOGCHAR_t* const k_pszPrefixes[LOGLEV_QTY + 1];	//!< LOGLEV_WARN, nullptr term
 		static const LOGCHAR_t* GRAYCALL GetPrefixStr(LOGLEV_TYPE eLogLevel);
 	};
-};
+}
 #endif

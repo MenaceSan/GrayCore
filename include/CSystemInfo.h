@@ -60,6 +60,7 @@ namespace Gray
 		struct utsname m_utsname;	//!< output from uname() on __linux__.
 		UINT m_nOSVer;				//!< Major << 8 | minor
 		UINT m_nNumberOfProcessors;	//!< should we worry about SMP issues ?
+		size_t m_nPageSize;			//!< cMem::k_PageSizeMin
 #else
 #error NOOS
 #endif
@@ -72,17 +73,18 @@ namespace Gray
 		~cSystemInfo();
 
 	public:
-		UINT get_NumberOfProcessors() const;	// SMP issues ?
-		bool isOS64Bit() const;
+		UINT get_NumberOfProcessors() const noexcept;	// SMP issues ?
+		bool isOS64Bit() const noexcept;
 
-		UINT get_OSVer() const;
+		UINT get_OSVer() const noexcept;
+		size_t get_PageSize() const noexcept;
 
 #ifdef _WIN32
-		bool isOSNTAble() const;
-		bool isOSXPAble() const;
+		bool isOSNTAble() const noexcept;
+		bool isOSXPAble() const noexcept;
 #endif
 #ifdef __linux__
-		bool isVer3_17_plus() const;
+		bool isVer3_17_plus() const noexcept;
 #endif
 
 		static StrLen_t GRAYCALL GetSystemDir(FILECHAR_t* pszDir, StrLen_t iLenMax);

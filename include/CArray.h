@@ -38,7 +38,7 @@ namespace Gray
 			return;
 
 #ifdef _DEBUG
-		ASSERT(cMem::IsValid(pElements, nCount * sizeof(TYPE), true));
+		ASSERT(!cMem::IsCorrupt(pElements, nCount * sizeof(TYPE), true));
 		// for debug. first do bit-wise init (or zero) initialization
 		cValArray::FillSize<BYTE>(pElements, nCount * sizeof(TYPE), cHeap::FILL_Alloc);
 #endif
@@ -57,7 +57,7 @@ namespace Gray
 			return;
 
 #ifdef _DEBUG
-		ASSERT(cMem::IsValid(pElements, nCount * sizeof(TYPE), true));
+		ASSERT(!cMem::IsCorrupt(pElements, nCount * sizeof(TYPE), true));
 		const ITERATE_t nCountPrev = nCount;	// just for debug
 		UNREFERENCED_PARAMETER(nCountPrev);
 #endif
@@ -75,8 +75,8 @@ namespace Gray
 		if (nCount <= 0)
 			return;
 
-		ASSERT(cMem::IsValid(pDest, nCount * sizeof(TYPE), true));
-		ASSERT(cMem::IsValid(pSrc, nCount * sizeof(TYPE), false));
+		ASSERT(!cMem::IsCorrupt(pDest, nCount * sizeof(TYPE), true));
+		ASSERT(!cMem::IsCorrupt(pSrc, nCount * sizeof(TYPE), false));
 
 		while ((nCount--) != 0)
 		{
@@ -189,7 +189,7 @@ namespace Gray
 		void SetDataArrayPtr(TYPE* pData, ITERATE_t nSize)
 		{
 			//! set internal pointer. (dangerous)
-			ASSERT(!cMem::IsCorrupt(pData, nSize));
+			ASSERT(!cMem::IsCorrupt(pData, nSize, false));
 			m_pData = pData;
 			m_nSize = nSize;
 		}
@@ -679,7 +679,7 @@ namespace Gray
 			this->InsertAt(0, newElement);
 		}
 
-		TYPE* get_DataWork() const
+		TYPE* get_DataWork() const noexcept
 		{
 			return this->m_pData;
 		}

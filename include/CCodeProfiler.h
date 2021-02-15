@@ -57,5 +57,5 @@ namespace Gray
 #else
 #define CODEPROFILEFUNC()	__noop	// compile out profiling. Do nothing.
 #endif
-};
+} 
 #endif

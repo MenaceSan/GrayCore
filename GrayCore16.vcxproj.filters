@@ -374,9 +374,6 @@
     <ClInclude Include="include\cAtomManager.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="include\cResourceBase.h">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="include\cListNodeRef.h">
       <Filter>include</Filter>
     </ClInclude>
@@ -390,6 +387,9 @@
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="include\cObjectService.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cResourceDir.h">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>
@@ -436,6 +436,9 @@
       <Filter>build</Filter>
     </None>
     <None Include="build\graycore-v142.nuspec">
+      <Filter>build</Filter>
+    </None>
+    <None Include="build\GrayCore.nuget.targets">
       <Filter>build</Filter>
     </None>
   </ItemGroup>
@@ -664,6 +667,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\cObjectService.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cRegKey.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

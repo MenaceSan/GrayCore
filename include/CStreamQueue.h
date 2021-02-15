@@ -37,23 +37,23 @@ namespace Gray
 		{
 			//! @arg nGrowSizeMax = 0 = not used. write only ?
 		}
-		~cStreamQueue()
+		~cStreamQueue() noexcept
 		{
 		}
 
-		virtual HRESULT WriteX(const void* pData, size_t nDataSize) override
+		HRESULT WriteX(const void* pData, size_t nDataSize) override
 		{
 			return SUPER_t::WriteX(pData, nDataSize);
 		}
-		virtual HRESULT ReadX(void* pData, size_t nDataSize) override
+		HRESULT ReadX(void* pData, size_t nDataSize) override
 		{
 			return SUPER_t::ReadX(pData, nDataSize);
 		}
-		virtual HRESULT ReadPeek(void* pData, size_t nDataSize) override
+		HRESULT ReadPeek(void* pData, size_t nDataSize) override
 		{
 			return SUPER_t::ReadPeek((BYTE*)pData, (ITERATE_t)nDataSize);
 		}
-		virtual size_t SetSeekSizeMin(size_t nSizeMin = k_FILE_BLOCK_SIZE) override
+		size_t SetSeekSizeMin(size_t nSizeMin = k_FILE_BLOCK_SIZE) override
 		{
 			//! similar to ReadCommit (put_AutoReadCommitSize) size. Used by cStreamTransaction.
 			//! @arg nSizeMin = 0 = turn off auto read commit. Allow Seek() back.
@@ -62,11 +62,11 @@ namespace Gray
 			this->put_AutoReadCommit((ITERATE_t)nSizeMin);
 			return (size_t)iAutoReadCommit;
 		}
-		virtual STREAM_SEEKRET_t Seek(STREAM_OFFSET_t offset, SEEK_ORIGIN_TYPE eSeekOrigin = SEEK_Set) override
+		STREAM_SEEKRET_t Seek(STREAM_OFFSET_t offset, SEEK_ORIGIN_TYPE eSeekOrigin = SEEK_Set) override
 		{
 			return SUPER_t::SeekQ(offset, eSeekOrigin);
 		}
-		virtual STREAM_POS_t GetLength() const override
+		STREAM_POS_t GetLength() const override
 		{
 			//! Get the full Seek-able length. line Seek(SEEK_END).
 			return this->get_WriteIndex();	// get_ReadQty()

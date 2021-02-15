@@ -33,7 +33,7 @@ namespace Gray
 		//! @note TYPE = cSingletonStatic based class = this
 		//! Externally created singleton. might be stack based, or abstract (e.g.cNTServiceImpl) but usually static allocated.
 		//! @note Assume 1. gets constructed/destructed by the C Runtime, 2. Is inherently thread safe since its not created on demand.
-		//! The BIG problem with this is that we cannot guarantee order of creation/destruction. So singletons that rely/construct on each other may be corrupt/uninitialized.
+		//! @note The BIG problem with this is that we cannot guarantee order of creation/destruction. So singletons that rely/construct on each other may be corrupt/uninitialized.
 
 	protected:
 		static TYPE* sm_pThe;	//!< pointer to the one and only object of this TYPE. ASSUME automatically init to = nullptr.
@@ -73,13 +73,13 @@ namespace Gray
 		}
 		static inline TYPE* get_SingleU() noexcept
 		{
-			//! @return sm_pThe but allow that it might be nullptr. Weird.
+			//! @return sm_pThe unchecked. allow that it might be nullptr. Weird case.
 			return sm_pThe;
 		}
 		static inline TYPE* get_Single()
 		{
 			//! This is a complex or abstract or assumed static type that we cannot just create automatically on first usage.
-			ASSERT(isSingleCreated());
+			DEBUG_CHECK(isSingleCreated());
 			return sm_pThe;	// get_SingleU()
 		}
 		template <class TYPE2>
@@ -100,23 +100,25 @@ namespace Gray
 	class GRAYCORE_LINK cSingletonRegister : public CObject, public cHeapObject // IHeapObject
 	{
 		//! @class Gray::cSingletonRegister
-		//! NON template base for cSingleton. MUST be IHeapObject
+		//! NON template abstract base for cSingleton. MUST be IHeapObject
 		//! Register this to allow for proper order of virtual destruction at C runtime destruct.
-		//! Allows for ordered destruction of singletons if modules unload.
-		//! @note Static singletons are not multi threaded anyhow. so don't worry about static init order for sm_LockSingle.
+		//! Allows for ordered destruction of singletons if modules unload. (Not in proper reverse load order)
+		//! @note Static singletons are not multi threaded anyhow. so don't worry about static init order for sm_LockSingle. assume static init is single threaded.
 
 		friend class cSingletonManager;
 
 	protected:
 #ifndef UNDER_CE
-		HMODULE m_hModuleLoaded;	//!< What modules loaded this ? So singletons can be destroyed if DLL/SO unloads.
+		HMODULE m_hModuleLoaded;	//!< What modules loaded this ? So singletons can be destroyed if DLL/SO unloads. cOSModule::GetModuleHandleForAddr()
 #endif
 	public:
 		static cThreadLockFast sm_LockSingle; //!< common lock for all cSingleton.
 	protected:
 		cSingletonRegister(const TYPEINFO_t& rAddrCode) noexcept;
-		virtual ~cSingletonRegister();
-		void RegisterSingleton();
+		virtual ~cSingletonRegister() noexcept;
+
+		static void GRAYCALL RegisterSingleton(cSingletonRegister& reg);
+
 	public:
 		static void GRAYCALL ReleaseModule(HMODULE hMod);
 		UNITTEST_FRIEND(cSingleton);
@@ -145,7 +147,7 @@ namespace Gray
 			//! typically this == pObject is type of cSingleton
 			//! @arg rAddrCode = typeid(XXX) but GCC doesn't like it as part of template?
 		}
-		virtual ~cSingleton()
+		virtual ~cSingleton() noexcept
 		{
 			//! I am being destroyed.
 			//! sm_pThe is set to nullptr in ~cSingletonStatic
@@ -165,9 +167,12 @@ namespace Gray
 				{
 					DEBUG_CHECK(!TYPE::isSingleCreated());	// SUPER_t::sm_pThe
 					// similar to CreateObject from cObjectFactory Like the MFC CreateObject() and "CRuntime?"
+
+					// TODO Allocate static space big enough . DONT use the heap at all. use cList to define destruct order.
+
 					new TYPE(); // assume it calls its constructor properly and sets sm_pThe
 					DEBUG_CHECK(TYPE::isSingleCreated());	// SUPER_t::sm_pThe
-					SUPER_t::sm_pThe->RegisterSingleton();	// Register only if i know it is dynamic. Not static.
+					RegisterSingleton(*SUPER_t::sm_pThe);	// Register only if i know it is dynamic. Not static.
 				}
 			}
 			return SUPER_t::sm_pThe;
@@ -190,7 +195,7 @@ namespace Gray
 					TYPE2* p = new TYPE2();
 					ASSERT(p == SUPER_t::sm_pThe);
 					ASSERT(TYPE2::isSingleCreated());	// SUPER_t::sm_pThe
-					SUPER_t::sm_pThe->RegisterSingleton();	// Register only if i know it is dynamic. Not static.
+					RegisterSingleton(*SUPER_t::sm_pThe);	// Register only if i know it is dynamic. Not static.
 				}
 			}
 			return CHECKPTR_CAST(TYPE2, SUPER_t::sm_pThe);

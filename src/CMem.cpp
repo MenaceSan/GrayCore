@@ -29,25 +29,25 @@ namespace Gray
 
 	uintptr_t VOLATILE cMem::sm_bDontOptimizeOut0 = 0;	//!< used to trick the optimizer. Always 0.
 	uintptr_t VOLATILE cMem::sm_bDontOptimizeOutX = 1;	//!< used to trick the optimizer. Unknown value.
-
-	bool GRAYCALL cMem::IsValid(const void* pData, size_t nLen, bool bWriteAccess) noexcept // static
+ 
+	bool GRAYCALL cMem::IsCorrupt(const void* pData, size_t nLen, bool bWriteAccess) noexcept // static
 	{
 		//! Is this pointer valid to read/write to ? On heap, stack or static const data space.
 		//! similar to _MFC_VER AfxIsValidAddress(), AtlIsValidAddress() 
-		//! @note this should only ever be used in _DEBUG code. and only in an ASSERT. Its slow.
+		//! @note This IS slow. This should only ever be used in _DEBUG code. and only in an ASSERT. 
 		//! IsBadWritePtr() is just doing exception handling under the hood. _CrtIsValidPointer is just a null check in >= VS2010 
 		//! @note This can cause problems with thread stack guard pages in theory. https://msdn.microsoft.com/en-us/library/bb288454.aspx
 		//! @todo make a faster (less thorough) version of this ?
 
-		if (pData == nullptr)	// nullptr is never valid.
+		if (pData == nullptr)	// nullptr is not technically bad unless nLen > 0.
 		{
 			if (nLen == 0)
-				return true;	// This technically is valid.
-			return false;
+				return false;	// This technically is ok.
+			return true;
 		}
 		if (!IsValidApp(pData))	// ASSUME memory in this range is never valid? Fail quickly. This is Kernel Space. <1G
 		{
-			return false;
+			return true;
 		}
 
 #if defined(UNDER_CE)
@@ -64,7 +64,7 @@ namespace Gray
 		{
 			// NOTE: Aligned blocks might make this faster.
 			sm_bDontOptimizeOut0 = 0;	// Always 0
-			for (size_t i = 0; i < nLen; i++)
+			for (size_t i = 0; i < nLen; i += k_PageSizeMin)
 			{
 				BYTE bVal = ((const BYTE*)pData)[i];	// Read it.
 				if (bWriteAccess)	// try to write it.
@@ -72,12 +72,11 @@ namespace Gray
 					((BYTE*)pData)[i] = bVal | (BYTE)sm_bDontOptimizeOut0;
 				}
 			}
-			return true;
+			return false;
 		}
 		GRAY_TRY_CATCHALL // GRAY_TRY_CATCHALL // catch(...)
 		{
-			// We failed.
-			return false;
+			return true;	// We failed.
 		}
 		GRAY_TRY_END
 #else
@@ -88,15 +87,15 @@ namespace Gray
 		{
 			// We failed.
 			::signal(SIGSEGV, pfnPrevHandler);
-			return false;
+			return true;
 		}
 		pfnPrevHandler = ::signal(SIGSEGV, IsValidFailHandler);
 
 		// NOTE: Aligned blocks might make this faster.
 		sm_bDontOptimizeOut0 = 0;	// Always 0
-		for (size_t i = 0; i < nLen; i++)
+		for (size_t i = 0; i < nLen; i += k_PageSizeMin)
 		{
-			BYTE bVal = ((const BYTE*)pData)[i];	// Read it.
+			BYTE bVal = ((const BYTE*)pData)[i];	// try to Read it.
 			if (bWriteAccess)	// try to write it.
 			{
 				((BYTE*)pData)[i] = bVal | (BYTE)sm_bDontOptimizeOut0;
@@ -104,7 +103,7 @@ namespace Gray
 		}
 
 		::signal(SIGSEGV, pfnPrevHandler);		// undo signal.
-		return true;
+		return false;	// its good.
 #endif
 	}
 

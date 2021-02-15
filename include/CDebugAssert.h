@@ -95,6 +95,6 @@ namespace Gray
 
 #endif	// ! _DEBUG
 
-};
+} 
 
 #endif // _INC_cDebugAssert_H

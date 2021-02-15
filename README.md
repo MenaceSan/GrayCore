@@ -118,6 +118,12 @@ Platform = Win32 or x64
 GRAY_DLL = as DLL.
 GRAY_STATICLIB = Static lib (default) else DLL if GRAY_DLL 
 
+No options for:
+consume CRT as a dll only. 
+stdcall calling convention only. 
+NO_CRT
+MFC
+
 @todo
 USE_CRT = 0 = minimize use of CRT MSVCRTD . remove or wrap -> sprintf, strtod, rand, malloc ?
 Timeunits : span merge duplicated code.

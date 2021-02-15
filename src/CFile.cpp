@@ -405,7 +405,7 @@ namespace Gray
 		return S_OK;
 	}
 
-	void cFile::Close() // virtual
+	void cFile::Close() noexcept  // virtual
 	{
 		//! cStream
 		if (!isFileOpen())
@@ -415,7 +415,7 @@ namespace Gray
 		CFile::Close();	// NOT __super from cStream
 	}
 
-	HANDLE cFile::DetachFileHandle()
+	HANDLE cFile::DetachFileHandle() noexcept
 	{
 		if (!isFileOpen())
 		{

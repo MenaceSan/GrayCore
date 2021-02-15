@@ -13,7 +13,7 @@
 
 namespace Gray
 {
-	class GRAYCORE_LINK cNonCopyable // 
+	class GRAYCORE_LINK cNonCopyable 
 	{
 		//! @class Gray::cNonCopyable
 		//! Block C++ usage of default copy constructor. base a class on this with protected type.
@@ -23,17 +23,17 @@ namespace Gray
 
 	protected:
 		//! Force the use of Factory creation via protected constructor.
-		cNonCopyable() noexcept
+		inline cNonCopyable() noexcept
 		{}
-		~cNonCopyable() noexcept
+		inline ~cNonCopyable() noexcept
 		{}
 	
 		//! Restrict the copy constructor and assignment operator
 		//! __GNUC__ - defaulted and deleted functions only available with -std=c++11 or -std=gnu++11
 		//! Make this a macro to avoid linkage inconsistency with use in DLL/SO and templates.
-#define NonCopyable_IMPL(_TYPE) private: _TYPE(const _TYPE&) IS_DELETE; const _TYPE& operator=(const _TYPE&) IS_DELETE;
+#define NonCopyable_IMPL(_TYPE) private: inline _TYPE(const _TYPE&) IS_DELETE; inline const _TYPE& operator=(const _TYPE&) IS_DELETE;
 
 		NonCopyable_IMPL(cNonCopyable);
 	};
-};
+} 
 #endif // cNonCopyable

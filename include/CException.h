@@ -148,6 +148,6 @@ namespace Gray
 		}
 		virtual BOOL GetErrorMessage(GChar_t* lpszError, UINT nLenMaxError, UINT* pnHelpContext) override;
 	};
-};
+} 
 
 #endif // _INC_cException_H

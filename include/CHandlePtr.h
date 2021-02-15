@@ -53,25 +53,25 @@ namespace Gray
 			CloseHandleLast();
 		}
 
-		bool isValidHandle() const noexcept
+		inline bool isValidHandle() const noexcept
 		{
 			return m_h != nullptr;
 		}
 
-		operator _TYPE_HAND () const noexcept
+		inline operator _TYPE_HAND () const noexcept
 		{
 			return m_h;
 		}
-		_TYPE_HAND operator -> () const noexcept
+		inline _TYPE_HAND operator -> () const noexcept
 		{
 			return m_h;
 		}
 
-		_TYPE_HAND get_Handle() const noexcept
+		inline _TYPE_HAND get_Handle() const noexcept
 		{
 			return m_h;
 		}
-		_TYPE_HAND& ref_Handle() noexcept
+		inline _TYPE_HAND& ref_Handle() noexcept
 		{
 			return m_h;
 		}

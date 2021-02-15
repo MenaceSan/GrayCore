@@ -46,21 +46,21 @@ namespace Gray
 			const int iRefCount = get_RefCount();
 			if (isSmartDebug())
 			{
-				ASSERT(iRefCount != 123123);	// dummy for breakpoint.
+				DEBUG_CHECK(iRefCount != 123123);	// dummy for breakpoint.
 			}
-			ASSERT(iRefCount < (~k_REFCOUNT_MASK));
+			DEBUG_CHECK(iRefCount < (~k_REFCOUNT_MASK));
 #endif
 			m_nRefCount.IncV();
 		}
-		void _InternalRelease()
+		void _InternalRelease() noexcept
 		{
 #ifdef _DEBUG
-			ASSERT(isValidObj());
-			ASSERT(!isDestructing());
+			DEBUG_CHECK(isValidObj());
+			DEBUG_CHECK(!isDestructing());
 			const int iRefCount2 = get_RefCount();
 			if (isSmartDebug())
 			{
-				ASSERT(iRefCount2 != 123123); // dummy for breakpoint.
+				DEBUG_CHECK(iRefCount2 != 123123); // dummy for breakpoint.
 			}
 #endif
 			const int iRefCount = m_nRefCount.Dec();
@@ -70,7 +70,7 @@ namespace Gray
 			}
 			else
 			{
-				ASSERT(iRefCount > 0);
+				DEBUG_CHECK(iRefCount > 0);
 			}
 		}
 
@@ -80,10 +80,10 @@ namespace Gray
 			: m_nRefCount(iRefCount)
 		{
 		}
-		virtual ~cRefBase()
+		virtual ~cRefBase() noexcept
 		{
 			//! ASSUME StaticDestruct() was called if needed.
-			ASSERT(get_RefCount() == 0);
+			DEBUG_CHECK(get_RefCount() == 0);
 		}
 
 		int get_RefCount() const noexcept
@@ -116,7 +116,7 @@ namespace Gray
 		{
 			// Is this really a valid object?
 			// does it have proper vtable ?
-			if (!cMem::IsValid(this))
+			if (!cMem::IsValidPtr(this))
 				return false;
 #if defined(_DEBUG) && ! defined(__GNUC__)
 			return IS_TYPE_OF(cRefBase, this);
@@ -205,11 +205,11 @@ namespace Gray
 		}
 
 #ifdef _DEBUG
-		bool isSmartDebug() const
+		bool isSmartDebug() const noexcept
 		{
 			return(m_nRefCount.get_Value() & k_REFCOUNT_DEBUG) ? true : false;
 		}
-		void SetSmartDebug()
+		void SetSmartDebug() noexcept
 		{
 			//! object is in the act of destruction.
 			if (isSmartDebug())

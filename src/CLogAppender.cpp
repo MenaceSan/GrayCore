@@ -126,6 +126,8 @@ namespace Gray
 	{
 		//! Remove myself from the list of valid appenders in cLogMgr.
 		//! will descend into child cLogNexus as well.
+		//! called on destruct.
+
 		if (!cLogMgr::isSingleCreated())
 		{
 			return false;

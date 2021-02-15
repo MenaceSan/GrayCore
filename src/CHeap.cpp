@@ -246,17 +246,17 @@ namespace Gray
 	{
 		//! is this a valid malloc() heap pointer?
 		//! @note this should only ever be used in debug code. and only in an ASSERT.
-		if (pData == nullptr)
+		if (!cMem::IsValidApp(pData))
 			return false;
 #if defined(_DEBUG)
 #if defined(_WIN32) && ! defined(UNDER_CE) && ! defined(__GNUC__) && USE_CRT
 		return ::_CrtIsValidHeapPointer(pData) ? true : false;
 #else
 		//! @todo validate the heap block vs static memory for __linux__?
-		return cMem::IsValid(pData, 1);
+		return !cMem::IsCorrupt(pData, 1);
 #endif
 #else
-		return cMem::IsValid(pData, 1);
+		return !cMem::IsCorrupt(pData, 1);
 #endif
 	}
 
@@ -422,4 +422,3 @@ namespace Gray
 #endif // defined(_MSC_VER) && _MSC_VER >= 1300
 
 }
- 

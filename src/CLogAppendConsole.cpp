@@ -14,10 +14,9 @@
 
 namespace Gray
 {
-	cLogAppendConsole::cLogAppendConsole()
-		: cSingletonSmart<cLogAppendConsole>(this, typeid(cLogAppendConsole))
+	cLogAppendConsole::cLogAppendConsole()		 
 	{
-		// cLogAppendConsole::AddAppenderCheck()
+		// assume will call cLogAppendConsole::AddAppenderCheck()
 	}
 
 	cLogAppendConsole::~cLogAppendConsole() // virtual 
@@ -37,7 +36,7 @@ namespace Gray
 		return(1);	// something was written.
 	}
 
-	HRESULT GRAYCALL cLogAppendConsole::AddAppenderCheck(cLogNexus* pLogger, bool bAttachElseAlloc) // static
+	cLogAppendConsole* GRAYCALL cLogAppendConsole::AddAppenderCheck(cLogNexus* pLogger, bool bAttachElseAlloc) // static
 	{
 		//! Make sure cLogAppendConsole singleton is attached to cLogMgr
 		//! Push log messages to the console (or my parent console) if there is one.
@@ -48,20 +47,23 @@ namespace Gray
 		{
 			pLogger = cLogMgr::get_Single();
 		}
-		if (pLogger->FindAppenderType(typeid(cLogAppendConsole)) != nullptr) // already has this appender.
-			return S_FALSE;
+
+		cLogAppender* pAppender0 = pLogger->FindAppenderType(typeid(cLogAppendConsole));
+		if (pAppender0 != nullptr) // already has this appender.
+			return static_cast<cLogAppendConsole*>(pAppender0);
 
 		cAppConsole& ac = cAppConsole::I();
 		if (!ac.isConsoleMode())	// no console ?
 		{
 			// Attach to parent console or create my own.
 			if (!ac.AttachOrAllocConsole(bAttachElseAlloc))
-				return E_NOTIMPL;
+				return nullptr;
 		}
 
 		// attach new console appender to logging system.
-		pLogger->AddAppender(new cLogAppendConsole);
-		return S_OK;
+		cLogAppendConsole* pAppender = new cLogAppendConsole;
+		pLogger->AddAppender(pAppender);
+		return pAppender;
 	}
 
 	bool GRAYCALL cLogAppendConsole::RemoveAppenderCheck(cLogNexus* pLogger, bool bOnlyIfParent) // static

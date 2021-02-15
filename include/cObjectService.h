@@ -17,16 +17,16 @@
 namespace Gray
 {
 	template <class TYPE = CObject>
-	class cObjectFactoryT : public cObjectFactory<TYPE>, cSingleton<cObjectFactoryT<TYPE>>
+	class cObjectFactoryT2 : public cObjectFactoryT<TYPE>, cSingleton<cObjectFactoryT2<TYPE>>
 	{
-		//! @class Gray::cObjectFactoryT
-		//! factory  pattern for CObject based objects
-		//! Use something like the Singleton register for creation of a given type.
+		//! @class Gray::cObjectFactoryT2
+		//! factory pattern for CObject based objects. sealed type.
 	public:
-		cObjectFactoryT() noexcept
-			: cObjectFactory(typeid(TYPE).name(), typeid(TYPE))
+		cObjectFactoryT2() noexcept
+			: cObjectFactoryT(typeid(TYPE).name(), typeid(TYPE))
 			, cSingleton(this, typeid(cObjectFactoryT<TYPE>))
 		{
+			// Allow overriden type name ??
 		}
 		TYPE* CreateObject() const override
 		{
@@ -54,6 +54,7 @@ namespace Gray
 
 		static CObject* GRAYCALL CreateObject(const ATOMCHAR_t* pszName);
 		static CObject* GRAYCALL CreateObject(const TYPEINFO_t& type);
+		// 		static void GRAYCALL ReleaseModule(HMODULE hMod);
 
 	};
 

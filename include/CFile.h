@@ -148,7 +148,7 @@ namespace Gray
 		HRESULT OpenSetup(cStringF sFilePath, OF_FLAGS_t uModeFlags);
 
 	public:
-		cFile()
+		cFile() noexcept
 			: m_nOpenFlags(0)
 		{
 		}
@@ -156,7 +156,7 @@ namespace Gray
 		{
 			OpenX(sFilePath, nOpenFlags);
 		}
-		virtual ~cFile()
+		virtual ~cFile() noexcept
 		{
 			Close();
 		}
@@ -265,9 +265,9 @@ namespace Gray
 
 		// MFC Open is BOOL return type.
 		virtual HRESULT OpenX(cStringF sFilePath = "", OF_FLAGS_t nOpenFlags = OF_READ | OF_SHARE_DENY_NONE);
-		virtual void Close(void) override;
+		void Close(void) noexcept override;
 
-		HANDLE DetachFileHandle();
+		HANDLE DetachFileHandle() noexcept;
 
 		HRESULT OpenWait(cStringF sFilePath = "", OF_FLAGS_t nOpenFlags = OF_READ | OF_SHARE_DENY_NONE, TIMESYSD_t nWaitTime = 100);
 		HRESULT OpenCreate(cStringF sFilePath = "", OF_FLAGS_t nOpenFlags = OF_CREATE | OF_WRITE, _SECURITY_ATTRIBUTES* pSa = nullptr);

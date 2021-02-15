@@ -15,7 +15,7 @@
 namespace Gray
 {
 	static cArrayPtr<const HResultCode> s_HResult_CodeSets;	// local private Facility_t sets .
-	GRAYCORE_LINK va_list k_va_list_empty;	// For faking out the va_list. __GNUC__ doesn't allow a pointer to va_list. So use this to simulate nullptr.
+	const va_list HResult::k_va_list_empty = 0;	// For faking out the va_list. __GNUC__ doesn't allow a pointer to va_list. So use this to simulate nullptr.
 
 	const HResult::Facility_t HResult::k_Facility[] =
 	{

@@ -233,6 +233,6 @@ namespace Gray
 
 	// Iterate through all members. iterator i;
 #define FOR_HASH_TABLE(h,i)	for ( ; i.m_i<h.k_HASH_ARRAY_QTY; i.m_i++ ) for ( i.m_j=0; i.m_j<h.m_aTable[i.m_i].GetSize(); i.m_j++ )
-};
+}
 
 #endif // _INC_CHASH_H

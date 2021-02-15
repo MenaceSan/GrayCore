@@ -120,7 +120,7 @@ namespace Gray
 		{
 			// return the message defined by the system for the error code
 			GChar_t szCode[cExceptionHolder::k_MSG_MAX_SIZE];
-			StrLen_t nChars = HResult::GetTextV(m_hResultCode, szCode, STRMAX(szCode), k_va_list_empty); // pnHelpContext
+			StrLen_t nChars = HResult::GetTextV(m_hResultCode, szCode, STRMAX(szCode), HResult::k_va_list_empty); // pnHelpContext
 			if (nChars > 0)
 			{
 				StrT::sprintfN(lpszError, nLenMaxError - 1,

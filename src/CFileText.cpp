@@ -29,7 +29,7 @@ namespace Gray
 	{
 		OpenX(sFilePath, nOpenFlags);
 	}
-	cFileText::~cFileText() // virtual
+	cFileText::~cFileText() noexcept // virtual
 	{
 		// Virtuals don't work in destructors !
 		Close();
@@ -155,7 +155,7 @@ namespace Gray
 		return S_OK;
 	}
 
-	void cFileText::Close()	// virtual
+	void cFileText::Close() noexcept	// virtual
 	{
 		// virtuals don't work in destruct.
 		if (!isFileOpen())

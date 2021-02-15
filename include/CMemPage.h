@@ -75,12 +75,12 @@ namespace Gray
 		//! _WIN32 ONLY allocates whole pages at a time, not just specified range of bytes. Pool these locked blocks.
 
 	public:
-		cMemPageMgr()
+		cMemPageMgr() noexcept
 			: cSingleton<cMemPageMgr>(this, typeid(cMemPageMgr))
 			, m_dwPageSize(0)
 		{
 		}
-		virtual ~cMemPageMgr()
+		virtual ~cMemPageMgr() noexcept
 		{
 			// Make sure this stuff doesnt get destroyed too early.
 		}
@@ -90,8 +90,7 @@ namespace Gray
 			//! Protect or un-protect these pages.
 			if (m_dwPageSize == 0)
 			{
-				m_dwPageSize = cSystemInfo::I().m_SystemInfo.dwPageSize;
-				ASSERT(m_dwPageSize);
+				m_dwPageSize = cSystemInfo::I().get_PageSize();
 			}
 
 			const UINT_PTR nStart = ((UINT_PTR)p);

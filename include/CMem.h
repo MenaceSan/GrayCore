@@ -26,6 +26,7 @@ namespace Gray
 
 		static VOLATILE uintptr_t sm_bDontOptimizeOut0;	// static global byte to fool the optimizer into preserving this data.
 		static VOLATILE uintptr_t sm_bDontOptimizeOutX;	// static global byte to fool the optimizer into preserving this data.
+		static const size_t k_PageSizeMin = 64;		// More like 4K ?
 
 #if ! defined(UNDER_CE) && ( ! defined(_DEBUG) || ! defined(_MSC_VER))
 		static void __cdecl IsValidFailHandler(int nSig);	// JMP_t
@@ -42,26 +43,27 @@ namespace Gray
 		static bool inline IsValidApp(const void* pData) noexcept
 		{
 			//! Is this pointer into App space? Not kernel space. Kernel Space <= 1G or 2G for __linux__
+			//! Can i read from this ?
 			//! Does not mean I have write permissions.
 			//! Used to sanity check pointers. Ensure NOT offset from nullptr?
 
 			if (((UINT_PTR)pData) < 16 * 1024)	// ASSUME memory in this range is never valid? Fail quickly. This is Kernel Space ONLY. <1G
 				return false;
 #ifdef _WIN32
-
+			// 1G or 2G ?
 #endif
 			return true;
 		}
 
-		static bool GRAYCALL IsValid(const void* pData, size_t nSize = 1, bool bWriteAccess = false) noexcept;
-		static inline bool IsCorrupt(const void* pData, size_t nSize = 1, bool bWriteAccess = false) noexcept
+		static bool GRAYCALL IsCorrupt(const void* pData, size_t nSize, bool bWriteAccess = false) noexcept;
+
+		static bool inline IsValidPtr(const void* pData) noexcept
 		{
-			//! is this a NOT valid/corrupt pointer? nullptr is not corrupt.
-			//! @note this should only ever be used in debug code. and only in an ASSERT.
-			if (pData == nullptr)	// nullptr is not corrupt.
-				return false;
-			return !IsValid(pData, nSize, bWriteAccess);
+			//! Can i read or write to this ?
+			//! if DEBUG call IsCorrupt(pData,1) ??
+			return IsValidApp(pData);
 		}
+
 		static inline bool IsZeros(const void* pData, size_t nSize) noexcept
 		{
 			//! Is all zeros ? nSize = 0 = true.
@@ -371,8 +373,7 @@ namespace Gray
 		inline bool isValidPtr() const noexcept
 		{
 			//! Is this (probably) valid to use/read/write. not nullptr.
-			//! Use cMem::IsValid to know more.
-			return m_pData != nullptr;
+			return cMem::IsValidPtr(m_pData);
 		}
 		inline bool IsValidIndex(size_t i) const noexcept
 		{
@@ -386,12 +387,12 @@ namespace Gray
 				return true;
 			return IS_INDEX_GOOD(i, m_nSize);
 		}
-		bool IsValidPtr(const void* p) const noexcept
+		bool IsInternalPtr(const void* p) const noexcept
 		{
 			//! Is p inside the known valid range for the block? Inclusive = Can be equal to end.
 			return IsValidIndex(cMem::Diff(p, get_Data()));
 		}
-		bool IsValidPtr2(const void* p) const noexcept
+		bool IsInternalPtr2(const void* p) const noexcept
 		{
 			//! Is p inside the known valid range for the block? Exclusive = Cant be equal to end!
 			return IsValidIndex2(cMem::Diff(p, get_Data()));
@@ -594,7 +595,7 @@ namespace Gray
 			//! opposite of SetNVal3()
 			return ((DWORD)p[0]) << 16 | ((DWORD)p[1]) << 8 | p[2];
 		}
-		static inline void SetNVal3(BYTE* p, DWORD nVal) noexcept
+		static inline void SetNVal3(BYTE* p, size_t nVal) noexcept
 		{
 			//! Set 3 packed BYTEs as a value. Network order. Big Endian.
 			//! opposite of GetNVal3()

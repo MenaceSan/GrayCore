@@ -26,11 +26,11 @@ namespace Gray
 		static bool sm_bIsDestroyed;	//!< safety catch for threads that are running past the exit code. cAppState::().isInCExit()
 
 	public:
-		cSingletonManager()
+		cSingletonManager() noexcept
 			: cSingletonStatic<cSingletonManager>(this)
 		{
 		}
-		~cSingletonManager()
+		~cSingletonManager() noexcept
 		{
 			//! clean up all singletons in a predictable order/manor.
 			//! This is called by the C static runtime
@@ -53,8 +53,8 @@ namespace Gray
 		ITERATE_t ReleaseModule(HMODULE hMod)
 		{
 			//! IOSModuleRelease
+			//! delete any singletons in hMod space.
 			//! When a module is released, all its singletons from it MUST be destroyed. 
-			//! Any singletons in hMod space must go.
 			//! @return Number of releases.
 			ITERATE_t iCount = 0;
 			for (ITERATE_t i = m_aSingletons.GetSize() - 1; i >= 0; i--)
@@ -87,7 +87,7 @@ namespace Gray
 		bool RemoveReg(cSingletonRegister* pReg)
 		{
 			//! May have already been removed if we are destructing app. but thats OK.
-			ASSERT(isSingleCreated());
+			DEBUG_CHECK(isSingleCreated());
 			return m_aSingletons.RemoveArg(pReg);
 		}
 		static bool isDestroyed()
@@ -108,7 +108,7 @@ namespace Gray
 #endif
 	}
 
-	void cSingletonRegister::RegisterSingleton()
+	void GRAYCALL cSingletonRegister::RegisterSingleton(cSingletonRegister& reg) // static
 	{
 		//! register with cSingletonManager
 		//! Only register this if we know its NOT static. We called new.
@@ -123,11 +123,11 @@ namespace Gray
 		// Prevent re-registering of singletons constructed after SingletonManager shutdown (during exit)
 		if (!cSingletonManager::isDestroyed())	// special case. DLL was unloaded.
 		{
-			cSingletonManager::I().AddReg(this);
+			cSingletonManager::I().AddReg(&reg);
 		}
 	}
 
-	cSingletonRegister::~cSingletonRegister()
+	cSingletonRegister::~cSingletonRegister() noexcept
 	{
 		//! Allow Early removal of a singleton! This is sort of weird but i should allow it for DLL unload.
 		cThreadGuardFast threadguard(sm_LockSingle);	// thread sync critical section all singletons.

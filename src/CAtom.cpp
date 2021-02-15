@@ -22,7 +22,7 @@ namespace Gray
 		SetAtomStatic(m_aEmpty);
 	}
 
-	cAtomManager::~cAtomManager()
+	cAtomManager::~cAtomManager() noexcept
 	{
 		DEBUG_MSG(("~cAtomManager"));
 	}

@@ -9,7 +9,7 @@
 #pragma once
 #endif
 
-#include "CList.h"
+#include "cList.h"
 #include "cRefPtr.h"
 #include "cHeapObject.h"
 
@@ -19,11 +19,12 @@ namespace Gray
 	class cListNodeRef
 		: public cListNodeT < _TYPE_REC >
 		, public cRefBase
+		, public cHeapObject
 	{
 		//! @class Gray::cListNodeRef
 		//! A smart pointer referenced node in a linked list. Attaching to my parent/list puts a Smart Pointer reference on me.
 		//! For Objects that are in cListT and based on cHeapObject, cListNodeBase and cRefBase
-		//! @note DecRefCount should "delete this;" in onFinalRelease
+		//! @note cRefBase DecRefCount should "delete this;" in onFinalRelease
 
 		typedef cListNodeT<_TYPE_REC> SUPER_t;
 		typedef cListT<_TYPE_REC> PARENT_t;

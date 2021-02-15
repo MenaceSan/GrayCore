@@ -108,7 +108,7 @@ namespace Gray
 
 	protected:
 		cAppState();
-		virtual ~cAppState();
+		virtual ~cAppState() noexcept;
 
 	public:
 		static cStringF GRAYCALL get_AppFilePath();			//!< The full path+name of the current EXE/PE.

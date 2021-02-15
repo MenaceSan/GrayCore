@@ -51,9 +51,9 @@ namespace Gray
 	public:
 		cFileText();
 		cFileText(cStringF sFilePath, OF_FLAGS_t nOpenFlags);
-		virtual ~cFileText();
+		virtual ~cFileText() noexcept;
 
-		virtual bool isFileOpen() const noexcept override
+		bool isFileOpen() const noexcept override
 		{
 			return m_pStream != nullptr;
 		}
@@ -61,8 +61,8 @@ namespace Gray
 		HRESULT GetStreamError() const;
 
 		// NOT OF_TEXT since \n processing is weird.
-		virtual HRESULT OpenX(cStringF sFilePath = "", OF_FLAGS_t nOpenFlags = OF_READ | OF_SHARE_DENY_NONE) override;
-		virtual void Close(void) override;
+		HRESULT OpenX(cStringF sFilePath = "", OF_FLAGS_t nOpenFlags = OF_READ | OF_SHARE_DENY_NONE) override;
+		void Close() noexcept override;
 		HRESULT OpenFileHandle(HANDLE h, OF_FLAGS_t nOpenFlags);
 
 		FILE* DetachFileStream()

@@ -64,7 +64,7 @@ namespace Gray
 		static bool GRAYCALL TestTypes();
 	};
 
-	class GRAYCORE_LINK cUnitTest : public cUnitTestCur
+	class GRAYCORE_LINK cUnitTest : public CObject, public cUnitTestCur
 	{
 		//! @class Gray::cUnitTest
 		//! a unit test for a specific type of thing. attached to a cOSModImpl
@@ -74,7 +74,7 @@ namespace Gray
 
 	public:
 		cUnitTest();
-		virtual ~cUnitTest() noexcept(false);	// M$ test force use of noexcept(false); 
+		~cUnitTest() noexcept override;  // avoid M$ test use of noexcept(false); 
 
 		const FILECHAR_t* get_TestInpDir() const;
 
@@ -82,7 +82,7 @@ namespace Gray
 		virtual void RunUnitTest() = 0;	 
 	};
 
- 	class GRAYCORE_LINK cUnitTestRegister : public cObjectFactory<cUnitTest>
+ 	class GRAYCORE_LINK cUnitTestRegister : public cObjectFactoryT<cUnitTest>
 	{
 		//! @class Gray::cUnitTestRegister
 		//! Hold the registration for a type of cUnitTest.
@@ -110,11 +110,11 @@ namespace Gray
 			, cSingletonStatic< cUnitTestRegisterT<T> >(this)
 		{
 		}
-		cUnitTest* CreateObject() const override
+		cUnitTest* CreateObjectT() const override
 		{
 			//! create derived version of cUnitTest
 			//! Never create pure virtual cUnitTest directly of course.
-			return new T();
+			return new T;
 		}
 	};
 
@@ -157,7 +157,7 @@ namespace Gray
 	public:
 		cArrayPtr<cUnitTestRegister> m_aUnitTests;	//!< list of all registered unit tests. Register as they get instantiate by C runtime static loader.
 		static AssertCallback_t UnitTest_AssertCallback;	//!< redirect assert here for test failure. requires _DEBUG or _DEBUG_FAST.
-		AssertCallback_t* m_pAssertOrig;			//! restore the original assert.
+		AssertCallback_t* m_pAssertOrig = nullptr;			//! restore the original assert.
 		
 		UNITTEST_LEVEL_TYPE m_nTestLevel;		//!< The current global test level for UnitTests(). throttle tests at run time.
 		cArrayString<LOGCHAR_t> m_aTestNames;	// just run these tests.
@@ -172,6 +172,9 @@ namespace Gray
 
 	public:
 		cUnitTests();
+		~cUnitTests() noexcept
+		{
+		}
 
 		HRESULT InitTestOutDir();
 		bool RegisterUnitTest(cUnitTestRegister* pTest);
@@ -196,17 +199,16 @@ namespace Gray
 		CHEAPOBJECT_IMPL;	// dynamic singleton
 	};
 
-#define UNITTEST_TRUE(x)		ASSERT(x)	// UNITTEST_TRUE is different from a normal ASSERT ?
-#define UNITTEST_TRUE2(x,d)		ASSERT(x)	// UNITTEST_TRUE with a description
+#define UNITTEST_TRUE(x)			ASSERT(x)	// UNITTEST_TRUE is different from a normal ASSERT ?
+#define UNITTEST_TRUE2(x,d)			ASSERT(x)	// UNITTEST_TRUE with a description
 
-	// Deprecate all below in favor of UNITTEST2_*
- 
+	// declare a global exposed cUnitTest. Dont use this directly but use UNITTEST2_* to  support M$ test. 
 #define UNITTEST_REGISTER_NAME(n)	g_UnitTest_##n
-#define UNITTEST_REGISTER(n,l)		::Gray::cUnitTestRegisterT< UNITTEST_N(n) > UNITTEST_REGISTER_NAME(n)( #n, l );	// instantiate to register cUnitTest  .
+#define UNITTEST_REGISTER(n,l)		__DECL_EXPORT cUnitTestRegisterT< UNITTEST_N(n) > UNITTEST_REGISTER_NAME(n)( #n, l ) 	// instantiate to register cUnitTest  .
 
-	// Allow an external hard link. optional.
+	// Allow an external hard link to the Base type (because full type is not exposed) and we are pulling from static library. optional.
 #define UNITTEST_EXT_NAME(n)		g_pUnitTest_##n		//!< a base pointer to cUnitTestRegister for UNITTEST_N(n)
-#define UNITTEST_EXT_DEF(n)			cUnitTestRegister* UNITTEST_EXT_NAME(n) = &UNITTEST_REGISTER_NAME(n);
+#define UNITTEST_EXT_DEF(n)			__DECL_EXPORT cUnitTestRegister* UNITTEST_EXT_NAME(n) = &UNITTEST_REGISTER_NAME(n) 
 
 } 	// namespace
 

@@ -264,7 +264,7 @@ namespace Gray
 			{
 				pszParam = CSTRCONST("(null)");
 			}
-			else if (!cMem::IsValid(pszParam, 16))
+			else if (cMem::IsCorrupt(pszParam, 16, false))
 			{
 				pszParam = CSTRCONST("(ERR)");
 			}

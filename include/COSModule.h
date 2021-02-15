@@ -21,7 +21,7 @@
 #elif defined(__linux__)
 #include <dlfcn.h>
 #define MODULE_EXT MIME_EXT_so
-typedef int (GRAYCALL * FARPROC)();
+typedef int (GRAYCALL* FARPROC)();
 #else
 #error NOOS
 #endif
@@ -29,7 +29,7 @@ typedef int (GRAYCALL * FARPROC)();
 namespace Gray
 {
 #define HMODULE_NULL ((HMODULE)nullptr)	// This sometimes means the current process module.
- 
+
 	class GRAYCORE_LINK cOSModule
 	{
 		//! @class Gray::cOSModule
@@ -66,9 +66,9 @@ namespace Gray
 		static const UINT k_Load_Preload = RTLD_LAZY;		//!< Lazy load. Don't call init till we know we need them. Diff from __linux RTLD_LAZY, RTLD_NOLOAD
 		static const UINT k_Load_Resource = RTLD_LAZY;		//!< This is just a resource load. RTLD_LAZY, LOAD_LIBRARY_AS_IMAGE_RESOURCE
 #endif
-		static const UINT k_Load_OSMask		= 0x0FFFFFFF;
-		static const UINT k_Load_ByName		= 0x40000000;	//!< try to find it (by just its file name, NOT Path) already loaded first. NOT OS flag.
-		static const UINT k_Load_NoRefCount	= 0x80000000;	//!< I DO NOT own the ref count. Don't free. NOT OS Flag.
+		static const UINT k_Load_OSMask = 0x0FFFFFFF;
+		static const UINT k_Load_ByName = 0x40000000;	//!< try to find it (by just its file name, NOT Path) already loaded first. NOT OS flag.
+		static const UINT k_Load_NoRefCount = 0x80000000;	//!< I DO NOT own the ref count. Don't free. NOT OS Flag.
 
 		cOSModule(HMODULE hModule = HMODULE_NULL, UINT32 uFlags = k_Load_Normal);
 		cOSModule(const FILECHAR_t* pszModuleName, UINT32 uFlags);
@@ -83,7 +83,7 @@ namespace Gray
 
 		bool isValidModule() const noexcept
 		{
-			return(m_hModule != HMODULE_NULL);
+			return m_hModule != HMODULE_NULL;
 		}
 		operator HMODULE() const noexcept
 		{
@@ -101,13 +101,13 @@ namespace Gray
 		bool isResourceModule() const noexcept
 		{
 			// We cant call this. its not loaded as code.
-			return ( m_uFlags & (k_Load_Preload | k_Load_Resource));
+			return m_uFlags & (k_Load_Preload | k_Load_Resource);
 		}
 
 		StrLen_t GetModulePath(FILECHAR_t* pszModuleName, StrLen_t nSizeMax) const;
 		cStringF get_Name() const;
 
-		HRESULT GetLastErrorDef(HRESULT hResDef = E_FAIL) const
+		HRESULT GetLastErrorDef(HRESULT hResDef = E_FAIL) const noexcept
 		{
 #ifdef _WIN32
 			return HResult::GetLastDef(hResDef);

@@ -228,7 +228,7 @@ do ordain and establish this constitution of the United States of America\n\n");
 		sm_nCreatedUnitTests++;
 	}
 
-	cUnitTest::~cUnitTest() noexcept(false) 	// virtual
+	cUnitTest::~cUnitTest() noexcept   // avoid M$ test force use of noexcept(false); 	// override
 	{
 		sm_nCreatedUnitTests--;
 	}
@@ -243,13 +243,13 @@ do ordain and establish this constitution of the United States of America\n\n");
 	//****************************************************************************
 
 	cUnitTestRegister::cUnitTestRegister(const ATOMCHAR_t* pszTestName, UNITTEST_LEVEL_TYPE nTestLevel)
-		: cObjectFactory(pszTestName, typeid(cUnitTest))
+		: cObjectFactoryT(pszTestName, typeid(cUnitTest))
 		, m_nTestLevel(nTestLevel)
 	{
 		//! May be constructed in 'C' static init code.
 		//! register myself in the unit test list.
 		cUnitTests& uts = cUnitTests::I();
-		uts.m_aUnitTests.Add(this);
+		uts.RegisterUnitTest(this);
 	}
 
 	cUnitTestRegister::~cUnitTestRegister() // virtual
@@ -263,7 +263,7 @@ do ordain and establish this constitution of the United States of America\n\n");
 	{
 		//! Create the cUnitTest object and run the cUnitTest.
 		ASSERT(this != nullptr);
-		cNewPtr<cUnitTest> pUnitTest(CreateObject());
+		cNewPtr<cUnitTest> pUnitTest(CreateObjectT());
 		pUnitTest->RunUnitTest();
 	}
 
@@ -274,6 +274,7 @@ do ordain and establish this constitution of the United States of America\n\n");
 		, m_bRunning(false)
 		, m_iFailures(0)
 		, m_nTestLevel(UNITTEST_LEVEL_Common) // UNITTEST_LEVEL_Common
+		, m_pAssertOrig(nullptr)
 	{
 		cTimePerf::InitFreq();	// make sure this gets called. OK to call again.
 
@@ -519,7 +520,7 @@ do ordain and establish this constitution of the United States of America\n\n");
 		char szDashes[64];
 		cValArray::FillSize<BYTE>(szDashes, STRMAX(szDashes), '-');
 		szDashes[STRMAX(szDashes)] = '\0';
-		UNITTEST_TRUE(cMem::IsValid(szDashes, sizeof(szDashes)));
+		UNITTEST_TRUE(!cMem::IsCorrupt(szDashes, sizeof(szDashes), true));
 
 		ITERATE_t iTestsRun = 0;
 		for (ITERATE_t i = 0; i < m_aUnitTests.GetSize(); i++)

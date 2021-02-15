@@ -299,7 +299,7 @@ namespace Gray
 		{
 			//! Allocate then copy something into it.
 
-			ASSERT(pData == nullptr || !this->IsValidPtr(pData));	// NOT from myself ! // Check before Alloc
+			ASSERT(pData == nullptr || !this->IsInternalPtr(pData));	// NOT from inside myself ! // Check before Alloc
 			if (!Alloc(nSize))
 			{
 				return false;	// FAILED HRESULT_WIN32_C(ERROR_NOT_ENOUGH_MEMORY)
@@ -327,7 +327,7 @@ namespace Gray
 		}
 		bool ReAlloc(const void* pData, size_t nSize)
 		{
-			ASSERT(pData == nullptr || !this->IsValidPtr(pData));	// NOT from myself ! // Check before Alloc
+			ASSERT(pData == nullptr || !this->IsInternalPtr(pData));	// NOT from myself ! // Check before Alloc
 			if (!ReAlloc(nSize))
 			{
 				return false;	// FAILED HRESULT_WIN32_C(ERROR_NOT_ENOUGH_MEMORY)

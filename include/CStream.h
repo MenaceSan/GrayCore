@@ -89,7 +89,7 @@ namespace Gray
 		static const size_t k_FILE_BLOCK_SIZE = (32 * 1024);	//!< default arbitrary transfer block size. more than this is NOT more efficient.
 
 	public:
-		virtual ~cStreamBase()
+		virtual ~cStreamBase() noexcept
 		{
 		}
 		virtual STREAM_SEEKRET_t Seek(STREAM_OFFSET_t iOffset, SEEK_ORIGIN_TYPE eSeekOrigin = SEEK_Set)
@@ -134,7 +134,7 @@ namespace Gray
 		cStreamOutput() noexcept
 		{
 		}
-		virtual ~cStreamOutput()
+		virtual ~cStreamOutput() noexcept
 		{
 		}
 
@@ -311,7 +311,7 @@ namespace Gray
 		cStreamInput() noexcept
 		{
 		}
-		virtual ~cStreamInput()
+		virtual ~cStreamInput() noexcept
 		{
 		}
 
@@ -463,18 +463,19 @@ namespace Gray
 
 	public:
 		//! Disambiguate Seek for cStreamBase to cStreamInput for stupid compiler.
-		virtual STREAM_SEEKRET_t Seek(STREAM_OFFSET_t iOffset, SEEK_ORIGIN_TYPE eSeekOrigin = SEEK_Set) override
+		STREAM_SEEKRET_t Seek(STREAM_OFFSET_t iOffset, SEEK_ORIGIN_TYPE eSeekOrigin = SEEK_Set) override
 		{
 			return cStreamInput::Seek(iOffset, eSeekOrigin);
 		}
-		virtual STREAM_POS_t GetPosition() const override
+		STREAM_POS_t GetPosition() const override
 		{
 			return cStreamInput::GetPosition();
 		}
-		virtual STREAM_POS_t GetLength() const override
+		STREAM_POS_t GetLength() const override
 		{
 			return cStreamInput::GetLength();
 		}
+
 		void SeekToBegin()
 		{
 			cStreamInput::SeekToBegin();
