@@ -90,7 +90,7 @@ namespace Gray
 			//! Protect or un-protect these pages.
 			if (m_dwPageSize == 0)
 			{
-				m_dwPageSize = cSystemInfo::I().get_PageSize();
+				m_dwPageSize = (DWORD)cSystemInfo::I().get_PageSize();
 			}
 
 			const UINT_PTR nStart = ((UINT_PTR)p);

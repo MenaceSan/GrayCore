@@ -178,6 +178,7 @@
 
 #else
 #include <windows.h>
+#include <objbase.h>	// CINTERFACE DECLARE_INTERFACE
 #endif	// ! _AFXDLL
 
 // TODO : Include SysRes.h from here !?????
