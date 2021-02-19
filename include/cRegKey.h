@@ -51,7 +51,7 @@ namespace Gray
 		}
 	};
 
-	class GRAYCORE_LINK cRegKey	// not GRAYCORE_LINK since its inline?
+	class GRAYCORE_LINK cRegKey	 
 		: public cHandlePtr < HKEY >
 	{
 		//! @class GrayLib::cRegKey

@@ -501,6 +501,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <None Include="build\BuildNuGetImage.bat" />
+    <None Include="build\Directory.Build.props" />
     <None Include="build\graycore-v141.nuspec" />
     <None Include="build\graycore-v142.nuspec" />
     <None Include="build\GrayCore.nuget.props" />

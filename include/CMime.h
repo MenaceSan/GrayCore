@@ -87,7 +87,7 @@ namespace Gray
 		MIME_QTY,
 	};
 
-	struct GRAYCORE_LINK cMime	// static
+	struct GRAYCORE_LINK cMime	 
 	{
 		//! @struct Gray::cMime
 		//! Declare all the file types that the app might want to use.
@@ -99,8 +99,11 @@ namespace Gray
 
 		static MIME_TYPE GRAYCALL FindMimeTypeForExt(const char* pszExt, MIME_TYPE eMimeTypeDefault = MIME_UNKNOWN);
 
-		static const char* const k_aszMimeType[MIME_QTY + 1];	//!< Predefined known types.
-		static const char* const k_aszMimeExt[(MIME_QTY * 2) + 1];
+		const char* m_pszName;	//!< IANA name for predefined/known MIME types.
+		const char* m_pExt;
+		const char* m_pExt2;	// Alternate extension. // Allow any alterate extension for each MIME type.
+
+		static const cMime k_Type[MIME_QTY];		// Define info for all the types i support.
 	};
 }
 #endif

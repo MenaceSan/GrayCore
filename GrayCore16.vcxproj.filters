@@ -441,6 +441,9 @@
     <None Include="build\GrayCore.nuget.targets">
       <Filter>build</Filter>
     </None>
+    <None Include="build\Directory.Build.props">
+      <Filter>build</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">

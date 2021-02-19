@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Put this in the directory of the project being built to select GRAY_LINK type as 'Stat' else it defaults to 'DLL' -->
+<!-- Ideally this should not be needed. It should have been derived from $(PreprocessorDefinitions) but it seems i cant read this in Condition ?? -->
+<!-- TODO PreprocessorDefinitions is not available ? https://docs.microsoft.com/en-us/cpp/build/working-with-project-properties?view=msvc-160 -->
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="15.0">
+  <PropertyGroup>
+    <GRAY_LINK>Stat</GRAY_LINK>
+  </PropertyGroup>
+</Project>

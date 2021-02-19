@@ -9,7 +9,11 @@ set BinDir=..\..\..\bin
 set DstDir=%BinDir%\graycore-%ToolVer%.%CodeVer%
 @ECHO on
 
+rem clean dir.
+del "%DstDir%\" /Q
+rmdir /s/q "%DstDir%\"
 md "%DstDir%\"
+
 xcopy /Q /R /Y "..\ReadMe.md" "%DstDir%\"
 IF ERRORLEVEL 1 GOTO ERRORDETECTED
 xcopy /Q /R /Y "..\License.txt" "%DstDir%\"
@@ -22,7 +26,11 @@ IF ERRORLEVEL 1 GOTO ERRORDETECTED
 md "%DstDir%\build\"
 copy ".\GrayCore.nuget.props" "%DstDir%\build\graycore-%ToolVer%.props"
 IF ERRORLEVEL 1 GOTO ERRORDETECTED
-copy ".\GrayCore.nuget.targets" "%DstDir%\build\graycore-%ToolVer%.targets"
+rem copy ".\GrayCore.nuget.targets" "%DstDir%\build\graycore-%ToolVer%.targets"
+rem IF ERRORLEVEL 1 GOTO ERRORDETECTED
+
+rem copy build helper file for static lib linking.
+copy ".\Directory.Build.props" "%DstDir%\*"
 IF ERRORLEVEL 1 GOTO ERRORDETECTED
 
 rem md %DstDir%\bin\

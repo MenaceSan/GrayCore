@@ -643,7 +643,7 @@ namespace Gray
 			return SerializeInput(a.ref_Inp());
 	}
 
-#if 1 // def GRAY_DLL // force implementation/instantiate for DLL/SO.
+#if true // def GRAY_DLL // force implementation/instantiate for DLL/SO.
 #ifndef _MFC_VER
 	template class GRAYCORE_LINK CStringT < char >;		// force implementation/instantiate for DLL/SO.
 	template class GRAYCORE_LINK CStringT < wchar_t >;	// force implementation/instantiate for DLL/SO.
