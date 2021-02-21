@@ -523,9 +523,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <None Include="build\BuildNuGetImage.bat" />
+    <None Include="build\Directory.Build.props" />
     <None Include="build\graycore-v141.nuspec" />
     <None Include="build\graycore-v142.nuspec" />
     <None Include="build\GrayCore.nuget.props" />
+    <None Include="build\GrayCore.nuget.targets" />
     <None Include="include\cLogLevel.tbl" />
     <None Include="include\cMimeExts.tbl" />
     <None Include="include\cMimeTypes.tbl" />
@@ -762,6 +764,9 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="src\GrayCore.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="build\GrayWorldLogoSm.jpg" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

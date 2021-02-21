@@ -187,7 +187,7 @@ namespace Gray
 		StrLen_t SetLinesParse(const IniChar_t* pszData, StrLen_t iLen = k_StrLen_UNK, const IniChar_t* pszSep = nullptr, STRP_MASK_t uFlags = (STRP_START_WHITE | STRP_MERGE_CRNL | STRP_END_WHITE | STRP_EMPTY_STOP));
 		cStringA GetStringAll(const IniChar_t* pszSep = nullptr) const;
 
-		HRESULT ReadSectionData(cStringA& rsSectionNext, cStreamInput& stream, bool bStripComments);
+		HRESULT ReadSectionData(OUT cStringA& rsSectionNext, cStreamInput& stream, bool bStripComments);
 		HRESULT WriteSectionData(cStreamOutput& file);
 	};
 
@@ -259,6 +259,7 @@ namespace Gray
 			: cIniSection(rSectionCopy)
 			, m_FilePos(rSectionCopy.m_FilePos)
 		{
+			// copy
 		}
 		virtual ~cIniSectionEntry()
 		{
@@ -266,6 +267,7 @@ namespace Gray
 
 		int get_HashCode() const noexcept
 		{
+			// Hash within this file.
 			return (int)m_FilePos.get_Line1();
 		}
 	};

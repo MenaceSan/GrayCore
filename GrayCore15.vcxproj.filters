@@ -436,6 +436,12 @@
     <None Include="build\graycore-v142.nuspec">
       <Filter>build</Filter>
     </None>
+    <None Include="build\Directory.Build.props">
+      <Filter>build</Filter>
+    </None>
+    <None Include="build\GrayCore.nuget.targets">
+      <Filter>build</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">
@@ -669,5 +675,10 @@
     <ResourceCompile Include="src\GrayCore.rc">
       <Filter>src</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="build\GrayWorldLogoSm.jpg">
+      <Filter>build</Filter>
+    </Image>
   </ItemGroup>
 </Project>

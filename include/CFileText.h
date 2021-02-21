@@ -65,7 +65,7 @@ namespace Gray
 		void Close() noexcept override;
 		HRESULT OpenFileHandle(HANDLE h, OF_FLAGS_t nOpenFlags);
 
-		FILE* DetachFileStream()
+		FILE* DetachFileStream() noexcept
 		{
 			FILE* pStream = m_pStream;
 			DetachFileHandle();

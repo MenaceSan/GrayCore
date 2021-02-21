@@ -842,13 +842,14 @@ namespace Gray
 		return sArgs;
 	}
 
-	HRESULT cIniSectionData::ReadSectionData(cStringA& rsSectionNext, cStreamInput& stmIn, bool bStripComments)
+	HRESULT cIniSectionData::ReadSectionData(OUT cStringA& rsSectionNext, cStreamInput& stmIn, bool bStripComments)
 	{
 		//! Read the cIniSectionData from a cStreamInput. Up to EOF or [next section]
 		//! Might be first section (with no [Section header] text in rsSectionNext)
+		//! ASSUME caller sets m_FilePos.
 		//! @arg
-		//!  rsSectionNext = the name of this section. without [].
-		//!  bStripComments = strip leading spaces and trailing spaces and comments.
+		//!  rsSectionNext = in = the name of this section (maybe) out the name of the next section. without [].
+		//!  bStripComments = strip leading spaces and trailing spaces and comments. Keep blank lines to match line numbers of original file.
 		//! @return
 		//!  S_OK = read a section. S_FALSE = empty section
 		//!  rsSectionNext = the name of the next section. (if any)

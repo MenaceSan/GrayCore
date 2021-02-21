@@ -1,4 +1,5 @@
-rem Assume we have built all the binaries. This will copy them all to the appropriate fodler structure to prepare for NuGet packing.
+rem Assume we have built all the binaries. This will copy them all to the appropriate folder structure to prepare for NuGet packing.
+rem Assume NuGet tools are installed /Programs/NuGet.exe .
 rem https://digitalhouseblog.wordpress.com/2019/08/22/how-to-make-a-nuget-package-for-c/
 rem https://docs.microsoft.com/en-us/nuget/reference/nuget-exe-cli-reference -> https://www.nuget.org/downloads
 
