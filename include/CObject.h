@@ -37,7 +37,7 @@ namespace Gray
 		{
 		}
 
-		bool inline IsValidSignature(UINT32 nVer, size_t nSizeofThis) const
+		bool inline IsValidSignature(UINT32 nVer, size_t nSizeofThis) const noexcept
 		{
 			//! Call this from the context of some other DLL or lib and make sure they match.
 			//! If not, then there are un-matching pound defines (conditional code) or different compiler packing params. This is BAD.

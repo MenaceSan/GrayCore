@@ -62,7 +62,7 @@ namespace Gray
 		//! Posix, _CONSOLE or DOS style arguments. main() style init.
 		//! set pre-parsed arguments from console style start. ppszArgs[0] = app path
 		//! @note M$ unit tests will block arguments!
-		
+
 		ASSERT_N(ppszArgs != nullptr);
 
 		// build m_sArguments
@@ -183,6 +183,8 @@ namespace Gray
 
 	//*********************************************************
 
+	const FILECHAR_t k_EnvironName[] = _FN(GRAY_NAMES) _FN("Core");
+
 	cAppState::cAppState()
 		: cSingleton<cAppState>(this, typeid(cAppState))
 		, m_Sig(_INC_GrayCore_H, sizeof(cAppState)) // help with debug versioning and DLL usage.
@@ -192,6 +194,14 @@ namespace Gray
 	{
 		//! Cache the OS params for this process/app ?
 		ASSERT(m_ThreadModuleLoading.isInit());
+
+		if (GetEnvironStr(k_EnvironName, nullptr, 0) == 0)
+		{
+			// MUST not already exist !
+			FILECHAR_t szValue[StrNum::k_LEN_MAX_DIGITS_INT + 2];
+			StrT::ULtoA((UINT_PTR)this, szValue, STRMAX(szValue), 16);
+			SetEnvironStr(k_EnvironName, szValue);		// record this globally to any consumer in the process space.
+		}
 	}
 
 	cAppState::~cAppState() noexcept
@@ -208,7 +218,7 @@ namespace Gray
 		//! @note kernel debuggers like SoftIce can fool this.
 #ifdef _WIN32
 #if (_WIN32_WINNT >= 0x0400) && ! defined(UNDER_CE)
-		return(::IsDebuggerPresent() ? true : false);
+		return ::IsDebuggerPresent() ? true : false ;
 #else
 		return false;
 #endif
@@ -257,6 +267,29 @@ namespace Gray
 	{
 		//! Get the directory the app EXE is in.
 		return cFilePath::GetFileDir(cAppState::get_AppFilePath());
+	}
+
+	HRESULT cAppState::CheckValidSignatureI(UINT32 nGrayCoreVer, size_t nSizeofThis) const noexcept // protected
+	{
+		// Is the pAppEx what we think it is ?
+		// Assume cAppState is relatively stable annd wont just crash. CheckValidSignatureX called.
+
+		if (!m_Sig.IsValidSignature(nGrayCoreVer, nSizeofThis))
+		{
+			// Something is wrong. No idea.
+			return HRESULT_WIN32_C(ERROR_INTERNAL_ERROR);
+		}
+
+		FILECHAR_t szValue[StrNum::k_LEN_MAX_DIGITS_INT + 2];
+		StrLen_t len = GetEnvironStr(k_EnvironName, szValue, STRMAX(szValue));		// record this globally to any consumer in the process space.
+		UINT_PTR uVal = StrT::toUP<FILECHAR_t>(szValue, nullptr, 16);
+		if (uVal != (UINT_PTR)this)
+		{
+			// Mix of GRAY_STATICLIB and DLL linkage is not allowed.
+			return HRESULT_WIN32_C(ERROR_INTERNAL_ERROR);
+		}
+
+		return S_OK;	// good.
 	}
 
 	APPSTATE_TYPE_ GRAYCALL cAppState::GetAppState() // static
@@ -314,15 +347,16 @@ namespace Gray
 		//! return _C_Termination_Done;	// undocumented symbol is not good in DLL.
 		//! @note _C_Termination_Done wouldn't work properly in a DLL.
 		APPSTATE_TYPE_ eAppState = I().m_eAppState;
-		return(eAppState == APPSTATE_Exit);
+		return eAppState == APPSTATE_Exit;
 	}
 
 	StrLen_t GRAYCALL cAppState::GetEnvironStr(const FILECHAR_t* pszVarName, FILECHAR_t* pszValue, StrLen_t iLenMax) noexcept	// static
 	{
 		//! Get a named environment variable by name.
+		//! @arg iLenMax = 0 just return the length i would have needed.
 		//! @return
-		//!  pszValue = the value for the Tag name
-		//!  Length of the pszValue string. 0 = none
+		//!  pszValue = the output value for the pszVarName. nullptr = i just wanted the length.
+		//!  Length of the pszValue string. 0 = none. 
 #ifdef UNDER_CE
 		ASSERT(0);
 		return 0;	// no such thing.
@@ -405,7 +439,7 @@ namespace Gray
 		return i;
 	}
 
-	bool cAppState::SetEnvironStr(const FILECHAR_t* pszVarName, const FILECHAR_t* pszVal) // static
+	bool cAppState::SetEnvironStr(const FILECHAR_t* pszVarName, const FILECHAR_t* pszVal) noexcept // static
 	{
 		//! ASSUME pszVarName is valid format.
 		//! @arg pszVal = nullptr = (or "") to erase it.

@@ -281,7 +281,7 @@ namespace Gray
 		{
 			//! Get decimal digit value.
 			// ASSERT(ch>='0'&&ch<=??);
-			return(ch - '0');
+			return ch - '0' ;
 		}
 
 		static bool GRAYCALL IsDigitF(wchar_t ch);

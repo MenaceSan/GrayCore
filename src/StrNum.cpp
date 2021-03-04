@@ -13,9 +13,11 @@
 
 namespace Gray
 {
-	StrLen_t GRAYCALL StrNum::GetTrimCharsLen(const char* pszInp, StrLen_t nLen, char ch) // static
+	StrLen_t GRAYCALL StrNum::GetTrimCharsLen(const char* pszInp, StrLen_t nLen, char ch) noexcept // static
 	{
 		//! Get Length of string if all ch chars are trimmed from the end.
+		if (pszInp == nullptr)
+			return 0;
 		for (; nLen > 0; nLen--)
 		{
 			if (pszInp[nLen - 1] != ch)
@@ -24,12 +26,15 @@ namespace Gray
 		return nLen;
 	}
 
-	StrLen_t GRAYCALL StrNum::GetNumberString(OUT char* pszOut, const wchar_t* pszInp, StrLen_t iStrMax) // static
+	StrLen_t GRAYCALL StrNum::GetNumberString(OUT char* pszOut, const wchar_t* pszInp, StrLen_t iStrMax) noexcept // static
 	{
 		//! Get a string in ASCII from UNICODE that represents a number.
 		//! Only get numeric type chars.
 		//! Like a simple version of StrU::UNICODEtoUTF8() and Opposite of StrU::UTF8toUNICODE()
 		//! @note ASSUME pszOut[k_LEN_MAX_DIGITS]
+
+		if (pszInp == nullptr)
+			return 0;
 
 		StrLen_t nLen = 0;
 		for (; nLen < iStrMax; nLen++)
@@ -51,7 +56,7 @@ namespace Gray
 
 	//*************************************************************************************
 
-	UINT64 GRAYCALL StrNum::toUL(const char* pszInp, const char** ppszInpEnd, RADIX_t nBaseRadix) // static
+	UINT64 GRAYCALL StrNum::toUL(const char* pszInp, const char** ppszInpEnd, RADIX_t nBaseRadix) noexcept // static
 	{
 		//! Similar to ::strtoul(). skip leading spaces. BUT NOT newlines. We should use StrNum::GetNumberString ?
 		//! May have 0x# prefix to indicate hex
@@ -126,7 +131,7 @@ namespace Gray
 		return uVal;
 	}
 
-	INT64 GRAYCALL StrNum::toIL(const char* pszInp, const char** ppszInpEnd, RADIX_t nBaseRadix)
+	INT64 GRAYCALL StrNum::toIL(const char* pszInp, const char** ppszInpEnd, RADIX_t nBaseRadix) noexcept
 	{
 		//! convert string to integer value. like strtol(), or a bit like atoi()
 		//! May have 0x# prefix to indicate hex
@@ -191,8 +196,10 @@ namespace Gray
 		//! @arg iStrMax must include space for null.
 		//! @return First digit (most significant)
 
-		ASSERT(nBaseRadix <= StrChar::k_uRadixMax);
+		ASSERT(pszOut != nullptr);
 		ASSERT(iStrMax > 0);
+		ASSERT(nBaseRadix <= StrChar::k_uRadixMax);
+
 		if (nBaseRadix < StrChar::k_uRadixMin)
 			nBaseRadix = 10;
 		iStrMax--;
@@ -344,18 +351,20 @@ namespace Gray
 
 	StrLen_t GRAYCALL StrNum::DtoAG(double dVal, OUT char* pszOut, StrLen_t iStrMax, int iDecPlacesWanted, char chE) // static
 	{
-		if (iStrMax >= k_LEN_MAX_DIGITS)
+		//! @arg iStrMax = k_LEN_MAX_DIGITS
+
+		if (iStrMax >= k_LEN_MAX_DIGITS)	// buffer is big enough.
 		{
 			return DtoAG2(dVal, pszOut, iDecPlacesWanted, chE);
 		}
-		char szTmp[StrNum::k_LEN_MAX_DIGITS + 4];
+		char szTmp[StrNum::k_LEN_MAX_DIGITS + 4];	// MUST allow at least this size.
 		StrNum::DtoAG2(dVal, szTmp, iDecPlacesWanted, chE); // StrLen_t iStrLen = 
-		return StrT::CopyLen(pszOut, szTmp, iStrMax);
+		return StrT::CopyLen(pszOut, szTmp, iStrMax);	// Copy to smaller buffer.
 	}
 
 	double GRAYCALL StrNum::toDouble(const char* pszInp, const char** ppszInpEnd) // static
 	{
-		//! Convert a string to a double precision decimal value.
+		//! Convert a string to a double precision decimal value. k_LEN_MAX_DIGITS
 		//! MUST emulate/match the C compiler. The C++ compiler will generate a double value from a string in code.
 		//! MUST be reversible using DtoA().
 		//! like atof(), wcstod() or strtod() and opposite of DtoA(), dtoa()

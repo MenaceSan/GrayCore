@@ -45,15 +45,18 @@ namespace Gray
 			return i;
 		}
 
-		static bool inline IsValidApp(const void* pData) noexcept
+		static bool constexpr IsValidApp(const void* pData) noexcept
 		{
 			//! Is this pointer into App space? Not kernel space. Kernel Space <= 1G or 2G for __linux__
 			//! Can i read from this ?
 			//! Does not mean I have write permissions.
 			//! Used to sanity check pointers. Ensure NOT offset from nullptr?
 
-			if (((UINT_PTR)pData) < 16 * 1024)	// ASSUME memory in this range is never valid? Fail quickly. This is Kernel Space ONLY. <1G
+			if (pData == nullptr)
 				return false;
+			UINT_PTR u = (UINT_PTR)pData;
+			if (u < 16 * 1024)	// ASSUME memory in this range is never valid? Fail quickly. This is Kernel Space ONLY. <1G . PageSize ?
+				return false;	// 
 #ifdef _WIN32
 			// 1G or 2G ?
 #endif

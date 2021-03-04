@@ -110,39 +110,58 @@ namespace Gray
 		cAppState();
 		virtual ~cAppState() noexcept;
 
+		HRESULT CheckValidSignatureI(UINT32 nGrayCoreVer, size_t nSizeofThis) const noexcept;
+
 	public:
 		static cStringF GRAYCALL get_AppFilePath();			//!< The full path+name of the current EXE/PE.
 		static cStringF GRAYCALL get_AppFileTitle();		//!< File name no Ext.
 		static cStringF GRAYCALL get_AppFileDir();
 
-		static HRESULT inline CheckValidSignature(UINT32 nGrayCoreVer, size_t nSizeofThis)
+		static HRESULT inline CheckValidSignatureX(UINT32 nGrayCoreVer, size_t nSizeofThis, const cAppState* pAppX) noexcept
 		{
 			//! Is this the correct version of cAppState?
-			//! Must be agreed to by all users. sizeof(cAppState) for checking alignments of structures.
+			//! Must be agreed to by all code consumers. sizeof(cAppState) for checking alignments of structures.
 			//! Ensure that some external DLL/SO caller has the same structure packing that we have.
+			//! Make this inline code so it runs in the callers context.
 			//! @arg nGrayCoreVer = _INC_GrayCore_H  (from the callers perspective)
-			//! @arg nSizeofThis = sizeof(cAppState) (from the callers perspective)
+			//! @arg nSizeofThis = sizeof(cAppState) (from the callers perspective) for structure packing check.
+			//! @note make sure Lib is not shared as both DLL and static. GetEnvironStr(GRAY_NAMES "Core") contains &cAppState
 
-			const cAppState* const pApp = get_SingleU();
+			if (nGrayCoreVer != _INC_GrayCore_H)
+			{
+				// My *Core DLL is not the correct version or packing is incorrect!
+				return HRESULT_WIN32_C(ERROR_PRODUCT_VERSION);
+			}
+
+			const cAppState* const pApp = get_SingleU();	// allow nullptr.
 			if (!cMem::IsValidApp(pApp))
 			{
 				// Something is wrong. No idea.
 				return HRESULT_WIN32_C(ERROR_INTERNAL_ERROR);
 			}
-			if (nGrayCoreVer != _INC_GrayCore_H || !pApp->m_Sig.IsValidSignature(nGrayCoreVer, nSizeofThis))
+			if (pAppX != nullptr && pAppX != pApp)
 			{
-				// My *Core DLL is not the correct version or packing is incorrect!
-				return HRESULT_WIN32_C(ERROR_PRODUCT_VERSION);
+				// Mix of GRAY_STATICLIB and DLL linkage is not allowed.
+				return HRESULT_WIN32_C(ERROR_INTERNAL_ERROR);
 			}
-			return S_OK;	// Things seem good.
+
+			return pApp->CheckValidSignatureI(nGrayCoreVer, nSizeofThis);
 		}
 
-		APPSTATE_TYPE_ get_AppState() const noexcept
+		static HRESULT inline CheckValidSignatureX() noexcept
+		{
+			//! Is this the correct version of cAppState?
+			//! Force inline version.
+			return CheckValidSignatureX(_INC_GrayCore_H, sizeof(cAppState), cAppState::get_SingleU());
+		}
+
+		APPSTATE_TYPE_ inline get_AppState() const noexcept
 		{
 			//! use isInCInit() for loading DLL's.
 			return m_eAppState;
 		}
 		static APPSTATE_TYPE_ GRAYCALL GetAppState();
+
 		void put_AppState(APPSTATE_TYPE_ eAppState) noexcept
 		{
 			//! Indicate the process/app has changed state.
@@ -151,7 +170,7 @@ namespace Gray
 		}
 		void InitAppState() noexcept;
 
-		THREADID_t get_MainThreadId() const noexcept
+		THREADID_t inline get_MainThreadId() const noexcept
 		{
 			//! The thread we started with.
 			return m_nMainThreadId;
@@ -170,7 +189,7 @@ namespace Gray
 		static cString GRAYCALL GetCurrentUserName(bool bForce = false);
 		static cStringF GRAYCALL GetCurrentUserDir(const FILECHAR_t* pszSubFolder = nullptr, bool bCreate = true);		//!< Get Root folder the user has write access to.
 
-		static PROCESSID_t GRAYCALL get_CurrentProcessId() noexcept
+		static PROCESSID_t inline get_CurrentProcessId() noexcept
 		{
 			//! similar to cOSProcess
 #ifdef _WIN32
@@ -190,7 +209,7 @@ namespace Gray
 		static StrLen_t GRAYCALL GetEnvironStr(const FILECHAR_t* pszVarName, FILECHAR_t* pszValue, StrLen_t iLenMax) noexcept;
 		static cStringF GRAYCALL GetEnvironStr(const FILECHAR_t* pszVarName) noexcept;	//!< environment variable. from (system,user,app)
 		static ITERATE_t GRAYCALL GetEnvironArray(cArrayString<FILECHAR_t>& a);
-		static bool GRAYCALL SetEnvironStr(const FILECHAR_t* pszVarName, const FILECHAR_t* pszVal);
+		static bool GRAYCALL SetEnvironStr(const FILECHAR_t* pszVarName, const FILECHAR_t* pszVal) noexcept;
 
 		//! Current default directory for the app. @note UNDER_CE has no such thing. just use the root.
 		static StrLen_t GRAYCALL GetCurrentDir(FILECHAR_t* pszDir, StrLen_t iSizeMax);

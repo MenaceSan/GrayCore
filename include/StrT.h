@@ -317,35 +317,35 @@ namespace Gray
 
 		// string to numeric. similar to strtoul()
 		template< typename TYPE >
-		GRAYCORE_LINK static UINT64 GRAYCALL toUL(const TYPE* pszStr, const TYPE** ppszStrEnd = /*(const TYPE**)*/nullptr, RADIX_t nBaseRadix = 0);
+		GRAYCORE_LINK static UINT64 GRAYCALL toUL(const TYPE* pszStr, const TYPE** ppszStrEnd = /*(const TYPE**)*/nullptr, RADIX_t nBaseRadix = 0) NOEXCEPT;
 		template< typename TYPE >
-		GRAYCORE_LINK static INT64 GRAYCALL toIL(const TYPE* pszStr, const TYPE** ppszStrEnd = /*(const TYPE**)*/nullptr, RADIX_t nBaseRadix = 10);
+		GRAYCORE_LINK static INT64 GRAYCALL toIL(const TYPE* pszStr, const TYPE** ppszStrEnd = /*(const TYPE**)*/nullptr, RADIX_t nBaseRadix = 10) NOEXCEPT;
 
 		template< typename TYPE >
-		static UINT_PTR toUP(const TYPE* pszStr, const TYPE** ppszStrEnd = /*(const TYPE**)*/nullptr, RADIX_t nBaseRadix = 0)
-		{
-			// UINT_PTR
-			return (UINT_PTR)toUL(pszStr, ppszStrEnd, nBaseRadix);
-		}
-		template< typename TYPE >
-		static INT_PTR toIP(const TYPE* pszStr, const TYPE** ppszStrEnd = /*(const TYPE**)*/nullptr, RADIX_t nBaseRadix = 10)
-		{
-			// INT_PTR
-			return (INT_PTR)toIL(pszStr, ppszStrEnd, nBaseRadix);
-		}
-
-		template< typename TYPE >
-		static UINT toU(const TYPE* pszStr, const TYPE** ppszStrEnd = /*(const TYPE**)*/nullptr, RADIX_t nBaseRadix = 0)
+		static UINT toU(const TYPE* pszStr, const TYPE** ppszStrEnd = /*(const TYPE**)*/nullptr, RADIX_t nBaseRadix = 0) NOEXCEPT
 		{
 			//! Just cast down from 64.
 			return (UINT)toUL(pszStr, ppszStrEnd, nBaseRadix);
 		}
 		template< typename TYPE >
-		static int toI(const TYPE* pszStr, const TYPE** ppszStrEnd = /*(const TYPE**)*/nullptr, RADIX_t nBaseRadix = 10)
+		static int toI(const TYPE* pszStr, const TYPE** ppszStrEnd = /*(const TYPE**)*/nullptr, RADIX_t nBaseRadix = 10) NOEXCEPT
 		{
 			//! atoi()
 			//! Just cast down from 64.
 			return (int)toIL(pszStr, ppszStrEnd, nBaseRadix);
+		}
+
+		template< typename TYPE >
+		static UINT_PTR toUP(const TYPE* pszStr, const TYPE** ppszStrEnd = /*(const TYPE**)*/nullptr, RADIX_t nBaseRadix = 0) NOEXCEPT
+		{
+			// UINT_PTR as 64 bit or 32 bit as needed.
+			return (UINT_PTR)toUL(pszStr, ppszStrEnd, nBaseRadix);
+		}
+		template< typename TYPE >
+		static INT_PTR toIP(const TYPE* pszStr, const TYPE** ppszStrEnd = /*(const TYPE**)*/nullptr, RADIX_t nBaseRadix = 10) NOEXCEPT
+		{
+			// INT_PTR as 64 bit or 32 bit as needed.
+			return (INT_PTR)toIL(pszStr, ppszStrEnd, nBaseRadix);
 		}
 
 		// numeric to string
@@ -438,11 +438,11 @@ namespace Gray
 #endif
 	}
 
-	template<> inline UINT64 StrT::toUL<char>(const char* pszStr, const char** ppszStrEnd, RADIX_t nBaseRadix)
+	template<> inline UINT64 StrT::toUL<char>(const char* pszStr, const char** ppszStrEnd, RADIX_t nBaseRadix) NOEXCEPT
 	{
 		return StrNum::toUL(pszStr, ppszStrEnd, nBaseRadix);
 	}
-	template<> inline UINT64 StrT::toUL<wchar_t>(const wchar_t* pszStr, const wchar_t** ppszStrEnd, RADIX_t nBaseRadix)
+	template<> inline UINT64 StrT::toUL<wchar_t>(const wchar_t* pszStr, const wchar_t** ppszStrEnd, RADIX_t nBaseRadix) NOEXCEPT
 	{
 		char szTmp[StrNum::k_LEN_MAX_DIGITS_INT + 4];
 		StrNum::GetNumberString(szTmp, pszStr, StrNum::k_LEN_MAX_DIGITS_INT);

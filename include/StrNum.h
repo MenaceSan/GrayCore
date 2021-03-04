@@ -26,18 +26,18 @@ namespace Gray
 		static const StrLen_t k_LEN_MAX_DIGITS = (309 + 40);	//!< Largest number we can represent in double format + some extra places for post decimal. (). like _CVTBUFSIZE or StrT::k_LEN_MAX_KEY
 		static const StrLen_t k_LEN_MAX_DIGITS_INT = 64;	//!< Largest 64 bits base 2 not including sign or '\0' is only 64 digits.
 
-		static StrLen_t GRAYCALL GetTrimCharsLen(const char* pStr, StrLen_t nLen, char ch);
-		static StrLen_t GRAYCALL GetNumberString(OUT char* pszOut, const wchar_t* pszInp, StrLen_t iStrMax = k_LEN_MAX_DIGITS);
+		static StrLen_t GRAYCALL GetTrimCharsLen(const char* pStr, StrLen_t nLen, char ch) noexcept;
+		static StrLen_t GRAYCALL GetNumberString(OUT char* pszOut, const wchar_t* pszInp, StrLen_t iStrMax = k_LEN_MAX_DIGITS) noexcept;
 
-		static UINT64 GRAYCALL toUL(const char* pszInp, const char** ppszInpEnd = (const char**)nullptr, RADIX_t nBaseRadix = 0);
-		static INT64 GRAYCALL toIL(const char* pszInp, const char** ppszInpEnd = (const char**)nullptr, RADIX_t nBaseRadix = 10);
+		static UINT64 GRAYCALL toUL(const char* pszInp, const char** ppszInpEnd = (const char**)nullptr, RADIX_t nBaseRadix = 0) noexcept;
+		static INT64 GRAYCALL toIL(const char* pszInp, const char** ppszInpEnd = (const char**)nullptr, RADIX_t nBaseRadix = 10) noexcept;
 
-		static UINT32 GRAYCALL toU(const char* pszInp, const char** ppszInpEnd = (const char**)nullptr, RADIX_t nBaseRadix = 0)
+		static UINT32 GRAYCALL toU(const char* pszInp, const char** ppszInpEnd = (const char**)nullptr, RADIX_t nBaseRadix = 0) noexcept
 		{
 			//! Just cast down from 64.
 			return (UINT32)toUL(pszInp, ppszInpEnd, nBaseRadix);
 		}
-		static INT32 GRAYCALL toI(const char* pszInp, const char** ppszInpEnd = (const char**)nullptr, RADIX_t nBaseRadix = 10)
+		static INT32 GRAYCALL toI(const char* pszInp, const char** ppszInpEnd = (const char**)nullptr, RADIX_t nBaseRadix = 10) noexcept
 		{
 			//! Just cast down from 64.
 			return (INT32)toIL(pszInp, ppszInpEnd, nBaseRadix);
@@ -51,12 +51,12 @@ namespace Gray
 
 		static StrLen_t GRAYCALL UtoA(UINT32 nVal, OUT char* pszOut, StrLen_t iStrMax, RADIX_t nBaseRadix = 10)
 		{
-			//! Just cast up to 64.
+			//! Just cast up to 64. k_LEN_MAX_DIGITS_INT
 			return ULtoA(nVal, pszOut, iStrMax, nBaseRadix);
 		}
 		static StrLen_t GRAYCALL ItoA(INT32 nVal, OUT char* pszOut, StrLen_t iStrMax, RADIX_t nBaseRadix = 10)
 		{
-			//! Just cast up to 64.
+			//! Just cast up to 64. k_LEN_MAX_DIGITS_INT
 			return ILtoA(nVal, pszOut, iStrMax, nBaseRadix);
 		}
 
