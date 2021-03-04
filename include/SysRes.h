@@ -7,7 +7,7 @@
 #define _INC_SysRes_H
 #pragma once
 
-#ifdef _MFC_VER
+#if defined(_MFC_VER) || defined(_AFXDLL)	// rc file will define _AFXDLL
 #include <afxres.h>         // must be included before <afxwin.h> or <afxext.h>
 
 #if defined(RC_INVOKED) &&  !defined(APSTUDIO_INVOKED)

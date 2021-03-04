@@ -112,7 +112,7 @@ namespace Gray
 		if (!StrT::IsWhitespace(pszArgs))
 		{
 			StrLen_t len = StrT::CopyLen(sCommandLine, pszExeName, STRMAX(sCommandLine));
-			len += StrT::CopyLen(sCommandLine + len, " ", STRMAX(sCommandLine) - len);
+			len += StrT::CopyLen<FILECHAR_t>(sCommandLine + len, _FN(" "), STRMAX(sCommandLine) - len);
 			StrT::CopyLen(sCommandLine + len, pszArgs, STRMAX(sCommandLine) - len);
 			pszArgs = sCommandLine;
 		}

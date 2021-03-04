@@ -76,7 +76,7 @@ namespace Gray
 		TYPE* DetachPtr() noexcept
 		{
 			//! Do not decrement the reference count when this is destroyed.
-			//! Pass the ref outside the smart pointer system. for use with COM interfaces.
+			//! Pass the reference counted pointer outside the smart pointer system. for use with COM interfaces.
 			//! same as _WIN32 ATL cComPtr Detach()
 			TYPE* p = m_p;
 			m_p = nullptr;	// NOT ReleasePtr();
@@ -115,6 +115,7 @@ namespace Gray
 
 		TYPE* operator -> () const
 		{
+			// nullptr is not allowed.
 			ASSERT(m_p != nullptr); return m_p;
 		}
 

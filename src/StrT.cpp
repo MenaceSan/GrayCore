@@ -24,10 +24,9 @@ namespace Gray
 
 namespace Gray
 {
-#ifdef GRAY_DLL // force implementation/instantiate for DLL/SO.
+	// force implementation/instantiate for DLL/SO and GRAY_STATICLIB.
 	template struct GRAYCORE_LINK StrX<char>;
 	template struct GRAYCORE_LINK StrX<wchar_t>;
-#endif
 
 	// even GRAY_STATICLIB needs this to expose the symbols. but only in vs2019.
 #define TYPE char

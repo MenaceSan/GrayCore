@@ -25,7 +25,7 @@ namespace Gray
 		const ATOMCHAR_t* const m_pszName;		//! The main type name we can create by. Might have multiple alternate aliases for interfaces. e.g. "IObjectName"
 		const cTypeInfo& m_TypeInfo;		//! the typeid(TYPE) of some object we would create.
 
-	private:
+	public:
 		static void GRAYCALL RegisterFactory(const cObjectFactory& factory) noexcept;
 
 	public:

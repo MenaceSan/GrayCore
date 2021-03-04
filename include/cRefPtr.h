@@ -207,12 +207,13 @@ namespace Gray
 #ifdef _DEBUG
 		bool isSmartDebug() const noexcept
 		{
+			//! Is this object marked as debug?
 			return(m_nRefCount.get_Value() & k_REFCOUNT_DEBUG) ? true : false;
 		}
 		void SetSmartDebug() noexcept
 		{
-			//! object is in the act of destruction.
-			if (isSmartDebug())
+			//! Mark this object as debug. maybe object is in the act of destruction?
+			if (isSmartDebug())	// already marked.
 				return;
 			m_nRefCount.AddX(k_REFCOUNT_DEBUG);
 		}
@@ -375,7 +376,7 @@ namespace Gray
 	// The lowest (un-type checked) smart pointer.
 	typedef GRAYCORE_LINK cRefPtr<> cRefBasePtr;
 
-#ifdef GRAY_DLL // force implementation/instantiate for DLL/SO.
+#ifndef GRAY_STATICLIB // force implementation/instantiate for DLL/SO.
 	template class GRAYCORE_LINK cRefPtr < cRefBase >;
 #endif
 

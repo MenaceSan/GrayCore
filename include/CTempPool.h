@@ -36,7 +36,7 @@ namespace Gray
 		static cThreadLocalSysNew<cTempPool> sm_ThreadLocalDefault;	// default for sm_pThreadLocal. set sm_pThreadLocal with cThreadLocalTypeNew in more strict applications.
 
 	public:
-		cTempPool()
+		cTempPool() noexcept
 		: m_iCountCur(0)
 		{
 		}

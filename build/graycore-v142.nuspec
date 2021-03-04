@@ -14,7 +14,7 @@
     <title>GrayCore C++ Library for cruntime v142</title>
     <summary>GrayCore C++ Library for cruntime v142</summary>
     <copyright>Copyright 2020 Dennis Robinson (menasoft.com)</copyright>
-    <tags>native nativepackage CoApp menasoft</tags>
+    <tags>native nativepackage v142 CoApp menasoft</tags>
     <repository type="git" url="https://github.com/MenaceSan/GrayCore.git" branch="master" />
     
   </metadata>

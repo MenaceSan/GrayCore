@@ -28,6 +28,7 @@ namespace Gray
 	class GRAYCORE_LINK cArchive;
 
 #if defined(_MFC_VER) // Only need minimal sub-set if using MFC. __ATLSTR_H__
+	// NOTE: TCHAR is always wchar_t for MFC
 #define cStringT_DEF(_TYPE_CH) ATL::CStringT< _TYPE_CH, StrTraitMFC_DLL< _TYPE_CH > >
 
 #else
@@ -262,11 +263,11 @@ namespace Gray
 			FormatV(pszStr, vargs);
 			va_end(vargs);
 		}
-		COMPARE_t Compare(const _TYPE_CH* pszStr) const
+		COMPARE_t Compare(const _TYPE_CH* pszStr) const noexcept
 		{
 			return StrT::Cmp(GetString(), pszStr);
 		}
-		COMPARE_t CompareNoCase(const _TYPE_CH* pszStr) const
+		COMPARE_t CompareNoCase(const _TYPE_CH* pszStr) const noexcept
 		{
 			return StrT::CmpI(GetString(), pszStr);
 		}

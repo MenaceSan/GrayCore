@@ -26,10 +26,10 @@ namespace Gray
 		cAtomRef m_aKey;	//!< property key name.
 		cStringI m_sVal;	//!< property value as a string.
 	public:
-		cIniKeyValue()
+		cIniKeyValue() noexcept
 		{
 		}
-		cIniKeyValue(cAtomRef aKey, cStringI sVal)
+		cIniKeyValue(cAtomRef aKey, cStringI sVal) noexcept
 		: m_aKey(aKey), m_sVal(sVal)
 		{
 		}
@@ -61,7 +61,7 @@ namespace Gray
 		//! Similar to cIniObject but props are NOT known/predefined.
 
 	public:
-		cIniMap()
+		cIniMap() noexcept
 		{
 		}
 		virtual ~cIniMap()

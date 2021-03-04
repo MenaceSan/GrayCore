@@ -93,7 +93,7 @@ namespace Gray
 		return cTempPool::GetTempST<TYPE>(nLen, szTmp);
 	}
 
-#if true // def GRAY_DLL // force implementation/instantiate for DLL/SO.
+	// force implementation/instantiate for DLL/SO.
 	template GRAYCORE_LINK const wchar_t* GRAYCALL StrArg<wchar_t>(const char* pszStrInp);		// Force Instantiation for DLL.
 	template GRAYCORE_LINK const char* GRAYCALL StrArg<char>(const wchar_t* pszStrInp);		// Force Instantiation for DLL.
 
@@ -116,7 +116,4 @@ namespace Gray
 
 	template GRAYCORE_LINK const wchar_t* GRAYCALL StrArg<wchar_t>(double v);		// Force Instantiation for DLL.
 	template GRAYCORE_LINK const char* GRAYCALL StrArg<char>(double v);		// Force Instantiation for DLL.
-
-#endif
-};
- 
+}

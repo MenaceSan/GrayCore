@@ -334,7 +334,7 @@ namespace Gray
 		UNITTEST_FRIEND(cFileDir);
 	};
 
-#ifdef GRAY_DLL // force implementation/instantiate for DLL/SO.
+#ifndef GRAY_STATICLIB // force implementation/instantiate for DLL/SO.
 	template class GRAYCORE_LINK CArray < cFileFindEntry, const cFileFindEntry& >;
 	template class GRAYCORE_LINK cArrayTyped < cFileFindEntry, const cFileFindEntry& >;
 	template class GRAYCORE_LINK cArrayStruct < cFileFindEntry >;

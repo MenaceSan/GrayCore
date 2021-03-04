@@ -91,19 +91,19 @@ namespace Gray
 	};
 
 	template<class TYPE>
-	class cThreadLockArraySmart
+	class cThreadLockArrayRef
 	: protected cArrayRef < TYPE >
 	{
-		//! @class Gray::cThreadLockArraySmart
+		//! @class Gray::cThreadLockArrayRef
 		//! Thread safe array of smart pointers. NON sorted.
 		typedef cArrayRef<TYPE> SUPER_t;
 	public:
 		mutable cThreadLockCount m_Lock;
 	public:
-		cThreadLockArraySmart()
+		cThreadLockArrayRef()
 		{
 		}
-		~cThreadLockArraySmart()
+		~cThreadLockArrayRef()
 		{
 		}
 

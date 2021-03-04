@@ -34,7 +34,7 @@ namespace Gray
 	{
 		//! @class Gray::cOSModule
 		//! manage access to a dynamically loaded *.DLL file. (or .SO in __linux__)
-		//! in _WIN32 HMODULE is just a load address. Not the same as cOSHandle?
+		//! in _WIN32 HMODULE is just a load address. Not the same as cOSHandle.
 		//! ASSUME Default = loaded into my app space ! Use cOSModuleX for other processes modules.
 		//! Inside a DLL there may be procedures and resources.
 		//! DLL's are "shared objects" or "shared libraries" in __linux__
@@ -43,7 +43,7 @@ namespace Gray
 		//! @todo Get module footprint info. how much memory does it use?
 
 	private:
-		HMODULE m_hModule;		//!< sometimes the same as HINSTANCE ? = loading address of the code. NOT cOSHandle ?
+		HMODULE m_hModule;		//!< sometimes the same as HINSTANCE ? = loading address of the code. NOT cOSHandle.
 		UINT32 m_uFlags;		//!< k_Load_RefCount= I am responsible to unload this since i loaded it. k_Load_Preload = This is not callable code. init was not called and refs not loaded.
 #if defined(__linux__)
 		cStringF m_sModuleName;	//!< Must store this if __linux__ can't query it directly.
@@ -127,6 +127,7 @@ namespace Gray
 		}
 		void ClearModule() noexcept
 		{
+			// Dont decrement load count (FreeModuleLast) even if i should.
 			m_hModule = HMODULE_NULL;
 			m_uFlags = k_Load_Normal;
 #ifdef __linux__
@@ -197,7 +198,7 @@ namespace Gray
 
 	typedef cOSModuleFunc<FARPROC> cOSModuleFuncGeneric;
 
-#ifdef GRAY_DLL // force implementation/instantiate for DLL/SO.
+#ifndef GRAY_STATICLIB // force implementation/instantiate for DLL/SO.
 	template class GRAYCORE_LINK cOSModuleFunc < FARPROC >;
 #endif
 }

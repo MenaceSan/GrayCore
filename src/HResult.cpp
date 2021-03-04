@@ -224,7 +224,7 @@ namespace Gray
 			return "OK";
 		}
 
-#ifdef GRAY_DLL
+#ifndef GRAY_STATICLIB  
 		// Since we load this anyhow make sure we are using HResult::AddCodesDefault();
 		HResult::AddCodesDefault();
 #endif
@@ -259,11 +259,12 @@ namespace Gray
 	{
 		//! Ask the system what text there is for hRes.
 		//! don't call strerror() here since it has just a pointer. use GetTextBase().
-
+		//! @arg pSource = use with FORMAT_MESSAGE_FROM_STRING or just FORMAT_MESSAGE_FROM_HMODULE
+		//! 
 #ifdef _WIN32
 		// FORMAT_MESSAGE_ALLOCATE_BUFFER
 		DWORD dwFlags = FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS;
-		if (pSource != nullptr)
+		if (pSource != nullptr) // not FORMAT_MESSAGE_FROM_STRING?
 		{
 			dwFlags |= FORMAT_MESSAGE_FROM_HMODULE;
 		}
@@ -271,13 +272,16 @@ namespace Gray
 		{
 			dwFlags |= FORMAT_MESSAGE_ARGUMENT_ARRAY;
 		}
+
 		// nLenRet = number of TCHARs
 		DWORD nLenRet = _GTN(::FormatMessage)(
 			dwFlags,
-			pSource,
+			pSource,	// use with FORMAT_MESSAGE_FROM_STRING or FORMAT_MESSAGE_FROM_HMODULE
 			hRes,
 			LANG_NEUTRAL,	// MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US)
-			pszError, nLenMaxError, (vargs != k_va_list_empty) ? &vargs : nullptr);
+			pszError, nLenMaxError,
+			(vargs != k_va_list_empty) ? &vargs : nullptr);
+
 		if (nLenRet > 0)
 		{
 			// successful translation -- trim any trailing junk
@@ -390,11 +394,13 @@ namespace Gray
 					return Make(k_Facility[i].get_A(), (WORD)StrT::toU(pszErrorCode));
 			}
 		}
+
 		if (bHasEndParen && nLenError > 2 && !StrT::CmpN(pszErrorCode - 2, _GT(" ("), 2))
 		{
 			// full code. hex number. 0 prefix.
 			return (HRESULT)StrT::toU(pszErrorCode);
 		}
+
 		return S_FALSE;	// No idea.
 	}
 }

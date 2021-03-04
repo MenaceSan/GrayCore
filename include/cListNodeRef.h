@@ -22,7 +22,7 @@ namespace Gray
 		, public cHeapObject
 	{
 		//! @class Gray::cListNodeRef
-		//! A smart pointer referenced node in a linked list. Attaching to my parent/list puts a Smart Pointer reference on me.
+		//! A smart pointer to reference counted node in a linked list. Attaching to my parent/list puts a Smart Pointer reference on me.
 		//! For Objects that are in cListT and based on cHeapObject, cListNodeBase and cRefBase
 		//! @note cRefBase DecRefCount should "delete this;" in onFinalRelease
 

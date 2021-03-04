@@ -31,7 +31,7 @@ namespace Gray
 		cInterlockedInt m_nWriters;
 
 	public:
-		void IncReadLockCount()
+		void IncReadLockCount() noexcept
 		{
 			for (;;)
 			{
@@ -42,12 +42,12 @@ namespace Gray
 				cThreadId::SleepCurrent(0);
 			}
 		}
-		void DecReadLockCount()
+		void DecReadLockCount() noexcept
 		{
 			m_nReaders.DecV();
 		}
 
-		void Lock()
+		void Lock() noexcept
 		{
 			// Write lock
 			for (;;)
@@ -65,7 +65,7 @@ namespace Gray
 			}
 		}
 
-		void Unlock()
+		void Unlock() noexcept
 		{
 			// Write unlock
 			m_nWriters.DecV();
@@ -100,7 +100,7 @@ namespace Gray
 		bool m_bLostOrder;	//!< can't figure who is thread.
 
 	public:
-		cThreadLockRW()
+		cThreadLockRW() noexcept
 		: m_bLostOrder(false)
 		{
 		}
@@ -156,14 +156,14 @@ namespace Gray
 	, public cThreadLockRW
 	{
 		//! @class Gray::cThreadLockableRW
-		//! An smart pointer referenced object that can be read/write locked.
+		//! Abstract base for a smart pointer referenced object that can be locked in read or write mode.
 		//! similar to cThreadLockableRef
 	};
 
 	template<class TYPE>
-	class CSmartReadPtr : public cRefPtr<TYPE>, public cThreadGuardRead
+	class cSmartReadPtr : public cRefPtr<TYPE>, public cThreadGuardRead
 	{
-		//! @class Gray::CSmartReadPtr
+		//! @class Gray::cSmartReadPtr
 		//! I promise to only read from the cThreadLockableRW based object.
 		//! If another thread is open writing then we must wait.
 		//! If any thread has other read opens then it's OK.
@@ -171,7 +171,7 @@ namespace Gray
 		//! we MUST record the read action in case a writer (on another thread) comes along.
 		//! @note this only returns 'const' pointers of course.
 
-		CSmartReadPtr(TYPE* pObj)
+		cSmartReadPtr(TYPE* pObj)
 		: cRefPtr<TYPE>(pObj)
 		, cThreadGuardRead(*pObj)
 		{
@@ -179,20 +179,21 @@ namespace Gray
 
 		const TYPE* get_Ptr() const
 		{
-			return(this->m_pObj);
+			// return the cThreadLockableRW
+			return this->m_pObj ;
 		}
 	};
 	template<class TYPE>
-	class CSmartWritePtr : public cRefPtr<TYPE>, public cThreadGuardWrite
+	class cSmartWritePtr : public cRefPtr<TYPE>, public cThreadGuardWrite
 	{
-		//! @class Gray::CSmartWritePtr
+		//! @class Gray::cSmartWritePtr
 		//! we would like to write to the cThreadLockableRW based object.
 		//! If another thread has it open (read or write) then we must wait.
-		CSmartWritePtr(TYPE* pObj)
+		cSmartWritePtr(TYPE* pObj)
 		: cRefPtr<TYPE>(pObj)
 		, cThreadGuardWrite(*pObj)
 		{
 		}
 	};
-};
+} 
 #endif // _INC_cThreadLockRW_H

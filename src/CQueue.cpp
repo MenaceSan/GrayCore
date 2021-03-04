@@ -45,11 +45,10 @@ namespace Gray
 		return m_iReadLast;
 	}
 
-#ifdef GRAY_DLL // force implementation/instantiate for DLL/SO.
+#ifndef GRAY_STATICLIB // force implementation/instantiate for DLL/SO.
 	template class GRAYCORE_LINK cQueueRead<char>;		// Force Instantiation for DLL.
 	template class GRAYCORE_LINK cQueueStatic<char, 512>;	// Force Instantiation for DLL.
 	template class GRAYCORE_LINK cQueueRW<char>;
-
 #endif
 
 }

@@ -22,7 +22,8 @@ namespace Gray
 	}
 	void GRAYCALL cTempPool::FreeTempsForThreadManually() // static
 	{
-		// Manually free all stuff that would otherwise leak on this thread.
+		//! Manually free all stuff that would otherwise leak on this thread.
+		//! I assume normal thread destruct/cleanup isnt going to work ?
 		if (sm_pThreadLocal == &sm_ThreadLocalDefault)
 		{
 			sm_ThreadLocalDefault.FreeDataManually();
@@ -38,9 +39,9 @@ namespace Gray
 
 	void* cTempPool::GetTempV(size_t nLenNeed)
 	{
-		//! Get a temporary/scratch memory space for random uses. Non leaking pointer return. beware of k_iCountMax.
-		//! Ideally we use should CString(x).get_CPtr() instead.
+		//! Get a temporary/scratch memory space for random uses on this thread. Non leaking pointer return. beware of k_iCountMax.
 		//! Typically used to hold "%s" argument conversions for StrT::sprintfN() type operations.
+		//! Ideally we use should CString(x).get_CPtr() instead (to control allocation lifetime)?
 		//! @arg nLenNeed = exact size (in bytes) including space for '\0'
 
 		if (m_aBlocks.GetSize() == 0)	// first time alloc.

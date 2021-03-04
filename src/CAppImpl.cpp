@@ -37,7 +37,7 @@ namespace Gray
 	{
 	}
 
-	cString cAppImpl::get_HelpText() const // virtual 
+	cString cAppImpl::get_HelpText() const // virtual override
 	{
 		// App Name
 		// Description.

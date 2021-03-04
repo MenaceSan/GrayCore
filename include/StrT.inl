@@ -20,7 +20,7 @@ namespace Gray
 	// Compares and searches
 
 	template< typename TYPE>
-	COMPARE_t GRAYCALL StrT::Cmp(const TYPE* pszStr1, const TYPE* pszStr2)
+	COMPARE_t GRAYCALL StrT::Cmp(const TYPE* pszStr1, const TYPE* pszStr2) NOEXCEPT
 	{
 		//! replace _strcmp()
 		//! How does pszStr1 compare to pszStr2
@@ -32,7 +32,7 @@ namespace Gray
 			return COMPARE_Greater;
 		for (StrLen_t i = 0;; i++)
 		{
-			ASSERT(i < StrT::k_LEN_MAX);
+			DEBUG_CHECK(i < StrT::k_LEN_MAX);
 			TYPE ch1 = pszStr1[i];
 			TYPE ch2 = pszStr2[i];
 			if (ch1 == '\0' || ch1 != ch2)
@@ -52,19 +52,19 @@ namespace Gray
 			return COMPARE_Greater;
 		if (iLenMaxChars < 0)
 			return COMPARE_Less;
-		DEBUG_ASSERT(iLenMaxChars <= StrT::k_LEN_MAX, "CmpN");
+		DEBUG_CHECK(iLenMaxChars <= StrT::k_LEN_MAX);
 		for (StrLen_t i = 0; i < iLenMaxChars; i++)
 		{
 			TYPE ch1 = pszStr1[i];
 			TYPE ch2 = pszStr2[i];
 			if (ch1 == '\0' || ch1 != ch2)
-				return(ch1 - ch2);
+				return ch1 - ch2 ;
 		}
 		return COMPARE_Equal;
 	}
 
 	template< typename TYPE>
-	COMPARE_t GRAYCALL StrT::CmpI(const TYPE* pszStr1, const TYPE* pszStr2)
+	COMPARE_t GRAYCALL StrT::CmpI(const TYPE* pszStr1, const TYPE* pszStr2) NOEXCEPT
 	{
 		//! @note for some reason the M$ version fails in static initializers in release mode !?
 		//! replace _strcmpi strcmpi _stricmp
@@ -77,7 +77,7 @@ namespace Gray
 			return COMPARE_Greater;
 		for (StrLen_t i = 0;; i++)
 		{
-			ASSERT(i < StrT::k_LEN_MAX);
+			DEBUG_CHECK(i < StrT::k_LEN_MAX);
 			COMPARE_t iDiff = StrChar::CmpI(pszStr1[i], pszStr2[i]);
 			if (pszStr1[i] == '\0' || iDiff != 0)
 				return iDiff;
@@ -98,7 +98,7 @@ namespace Gray
 			return COMPARE_Greater;
 		if (iLenMaxChars < 0)
 			return COMPARE_Less;
-		DEBUG_ASSERT(iLenMaxChars <= StrT::k_LEN_MAX, "CmpIN");
+		DEBUG_CHECK(iLenMaxChars <= StrT::k_LEN_MAX);
 		for (StrLen_t i = 0; i < iLenMaxChars; i++)
 		{
 			COMPARE_t iDiff = StrChar::CmpI(pszStr1[i], pszStr2[i]);

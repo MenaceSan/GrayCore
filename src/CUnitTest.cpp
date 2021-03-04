@@ -313,7 +313,7 @@ do ordain and establish this constitution of the United States of America\n\n");
 			// Is this entry something to copy?
 			if (dir1.isDots())
 				continue;
-			if (dir1.m_FileEntry.m_sFileName.StartsWithI(GRAY_NAMES))
+			if (dir1.m_FileEntry.m_sFileName.StartsWithI(_FN(GRAY_NAMES)))
 				continue;
 			// Don't bother copying it if it looks the same.
 			cStringF dstPath = cFilePath::CombineFilePathX(dstDir, dir1.m_FileEntry.m_sFileName);

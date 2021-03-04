@@ -66,7 +66,7 @@ namespace Gray
 #endif
 	};
 
-#ifdef GRAY_DLL	// _WINDLL
+#ifndef GRAY_STATICLIB 
 	// ASSUME g_Module is defined for DLL/SO. (and is outside namespace)
 	// Declare/expose DllMain()
 #ifdef _WIN32	// _WINDLL
@@ -75,7 +75,7 @@ namespace Gray
 #define COSMODULE_IMPL(N)  CATTR_CONSTRUCTOR void _cdecl SOConstructor() { N::g_Module.SOConstructor(); } \
 	CATTR_DESTRUCTOR void _cdecl SODestructor() { g_Module.SODestructor(); }
 #endif
-#endif //GRAY_DLL
+#endif  
 
 }
 

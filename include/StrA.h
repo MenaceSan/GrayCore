@@ -9,7 +9,7 @@
 #endif
 
 #include "StrConst.h"
-#include "HResult.h"
+#include "Index.h"
 #include "cUnitTestDecl.h"
 
 namespace Gray
@@ -36,6 +36,6 @@ namespace Gray
 		static StrLen_t GRAYCALL BlockReplacement(char* pszOut, StrLen_t iOutSizeMax, const char* pszInp, IIniBaseGetter* pBlockReq, bool bRecursing = false);
 		UNITTEST_FRIEND(StrA);
 	};
-};
+} 
 
 #endif

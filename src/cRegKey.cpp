@@ -19,16 +19,16 @@ namespace Gray
 {
 	const cRegKeyName cRegKey ::k_aNames[] =	// map default HKEY values to names.
 	{
-		{ HKEY_CLASSES_ROOT, "HKCR" },
-		{ HKEY_CURRENT_USER, "HKCU" },
-		{ HKEY_LOCAL_MACHINE, "HKLM" },
-		{ HKEY_USERS, "HKU" },
+		{ HKEY_CLASSES_ROOT, _FN("HKCR") },
+		{ HKEY_CURRENT_USER, _FN("HKCU") },
+		{ HKEY_LOCAL_MACHINE, _FN("HKLM") },
+		{ HKEY_USERS, _FN("HKU") },
 #ifndef UNDER_CE
-		{ HKEY_PERFORMANCE_DATA, "HKPD" },
-		{ HKEY_PERFORMANCE_TEXT, "HKPT" },
-		{ HKEY_PERFORMANCE_NLSTEXT, "HKPN" },
-		{ HKEY_CURRENT_CONFIG, "HKCC" },
-		{ HKEY_DYN_DATA, "HKDD" },
+		{ HKEY_PERFORMANCE_DATA, _FN("HKPD") },
+		{ HKEY_PERFORMANCE_TEXT, _FN("HKPT") },
+		{ HKEY_PERFORMANCE_NLSTEXT, _FN("HKPN") },
+		{ HKEY_CURRENT_CONFIG, _FN("HKCC") },
+		{ HKEY_DYN_DATA, _FN("HKDD") },
 #endif
 	};
 

@@ -16,7 +16,7 @@ namespace Gray
 		// , m_hModule(HMODULE_NULL)
 	{
 		// Always static allocated. NEVER heap or Stack allocated. So Zero init is NEVER needed!
-		ASSERT(!StrT::IsWhitespace(m_pszModuleName));
+		DEBUG_CHECK(!StrT::IsWhitespace(m_pszModuleName));
 		OnProcessAttach2();
 	}
 
@@ -67,7 +67,7 @@ namespace Gray
 	}
 
 #ifdef _WIN32
-	bool cOSModImpl::DllMain(HINSTANCE hMod, DWORD dwReason)
+	bool cOSModImpl::DllMain(HINSTANCE hMod, DWORD dwReason) // virtual
 	{
 		switch (dwReason)
 		{
@@ -82,7 +82,9 @@ namespace Gray
 			m_hModule = hMod;
 			return this->OnProcessAttach2();
 		case DLL_THREAD_ATTACH: // a new thread has been created.
+			break;
 		case DLL_THREAD_DETACH:
+			// cThreadLocalSys ??
 			break;
 		default:
 			DEBUG_ERR(("%s:DllMain event=%d", LOGSTR(m_pszModuleName), dwReason));
@@ -98,5 +100,4 @@ namespace Gray
 		this->OnProcessAttach2();
 	}
 #endif
-
 }

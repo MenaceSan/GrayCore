@@ -5,7 +5,7 @@ rem https://docs.microsoft.com/en-us/nuget/reference/nuget-exe-cli-reference -> 
 
 @ECHO OFF
 set CodeVer=1.6.4
-set ToolVer=v142
+set ToolVer=v141
 set BinDir=..\..\..\bin
 set DstDir=%BinDir%\graycore-%ToolVer%.%CodeVer%
 @ECHO on

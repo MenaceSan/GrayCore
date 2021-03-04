@@ -282,7 +282,7 @@ namespace Gray
 			{
 				WriteQ(pVal[i]);
 			}
-			return i;
+			return (HRESULT) i;
 		}
 	};
 
@@ -941,7 +941,7 @@ namespace Gray
 		}
 	};
 
-#ifdef GRAY_DLL // force implementation/instantiate for DLL/SO.
+#ifndef GRAY_STATICLIB // force implementation/instantiate for DLL/SO.
 	template class GRAYCORE_LINK cQueueRead < BYTE >;
 	template class GRAYCORE_LINK cQueueRW < BYTE >;
 #endif

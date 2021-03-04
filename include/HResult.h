@@ -41,7 +41,7 @@ namespace Gray
 		FACILITY_RPC = 1,		//!< Used for RPC_E_DISCONNECTED
 		FACILITY_DISPATCH = 2,
 		FACILITY_ITF = 4,		//!< OLE_E_BLANK ??
-		FACILITY_WIN32 = 7,		//!< Normal windows codes. HRESULT_FROM_WIN32() or HRESULT_WIN32_C(LSTATUS/error_status_t) 
+		FACILITY_WIN32 = 7,		//!< Normal windows codes. HRESULT_FROM_WIN32() or HRESULT_WIN32_C(LSTATUS/error_status_t) 0x80070XXX
 		// FACILITY_DPLAY
 #endif
 		FACILITY_POSIX = 5,		//!< Facility for POSIX _errno in a _WIN32 style code.
@@ -168,7 +168,7 @@ namespace Gray
 			return GetFacility(m_hRes);
 		}
 
-		static inline bool IsFailure(HRESULT hRes) noexcept
+		constexpr static bool IsFailure(HRESULT hRes) noexcept
 		{
 			//! FAILED(hRes)
 			//! like HRESULT_SEVERITY(hr)  (((hr) >> 31) & 0x1)

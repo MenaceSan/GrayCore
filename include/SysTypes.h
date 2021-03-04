@@ -17,7 +17,7 @@
 //! try to compile in several different environments:
 //!
 //! 1. Windows Static Library = _WIN32 (NOT WIN32, NOT _WINDLL) if GRAY_STATICLIB
-//! 2. Windows DLL = _WIN32, _WINDLL, GRAY_DLL (opposite of GRAY_STATICLIB)
+//! 2. Windows DLL = _WIN32, _WINDLL (opposite of GRAY_STATICLIB)
 //! 3. Windows MFC DLL with Gray* Static Library= _WIN32, _AFXDLL, _MFC_VER > 0x0600
 //! 4. WindowsCE / PocketPC= UNDER_CE, _WIN32
 //! 5. LINUX 32/64 bit static lib = __linux__ (NOT _BSD?) ( USE_64BIT = __ia64__, __s390x__, __x86_64__, __powerpc64__ )
@@ -101,7 +101,7 @@
 #error UNSUPPORTED COMPILER
 
 #else
-#error UNKNOWN COMPILER
+#error UNKNOWN COMPILER	// RC_INVOKED will fail here. dont include for RC. use SysRes.h
 #endif
 
 // http://en.wikipedia.org/wiki/Pragma_once
@@ -296,7 +296,7 @@
 #error UNKNOWN COMPILER
 #endif
 
-#ifndef UNREFERENCED_PARAMETER	//!< _WIN32 type thing. get rid of stupid warning.
+#ifndef UNREFERENCED_PARAMETER	//!< _MSC_VER thing. get rid of stupid warning.
 #define UNREFERENCED_PARAMETER(P)       ((void)(P))
 #endif
 

@@ -21,6 +21,8 @@ namespace Gray
 	void GRAYCALL cObjectFactory::RegisterFactory(const cObjectFactory& factory) noexcept // static 
 	{
 		// TODO add this to a cObjectService registration list.
+
+		// No dupes.
 		UNREFERENCED_REFERENCE(factory);
 	}
 

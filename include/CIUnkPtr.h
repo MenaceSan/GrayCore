@@ -1,6 +1,6 @@
 //
 //! @file cIUnkPtr.h
-//! Template for a type specific smart pointer to a IUnknown based object.
+//! Template for a type specific smart/reference counted pointer to a IUnknown based object.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
@@ -31,8 +31,8 @@ namespace Gray
 #endif
 	{
 		//! @class Gray::cIUnkPtr
-		//! Smart pointer to an IUnknown based object.
-		//! like _WIN32 ATL cComPtr<> or "com_ptr_t"
+		//! Smart/reference counted pointer to an IUnknown based object.
+		//! like _WIN32 ATL CComPtr<> or "com_ptr_t"
 		//! TYPE must be based on IUnknown
 
 #ifdef USE_IUNK_TRACE
@@ -256,7 +256,7 @@ namespace Gray
 		}
 	};
 
-	// The lowest (un-type checked) smart pointer.
+	// The lowest (un-type checked) smart/reference counted pointer.
 	typedef GRAYCORE_LINK cIUnkPtr<> cIUnkBasePtr;
 
 #ifdef USE_IUNK_TRACE
@@ -311,7 +311,7 @@ namespace Gray
 #define IUNK_ATTACH(p)			__noop		// No trace.
 #endif	// USE_IUNK_TRACE
 
-#ifdef GRAY_DLL // force implementation/instantiate for DLL/SO.
+#ifndef GRAY_STATICLIB // force implementation/instantiate for DLL/SO.
 	template class GRAYCORE_LINK cIUnkPtr < IUnknown >;
 #endif
 

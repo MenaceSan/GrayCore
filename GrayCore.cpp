@@ -14,7 +14,7 @@ namespace Gray
 {
 	cOSModImpl g_Module(GRAY_NAMES "Core");
 
-#ifdef GRAY_DLL // force implementation/instantiate for DLL/SO.
+#ifndef GRAY_STATICLIB // force implementation/instantiate for DLL/SO.
 	template class GRAYCORE_LINK cInterlockedVal<int>;		// Force Instantiation
 #ifdef USE_INT64
 	template class GRAYCORE_LINK cInterlockedVal<INT64>;	// Force Instantiation 

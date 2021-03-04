@@ -19,7 +19,7 @@ namespace Gray
 
 #define CATOM_STR(a)		a		//!< Part of a static atom quoted string. for concatenate use. e.g. "Tag_%s"
 #define CATOM_CAT(a,b)		a##b	//!< https://gcc.gnu.org/onlinedocs/cpp/Concatenation.html#Concatenation
-#define CATOM_STATSTR(a)	#a		//!< A static atom i know is defined some place, but i just want to use the string here. Typically used by property bag. (e.g."SymName","Root")
+#define CATOM_N(a)	#a		//!< A static atom i know is defined some place, but i just want to use the string here. Typically used by property bag. (e.g."SymName","Root")
 
 	class GRAYCORE_LINK cAtomDef : public cRefBase // CStringData
 	{

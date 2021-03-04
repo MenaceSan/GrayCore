@@ -35,16 +35,13 @@ namespace Gray		//!< The main namespace for all Core functions.
 #endif
 #define GRAYCALL	__stdcall	//!< declare calling convention for static functions so everyone knows the arg passing scheme. don't assume compiler default. _cdecl.
 
-#if ! defined(GRAY_STATICLIB)
-#define GRAY_DLL	// We are building Gray DLL/SO instead of static lib. use __DECL_IMPORT or __DECL_EXPORT. opposite of GRAY_STATICLIB
-#endif
-
 	// use _LIB && _WINDLL && _MFC_VER to identify the type of LIB build. or it may just be who is including us.
 #ifndef GRAYCORE_LINK
 #if defined(_MFC_VER) || defined(GRAY_STATICLIB)	// GRAY_STATICLIB or _MFC_VER can be defined to make Gray* all static lib
 #define GRAYCORE_LINK
 #else
-#define GRAYCORE_LINK __DECL_IMPORT	// default is to include from a DLL/SO (GRAY_DLL)
+	// We are building Gray DLL/SO instead of static lib. use __DECL_IMPORT or __DECL_EXPORT. opposite of GRAY_STATICLIB
+#define GRAYCORE_LINK __DECL_IMPORT	// default is to include from a DLL/SO 
 #endif
 #endif
 

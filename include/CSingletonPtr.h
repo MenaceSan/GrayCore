@@ -16,16 +16,16 @@
 namespace Gray
 {
 	template <class TYPE>
-	class cSingletonSmart : public cSingleton<TYPE>, public cRefBase
+	class cSingletonRefBase : public cSingleton<TYPE>, public cRefBase
 	{
-		//! @class Gray::cSingletonSmart
+		//! @class Gray::cSingletonRefBase
 		//! Base class for a cSingleton that is reference counted and lazy loaded.
 		//! This will be destroyed when the last reference is released. recreated again on demand.
 		//! e.g. a public service (shared by all) that is loaded on demand and released when no one needs it.
 		//! @note These objects are normally cHeapObject, but NOT ALWAYS ! (allow static versions using StaticConstruct() and k_REFCOUNT_STATIC)
 
 	protected:
-		cSingletonSmart(TYPE* pObject, const TYPEINFO_t& rAddrCode, int iRefCountStart = 0)
+		cSingletonRefBase(TYPE* pObject, const TYPEINFO_t& rAddrCode, int iRefCountStart = 0)
 			: cSingleton<TYPE>(pObject, rAddrCode)
 			, cRefBase(iRefCountStart)
 		{
@@ -38,20 +38,22 @@ namespace Gray
 	class cSingletonPtr : protected cRefPtr < TYPE >		// protected for read only.
 	{
 		//! @class Gray::cSingletonPtr
-		//! A reference to a cSingletonSmart<> based TYPE or a type that has both cSingleton and cRefBase.
+		//! A reference to a cSingletonRefBase<> based TYPE or a type that has both cSingleton and cRefBase.
 		typedef cRefPtr<TYPE> SUPER_t;
 
 	public:
 		cSingletonPtr(bool bInit = true) : cRefPtr<TYPE>(bInit ? TYPE::get_Single() : nullptr)
 		{
-			//! @arg bInit = Allocate a reference automatically by default. Attach to cSingletonSmart, false = defer init until later.
+			//! @arg bInit = Allocate a reference automatically by default. Attach to cSingletonRefBase, false = defer init until later.
 		}
 		void InitPtr()
 		{
-			//! If i created an empty cSingletonPtr(false) (as part of some class) this is how I populate it on that classes constructor.
-			//! Attach to cSingletonSmart
+			//! If i created an empty cSingletonPtr(false) (as part of some class) this is how I populate it on that classes constructor later.
+			//! Attach to cSingletonRefBase
 			this->put_Ptr(TYPE::get_Single());
 		}
+
+		// cRefPtr is protected so expose the parts i allow.
 		void ReleasePtr()
 		{
 			SUPER_t::ReleasePtr();
@@ -73,6 +75,7 @@ namespace Gray
 			return this->m_p;
 		}
 #endif
+
 	};
 }
 #endif

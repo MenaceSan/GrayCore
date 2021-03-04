@@ -153,7 +153,7 @@ namespace Gray
 #endif
 		}
 
-		HRESULT TerminateProcess(APP_EXITCODE_t uExitCode)
+		HRESULT TerminateProcess(APP_EXITCODE_t uExitCode) const noexcept
 		{
 			//! terminate some process. inject uExitCode.
 			//! m_nPid may be invalid after this!
@@ -183,7 +183,7 @@ namespace Gray
 			return 0;
 #endif
 }
-		bool put_PriorityClass(DWORD dwPriorityClass) noexcept
+		bool put_PriorityClass(DWORD dwPriorityClass) const noexcept
 		{
 			//! Set the threads priority.
 			//! @arg dwPriorityClass = ABOVE_NORMAL_PRIORITY_CLASS
@@ -200,13 +200,13 @@ namespace Gray
 
 		HRESULT CreateRemoteThread(THREAD_FUNC_t pvFunc, const void* pvArgs, OUT cOSHandle& thread);
 
-		void* AllocMemory(size_t nSize)
+		void* AllocMemory(size_t nSize) const noexcept
 		{
 			// Allocate space in the process memory.
 			return ::VirtualAllocEx(get_ProcessHandle(), NULL, nSize, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
 		}
 
-		HRESULT WriteProcessMemory(void* pBaseAddress, const void* pData, size_t nSize)
+		HRESULT WriteProcessMemory(void* pBaseAddress, const void* pData, size_t nSize) const noexcept
 		{
 			//! Write to memory inside some other process address space.
 			//! ASSUME: PROCESS_QUERY_INFORMATION | PROCESS_VM_WRITE access AND cOSUserToken with SE_DEBUG_NAME
@@ -220,7 +220,7 @@ namespace Gray
 			return (HRESULT)nSizeWrite;
 		}
 
-		HRESULT ReadProcessMemory(const void* pBaseAddress, void* pDataIn, size_t nSize) const
+		HRESULT ReadProcessMemory(const void* pBaseAddress, void* pDataIn, size_t nSize) const noexcept
 		{
 			//! Read memory from inside some other process address space.
 			//! Need permissions to do this.
@@ -235,7 +235,7 @@ namespace Gray
 			return (HRESULT)nSizeRead;
 		}
 
-		bool GetExitCodeProcess(OUT APP_EXITCODE_t* pnExitCode)
+		bool GetExitCodeProcess(OUT APP_EXITCODE_t* pnExitCode) const noexcept
 		{
 			//! The exit value specified in the ExitProcess or TerminateProcess function.
 			//! @arg pnExitCode = APP_EXITCODE_STILL_ACTIVE = process is running.
@@ -255,20 +255,20 @@ namespace Gray
 
 		// Stats
 #ifndef UNDER_CE
-		bool GetStatTimes(OUT FILETIME* pCreationTime, OUT FILETIME* pExitTime, OUT FILETIME* pKernelTime, OUT FILETIME* pUserTime) const
+		bool GetStatTimes(OUT FILETIME* pCreationTime, OUT FILETIME* pExitTime, OUT FILETIME* pKernelTime, OUT FILETIME* pUserTime) const noexcept
 		{
 			//! How much time has this process run ?
 			return ::GetProcessTimes(get_ProcessHandle(), pCreationTime, pExitTime, pKernelTime, pUserTime) ? true : false;
 		}
 
-		bool GetStatIoCounters(OUT IO_COUNTERS* pIoCounters) const
+		bool GetStatIoCounters(OUT IO_COUNTERS* pIoCounters) const noexcept
 		{
 			return ::GetProcessIoCounters(get_ProcessHandle(), pIoCounters) ? true : false;
 		}
 #endif // UNDER_CE
 
 #if ( _WIN32_WINNT >= 0x0501 ) && ! defined(UNDER_CE)
-		bool GetStatHandleCount(OUT DWORD* pdwHandleCount) const
+		bool GetStatHandleCount(OUT DWORD* pdwHandleCount) const noexcept
 		{
 			//! How many open handles does this process have ?
 			return ::GetProcessHandleCount(get_ProcessHandle(), pdwHandleCount);

@@ -19,7 +19,7 @@ namespace Gray
 #define MIME_EXT_3ds	".3ds"	// 3d Studio.
 #define MIME_EXT_7z		".7z"
 #define MIME_EXT_avi	".avi"
-#define MIME_EXT_bin	".bin"
+#define MIME_EXT_bin	".bin"		// no mime type.
 #define MIME_EXT_bmp	".bmp"
 #define MIME_EXT_cer	".cer"
 #define MIME_EXT_crl	".crl"
@@ -60,6 +60,7 @@ namespace Gray
 #define MIME_EXT_ppt	".ppt"
 #define MIME_EXT_pptx	".pptx"
 #define MIME_EXT_pvk	".pvk"
+	// #define MIME_EXT_raw		".raw"	// no mime type . binary.
 #define MIME_EXT_rtf	".rtf"
 #define MIME_EXT_scp	".scp"
 #define MIME_EXT_so		".so"

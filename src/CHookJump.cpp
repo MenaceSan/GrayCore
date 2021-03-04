@@ -6,6 +6,8 @@
 #include "cHookJump.h"
 #include "cLogMgr.h"
 
+#if USE_INTEL
+
 #ifdef _WIN32
 #include "cMemPage.h"
 #endif
@@ -17,20 +19,15 @@ namespace Gray
 		// The k_I_JUMP i inserted is just on top of another k_I_JUMP? Normal fixup jump table.
 		// I don't need to lock and swap to call the old code. I can just chain jump to it
 
-#ifdef USE_64BIT	// is this 64 only ?
 		// Look for other forms of chainable jmp commands. e.g. 48 ff 25
 		if (m_OldCode[0] == 0x48 && m_OldCode[1] == 0xff && m_OldCode[2] == 0x25)
 		{
 			return true;
 		}
-#endif
-
-#if 0
 		if (m_OldCode[0] == 0xff && m_OldCode[1] == 0x25)
 		{
-			return true;
+			// return true; // TODO? 
 		}
-#endif
 
 		return m_OldCode[0] == k_I_JUMP;	// the old code was just a jump as well.
 	}
@@ -41,23 +38,25 @@ namespace Gray
 		// ASSUME isChainable()
 
 		int lRelAddr = 0; // not int_ptr
-		STATIC_ASSERT(sizeof(lRelAddr) == k_LEN_P, lRelAddr);
+		STATIC_ASSERT(sizeof(lRelAddr) == k_LEN_JO, lRelAddr);
 
 		// for k_I_JUMP
 		if (m_OldCode[0] == k_I_JUMP)
 		{
 			::memcpy(&lRelAddr, m_OldCode + k_LEN_J, sizeof(lRelAddr));
-			return (FARPROC)(((UINT_PTR)m_pFuncOrig) + lRelAddr + k_LEN_J + k_LEN_P);
+			return (FARPROC)(((UINT_PTR)m_pFuncOrig) + lRelAddr + k_LEN_J + k_LEN_JO);
 		}
 
-#ifdef USE_64BIT
 		// Look for other forms of chainable jmp commands. e.g.  0xFF
 		if (m_OldCode[0] == 0x48 && m_OldCode[1] == 0xff && m_OldCode[2] == 0x25)
 		{
 			::memcpy(&lRelAddr, m_OldCode + 3, sizeof(lRelAddr));
-			return *((FARPROC*)(((UINT_PTR)m_pFuncOrig) + lRelAddr + 3 + k_LEN_P));
+			return *((FARPROC*)(((UINT_PTR)m_pFuncOrig) + lRelAddr + 3 + k_LEN_JO));
 		}
-#endif
+		if (m_OldCode[0] == 0xff && m_OldCode[1] == 0x25)
+		{
+			// TODO ?
+		}
 
 		return nullptr;
 	}
@@ -68,7 +67,7 @@ namespace Gray
 		FARPROC p = GetChainFuncInt();
 		if (p == nullptr)
 		{
-			return m_pFuncOrig;
+			return m_pFuncOrig;		// assume it is swapped back in.
 		}
 		return p;
 	}
@@ -126,17 +125,13 @@ namespace Gray
 			return HRESULT_FROM_WIN32(ERROR_INVALID_HOOK_HANDLE);
 		}
 #endif
-		const int lRelAddr = (int)lRelPtr;
-		STATIC_ASSERT(sizeof(lRelAddr) == k_LEN_P, lRelAddr);
+		const int lRelAddr = (int)lRelPtr;	// 32 bit.
+		STATIC_ASSERT(sizeof(lRelAddr) == k_LEN_JO, lRelAddr);
 
 		// DEBUG_TRACE(("InstallHook JMP %08x", lRelAddr));
 		// create unconditional JMP to relative address is 5 bytes. X86/64 ONLY!!
-#if USE_INTEL
 		m_Jump[0] = k_I_JUMP;
-#else
-#error The CPU type must be defined as _M_IX86 or _M_X64
-#endif
-		::memcpy(m_Jump + k_LEN_J, &lRelAddr, k_LEN_P);
+		::memcpy(m_Jump + k_LEN_J, &lRelAddr, k_LEN_JO);
 
 		if (::memcmp(m_Jump, m_OldCode, sizeof(m_Jump)) == 0)
 		{
@@ -174,3 +169,4 @@ namespace Gray
 			GRAY_TRY_END
 	}
 }
+#endif

@@ -16,12 +16,12 @@
 #include <pthread.h>	// pthread_key_t
 #endif
 
-#if defined(_WIN32) && defined(__GNUC__)
-typedef VOID (NTAPI *PFLS_CALLBACK_FUNCTION) ( PVOID lpFlsData );
-WINBASEAPI DWORD WINAPI FlsAlloc( PFLS_CALLBACK_FUNCTION lpCallback );	// replace TlsAlloc()
-WINBASEAPI BOOL WINAPI FlsFree( DWORD dwFlsIndex );
-WINBASEAPI PVOID WINAPI FlsGetValue( DWORD dwFlsIndex );
-WINBASEAPI BOOL WINAPI FlsSetValue( DWORD dwFlsIndex, PVOID lpFlsData );
+#if defined(_WIN32) && defined(__GNUC__)	// __GNUC__ didnt define this !
+typedef VOID(NTAPI* PFLS_CALLBACK_FUNCTION) (PVOID lpFlsData);
+WINBASEAPI DWORD WINAPI FlsAlloc(PFLS_CALLBACK_FUNCTION lpCallback);	// replace TlsAlloc()
+WINBASEAPI BOOL WINAPI FlsFree(DWORD dwFlsIndex);
+WINBASEAPI PVOID WINAPI FlsGetValue(DWORD dwFlsIndex);
+WINBASEAPI BOOL WINAPI FlsSetValue(DWORD dwFlsIndex, PVOID lpFlsData);
 #endif
 
 namespace Gray
@@ -29,9 +29,9 @@ namespace Gray
 	DECLARE_INTERFACE(IThreadLocal)
 	{
 		//! @interface Gray::IThreadLocal
-		//! base for a type of thread local storage. TYPE is implied.
+		//! base for a type of thread local storage. .
 		//! allows the system thread local type to get replaced by smarter thread locals. e.g. cThreadLocalTypeNew
-		//! GetDataNewV = Get thread local value or create a new one if not already existing.
+		//! GetDataNewV = Get thread local value (as void*, TYPE is implied) or create a new one if not already existing.
 		IGNORE_WARN_INTERFACE(IThreadLocal);
 		virtual void* GetDataNewV() = 0;
 		//! TODO manage the life of an object. Ask for a new object, or return it when I'm done. (maybe its created or freed, maybe its cached)
@@ -50,18 +50,18 @@ namespace Gray
 #ifndef TLS_OUT_OF_INDEXES
 #define TLS_OUT_OF_INDEXES 0xffffffff	// TLS_OUT_OF_INDEXES not defined on UNDER_CE
 #endif
-		typedef DWORD TYPESLOT_t;	//!< from ::FlsAlloc()  or ::TlsAlloc() if (_WIN32_WINNT < 0x0600)
+		typedef DWORD TYPESLOT_t;	//!< from ::FlsAlloc() or ::TlsAlloc() if (_WIN32_WINNT < 0x0600)
 #elif defined(__linux__)
 #define TLS_OUT_OF_INDEXES 	((pthread_key_t)-1)
 #define NTAPI
 		typedef pthread_key_t TYPESLOT_t;	//!< from ::pthread_key_create
-		typedef void (NTAPI *PFLS_CALLBACK_FUNCTION)(IN void *p);	// like FARPROC
+		typedef void (NTAPI* PFLS_CALLBACK_FUNCTION)(IN void* p);	// like FARPROC
 #else
 #error NOOS
 #endif
 
 	private:
-		TYPESLOT_t m_nTypeSlot;		//!< id for the type of data stored per thread. if (_WIN32_WINNT >= 0x0600)
+		TYPESLOT_t m_nTypeSlot;		//!< id for the type of data stored per thread. if (_WIN32_WINNT >= 0x0600) ::FlsAlloc(), etc.
 
 	public:
 		cThreadLocalSys(PFLS_CALLBACK_FUNCTION pDestruct = nullptr) noexcept
@@ -69,15 +69,15 @@ namespace Gray
 			//! Allocate new (void*) to be stored for EACH thread. Associate this type with m_nTypeSlot
 			//! @arg pDestruct = supply a destructor if i think i need one when a thread is destroyed. (e.g. delete)
 #ifdef _WIN32
-			// Use newer FlsAlloc (has destructor) over old XP specific TlsAlloc. limited to 128 uses.
+			// Use (newer) ::FlsAlloc (has destructor) over old XP specific ::TlsAlloc. limited to 128 uses.
 #if (_WIN32_WINNT >= 0x0600)
 			m_nTypeSlot = ::FlsAlloc(pDestruct);
 #else
-			m_nTypeSlot = ::TlsAlloc();
+			m_nTypeSlot = ::TlsAlloc();		// no destruct ? this is bad ! have to handle our own destruct on DLL_THREAD_DETACH
 #endif
-#else // __linux__
-			int iRet = ::pthread_key_create( &m_nTypeSlot, pDestruct);
-			if (iRet!=0)
+#elif defined(__linux__)
+			int iRet = ::pthread_key_create(&m_nTypeSlot, pDestruct);
+			if (iRet != 0)
 			{
 				m_nTypeSlot = TLS_OUT_OF_INDEXES;	// failed for some reason.
 			}
@@ -93,9 +93,9 @@ namespace Gray
 #else
 			::TlsFree(m_nTypeSlot);
 #endif
-#else // __linux__
+#elif defined(__linux__)
 			int iRet = ::pthread_key_delete(m_nTypeSlot);
-			ASSERT(iRet==0);
+			ASSERT(iRet == 0);
 			UNREFERENCED_PARAMETER(iRet);
 #endif
 		}
@@ -126,7 +126,7 @@ namespace Gray
 #else
 			return ::TlsGetValue(m_nTypeSlot);
 #endif
-#else // __linux__
+#elif defined(__linux__)
 			return ::pthread_getspecific(m_nTypeSlot);
 #endif
 		}
@@ -141,9 +141,9 @@ namespace Gray
 #else
 			return ::TlsSetValue(m_nTypeSlot, pData) ? true : false;
 #endif
-#else // __linux__
-			int iRet = ::pthread_setspecific(m_nTypeSlot, pData );
-			return iRet == 0 ;
+#elif defined(__linux__)
+			int iRet = ::pthread_setspecific(m_nTypeSlot, pData);
+			return iRet == 0;
 #endif
 		}
 	};
@@ -160,7 +160,7 @@ namespace Gray
 
 	public:
 		cThreadLocalSysT(PFLS_CALLBACK_FUNCTION pDestruct = nullptr) noexcept
-			: cThreadLocalSys(pDestruct) 
+			: cThreadLocalSys(pDestruct)
 		{
 			STATIC_ASSERT(sizeof(TYPE) <= sizeof(void*), cThreadLocalSysT); // ?
 		}
@@ -210,7 +210,7 @@ namespace Gray
 		}
 		virtual void* GetDataNewV()
 		{
-			//! override IThreadLocal
+			//! override IThreadLocal and get as a void*
 			//! This allows smarter usage and cleanup of this TYPE.
 			return GetDataNew();
 		}
@@ -225,5 +225,5 @@ namespace Gray
 			}
 		}
 	};
-} 
+}
 #endif

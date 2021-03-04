@@ -41,8 +41,8 @@ namespace Gray
 		//! Produce a string constant of either UNICODE or UTF8. For use inside templates.
 
 	public:
-		const char* m_A;
-		const wchar_t* m_W;		// the Unicode version  of m_A;
+		const char* m_A;		//!< a UTF8 string.
+		const wchar_t* m_W;		//!< the UNICODE version of m_A;
 
 		static const StrLen_t k_TabSize = 4;	//!< default desired spaces for a tab.
 

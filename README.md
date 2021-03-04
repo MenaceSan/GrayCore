@@ -41,6 +41,7 @@ Core classes used by all other modules. Make code more portable and more object 
 GrayCore has very minimal external library requirements. Only make use of standard C lib and core OS modules.
 Abstract and minimize the direct use of OS services such that a program can compile for Windows, Linux and Windows CE. 
 Code can build with various tools and environments such as x64, x86, GNU tools, Microsoft compilers, MFC or just std C, Unicode or UTF8 default.
+Unit Tests are in a separate project called GrayCore.Tests 
 
 @verbatim
 Includes conditional compilation for _MSC_VER, __GNUC__, _WIN32, __linux__, _AFXDLL/_MFC_VER, UNDER_CE, _M_X64, _UNICODE.
@@ -60,8 +61,9 @@ Array, Sorted Arrays, Hash Tables.
 Thread Locking and Interlocked data types.
 File, Text and Binary.
 File folder lists. File name/path validation.
-Smart Pointers.
+Smart (reference counted) Pointers to heap.
 Heap management.
+Hooking of existing functions on x86,64 machines.
 Singleton, NonCopyable classes. Lazy construction.
 Streams, Queues.
 Unicode/UTF8 convert.
@@ -115,8 +117,7 @@ graycore-v142.1.6.4 = seperate package for the v142 tool chain. VS2019
 Contains options for:
 Configuration = *release* or *debug*  
 Platform = Win32 or x64
-GRAY_DLL = as DLL.
-GRAY_STATICLIB = Static lib (default) else DLL if GRAY_DLL 
+GRAY_STATICLIB = Static lib else DLL/SO  (default)   
 
 No options for:
 consume CRT as a dll only. 

@@ -24,18 +24,23 @@ namespace Gray
 		//! a void type memory block. test bytes, Move memory bytes around.
 		//! May be on heap, const memory space or static in stack. do NOT assume. use cHeap.
 
-		static VOLATILE uintptr_t sm_bDontOptimizeOut0;	// static global byte to fool the optimizer into preserving this data.
-		static VOLATILE uintptr_t sm_bDontOptimizeOutX;	// static global byte to fool the optimizer into preserving this data.
-		static const size_t k_PageSizeMin = 64;		// More like 4K ?
+		static VOLATILE uintptr_t sm_bDontOptimizeOut0;	//!< static global byte to fool the optimizer into preserving this data.
+		static VOLATILE uintptr_t sm_bDontOptimizeOutX;	//!< static global byte to fool the optimizer into preserving this data.
+		static const size_t k_PageSizeMin = 64;		//!< Minimum page size for architecture. Usually More like 4K ?
 
 #if ! defined(UNDER_CE) && ( ! defined(_DEBUG) || ! defined(_MSC_VER))
 		static void __cdecl IsValidFailHandler(int nSig);	// JMP_t
 #endif
 
+		static inline const BYTE* ToBytePtr(const void* p) noexcept
+		{
+			return (const BYTE*)p;
+		}
+
 		static ptrdiff_t inline Diff(const void* pEnd, const void* pStart) noexcept
 		{
 			//! @return Difference in bytes. Assume it is a reasonable sized block? like GET_INDEX_IN()
-			ptrdiff_t i = ((const BYTE*)pEnd - (const BYTE*)pStart);	// like INT_PTR
+			const ptrdiff_t i = ToBytePtr(pEnd) - ToBytePtr(pStart);	// like INT_PTR
 			// DEBUG_CHECK(i > -(INT_PTR)(cHeap::k_ALLOC_MAX) && i < (INT_PTR)(cHeap::k_ALLOC_MAX));	// k_ALLOC_MAX
 			return i;
 		}
@@ -71,7 +76,7 @@ namespace Gray
 				return true;
 			for (size_t i = 0; i < nSize; i++)
 			{
-				if (((const BYTE*)pData)[i] != 0)
+				if (ToBytePtr(pData)[i] != 0)
 					return false;
 			}
 			return true;
@@ -87,8 +92,8 @@ namespace Gray
 		static inline COMPARE_t CompareSecure(const void* p1, const void* p2, size_t nSizeBlock) noexcept
 		{
 			//! constant-time buffer comparison. NOT efficient. Prevents timing based hacks.
-			const BYTE* pB1 = (const BYTE*)p1;
-			const BYTE* pB2 = (const BYTE*)p2;
+			const BYTE* pB1 = ToBytePtr(p1);
+			const BYTE* pB2 = ToBytePtr(p2);
 			BYTE nDiff = 0;
 			for (size_t i = 0; i < nSizeBlock; i++)
 			{
@@ -165,7 +170,7 @@ namespace Gray
 			else
 			{
 				register BYTE* pDstB = (BYTE*)pDst + nSizeBlock - 1;
-				register const BYTE* pSrcB = (const BYTE*)pSrc;
+				register const BYTE* pSrcB = ToBytePtr(pSrc);
 				while (nSizeBlock--)
 				{
 					*pDstB-- = *pSrcB++;
@@ -183,12 +188,12 @@ namespace Gray
 		}
 		static inline void CopyRepeat(void* pDst, size_t nDstSize, const void* pSrc, size_t nSrcSize) noexcept
 		{
-			//! Fill pDst with repeating copies of pSrc.
+			//! Fill pDst with repeating copies of pSrc. Wrap back to sart.
 			for (size_t i = 0; i < nDstSize;)
 			{
 				for (size_t j = 0; j < nSrcSize && i < nDstSize; j++, i++)
 				{
-					((BYTE*)pDst)[i] = ((const BYTE*)pSrc)[j];
+					((BYTE*)pDst)[i] = ToBytePtr(pSrc)[j];
 				}
 			}
 		}

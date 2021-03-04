@@ -52,7 +52,7 @@ namespace Gray
 	};
 
 #if defined(_MFC_VER)
-#define COBJECT_IsValidCheck()	cMem::IsValid(this,4)	// not in _MFC_VER.
+#define COBJECT_IsValidCheck()	(!cMem::IsCorrupt(this,4))	// not in _MFC_VER.
 #else
 
 #ifdef _DEBUG

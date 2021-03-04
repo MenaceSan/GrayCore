@@ -589,7 +589,7 @@ namespace Gray
 		UNITTEST_FRIEND(cInterlockedVal);
 	};
 
-#ifdef GRAY_DLL // force implementation/instantiate for DLL/SO.
+#ifndef GRAY_STATICLIB // force implementation/instantiate for DLL/SO.
 	template class GRAYCORE_LINK cInterlockedPtr < >;
 	template class GRAYCORE_LINK cInterlockedVal < long >;
 	template class GRAYCORE_LINK cInterlockedVal < ULONG >;

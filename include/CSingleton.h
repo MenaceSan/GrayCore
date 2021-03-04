@@ -31,7 +31,7 @@ namespace Gray
 		//! @class Gray::cSingletonStatic
 		//! base class for a type that we want to make sure only one of these can exist at a time.
 		//! @note TYPE = cSingletonStatic based class = this
-		//! Externally created singleton. might be stack based, or abstract (e.g.cNTServiceImpl) but usually static allocated.
+		//! Externally created singleton pointer. might be stack based, or abstract (e.g.cNTServiceImpl) but usually static allocated.
 		//! @note Assume 1. gets constructed/destructed by the C Runtime, 2. Is inherently thread safe since its not created on demand.
 		//! @note The BIG problem with this is that we cannot guarantee order of creation/destruction. So singletons that rely/construct on each other may be corrupt/uninitialized.
 
@@ -105,6 +105,8 @@ namespace Gray
 		//! Allows for ordered destruction of singletons if modules unload. (Not in proper reverse load order)
 		//! @note Static singletons are not multi threaded anyhow. so don't worry about static init order for sm_LockSingle. assume static init is single threaded.
 
+		// TODO allocate static space and use linked list to store order ?
+
 		friend class cSingletonManager;
 
 	protected:
@@ -128,7 +130,7 @@ namespace Gray
 	class cSingleton : public cSingletonStatic<TYPE>, public cSingletonRegister
 	{
 		//! @class Gray::cSingleton
-		//! abstract base class for singleton created lazy/on demand if it does not yet exist or maybe static. see cSingletonSmart<> to destroy on non use.
+		//! abstract base class for singleton created lazy/on demand if it does not yet exist or maybe static. see cSingletonRefBase<> to destroy on non use.
 		//! Thread safe.
 		//! ASSUME cSingletonRegister will handle destruct order on app close or module unload.
 		//! ASSUME TYPE is based on cSingleton and IHeapObject.

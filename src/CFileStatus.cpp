@@ -180,6 +180,7 @@ namespace Gray
 			pFileStatus->UpdateLinuxHidden(cFilePath::GetFileName(pszFilePath));
 			ASSERT(pFileStatus->isFileValid());
 		}
-		return S_OK;
+
+		return S_OK;	// file exists.
 	}
 }
