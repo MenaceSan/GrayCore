@@ -25,7 +25,7 @@ namespace Gray
 	{
 		//! @class Gray::cAtomDef
 		//! A single string name shared by all.
-		//! @note Internal holder for the atom. Don't use this publicly. Use cAtomRef.
+		//! @note Internal holder for the atom. DON'T USE THIS publicly. Use cAtomRef.
 
 		friend class cAtomRef;
 		friend class cAtomManager;
@@ -96,7 +96,7 @@ namespace Gray
 		{
 			DEBUG_CHECK(isValidPtr());
 		}
-		cAtomRef(const ATOMCHAR_t* pszName = "") noexcept
+		cAtomRef(const ATOMCHAR_t* pszName = CATOM_STR("")) noexcept
 			: SUPER_t(FindorCreateAtomStr(pszName))
 		{
 			//! @note cAtomRef can be defined in the C++ init code. So the cAtomManager must be safe to run at init time.
@@ -190,7 +190,7 @@ namespace Gray
 		}
 		void SetAtomStatic();
 
-		static cAtomRef GRAYCALL FindAtomStr(const ATOMCHAR_t* pszText);
+		static cAtomRef GRAYCALL FindAtomStr(const ATOMCHAR_t* pszText);	// dont create.
 		static cAtomRef GRAYCALL FindAtomHashCode(ATOMCODE_t idAtomCode);
 
 		static HRESULT GRAYCALL CheckSymbolicStr(const ATOMCHAR_t* pszTag, bool bAllowDots = false);

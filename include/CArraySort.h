@@ -452,7 +452,7 @@ namespace Gray
 
 		TYPE_PTR FindArgForKey(TYPE_KEY key1) const noexcept
 		{
-			ITERATE_t index = this->FindIForKey(key1);
+			const ITERATE_t index = this->FindIForKey(key1);
 			if (index < 0)
 				return nullptr;
 			return this->GetAt(index);

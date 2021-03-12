@@ -49,30 +49,41 @@ namespace Gray
 		static const char k_EmptyA = '\0';		//!< like CString::m_Nil
 		static const wchar_t k_EmptyW = '\0';		//!< like CString::m_Nil
 
-		static const cStrConst k_Empty;			//!< Empty cStrConst string. like CString::m_Nil
+		static const cStrConst k_Empty;			//!< Empty cStrConst string as &k_EmptyA or &k_EmptyW. like CString::m_Nil
 
 	public:
 		cStrConst(const char* a, const wchar_t* w) noexcept
 			: m_A(a), m_W(w)
 		{}
-		operator const char*() const noexcept
+
+		inline bool isNull() const noexcept
 		{
+			return m_A == nullptr;
+		}
+
+		inline operator const char*() const noexcept
+		{
+			// Implied type
 			return m_A;
 		}
-		operator const wchar_t*() const noexcept
+		inline operator const wchar_t*() const noexcept
 		{
+			// Implied type
 			return m_W;
 		}
-		const char* get_StrA() const noexcept
+		inline const char* get_StrA() const noexcept
 		{
+			// Explicit type
 			return m_A;
 		}
-		const wchar_t* get_StrW() const noexcept
+		inline const wchar_t* get_StrW() const noexcept
 		{
+			// Explicit type
 			return m_W;
 		}
-		const GChar_t* get_CPtr() const noexcept
+		inline const GChar_t* get_CPtr() const noexcept
 		{
+			// Explicit type
 			//! Get the default GChar_t type.
 #if USE_UNICODE
 			return m_W;
@@ -80,12 +91,14 @@ namespace Gray
 			return m_A;
 #endif
 		}
-		bool isNull() const noexcept
-		{
-			return(m_A == nullptr);
-		}
+
+		// template derived type
+		template <typename TYPE> const TYPE* Get() const noexcept;
 	};
 
+	template <>	inline const char* cStrConst::Get<char>() const noexcept { return m_A; }
+	template <>	inline const wchar_t* cStrConst::Get<wchar_t>() const noexcept { return m_W; }
+
 #define CSTRCONST(t) ::Gray::cStrConst(t,__TOW(t))	//!< define a const for both Unicode and UTF8 in templates. used at run-time not just compile time.
-};
+}
 #endif

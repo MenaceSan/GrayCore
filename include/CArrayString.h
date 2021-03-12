@@ -139,7 +139,7 @@ namespace Gray
 		STR_t GetAtCheck(ITERATE_t i) const
 		{
 			if (!SUPER_t::IsValidIndex(i))
-				return "";
+				return cStrConst::k_Empty.Get<_TYPE_CH>();	// STR_t("")
 			return SUPER_t::GetAt(i);
 		}
 

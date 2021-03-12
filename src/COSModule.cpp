@@ -297,7 +297,7 @@ namespace Gray
 	{
 		//! Load this module ONLY if it exposes this symbol.
 		//! @return HRESULT_WIN32_C(ERROR_CALL_NOT_IMPLEMENTED) = I don't have this symbol
-
+		//!  'The specified module could not be found. (08007007e)' = a dependant DLL could not be loaded !
 #if 0
 		HRESULT hRes = LoadModule(pszModuleName, k_Load_Preload | k_Load_ByName);
 		if (FAILED(hRes))

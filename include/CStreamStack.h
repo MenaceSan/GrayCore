@@ -31,7 +31,7 @@ namespace Gray
 			: cStreamQueue(MIN(nSizeMaxBuffer / 2, 8 * 1024), nSizeMaxBuffer)	// chunk size, max size.
 			, m_pStreamInp(pStreamInp)
 		{
-			ASSERT(get_AutoReadCommit() > 0);
+			DEBUG_CHECK(get_AutoReadCommit() > 0);
 		}
 
 		virtual HRESULT ReadX(void* pData, size_t nDataSize) override = 0;	// MUST be overridden. and call ReadFill() at some point.
@@ -51,7 +51,7 @@ namespace Gray
 		HRESULT WriteFlush();
 
 	public:
-		cStreamStackOut(cStreamOutput* pStreamOut = nullptr, size_t nSizeBuffer = cStream::k_FILE_BLOCK_SIZE)
+		cStreamStackOut(cStreamOutput* pStreamOut = nullptr, size_t nSizeBuffer = cStream::k_FILE_BLOCK_SIZE) noexcept
 			: cStreamQueue(8 * 1024, nSizeBuffer)
 			, m_pStreamOut(pStreamOut)
 		{
@@ -69,7 +69,7 @@ namespace Gray
 		//! nSizeBuffer = the size of the largest possible whole packet.
 
 	public:
-		cStreamStackPackets(cStreamOutput* pStreamOut = nullptr, size_t nSizeBuffer = cStream::k_FILE_BLOCK_SIZE)
+		cStreamStackPackets(cStreamOutput* pStreamOut = nullptr, size_t nSizeBuffer = cStream::k_FILE_BLOCK_SIZE) noexcept
 			: cStreamStackOut(pStreamOut, nSizeBuffer)
 		{
 		}

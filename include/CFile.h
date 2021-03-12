@@ -96,7 +96,7 @@ namespace Gray
 		}
 
 		// virtual BOOL Open( const TCHAR* lpszFileName, UINT nOpenFlags, CFileException* pError = nullptr ) = 0; // MFC def.
-		HRESULT OpenCreate(cStringF sFilePath = "", OF_FLAGS_t nOpenFlags = OF_CREATE | OF_WRITE, _SECURITY_ATTRIBUTES* pSa = nullptr);
+		HRESULT OpenCreate(cStringF sFilePath = _FN(""), OF_FLAGS_t nOpenFlags = OF_CREATE | OF_WRITE, _SECURITY_ATTRIBUTES* pSa = nullptr);
 	public:
 		virtual ~CFile()
 		{
@@ -264,13 +264,13 @@ namespace Gray
 		}
 
 		// MFC Open is BOOL return type.
-		virtual HRESULT OpenX(cStringF sFilePath = "", OF_FLAGS_t nOpenFlags = OF_READ | OF_SHARE_DENY_NONE);
+		virtual HRESULT OpenX(cStringF sFilePath = _FN(""), OF_FLAGS_t nOpenFlags = OF_READ | OF_SHARE_DENY_NONE);
 		void Close(void) noexcept override;
 
 		HANDLE DetachFileHandle() noexcept;
 
-		HRESULT OpenWait(cStringF sFilePath = "", OF_FLAGS_t nOpenFlags = OF_READ | OF_SHARE_DENY_NONE, TIMESYSD_t nWaitTime = 100);
-		HRESULT OpenCreate(cStringF sFilePath = "", OF_FLAGS_t nOpenFlags = OF_CREATE | OF_WRITE, _SECURITY_ATTRIBUTES* pSa = nullptr);
+		HRESULT OpenWait(cStringF sFilePath = _FN(""), OF_FLAGS_t nOpenFlags = OF_READ | OF_SHARE_DENY_NONE, TIMESYSD_t nWaitTime = 100);
+		HRESULT OpenCreate(cStringF sFilePath = _FN(""), OF_FLAGS_t nOpenFlags = OF_CREATE | OF_WRITE, _SECURITY_ATTRIBUTES* pSa = nullptr);
 
 		// File Access
 		bool SetFileTime(const cTimeFile* lpCreationTime, const cTimeFile* lpAccessTime, const cTimeFile* lpLastWriteTime);

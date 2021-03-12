@@ -183,7 +183,7 @@ namespace Gray
 #endif
 
 	public:
-		explicit cFileFind(cStringF sDirPath = "", DWORD nFileFlags = 0) noexcept;
+		explicit cFileFind(cStringF sDirPath = _FN(""), DWORD nFileFlags = 0) noexcept;
 		~cFileFind()
 		{
 			CloseContext();

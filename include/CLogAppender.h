@@ -95,7 +95,7 @@ namespace Gray
 		}
 		bool IsLogAttrMask(LOG_ATTR_MASK_t uAttrMask) const noexcept
 		{
-			return (m_uAttrMask & uAttrMask) ? true : false ;
+			return (m_uAttrMask & uAttrMask) ? true : false;
 		}
 
 		LOGLEV_TYPE get_LogLevel() const noexcept
@@ -111,7 +111,7 @@ namespace Gray
 		bool IsLoggedLevel(LOGLEV_TYPE eLogLevel) const noexcept
 		{
 			//! level = LOGLEV_INFO (higher is more important
-			return eLogLevel >= m_eLogLevel ;
+			return eLogLevel >= m_eLogLevel;
 		}
 
 		bool IsLogged(LOG_ATTR_MASK_t uAttrMask, LOGLEV_TYPE eLogLevel) const noexcept
@@ -157,7 +157,7 @@ namespace Gray
 		//! All events funnel through addEvent().
 		IGNORE_WARN_INTERFACE(ILogProcessor);
 		virtual bool IsLogged(LOG_ATTR_MASK_t uAttrMask, LOGLEV_TYPE eLogLevel) const = 0; // fast pre-check. can call before building message.
-		virtual HRESULT addEvent(cLogEvent* pEvent) = 0;
+		virtual HRESULT addEvent(cLogEvent * pEvent) = 0;
 	};
 
 	class cLogNexus;
@@ -192,7 +192,7 @@ namespace Gray
 		}
 
 		// Helpers.
-		HRESULT addEventS(LOG_ATTR_MASK_t uAttrMask, LOGLEV_TYPE eLogLevel, cStringL sMsg, cStringL sContext="");
+		HRESULT addEventS(LOG_ATTR_MASK_t uAttrMask, LOGLEV_TYPE eLogLevel, cStringL sMsg, cStringL sContext = "");
 		HRESULT addEventV(LOG_ATTR_MASK_t uAttrMask, LOGLEV_TYPE eLogLevel, const LOGCHAR_t* pszFormat, va_list vargs);
 
 		HRESULT _cdecl addEventF(LOG_ATTR_MASK_t uAttrMask, LOGLEV_TYPE eLogLevel, const LOGCHAR_t* pszFormat, ...)

@@ -126,7 +126,7 @@ namespace Gray
 			{
 				TYPE* p2 = this->m_p;
 				this->m_p = nullptr;		// clear this in case the destructor refs itself in some odd way.
-				delete p2;
+				delete p2;	// assume no throw. noexcept
 			}
 		}
 	};

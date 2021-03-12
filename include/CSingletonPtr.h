@@ -70,6 +70,7 @@ namespace Gray
 #if 1
 		TYPE* get_Ptr() const
 		{
+			//! expose this otherwise protected function.
 			//! For use with SMARTS_CAST(x) and SMART_CAST(x) or just use TYPE::get_Single() ? 
 			ASSERT_N(this->m_p != nullptr);
 			return this->m_p;

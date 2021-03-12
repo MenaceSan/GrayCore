@@ -317,6 +317,7 @@ namespace Gray
 	template< typename _TYPE_CH>
 	CStringT<_TYPE_CH> CStringT<_TYPE_CH>::Left(StrLen_t nCount) const
 	{
+		//! Get the left nCount chars. truncate.
 		if (nCount >= GetLength())
 			return *this;
 		THIS_t sNew;
@@ -332,6 +333,7 @@ namespace Gray
 	template< typename _TYPE_CH>
 	CStringT<_TYPE_CH> CStringT<_TYPE_CH>::Right(StrLen_t nCount) const
 	{
+		//! Get the right nCount chars. skip leading chars.
 		//! @return
 		//!  a new string with the nCount right most chars in this string.
 

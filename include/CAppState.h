@@ -26,7 +26,7 @@ namespace Gray
 	{
 		//! @enum Gray::APPSTATE_TYPE_
 		//! What state is the app in at the moment?
-		APPSTATE_Init,		//!< static class init time. constructors called for static stuff. maybe set for single thread loading DLL dynamically.
+		APPSTATE_Init,		//!< static class init time. constructors called for static stuff. maybe set for single thread loading DLL dynamically. main() not called yet.
 		APPSTATE_RunInit,	//!< not static init but still init. In main() but not main loop yet. InitInstance()
 		APPSTATE_Run,		//!< we are in main() main loop. Run() and OnTickApp()
 		APPSTATE_RunExit,	//!< classes are being cleaned up. destructors called. Trying to exit. ExitInstance().
@@ -57,10 +57,18 @@ namespace Gray
 			//! Is FILECHAR_t char 'ch' a command line switch char?
 			return ch == '-' || ch == '/';
 		}
+		static inline bool IsArg(const FILECHAR_t* pszArg)
+		{
+			if (StrT::IsWhitespace<FILECHAR_t>(pszArg))
+				return false;
+			if (IsArgSwitch(pszArg[0]))
+				return false;
+			return true;
+		}
 
 		cStringF get_ArgsStr() const noexcept;
 		ITERATE_t get_ArgsQty() const noexcept;
-		cStringF GetArgsEnum(ITERATE_t i) const;	//!< command line arg.
+		cStringF GetArgEnum(ITERATE_t i) const;	//!< command line arg.
 
 		void InitArgsF(const FILECHAR_t* pszCommandArgs, const FILECHAR_t* pszSep = nullptr);
 		void InitArgs2(int argc, APP_ARGS_t argv);
@@ -223,6 +231,10 @@ namespace Gray
 		cStringF GetTempFile(const FILECHAR_t* pszFileTitle);
 		cStringF GetTempDir(const FILECHAR_t* pszFileDir, bool bCreate = true);
 
+		inline cStringF GetArgEnum(ITERATE_t i) const
+		{
+			return m_Args.GetArgEnum(i);
+		}
 		void SetArgValid(ITERATE_t i);
 		cStringF get_InvalidArgs() const;
 

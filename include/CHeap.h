@@ -230,15 +230,15 @@ namespace Gray
 			return cHeap::IsCorruptHeap(m_pData);
 		}
 
-		size_t get_AllocSize() const
+		size_t get_AllocSize() const noexcept
 		{
 			//! Special version of get_Size() to measure the true allocation size.
 			//! @return The actual size of the allocation in bytes. May be greater than I requested? get_Size()
 			//! @note Not always the size of the allocation request in __linux__ or Lazy.
-			ASSERT(!isCorrupt());
+			DEBUG_CHECK(!isCorrupt());
 			return cHeap::GetSize(m_pData);
 		}
-		size_t GetHeapStats(OUT ITERATE_t& iAllocCount) const
+		size_t GetHeapStats(OUT ITERATE_t& iAllocCount) const noexcept
 		{
 			//! sizeof all children alloc(s). not size of *this
 			if (!isValidPtr())

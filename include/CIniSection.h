@@ -197,7 +197,7 @@ namespace Gray
 		//! cIniSectionData + section title info
 		typedef cIniSectionData SUPER_t;
 
-	protected:
+	public:
 		cStringI m_sSectionTitle;	//!< "SECTIONTYPE SECTIONNAME" = everything that was inside [] without the []
 
 	public:
@@ -205,7 +205,7 @@ namespace Gray
 			: cIniSectionData(bStripComments)
 		{
 		}
-		cIniSection(cStringI sSectionTitle, bool bStripComments = false)
+		cIniSection(cStringI sSectionTitle, bool bStripComments = false) noexcept
 			: cIniSectionData(bStripComments)
 			, m_sSectionTitle(sSectionTitle)
 		{

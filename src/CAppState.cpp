@@ -36,7 +36,7 @@ namespace Gray
 		return m_asArgs.GetSize();
 	}
 
-	cStringF cAppArgs::GetArgsEnum(ITERATE_t i) const					// command line arg.
+	cStringF cAppArgs::GetArgEnum(ITERATE_t i) const					// command line arg.
 	{
 		//! Get a command line argument parsed param by index.
 		//! Command line arguments honor "quoted strings" as a single argument.
@@ -113,10 +113,10 @@ namespace Gray
 		//! Find a command line arg as regex or ignoring case.
 		//! @arg bRegex = Search for a wildcard prefix.
 
-		ITERATE_t iArgsQty = get_ArgsQty();
+		const ITERATE_t iArgsQty = get_ArgsQty();
 		for (ITERATE_t i = 0; i < iArgsQty; i++)
 		{
-			cStringF sArg = GetArgsEnum(i);
+			cStringF sArg = GetArgEnum(i);
 			const FILECHAR_t* pszArg = sArg;
 			while (IsArgSwitch(*pszArg))
 			{
@@ -148,10 +148,10 @@ namespace Gray
 		//! Find one of several possible command line args maybe ignoring case. nullptr terminated list.
 		//! @return index of the first one.
 
-		ITERATE_t iArgsQty = get_ArgsQty();
+		const ITERATE_t iArgsQty = get_ArgsQty();
 		for (ITERATE_t i = 0; i < iArgsQty; i++)
 		{
-			cStringF sArg = GetArgsEnum(i);
+			cStringF sArg = GetArgEnum(i);
 			const FILECHAR_t* pszArg = sArg.get_CPtr();
 			while (cAppArgs::IsArgSwitch(pszArg[0]))
 				pszArg++;
@@ -218,7 +218,7 @@ namespace Gray
 		//! @note kernel debuggers like SoftIce can fool this.
 #ifdef _WIN32
 #if (_WIN32_WINNT >= 0x0400) && ! defined(UNDER_CE)
-		return ::IsDebuggerPresent() ? true : false ;
+		return ::IsDebuggerPresent() ? true : false;
 #else
 		return false;
 #endif
@@ -248,11 +248,11 @@ namespace Gray
 		DWORD dwRetLen = _FNF(::GetModuleFileName)(HMODULE_NULL, szPath, STRMAX(szPath));
 		if (dwRetLen <= 0)
 		{
-			return "";
+			return cStrConst::k_Empty.Get<FILECHAR_t>();
 		}
 		return cStringF(szPath, dwRetLen);
 #elif defined(__linux__)
-		return I().m_Args.GetArgsEnum(0);	// The name of the current app.
+		return I().GetArgEnum(0);	// The name of the current app.
 #else
 #error NOOS
 #endif
@@ -331,14 +331,14 @@ namespace Gray
 		//! Thought it may be setting up or tearing down. Almost exit.
 		//! Use cAppStateMain inmain;
 		APPSTATE_TYPE_ eAppState = I().m_eAppState;
-		return(eAppState == APPSTATE_RunInit || eAppState == APPSTATE_Run || eAppState == APPSTATE_RunExit);
+		return eAppState == APPSTATE_RunInit || eAppState == APPSTATE_Run || eAppState == APPSTATE_RunExit;
 	}
 	GRAYCORE_LINK bool GRAYCALL cAppState::isAppStateRun() // static
 	{
 		//! the process/app is in APPSTATE_Run?
 		//! Use cAppStateMain inmain;
 		APPSTATE_TYPE_ eAppState = I().m_eAppState;
-		return(eAppState == APPSTATE_Run);
+		return eAppState == APPSTATE_Run;
 	}
 	GRAYCORE_LINK bool GRAYCALL cAppState::isInCExit() // static
 	{
@@ -384,7 +384,7 @@ namespace Gray
 		FILECHAR_t szValue[_MAX_PATH];
 		if (GetEnvironStr(pszVarName, szValue, STRMAX(szValue)) <= 0)
 		{
-			return "";
+			return _FN("");
 		}
 		return szValue;
 #elif defined(__linux__)
@@ -416,6 +416,7 @@ namespace Gray
 		FILECHAR_t* pszEnv0 = _FNFW(::GetEnvironmentStrings)();
 		if (pszEnv0 == nullptr)
 			return 0;
+
 		FILECHAR_t* pszEnv = pszEnv0;
 		for (;; i++)
 		{
@@ -477,7 +478,7 @@ namespace Gray
 		pszDir[0] = '\0';
 		return 0;	// no concept of current directory in UNDER_CE. just use the root. (or get_AppFileDir()??)
 #elif defined(_WIN32)
-		DWORD dwRetLen = _FNF(::GetCurrentDirectory)(iSizeMax - 1, pszDir);
+		const DWORD dwRetLen = _FNF(::GetCurrentDirectory)(iSizeMax - 1, pszDir);
 		return (StrLen_t)dwRetLen;
 #elif defined(__linux__)
 		if (::getcwd(pszDir, iSizeMax - 1) == nullptr)
@@ -511,8 +512,8 @@ namespace Gray
 #elif defined(_WIN32)
 		return _FNF(::SetCurrentDirectory)(pszDir) ? true : false;
 #elif defined(__linux__)
-		int iRet = ::chdir(pszDir);
-		return(iRet == 0);
+		const int iRet = ::chdir(pszDir);
+		return iRet == 0;
 #endif
 	}
 
@@ -581,6 +582,7 @@ namespace Gray
 			sTmp = szNoise;
 			pszFileTitle = sTmp;
 		}
+
 		// TODO: m_bTempDirWritable = Test if we can really write to it?
 		return cFilePath::CombineFilePathX(get_TempDir(), pszFileTitle);
 	}
@@ -611,14 +613,14 @@ namespace Gray
 	{
 		//! Get a list of args NOT marked as valid. Not IN m_ValidArgs
 		cStringF sInvalidArgs;
-		ITERATE_t iArgsQty = m_Args.get_ArgsQty();
+		const ITERATE_t iArgsQty = m_Args.get_ArgsQty();
 		for (ITERATE_t i = 1; i < iArgsQty; i++)
 		{
 			if (m_ArgsValid.IsSet((BIT_ENUM_t)i))
 				continue;
 			if (!sInvalidArgs.IsEmpty())
 				sInvalidArgs += _FN(",");
-			sInvalidArgs += m_Args.GetArgsEnum(i);
+			sInvalidArgs += GetArgEnum(i);
 		}
 		return sInvalidArgs;
 	}
@@ -722,7 +724,7 @@ namespace Gray
 		if (!_GTN(::GetUserName)(szUserName, &dwLength))
 #endif
 		{
-			return "";
+			return _GT("");
 		}
 		pThis->m_sUserName = szUserName;
 #elif defined(__linux__)
@@ -791,7 +793,7 @@ namespace Gray
 		// hRes = _FNF(::SHGetFolderPathAndSubDir)( HANDLE_NULL, CSIDL_LOCAL_APPDATA|CSIDL_FLAG_CREATE, NULL, 0, pszSubFolder, szPath);
 		HRESULT hRes = _FNF(::SHGetFolderPath)(HANDLE_NULL, CSIDL_LOCAL_APPDATA, NULL, 0, szPath);	// ASSUME _MAX_PATH
 		if (FAILED(hRes))
-			return "";
+			return _FN("");
 		StrLen_t iLen = StrT::Len(szPath);
 #elif defined(__linux__)
 		// e.g. "/home/Dennis/X"
@@ -799,7 +801,7 @@ namespace Gray
 		HRESULT hRes = S_OK;
 #endif
 		if (iLen <= 0)
-			return "";
+			return _FN("");
 		if (!StrT::IsNullOrEmpty(pszSubFolder))
 		{
 			iLen = cFilePath::CombineFilePathA(szPath, STRMAX(szPath), iLen, pszSubFolder);
@@ -807,7 +809,7 @@ namespace Gray
 			{
 				hRes = cFileDir::CreateDirectoryX(szPath);
 				if (FAILED(hRes))
-					return "";
+					return _FN("");
 			}
 		}
 		return szPath;

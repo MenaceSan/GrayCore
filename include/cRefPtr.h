@@ -321,7 +321,7 @@ namespace Gray
 		void ReleasePtr()
 		{
 			//! just set this to nullptr.
-			TYPE* p2 = this->m_p;
+			TYPE* p2 = this->m_p;  // make local copy.
 			if (p2 != nullptr)
 			{
 #ifdef _DEBUG

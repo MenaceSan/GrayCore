@@ -143,7 +143,7 @@ namespace Gray
 			TYPE** ppObj = &this->m_p;
 			return reinterpret_cast<void**>(ppObj);
 		}
-		TYPE* GetInterfacePtr() const
+		TYPE* GetInterfacePtr() const noexcept
 		{
 			//! like _com_ptr_t
 			return this->m_p;
@@ -211,7 +211,7 @@ namespace Gray
 			if (this->m_p == nullptr)
 				return 0;
 
-			TYPE* p2 = this->m_p;
+			TYPE* p2 = this->m_p;	// make local copy.
 #ifdef _DEBUG
 			AssertIUnk(this->m_p);
 #endif

@@ -61,7 +61,7 @@ namespace Gray
 		HRESULT GetStreamError() const;
 
 		// NOT OF_TEXT since \n processing is weird.
-		HRESULT OpenX(cStringF sFilePath = "", OF_FLAGS_t nOpenFlags = OF_READ | OF_SHARE_DENY_NONE) override;
+		HRESULT OpenX(cStringF sFilePath = _FN(""), OF_FLAGS_t nOpenFlags = OF_READ | OF_SHARE_DENY_NONE) override;
 		void Close() noexcept override;
 		HRESULT OpenFileHandle(HANDLE h, OF_FLAGS_t nOpenFlags);
 

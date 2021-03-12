@@ -100,7 +100,7 @@ namespace Gray
 			ch = *pszInp; // Char_Radix2U
 			if (StrChar::IsDigit(ch))
 			{
-				ch = (char) StrChar::Dec2U(ch);
+				ch = (char)StrChar::Dec2U(ch);
 			}
 			else
 			{
@@ -140,7 +140,7 @@ namespace Gray
 		pszInp = StrT::GetNonWhitespace(pszInp);
 		if (pszInp[0] == '-')
 		{
-			return(-(INT64)StrNum::toUL(pszInp + 1, ppszInpEnd, nBaseRadix));
+			return -(INT64)StrNum::toUL(pszInp + 1, ppszInpEnd, nBaseRadix);
 		}
 		return (INT64)StrNum::toUL(pszInp, ppszInpEnd, nBaseRadix);
 	}
@@ -424,7 +424,7 @@ namespace Gray
 			{
 				if (ppszInpEnd != nullptr)
 				{
-					*ppszInpEnd = (char *)pszStart;	// Nothing here that was a number.
+					*ppszInpEnd = (char*)pszStart;	// Nothing here that was a number.
 				}
 				return 0.0;
 			}
@@ -491,7 +491,7 @@ namespace Gray
 
 		if (ppszInpEnd != nullptr)
 		{
-			*ppszInpEnd = (char *)pszInp;
+			*ppszInpEnd = (char*)pszInp;
 		}
 
 		double fraction = cFloatDeco::toDouble(fracHi, fracLo, (bExpNegative) ? (nExpFrac - nExp) : (nExpFrac + nExp));

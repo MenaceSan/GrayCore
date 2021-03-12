@@ -616,7 +616,7 @@ namespace Gray
 		{
 			// Like return SUPER_t::Mid(nFirst, nCount)
 			if (nFirst >= this->GetLength())
-				return "";
+				return cStrConst::k_Empty.Get<_TYPE_CH>();
 			return THIS_t(this->GetString() + nFirst, nCount);
 		}
 
