@@ -199,8 +199,8 @@ namespace Gray
 		//! Stupid MFC has void return. use HResult::GetLast()
 		ASSERT(isFileOpen());
 #ifdef _WIN32
-		m_hFile.SeekX(dwNewLen, SEEK_Set);	// SetFilePointer()
-		if (!::SetEndOfFile(m_hFile))	// truncate to this length/
+		m_hFile.SeekRaw(dwNewLen, SEEK_Set);	// SetFilePointer() . maybe beyond end ?
+		if (!::SetEndOfFile(m_hFile))	// truncate to this length 
 		{
 			// ASSUME HResult::GetLast() set.
 			DEBUG_ERR(("cFile::SetLength %d ERR='%s'", dwNewLen, LOGERR(HResult::GetLast())));
@@ -217,7 +217,6 @@ namespace Gray
 			DEBUG_ERR(("cFile::SetLength %d ERR='%s'", dwNewLen, LOGERR(HResult::GetLast())));
 		}
 #endif
-		return S_OK;
 	}
 
 	HRESULT CFile::Write(const void* pData, size_t nDataSize)

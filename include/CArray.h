@@ -167,7 +167,7 @@ namespace Gray
 		m_nSize = 0;
 		if (m_pData != nullptr)
 		{
-			cValArray::DestructElements<TYPE>(m_pData, iSize);
+			cValArray::DestructElementsX<TYPE>(m_pData, iSize);
 			cHeap::FreePtr((void*)(m_pData));	// const_cast
 			m_pData = nullptr;
 		}
@@ -200,7 +200,7 @@ namespace Gray
 			ASSERT_N(m_pData != nullptr);
 
 			// construct new elements
-			cValArray::ConstructElements<TYPE>(&m_pData[m_nSize], nNewSize - m_nSize);
+			cValArray::ConstructElementsX<TYPE>(&m_pData[m_nSize], nNewSize - m_nSize);
 		}
 		m_nSize = nNewSize;
 	}
@@ -277,7 +277,7 @@ namespace Gray
 		ITERATE_t nMoveCount = m_nSize - (nIndex + 1);
 		if (nMoveCount < 0)
 			return;
-		cValArray::DestructElements<TYPE>(&m_pData[nIndex], 1);
+		cValArray::DestructElementsX<TYPE>(&m_pData[nIndex], 1);
 		m_nSize--;
 		if (nMoveCount > 0) // not last.
 		{
@@ -306,7 +306,7 @@ namespace Gray
 			return;
 		}
 		// just remove a range
-		cValArray::DestructElements<TYPE>(&m_pData[nIndex], iQty);
+		cValArray::DestructElementsX<TYPE>(&m_pData[nIndex], iQty);
 		if (nMoveCount > 0)	// not last.
 		{
 			cMem::CopyOverlap(&m_pData[nIndex], &m_pData[nIndex + iQty], nMoveCount * sizeof(TYPE));

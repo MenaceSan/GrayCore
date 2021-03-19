@@ -238,19 +238,21 @@ namespace Gray
 
 		STREAM_POS_t SeekRaw(STREAM_OFFSET_t lOffset, SEEK_ORIGIN_TYPE eSeekOrigin) const noexcept
 		{
+			//! Change or get the current file position pointer.
+			//! @note it is legal to seek beyond the end of the file to grow it !
 #ifdef _WIN32
 #ifdef USE_FILE_POS64
 			LARGE_INTEGER NewFilePointer;
 			NewFilePointer.QuadPart = lOffset;
 			if (!::SetFilePointerEx(m_h, NewFilePointer, &NewFilePointer, eSeekOrigin))
 			{
-				return k_STREAM_POS_ERR;
+				return k_STREAM_POS_ERR;	// HResult::GetLast()
 			}
 			return NewFilePointer.QuadPart;
 #else
 			DWORD dwRet = ::SetFilePointer(m_h, (LONG)lOffset, nullptr, eSeekOrigin);
 			if (dwRet == INVALID_SET_FILE_POINTER)
-				return k_STREAM_POS_ERR;
+				return k_STREAM_POS_ERR;	// HResult::GetLast()
 			return dwRet;
 #endif // USE_FILE_POS64
 #else
@@ -264,12 +266,14 @@ namespace Gray
 			//! Change or get the current file position pointer.
 			//! @arg eSeekOrigin = // SEEK_SET ?
 			//! @return the New position % int, <0=FAILED
-			
+			//! @note it is legal to seek beyond the end of the file to grow it !
+
 			const STREAM_POS_t nPos = SeekRaw(lOffset, eSeekOrigin);
 			if (nPos == k_STREAM_POS_ERR)
 			{
 				return HResult::GetLastDef();
 			}
+
 			return (HRESULT)(INT32)nPos;	// truncated ?
 		}
 
