@@ -4,7 +4,7 @@ rem https://digitalhouseblog.wordpress.com/2019/08/22/how-to-make-a-nuget-packag
 rem https://docs.microsoft.com/en-us/nuget/reference/nuget-exe-cli-reference -> https://www.nuget.org/downloads
 
 @ECHO OFF
-set CodeVer=1.6.4
+set CodeVer=1.6.5
 set ToolVer=v141
 set BinDir=..\..\..\bin
 set DstDir=%BinDir%\graycore-%ToolVer%.%CodeVer%
@@ -86,12 +86,12 @@ xcopy /Q /R /Y "%BinDir%\x64%ToolVer%\ReleaseStat\GrayCore.pdb" "%DstDir%\lib\x6
 IF ERRORLEVEL 1 GOTO ERRORDETECTED
 
 rem now zip it up.
-rem e.g. /Programs/NuGet.exe pack GrayCore-v142.nuspec -BasePath "C:\Dennis\Source\bin\graycore-v142.1.6.4" -OutputDirectory "C:\Dennis\Source\bin"
+rem e.g. /Programs/NuGet.exe pack GrayCore-v142.nuspec -BasePath "C:\Dennis\Source\bin\graycore-v142.1.6.5" -OutputDirectory "C:\Dennis\Source\bin"
 /Programs/NuGet.exe pack GrayCore-%ToolVer%.nuspec -BasePath "%DstDir%" -OutputDirectory "%BinDir%" 
 IF ERRORLEVEL 1 GOTO ERRORDETECTED
 
 rem add to local test server.
-rem /Programs/NuGet.exe add graycore-v142.1.6.4.nupkg -source C:\Dennis\Source\bin\packages
+rem /Programs/NuGet.exe add graycore-v142.1.6.5.nupkg -source C:\Dennis\Source\bin\packages
 /Programs/NuGet.exe add "%BinDir%\graycore-%ToolVer%.%CodeVer%.nupkg" -source "%BinDir%\packages"
 IF ERRORLEVEL 1 GOTO ERRORDETECTED
 

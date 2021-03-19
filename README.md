@@ -2,7 +2,7 @@
 # GrayCore
 C++ core library providing very basic utility functionality without using any STL. Minimal dependencies.
 
-GRAY_VERSION_S = Version 1.6.4
+GRAY_VERSION_S = Version 1.6.5
 
 https://www.menasoft.com/graydox/d8/df5/namespaceGray.html
 https://github.com/MenaceSan/GrayCore
@@ -109,10 +109,12 @@ Needs dl, pthread
 g++ -std=c++0x -D_DEBUG -O2 -g -Wall -c -fmessage-length=0 -fPIC -pthread -o *
 
 NuGet packages:
+
+https://www.nuget.org/packages?q=graycore
 Build native NuGet package for *Release  and *debug configs and multiple tool chains/CRT versions and platforms
 
-graycore-v141.1.6.4 = seperate package for the v141 tool chain. VS2017
-graycore-v142.1.6.4 = seperate package for the v142 tool chain. VS2019
+graycore-v141.1.6.5 = seperate package for the v141 tool chain. VS2017
+graycore-v142.1.6.5 = seperate package for the v142 tool chain. VS2019
 
 Contains options for:
 Configuration = *release* or *debug*  
