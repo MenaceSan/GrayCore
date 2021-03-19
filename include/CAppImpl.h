@@ -19,7 +19,7 @@ namespace Gray
 	struct GRAYCORE_LINK cAppCommand
 	{
 		//! @struct Gray::cAppCommand
-		//! a command line switch that does something.
+		//! a command line switch that does something. similar to MFC CCmdTarget ?
 		//! Abstract Base class for a command handler (plugin).
 
 		const FILECHAR_t* m_pszSwitch;		//!< abbreviated -switch or /switch (case sensative) optional, nullptr allowed
@@ -33,6 +33,8 @@ namespace Gray
 		}
 
 		bool IsMatch(cStringF sArg) const;
+
+		// return # of EXTRA args consumed.
 		virtual HRESULT DoCommand(int iArgN, const FILECHAR_t* pszArg) = 0;	//!< call this if we see the m_pszCmd switch. can consume more arguments (or not).
 	};
 
@@ -51,13 +53,14 @@ namespace Gray
 		cAppState& m_State;					//!< Quick reference to cAppState singleton.
 		bool m_bCloseSignal;				//!< Polite request to close the application. checked in Run() and OnTickApp()
 
-		cArrayPtr<cAppCommand> m_aCommands;		//! built a list of commands. Dynamically add new command handlers to the app. to process cAppArgs.
+		cArrayPtr<cAppCommand> m_aCommands;		//! built a list of possible commands. Dynamically add new command handlers to the app. to process cAppArgs.
 
 	public:
-		cAppImpl(const FILECHAR_t* pszAppName = nullptr);
+		cAppImpl(const FILECHAR_t* pszAppName );
 		virtual ~cAppImpl();
 
-		cAppCommand* AddCommand(cAppCommand& cmd);
+		cAppCommand* RegisterCommand(cAppCommand& cmd);
+		HRESULT RunCommand(ITERATE_t i, const FILECHAR_t* pszCmd);
 		HRESULT RunCommands();
 
 		static inline HINSTANCE get_HInstance()

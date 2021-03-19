@@ -199,16 +199,20 @@ namespace Gray
 		CHEAPOBJECT_IMPL;	// dynamic singleton
 	};
 
-#define UNITTEST_TRUE(x)			ASSERT(x)	// UNITTEST_TRUE is different from a normal ASSERT ?
+#define UNITTEST_TRUE(x)			ASSERT(x)	// UNITTEST_TRUE is different from a normal ASSERT ? ::Microsoft::VisualStudio::CppUnitTestFramework::Assert::IsTrue(x) 
 #define UNITTEST_TRUE2(x,d)			ASSERT(x)	// UNITTEST_TRUE with a description
 
 	// declare a global exposed cUnitTest. Dont use this directly but use UNITTEST2_* to  support M$ test. 
 #define UNITTEST_REGISTER_NAME(n)	g_UnitTest_##n
-#define UNITTEST_REGISTER(n,l)		__DECL_EXPORT cUnitTestRegisterT< UNITTEST_N(n) > UNITTEST_REGISTER_NAME(n)( #n, l ) 	// instantiate to register cUnitTest  .
+#define UNITTEST_REGISTER(n,lvl)		__DECL_EXPORT cUnitTestRegisterT< UNITTEST_N(n) > UNITTEST_REGISTER_NAME(n)( #n, lvl ) 	// instantiate to register cUnitTest  .
 
 	// Allow an external hard link to the Base type (because full type is not exposed) and we are pulling from static library. optional.
 #define UNITTEST_EXT_NAME(n)		g_pUnitTest_##n		//!< a base pointer to cUnitTestRegister for UNITTEST_N(n)
-#define UNITTEST_EXT_DEF(n)			__DECL_EXPORT cUnitTestRegister* UNITTEST_EXT_NAME(n) = &UNITTEST_REGISTER_NAME(n) 
+#define UNITTEST_EXT_EXP(n)			__DECL_EXPORT cUnitTestRegister* UNITTEST_EXT_NAME(n) = &UNITTEST_REGISTER_NAME(n)		// use this to make the text externally exposed.
+#define UNITTEST_EXT_IMP(n)			__DECL_IMPORT cUnitTestRegister* UNITTEST_EXT_NAME(n) 		// import = access to externally exposed.
+
+#define UNITTEST_CLASS(n)		class UNITTEST_N(n) : public cUnitTest //!< define and implement class.
+#define UNITTEST_METHOD(x)		public: void RunUnitTest() override				// call the public virtual as a test. 
 
 } 	// namespace
 

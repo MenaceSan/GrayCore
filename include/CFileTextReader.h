@@ -55,9 +55,9 @@ namespace Gray
 		HRESULT ReadStringLine(OUT const char** ppszLine);
 
 	public:
-		virtual HRESULT ReadStringLine(OUT char* pszBuffer, StrLen_t iSizeMax) override;
+		HRESULT ReadStringLine(OUT char* pszBuffer, StrLen_t iSizeMax) override;
 
-		virtual STREAM_SEEKRET_t Seek(STREAM_OFFSET_t iOffset, SEEK_ORIGIN_TYPE eSeekOrigin = SEEK_Set) override;
+		HRESULT SeekX(STREAM_OFFSET_t iOffset, SEEK_ORIGIN_TYPE eSeekOrigin = SEEK_Set) override;
 	};
 
 	class GRAYCORE_LINK cFileTextReader : public cStreamTextReader

@@ -12,7 +12,7 @@
 
 #include "cArray.h"
 #include "StrT.h"
-#include "cValT.h"
+#include "cValArray.h"
 #include "cUnitTestDecl.h"
 
 namespace Gray

@@ -72,7 +72,7 @@ namespace Gray
 			ASSERT(m_iReadLast >= 0 && m_iReadLast <= m_iWriteLast);	// Assume will not will wrap to fill.
 		}
 
-		STREAM_SEEKRET_t SeekQ(STREAM_OFFSET_t iOffset, SEEK_ORIGIN_TYPE eSeekOrigin = SEEK_Set);	// support virtual
+		HRESULT SeekQ(STREAM_OFFSET_t iOffset, SEEK_ORIGIN_TYPE eSeekOrigin = SEEK_Set);	// support virtual
 
 		UNITTEST_FRIEND(cQueue);
 	};
@@ -212,7 +212,7 @@ namespace Gray
 		ITERATE_t ReadQty(TYPE* pBuf, ITERATE_t nCountMax)
 		{
 			//! copy TYPE data out. NOT thread safe.
-			//! @todo use CopyElements?
+			//! @todo use cValArray::CopyQty ?
 
 			ITERATE_t i = 0;
 			for (; !isEmptyQ() && i < nCountMax; i++)
@@ -249,7 +249,7 @@ namespace Gray
 		}
 		HRESULT WriteQty(const TYPE* pVal, ITERATE_t iLength)
 		{
-			//! Add several TYPE items to the Q using CopyElements. NOT thread safe.
+			//! Add several TYPE items to the Q using cValArray::CopyQty. NOT thread safe.
 			//! @note This is NOT reentrant/thread safe.
 			//! @return
 			//!   length put. 0 = full. I cant write anything.
@@ -261,14 +261,14 @@ namespace Gray
 			if (iWrite + iLengthMin > _QTY)	// will overflow/wrap?
 			{
 				ITERATE_t iTmp1 = _QTY - iWrite;
-				CopyElements(m_Data + iWrite, pVal, iTmp1);	// Write to end of buffer.
+				cValArray::CopyQty(m_Data + iWrite, pVal, iTmp1);	// Write to end of buffer.
 				ITERATE_t iTmp2 = iLengthMin - iTmp1;
-				CopyElements(m_Data, pVal + iTmp1, iTmp2);	// Wrap back from beginning.
+				cValArray::CopyQty(m_Data, pVal + iTmp1, iTmp2);	// Wrap back from beginning.
 				m_iWriteLast = iTmp2;
 			}
 			else
 			{
-				CopyElements(m_Data + iWrite, pVal, iLengthMin);
+				cValArray::CopyQty(m_Data + iWrite, pVal, iLengthMin);
 				m_iWriteLast = iWrite + iLengthMin;
 			}
 			return (HRESULT)iLengthMin;
@@ -339,12 +339,12 @@ namespace Gray
 			if (pData != nullptr)
 			{
 				//! copy data out.
-				CopyElements(pData, m_pData + m_iReadLast, iDataMaxQty);
+				cValArray::CopyQty(pData, m_pData + m_iReadLast, iDataMaxQty);
 			}
 			return (HRESULT)iDataMaxQty;
 		}
 
-		HRESULT ReadQty(TYPE* pData, ITERATE_t iDataMaxQty)
+		ITERATE_t ReadQty(TYPE* pData, ITERATE_t iDataMaxQty)
 		{
 			//! Just read a block. like ReadX but for TYPE
 			//! @arg iDataMaxQty = max qty of TYPE units i can fit in pData.
@@ -356,18 +356,18 @@ namespace Gray
 			if (pData != nullptr)
 			{
 				//! copy data out.
-				CopyElements(pData, m_pData + m_iReadLast, iDataMaxQty);
+				cValArray::CopyQty(pData, m_pData + m_iReadLast, iDataMaxQty);
 			}
 			AdvanceRead(iDataMaxQty);		// advance m_iReadLast pointer.
-			return (HRESULT)iDataMaxQty;
+			return iDataMaxQty;
 		}
 
 		void ReadCommitNow()
 		{
 			//! Prepare to read. move (read) data down to not waste space. allow more space for writing.
-			//! commit the read = can't get the data back. Seek will fail.
+			//! commit the read = can't get the data back. SeekX will fail.
 			//! @note beware of the rollback that protocols like to do if they get a bad request or non atomic transactions.
-			//! can't Seek() back after this.
+			//! can't SeekX() back after this.
 			//! pointers into this are now bad!
 			if (this->m_iReadLast <= 0)					// next read is already at 0.
 				return;
@@ -432,7 +432,7 @@ namespace Gray
 		void ReadCommitCheck()
 		{
 			//! is it time to attempt to reclaim the space in the queue
-			//! @note beware of the roll back that protocols like to do if they get a bad request/underflow. can't Seek back now ?
+			//! @note beware of the roll back that protocols like to do if they get a bad request/underflow. can't SeekX() back now ?
 			if (m_iAutoReadCommit != 0 && this->m_iReadLast >= m_iAutoReadCommit) // (ITERATE_t) m_nGrowSizeChunk
 			{
 				this->ReadCommitNow();
@@ -446,7 +446,7 @@ namespace Gray
 		{
 			//! For SetSeekSizeMin
 			//! @arg iAutoReadCommit = the size at which we 'commit' contents and erase already read data. to make room for more writing.
-			//!		0 = never do auto commit. we are reading and we may need to Seek back.
+			//!		0 = never do auto commit. we are reading and we may need to SeekX back.
 			m_iAutoReadCommit = iAutoReadCommit;
 			if (iAutoReadCommit != 0)
 			{
@@ -464,7 +464,7 @@ namespace Gray
 		}
 
 		// Act as a stream
-		STREAM_SEEKRET_t SeekQ(STREAM_OFFSET_t iOffset, SEEK_ORIGIN_TYPE eSeekOrigin = SEEK_Set)
+		HRESULT SeekQ(STREAM_OFFSET_t iOffset, SEEK_ORIGIN_TYPE eSeekOrigin = SEEK_Set)
 		{
 			//! move the current read start location.
 			//! @arg
@@ -474,23 +474,23 @@ namespace Gray
 			//!  the New position,  <0=FAILED = INVALID_SET_FILE_POINTER
 			SUPER_t::SeekQ(iOffset, eSeekOrigin);
 			ReadCommitCheck();
-			return this->m_iReadLast;
+			return (HRESULT) this->m_iReadLast;
 		}
 
-		HRESULT ReadQty(TYPE* pData, ITERATE_t iDataMaxQty)
+		ITERATE_t ReadQty(TYPE* pData, ITERATE_t iDataMaxQty)
 		{
 			//! Just read a block. like ReadX but for TYPE
 			//! @return iQty i actually read.
-			HRESULT iReadQty = SUPER_t::ReadQty(pData, iDataMaxQty);
+			const ITERATE_t nReadQty = SUPER_t::ReadQty(pData, iDataMaxQty);
 			ReadCommitCheck();
-			return iReadQty;
+			return nReadQty;
 		}
 
 		HRESULT ReadX(void* pData, size_t nDataSize)
 		{
 			//! bytes
-			HRESULT iReadQty = ReadQty((TYPE*)pData, (ITERATE_t)(nDataSize / sizeof(TYPE)));
-			return iReadQty * sizeof(TYPE);
+			const ITERATE_t nReadQty = ReadQty((TYPE*)pData, (ITERATE_t)(nDataSize / sizeof(TYPE)));
+			return (HRESULT)(nReadQty * sizeof(TYPE));
 		}
 
 		//***************************************************
@@ -559,7 +559,7 @@ namespace Gray
 			ASSERT_N(this->m_iWriteLast + iQtyMax <= m_iDataSizeAlloc);
 			if (pData != nullptr)
 			{
-				CopyElements(this->m_pData + this->m_iWriteLast, pData, iQtyMax);
+				cValArray::CopyQty(this->m_pData + this->m_iWriteLast, pData, iQtyMax);
 			}
 			AdvanceWrite(iQtyMax);
 		}

@@ -314,7 +314,7 @@
     <ClInclude Include="include\cUnitTestDecl.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="include\cValT.h">
+    <ClInclude Include="include\cValArray.h">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="include\cWinHeap.h">

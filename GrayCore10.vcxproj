@@ -708,7 +708,7 @@
     <ClInclude Include="cuint64.h" />
     <ClInclude Include="cUnitTest.h" />
     <ClInclude Include="cUnitTestDecl.h" />
-    <ClInclude Include="cValT.h" />
+    <ClInclude Include="cValArray.h" />
     <ClInclude Include="FileName.h" />
     <ClInclude Include="GrayCore.h" />
     <ClInclude Include="IUnkObject.h" />

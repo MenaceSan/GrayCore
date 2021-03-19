@@ -70,7 +70,8 @@ namespace Gray
 
 		HRESULT DoCommand(int iArgN, const FILECHAR_t* pszArg) override
 		{
-			// TODO
+			// TODO  pop message box or use console ? to wait for user input.
+
 			return E_NOTIMPL;
 		}
 	};
@@ -84,14 +85,9 @@ namespace Gray
 		, m_State(cAppState::I())
 		, m_bCloseSignal(false)
 	{
+		DEBUG_CHECK(!StrT::IsWhitespace(m_pszAppName));
 		m_aCommands.Add(&k_Help);
-		// m_aCommands.Add(&k_WaitForDebug);
-
-		if (StrT::IsWhitespace(m_pszAppName))
-		{
-			// Set to the app file name?? !!
-			m_pszAppName = _FN("App");	// default name.
-		}
+		// m_aCommands.Add(&k_WaitForDebug); 
 	}
 
 	cAppImpl::~cAppImpl()
@@ -100,7 +96,7 @@ namespace Gray
 
 	cString cAppImpl::get_HelpText() const // virtual override
 	{
-		// Get help for all the m_aCommands we support.
+		//! Get help for all the m_aCommands we support.
 
 		cString sHelp = _GT("");
 		for (int i = 0; i < m_aCommands.GetSize(); i++)
@@ -135,26 +131,28 @@ namespace Gray
 		return sHelp;
 	}
 
-	cAppCommand* cAppImpl::AddCommand(cAppCommand& cmd)
+	cAppCommand* cAppImpl::RegisterCommand(cAppCommand& cmd)
 	{
 		// Add or override existing command.
 		// is it an override ?
 
-		for (int i = 0; i < m_aCommands.GetSize(); i++)	// collision?
+		for (ITERATE_t i = 0; i < m_aCommands.GetSize(); i++)	// collision?
 		{
 			cAppCommand* pCmd2 = m_aCommands[i];
-			if (StrT::CmpI(pCmd2->m_pszName, cmd.m_pszName) == 0)
+			if (StrT::CmpI(pCmd2->m_pszName, cmd.m_pszName) == COMPARE_Equal)
 			{
-
+				// collide, replace ?
+				DEBUG_ERR(("RegisterCommand collision"));
+				return pCmd2;
 			}
-			if (StrT::Cmp(pCmd2->m_pszSwitch, cmd.m_pszSwitch) == 0)
+			if (StrT::Cmp(pCmd2->m_pszSwitch, cmd.m_pszSwitch) == COMPARE_Equal)
 			{
-
+				// allow collide ?
 			}
 		}
 
 		m_aCommands.Add(&cmd);
-		return nullptr;
+		return &cmd;
 	}
 
 	BOOL cAppImpl::InitInstance() // virtual 
@@ -175,69 +173,93 @@ namespace Gray
 		return !m_bCloseSignal;	// just keep going.
 	}
 
+	HRESULT cAppImpl::RunCommand(ITERATE_t i, const FILECHAR_t* pszCmd)
+	{
+		// Run a single command and set up its arguments.
+
+ 		while (cAppArgs::IsArgSwitch(*pszCmd))
+		{
+			pszCmd++;
+		}
+
+		// use "Cmd=Val" syntax?
+		// args can come from parse for = sign else get from the next arg in sequence (that isnt starting with IsSwitch(-/)) 
+		cStringF sCmd2; 
+		const FILECHAR_t* pszArgEq = StrT::FindChar(pszCmd, '=');
+		if (pszArgEq != nullptr)
+		{
+			sCmd2 = cStringF(pszCmd, StrT::Diff(pszArgEq, pszCmd));
+			pszCmd = sCmd2;
+		}
+
+		cAppCommand* pCmd = nullptr;
+		for (int j = 0; j < m_aCommands.GetSize(); j++)
+		{
+			cAppCommand* pCmd2 = m_aCommands[j];
+			if (pCmd2->IsMatch(pszCmd))
+			{
+				pCmd = pCmd2;
+				break;
+			}
+		}
+
+		if (pCmd == nullptr)	// no idea how to process this switch. might be an erorr
+		{
+			return i;	// just skip this.
+		}
+
+		m_State.m_ArgsValid.SetBit(i);	// found it anyhow.
+
+		HRESULT hRes = pCmd->DoCommand(i, pszArgEq != nullptr ? pszArgEq : m_State.m_Args.GetArgEnum(i + 1));
+		if (FAILED(hRes))
+		{
+			// Stop processing. report error.
+			cLogMgr::I().addEventF(LOG_ATTR_INIT, LOGLEV_CRIT, "Command line '%s' failed '%s'", LOGSTR(pszCmd), LOGERR(hRes));
+			return hRes;
+		}
+
+		int j = i;
+		if (pszArgEq != nullptr)
+		{
+			// use "Cmd=Val" syntax?
+			if (hRes > 1)
+				j += hRes - 1;
+		}
+		else
+		{
+			j += hRes;	// Process more arguments?
+		}
+
+		for (; i < j; i++)
+		{
+			m_State.m_ArgsValid.SetBit(i);	// consumed
+		}
+
+		return i;
+	}
+
 	HRESULT cAppImpl::RunCommands()
 	{
 		// NOTE: some commands may be run ahead of this. They effect init.
 
-		cAppArgs& args = m_State.m_Args;
-		for (int i = 1; i < args.get_ArgsQty(); i++)
+		const cAppArgs& args = m_State.m_Args;
+		ITERATE_t i = 1;
+		for (; i < args.get_ArgsQty(); i++)
 		{
 			if (m_State.m_ArgsValid.IsSet((BIT_ENUM_t)i))	// already processed this argument. (out of order ?). don't process it again. no double help.
 				continue;
-
-			cStringF sArg = args.GetArgEnum(i);
-			const FILECHAR_t* pszCmd = sArg;
-			while (cAppArgs::IsArgSwitch(*pszCmd))
-			{
-				pszCmd++;
-			}
-
-			// use "Cmd=Val" syntax?
-			// args can come from parse for = sign else get from the next arg in sequence (that isnt starting with IsSwitch(-/)) 
-			cStringF sCmd;	// dont use sArg
-			const FILECHAR_t* pszArgEq = StrT::FindChar(pszCmd, '=');
-			if (pszArgEq != nullptr)
-			{
-				sCmd = cStringF(pszCmd, pszArgEq - pszCmd);
-				pszCmd = sCmd;
-			}
-
-			cAppCommand* pCmd = nullptr;
-			for (int j = 0; j < m_aCommands.GetSize(); j++)
-			{
-				cAppCommand* pCmd2 = m_aCommands[j];
-				if (pCmd2->IsMatch(pszCmd))
-				{
-					pCmd = pCmd2;
-					break;
-				}
-			}
-			if (pCmd == nullptr)	// no idea how to process this switch. might be an erorr
-				continue;
-
-			m_State.m_ArgsValid.SetBit(i);	// found it anyhow.
-
-			HRESULT hRes = pCmd->DoCommand(i, pszArgEq != nullptr ? pszArgEq : args.GetArgEnum(i + 1));
+			cStringF sCmd = args.GetArgEnum(i);
+			HRESULT hRes = RunCommand(i, sCmd);
 			if (FAILED(hRes))
 			{
 				// Stop processing. report error.
-				cLogMgr::I().addEventF(LOG_ATTR_INIT, LOGLEV_CRIT, "Command line '%s' failed '%s'", LOGSTR(sArg), LOGERR(hRes));
+				cLogMgr::I().addEventF(LOG_ATTR_INIT, LOGLEV_CRIT, "Command line '%s' failed '%s'", LOGSTR(sCmd), LOGERR(hRes));
 				return hRes;
 			}
-
-			if (pszArgEq != nullptr)
-			{
-				// use "Cmd=Val" syntax.
-				if (hRes > 1)
-					i += hRes - 1;
-			}
-			else
-			{
-				i += hRes;	// Process more arguments.
-			}
+			i = hRes;
 		}
 
-		return S_OK;
+		return i;
 	}
 
 	int cAppImpl::Run() // virtual 

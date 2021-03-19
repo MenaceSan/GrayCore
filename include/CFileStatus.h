@@ -12,7 +12,7 @@
 #include "FileName.h"
 #include "cTimeFile.h"
 #include "cTimeInt.h"
-#include "cValT.h"
+#include "cValArray.h"
 #include "cStreamProgress.h"
 #include "HResult.h"
 

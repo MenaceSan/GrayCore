@@ -116,6 +116,7 @@ namespace Gray
 		//  FILEDEVICE_PREFIX "PhysicalDrive0"
 		//  "\\\\\?\\Volume{433619ed-c6ea-11d9-a3b2-806d6172696f}
 
+		// cOSHandle hDevice
 		HANDLE hDevice = ::CreateFile(szPath, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0, HANDLE_NULL);
 		if (hDevice != INVALID_HANDLE_VALUE)
 		{

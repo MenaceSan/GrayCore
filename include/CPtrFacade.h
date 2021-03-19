@@ -20,6 +20,7 @@ namespace Gray
 		//! @class Gray::cPtrFacade
 		//! a class that acts like (wraps) a pointer to TYPE. Not specific to TYPE=cRefBase.
 		//! Base for: cExceptionHolder, cLockerT, cNewPtr, cRefPtr, cIUnkPtr, etc.
+		//! sizeof(void*)
 		//! TODO cPtrNotNull<> // a pointer that can never be nullptr. like gsl::not_null<T>
 
 		typedef cPtrFacade<TYPE> THIS_t;
@@ -71,6 +72,7 @@ namespace Gray
 		void AttachPtr(TYPE* p) noexcept
 		{
 			//! sets the pointer WITHOUT adding a ref (if overload applicable). like get_PPtr().
+			//! DANGER
 			m_p = p;
 		}
 		TYPE* DetachPtr() noexcept

@@ -43,43 +43,45 @@ namespace Gray
 			return;
 		}
 
-		CStringData* pData;
+		CStringData* pDataNew;
 		const size_t iStringLengthBytes = (iNewLength + 1) * sizeof(_TYPE_CH);
 		if (m_pchData == &m_Nil)
 		{
 			// Make a new string.
-			pData = new((StrLen_t)iStringLengthBytes) CStringData;	// allocate extra space and call its constructor
-			ASSERT(pData != nullptr);
-			pData->IncRefCount();
+			pDataNew = new(iStringLengthBytes) CStringData;	// allocate extra space and call its constructor
+			ASSERT(pDataNew != nullptr);
+			pDataNew->IncRefCount();
 		}
 		else
 		{
-			pData = GetData();
-			int iRefCounts = pData->get_RefCount();
+			auto pDataOld = GetData();
+			StrLen_t nOldLen = pDataOld->get_CharCount();
+			if (nOldLen == iNewLength)	// no change.
+				return;
+			int iRefCounts = pDataOld->get_RefCount();
 			if (iRefCounts == 1)
 			{
 				// just change the existing ref. or it may be the same size.
-				pData = (CStringData*)cHeap::ReAllocPtr(pData, sizeof(CStringData) + iStringLengthBytes);
-				ASSERT_N(pData != nullptr);
+				pDataNew = (CStringData*)cHeap::ReAllocPtr(pDataOld, sizeof(CStringData) + iStringLengthBytes);
+				ASSERT_N(pDataNew != nullptr);
 			}
 			else
 			{
 				// Make a new string. Copy from old. So we can change size.
 				// NOTE: we maybe duping our self. (to change length)
 				ASSERT(iRefCounts > 1);
-				pData = new((StrLen_t)iStringLengthBytes) CStringData;
-				ASSERT_N(pData != nullptr);
-				pData->IncRefCount();
-				_TYPE_CH* pszNewData = reinterpret_cast<_TYPE_CH*>(pData->GetString());
-				StrT::CopyLen(pszNewData, m_pchData, iNewLength + 1); // Copy from old
-				EmptyValid();	// clear previous string.
+				pDataNew = new(iStringLengthBytes) CStringData;
+				ASSERT_N(pDataNew != nullptr);
+				pDataNew->IncRefCount();
+				StrT::CopyLen(reinterpret_cast<_TYPE_CH*>(pDataNew->GetString()), m_pchData, MIN(iNewLength, nOldLen) + 1); // Copy from old
+				pDataOld->DecRefCount();	// release ref to previous string.
 			}
 		}
 
-		ASSERT(cHeap::GetSize(pData) >= (sizeof(CStringData) + iStringLengthBytes));
-		pData->put_CharCount(iNewLength);
+		ASSERT(cHeap::GetSize(pDataNew) >= (sizeof(CStringData) + iStringLengthBytes));
+		pDataNew->put_CharCount(iNewLength);
 
-		m_pchData = reinterpret_cast<_TYPE_CH*>(pData->GetString());
+		m_pchData = reinterpret_cast<_TYPE_CH*>(pDataNew->GetString());
 		m_pchData[iNewLength] = '\0';	// might just be trimming an existing string.
 	}
 

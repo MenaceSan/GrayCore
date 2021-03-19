@@ -9,7 +9,7 @@
 #include "cTypes.h"
 #include "cFloat.h"
 #include "cFloatDeco.h"
-#include "cValT.h"
+#include "cValArray.h"
 
 namespace Gray
 {

@@ -10,7 +10,7 @@
 #pragma once
 #endif
 
-#include "cValT.h" // ITERATE_t
+#include "cValArray.h" // ITERATE_t
 #include "cDebugAssert.h"
 
 namespace Gray

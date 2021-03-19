@@ -52,7 +52,8 @@ namespace Gray
 			//! Get a pointer to the characters of the string. Stored in the space allocated after this class.
 			return (void*)(this + 1); // const_cast
 		}
-		void* operator new(size_t stAllocateBlock, StrLen_t iStringLengthBytes)
+
+		static void* operator new(size_t stAllocateBlock, size_t iStringLengthBytes)
 		{
 			//! @note Make sure this is compatible with realloc() !!
 			//! must set m_nCharCount after this !
@@ -61,16 +62,16 @@ namespace Gray
 			ASSERT(stAllocateBlock == sizeof(CStringData));
 			return cHeap::AllocPtr(stAllocateBlock + iStringLengthBytes);
 		}
-
-		void operator delete(void* pObj, StrLen_t iStringLengthBytes)
+		static void operator delete(void* pObj, size_t iStringLengthBytes)
 		{
 			UNREFERENCED_PARAMETER(iStringLengthBytes);
 			cHeap::FreePtr(pObj);
 		}
-		void operator delete(void* pObj)
+		static void operator delete(void* pObj)
 		{
 			cHeap::FreePtr(pObj);
 		}
+
 		StrLen_t get_CharCount() const noexcept
 		{
 			//! @return Number of chars. (not necessarily bytes)
@@ -79,12 +80,10 @@ namespace Gray
 		void put_CharCount(StrLen_t nCount) noexcept
 		{
 			//! @return Number of chars. (not necessarily bytes). NOT including '/0'
+			//! DANGER.
 			m_nCharCount = nCount;
 		}
 	};
-
-	// make sure the new length of the string is set correctly on destruct !
-	typedef cRefPtr<CStringData> CStringDataPtr;	//!< Pointer to hold a ref to the string data so i can thread lock it.
 
 	template< typename _TYPE_CH = char >
 	class GRAYCORE_LINK CStringT
@@ -202,16 +201,19 @@ namespace Gray
 
 		const _TYPE_CH& ReferenceAt(StrLen_t nIndex) const       // 0 based
 		{
+			// AKA ElementAt()
 			ASSERT(nIndex <= GetLength());
 			return m_pchData[nIndex];
 		}
 		_TYPE_CH GetAt(StrLen_t nIndex) const      // 0 based
 		{
+			// Get a character.
 			ASSERT(nIndex <= GetLength());	// allow to get the '\0' char
 			return m_pchData[nIndex];
 		}
 		void SetAt(StrLen_t nIndex, _TYPE_CH ch)
 		{
+			// Set a character.
 			ASSERT(IS_INDEX_GOOD(nIndex, GetLength()));
 			CopyBeforeWrite();
 			m_pchData[nIndex] = ch;

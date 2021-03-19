@@ -80,7 +80,7 @@
 #endif // _MSC_VER >= 1000
 
 #ifndef USE_CRT
-#define USE_CRT 1	// 1 = use all normal CRT functions. 0 = attempt to use minimal/no CRT.
+#define USE_CRT 1	// 1 = use all normal CRT functions. 0 = attempt to use minimal/no CRT. msvcp140.dll and vcruntime140.dll
 #endif
 
 // Define your compiler here.

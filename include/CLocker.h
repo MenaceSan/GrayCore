@@ -76,7 +76,7 @@ namespace Gray
 		//! Might be used for: cDXSurfaceLock, cSemaphoreLock, cWinHeap, cDXMesh, cDXBuffer
 		//! TYPE must support Unlock() and probably Lock() or be based on cLockableBase*
 		//! m_p = the lock we are locking.
-		//! Similar to ATL CCritSecLock
+		//! Similar to ATL CCritSecLock, std::unique_lock
 		//
 	public:
 		explicit cLockerT(TYPE* pLock, bool bLockSuccess) noexcept
@@ -88,7 +88,7 @@ namespace Gray
 			: cPtrFacade<TYPE>(&rLock)
 		{
 			ASSERT(this->m_p == &rLock && this->m_p != nullptr);
-			rLock.Lock();
+			rLock.Lock();	// Assume lock must succeed.
 		}
 		~cLockerT()
 		{

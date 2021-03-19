@@ -138,7 +138,7 @@ _CPPUNWIND = for exceptions. not avail in UNDER_CE
 __GNUC__ 64 bit sync exchange in 32 bit code. _InterlockedCompareExchange64
 Heap:Alloc() fail should not always assert. this may not always be fatal/unexpected.
 __linux__ getopt() like argument definitions for apps.
-Test UNICODE vs binary vs ASCII cFileText files. WriteString() and Seek().
+Test UNICODE vs binary vs ASCII cFileText files. WriteString() and SeekX().
 enumerate devices/drives mounted on system.
 LINUX write file attributes? chmod() for particular user.
 Test - thread handling for cString. can multiple threads use instances of the same string ? instance interlock count delete works OK?

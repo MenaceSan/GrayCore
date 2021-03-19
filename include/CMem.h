@@ -12,8 +12,6 @@
 
 #include "Index.h"
 #include "StrConst.h"
-#include "cValT.h"
-#include "cUnitTestDecl.h"
 #include "cDebugAssert.h"
 
 namespace Gray
@@ -250,8 +248,6 @@ namespace Gray
 		}
 		static StrLen_t GRAYCALL GetHexDigest(OUT char* pszHexString, const BYTE* pData, size_t nSizeData);
 		static HRESULT GRAYCALL SetHexDigest(const char* pszHexString, OUT BYTE* pData, size_t nSizeData);
-
-		UNITTEST_FRIEND(cMem);
 	};
 
 	template <UINT32 _SIGVALID = 0xCA11AB1E>
@@ -290,14 +286,13 @@ namespace Gray
 	};
 
 	template<size_t TYPE_SIZE>
-	class cMemStatic
+	class cMemStaticSized
 	{
-		//! @class Gray::cMemStatic
+		//! @class Gray::cMemStaticSized
 		//! Store an inline/static allocated blob of a specific known size/type. TYPE_SIZE in bytes.
 
 	public:
 		static const size_t k_Size = TYPE_SIZE;	//!< All hashes of this type are this size (bytes).
-		static const size_t k_SizeHexDigest = ((TYPE_SIZE * 2) + 1);	//!< hold a string with the hex digest of this. (chars).
 
 		BYTE m_Data[TYPE_SIZE];		//!< All objects of this type are this size.
 

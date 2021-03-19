@@ -33,9 +33,12 @@ namespace Gray
 			UNREFERENCED_PARAMETER(pszDevice);
 			return S_FALSE;	// not needed i guess.
 		}
+
+		// TODO Request to Stream ??
+
 		virtual HRESULT RequestFile(const FILECHAR_t* pszSrcName, const FILECHAR_t* pszDestPath, IStreamProgressCallback* pProgress = nullptr, FILE_SIZE_t nOffsetStart = 0, FILE_SIZE_t* pnRequestSizeEst = nullptr)
 		{
-			//! Request a file from a server to be brought back to me/local. ASSUME blocking call.
+			//! Request a file from a (remote) server to be brought back to me/local. ASSUME blocking call.
 			//! @arg pszDestPath = a local file. nullptr = query only. don't actually get the file.
 			//! @arg pnRequestSizeEst = nullptr = i don't care. -1 = request/return the size.
 			UNREFERENCED_PARAMETER(pszSrcName);
@@ -94,8 +97,11 @@ namespace Gray
 			m_sServerRoot = pszServerRoot;
 			return S_OK;
 		}
+
 		virtual HRESULT RequestFile(const FILECHAR_t* pszSrcName, const FILECHAR_t* pszDestPath, IStreamProgressCallback* pProgress, FILE_SIZE_t nOffsetStart, FILE_SIZE_t* pnRequestSizeEst) override;
 		virtual HRESULT SendFile(const FILECHAR_t* pszSrcPath, const FILECHAR_t* pszDestName, IStreamProgressCallback* pProgress, FILE_SIZE_t nOffsetStart, FILE_SIZE_t nSize) override;
+		
+		
 		virtual HRESULT SendAttr(const FILECHAR_t* pszDestName, cTimeFile timeChanged) override;
 
 

@@ -1005,7 +1005,7 @@ namespace Gray
 
 	bool GRAYCALL cFilePath::IsFileNameExt(const FILECHAR_t* pszFileName, const FILECHAR_t* pszExt) noexcept // static
 	{
-		//! Is this the extension for the file name ? with or without dot.
+		//! Is this the extension for the file name ? with or without dot. test MIME type.
 		if (pszExt == nullptr)
 			return false;
 		StrLen_t iLenExt = StrT::Len(pszExt);
@@ -1014,7 +1014,7 @@ namespace Gray
 		{
 			return false;
 		}
-		return !StrT::CmpIN(pszFileName + (iLenName - iLenExt), pszExt, iLenExt);
+		return !StrT::CmpIN(pszFileName + (iLenName - iLenExt), pszExt, iLenExt);	// EndsWith
 	}
 
 	cStringF GRAYCALL cFilePath::GetNameExtStar(const FILECHAR_t* pszFilePath) // static

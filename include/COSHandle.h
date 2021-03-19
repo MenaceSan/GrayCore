@@ -33,27 +33,29 @@ namespace Gray
 	enum SEEK_ORIGIN_TYPE
 	{
 		//! @enum Gray::SEEK_ORIGIN_TYPE
+		//! What are we moving relative to ? SEEK_SET,SEEK_CUR,SEEK_END or FILE_BEGIN,FILE_CURRENT,FILE_END
 		//! SEEK_SET defined for both __linux__ and _WIN32
 		//! same as enum tagSTREAM_SEEK
-		//! Seek Origin Type flag. SEEK_SET,SEEK_CUR,SEEK_END or FILE_BEGIN,FILE_CURRENT,FILE_END
+
 		SEEK_Set = 0,		//!< SEEK_SET = FILE_BEGIN = STREAM_SEEK_SET = 0 = relative to the start of the file.
 		SEEK_Cur = 1,		//!< SEEK_CUR = FILE_CURRENT = STREAM_SEEK_CUR = 1 = relative to the current position.
 		SEEK_End = 2,		//!< SEEK_END = FILE_END = STREAM_SEEK_END = 2 = relative to the end of the file.
+
 		SEEK_MASK = 0x0007,		//!< | _BITMASK(SEEK_Set) allow extra bits above SEEK_ORIGIN_TYPE ?
 	};
 
 #if defined(_MFC_VER) && ( _MFC_VER > 0x0600 )
 	typedef LONGLONG	STREAM_OFFSET_t;
-	typedef ULONGLONG	STREAM_SEEKRET_t;
 	typedef ULONGLONG	STREAM_POS_t;		// same as FILE_SIZE_t.
 #define USE_FILE_POS64
 
 #else
-	typedef LONG_PTR	STREAM_OFFSET_t;	//!< Might be 64 or 32 bit. TODO SET USE_FILE_POS64
-	typedef LONG_PTR	STREAM_SEEKRET_t;	//!< return from Seek()
-	typedef ULONG_PTR	STREAM_POS_t;		//!< NOT same as FILE_SIZE_t in 32 bit. Why not ?
+	typedef LONG_PTR	STREAM_OFFSET_t;	//!< Might be 64 or 32 bit relative value (signed). TODO SET USE_FILE_POS64
+	typedef ULONG_PTR	STREAM_POS_t;		//!< NOT same as FILE_SIZE_t in 32 bit? Why not ?
 
 #endif	// ! _MFC_VER
+
+	constexpr STREAM_POS_t k_STREAM_POS_ERR = (STREAM_POS_t)(-1);	// like INVALID_SET_FILE_POINTER
 
 	class GRAYCORE_LINK cOSHandle : protected cNonCopyable
 	{
@@ -67,7 +69,7 @@ namespace Gray
 	public:
 		HANDLE m_h;
 
-	protected: 
+	protected:
 		void CloseHandleLast() noexcept
 		{
 			// Assume destruction or my caller will clear m_h
@@ -78,12 +80,12 @@ namespace Gray
 
 	public:
 		explicit inline cOSHandle(HANDLE h = INVALID_HANDLE_VALUE) noexcept
-		: m_h(h)
+			: m_h(h)
 		{
 		}
 
 		cOSHandle(const cOSHandle& Handle) noexcept
-		: m_h(Handle.Duplicate())
+			: m_h(Handle.Duplicate())
 		{
 		}
 		cOSHandle& operator=(const cOSHandle& Handle)
@@ -150,7 +152,7 @@ namespace Gray
 		}
 
 #ifdef __linux__
-		void OpenHandle( const char* pszPath, UINT uFlags, UINT uMode=0)
+		void OpenHandle(const char* pszPath, UINT uFlags, UINT uMode = 0)
 		{
 			//! Similar to _WIN32 AttachHandle( _FNF(::CreateFile))
 			//! @arg uFlags = O_RDWR | O_NOCTTY | O_NDELAY
@@ -194,7 +196,7 @@ namespace Gray
 			{
 				return HResult::GetLastDef(HRESULT_WIN32_C(ERROR_WRITE_FAULT));	// E_HANDLE = file handle m_h is bad. 
 			}
-			return (HRESULT) nLengthWritten;
+			return (HRESULT)nLengthWritten;
 		}
 
 		HRESULT ReadX(void* pData, size_t nDataSize) const
@@ -216,10 +218,10 @@ namespace Gray
 				// ERROR_HANDLE_EOF = No more data = EOF.
 				return HResult::GetLastDef(HRESULT_WIN32_C(ERROR_READ_FAULT));
 			}
-			return (HRESULT) nLengthRead;
+			return (HRESULT)nLengthRead;
 		}
 
-		HRESULT FlushX() const
+		HRESULT FlushX() const noexcept
 		{
 			//! synchronous flush of write data to file.
 #ifdef _WIN32
@@ -234,27 +236,41 @@ namespace Gray
 			return S_OK;
 		}
 
-		STREAM_SEEKRET_t Seek(STREAM_OFFSET_t lOffset, SEEK_ORIGIN_TYPE eSeekOrigin) const
+		STREAM_POS_t SeekRaw(STREAM_OFFSET_t lOffset, SEEK_ORIGIN_TYPE eSeekOrigin) const noexcept
 		{
-			//! Change or get the current file position pointer.
-			//! @arg eSeekOrigin = // SEEK_SET ?
-			//! @return the New position, -1=FAILED
 #ifdef _WIN32
 #ifdef USE_FILE_POS64
 			LARGE_INTEGER NewFilePointer;
 			NewFilePointer.QuadPart = lOffset;
-			const bool bRet = ::SetFilePointerEx(m_h, NewFilePointer, &NewFilePointer, eSeekOrigin);
-			if (!bRet)
+			if (!::SetFilePointerEx(m_h, NewFilePointer, &NewFilePointer, eSeekOrigin))
 			{
-				return((STREAM_POS_t)-1);
+				return k_STREAM_POS_ERR;
 			}
-			return((STREAM_POS_t)NewFilePointer.QuadPart);
+			return NewFilePointer.QuadPart;
 #else
-			return ::SetFilePointer(m_h, (LONG)lOffset, nullptr, eSeekOrigin);
+			DWORD dwRet = ::SetFilePointer(m_h, (LONG)lOffset, nullptr, eSeekOrigin);
+			if (dwRet == INVALID_SET_FILE_POINTER)
+				return k_STREAM_POS_ERR;
+			return dwRet;
 #endif // USE_FILE_POS64
 #else
-			return ::lseek(m_h, lOffset, eSeekOrigin);
+			//! Use _tell( m_hFile ) for __linux__ ?
+			return (STREAM_POS_t) ::lseek(m_h, 0, SEEK_CUR);
 #endif
+		}
+
+		HRESULT SeekX(STREAM_OFFSET_t lOffset, SEEK_ORIGIN_TYPE eSeekOrigin) const
+		{
+			//! Change or get the current file position pointer.
+			//! @arg eSeekOrigin = // SEEK_SET ?
+			//! @return the New position % int, <0=FAILED
+			
+			const STREAM_POS_t nPos = SeekRaw(lOffset, eSeekOrigin);
+			if (nPos == k_STREAM_POS_ERR)
+			{
+				return HResult::GetLastDef();
+			}
+			return (HRESULT)(INT32)nPos;	// truncated ?
 		}
 
 		HRESULT WaitForSingleObject(TIMESYSD_t dwMilliseconds) const;

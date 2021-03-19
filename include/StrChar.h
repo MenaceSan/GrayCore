@@ -10,7 +10,7 @@
 #endif
 
 #include "cUnitTestDecl.h"
-#include "cValT.h"
+#include "cValArray.h"
 
 #ifdef _WIN32
 #include <wtypes.h>	// BSTR

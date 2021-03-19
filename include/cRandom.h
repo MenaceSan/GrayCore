@@ -42,7 +42,7 @@ namespace Gray
 
 		virtual void InitSeed(const void* pData, size_t iSize) = 0;	// all implementations must support this.
 		void InitSeed(IRandomNoise* pSrc, size_t iSize);
-		void InitSeedDefault(size_t iSize = sizeof(int));
+		void InitSeedOS(size_t iSize = sizeof(int));
 		void InitSeedUns(UINT iSeed);	// SEED_t
 
 		virtual HRESULT GetNoise(void* pData, size_t iSize) override;	//!< fill array with random. return # filled.

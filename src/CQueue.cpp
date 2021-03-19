@@ -10,7 +10,7 @@
 
 namespace Gray
 {
-	STREAM_SEEKRET_t cQueueBase::SeekQ(STREAM_OFFSET_t iOffset, SEEK_ORIGIN_TYPE eSeekOrigin)	// support virtual
+	HRESULT cQueueBase::SeekQ(STREAM_OFFSET_t iOffset, SEEK_ORIGIN_TYPE eSeekOrigin)	// support virtual
 	{
 		//! eSeekOrigin = SEEK_CUR, etc
 		//! move the current read start location.
@@ -32,17 +32,17 @@ namespace Gray
 		}
 		if (m_iReadLast < 0)	// seek before start.
 		{
-			// FAILURE!!
+			// FAILURE!! before start.
 			m_iReadLast = 0;
-			return (STREAM_SEEKRET_t)HRESULT_WIN32_C(ERROR_EMPTY);
+			return HRESULT_WIN32_C(ERROR_EMPTY);
 		}
 		if (m_iReadLast > m_iWriteLast)
 		{
-			// FAILURE!!
+			// FAILURE!! past end
 			m_iReadLast = m_iWriteLast;
-			return (STREAM_SEEKRET_t)HRESULT_WIN32_C(ERROR_DATABASE_FULL);
+			return HRESULT_WIN32_C(ERROR_DATABASE_FULL);
 		}
-		return m_iReadLast;
+		return (HRESULT) m_iReadLast;
 	}
 
 #ifndef GRAY_STATICLIB // force implementation/instantiate for DLL/SO.

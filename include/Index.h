@@ -1,6 +1,7 @@
 //
 //! @file Index.h
 //! Difference of 2 pointers in memory.
+//! templates for comparing, swapping of any type.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
@@ -14,6 +15,50 @@
 
 namespace Gray
 {
+	typedef int COMPARE_t;	//!< result of compare. 0=same, 1=a>b, -1=a<b
+	enum COMPARE_TYPE
+	{
+		//! @enum Gray::COMPARE_TYPE
+		//! General return type from a compare. Similar to _WIN#2 VARCMP_GT
+		COMPARE_Less = -1,		//!< VARCMP_LT
+		COMPARE_Equal = 0,		//!< VARCMP_EQ
+		COMPARE_Greater = 1,	//!< VARCMP_GT
+	};
+
+	struct GRAYCORE_LINK cValT	// static. Value/Object of some type in memory.
+	{
+		//! @struct Gray::cValT
+		//! Helper functions for an arbitrary value/object type in memory. We may compare these.
+		//! Similar to System.IComparable in .NET
+
+		template <class TYPE>
+		static inline void Swap(TYPE& a, TYPE& b) noexcept
+		{
+			//! swap 2 values. similar to cMem::Swap() but uses the intrinsic = operator.
+			//! dangerous for complex struct that has pointers and such. may not do a 'deep' copy.
+			//! assume TYPE has a safe overloaded = operator.
+			//! Overload this template for any specific TYPE Swaps.
+			register TYPE x = a;
+			a = b;
+			b = x;
+		}
+
+		template <class TYPE>
+		static inline COMPARE_t Compare(const TYPE& a, const TYPE& b) noexcept
+		{
+			//! compare 2 TYPE values.
+			//! Similar to .NET IComparable but for any types.
+			//! Overload this template for any specific TYPE Compare.
+			//! obviously TYPE must also support >. We assume all types already support ==.
+			//! @note we need this because INT_MAX-INT_MIN is not positive !!! (and 0-0xFFFFFFFF is not negative)
+			//! @note also memcmp() is a backwards numeric compare for USE_LITTLE_ENDIAN (Intel) machines.
+			if (a > b)
+				return COMPARE_Greater; // is greater than.
+			if (a == b)
+				return COMPARE_Equal;	// is equal.
+			return COMPARE_Less;	// must be less than.
+		}
+	};
 
 #ifdef USE_64BIT
 #define _SIZEOF_PTR 8	//!< bytes = sizeof(void*) for __DECL_ALIGN macro. Can't do sizeof(x). uintptr_t
@@ -49,7 +94,4 @@ namespace Gray
 #define _sizeofm(s,m)	sizeof(((s *)0)->m)	//!< size_t of a structure member/field (like offsetof()) nullptr
 
 }
-
 #endif
-
-

@@ -110,11 +110,10 @@ namespace Gray
 #endif
 
 		// File Access
-		virtual STREAM_SEEKRET_t Seek(STREAM_OFFSET_t lOffset = 0, SEEK_ORIGIN_TYPE eSeekOrigin = SEEK_Set);	// should be const ? but not in MFC !
 		virtual STREAM_POS_t GetPosition() const;
 		virtual STREAM_POS_t GetLength() const;
 
-		virtual void SetLength(STREAM_SEEKRET_t dwNewLen);
+		virtual void SetLength(STREAM_POS_t dwNewLen);
 		virtual void Close()
 		{
 			m_hFile.CloseHandle();
@@ -172,14 +171,6 @@ namespace Gray
 			return true;
 		}
 
-		virtual STREAM_SEEKRET_t Seek(STREAM_OFFSET_t lOffset = 0, SEEK_ORIGIN_TYPE eSeekOrigin = SEEK_Set) override
-		{
-			//! disambiguate cStream
-			//! not const in MFC
-			//! @return
-			//!  the New position,  <0 = FAILED = INVALID_SET_FILE_POINTER
-			return CFile::Seek(lOffset, eSeekOrigin);
-		}
 		virtual STREAM_POS_t GetPosition() const override
 		{
 			//! disambiguate. cStream
@@ -281,6 +272,7 @@ namespace Gray
 		virtual HRESULT ReadX(void* pData, size_t nDataSize) override;
 		virtual HRESULT WriteX(const void* pData, size_t nDataSize) override; // disambiguate.
 		virtual HRESULT FlushX() override;
+		virtual HRESULT SeekX(STREAM_OFFSET_t lOffset = 0, SEEK_ORIGIN_TYPE eSeekOrigin = SEEK_Set);
 
 		static HRESULT GRAYCALL DeletePath(const FILECHAR_t* pszFileName);	// NOTE: MFC Remove() returns void
 		static HRESULT GRAYCALL DeletePathX(const FILECHAR_t* pszFilePath, DWORD nFileFlags = 0);

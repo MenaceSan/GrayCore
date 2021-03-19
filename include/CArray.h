@@ -12,11 +12,9 @@
 
 #include "cHeap.h"
 #include "cObject.h"
-#include "cValT.h"
+#include "cValArray.h"
 #ifdef _MFC_VER
-#include <afxtempl.h>	// CArray
-#else
-#include <new>	// STL overload the new operator to allow call of constructor directly.
+#include <afxtempl.h>	// CArray from _MFC_VER 
 #endif
 
 namespace Gray
@@ -27,78 +25,11 @@ namespace Gray
 
 #ifndef _MFC_VER
 
-	template <class TYPE>
-	void __cdecl ConstructElements(TYPE* pElements, ITERATE_t nCount)
-	{
-		//! 'new' an array of elements. For use with CArray
-		//! @note we cannot always ASSUME that the constructor actually does anything. (i.e. new int)
-		//! for instance void* has no constructor and will be left as CDCDCDCD NOT nullptr as expected.
-
-		if (nCount <= 0)
-			return;
-
-#ifdef _DEBUG
-		ASSERT(!cMem::IsCorrupt(pElements, nCount * sizeof(TYPE), true));
-		// for debug. first do bit-wise init (or zero) initialization
-		cValArray::FillSize<BYTE>(pElements, nCount * sizeof(TYPE), cHeap::FILL_Alloc);
-#endif
-
-		for (; (nCount--) != 0; pElements++)
-		{
-			::new((void*)pElements) TYPE;
-		}
-	}
-
-	template <class TYPE>
-	void __cdecl DestructElements(TYPE* pElements, ITERATE_t nCount)
-	{
-		//! Call the destructor(s) for an array. Does not explicitly free anything.
-		if (nCount <= 0)
-			return;
-
-#ifdef _DEBUG
-		ASSERT(!cMem::IsCorrupt(pElements, nCount * sizeof(TYPE), true));
-		const ITERATE_t nCountPrev = nCount;	// just for debug
-		UNREFERENCED_PARAMETER(nCountPrev);
-#endif
-
-		for (; (nCount--) != 0; pElements++)
-		{
-			(pElements)->~TYPE();
-		}
-	}
-
-	template <class TYPE>
-	void __cdecl CopyElements(TYPE* pDest, const TYPE* pSrc, ITERATE_t nCount)
-	{
-		//! element-copy using class assignment operators
-		if (nCount <= 0)
-			return;
-
-		ASSERT(!cMem::IsCorrupt(pDest, nCount * sizeof(TYPE), true));
-		ASSERT(!cMem::IsCorrupt(pSrc, nCount * sizeof(TYPE), false));
-
-		while ((nCount--) != 0)
-		{
-			*pDest++ = *pSrc++;
-		}
-	}
-
-	// Override implementation of templates
-	template <>
-	inline void __cdecl CopyElements<BYTE>(BYTE* pDest, const BYTE* pSrc, ITERATE_t nCount)
-	{
-		//! Any integral type could use this ?
-		cMem::Copy(pDest, pSrc, nCount);
-	}
-
-	/////////////////////////////////////////////////////////////////////////////
-
 	template <class TYPE, class ARG_TYPE = const TYPE& >
 	class CArray : public CObject
 	{
 		//! @class Gray::CArray
-		//! Minimal array template of elements. like MFC version.
+		//! Minimal array template of elements. like MFC version. use cArrayTyped<> instead !
 		//! @note MFC 8.0 uses INT_PTR for GetSize()
 		//! ARG_TYPE = const TYPE&	typically
 
@@ -106,13 +37,7 @@ namespace Gray
 
 	protected:
 		TYPE* m_pData;			//!< the actual array of data
-		ITERATE_t m_nSize;		//!< Number of elements (upperBound - 1)
-
-	protected:
-		bool IsValidIndex(ITERATE_t i) const noexcept
-		{
-			return IS_INDEX_GOOD(i, this->m_nSize);
-		}
+		ITERATE_t m_nSize;		//!< Number of elements (upperBound - 1). m_pData MUST hold at least this many. 
 
 	public:
 		CArray() noexcept
@@ -131,6 +56,10 @@ namespace Gray
 			RemoveAll();
 		}
 
+		bool IsValidIndex(ITERATE_t i) const noexcept
+		{
+			return IS_INDEX_GOOD(i, this->m_nSize);
+		}
 		bool IsValidMallocSize() const noexcept;
 
 		// Attributes
@@ -147,9 +76,9 @@ namespace Gray
 			return this->m_nSize <= 0;
 		}
 		void SetSize(ITERATE_t nNewSize);
-		ITERATE_t GetMallocSize() const noexcept
+		ITERATE_t get_CountMalloc() const noexcept
 		{
-			//! Get quantity of objects truly allocated. (may not be whole number)
+			//! Get quantity of objects truly allocated. (may not be same as m_nSize or even properly aligned with TYPE)
 			//! like STL capacity()
 			return (ITERATE_t)(cHeap::GetSize(m_pData) / sizeof(TYPE));
 		}
@@ -238,7 +167,7 @@ namespace Gray
 		m_nSize = 0;
 		if (m_pData != nullptr)
 		{
-			DestructElements<TYPE>(m_pData, iSize);
+			cValArray::DestructElements<TYPE>(m_pData, iSize);
 			cHeap::FreePtr((void*)(m_pData));	// const_cast
 			m_pData = nullptr;
 		}
@@ -250,47 +179,28 @@ namespace Gray
 		//! @note SetSize(0) is slightly more efficient than RemoveAll() if u plan to re-use the array.
 		ASSERT_VALID(this);
 		ASSERT(nNewSize >= 0);
-		if (nNewSize <= 0)
-		{
-			// shrink to nothing but keep any allocated memory.
-			goto do_try_resize;
-		}
-		else if (m_pData == nullptr)
-		{
-			// create one with exact size
-			m_pData = (TYPE*)cHeap::AllocPtr(nNewSize * sizeof(TYPE));
-			ASSERT(m_pData != nullptr);
-			ConstructElements<TYPE>(m_pData, nNewSize);
-		}
-		else if (nNewSize <= GetMallocSize())
+		if (nNewSize <= get_CountMalloc())
 		{
 			// it fits. don't shrink the allocated array. we may expand again some day.
-		do_try_resize:
-			if (nNewSize > m_nSize)
-			{
-				// initialize the new elements
-				ConstructElements<TYPE>(&m_pData[m_nSize], nNewSize - m_nSize);
-			}
-			else if (m_nSize > nNewSize)
-			{
-				// destroy the old elements
-				DestructElements<TYPE>(&m_pData[nNewSize], m_nSize - nNewSize);
-			}
+			cValArray::Resize<TYPE>(m_pData, nNewSize, m_nSize);
 		}
 		else
 		{
 			// otherwise, grow array
 			// MFC will heuristically determine growth when nGrowBy == 0 (this avoids heap fragmentation in many situations)
-#if 1
-			m_pData = (TYPE*)cHeap::ReAllocPtr(m_pData, (nNewSize + (nNewSize / 16)) * sizeof(TYPE));
-#else
-			m_pData = (TYPE*)cHeap::ReAllocPtr(m_pData, nNewSize * sizeof(TYPE));
-#endif
+
+			ASSERT(nNewSize > m_nSize);
+			ITERATE_t allocateExtra = 0;
+			if (m_nSize != 0)	// not the first time we have done this.
+			{
+				allocateExtra = (nNewSize / 16);
+			}
+
+			m_pData = (TYPE*)cHeap::ReAllocPtr(m_pData, (nNewSize + allocateExtra) * sizeof(TYPE));
 			ASSERT_N(m_pData != nullptr);
 
-			// construct remaining elements
-			ASSERT(nNewSize > m_nSize);
-			ConstructElements<TYPE>(&m_pData[m_nSize], nNewSize - m_nSize);
+			// construct new elements
+			cValArray::ConstructElements<TYPE>(&m_pData[m_nSize], nNewSize - m_nSize);
 		}
 		m_nSize = nNewSize;
 	}
@@ -301,7 +211,7 @@ namespace Gray
 		ASSERT_VALID(this);
 		ASSERT(this != &src);   // ASSUME Not copy to self.
 		SetSize(src.m_nSize);
-		CopyElements<TYPE>(m_pData, src.m_pData, src.m_nSize);
+		cValArray::CopyQty<TYPE>(m_pData, src.m_pData, src.m_nSize);
 	}
 
 	template <class TYPE, class ARG_TYPE>
@@ -323,18 +233,12 @@ namespace Gray
 	template <class TYPE, class ARG_TYPE>
 	void CArray<TYPE, ARG_TYPE>::MoveElement(ITERATE_t iFrom, ITERATE_t iTo) // throw
 	{
+		//! shift the whole array. move an index to another place.
 		//! Similar to Swap() but only one element is moved. (sort of)
-		//! re-order the whole array. move an index to another place.
 		//! dangerous for types that have internal pointers !
-		BYTE bTmp[sizeof(TYPE)];
 		ASSERT(IsValidIndex(iFrom));
-		cMem::Copy(bTmp, &m_pData[iFrom], sizeof(TYPE));
-		// shift old data to fill gap
 		ASSERT(IsValidIndex(iTo));
-		cMem::CopyOverlap(&m_pData[iTo + 1], &m_pData[iTo],
-			(iFrom - iTo) * sizeof(TYPE));
-		// re-init slots we copied from
-		cMem::Copy(&m_pData[iTo], bTmp, sizeof(TYPE));
+		cValArray::MoveElement(&m_pData[iTo], &m_pData[iFrom]);
 	}
 
 	template <class TYPE, class ARG_TYPE>
@@ -366,14 +270,14 @@ namespace Gray
 	template <class TYPE, class ARG_TYPE>
 	void CArray<TYPE, ARG_TYPE>::RemoveAt(ITERATE_t nIndex)
 	{
-		// NOTE: Any destructor effecting the array will be reentrant ?!
+		//! NOTE: Any destructor effecting the array MAY be reentrant ?!
 		ASSERT_VALID(this);
 		if (nIndex < 0)
 			return;
 		ITERATE_t nMoveCount = m_nSize - (nIndex + 1);
 		if (nMoveCount < 0)
 			return;
-		DestructElements<TYPE>(&m_pData[nIndex], 1);
+		cValArray::DestructElements<TYPE>(&m_pData[nIndex], 1);
 		m_nSize--;
 		if (nMoveCount > 0) // not last.
 		{
@@ -402,7 +306,7 @@ namespace Gray
 			return;
 		}
 		// just remove a range
-		DestructElements<TYPE>(&m_pData[nIndex], iQty);
+		cValArray::DestructElements<TYPE>(&m_pData[nIndex], iQty);
 		if (nMoveCount > 0)	// not last.
 		{
 			cMem::CopyOverlap(&m_pData[nIndex], &m_pData[nIndex + iQty], nMoveCount * sizeof(TYPE));
@@ -422,7 +326,7 @@ namespace Gray
 		else
 		{
 			// ASSERT(m_nSize>0);
-			if (m_nSize > GetMallocSize())	// NOTE: GetMallocSize will check m_pData
+			if (m_nSize > get_CountMalloc())	// NOTE: get_CountMalloc will check m_pData
 				return false;
 		}
 		return true;
@@ -469,10 +373,11 @@ namespace Gray
 		{
 			//! Force copies to be explicit!
 			this->SetSize(rArray.GetSize());
-			CopyElements(this->GetData(), rArray.GetData(), this->GetSize());
+			cValArray::CopyQty(this->GetData(), rArray.GetData(), this->GetSize());
 		}
 		explicit cArrayTyped(ITERATE_t iSize)
 		{
+			// set Size to iSize empty entries.
 			this->SetSize(iSize);
 		}
 		virtual ~cArrayTyped()
@@ -602,7 +507,7 @@ namespace Gray
 				return;
 			this->RemoveAll();	// destruct any previous data.
 			this->SetSize(aValues.GetSize());
-			CopyElements(this->GetData(), aValues.GetData(), this->GetSize());
+			cValArray::CopyQty(this->GetData(), aValues.GetData(), this->GetSize());
 		}
 
 		const cArrayTyped<TYPE, ARG_TYPE>& operator = (const cArrayTyped<TYPE, ARG_TYPE>& aValues)
@@ -695,25 +600,20 @@ namespace Gray
 			if (nSrcSize > 0)
 			{
 				this->SetSize(nOldSize + nSrcSize);
-				CopyElements<TYPE>(this->GetData() + nOldSize, src.GetData(), nSrcSize);
+				cValArray::CopyQty<TYPE>(this->GetData() + nOldSize, src.GetData(), nSrcSize);
 			}
 		}
 
 		bool IsEqualArray(const SUPER_t& aValues) const
 		{
 			//! Compare 2 arrays, just look for the first not same.
+			//! Assume everything supports the == operator.
 			//! @note Must be the same order too !
 			//! @return false = different
-			if (this == &aValues)
-				return true;
+
 			if (this->GetSize() != aValues.GetSize())
 				return false;
-			for (ITERATE_t i = 0; i < this->GetSize(); i++)
-			{
-				if (!(this->GetAt(i) == aValues.GetAt(i)))	// Assume everything supports the == operator.
-					return false;
-			}
-			return true; // looks the same to me.
+			return cValArray::IsEqualQty(this->GetData(), aValues.GetData(), aValues.GetSize());
 		}
 
 		bool isArraySorted() const;
@@ -916,7 +816,7 @@ namespace Gray
 		//! An array of some simple value type that is easy to copy.
 		//! Using a Reference is a waste if the object is small. Just use a copy for small objects.
 	public:
-		cArrayVal()
+		cArrayVal() noexcept
 		{
 		}
 		explicit cArrayVal(ITERATE_t iSize) : cArrayTyped<TYPE, TYPE>(iSize)

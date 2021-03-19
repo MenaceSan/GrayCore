@@ -582,6 +582,7 @@
     <ClInclude Include="include\cArraySortRef.h" />
     <ClInclude Include="include\cArraySortString.h" />
     <ClInclude Include="include\cArrayString.h" />
+    <ClInclude Include="include\cArrayT.h" />
     <ClInclude Include="include\cAtom.h" />
     <ClInclude Include="include\cAtomManager.h" />
     <ClInclude Include="include\cBits.h" />
@@ -676,7 +677,7 @@
     <ClInclude Include="include\cUInt64.h" />
     <ClInclude Include="include\cUnitTest.h" />
     <ClInclude Include="include\cUnitTestDecl.h" />
-    <ClInclude Include="include\cValT.h" />
+    <ClInclude Include="include\cValArray.h" />
     <ClInclude Include="include\cWinHeap.h" />
     <ClInclude Include="include\cWinHeap2.h" />
     <ClInclude Include="include\FileName.h" />

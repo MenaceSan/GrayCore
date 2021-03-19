@@ -48,7 +48,7 @@ namespace Gray
 
 	void cAppArgs::InitArgsInt(ITERATE_t argc, APP_ARGS_t ppszArgs)
 	{
-		//! set pre-parsed arguments
+		//! set pre-parsed arguments. like normal 'c' main()
 		//! m_asArgs[0] = app name.
 		m_asArgs.SetSize(argc);
 		for (int i = 0; i < argc; i++)
@@ -65,7 +65,7 @@ namespace Gray
 
 		ASSERT_N(ppszArgs != nullptr);
 
-		// build m_sArguments
+		// build m_sArguments from APP_ARGS_t
 		m_sArguments.Empty();
 		for (int i = 1; i < argc; i++)
 		{
@@ -77,9 +77,9 @@ namespace Gray
 		InitArgsInt(argc, ppszArgs);
 	}
 
-	void cAppArgs::InitArgsF(const FILECHAR_t* pszCommandArgs, const FILECHAR_t* pszSep)
+	void cAppArgs::InitArgsF( const FILECHAR_t* pszCommandArgs, const FILECHAR_t* pszSep)
 	{
-		//! set m_sArguments and parse pszCommandArgs to cArrayString. Windows WinMain() style init.
+		//! set (unparsed) m_sArguments and parse pszCommandArgs to cArrayString. Windows WinMain() style init.
 		//! @arg pszCommandArgs = assumed to NOT contain the app path name.
 		//! Similar to _WIN32  CommandLineToArgvW()
 		//! Honor quotes.
@@ -93,12 +93,12 @@ namespace Gray
 		FILECHAR_t szNull[1];
 		int iSkip = 0;
 
-		if (pszSep == nullptr)
+		if (pszSep == nullptr)	// do default action.
 		{
 			pszSep = _FN("\t ");
 			iSkip = 1;
 			szNull[0] = '\0';
-			apszArgs[0] = szNull;		// app name to be filled in later.
+			apszArgs[0] = szNull;		// app name to be filled in later. from cAppState, cAppImpl etc.
 		}
 
 		// skip first argument as it is typically the name of my app EXE.
@@ -575,15 +575,18 @@ namespace Gray
 			// make up a random unused file name. ALA _WIN32 GetTempFileName()
 			// TODO: Test if the file already exists? use base64 name ?
 			BYTE noise[8];
-			g_Rand.GetNoise(noise, sizeof(noise));
-			char szNoise[(sizeof(noise) * 2) + 1];	// GetHexDigestSize
-			StrLen_t nLen = cMem::GetHexDigest(szNoise, noise, sizeof(noise));
-			ASSERT(nLen == STRMAX(szNoise));
+			g_Rand.GetNoise(noise, sizeof(noise));	// assume InitSeed() called.
+
+			char szNoise[(sizeof(noise) * 2) + 2];	// GetHexDigestSize
+			szNoise[0] = 'T';
+			StrLen_t nLen = cMem::GetHexDigest(szNoise+1, noise, sizeof(noise));
+			ASSERT(nLen == STRMAX(szNoise)-1);
+
 			sTmp = szNoise;
 			pszFileTitle = sTmp;
 		}
 
-		// TODO: m_bTempDirWritable = Test if we can really write to it?
+		// TODO: m_bTempDirWritable = Test if we can really write to get_TempDir?
 		return cFilePath::CombineFilePathX(get_TempDir(), pszFileTitle);
 	}
 
@@ -632,6 +635,8 @@ namespace Gray
 		//! can get similar results from the win32 GetCommandLine(); (which includes the app path as arg 0)
 		//! similar to _WIN32 shell32 CommandLineToArgvW( pszCommandArgs, &(dwArgc));
 
+		cStringF sAppPath = get_AppFilePath();
+
 		if (pszCommandArgs == nullptr)
 		{
 			// Get command line from the OS ? 
@@ -647,7 +652,6 @@ namespace Gray
 			m_Args.InitArgsF(pszCommandArgs);
 		}
 
-		cStringF sAppPath = get_AppFilePath();
 		m_Args.m_asArgs[0] = const_cast<FILECHAR_t*>(sAppPath.get_CPtr());
 	}
 

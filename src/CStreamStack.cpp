@@ -83,14 +83,14 @@ namespace Gray
 		ITERATE_t nSizeOver = iWriteActual % nSizeBlockAlign;
 		if (nSizeOver > 0)	// must back out the unaligned part.
 		{
-			STREAM_SEEKRET_t lPosRet = m_pStreamInp->Seek(-nSizeOver, SEEK_Cur);
-			if (lPosRet < 0)
+			hRes = m_pStreamInp->SeekX(-nSizeOver, SEEK_Cur);
+			if (FAILED(hRes))
 			{
 				trans.SetTransactionFailed();	// roll back.
-				return (HRESULT)lPosRet;
+				return hRes;
 			}
 			iWriteActual -= nSizeOver;
-			ASSERT(trans.m_lPosStart + iWriteActual == lPosRet);
+			DEBUG_CHECK(trans.m_lPosStart + iWriteActual == m_pStreamInp->GetPosition());
 		}
 
 		trans.SetTransactionComplete();

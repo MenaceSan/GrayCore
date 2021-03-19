@@ -30,7 +30,7 @@ namespace Gray
 #define FAILED(x)			(((HRESULT)(x)) < S_OK)
 #endif // __linux__
 
-	enum FACILITY_TYPE
+	enum FACILITY_TYPE : WORD
 	{
 		//! @enum Gray::FACILITY_TYPE
 		//! What general group of HRESULT error codes is this?
@@ -58,7 +58,7 @@ namespace Gray
 		//!< max = 2048 = 0x800 = 11 bits ?
 	};
 
-	enum HRESULT_WIN32_TYPE_
+	enum HRESULT_WIN32_TYPE_ : WORD
 	{
 		//! @enum Gray::HRESULT_WIN32_TYPE_
 		//! codes for FACILITY_WIN32. (AKA LSTATUS/error_status_t)
@@ -76,7 +76,7 @@ namespace Gray
 #endif
 #define HRESULT_WIN32_C(x)	MAKE_HRESULT(1,FACILITY_WIN32,(WORD)(x)) //!< a constant LSTATUS/error_status_t with no check, unlike HRESULT_FROM_WIN32()
 
-	enum HRESULT_OTHER_TYPE_
+	enum HRESULT_OTHER_TYPE_ : UINT32
 	{
 		//! @enum Gray::HRESULT_OTHER_TYPE_
 		//! Other Common (non FACILITY_WIN32) HRESULT codes like E_FAIL
@@ -92,7 +92,7 @@ namespace Gray
 		E_INVALIDARG = HRESULT_WIN32_C(ERROR_INVALID_PARAMETER),		// "One or more arguments are invalid"
 #endif
 
-#define HRESULT_ENTRY(a,b,c,d) a=MAKE_HRESULT(1,b,c),	
+#define HRESULT_ENTRY(a,b,c,d) a = MAKE_HRESULT(1,b,c),	
 #include "HResults.tbl"
 #undef HRESULT_ENTRY
 	};
@@ -103,7 +103,7 @@ namespace Gray
 		//! Used to define a nullptr terminated table of codes (usually) for a single FACILITY_TYPE.
 		//! ASSUME this array is HRESULT sorted.
 	public:
-		HRESULT m_hRes;			//! error code for a FACILITY_TYPE. might just use WORD?
+		HRESULT m_hRes;			//! DWORD error code for a FACILITY_TYPE. might just use WORD?
 		const char* m_pszMsg;	//! associated error message string. UTF8
 
 	public:
@@ -122,7 +122,7 @@ namespace Gray
 		typedef cPair<FACILITY_TYPE, const GChar_t*> Facility_t;	// name the facilities.
 		static const Facility_t k_Facility[];	//!< names of all known FACILITY_TYPE.
 
-		HRESULT m_hRes;
+		HRESULT m_hRes;		// DWORD
 
 	public:
 		HResult(HRESULT hRes) noexcept

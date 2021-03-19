@@ -4,7 +4,7 @@
 //
 #include "pch.h"
 #include "cFloatDeco.h"
-#include "cValT.h"
+#include "cValArray.h"
 #include "StrNum.h"
 #include "cDebugAssert.h"	// ASSERT
 

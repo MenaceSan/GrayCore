@@ -228,7 +228,7 @@ namespace Gray
 		// cStringF GetUserHomeAppDir();
 
 		cStringF get_TempDir();
-		cStringF GetTempFile(const FILECHAR_t* pszFileTitle);
+		cStringF GetTempFile(const FILECHAR_t* pszFileTitle = nullptr);
 		cStringF GetTempDir(const FILECHAR_t* pszFileDir, bool bCreate = true);
 
 		inline cStringF GetArgEnum(ITERATE_t i) const

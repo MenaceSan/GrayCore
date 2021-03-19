@@ -10,7 +10,7 @@
 #endif
 
 #include "cTimeUnits.h"
-#include "cValT.h"
+#include "cValArray.h"
 #include "cString.h"
 #include "cDebugAssert.h"
 

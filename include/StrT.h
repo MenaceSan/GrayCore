@@ -14,7 +14,7 @@
 #include "StrNum.h"
 #include "StrU.h"
 #include "StrFormat.h"
-#include "cValT.h"
+#include "cValArray.h"
 #include "cHeap.h"
 #include "cUnitTestDecl.h"
 #include "cDebugAssert.h"	// ASSERT
@@ -140,8 +140,8 @@ namespace Gray
 			//! Difference between 2 pointers in chars (not bytes). Check for 64 bit overflow. Safer.
 			ASSERT(pszEnd != nullptr);
 			ASSERT(pszStart != nullptr);
-			INT_PTR i = (pszEnd - pszStart);	// ptrdiff_t
-			ASSERT(i > -(INT_PTR)(cHeap::k_ALLOC_MAX) && i < (INT_PTR)(cHeap::k_ALLOC_MAX));	// k_ALLOC_MAX
+			INT_PTR i = pszEnd - pszStart;	// like ptrdiff_t cMem::Diff() but in chars not bytes. 
+			ASSERT(i > -(INT_PTR)(cHeap::k_ALLOC_MAX / sizeof(TYPE)) && i < (INT_PTR)(cHeap::k_ALLOC_MAX / sizeof(TYPE)));	// k_ALLOC_MAX as TYPE
 			return (StrLen_t)i;
 		}
 

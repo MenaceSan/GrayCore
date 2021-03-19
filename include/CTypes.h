@@ -151,8 +151,10 @@ namespace Gray
 	struct cTypeLimit	// static
 	{
 		//! @struct Gray::cTypeLimit
-		//! Numeric constants (limits) each basic type.
+		//! Numeric constants (limits) for each basic type.
 		//! Similar to std::numeric_limits<T>::max(), or INT_MAX
+		//! Use StrNum::toValue<TYPE>(const char* pszInp); and StrNum::ValueToA<T>(_TYPE val, ... );
+
 		static const TYPE k_Min;		//!< Min value TYPE can represent. negative if signed type. NOT EPSILON (near zero). e.g. INT_MIN, -FLT_MAX 
 		static const TYPE k_Max;		//!< Max positive value. Can equal this value. inclusive. AKA INT_MAX, FLT_MAX, DBL_MAX
 		static const BYTE k_TypeFlags;	//!< CTYPE_FLAG_TYPE_ = float, signed, etc ?
@@ -162,10 +164,6 @@ namespace Gray
 			//! A signed number. might be float or int
 			return (k_TypeFlags & CTYPE_FLAG_NumSigned) ? true : false;
 		}
-
-		// TODO Use StrNum
-		// TYPE FromString(const char* pszInp);
-		// StrLen_t ToString(char* pszOut, TYPE val);
 	};
 
 #ifdef _MSC_VER		// M$ this is not a redundant define.

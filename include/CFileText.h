@@ -73,15 +73,15 @@ namespace Gray
 			return pStream;
 		}
 
-		virtual STREAM_SEEKRET_t Seek(STREAM_OFFSET_t offset = 0, SEEK_ORIGIN_TYPE eSeekOrigin = SEEK_Set) override;
-		virtual STREAM_POS_t GetPosition() const override;
+		HRESULT SeekX(STREAM_OFFSET_t offset = 0, SEEK_ORIGIN_TYPE eSeekOrigin = SEEK_Set) override;
+		STREAM_POS_t GetPosition() const override;
 
-		virtual HRESULT FlushX() override;
-		virtual HRESULT ReadX(void* pBuffer, size_t nSizeMax) override;
-		virtual HRESULT WriteX(const void* pData, size_t nDataSize) override;
+		HRESULT FlushX() override;
+		HRESULT ReadX(void* pBuffer, size_t nSizeMax) override;
+		HRESULT WriteX(const void* pData, size_t nDataSize) override;
 
-		virtual HRESULT WriteString(const char* pszStr) override;
-		virtual HRESULT WriteString(const wchar_t* pszStr) override
+		HRESULT WriteString(const char* pszStr) override;
+		HRESULT WriteString(const wchar_t* pszStr) override
 		{
 			return SUPER_t::WriteString(pszStr);
 		}

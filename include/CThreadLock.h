@@ -514,6 +514,6 @@ namespace Gray
 	typedef cThreadLockStub cThreadLockCount;
 #endif
 	typedef cLockerT<cThreadLockCount> cThreadGuard;	// instantiated locker.
-};
+} 
 
 #endif // _INC_cThreadLock_H

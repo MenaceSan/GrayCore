@@ -745,7 +745,7 @@
     <ClInclude Include="cObjectFactory.h" />
     <ClInclude Include="cTimeZone.h" />
     <ClInclude Include="cTriState.h" />
-    <ClInclude Include="cValT.h" />
+    <ClInclude Include="cValArray.h" />
     <ClInclude Include="cDebugAssert.h" />
     <ClInclude Include="cException.h" />
     <ClInclude Include="cExceptionAssert.h" />

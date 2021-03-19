@@ -94,12 +94,12 @@ namespace Gray
 		return (HRESULT)nSizeCopy;
 	}
 
-	STREAM_SEEKRET_t cStreamTextReader::Seek(STREAM_OFFSET_t iOffset, SEEK_ORIGIN_TYPE eSeekOrigin) // override;
+	HRESULT cStreamTextReader::SeekX(STREAM_OFFSET_t iOffset, SEEK_ORIGIN_TYPE eSeekOrigin) // override;
 	{
 		//! @arg eSeekOrigin = // SEEK_SET ?
 		//! @return the New position, -1=FAILED
 
-		STREAM_SEEKRET_t nPosFile = m_reader.GetPosition();	// WriteIndex
+		STREAM_POS_t nPosFile = m_reader.GetPosition();	// WriteIndex
 		ITERATE_t iReadQty = this->get_ReadQty();		// what i have buffered.
 
 		switch (eSeekOrigin)
@@ -109,11 +109,11 @@ namespace Gray
 			{
 				// Move inside buffer.
 				AdvanceRead((ITERATE_t)iOffset);
-				return nPosFile + iOffset - iReadQty;
+				return (HRESULT)(nPosFile + iOffset - iReadQty);
 			}
 			// outside current buffer.
 			this->EmptyQ();
-			return m_reader.Seek(nPosFile + iOffset - iReadQty, SEEK_Set);
+			return m_reader.SeekX(nPosFile + iOffset - iReadQty, SEEK_Set);
 
 		case SEEK_End:
 			if (iOffset > 0)
@@ -128,17 +128,17 @@ namespace Gray
 			{
 				// Move inside buffer.
 				AdvanceRead((ITERATE_t)(nPosFile - iOffset));
-				return iOffset;
+				return (HRESULT)iOffset;
 			}
 			// outside current buffer.
 			this->EmptyQ();
-			return m_reader.Seek(iOffset, SEEK_Set);
+			return m_reader.SeekX(iOffset, SEEK_Set);
 
 		default:
 			break;
 		}
 
 		ASSERT(0);
-		return((STREAM_POS_t)-1);
+		return E_FAIL;
 	}
 }

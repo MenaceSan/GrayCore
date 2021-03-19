@@ -158,7 +158,7 @@ namespace Gray
 
 	HRESULT cFileCopier::RequestFile(const FILECHAR_t* pszSrcName, const FILECHAR_t* pszDestPath, IStreamProgressCallback* pProgress, FILE_SIZE_t nOffsetStart, FILE_SIZE_t* pnRequestSizeEst) // virtual 
 	{
-		//! Request a file from a m_sServerRoot/pszSrcName to be brought back to me at local pszDestPath.
+		//! Request a file from a m_sServerRoot/pszSrcName (file system) to be brought back to me at local pszDestPath.
 		//! @arg pnRequestSizeEst = unused/unnecessary for local file system copy.
 
 		cStringF sSrcPath = makeFilePath(pszSrcName);

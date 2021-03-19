@@ -33,7 +33,7 @@ namespace Gray
 		// m_iLineNum = -1 or -2 can be used to indicate errors.
 
 	public:
-		cTextPos(STREAM_POS_t lOffset = (STREAM_POS_t)k_ITERATE_BAD, ITERATE_t iLineNum = k_ITERATE_BAD, StrLen_t iColNum = k_StrLen_UNK) noexcept
+		cTextPos(STREAM_POS_t lOffset = k_STREAM_POS_ERR, ITERATE_t iLineNum = k_ITERATE_BAD, StrLen_t iColNum = k_StrLen_UNK) noexcept
 			: m_lOffset(lOffset)
 			, m_iLineNum(iLineNum)
 			, m_iColNum(iColNum)

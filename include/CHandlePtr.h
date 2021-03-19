@@ -16,46 +16,65 @@ namespace Gray
 {
 #define HANDLEPTR_NULL	nullptr		//!< NOT the same as an OS HANDLE, Not an int in Linux. Always void* based.
 
-	template< typename _TYPE_HAND = void* >
+	//! MUST Implement versions of this for each _TYPE_HAND.
+	//! Assume destruction or my caller will clear m_h
+	template< typename _TYPE_HAND >
+	static void inline CloseHandleType(_TYPE_HAND h); // Don't use/define a default implementation! This should fail at compile time if type is not implemented explicitly.
+
+	template< typename _TYPE_HAND, void (*_CLOSER)(_TYPE_HAND) = CloseHandleType >
 	class cHandlePtr : protected cNonCopyable
 	{
 		//! @class Gray::cHandlePtr
 		//! Generic handle/pointer that requires an open/close operation. The underlying type is a pointer more or less.
-		//! Assumes handle has been declared as a pointer type with DECLARE_HANDLE() and STRICT or similar.
 		//! @note NOT the same as cOSHandle. Might be GUI or User handle. NOT _WIN32 = CloseHandle(HANDLE).
-		//! @note this can't be used with handles that don't declare a type using DECLARE_HANDLE. e.g. HCERTSTORE.
-		//! e.g. _WIN32 types RegCloseKey(HKEY), SC_HANDLE, HDESK, HWINSTA, FreeLibrary(HMODULE),
+		//! @note if The pointer is void*. We MUST supply CloseHandleType manually!
+		//! Assumes handle has been declared as a pointer type with DECLARE_HANDLE() and STRICT or similar.
+		//! ASSSUME It has a corresponding cHandlePtr<TYPE*>::CloseHandleType(h). So TYPE MUST NOT by void!
+		//! @note this can't be used with handles that don't declare a unique type using DECLARE_HANDLE. e.g. HCERTSTORE.
+		//! e.g. _WIN32 types RegCloseKey(HKEY), SC_HANDLE, HDESK, HWINSTA, FreeLibrary(HMODULE)
 		//!  UnhookWindowsHookEx(HHOOK)
 		//! _WIN32 http://msdn.microsoft.com/en-us/library/ms724515(VS.85).aspx
 
-	private:
-		_TYPE_HAND m_h;	//!< nullptr or HANDLEPTR_NULL
 
 	protected:
-		void CloseHandleLast()
-		{
-			//! Assume destruction or my caller will clear m_h
-			if (!isValidHandle())
-				return;
-			CloseHandle(m_h);
-		}
+		_TYPE_HAND m_h;	//!< nullptr or HANDLEPTR_NULL
 
 	public:
-		//! MUST Implement versions of this for each _TYPE_HAND.
-		static void inline CloseHandle(_TYPE_HAND h); // Don't use/define a default implementation! This should fail at compile time if type is not implemented explicitly.
-
 		explicit inline cHandlePtr(_TYPE_HAND h = nullptr) noexcept
-		: m_h(h)
+			: m_h(h)
 		{
-		}
-		inline ~cHandlePtr() 
-		{
-			CloseHandleLast();
 		}
 
 		inline bool isValidHandle() const noexcept
 		{
-			return m_h != nullptr;
+			return m_h != HANDLEPTR_NULL;
+		}
+		void CloseHandle()
+		{
+			if (!isValidHandle())
+				return;
+			_TYPE_HAND h = m_h;
+			m_h = HANDLEPTR_NULL;
+			_CLOSER(h);
+		}
+
+		inline ~cHandlePtr()
+		{
+			CloseHandle();
+		}
+
+		void AttachHandle(_TYPE_HAND h)
+		{
+			if (m_h == h)
+				return;
+			CloseHandle();
+			m_h = h;
+		}
+		_TYPE_HAND DetachHandle() noexcept
+		{
+			_TYPE_HAND h = m_h;
+			m_h = HANDLEPTR_NULL;
+			return h;
 		}
 
 		inline operator _TYPE_HAND () const noexcept
@@ -66,37 +85,15 @@ namespace Gray
 		{
 			return m_h;
 		}
-
 		inline _TYPE_HAND get_Handle() const noexcept
 		{
 			return m_h;
 		}
+
 		inline _TYPE_HAND& ref_Handle() noexcept
 		{
+			//! DANGER. Expect the caller to modify the handle. It is responsible if it leaks an old value !
 			return m_h;
-		}
-
-		void CloseHandle()
-		{
-			if (!isValidHandle())
-				return;
-			_TYPE_HAND h = m_h;
-			m_h = nullptr;
-			CloseHandle(h);
-		}
-		void AttachHandle(_TYPE_HAND h)
-		{
-			if (m_h != h)
-			{
-				CloseHandleLast();
-				m_h = h;
-			}
-		}
-		_TYPE_HAND DetachHandle() noexcept
-		{
-			_TYPE_HAND h = m_h;
-			m_h = nullptr;
-			return h;
 		}
 	};
 } 

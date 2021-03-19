@@ -27,7 +27,7 @@ namespace Gray
 		InitSeed(block.get_Data(), (size_t)iSizeRet);	// pure virtual
 	}
 
-	void cRandomBase::InitSeedDefault(size_t iSize)
+	void cRandomBase::InitSeedOS(size_t iSize)
 	{
 		//! Initialize random sequence randomly.
 		//! Seed the random generator with time or some mix of more random data. NOT Deterministic!

@@ -12,7 +12,6 @@
 
 #include "cMem.h"
 #include "cDebugAssert.h"
-#include "cUnitTestDecl.h"
 
 // #define USE_HEAP_STATS		// Debug total allocation stats.
 
@@ -81,8 +80,6 @@ namespace Gray
 		}
 		static void GRAYCALL FreePtr(void* pData) noexcept;
 		static void* GRAYCALL ReAllocPtr(void* pData, size_t nSize);
-
-		UNITTEST_FRIEND(cHeap);
 	};
 
 	struct GRAYCORE_LINK cHeapAlign : public cHeap	// static

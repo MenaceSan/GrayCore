@@ -327,7 +327,7 @@
     <ClInclude Include="cTimeZone.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="cValT.h">
+    <ClInclude Include="cValArray.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="StrCharAscii.h">

@@ -45,7 +45,7 @@ namespace Gray
 		// NOTE: FILE_ATTRIBUTE_HIDDEN and OF_CREATE will create a hidden file!
 		DWORD dwFlagsAndAttributes = FILE_ATTRIBUTE_NORMAL;	// FILE_ATTRIBUTE_READONLY
 		DWORD dwDesiredAccess = GENERIC_READ;
-		switch (nOpenFlags & (OF_READ | OF_WRITE | OF_READWRITE))
+		switch (nOpenFlags & (OF_READ | OF_WRITE | OF_READWRITE))	// BEWARE OF_READ = 0
 		{
 		case OF_WRITE:
 			dwDesiredAccess = GENERIC_WRITE;
@@ -83,10 +83,10 @@ namespace Gray
 			{
 			case OF_READWRITE:
 			case OF_READ:
-				dwCreationDisposition = OPEN_ALWAYS; // append if exists.
+				dwCreationDisposition = OPEN_ALWAYS; // append if exists. create if not.
 				break;
 			case OF_WRITE:
-				dwCreationDisposition = CREATE_ALWAYS; // truncate if exist.
+				dwCreationDisposition = CREATE_ALWAYS; // truncate if exist. create if not.
 				break;
 			}
 		}
@@ -95,7 +95,7 @@ namespace Gray
 			// Named file with any attributes??
 			// dwFlagsAndAttributes |= FILE_ATTRIBUTE_NORMAL | FILE_ATTRIBUTE_HIDDEN;
 		}
-		if (nOpenFlags & OF_EXIST)
+		if (nOpenFlags & OF_EXIST)	// test if exists.
 		{
 			dwCreationDisposition = OPEN_EXISTING;
 		}
@@ -137,30 +137,15 @@ namespace Gray
 		return S_OK;
 	}
 
-	STREAM_SEEKRET_t CFile::Seek(STREAM_OFFSET_t lOffset, SEEK_ORIGIN_TYPE eSeekOrigin) // virtual
-	{
-		//! Change or get the current file position pointer.
-		//! Compatible with MFC definition.
-		//! Might be 'const' but MFC wont allow that
-		//! @arg eSeekOrigin = // SEEK_SET ?
-		//! @return the New position, -1=FAILED
-		if (!isFileOpen())
-		{
-			return((STREAM_POS_t)-1);
-		}
-		return m_hFile.Seek(lOffset, eSeekOrigin);
-	}
-
 	STREAM_POS_t CFile::GetPosition() const // virtual
 	{
 		//! Get the current read position in the file.
 		//! Seek( 0, SEEK_CUR ) like MFC
-		//! Use _tell( m_hFile ) for __linux__ ?
 		if (!isFileOpen())
 		{
-			return((STREAM_POS_t)-1);
+			return k_STREAM_POS_ERR;
 		}
-		return m_hFile.Seek(0, SEEK_Cur);
+		return m_hFile.SeekRaw(0, SEEK_Cur);
 	}
 
 #if defined(__linux__)
@@ -182,7 +167,7 @@ namespace Gray
 		//! @return <0 = error. (or directory?)
 		if (!isFileOpen())
 		{
-			return((STREAM_POS_t)-1);	// E_HANDLE
+			return k_STREAM_POS_ERR;	// E_HANDLE
 		}
 #ifdef _WIN32
 #ifdef USE_FILE_POS64
@@ -190,9 +175,9 @@ namespace Gray
 		bool bRet = ::GetFileSizeEx(m_hFile, &FileSize);
 		if (!bRet)
 		{
-			return((STREAM_POS_t)-1);
+			return k_STREAM_POS_ERR;
 		}
-		return((STREAM_POS_t)FileSize.QuadPart);
+		return (STREAM_POS_t)FileSize.QuadPart;
 #else
 		return ::GetFileSize(m_hFile, nullptr);
 #endif // defined(_MFC_VER) && ( _MFC_VER > 0x0600 )
@@ -201,19 +186,21 @@ namespace Gray
 		cFileStatusSys statusSys;
 		HRESULT hRes = GetStatusSys(statusSys);
 		if (FAILED(hRes))
-			return hRes;
+		{
+			return k_STREAM_POS_ERR;
+		}
 		return statusSys.st_size;
 #endif
 	}
 
-	void CFile::SetLength(STREAM_SEEKRET_t dwNewLen) // virtual
+	void CFile::SetLength(STREAM_POS_t dwNewLen) // virtual
 	{
 		//! Grow/Shrink the file.
 		//! Stupid MFC has void return. use HResult::GetLast()
 		ASSERT(isFileOpen());
 #ifdef _WIN32
-		Seek(dwNewLen, SEEK_Set);	// SetFilePointer()
-		if (!::SetEndOfFile(m_hFile))
+		m_hFile.SeekX(dwNewLen, SEEK_Set);	// SetFilePointer()
+		if (!::SetEndOfFile(m_hFile))	// truncate to this length/
 		{
 			// ASSUME HResult::GetLast() set.
 			DEBUG_ERR(("cFile::SetLength %d ERR='%s'", dwNewLen, LOGERR(HResult::GetLast())));
@@ -224,9 +211,14 @@ namespace Gray
 			::SetLastError(NO_ERROR);
 		}
 #elif defined(__linux__)
-		::ftruncate(m_hFile, dwNewLen);
-#endif
+		if (::ftruncate(m_hFile, dwNewLen) < 0)
+		{
+			// PosixError
+			DEBUG_ERR(("cFile::SetLength %d ERR='%s'", dwNewLen, LOGERR(HResult::GetLast())));
 		}
+#endif
+		return S_OK;
+	}
 
 	HRESULT CFile::Write(const void* pData, size_t nDataSize)
 	{
@@ -268,7 +260,7 @@ namespace Gray
 
 	bool cFile::IsFileExt(const FILECHAR_t* pszExt) const noexcept
 	{
-		//! is the pszExt a match?
+		//! is the pszExt a match? MIME
 		return cFilePath::IsFileNameExt(get_FilePath(), pszExt);
 	}
 
@@ -347,8 +339,8 @@ namespace Gray
 #else
 				hRes = CFile::OpenCreate(m_strFileName, nOpenFlags, nullptr);
 #endif
-	}
-}
+			}
+		}
 		if (FAILED(hRes))
 		{
 			return hRes;
@@ -555,13 +547,14 @@ namespace Gray
 		if (pData == nullptr)
 		{
 			// just skip it.
-			STREAM_SEEKRET_t nRet = Seek(nDataSize, SEEK_Cur);
-			if (nRet <= 0)
+			STREAM_POS_t nPosStart = GetPosition();
+			HRESULT hRes = SeekX(nDataSize, SEEK_Cur);
+			if (FAILED(hRes))
 			{
-				return 0;
-				// return HResult::GetLastDef();
+				return hRes;
 			}
-			return (HRESULT)nDataSize;
+			STREAM_POS_t nPosCur = GetPosition();
+			return (HRESULT)(nPosCur - nPosStart);
 		}
 
 #if defined(_MFC_VER)
@@ -622,6 +615,25 @@ namespace Gray
 		}
 #endif
 		return S_OK;
+	}
+
+	HRESULT cFile::SeekX(STREAM_OFFSET_t lOffset, SEEK_ORIGIN_TYPE eSeekOrigin) // virtual
+	{
+		//! Change or get the current file position pointer.
+		//! Compatible with MFC definition.
+		//! Might be 'const' but MFC wont allow that
+		//! @arg eSeekOrigin = // SEEK_SET ?
+		//! @return the New position, -1=FAILED
+		if (!isFileOpen())
+		{
+			return E_HANDLE;
+		}
+#ifdef _MFC_VER
+		CFile::Seek(lOffset, eSeekOrigin);
+		return S_OK;
+#else
+		return m_hFile.SeekX(lOffset, eSeekOrigin);
+#endif
 	}
 
 	HRESULT GRAYCALL cFile::DeletePath(const FILECHAR_t* pszFilePath) // static

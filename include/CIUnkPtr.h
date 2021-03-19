@@ -14,7 +14,7 @@
 #include "cPtrTrace.h"
 #include "IUnknown.h"
 
-#if defined(_DEBUG) && ! defined(UNDER_CE)
+#if 0 // defined(_DEBUG) && ! defined(UNDER_CE)
 #define USE_IUNK_TRACE
 #endif
 

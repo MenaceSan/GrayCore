@@ -5,6 +5,7 @@
 
 #include "pch.h"
 #include "cArray.h"
+#include "cArrayT.h"
 #include "cString.h"
 #include "cArraySortString.h"
 

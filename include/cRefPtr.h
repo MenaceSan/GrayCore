@@ -331,7 +331,7 @@ namespace Gray
 				p2->DecRefCount();	// this might delete this ?
 			}
 		}
-		int get_RefCount() const
+		int get_RefCount() const noexcept
 		{
 			//! @return cRefBase::get_RefCount
 			if (this->m_p == nullptr)
@@ -367,7 +367,7 @@ namespace Gray
 		{
 			//! explicit ref type conversion - to remove redundant casts
 			//! will work only for properly related types
-			return cRefPtr<_TYPE_2>((this->m_p)); // this will automatically give an error if classes are unrelated. static_cast<_TYPE_2>
+			return cRefPtr<_TYPE_2>(this->m_p); // this will automatically give an error if classes are unrelated. static_cast<_TYPE_2>
 		}
 #endif
 

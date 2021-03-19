@@ -172,28 +172,28 @@ namespace Gray
 		m_pStream = nullptr;
 	}
 
-	STREAM_SEEKRET_t cFileText::Seek(STREAM_OFFSET_t offset, SEEK_ORIGIN_TYPE eSeekOrigin) // virtual
+	HRESULT cFileText::SeekX(STREAM_OFFSET_t offset, SEEK_ORIGIN_TYPE eSeekOrigin) // virtual
 	{
 		//! eSeekOrigin = SEEK_SET, SEEK_END
 		//! @note end of line translation might be broken? ftell() and fseek() don't work correctly when you use it.
 		//! @note offset < 0 for SEEK_Cur is legal.
 		//! @return
 		//!  <0 = FAILED
-		//!  new file pointer position.
+		//!  new file pointer position % int32.
 		if (!isFileOpen())
-			return((STREAM_SEEKRET_t)-1);
+			return E_HANDLE;
 		if (::fseek(m_pStream, (long)offset, eSeekOrigin) != 0)
-			return((STREAM_SEEKRET_t)-1);
+			return HResult::GetLastDef();
 		if (eSeekOrigin == SEEK_Set) // SEEK_SET = FILE_BEGIN
 		{
 			if (offset == 0)
 			{
 				m_iCurLineNum = 0; // i actually know the line number for this position.
 			}
-			return offset;
+			return (HRESULT)offset;
 		}
 		m_iCurLineNum = k_ITERATE_BAD;	// invalid. no idea what the line number is now!
-		return ::ftell(m_pStream);	// did it really move?
+		return S_OK;	
 	}
 
 	STREAM_POS_t cFileText::GetPosition() const // virtual
@@ -202,8 +202,8 @@ namespace Gray
 		//! @note end of line translation might be broken? ftell and fseek don't work correctly when you use it.
 		//! @return -1 = error.
 		if (!isFileOpen())
-			return (STREAM_POS_t)-1;
-		return(::ftell(m_pStream));
+			return k_STREAM_POS_ERR;
+		return ::ftell(m_pStream);
 	}
 
 	HRESULT cFileText::FlushX() // virtual
@@ -359,7 +359,8 @@ namespace Gray
 		// FILE_BEGIN == SEEK_SET
 		if (!rPos.isValidPos())
 			return false;
-		if (Seek((STREAM_OFFSET_t)rPos.get_Offset(), SEEK_Set) != (STREAM_SEEKRET_t)rPos.get_Offset())
+		HRESULT hRes = SeekX(rPos.get_Offset(), SEEK_Set);
+		if (FAILED(hRes))
 			return false;
 		m_iCurLineNum = rPos.get_LineNum();
 		return true;

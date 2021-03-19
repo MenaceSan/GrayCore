@@ -9,23 +9,16 @@
 
 namespace Gray
 {
-	STREAM_POS_t cStreamBase::GetPosition() const // virtual
+ 	STREAM_POS_t cStreamBase::GetLength() const // virtual
 	{
-		//! Get current read position.
-		//! default implementation. If Seek() is not overridden.
-		cStreamBase* pThis = const_cast<cStreamBase*>(this);
-		return (STREAM_POS_t)(pThis->Seek(0, SEEK_Cur));
-	}
-
-	STREAM_POS_t cStreamBase::GetLength() const // virtual
-	{
-		//! default implementation. override this for better implementation.
+		//! default implementation using SeekX and GetPosition. override this for better implementation.
 		//! @return total length of the stream in bytes. if available. not the same as Read Length.
 
 		cStreamBase* pThis = const_cast<cStreamBase*>(this);
-		STREAM_POS_t nCurrent = (STREAM_POS_t)pThis->Seek(0, SEEK_Cur);	// save current position.
-		STREAM_POS_t nLength = (STREAM_POS_t)pThis->Seek(0, SEEK_End);		// seek to the end to find the length.
-		pThis->Seek((STREAM_OFFSET_t)nCurrent, SEEK_Set);		// restore the position pointer back.
+		STREAM_POS_t nCurrent = GetPosition();	// save current position.
+		pThis->SeekX(0, SEEK_End);		// seek to the end to find the length.
+		STREAM_POS_t nLength = GetPosition();
+		pThis->SeekX((STREAM_OFFSET_t)nCurrent, SEEK_Set);		// restore the position pointer back.
 		return nLength;
 	}
 
@@ -229,10 +222,10 @@ namespace Gray
 		{
 			return hResRead;
 		}
-		STREAM_SEEKRET_t nRetSeek = Seek(-hResRead, SEEK_Cur);	// back up.
-		if (nRetSeek < 0)
+		HRESULT hResSeek = SeekX(-hResRead, SEEK_Cur);	// back up.
+		if (FAILED(hResSeek))
 		{
-			return (HRESULT)nRetSeek;
+			return hResSeek;	// ERROR.
 		}
 		return hResRead;
 	}

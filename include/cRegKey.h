@@ -28,7 +28,23 @@ namespace Gray
 		//! Bind a hard name to the default HKEY values.
 		HKEY m_hKey; //!< e.g. HKEY_CLASSES_ROOT, HKEY_LOCAL_MACHINE, HKEY_CURRENT_USER, HKEY_USERS
 		const FILECHAR_t* m_pszRegPath;	//!< e.g. _FN("SOFTWARE\\Menasoft"), nullptr = use previous in array.
+
+		static inline bool IsKeyBase(HKEY hKey) noexcept
+		{
+			//! is it a base HKEY_* predefined key?
+			//! e.g. HKEY_CLASSES_ROOT, HKEY_LOCAL_MACHINE
+			return (((size_t)hKey) & ((size_t)HKEY_CLASSES_ROOT)) == ((size_t)HKEY_CLASSES_ROOT);
+		}
 	};
+
+	template <> inline void CloseHandleType(HKEY h) // static
+	{
+		//! ASSUME IsValidHandle(h)
+		if (cRegKeyName::IsKeyBase(h)) // never close base keys
+			return;
+		::RegCloseKey(h); // ignored BOOL return.
+	}
+
 	class cRegKeyInit
 	{
 		//! @class GrayLib::cRegKeyInit
@@ -74,18 +90,12 @@ namespace Gray
 		~cRegKey() noexcept
 		{
 		}
- 
-		static inline bool IsKeyBase(HKEY hKey) noexcept
+
+ 		inline bool isKeyBase() const noexcept
 		{
 			//! is it a base HKEY_* predefined key?
 			//! e.g. HKEY_CLASSES_ROOT, HKEY_LOCAL_MACHINE
-			return (((size_t)hKey) & ((size_t)HKEY_CLASSES_ROOT)) == ((size_t)HKEY_CLASSES_ROOT);
-		}
-		inline bool isKeyBase() const noexcept
-		{
-			//! is it a base HKEY_* predefined key?
-			//! e.g. HKEY_CLASSES_ROOT, HKEY_LOCAL_MACHINE
-			return IsKeyBase(get_Handle());
+			return cRegKeyName::IsKeyBase(get_Handle());
 		}
 
 		bool isKeyOpen() const noexcept
@@ -255,14 +265,6 @@ namespace Gray
 			return QueryValue(nullptr, OUT dwType, pData, OUT dwDataSize);
 		}
 	};
-
-	template <> inline void cHandlePtr<HKEY>::CloseHandle(HKEY h) // static
-	{
-		//! ASSUME IsValidHandle(h)
-		if (cRegKey::IsKeyBase(h)) // never close base keys
-			return;
-		::RegCloseKey(h); // ignored BOOL return.
-	}
 }
 
 #endif

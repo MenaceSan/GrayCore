@@ -35,7 +35,7 @@ namespace Gray
 	const FILECHAR_t* GRAYCALL cRegKey::GetNameBase(HKEY hKey) noexcept // static
 	{
 		//! Get a text name for a base registry HKEY.
-		if (!IsKeyBase(hKey))
+		if (!cRegKeyName::IsKeyBase(hKey))
 		{
 			return nullptr;
 		}
