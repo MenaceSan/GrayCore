@@ -17,7 +17,7 @@ namespace Gray
 	MIDL_INTERFACE("b01dface-0000-0000-C000-100000000046") IUnkObject : public IUnknown
 	{
 		//! @interface Gray::IUnkObject
-		//! IUnknown base for object like cXObject
+		//! IUnknown base for object like cXObject, cScriptableObj
 		//! e.g. Base interface to client for cProtocolStream. used by cNetServerConnection
 		IGNORE_WARN_INTERFACE(IUnkObject);
 

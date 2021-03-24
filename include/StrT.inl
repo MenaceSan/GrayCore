@@ -689,7 +689,7 @@ namespace Gray
 		//! @note
 		//!  This will ALWAYS terminate the string (unlike strncpy)
 		//! @return
-		//!  Length of pDst in chars. (Not including null.)
+		//!  Length of pDst in chars. (Not including '\0')
 
 		if (pDst == nullptr || iLenMaxChars <= 0)
 			return 0;

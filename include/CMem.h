@@ -351,9 +351,9 @@ namespace Gray
 			return m_nSize;
 		}
 
-		inline void* get_Data() const noexcept
+		inline void* get_DataV() const noexcept
 		{
-			//! Might be nullptr. that's OK.
+			//! get as void pointer. Might be nullptr. that's OK.
 			return m_pData;
 		}
 		inline BYTE* get_DataBytes() const noexcept
@@ -393,12 +393,12 @@ namespace Gray
 		bool IsInternalPtr(const void* p) const noexcept
 		{
 			//! Is p inside the known valid range for the block? Inclusive = Can be equal to end.
-			return IsValidIndex(cMem::Diff(p, get_Data()));
+			return IsValidIndex(cMem::Diff(p, get_DataBytes()));
 		}
 		bool IsInternalPtr2(const void* p) const noexcept
 		{
 			//! Is p inside the known valid range for the block? Exclusive = Cant be equal to end!
-			return IsValidIndex2(cMem::Diff(p, get_Data()));
+			return IsValidIndex2(cMem::Diff(p, get_DataBytes()));
 		}
 
 		bool IsZeros() const noexcept
@@ -446,7 +446,7 @@ namespace Gray
 			m_pData = pStart;
 			// ASSERT(is pStart reasonable?)
 		}
-		void put_Size(size_t nSize) noexcept
+		void put_DataSize(size_t nSize) noexcept
 		{
 			// Set size but leave data pointer.
 			m_nSize = nSize;

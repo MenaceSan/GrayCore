@@ -9,7 +9,7 @@
 #pragma once
 #endif
 
-#include "cOSHandle.h"
+#include "cOSHandle.h"  // STREAM_POS_t
 
 namespace Gray
 {
@@ -92,16 +92,16 @@ namespace Gray
 			m_nAmount = 0.0f;
 		}
 #if 0
-		void put_PercentComplete( float fComplete = 1.0f )
+		void put_PercentComplete( float fComplete = 1.0f ) noexcept
 		{
 			m_nAmount = fComplete;	// indicate we are done.
 		}
 #endif
-		float get_PercentComplete() const
+		float get_PercentComplete() const noexcept
 		{
 			return m_nAmount;	// return value <= 1.0f
 		}
-		float get_PercentChunk() const
+		float get_PercentChunk() const noexcept
 		{
 			return m_nTotal;
 		}
@@ -183,6 +183,6 @@ namespace Gray
 			return S_OK;	// S_OK=just keep going.
 		}
 	};
-};
+} 
 
 #endif

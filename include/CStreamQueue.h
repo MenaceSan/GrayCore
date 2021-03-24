@@ -86,13 +86,13 @@ namespace Gray
 
 		typedef cQueueRW<BYTE> SUPER_t;
 	public:
-		explicit cStreamStatic()
+		explicit cStreamStatic() noexcept
 			: cQueueRW<BYTE>(nullptr, 0, 0, 0, 0)
 		{
 			//! Empty
 			//! Read Only 0.
 		}
-		explicit cStreamStatic(void* pData, size_t iDataMax, size_t iReadLast, size_t iWriteLast, size_t iAutoReadCommit = 0)
+		explicit cStreamStatic(void* pData, size_t iDataMax, size_t iReadLast, size_t iWriteLast, size_t iAutoReadCommit = 0) noexcept
 			: cQueueRW<BYTE>((BYTE*)pData, (ITERATE_t)iDataMax, (ITERATE_t)iReadLast, (ITERATE_t)iWriteLast, (ITERATE_t)iAutoReadCommit)
 		{
 			//! Read/Write
@@ -155,19 +155,19 @@ namespace Gray
 	{
 		//! @class Gray::cStreamStringA
 		//! Build a string as a stream based on stack allocated/inline memory. cStreamOutput
-		//! Similar to StrBuilder.  cStreamQueue
+		//! Similar to StrBuilder<char>.  cStreamQueue
 		//! equiv to STL string builder. std::stringstream
 		typedef cStreamStatic SUPER_t;
 	private:
 		char m_szVal[StrT::k_LEN_MAX];	//!< Preallocated as MAX size.
 	public:
-		cStreamStringA()
+		cStreamStringA() noexcept
 			: cStreamStatic(m_szVal, STRMAX(m_szVal), 0, 0)
 		{
 			// Read/Write
 			m_szVal[0] = '\0';
 		}
-		StrLen_t get_StrLen() const
+		StrLen_t get_StrLen() const noexcept
 		{
 			return (StrLen_t)SUPER_t::get_WriteIndex();
 		}

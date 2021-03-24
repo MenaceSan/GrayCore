@@ -155,7 +155,7 @@ namespace Gray
 		{
 			// we ARE the new process now. replace with truly new process from disk.
 
-			char* args[128];	// arbitrary max.
+			char* args[k_ARG_ARRAY_MAX];	// arbitrary max.
 			char szTmp[StrT::k_LEN_MAX];
 			int iArgs = StrT::ParseCmdsTmp<FILECHAR_t>(szTmp, STRMAX(szTmp), pszArgs, args + 1, _countof(args) - 2, " ", STRP_DEF);
 			args[0] = (char*)pszExeName;

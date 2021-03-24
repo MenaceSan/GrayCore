@@ -90,7 +90,7 @@ namespace Gray
 			DEBUG_CHECK(isSingleCreated());
 			return m_aSingletons.RemoveArg(pReg);
 		}
-		static bool isDestroyed()
+		static bool isDestroyed() noexcept
 		{
 			return sm_bIsDestroyed;
 		}
@@ -108,7 +108,7 @@ namespace Gray
 #endif
 	}
 
-	void GRAYCALL cSingletonRegister::RegisterSingleton(cSingletonRegister& reg) // static
+	void GRAYCALL cSingletonRegister::RegisterSingleton(cSingletonRegister& reg) noexcept // static
 	{
 		//! register with cSingletonManager
 		//! Only register this if we know its NOT static. We called new.

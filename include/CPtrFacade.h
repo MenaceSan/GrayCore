@@ -71,7 +71,8 @@ namespace Gray
 
 		void AttachPtr(TYPE* p) noexcept
 		{
-			//! sets the pointer WITHOUT adding a ref (if overload applicable). like get_PPtr().
+			//! sets the pointer WITHOUT adding a ref (if overload applicable). like get_PPtr(). 
+			//! used with Com interfaces where QueryInterface already increments the ref count.
 			//! DANGER
 			m_p = p;
 		}

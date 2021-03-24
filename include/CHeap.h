@@ -185,7 +185,7 @@ namespace Gray
 		explicit cHeapBlock(size_t nSize)
 		{
 			//! Construct with initial size. uninitialized data.
-			Alloc(nSize);
+			AllocPtr(nSize);
 		}
 		cHeapBlock(const void* pDataCopy, size_t nSize)
 		{
@@ -271,7 +271,7 @@ namespace Gray
 			//! Someone has copied this buffer.
 			SetEmptyBlock();
 		}
-		bool Alloc(size_t nSize)
+		void* AllocPtr(size_t nSize)
 		{
 			//! Allocate a memory block of size. assume m_pData points to uninitialized data.
 			//! @note cHeap::AllocPtr(0) != nullptr ! maybe ?
@@ -286,18 +286,18 @@ namespace Gray
 				m_pData = cHeap::AllocPtr(nSize);
 				if (!isValidPtr())		// nSize = 0 may be nullptr or not?
 				{
-					return false;	// FAILED HRESULT_WIN32_C(ERROR_NOT_ENOUGH_MEMORY)
+					return nullptr;	// FAILED HRESULT_WIN32_C(ERROR_NOT_ENOUGH_MEMORY)
 				}
 			}
 			m_nSize = nSize;
-			return true;	// nullptr is OK for size = 0
+			return m_pData;	// nullptr is OK for size = 0
 		}
 		bool Alloc(const void* pData, size_t nSize)
 		{
 			//! Allocate then copy something into it.
 
 			ASSERT(pData == nullptr || !this->IsInternalPtr(pData));	// NOT from inside myself ! // Check before Alloc
-			if (!Alloc(nSize))
+			if (AllocPtr(nSize) == nullptr)
 			{
 				return false;	// FAILED HRESULT_WIN32_C(ERROR_NOT_ENOUGH_MEMORY)
 			}
@@ -364,7 +364,7 @@ namespace Gray
 #ifdef _DEBUG
 			DEBUG_CHECK(!isCorrupt());
 #endif
-			return m_pData;	
+			return m_pData;
 		}
 		inline BYTE* get_DataBytes() const noexcept
 		{

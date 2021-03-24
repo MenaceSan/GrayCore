@@ -275,6 +275,7 @@ namespace Gray
 			//! similar to cFileDirDlg::DeleteDirFiles( FOF_NOCONFIRMATION | FOF_SILENT | FOF_NOERRORUI )
 			//! e.g. cFileDir::DeleteDirFiles( pszDirPath ); = delete directory and all its sub stuff.
 			//! e.g. cFileDir::DeleteDirFiles( pszDirPath, "*.h" ); = delete contents of directory and all its wild carded children. leaves directory.
+			//! HRESULT_WIN32_C(ERROR_PATH_NOT_FOUND)
 			return DirFileOp(FILEOP_DELETE, pszDirName, pszWildcardFile, nFileFlags, nullptr, nullptr);
 		}
 

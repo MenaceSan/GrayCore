@@ -7,17 +7,32 @@
 
 #include "pch.h"
 #include "StrFormat.h"
+#include "StrBuilder.h"
 #include "StrT.h"
 #include "cTypes.h"
+#include "cIniBase.h"
+#include "cString.h"		// cStringI
+#include "cIniBase.h"		//  IIniBaseGetter
+#include "cLogMgr.h"	// LOGSTR()
+#include "StrArg.h"
 
 namespace Gray
 {
+	template < typename _TYPE_CH>
+	void _cdecl StrBuilder<_TYPE_CH>::AddFormat(const _TYPE_CH* pszFormat, ...) // GRAYCORE_LINK
+	{
+		va_list vargs;
+		va_start(vargs, pszFormat);
+		StrFormat<_TYPE_CH>::V(*this, pszFormat, vargs);
+		va_end(vargs);
+	}
+
 	const char StrFormatBase::k_Specs[16] = "EFGXcdefgiopsux";	// all legal sprintf format tags.  // Omit "S" "apnA"
 
 	template< typename TYPE>
 	StrLen_t StrFormat<TYPE>::ParseParam(const TYPE* pszFormat)
 	{
-		//! Parse the mode for 1 single argument/param from a printf() format string.
+		//! Parse the mode for 1 single argument/param from a sprintf() format string.
 		//! e.g. %d,%s,%u,%g,%f, etc.
 		//! http://www.cplusplus.com/reference/cstdio/printf/
 		//! @arg pszFormat = "%[flags][width][.precision][length]specifier"
@@ -104,9 +119,9 @@ namespace Gray
 	}
 
 	template< typename TYPE>
-	StrLen_t StrFormat<TYPE>::RenderString(TYPE* pszOut, StrLen_t nLenOutMax, const TYPE* pszParam, StrLen_t nParamLen, short nPrecision) const
+	void StrFormat<TYPE>::RenderString(StrBuilder<TYPE>& out, const TYPE* pszParam, StrLen_t nParamLen, short nPrecision) const
 	{
-		//! @arg nLenOutMax = max string chars including a space for terminator. (even though we don't terminate)
+		//! copy a string.
 		//! @arg pszParam = a properly terminated string.
 		//! @arg nPrecision = how many chars from pszParam do we take? (not including '\0')
 		//! Does not terminate.
@@ -114,46 +129,32 @@ namespace Gray
 		if (nPrecision < 0 || nPrecision > nParamLen)
 			nPrecision = (short)nParamLen;	// all
 
-		if (nPrecision >= m_nWidthMin)	// simple case = copy
-		{
-			return StrT::CopyLen(pszOut, pszParam, MIN(nLenOutMax, nPrecision + 1));
-		}
-
-		nLenOutMax--;
+		// a truncated or shifted string.
 		short nWidth = m_nWidthMin;				// Total width of what we place in pszOut
 		if (nWidth == 0)
+		{
 			nWidth = (short)nPrecision; // all
+		}
 
-		StrLen_t nEnd;
 		StrLen_t i = 0;
 		if (!m_bAlignLeft && nWidth > nPrecision) // pad left
 		{
-			nEnd = nWidth - nPrecision;
-			if (nEnd > nLenOutMax)
-				nEnd = nLenOutMax;
-			cValArray::FillQty<TYPE>(pszOut, nEnd, ' ');
-			i = nEnd;
+			const StrLen_t nWidth2 = nWidth - nPrecision;
+			out.AddCharRepeat(' ', nWidth2);
+			i = nWidth2;
 		}
 
-		nEnd = i + nPrecision;
-		if (nEnd > nLenOutMax)
-			nPrecision = (short)(nLenOutMax - i);
-		cMem::Copy(pszOut + i, pszParam, sizeof(TYPE) * nPrecision);
+		out.AddStr2(pszParam, nPrecision);
 		i += nPrecision;
 
 		if (m_bAlignLeft && nWidth > i)	// pad right
 		{
-			if (nWidth > nLenOutMax)
-				nWidth = (short) nLenOutMax;
-			cValArray::FillQty<TYPE>(pszOut + i, nWidth - i, ' ');
-			i = nWidth;
+			out.AddCharRepeat(' ', nWidth - i);
 		}
-
-		return i; // +
 	}
 
 	template< typename TYPE>
-	StrLen_t StrFormat<TYPE>::RenderUInt(TYPE* pszOut, StrLen_t nLenOutMax, const TYPE* pszPrefix, RADIX_t nRadix, char chRadixA, UINT64 uVal) const
+	void StrFormat<TYPE>::RenderUInt(StrBuilder<TYPE>& out, const TYPE* pszPrefix, RADIX_t nRadix, char chRadixA, UINT64 uVal) const
 	{
 		//! @arg nLenOutMax = max string chars including a space for terminator. (even though we don't terminate)
 
@@ -163,7 +164,7 @@ namespace Gray
 		StrLen_t nDigits = (StrNum::k_LEN_MAX_DIGITS_INT - StrT::Diff(pDigits, szTmp)) - 1;
 		StrLen_t nPrecision = m_nPrecision;		// We can increase this to include pad 0 and sign.
 		if (nPrecision > nDigits)
-			nPrecision = (short) nDigits;
+			nPrecision = (short)nDigits;
 
 		if (m_bLeadZero && m_nWidthMin > nDigits)
 		{
@@ -191,27 +192,16 @@ namespace Gray
 				nPrecision += nPrefix;
 		}
 
-		return RenderString(pszOut, nLenOutMax, pDigits, nDigits, (short) nPrecision);
+		RenderString(out, pDigits, nDigits, (short)nPrecision);
 	}
 
 	template< typename TYPE>
-	StrLen_t StrFormat<TYPE>::RenderFloat(TYPE* pszOut, StrLen_t nLenOutMax, char chRadixA, double dVal) const
+	void StrFormat<TYPE>::RenderFloat(StrBuilder<TYPE>& out, char chRadixA, double dVal) const
 	{
 		StrLen_t nPrecision = m_nPrecision;
 		if (nPrecision < 0)
 		{
 			nPrecision = 6;	// default. for decimal places or whole string depending on chRadixA < 0
-		}
-
-		if (nPrecision > m_nWidthMin)	// simple case = copy
-		{
-			if (m_bPlusSign && dVal >= 0)
-			{
-				*pszOut = '+';	// prefix.
-				return 1 + StrT::DtoA<TYPE>(dVal, pszOut + 1, nLenOutMax - 1, nPrecision, chRadixA);		// default = 6.
-			}
-
-			return StrT::DtoA<TYPE>(dVal, pszOut, nLenOutMax, nPrecision, chRadixA);		// default = 6.
 		}
 
 		TYPE szTmp[StrNum::k_LEN_MAX_DIGITS + 4];
@@ -225,17 +215,14 @@ namespace Gray
 			nPrecision = StrT::DtoA<TYPE>(dVal, szTmp, StrNum::k_LEN_MAX_DIGITS, nPrecision, chRadixA);		// default = 6.
 		}
 
-		return RenderString(pszOut, nLenOutMax, szTmp, nPrecision, (short) nPrecision);
+		RenderString(out, szTmp, nPrecision, (short)nPrecision);
 	}
 
 	template< typename TYPE>
-	StrLen_t StrFormat<TYPE>::RenderParam(TYPE* pszOut, StrLen_t nLenOutMax, va_list* pvlist) const
+	void StrFormat<TYPE>::RenderParam(StrBuilder<TYPE>& out, va_list* pvlist) const
 	{
 		//! Render a single parameter/spec.
 		//! @arg nLenOutMax = max string chars including a space for terminator. (even though we don't terminate)
-
-		if (nLenOutMax <= 0)	// Not even room for '\0'
-			return 0;
 
 		RADIX_t nBaseRadix = 10;
 		char chRadixA = 'a';
@@ -251,9 +238,10 @@ namespace Gray
 				// repeat char!
 			}
 			TYPE szTmp[2];
-			szTmp[0] = (TYPE) va_arg(*pvlist, int);
+			szTmp[0] = (TYPE)va_arg(*pvlist, int);
 			szTmp[1] = '\0';
-			return RenderString(pszOut, nLenOutMax, szTmp, 1, m_nPrecision);
+			RenderString(out, szTmp, 1, m_nPrecision);
+			return;
 		}
 
 		// case 'S':	// Opposite type? char/wchar_t
@@ -268,7 +256,8 @@ namespace Gray
 			{
 				pszParam = CSTRCONST("(ERR)");
 			}
-			return RenderString(pszOut, nLenOutMax, pszParam, StrT::Len(pszParam), m_nPrecision);
+			RenderString(out, pszParam, StrT::Len(pszParam), m_nPrecision);
+			return;
 		}
 
 		case 'd':
@@ -294,7 +283,8 @@ namespace Gray
 				pszPrefix = CSTRCONST("+");
 			}
 
-			return RenderUInt(pszOut, nLenOutMax, pszPrefix, 10, '\0', (UINT64)nVal);
+			RenderUInt(out, pszPrefix, 10, '\0', (UINT64)nVal);
+			return;
 		}
 
 		case 'u':
@@ -310,7 +300,8 @@ namespace Gray
 				nVal = va_arg(*pvlist, UINT32);
 			}
 
-			return RenderUInt(pszOut, nLenOutMax, pszPrefix, nBaseRadix, chRadixA, nVal);
+			RenderUInt(out, pszPrefix, nBaseRadix, chRadixA, nVal);
+			return;
 		}
 
 		case 'X':	// Upper case
@@ -362,7 +353,8 @@ namespace Gray
 		case 'f': // Float precision = decimal places. default m_nPrecision = 6
 			chRadixA = '\0';
 		do_num_float:
-			return RenderFloat(pszOut, nLenOutMax, chRadixA, va_arg(*pvlist, double));
+			RenderFloat(out, chRadixA, va_arg(*pvlist, double));
+			return;
 
 		case 'G':	// Upper case. Use the shortest representation: %E or %F
 			chRadixA = -'E';
@@ -377,11 +369,10 @@ namespace Gray
 		}
 
 		ASSERT(false);	// Should never happen.
-		return 0;
 	}
 
 	template< typename TYPE>
-	StrLen_t GRAYCALL StrFormat<TYPE>::FormatV(TYPE* pszOut, StrLen_t nLenOutMax, const TYPE* pszFormat, va_list vlist)	// static
+	void GRAYCALL StrFormat<TYPE>::V(StrBuilder<TYPE>& out, const TYPE* pszFormat, va_list vlist)	// static
 	{
 		//! Replace vsnprintf,_vsnprintf_s,_vsnprintf like StrT::vsprintfN
 		//! Make consistent overflow behavior for __linux__ and _WIN32
@@ -390,9 +381,7 @@ namespace Gray
 		//! Do not throw exceptions from this !?
 		//! @todo Allow .NET style "{0}" format for strings.  
 		//!
-		//! @arg pszOut = nullptr = just estimate for 2 pass formatting.
-		//! @arg nLenOutMax = max length allowing for '\0' terminator.
-		//! @return the size i used (in chars)(or would use if pszOut==nullptr). Not including '\0'.
+		//! @arg out = buffer to write to. max length allowing for '\0' terminator.
 		//!
 		//! Examples: (must pass UnitTestFormat)
 		//! "{ts'%04d-%02d-%02d %02d:%02d:%02d'}",
@@ -404,25 +393,19 @@ namespace Gray
 		//!  Newer Windows versions have a _TRUNCATE option to just truncate the string and return used size.
 		//!  _vscwprintf can be used to estimate the size needed in advance using a 2 pass method.
 
-		if (pszFormat == nullptr || nLenOutMax <= 1)
+		if (pszFormat == nullptr)
 		{
-			if (nLenOutMax <= 0)
-			{
-				return 0;	// Weird.
-			}
-			if (pszOut != nullptr)
-			{
-				*pszOut = '\0';
-			}
-			return 0;	// Error? or just do nothing?
+			return;	// Error? or just do nothing?
 		}
 
-		ASSERT(pszOut != pszFormat);
+		ASSERT(out.get_Str() != pszFormat);
 		bool bHasFormatting = false;
-		StrLen_t nLenOut = 0;
 
 		for (StrLen_t iLenForm = 0;; )
 		{
+			if (out.isOverflow())	// no room for anything more.
+				break;
+
 			TYPE ch = pszFormat[iLenForm++];
 			if (ch == '\0')	// At end.
 			{
@@ -438,7 +421,7 @@ namespace Gray
 
 				if (paramx.m_nSpec != '\0')
 				{
-					// Render param.
+					// Render param for int.
 					if (paramx.m_bWidthArg)
 					{
 						int iVal = va_arg(vlist, int);
@@ -450,55 +433,128 @@ namespace Gray
 						paramx.m_nWidthMin = (BYTE)iVal;
 					}
 
-					StrLen_t nLenOut2 = paramx.RenderParam(pszOut, nLenOutMax - nLenOut,
+					paramx.RenderParam(out,
 #ifdef __GNUC__
-							(va_list *)vlist
+					(va_list*)vlist
 #else
-							&vlist
+						& vlist
 #endif
 
 					);
-					nLenOut += nLenOut2;
-					if (pszOut != nullptr)
-					{
-						pszOut += nLenOut2;
-					}
 					continue;
 				}
 			}
 
 			// Just copy stuff into pszOut.
-			if (++nLenOut >= nLenOutMax)	// past limit. Stop.
-			{
-				nLenOut--;
-				break;
-			}
-			if (pszOut != nullptr)
-			{
-				*pszOut = ch;
-				pszOut++;
-			}
+			out.AddChar(ch);
 		}
-
-		// Terminate!
-		if (pszOut != nullptr)
-		{
-			ASSERT(nLenOut <= nLenOutMax);
-			*pszOut = '\0';
-		}
-
-		return nLenOut;		// Length not including '\0'.
 	}
 
-	template< typename TYPE>
-	StrLen_t _cdecl StrFormat<TYPE>::FormatF(TYPE* pszOut, StrLen_t nLenOutMax, const TYPE* pszFormat, ...)	// static
+	bool GRAYCALL StrTemplate::HasTemplateBlock(const IniChar_t* pszInp)
 	{
-		va_list vargs;
-		va_start(vargs, pszFormat);
-		StrLen_t nLenOut = FormatV(pszOut, nLenOutMax, pszFormat, vargs);
-		va_end(vargs);
-		return nLenOut;
+		// Does the string include "<?something?>" ?
+
+		ASSERT_N(pszInp != nullptr);
+
+		return StrT::FindStr(pszInp, "<?") != nullptr && StrT::FindStr(pszInp, "?>") != nullptr;
 	}
+
+	StrLen_t GRAYCALL StrTemplate::ReplaceTemplateBlock(StrBuilder<IniChar_t>& out, const IniChar_t* pszInp, IIniBaseGetter* pBlockReq, bool bRecursing)
+	{
+		//! Replace strings in a marked/delimited block using results from pBlockReq
+		//! Used for <?X?> replacement in scripts. also recursive like: <? FUNCTION("i say <VAR.X?>") ?>
+		//! e.g. SPEAK "hello there <?SRC.NAME?> my name is <?NAME?>"
+		//! @arg
+		//!	 pszOut = nullptr = if for testing.
+		//!  pBlockReq = submit text found in block for block replacement. nullptr = this is just a test for blocks.
+		//! @note
+		//!  Allowed to be recursive. ignore blocks inside quotes ?
+		//!  Bad properties are just blank.
+		//! @return
+		//!   length of input used or k_ITERATE_BAD
+
+		ASSERT_N(pszInp != nullptr);
+
+		StrLen_t iBeginBlock = -1;	// output index.
+		StrLen_t i = 0;	// input index.
+
+		if (bRecursing)
+		{
+			ASSERT(pszInp[0] == '<' && pszInp[1] == '?');
+		}
+
+		for (; i < StrT::k_LEN_MAX; i++)
+		{
+			char ch = pszInp[i];
+			if (ch == '\0')
+				break;
+
+			// just copy the text to pszOut.
+			out.AddChar(ch);
+
+			if (iBeginBlock < 0)	// not in block
+			{
+				if (ch == '?' && i && pszInp[i - 1] == '<')	// found the start !
+				{
+					iBeginBlock = out.get_Length() - 2; // point to opening <?
+					continue;
+				}
+				continue;
+			}
+
+			ASSERT(iBeginBlock >= 0);
+			ASSERT(i > 1);
+
+			if (ch == '<' && pszInp[i + 1] == '?')	// found recursive start block.
+			{
+				out.AdvanceWrite(-1);	// back up.
+				StrLen_t iLen = ReplaceTemplateBlock(out, pszInp + i, pBlockReq, true);
+				i += iLen;	// skip.
+				continue;
+			}
+
+			if (ch == '>' && pszInp[i - 1] == '?') // found end of block.
+			{
+				// NOTE: take the tag from output side in case it is the product of recursive blocks.
+				const StrLen_t iTagLen = (out.get_Length() - iBeginBlock) - 4;
+				cStringI sTag(out.get_DataWork() + iBeginBlock + 2, iTagLen);
+				iBeginBlock = -1;
+
+				HRESULT hRes;
+				if (pBlockReq != nullptr)
+				{
+					cStringI sVal;
+					hRes = pBlockReq->PropGet(sTag, OUT sVal);
+					if (SUCCEEDED(hRes))
+					{
+						out.AdvanceWrite(-(iTagLen + 4));	// back up.
+						out.AddStr2(sVal.get_CPtr(), sVal.GetLength());
+					}
+				}
+				else
+				{
+					hRes = HRESULT_WIN32_C(ERROR_READ_FAULT);
+				}
+				if (FAILED(hRes))
+				{
+					// Just in case this really is a >= operator ?
+					DEBUG_ERR(("StrTemplate '%s' ERR='%s'", LOGSTR(sTag), LOGERR(hRes)));
+				}
+				if (bRecursing)
+				{
+					break; // end of recurse block.
+				}
+			}
+		}
+
+		return i;
+	}
+
+	template class GRAYCORE_LINK StrBuilder<char>;		// Force Instantiation for DLL.
+	template class GRAYCORE_LINK StrBuilder<wchar_t>;	// Force Instantiation for DLL.
+
+	template class GRAYCORE_LINK StrBuilderDyn<char>;		// Force Instantiation for DLL.
+	template class GRAYCORE_LINK StrBuilderDyn<wchar_t>;	// Force Instantiation for DLL.
 
 	template class GRAYCORE_LINK StrFormat<char>;		// Force Instantiation for DLL.
 	template class GRAYCORE_LINK StrFormat<wchar_t>;	// Force Instantiation for DLL.

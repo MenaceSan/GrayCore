@@ -555,7 +555,7 @@ namespace Gray
 				continue;
 			iFiles++;
 			hRes = state.FindFileNext();
-			if (FAILED(hRes)) // HRESULT_WIN32_C(ERROR_NO_MORE_ITEMS)
+			if (FAILED(hRes)) // HRESULT_WIN32_C(ERROR_NO_MORE_ITEMS) is normal.
 				break;
 		}
 

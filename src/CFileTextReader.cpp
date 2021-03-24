@@ -112,7 +112,7 @@ namespace Gray
 				return (HRESULT)(nPosFile + iOffset - iReadQty);
 			}
 			// outside current buffer.
-			this->EmptyQ();
+			this->SetEmptyQ();
 			return m_reader.SeekX(nPosFile + iOffset - iReadQty, SEEK_Set);
 
 		case SEEK_End:
@@ -131,7 +131,7 @@ namespace Gray
 				return (HRESULT)iOffset;
 			}
 			// outside current buffer.
-			this->EmptyQ();
+			this->SetEmptyQ();
 			return m_reader.SeekX(iOffset, SEEK_Set);
 
 		default:

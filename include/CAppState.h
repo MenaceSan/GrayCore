@@ -22,7 +22,7 @@
 
 namespace Gray
 {
-	enum APPSTATE_TYPE_
+	enum APPSTATE_TYPE_ : BYTE
 	{
 		//! @enum Gray::APPSTATE_TYPE_
 		//! What state is the app in at the moment?

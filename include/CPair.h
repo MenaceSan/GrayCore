@@ -28,19 +28,19 @@ namespace Gray
 		TYPE m_Lo;		//!< low range value.
 		TYPE m_Hi;		//!< inclusive high side of range. int size = (hi-lo)+1, float size = hi-lo ?? weird.
 	public:
-		TYPE get_Min() const
+		TYPE get_Min() const noexcept
 		{
 			return m_Lo;
 		}
-		TYPE get_Max() const
+		TYPE get_Max() const noexcept
 		{
 			return m_Hi;
 		}
-		TYPE get_Avg() const
+		TYPE get_Avg() const noexcept
 		{
 			return (m_Lo + m_Hi) / 2;
 		}
-		TYPE GetClampValue(TYPE nVal) const
+		TYPE GetClampValue(TYPE nVal) const noexcept
 		{
 			// assume normalized.
 			if (nVal < m_Lo)
@@ -49,13 +49,13 @@ namespace Gray
 				return m_Hi;
 			return nVal;
 		}
-		bool IsInsideI(TYPE nVal) const
+		bool IsInsideI(TYPE nVal) const noexcept
 		{
 			//! Is the index in the range? inclusive.
 			// assume normalized.
 			return nVal >= m_Lo && nVal <= m_Hi;
 		}
-		bool IsInsideX(TYPE nVal) const
+		bool IsInsideX(TYPE nVal) const noexcept
 		{
 			//! Is the index in the range? Non inclusive.
 			//! @note if size 0 then this is never true !
@@ -63,20 +63,20 @@ namespace Gray
 			return nVal >= m_Lo && nVal < m_Hi;
 		}
 
-		TYPE get_RangeI() const
+		TYPE get_RangeI() const noexcept
 		{
 			//! Typically used for inclusive int types.
 			// assume normalized.
 			return (m_Hi - m_Lo) + 1;	// inclusive. integer
 		}
-		TYPE get_RangeX() const
+		TYPE get_RangeX() const noexcept
 		{
 			//! Typically used for exclusive float types.
 			// assume normalized.
 			return m_Hi - m_Lo;	// exclusive.
 		}
 
-		TYPE GetLinear1(float fOne) const
+		TYPE GetLinear1(float fOne) const noexcept
 		{
 			//! @arg fOne = 0.0 to 1.0
 			return (TYPE)(m_Lo + (fOne * get_RangeI()));
@@ -99,32 +99,32 @@ namespace Gray
 		}
 
 		// Setters.
-		void SetZero()
+		void SetZero() noexcept
 		{
 			m_Hi = m_Lo = 0;
 		}
-		void put_Min(TYPE iLo)
+		void put_Min(TYPE iLo) noexcept
 		{
 			m_Lo = iLo;
 		}
-		void put_Max(TYPE iHi)
+		void put_Max(TYPE iHi) noexcept
 		{
 			m_Hi = iHi;
 		}
-		void SetRange(TYPE iLo, TYPE iHi)
+		void SetRange(TYPE iLo, TYPE iHi) noexcept
 		{
 			//! May not be normalized ?
 			m_Lo = iLo;
 			m_Hi = iHi;
 		}
-		void NormalizeRange()
+		void NormalizeRange() noexcept
 		{
 			if (m_Lo > m_Hi)
 			{
 				cValT::Swap<TYPE>(m_Lo, m_Hi);
 			}
 		}
-		void UnionValue(TYPE nVal)
+		void UnionValue(TYPE nVal) noexcept
 		{
 			//! Expand the range to include this value. Normalized
 			if (nVal < m_Lo)
@@ -133,7 +133,7 @@ namespace Gray
 				m_Hi = nVal;
 		}
 
-		bool IsRangeOverlapI(const THIS_t& x) const
+		bool IsRangeOverlapI(const THIS_t& x) const noexcept
 		{
 			// Do 2 ranges (assume Normalized/proper ordered ranges) overlap ?
 			if (x.m_Lo > m_Hi)
@@ -142,7 +142,7 @@ namespace Gray
 				return false;
 			return true;
 		}
-		void SetUnionRange(const THIS_t& x)
+		void SetUnionRange(const THIS_t& x) noexcept
 		{
 			// assume Normalized/proper ordered ranges
 			if (x.m_Hi > m_Hi)
@@ -331,9 +331,9 @@ namespace Gray
 			for (; IsValidIndex(i); i++)
 			{
 				if (a < this[i + 1].m_a)
-					return(this[i].m_b);
+					return this[i].m_b ;
 			}
-			return(this[i - 1].m_b);
+			return this[i - 1].m_b ;
 		}
 	};
 }

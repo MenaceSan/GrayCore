@@ -395,6 +395,12 @@
     <ClInclude Include="include\cArrayT.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="include\cStack.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cQueueChunked.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.md" />

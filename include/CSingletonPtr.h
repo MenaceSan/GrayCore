@@ -53,7 +53,7 @@ namespace Gray
 			this->put_Ptr(TYPE::get_Single());
 		}
 
-		// cRefPtr is protected so expose the parts i allow.
+		// cRefPtr is protected so expose the parts i allow. cPtrFacade
 		void ReleasePtr()
 		{
 			SUPER_t::ReleasePtr();
@@ -62,12 +62,6 @@ namespace Gray
 		{
 			return SUPER_t::isValidPtr();
 		}
-		TYPE* operator -> () const
-		{
-			ASSERT_N(this->m_p != nullptr);
-			return this->m_p;
-		}
-#if 1
 		TYPE* get_Ptr() const
 		{
 			//! expose this otherwise protected function.
@@ -75,8 +69,22 @@ namespace Gray
 			ASSERT_N(this->m_p != nullptr);
 			return this->m_p;
 		}
-#endif
 
+		operator TYPE* () const noexcept
+		{
+			DEBUG_CHECK(this->m_p != nullptr);
+			return m_p;
+		}
+		operator TYPE& () const noexcept
+		{
+			DEBUG_CHECK(this->m_p != nullptr);
+			return *m_p;
+		}
+		TYPE* operator -> () const
+		{
+			ASSERT_N(this->m_p != nullptr);
+			return this->m_p;
+		}
 	};
 }
 #endif

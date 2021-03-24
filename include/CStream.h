@@ -164,7 +164,7 @@ namespace Gray
 		{
 			//! Write all or nothing (fail). otherwise same as WriteX() (where partials are allowed)
 			//! @return Number of bytes written. <0 = error.
-			HRESULT hRes = WriteX(pVal, nDataSize);
+			const HRESULT hRes = WriteX(pVal, nDataSize);
 			if (SUCCEEDED(hRes) && hRes != (HRESULT)nDataSize)
 				return HRESULT_WIN32_C(ERROR_WRITE_FAULT); // STG_WRITEFAULT
 			return hRes;
@@ -186,12 +186,40 @@ namespace Gray
 			//! Write a block prefixed by its size (Bytes).
 			//! Write out a string with the length prefix.
 			//! @return <0 = error.
-			HRESULT hRes = WriteSize(nSize);
+			const HRESULT hRes = WriteSize(nSize);
 			if (FAILED(hRes))
 				return hRes;
 			if (nSize == 0)
 				return S_OK;
 			return WriteT(pBuffer, nSize);
+		}
+
+		virtual HRESULT WriteString(const char* pszStr)
+		{
+			//! Write just the chars of the string. NOT nullptr. like fputs()
+			//! Does NOT assume include NewLine or automatically add one.
+			//! @note This can get overloaded for string only protocols. like FILE, fopen()
+			//! @note MFC CStdioFile has void return for this.
+			//! @return Number of chars written. <0 = error.
+			if (pszStr == nullptr)
+				return 0;	// write nothing = S_OK.
+			const StrLen_t iLen = StrT::Len(pszStr);
+			return WriteT(pszStr, iLen * sizeof(char));
+		}
+		virtual HRESULT WriteString(const wchar_t* pszStr)
+		{
+			//! Write just the chars of the string. NOT nullptr. like fputs()
+			//! Does NOT assume include NewLine or automatically add one.
+			//! @note This can get overloaded for string only protocols. like FILE, fopen()
+			//! @note MFC CStdioFile has void return for this.
+			//! @return Number of chars written. <0 = error.
+			if (pszStr == nullptr)
+				return 0;	// write nothing = S_OK.
+			const StrLen_t iLen = StrT::Len(pszStr);
+			const HRESULT hRes = WriteT(pszStr, iLen * sizeof(wchar_t));
+			if (FAILED(hRes))
+				return hRes;
+			return hRes / sizeof(wchar_t);
 		}
 
 		template< typename _CH >
@@ -212,64 +240,28 @@ namespace Gray
 			szTmp[1] = '\0';
 			for (; nCount-- > 0;)
 			{
-				HRESULT hRes = WriteString(szTmp);
+				const HRESULT hRes = WriteString(szTmp);
 				if (FAILED(hRes))
 					return hRes;
 			}
 			return S_OK;
 		}
 
-		virtual HRESULT WriteString(const char* pszStr)
+		template< typename _CH >
+		StrLen_t VPrintf(const _CH* pszFormat, va_list args)
 		{
-			//! Write just the chars of the string. NOT nullptr. like fputs()
-			//! Does NOT assume include NewLine or automatically add one.
-			//! @note This can get overloaded for string only protocols. like FILE, fopen()
-			//! @note MFC CStdioFile has void return for this.
-			//! @return Number of chars written. <0 = error.
-			if (pszStr == nullptr)
-				return 0;	// write nothing = S_OK.
-			StrLen_t iLen = StrT::Len(pszStr);
-			return WriteT(pszStr, iLen * sizeof(char));
-		}
-		virtual HRESULT WriteString(const wchar_t* pszStr)
-		{
-			//! Write just the chars of the string. NOT nullptr. like fputs()
-			//! Does NOT assume include NewLine or automatically add one.
-			//! @note This can get overloaded for string only protocols. like FILE, fopen()
-			//! @note MFC CStdioFile has void return for this.
-			//! @return Number of chars written. <0 = error.
-			if (pszStr == nullptr)
-				return 0;	// write nothing = S_OK.
-			StrLen_t iLen = StrT::Len(pszStr);
-			HRESULT hRes = WriteT(pszStr, iLen * sizeof(wchar_t));
-			if (FAILED(hRes))
-				return hRes;
-			return(hRes / sizeof(wchar_t));
+			//! Write just the chars of the string. NOT nullptr
+			//! @return
+			//!  <0 = error. else number of chars written
+			ASSERT(pszFormat != nullptr);
+			_CH szTemp[StrT::k_LEN_MAX];
+			const StrLen_t iLenRet = StrT::vsprintfN(szTemp, STRMAX(szTemp), pszFormat, args);
+			UNREFERENCED_PARAMETER(iLenRet);
+			return (StrLen_t) WriteString(szTemp);
 		}
 
-		StrLen_t VPrintf(const char* pszFormat, va_list args)
-		{
-			//! Write just the chars of the string. NOT nullptr
-			//! @return
-			//!  <0 = error. else number of chars written
-			ASSERT(pszFormat != nullptr);
-			char szTemp[StrT::k_LEN_MAX];
-			StrLen_t iLenRet = StrT::vsprintfN(szTemp, STRMAX(szTemp), pszFormat, args);
-			UNREFERENCED_PARAMETER(iLenRet);
-			return WriteString(szTemp);
-		}
-		StrLen_t VPrintf(const wchar_t* pszFormat, va_list args)
-		{
-			//! Write just the chars of the string. NOT nullptr
-			//! @return
-			//!  <0 = error. else number of chars written
-			ASSERT(pszFormat != nullptr);
-			wchar_t szTemp[StrT::k_LEN_MAX];
-			StrLen_t iLenRet = StrT::vsprintfN(szTemp, STRMAX(szTemp), pszFormat, args);
-			UNREFERENCED_PARAMETER(iLenRet);
-			return WriteString(szTemp);
-		}
-		StrLen_t _cdecl Printf(const char* pszFormat, ...)
+		template< typename _CH >
+		StrLen_t _cdecl Printf(const _CH* pszFormat, ...)
 		{
 			//! Write just the chars of the string. NOT nullptr
 			//! Does NOT assume include NewLine or automatically add one.
@@ -279,23 +271,10 @@ namespace Gray
 			ASSERT(pszFormat != nullptr);
 			va_list vargs;
 			va_start(vargs, pszFormat);
-			StrLen_t iLenRet = VPrintf(pszFormat, vargs);
+			const StrLen_t iLenRet = VPrintf(pszFormat, vargs);
 			va_end(vargs);
 			return iLenRet;
-		}
-		StrLen_t _cdecl Printf(const wchar_t* pszFormat, ...)
-		{
-			//! Write just the chars of the string. NOT nullptr
-			//! @note Use StrArg<GChar_t>(s) for safe "%s" args.
-			//! @return
-			//!  <0 = error. else number of chars written
-			ASSERT(pszFormat != nullptr);
-			va_list vargs;
-			va_start(vargs, pszFormat);
-			StrLen_t iLenRet = VPrintf(pszFormat, vargs);
-			va_end(vargs);
-			return iLenRet;
-		}
+		}		 
 
 		//! Copy cStreamInput to this stream.
 		HRESULT WriteStream(cStreamInput& sInp, STREAM_POS_t nSizeMax = k_FILE_BLOCK_SIZE, IStreamProgressCallback* pProgress = nullptr, TIMESYSD_t nTimeout = 0);
@@ -357,9 +336,9 @@ namespace Gray
 			//! Read the whole stream as a single allocated block in memory.
 			//! @arg nSizeExtra = extra memory allocation.
 			//! @return length read. (Not including nSizeExtra). or < 0 = error.
-			STREAM_POS_t nLengthStream = this->GetLength();
-			size_t nLengthAlloc = (size_t)nLengthStream;
-			if (!block.Alloc(nLengthAlloc + nSizeExtra))
+			const STREAM_POS_t nLengthStream = this->GetLength();
+			const size_t nLengthAlloc = (size_t)nLengthStream;
+			if (nullptr == block.AllocPtr(nLengthAlloc + nSizeExtra))
 				return E_OUTOFMEMORY;
 			return ReadT(block.get_Data(), nLengthAlloc);	// must get all.
 		}

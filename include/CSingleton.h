@@ -79,6 +79,7 @@ namespace Gray
 		static inline TYPE* get_Single()
 		{
 			//! This is a complex or abstract or assumed static type that we cannot just create automatically on first usage.
+			//! ASSUME this object exists.
 			DEBUG_CHECK(isSingleCreated());
 			return sm_pThe;	// get_SingleU()
 		}
@@ -119,7 +120,7 @@ namespace Gray
 		cSingletonRegister(const TYPEINFO_t& rAddrCode) noexcept;
 		virtual ~cSingletonRegister() noexcept;
 
-		static void GRAYCALL RegisterSingleton(cSingletonRegister& reg);
+		static void GRAYCALL RegisterSingleton(cSingletonRegister& reg) noexcept;
 
 	public:
 		static void GRAYCALL ReleaseModule(HMODULE hMod);
@@ -156,7 +157,7 @@ namespace Gray
 		}
 
 	public:
-		static TYPE* GRAYCALL get_Single()
+		static TYPE* GRAYCALL get_Single() noexcept
 		{
 			//! get (or create) a pointer to the singleton object.
 			//! @note This ensures proper creation order for singletons (Statics) that ref each other!
@@ -181,7 +182,7 @@ namespace Gray
 		}
 
 		template <class TYPE2>
-		static TYPE2* GRAYCALL get_SingleT()	// ASSUME TYPE2 derived from TYPE
+		static TYPE2* GRAYCALL get_SingleT() noexcept	// ASSUME TYPE2 derived from TYPE
 		{
 			//! get (or create) a pointer to the derived singleton TYPE2 object. 
 			//! ASSUME TYPE2 derived from TYPE.
@@ -203,7 +204,7 @@ namespace Gray
 			return CHECKPTR_CAST(TYPE2, SUPER_t::sm_pThe);
 		}
 
-		static TYPE& GRAYCALL I()
+		static TYPE& GRAYCALL I() noexcept
 		{
 			//! The singleton by reference.
 			return *get_Single();

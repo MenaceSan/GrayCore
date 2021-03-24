@@ -84,7 +84,7 @@ namespace Gray
 		IniChar_t szTmp[_MAX_PATH];
 		va_list vargs;
 		va_start(vargs, pszFormat);
-		StrLen_t iLenTmp = StrT::vsprintfN(szTmp, STRMAX(szTmp), pszFormat, vargs);
+		const StrLen_t iLenTmp = StrT::vsprintfN(szTmp, STRMAX(szTmp), pszFormat, vargs);
 		UNREFERENCED_PARAMETER(iLenTmp);
 		va_end(vargs);
 

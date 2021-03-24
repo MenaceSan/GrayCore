@@ -80,7 +80,7 @@ namespace Gray
 				}
 #endif
 			}
-			return get_Data();
+			return get_DataV();
 		}
 		void Unlock()
 		{
@@ -111,16 +111,16 @@ namespace Gray
 			m_hData = WINHEAPF(ReAlloc)(m_hData, (SIZE_T)dwSize, dwFlags);
 			return Lock();
 		}
-		void* Alloc(size_t dwSize, DWORD dwFlags = WINHEAPM(FIXED))
+		void* AllocPtr2(size_t dwSize, DWORD dwFlags = WINHEAPM(FIXED))
 		{
 			//! Allocate and lock the handle.
 			//! dwFlags = GMEM_MOVEABLE | GMEM_ZEROINIT 
 			AllocHandle(dwSize, dwFlags);
 			return Lock();
 		}
-		void* Alloc(const void* pSrc, size_t dwSize, DWORD dwFlags = WINHEAPM(FIXED))
+		void* AllocPtr3(const void* pSrc, size_t dwSize, DWORD dwFlags = WINHEAPM(FIXED))
 		{
-			void* pDst = Alloc(dwSize, dwFlags);
+			void* pDst = AllocPtr2(dwSize, dwFlags);
 			if (pDst != nullptr)
 			{
 				::memcpy(pDst, pSrc, dwSize);
@@ -155,7 +155,7 @@ namespace Gray
 #ifdef _DEBUG
 			if (hFail)
 			{
-				HRESULT hRes = HResult::GetLastDef();
+				const HRESULT hRes = HResult::GetLastDef();
 				DEBUG_ERR(("GlobalFree ERR='%s'", LOGERR(hRes)));
 			}
 #endif
@@ -215,7 +215,7 @@ namespace Gray
 			Free();
 			return &m_hData;
 		}
-		static LPVOID GRAYCALL AllocPtr(size_t nSize, DWORD nFlags = 0)
+		static LPVOID GRAYCALL AllocPtrX(size_t nSize, DWORD nFlags = 0)
 		{
 			//! like _WIN32 GlobalAllocPtr( UINT, SIZE_T ) or GlobalAlloc
 			//! nFlags = GMEM_MOVEABLE | GMEM_ZEROINIT 

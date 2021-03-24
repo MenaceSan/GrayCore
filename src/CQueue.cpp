@@ -5,12 +5,13 @@
 
 #include "pch.h"
 #include "cQueue.h"
+#include "cQueueChunked.h"
 #include "cUnitTest.h"
 #include "cLogMgr.h"
 
 namespace Gray
 {
-	HRESULT cQueueBase::SeekQ(STREAM_OFFSET_t iOffset, SEEK_ORIGIN_TYPE eSeekOrigin)	// support virtual
+	HRESULT cQueueIndex::SeekQ(STREAM_OFFSET_t iOffset, SEEK_ORIGIN_TYPE eSeekOrigin)	// support virtual
 	{
 		//! eSeekOrigin = SEEK_CUR, etc
 		//! move the current read start location.
@@ -47,8 +48,8 @@ namespace Gray
 
 #ifndef GRAY_STATICLIB // force implementation/instantiate for DLL/SO.
 	template class GRAYCORE_LINK cQueueRead<char>;		// Force Instantiation for DLL.
-	template class GRAYCORE_LINK cQueueStatic<char, 512>;	// Force Instantiation for DLL.
 	template class GRAYCORE_LINK cQueueRW<char>;
+	template class GRAYCORE_LINK cQueueStatic<char, 512>;	// Force Instantiation for DLL.
 #endif
 
 }

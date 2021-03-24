@@ -14,7 +14,9 @@ namespace Gray
 		//! called by ReadX()
 		//! @return how much i got.
 
-		if (!MakeWritePrepared(this->get_GrowSizeChunk()))
+		void* pWriteSpace = GetWritePrepared(this->get_GrowSizeChunk());
+		const ITERATE_t nWriteSpace = get_WriteSpaceQty();
+		if (pWriteSpace == nullptr || nWriteSpace <= 0)
 		{
 			return 0;	// no room.
 		}
@@ -25,13 +27,12 @@ namespace Gray
 		}
 
 		// Read all i have room for.
-		ASSERT(get_WriteQty() > 0);
-		HRESULT hRes = m_pStreamInp->ReadX(get_WritePtr(), (size_t)get_WriteQty());
+		HRESULT hRes = m_pStreamInp->ReadX(pWriteSpace, (size_t)nWriteSpace);
 		if (FAILED(hRes) || hRes <= 0)
 		{
 			return hRes;
 		}
- 
+
 		AdvanceWrite((ITERATE_t)hRes);
 		return hRes;
 	}
@@ -46,14 +47,14 @@ namespace Gray
 		if (nSizeBlockAlign <= 1) // simple case.
 			return ReadFill();
 
-		if (!MakeWritePrepared(this->get_GrowSizeChunk()))
+		void* pWriteSpace = GetWritePrepared(this->get_GrowSizeChunk());
+		const ITERATE_t iWriteSpaceQty = get_WriteSpaceQty(); // any room to write into?
+		if (pWriteSpace == nullptr || iWriteSpaceQty <= 0)
 		{
 			return 0;	// no room.
 		}
 
-		ITERATE_t iWriteQty = get_WriteQty();	// any room to write into?
-		ASSERT(iWriteQty > 0);
-		size_t nWriteQty = (size_t)iWriteQty;
+		size_t nWriteQty = (size_t)iWriteSpaceQty;
 		if (nWriteQty < nSizeBlockAlign)	// no room.
 			return 0;
 		nWriteQty -= nWriteQty % nSizeBlockAlign;	// Remove remainder.
@@ -64,7 +65,7 @@ namespace Gray
 		}
 
 		cStreamTransaction trans(m_pStreamInp);
-		HRESULT hRes = m_pStreamInp->ReadX(get_WritePtr(), nWriteQty);
+		HRESULT hRes = m_pStreamInp->ReadX(pWriteSpace, nWriteQty);
 		if (FAILED(hRes))
 		{
 			trans.SetTransactionFailed();

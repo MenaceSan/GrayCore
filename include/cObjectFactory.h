@@ -19,7 +19,7 @@ namespace Gray
 		//! abstract factory pattern for CObject based objects.
 		//! Intentionally NOT cSingleton. derived class may be. This is probably a static.
 		//! @note Allocation of the created object is unknown! probably dynamic and must delete ? NEVER cSingleton (it has its own mechanism for that).
-		//! Similar to IClassFactory
+		//! Similar to IClassFactory 
 		
 	public:
 		const ATOMCHAR_t* const m_pszName;		//! The main type name we can create by. Might have multiple alternate aliases for interfaces. e.g. "IObjectName"
@@ -37,7 +37,7 @@ namespace Gray
 			RegisterFactory(*this);
 		}
 
-		//! Create CObject of some derived cTypeInfo.
+		//! Create CObject of some derived cTypeInfo. AKA CreateInstance()
 		virtual CObject* CreateObject() const = 0;
 	};
 

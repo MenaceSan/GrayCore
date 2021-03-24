@@ -160,6 +160,7 @@ namespace Gray
 
 		HRESULT SetQI(IUnknown* p2, const IID& riid)
 		{
+			//! Get the riid interface from p2.
 			//! Do proper COM style dynamic_cast for Interface using QueryInterface().
 			if (p2 == nullptr)
 			{

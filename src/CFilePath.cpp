@@ -615,7 +615,7 @@ namespace Gray
 
 		va_list vargs;
 		va_start(vargs, pszBase);
-		for (int iCount = 0; iCount < 64; iCount++)	// arbitrary max.
+		for (int iCount = 0; iCount < k_ARG_ARRAY_MAX; iCount++)	// arbitrary max.
 		{
 			const FILECHAR_t* pszPart = va_arg(vargs, const FILECHAR_t*);
 			if (pszPart == nullptr)

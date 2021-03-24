@@ -642,6 +642,7 @@
     <ClInclude Include="include\cPtrTrace.h" />
     <ClInclude Include="include\cPtrTraceMgr.h" />
     <ClInclude Include="include\cQueue.h" />
+    <ClInclude Include="include\cQueueChunked.h" />
     <ClInclude Include="include\cRandom.h" />
     <ClInclude Include="include\cRefPtr.h" />
     <ClInclude Include="include\cRegKey.h" />
@@ -649,6 +650,7 @@
     <ClInclude Include="include\cSecurityAttributes.h" />
     <ClInclude Include="include\cSingleton.h" />
     <ClInclude Include="include\cSingletonPtr.h" />
+    <ClInclude Include="include\cStack.h" />
     <ClInclude Include="include\cStream.h" />
     <ClInclude Include="include\cStreamProgress.h" />
     <ClInclude Include="include\cStreamQueue.h" />

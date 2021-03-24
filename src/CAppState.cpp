@@ -89,7 +89,7 @@ namespace Gray
 
 		m_sArguments = pszCommandArgs;	// Raw unparsed.
 
-		FILECHAR_t* apszArgs[128];	// arbitrary max.
+		FILECHAR_t* apszArgs[k_ARG_ARRAY_MAX];	// arbitrary max.
 		FILECHAR_t szNull[1];
 		int iSkip = 0;
 
@@ -159,10 +159,10 @@ namespace Gray
 			// Match? nullptr terminated.
 			va_list vargs;
 			va_start(vargs, pszCommandArgFind);
+			const FILECHAR_t* pszFind = pszCommandArgFind;
 			for (;;)
 			{
-				const FILECHAR_t* pszFind = va_arg(vargs, const FILECHAR_t*);
-				if (pszFind == nullptr)
+				if (StrT::IsNullOrEmpty(pszFind))
 					break;
 				if (bIgnoreCase)
 				{
@@ -174,6 +174,7 @@ namespace Gray
 					if (StrT::Cmp(pszArg, pszFind) == 0)	// match all.
 						return i;
 				}
+				pszFind = va_arg(vargs, const FILECHAR_t*);	// next
 			}
 			va_end(vargs);
 		}

@@ -73,6 +73,7 @@ namespace Gray
 	typedef int ITERATE_t;		//!< like size_t but signed
 #endif
 	const ITERATE_t k_ITERATE_BAD = -1;
+	const ITERATE_t k_ARG_ARRAY_MAX = 128;		// Max number of arguments in user entered array. arbitrary.
 
 	typedef size_t COUNT_t;		//!< like size_t but a count of things that might NOT be bytes. ASSUME unsigned. _countof(x)
 

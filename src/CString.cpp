@@ -56,12 +56,12 @@ namespace Gray
 		{
 			auto pDataOld = GetData();
 			StrLen_t nOldLen = pDataOld->get_CharCount();
-			if (nOldLen == iNewLength)	// no change.
-				return;
 			int iRefCounts = pDataOld->get_RefCount();
 			if (iRefCounts == 1)
 			{
 				// just change the existing ref. or it may be the same size.
+				if (nOldLen == iNewLength)	// no change.
+					return;
 				pDataNew = (CStringData*)cHeap::ReAllocPtr(pDataOld, sizeof(CStringData) + iStringLengthBytes);
 				ASSERT_N(pDataNew != nullptr);
 			}
@@ -268,7 +268,7 @@ namespace Gray
 		//! _vsntprintf
 		//! use the normal sprintf() style.
 		_TYPE_CH szTemp[StrT::k_LEN_MAX];
-		StrT::vsprintfN(szTemp, STRMAX(szTemp), pszFormat, args);
+		StrT::vsprintfN(OUT szTemp, STRMAX(szTemp), pszFormat, args);
 		Assign(szTemp);
 	}
 
@@ -518,7 +518,24 @@ namespace Gray
 		cStringT<_TYPE_CH> sTmp(*this);	// copy of this.
 		sTmp.TrimRight();
 		sTmp.TrimLeft();
-		return(sTmp);
+		return sTmp;
+	}
+
+	template< typename _TYPE_CH>
+	cStringT<_TYPE_CH> _cdecl cStringT<_TYPE_CH>::Join(const _TYPE_CH* psz1, ...) // static
+	{
+		cStringT<_TYPE_CH> sTmp;
+		va_list vargs;
+		va_start(vargs, psz1);
+		for (int i = 0; i < k_ARG_ARRAY_MAX; i++)
+		{
+			if (StrT::IsNullOrEmpty(psz1))
+				break;
+			sTmp += psz1;
+			psz1 = va_arg(vargs, const _TYPE_CH*); // next
+		}
+		va_end(vargs); 
+		return sTmp;
 	}
 
 	template< typename _TYPE_CH>

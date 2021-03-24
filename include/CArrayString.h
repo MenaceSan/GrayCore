@@ -150,7 +150,7 @@ namespace Gray
 			szSep[0] = chSep;
 			szSep[1] = '\0';
 			_TYPE_CH szTmp[StrT::k_LEN_MAX];
-			_TYPE_CH* aCmds[128];
+			_TYPE_CH* aCmds[k_ARG_ARRAY_MAX];
 			ITERATE_t iStrings = StrT::ParseCmdsTmp(szTmp, STRMAX(szTmp), pszStr, aCmds, _countof(aCmds), szSep);
 			SetStrings((const _TYPE_CH**)aCmds, iStrings);
 			return iStrings;

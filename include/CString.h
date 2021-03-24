@@ -255,14 +255,14 @@ namespace Gray
 			return *this;
 		}
 
-		void FormatV(const _TYPE_CH* pszStr, va_list args);
-		void _cdecl Format(const _TYPE_CH* pszStr, ...)
+		void FormatV(const _TYPE_CH* pszFormat, va_list args);
+		void _cdecl Format(const _TYPE_CH* pszFormat, ...)
 		{
 			//! use the normal sprintf() style.
 			//! @note Use StrArg<GChar_t>(s) for safe "%s" args.
 			va_list vargs;
-			va_start(vargs, pszStr);
-			FormatV(pszStr, vargs);
+			va_start(vargs, pszFormat);
+			FormatV(pszFormat, vargs);
 			va_end(vargs);
 		}
 		COMPARE_t Compare(const _TYPE_CH* pszStr) const noexcept
@@ -394,7 +394,7 @@ namespace Gray
 
 		cStringT() noexcept
 		{}
-		cStringT(SUPER_t & str) noexcept : SUPER_t(str)
+		cStringT(SUPER_t & str) noexcept : SUPER_t(str)	 // copy constructor.
 		{}
 		cStringT(const char* pszText) : SUPER_t(pszText)
 		{}
@@ -622,6 +622,7 @@ namespace Gray
 			return THIS_t(this->GetString() + nFirst, nCount);
 		}
 
+		static THIS_t _cdecl Join(const _TYPE_CH* s1, ...);
 		static THIS_t _cdecl GetFormatf(const _TYPE_CH * pszFormat, ...);
 
 		// TODO MOVE THESE SOME OTHER PLACE >?

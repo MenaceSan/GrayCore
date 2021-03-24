@@ -16,7 +16,7 @@ namespace Gray
 
 #define _AT(x)		x			//!< like __T(x) macro but a stub for no change to ATOMCHAR_t text. like CATOM_STR()
 #define __TOA(x)	x			//!< like __T(x) macro for UTF8. Second layer "#define" to catch macro string arguments for x.
-#define __TOW(x)	L##x		//!< like __T(x) macro for UNICODE. or OLESTR()
+#define __TOW(x)	L##x		//!< convert literal "" to UNICODE. like __T(x) macro for UNICODE. or OLESTR()
 
 #if USE_UNICODE
 	typedef wchar_t GChar_t;		//!< My version of TCHAR, _TCHAR
@@ -35,6 +35,9 @@ namespace Gray
 
 #define STRLIT2(s)	(s), STRMAX(s)		//!< Macro to automatically add the size of literal string or fixed size buffer.
 
+#define STR_NL		"\n"			//!< NL/LF for Linux format text files. (10) Use "#define" so we can concatenate strings at compile time.
+#define STR_CRLF	"\r\n"			//!< CR+LF for DOS/Windows format text files. (13,10)
+
 	class GRAYCORE_LINK cStrConst
 	{
 		//! @class Gray::cStrConst
@@ -50,6 +53,7 @@ namespace Gray
 		static const wchar_t k_EmptyW = '\0';		//!< like CString::m_Nil
 
 		static const cStrConst k_Empty;			//!< Empty cStrConst string as &k_EmptyA or &k_EmptyW. like CString::m_Nil
+		static const cStrConst k_CrLf;			//!< STR_CRLF
 
 	public:
 		cStrConst(const char* a, const wchar_t* w) noexcept

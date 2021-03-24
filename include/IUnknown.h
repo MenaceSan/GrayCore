@@ -94,7 +94,7 @@ MIDL_INTERFACE("00000000-0000-0000-C000-000000000046") IUnknown
 //!  or if you do, don't make IUnknown base ambiguous to resolve in the interface! Leave that for classes.
 
 #define IUNKNOWN_DISAMBIG_R(TYPE) \
-	STDMETHOD_(ULONG,AddRef)(void) override /* disambiguate.*/ \
+	STDMETHOD_(ULONG, AddRef)(void) override /* disambiguate.*/ \
 	{ return TYPE::AddRef(); } \
 	STDMETHOD_(ULONG, Release)(void) override /* disambiguate.*/\
 	{ return TYPE::Release(); }

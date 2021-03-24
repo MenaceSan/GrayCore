@@ -27,7 +27,7 @@ namespace Gray
 		// TYPE m_data[ m_nCount * sizeof(TYPE) ];
 
 	public:
-		TYPE* GetData() const noexcept          // get array of data
+		TYPE* get_Data() const noexcept          // get array of data
 		{
 			//! Get a pointer to the data. Stored in the space allocated after this class.
 			return (TYPE*)(this + 1); // const_cast
@@ -69,7 +69,6 @@ namespace Gray
 			//! like STL capacity()
 			return (ITERATE_t)((cHeap::GetSize(this) - sizeof(cArrayDataT)) / sizeof(TYPE));
 		}
-
 	};
 
 	template <class TYPE >
@@ -85,7 +84,7 @@ namespace Gray
 			cArrayDataT<TYPE>* pDataNew = new(nCount * sizeof(TYPE)) cArrayDataT<TYPE>;	// allocate space 
 			ASSERT(pDataNew != nullptr);
 			pDataNew->put_Count(nCount);
-			cValArray::ConstructElementsX(pDataNew->GetData(), nCount);
+			cValArray::ConstructElementsX(pDataNew->get_Data(), nCount);
 			return pDataNew;
 		}
 
@@ -113,41 +112,42 @@ namespace Gray
 				return 0;
 			return pData->get_Count();
 		}
-		bool IsValidIndex(ITERATE_t i) const noexcept
+		inline bool IsValidIndex(ITERATE_t i) const noexcept
 		{
 			return IS_INDEX_GOOD(i, this->get_Count());
 		}
 
-		TYPE* GetData() const noexcept
+		inline TYPE* get_DataWork() const noexcept
 		{
 			// Get a pointer to the array.
 			auto p = get_Ptr();
 			if (p == nullptr)
 				return nullptr;
-			return p->GetData();
+			return p->get_Data();
 		}
 
 		TYPE GetAt(ITERATE_t nIndex) const noexcept
 		{
 			DEBUG_CHECK(IsValidIndex(nIndex));
-			return get_Ptr()->GetData()[nIndex];
+			return get_Ptr()->get_Data()[nIndex];
 		}
 		TYPE& ElementAt(ITERATE_t nIndex) noexcept
 		{
 			DEBUG_CHECK(IsValidIndex(nIndex));
-			return get_Ptr()->GetData()[nIndex];
+			return get_Ptr()->get_Data()[nIndex];
 		}
 		const TYPE& ConstElementAt(ITERATE_t nIndex) const noexcept
 		{
 			// same as GetAt() but more explicit
 			DEBUG_CHECK(IsValidIndex(nIndex));
-			return get_Ptr()->GetData()[nIndex];
+			return get_Ptr()->get_Data()[nIndex];
 		}
 		void SetAt(ITERATE_t nIndex, const TYPE& newElement) noexcept
 		{
 			// If multiple refs to this then we should copy/split it ?
+			// @note DANGER - this is a reference counted object. Any changes to it will make changes to all references !! Make a deep copy if required.
 			DEBUG_CHECK(IsValidIndex(nIndex));
-			get_Ptr()->GetData()[nIndex] = newElement;
+			get_Ptr()->get_Data()[nIndex] = newElement;
 		}
 
 		void AssertValidIndex(ITERATE_t nIndex) const // throw
@@ -158,13 +158,13 @@ namespace Gray
 		{
 			//! throw an exception if we are out of range.
 			AssertValidIndex(nIndex);
-			return get_Ptr()->GetData()[nIndex];
+			return get_Ptr()->get_Data()[nIndex];
 		}
 		inline const TYPE& operator[](ITERATE_t nIndex) const // throw
 		{
 			//! throw an exception if we are out of range.
 			AssertValidIndex(nIndex);
-			return get_Ptr()->GetData()[nIndex];
+			return get_Ptr()->get_Data()[nIndex];
 		}
 
 		ITERATE_t get_CountMalloc() const noexcept
@@ -206,7 +206,7 @@ namespace Gray
 				if (nCountNew <= get_CountMalloc())
 				{
 					// it fits. don't shrink the allocated array. we may expand again some day.
-					cValArray::Resize<TYPE>(pOld->GetData(), nCountNew, nCountOld);
+					cValArray::Resize<TYPE>(pOld->get_Data(), nCountNew, nCountOld);
 					pNew = pOld;
 				}
 				else
@@ -225,7 +225,7 @@ namespace Gray
 					ASSERT_N(pNew != nullptr);
 
 					// construct new elements
-					cValArray::ConstructElementsX<TYPE>(pNew->GetData() + nCountOld, nCountNew - nCountOld);
+					cValArray::ConstructElementsX<TYPE>(pNew->get_Data() + nCountOld, nCountNew - nCountOld);
 				}
 
 				pNew->put_Count(nCountNew);
@@ -238,7 +238,7 @@ namespace Gray
 			ASSERT(iRefCounts > 1);
 			pNew = CreateData(nCountNew);
 			ASSERT_N(pNew != nullptr);
-			cValArray::CopyQty(pNew->GetData(), pOld->GetData(), MIN(nCountNew, nCountOld)); // Copy from old
+			cValArray::CopyQty(pNew->get_Data(), pOld->get_Data(), MIN(nCountNew, nCountOld)); // Copy from old
 
 			this->put_Ptr(pNew);
 		}
@@ -251,7 +251,7 @@ namespace Gray
 			{
 				put_Count(nIndex + 1);	// Grow.
 			}
-			get_Ptr()->GetData()[nIndex] = newElement;	// SetAt
+			get_Ptr()->get_Data()[nIndex] = newElement;	// SetAt
 		}
 		ITERATE_t Add(const TYPE& newElement)
 		{
@@ -269,11 +269,11 @@ namespace Gray
 			auto p = get_Ptr();
 			if (nIndex < nCount)
 			{
-				cValArray::MoveElement(p->GetData() + nIndex, p->GetData() + nCount);	// make space.
+				cValArray::MoveElement(p->get_Data() + nIndex, p->get_Data() + nCount);	// make space.
 			}
 			// insert new value in the gap
 			ASSERT(nIndex + 1 <= nCount);
-			p->GetData()[nIndex] = newElement;	// ASSUME copy constructor will be called!
+			p->get_Data()[nIndex] = newElement;	// ASSUME copy constructor will be called!
 		}
 		void RemoveAt(ITERATE_t nIndex)
 		{
@@ -287,7 +287,7 @@ namespace Gray
 			ITERATE_t nMoveCount = nCount - (nIndex + 1);
 			if (nMoveCount < 0)
 				return;
-			auto pData = p->GetData();
+			auto pData = p->get_Data();
 			cValArray::DestructElementsX<TYPE>(pData + nIndex, 1);
 			p->put_Count(nCount - 1);
 			if (nMoveCount > 0) // not last.
@@ -295,7 +295,6 @@ namespace Gray
 				cMem::CopyOverlap(pData + nIndex, pData + nIndex + 1, nMoveCount * sizeof(TYPE));
 			}
 		}
-
 	};
 }
 

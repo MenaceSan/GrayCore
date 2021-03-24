@@ -67,7 +67,7 @@ namespace Gray
 	{
 		// Variable Sized. samples use LocalAlloc() except for AllocateAndInitializeSid()
 		DWORD dwSize = SECURITY_MAX_SID_SIZE;
-		this->Alloc(dwSize);
+		this->AllocPtr2(dwSize);
 		if (!::CreateWellKnownSid(eWellKnownSidType, nullptr, get_SID(), &dwSize))
 		{
 			this->Free();
@@ -113,7 +113,7 @@ namespace Gray
 		{
 			return false;
 		}
-		this->Alloc(pSID, nLengthSid);
+		this->AllocPtr3(pSID, nLengthSid);
 		return true;
 	}
 
@@ -164,7 +164,7 @@ namespace Gray
 		}
 
 		cString sDomain;
-		Alloc(dwSidSize);
+		AllocPtr2(dwSidSize);
 		bRet = _GTN(::LookupAccountName)(nullptr, pszUserName, get_SID(), &dwSidSize, sDomain.GetBuffer(dwDomainSize), &dwDomainSize, &snu);
 		sDomain.ReleaseBuffer();
 
@@ -186,7 +186,7 @@ namespace Gray
 		//! Variable Sized. samples use LocalAlloc()
 
 		DWORD nACLSizeEst = sizeof(ACL) + ((sizeof(ACCESS_ALLOWED_ACE) + sizeof(SID)) * 4); // estimate size needed?
-		this->Alloc(nACLSizeEst);	// LocalAlloc
+		this->AllocPtr2(nACLSizeEst);	// LocalAlloc
 		ASSERT(get_ACL() != nullptr);
 		ASSERT(!isValid());
 		if (!::InitializeAcl(get_ACL(), nACLSizeEst, ACL_REVISION))
@@ -229,7 +229,7 @@ namespace Gray
 	cSecurityDesc::cSecurityDesc(ACL* pDacl)
 	{
 		//! @note pDacl can be nullptr
-		Alloc(sizeof(SECURITY_DESCRIPTOR));
+		AllocPtr2(sizeof(SECURITY_DESCRIPTOR));
 
 		if (!::InitializeSecurityDescriptor(get_Data(), SECURITY_DESCRIPTOR_REVISION))
 		{

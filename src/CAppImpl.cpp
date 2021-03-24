@@ -142,7 +142,7 @@ namespace Gray
 			if (StrT::CmpI(pCmd2->m_pszName, cmd.m_pszName) == COMPARE_Equal)
 			{
 				// collide, replace ?
-				DEBUG_ERR(("RegisterCommand collision"));
+				DEBUG_ERR(("RegisterCommand collision '%s'", LOGSTR(cmd.m_pszName)));
 				return pCmd2;
 			}
 			if (StrT::Cmp(pCmd2->m_pszSwitch, cmd.m_pszSwitch) == COMPARE_Equal)

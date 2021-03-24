@@ -122,18 +122,18 @@ namespace Gray
 		virtual HRESULT GetNoise(void* pData, size_t len) override	// IRandomNoise
 		{
 			//! Get sample random data bytes
-			if (m_Src.get_Data() == nullptr)
-			{
-				// No m_Src supplied so fill with fixed data.
-				cMem::Fill(pData, len, 0x2a);
-				m_nOffset += len;
-			}
-			else
+			if (m_Src.isValidPtr())
 			{
 				// todo repeat like cMem::CopyRepeat() ?
 				::memcpy(pData, m_Src.GetOffset(m_nOffset), len);
 				m_nOffset += len;
-				ASSERT(m_Src.IsValidIndex2(m_nOffset));		// Don't overflow!
+				ASSERT(m_Src.IsValidIndex2(m_nOffset));		// did we overflow?!
+			}
+			else
+			{
+				// No m_Src supplied so fill with fixed data.
+				cMem::Fill(pData, len, 0x2a);
+				m_nOffset += len;
 			}
 			return (HRESULT)len;
 		}

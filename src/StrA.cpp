@@ -8,7 +8,6 @@
 #include "StrA.h"
 #include "StrChar.h"
 #include "cLogMgr.h"
-#include "cIniBase.h"	// IIniBaseGetter
 #include "cHeap.h"
 #include "cBits.h"
 
@@ -39,7 +38,7 @@ namespace Gray
 		{
 			i = StrT::TableFindSorted(pszStr, k_pszBoolTrue, _countof(k_pszBoolTrue) - 1);
 		}
-		return (i >= 0);
+		return i >= 0;
 	}
 
 	bool GRAYCALL StrA::IsBoolFalse(const char* pszStr, bool bHead)
@@ -66,7 +65,7 @@ namespace Gray
 		{
 			i = StrT::TableFindSorted(pszStr, k_pszBoolFalse, _countof(k_pszBoolFalse) - 1);
 		}
-		return (i >= 0);
+		return i >= 0;
 	}
 
 	bool GRAYCALL StrA::IsPlural(const char* pszWord)
@@ -124,9 +123,9 @@ namespace Gray
 		}
 		if (StrChar::IsVowel(pszWord[0]))
 		{
-			return("an ");
+			return "an ";
 		}
-		return("a ");
+		return "a ";
 	}
 
 	INT_PTR GRAYCALL StrA::GetFixedIntRef(const char*& rpszExp, int nPlaces) // static
@@ -142,7 +141,7 @@ namespace Gray
 		//!  Why not use atof/strtod() ? rounding NOT ALL INTS ARE WELL STORED as FLOAT !
 
 		if (rpszExp == nullptr)
-			return(0);
+			return 0;
 
 		INT_PTR lVal = StrT::toIP(rpszExp, &rpszExp);
 		int  iDecimalFound = 0;
@@ -183,7 +182,7 @@ namespace Gray
 
 	StrLen_t GRAYCALL StrA::MakeNamedBitmask(char* pszOut, StrLen_t iLenOutMax, UINT dwFlags, const char** ppszNames, ITERATE_t iMaxNames, char chSep)
 	{
-		//! For each bit set in dwFlags, copy a ppszNames[bit number] string to the pszOut. separated by |
+		//! For each bit set in dwFlags, copy a ppszNames[bit number] string to the pszOut. separated by chSep (|)
 		//! @return string length
 
 		bool bMath = (chSep == '\0');
@@ -219,121 +218,5 @@ namespace Gray
 		}
 
 		return iLen;
-	}
-
-	StrLen_t GRAYCALL StrA::BlockReplacement(char* pszOut, StrLen_t iOutLenMax, const char* pszInp, IIniBaseGetter* pBlockReq, bool bRecursing)
-	{
-		//! Replace strings in a marked/delimited block using results from pBlockReq
-		//! Used for <?X?> replacement in scripts.
-		//! e.g. SPEAK "hello there <?SRC.NAME?> my name is <?NAME?>"
-		//! @arg
-		//!  uSizeOut = only go this far in the pszOut buffer.
-		//!  pBlockReq = submit text found in block for block replacement. nullptr = this is just a test for blocks.
-		//! @note
-		//!  Allowed to be recursive. ignore blocks inside quotes ?
-		//!  Bad properties are just blank.
-		//! @return
-		//!  n = new length of pszOut. may not have been changed. or k_ITERATE_BAD
-
-		bool bOpenBlock = false;
-		StrLen_t iBeginBlock = 0;
-		StrLen_t iOutLen = 0;
-		StrLen_t i = 0;
-
-		if (bRecursing)
-		{
-			ASSERT(pszInp[0] == '<' && pszInp[1] == '?');
-		}
-
-		ASSERT_N(pszOut != nullptr || iOutLenMax <= 0);
-		ASSERT_N(pszInp != nullptr);
-		for (; i < StrT::k_LEN_MAX; i++)
-		{
-			// const char* pszInp2 = &pszInp[i];
-			char ch = pszInp[i];
-			if (ch == '\0')
-				break;
-
-			// just copy the text.
-			//
-			if (iOutLen < iOutLenMax)
-			{
-				pszOut[iOutLen++] = ch;
-			}
-
-			if (!bOpenBlock)	// not in block
-			{
-				if (ch == '?' && i && pszInp[i - 1] == '<')	// found the start !
-				{
-					if (pBlockReq == nullptr)
-						return i;
-					iBeginBlock = iOutLen - 2; // point to opening <?
-					bOpenBlock = true;
-					continue;
-				}
-				continue;
-			}
-
-			ASSERT(bOpenBlock);
-			ASSERT(i > 0);
-
-			if (ch == '<' && pszInp[i + 1] == '?')	// found recursive start block.
-			{
-				iOutLen--;
-				StrLen_t iLen = StrA::BlockReplacement(pszOut + iOutLen, iOutLenMax - iOutLen, pszInp + i, pBlockReq, true);
-				StrLen_t iLenOutTmp = StrT::Len(pszOut + iOutLen);
-				iOutLen += iLenOutTmp;
-				i += iLen - 1;
-				continue;
-			}
-
-			if (ch == '>' && pszInp[i - 1] == '?') // found end of block.
-			{
-				// NOTE: take the tag from output side in case it is the product of recursive blocks.
-				bOpenBlock = false;
-				StrLen_t iTagLen = (iOutLen - iBeginBlock) - 4;
-				cStringA sTag(pszOut + iBeginBlock + 2, iTagLen);
-				StrLen_t iOutMax = iOutLenMax - iBeginBlock;
-				HRESULT hRes;
-				if (pBlockReq != nullptr)
-				{
-					cStringI sVal;
-					hRes = pBlockReq->PropGet(sTag, sVal);
-					if (SUCCEEDED(hRes))
-					{
-						hRes = StrT::CopyLen<IniChar_t>(pszOut + iBeginBlock, sVal, iOutMax);
-					}
-				}
-				else
-				{
-					hRes = HRESULT_WIN32_C(ERROR_READ_FAULT);
-				}
-				if (FAILED(hRes))
-				{
-					// Just in case this really is a >= operator ?
-					DEBUG_ERR(("Parse '%s' ERR='%s'", LOGSTR(sTag), LOGERR(hRes)));
-				}
-				else
-				{
-					iOutLen = iBeginBlock + hRes;
-				}
-				if (bRecursing)
-				{
-					i++;
-					break; // end of recurse block.
-				}
-			}
-		}
-
-		if (pBlockReq == nullptr)
-		{
-			return k_ITERATE_BAD;
-		}
-		if (bRecursing)
-		{
-			return i;
-		}
-		pszOut[iOutLen] = '\0';
-		return(iOutLen);
 	}
 }

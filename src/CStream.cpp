@@ -6,6 +6,7 @@
 #include "cStream.h"
 #include "cHeap.h"
 #include "cThreadLock.h"
+#include "cStack.h"		// include this some palce just to compile.
 
 namespace Gray
 {

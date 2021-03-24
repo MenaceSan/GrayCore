@@ -101,6 +101,7 @@ namespace Gray
 	{
 		//! @class Gray::HResultCode
 		//! Used to define a nullptr terminated table of codes (usually) for a single FACILITY_TYPE.
+		//! cPair
 		//! ASSUME this array is HRESULT sorted.
 	public:
 		HRESULT m_hRes;			//! DWORD error code for a FACILITY_TYPE. might just use WORD?
@@ -119,7 +120,7 @@ namespace Gray
 		//! https://msdn.microsoft.com/en-us/library/cc231198.aspx
 
 	public:
-		typedef cPair<FACILITY_TYPE, const GChar_t*> Facility_t;	// name the facilities.
+		typedef cPair<FACILITY_TYPE, const GChar_t*> Facility_t;	//!< name each FACILITY_TYPE.
 		static const Facility_t k_Facility[];	//!< names of all known FACILITY_TYPE.
 
 		HRESULT m_hRes;		// DWORD

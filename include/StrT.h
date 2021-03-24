@@ -13,10 +13,8 @@
 #include "StrConst.h"
 #include "StrNum.h"
 #include "StrU.h"
-#include "StrFormat.h"
 #include "cValArray.h"
 #include "cHeap.h"
-#include "cUnitTestDecl.h"
 #include "cDebugAssert.h"	// ASSERT
 
 namespace Gray
@@ -74,9 +72,6 @@ namespace Gray
 
 		static const StrLen_t k_LEN_MAX = 15000;		//!< arbitrary max size for Format() etc. NOTE: _MSC_VER says stack frame should be at least 16384
 		static const StrLen_t k_LEN_MAX_KEY = 128;		//!< arbitrary max size of (Symbolic Identifier) keys.
-
-#define STR_NL		"\n"			//!< NL/LF for Linux format text files. (10) Use "#define" so we can concatenate strings at compile time.
-#define STR_CRLF	"\r\n"			//!< CR+LF for DOS/Windows format text files. (13,10)
 
 		static const char k_szBlockStart[STR_BLOCK_QTY + 1]; //!< array of STR_BLOCK_TYPE	"\"{[("
 		static const char k_szBlockEnd[STR_BLOCK_QTY + 1];
@@ -236,7 +231,7 @@ namespace Gray
 		// String modifying.
 
 		template< typename TYPE >
-		GRAYCORE_LINK static StrLen_t GRAYCALL CopyLen(TYPE* pszDst, const TYPE* pSrc, StrLen_t iLenCharsMax) NOEXCEPT;
+		GRAYCORE_LINK static StrLen_t GRAYCALL CopyLen(TYPE* pszDst, const TYPE* pSrc, StrLen_t iLenCharsMax) NOEXCEPT; // iLenCharsMax includes room for '\0'
 
 		template< typename TYPE >
 		static void MakeUpperCase(TYPE* pszDst, StrLen_t iLenCharsMax) NOEXCEPT
@@ -267,7 +262,7 @@ namespace Gray
 
 		// like _vsntprintf
 		template< typename TYPE >
-		static StrLen_t vsprintfN(OUT TYPE* pszOut, StrLen_t iLenOutMax, const TYPE* pszFormat, va_list vlist);
+		GRAYCORE_LINK static StrLen_t GRAYCALL vsprintfN(OUT TYPE* pszOut, StrLen_t iLenOutMax, const TYPE* pszFormat, va_list vlist);
 
 		template< typename TYPE >
 		static StrLen_t _cdecl sprintfN(OUT TYPE* pszOut, StrLen_t iLenOutMax, const TYPE* pszFormat, ...)
@@ -279,7 +274,7 @@ namespace Gray
 			//!  size in characters. -1 = too small. (NOT CONSISTENT WITH LINUX!)
 			va_list vargs;
 			va_start(vargs, pszFormat);
-			StrLen_t nLenRet = StrT::vsprintfN(pszOut, iLenOutMax, pszFormat, vargs);
+			const StrLen_t nLenRet = StrT::vsprintfN(pszOut, iLenOutMax, pszFormat, vargs);
 			va_end(vargs);
 			return nLenRet;
 		}
@@ -382,8 +377,6 @@ namespace Gray
 		GRAYCORE_LINK static double GRAYCALL toDouble(const TYPE* pszStr, const TYPE** ppszStrEnd = /*(const TYPE**)*/ nullptr);
 		template< typename TYPE >
 		GRAYCORE_LINK static StrLen_t GRAYCALL DtoA(double nVal, OUT TYPE* pszOut, StrLen_t iStrMax, int iDecPlaces = -1, char chE = -'e');
-
-		UNITTEST_FRIEND(StrT);
 	};
 
 	template< typename TYPE = char >
@@ -525,7 +518,7 @@ namespace Gray
 	template<> inline StrLen_t StrT::ULtoA<wchar_t>(UINT64 uVal, wchar_t* pszOut, StrLen_t iOutMax, RADIX_t nBaseRadix) // static
 	{
 		char szTmp[StrNum::k_LEN_MAX_DIGITS_INT];
-		StrLen_t iStrLen = StrNum::ULtoA(uVal, szTmp, _countof(szTmp), nBaseRadix);
+		const StrLen_t iStrLen = StrNum::ULtoA(uVal, szTmp, _countof(szTmp), nBaseRadix);
 		return StrU::UTF8toUNICODE(pszOut, iOutMax, szTmp, iStrLen);
 	}
 	template<> inline StrLen_t StrT::ILtoA<char>(INT64 uVal, char* pszOut, StrLen_t iOutMax, RADIX_t nBaseRadix) // static
@@ -535,7 +528,7 @@ namespace Gray
 	template<> inline StrLen_t StrT::ILtoA<wchar_t>(INT64 uVal, wchar_t* pszOut, StrLen_t iOutMax, RADIX_t nBaseRadix) // static
 	{
 		char szTmp[StrNum::k_LEN_MAX_DIGITS_INT];
-		StrLen_t iStrLen = StrNum::ILtoA(uVal, szTmp, _countof(szTmp), nBaseRadix);
+		const StrLen_t iStrLen = StrNum::ILtoA(uVal, szTmp, _countof(szTmp), nBaseRadix);
 		return StrU::UTF8toUNICODE(pszOut, iOutMax, szTmp, iStrLen);
 	}
 
@@ -552,9 +545,9 @@ namespace Gray
 	{
 		char szTmp[StrNum::k_LEN_MAX_DIGITS + 4];
 #if 0
-		StrLen_t iStrLen = StrNum::DToATestLegacy(nVal, szTmp, _countof(szTmp), iDecPlaces);
+		const StrLen_t iStrLen = StrNum::DToATestLegacy(nVal, szTmp, _countof(szTmp), iDecPlaces);
 #else
-		StrLen_t iStrLen = StrNum::DtoAG2(nVal, szTmp, iDecPlaces, chE);
+		const StrLen_t iStrLen = StrNum::DtoAG2(nVal, szTmp, iDecPlaces, chE);
 #endif
 		return StrU::UTF8toUNICODE(pszOut, iOutMax, szTmp, iStrLen);
 	}
@@ -568,63 +561,9 @@ namespace Gray
 	template<> inline StrLen_t StrT::ULtoAK<wchar_t>(UINT64 uVal, OUT wchar_t* pszOut, StrLen_t iStrMax, UINT nKUnit, bool bSpace) // static
 	{
 		char szTmp[StrNum::k_LEN_MAX_DIGITS + 4];
-		StrLen_t iStrLen = StrNum::ULtoAK(uVal, szTmp, _countof(szTmp), nKUnit, bSpace);
+		const StrLen_t iStrLen = StrNum::ULtoAK(uVal, szTmp, _countof(szTmp), nKUnit, bSpace);
 		return StrU::UTF8toUNICODE(pszOut, iStrMax, szTmp, iStrLen);
 	}
-
-#if 1 // use the C lib. else StrFormat
-	template<> StrLen_t inline StrT::vsprintfN<char>(OUT char* pszOut, StrLen_t iLenOutMax, const char* pszFormat, va_list vlist)
-	{
-		//! UTF8 sprintf version.
-		//! @note Use StrArg<char>(s) for safe "%s" args.
-		//! @note Windows _snprintf and _vsnprintf are not compatible to Linux versions.
-		//!  Linux result is the size of the buffer that it should have.
-		//!  Windows Result value is not size of buffer needed, but -1 if no fit is possible.
-		//!  Newer Windows versions have a _TRUNCATE option to just truncate the string.
-		//!  ?? try to 'fix' this by at least suggesting enlarging the size by 20 ??
-		//!  _vscwprintf can be used to estimate the size needed in advance using a 2 pass method.
-		//! @arg
-		//!  pszOut = vsnprintf is OK with nullptr and size=0.
-		//!  iLenOutMax = size in characters. (Not Bytes) Must allow space for '\0'
-		//! @return
-		//!  size in characters.  negative value if an output error occurs.
-#if defined(__linux__)
-		return ::vsnprintf(pszOut, iLenOutMax, pszFormat, vlist); // C99
-#elif USE_CRT && (_MSC_VER >= 1400) && ! defined(UNDER_CE)
-		// CRT version. act as _TRUNCATE
-		return ::_vsnprintf_s(pszOut, (size_t)(iLenOutMax), (size_t)(iLenOutMax - 1), pszFormat, vlist);	// to shut up the deprecated warnings.
-#elif USE_CRT
-		// OLD CRT version.
-		return ::_vsnprintf(pszOut, iLenOutMax, pszFormat, vlist);
-#else // _WIN32
-		// dont use _WIN32 System version (No floats). return ::FormatMessageA(0, pszFormat, 0, 0, pszOut, iLenOutMax, &vlist);
-		return StrFormat<char>::FormatV(pszOut, iLenOutMax, pszFormat, vlist);
-#endif
-	}
-
-	template<> StrLen_t inline StrT::vsprintfN<wchar_t>(OUT wchar_t* pszOut, StrLen_t iLenOutMax, const wchar_t* pszFormat, va_list vlist)
-	{
-		//! UNICODE sprintf version.
-		//! @note Use StrArg<wchar_t>(s) for safe "%s" args.
-		//! @arg
-		//!  pszOut = vsnprintf is ok with nullptr and size=0.
-		//!  iLenOutMax = size in characters. (Not Bytes) Must allow space for '\0'
-		//! @return
-		//!  size in characters. -1 = too small.
-#if defined(__linux__)
-		return ::vswprintf(pszOut, iLenOutMax, pszFormat, vlist);  // C99
-#elif USE_CRT && (_MSC_VER >= 1400) &&  ! defined(UNDER_CE)
-		// CRT version. act as _TRUNCATE
-		return ::_vsnwprintf_s(pszOut, (size_t)(iLenOutMax), (size_t)(iLenOutMax - 1), pszFormat, vlist);	// to shut up the deprecated warnings.
-#elif USE_CRT
-		// OLD CRT version.
-		return ::_vsnwprintf(pszOut, iLenOutMax, pszFormat, vlist);
-#else // _WIN32
-		// @note dont use _WIN32 System version (No floats)  return ::FormatMessageW(0, pszFormat, 0, 0, pszOut, iLenOutMax, &vlist);
-		return StrFormat<wchar_t>::FormatV(pszOut, iLenOutMax, pszFormat, vlist);
-#endif
-	}
-#endif
 
 	// Override implementations
 

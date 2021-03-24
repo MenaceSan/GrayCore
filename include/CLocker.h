@@ -29,40 +29,42 @@ namespace Gray
 			: m_nLockCount(0)
 		{
 		}
-		~cLockableBase()
+		~cLockableBase() noexcept
 		{
-			ASSERT(m_nLockCount == 0);
+			DEBUG_CHECK(m_nLockCount == 0);
 		}
-		inline LONG get_LockCount() const
+		inline LONG get_LockCount() const noexcept
 		{
-			ASSERT(m_nLockCount >= 0);
+			DEBUG_CHECK(m_nLockCount >= 0);
 			return m_nLockCount;
 		}
-		inline bool isLocked() const
+		inline bool isLocked() const noexcept
 		{
-			ASSERT(m_nLockCount >= 0);
+			DEBUG_CHECK(m_nLockCount >= 0);
 			return(m_nLockCount != 0);
 		}
 
-		inline void IncLockCount()
+		inline void IncLockCount() noexcept
 		{
 			++m_nLockCount;
-			ASSERT(m_nLockCount >= 0);
+			DEBUG_CHECK(m_nLockCount >= 0);
 		}
-		inline LONG DecLockCount()
+		inline LONG DecLockCount() noexcept
 		{
+			//! @return new lock count.
 			--m_nLockCount;
-			ASSERT(m_nLockCount >= 0);
-			return m_nLockCount;
+			DEBUG_CHECK(m_nLockCount >= 0);
+			return m_nLockCount; // return new lock count.
 		}
-		inline void Lock()
+		inline void Lock() noexcept
 		{
 			// For template support. cLockerT
 			IncLockCount();
 		}
-		inline LONG Unlock()
+		inline LONG Unlock() noexcept
 		{
-			// For template support. cLockerT
+			//! For template support. cLockerT
+			//! @return new lock count.
 			return DecLockCount();
 		}
 	};
@@ -77,20 +79,20 @@ namespace Gray
 		//! TYPE must support Unlock() and probably Lock() or be based on cLockableBase*
 		//! m_p = the lock we are locking.
 		//! Similar to ATL CCritSecLock, std::unique_lock
-		//
+ 
 	public:
 		explicit cLockerT(TYPE* pLock, bool bLockSuccess) noexcept
 			: cPtrFacade<TYPE>(bLockSuccess ? pLock : nullptr)
 		{
 			// The lock may not always work ! this->m_p == nullptr
 		}
-		explicit cLockerT(TYPE& rLock)
+		explicit cLockerT(TYPE& rLock) noexcept
 			: cPtrFacade<TYPE>(&rLock)
 		{
-			ASSERT(this->m_p == &rLock && this->m_p != nullptr);
+			DEBUG_CHECK(this->m_p == &rLock && this->m_p != nullptr);
 			rLock.Lock();	// Assume lock must succeed.
 		}
-		~cLockerT()
+		~cLockerT() noexcept
 		{
 			if (this->m_p != nullptr)
 			{

@@ -320,7 +320,7 @@ namespace Gray
 		if (!CFile::Open(m_strFileName, nOpenFlags))	// doesn't use pSa
 		{
 			hRes = HResult::GetLastDef(HRESULT_WIN32_C(ERROR_FILE_NOT_FOUND));
-	}
+		}
 #else
 		hRes = CFile::OpenCreate(m_strFileName, nOpenFlags, nullptr);
 #endif
@@ -334,7 +334,7 @@ namespace Gray
 				if (!CFile::Open(m_strFileName, nOpenFlags))
 				{
 					hRes = HResult::GetLastDef(HRESULT_WIN32_C(ERROR_FILE_NOT_FOUND));
-		}
+				}
 #else
 				hRes = CFile::OpenCreate(m_strFileName, nOpenFlags, nullptr);
 #endif
@@ -595,7 +595,7 @@ namespace Gray
 #else
 		return CFile::Write(pData, nDataSize);
 #endif
-		}
+	}
 
 	HRESULT cFile::FlushX() // virtual
 	{
@@ -683,7 +683,7 @@ namespace Gray
 
 	HRESULT GRAYCALL cFile::LoadFile(const FILECHAR_t* pszFilePath, OUT cHeapBlock& block, size_t nSizeExtra) // static
 	{
-		//! Read file into memory.
+		//! Read whole file into memory.
 		//! @arg nSizeExtra = allocate some extra space at end.
 		//! @return size read (Not including nSizeExtra). or <0 = error.
 		cFile file;
@@ -693,12 +693,12 @@ namespace Gray
 		hRes = file.ReadAll(block, nSizeExtra);
 		if (FAILED(hRes))
 			return hRes;
+		ASSERT(hRes == (HRESULT)(block.get_DataSize() - nSizeExtra));	// got it all ?
 		// Zero the extra (if any);
-		ASSERT(hRes == (HRESULT)(block.get_DataSize() - nSizeExtra));
 		if (nSizeExtra > 0)
 		{
-			block.get_DataBytes()[hRes] = 0;	// terminator.
+			block.get_DataBytes()[hRes] = '\0';	// terminator as default.
 		}
 		return hRes;
 	}
-	}
+}

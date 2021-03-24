@@ -11,10 +11,15 @@
 
 #include "StrChar.h"
 #include "StrConst.h"
+#include "StrBuilder.h"
 #include "cDebugAssert.h"
+#include "IUnknown.h"		// DECLARE_INTERFACE
 
 namespace Gray
 {
+	DECLARE_INTERFACE(IIniBaseGetter);		// cIniBase.h
+	typedef char IniChar_t;		//!< char format even on UNICODE system! Screw M$, INI files should ALWAYS have UTF8 contents
+
 	struct GRAYCORE_LINK StrFormatBase
 	{
 		//! @class Gray::StrFormatBase
@@ -63,21 +68,60 @@ namespace Gray
 		//! Hold a single printf type format parameter/specifier and render it.
 
 	public:
-		typedef StrLen_t(_cdecl *STRFORMAT_t)(TYPE* pszOut, StrLen_t iLenOutMax, const TYPE* pszFormat, ...);	// for testing.
+		typedef StrLen_t(_cdecl* STRFORMAT_t)(TYPE* pszOut, StrLen_t iLenOutMax, const TYPE* pszFormat, ...);	// signature for testing.
 
 	public:
 		StrLen_t ParseParam(const TYPE* pszFormat);
-		StrLen_t RenderString(TYPE* pszOut, StrLen_t nLenOutMax, const TYPE* pszParam, StrLen_t nParamLen, short nPrecision) const;
-		StrLen_t RenderUInt(TYPE* pszOut, StrLen_t nLenOutMax, const TYPE* pszPrefix, RADIX_t nRadix, char chRadixA, UINT64 uVal) const;
-		StrLen_t RenderFloat(TYPE* pszOut, StrLen_t nLenOutMax, char chRadixA, double dVal) const;
 
-		StrLen_t RenderParam(TYPE* pszOut, StrLen_t nLenOutMax, va_list* pvlist) const;
+		void RenderString(StrBuilder<TYPE>& out, const TYPE* pszParam, StrLen_t nParamLen, short nPrecision) const;
+		void RenderUInt(StrBuilder<TYPE>& out, const TYPE* pszPrefix, RADIX_t nRadix, char chRadixA, UINT64 uVal) const;
+		void RenderFloat(StrBuilder<TYPE>& out, char chRadixA, double dVal) const;
 
-		static StrLen_t GRAYCALL FormatV(TYPE* pszOut, StrLen_t nLenOutMax, const TYPE* pszFormat, va_list vlist);
-		static StrLen_t _cdecl FormatF(TYPE* pszOut, StrLen_t nLenOutMax, const TYPE* pszFormat, ...);
+		void RenderParam(StrBuilder<TYPE>& out, va_list* pvlist) const;
 
-		UNITTEST_FRIEND(StrFormat);
+		static void GRAYCALL V(StrBuilder<TYPE>& out, const TYPE* pszFormat, va_list vlist);
+		static inline StrLen_t GRAYCALL V(TYPE* pszOut, StrLen_t nLenOutMax, const TYPE* pszFormat, va_list vlist);
+
+		static inline void _cdecl F(StrBuilder<TYPE>& out, const TYPE* pszFormat, ...);
+		static inline StrLen_t _cdecl F(TYPE* pszOut, StrLen_t nLenOutMax, const TYPE* pszFormat, ...);
 	};
+
+	class GRAYCORE_LINK StrTemplate
+	{
+		//! @class Gray::StrTemplate
+		//! strings may contain template blocks to be replaced. <?block?>
+		//! similar to expressions.
+	public:
+		static bool GRAYCALL HasTemplateBlock(const IniChar_t* pszInp);
+		static StrLen_t GRAYCALL ReplaceTemplateBlock(StrBuilder<IniChar_t>& out, const IniChar_t* pszInp, IIniBaseGetter* pBlockReq, bool bRecursing = false);
+	};
+
+	template< typename TYPE>
+	inline StrLen_t GRAYCALL StrFormat<TYPE>::V(TYPE* pszOut, StrLen_t nLenOutMax, const TYPE* pszFormat, va_list vlist)	// static
+	{
+		StrBuilder<TYPE> out(pszOut, nLenOutMax);
+		V(OUT out, pszFormat, vlist);
+		return out.get_Length();
+	}
+
+	template< typename TYPE>
+	inline void _cdecl StrFormat<TYPE>::F(StrBuilder<TYPE>& out, const TYPE* pszFormat, ...)	// static
+	{
+		va_list vargs;
+		va_start(vargs, pszFormat);
+		V(out, pszFormat, vargs);
+		va_end(vargs);
+	}
+
+	template< typename TYPE>
+	inline StrLen_t _cdecl StrFormat<TYPE>::F(TYPE* pszOut, StrLen_t nLenOutMax, const TYPE* pszFormat, ...)	// static
+	{
+		va_list vargs;
+		va_start(vargs, pszFormat);
+		const StrLen_t nLenOut = V(pszOut, nLenOutMax, pszFormat, vargs);
+		va_end(vargs);
+		return nLenOut;
+	}
 }
 
 #endif

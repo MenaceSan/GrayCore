@@ -516,7 +516,7 @@ namespace Gray
 			return *this;
 		}
 
-		ITERATE_t FindIFor(ARG_TYPE arg) const
+		ITERATE_t FindIFor(ARG_TYPE arg) const noexcept
 		{
 			//! Find the index of a specified entry arg.
 			//! @return index, -1 = k_ITERATE_BAD = not found.
@@ -527,7 +527,7 @@ namespace Gray
 			}
 			return k_ITERATE_BAD;
 		}
-		bool HasArg(ARG_TYPE arg) const
+		bool HasArg(ARG_TYPE arg) const noexcept
 		{
 			//! Find the index of a specified entry.
 			return FindIFor(arg) >= 0;

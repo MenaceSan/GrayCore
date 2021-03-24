@@ -21,8 +21,8 @@ namespace Gray
 	{
 		//! Format the text for the event in the default way. adds FILE_EOL.
 
-		LOGCHAR_t szTemp[StrT::k_LEN_MAX];	// assume this magic number is big enough.
-		StrBuilder s(szTemp, STRMAX(szTemp));
+		LOGCHAR_t szTemp[StrT::k_LEN_MAX];	// assume this magic number is big enough. Logging is weird and special so dont use dynamic memory.
+		StrBuilder<LOGCHAR_t> s(szTemp, STRMAX(szTemp));
 
 		if (get_LogLevel() >= LOGLEV_WARN)
 		{

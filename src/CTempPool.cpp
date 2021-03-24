@@ -54,7 +54,7 @@ namespace Gray
 			if (++m_iCountCur >= k_iCountMax)
 				m_iCountCur = 0;
 		}
-		m_aBlocks[m_iCountCur].Alloc(nLenNeed);	// alloc to the size we need.
+		m_aBlocks[m_iCountCur].AllocPtr(nLenNeed);	// alloc to the size we need.
 		return(m_aBlocks[m_iCountCur].get_Data());
 	}
 
