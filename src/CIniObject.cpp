@@ -11,24 +11,12 @@
 
 namespace Gray
 {
-	HRESULT cIniObject::PropSet(const IniChar_t* pszPropTag, const IniChar_t* pszValue) // override
-	{
-		//! IIniBaseSetter
-		//! Set a prop by its string name.
-		//! default implementation.
-		//! @return E_INVALIDARG,  HRESULT_WIN32_C(ERROR_UNKNOWN_PROPERTY)
-
-		// m_nDirtyMask
-
-		return this->PropSetN(this->FindProp(pszPropTag), pszValue);
-	}
-
 	HRESULT cIniObject::PropGet(const IniChar_t* pszPropTag, OUT cStringI& rsValue) const // override
 	{
 		//! IIniBaseGetter
 		//! Read a prop by its string name.
 		//! default implementation.
-		return this->PropEnum(this->FindProp(pszPropTag), rsValue, nullptr);
+		return this->PropGetEnum(this->FindProp(pszPropTag), rsValue, nullptr);
 	}
 
 	HRESULT cIniObject::FileWriteN(cStreamOutput& rOut, IPROPIDX_t ePropIdx) const
@@ -40,7 +28,7 @@ namespace Gray
 		if (!(m_nDirtyMask & nPropMask))	// already written. or not changed?
 			return S_FALSE;
 		cStringI sValue;
-		HRESULT hRes = this->PropEnum(ePropIdx, sValue);
+		HRESULT hRes = this->PropGetEnum(ePropIdx, sValue);
 		if (FAILED(hRes))
 			return hRes;
 		m_nDirtyMask &= ~nPropMask;		// not dirty anymore.

@@ -9,10 +9,12 @@
 #include "cString.h"
 #include "cCodeProfiler.h"
 #include "cAppState.h"
-#include "cFileTextReader.h"	// cFileText or cFileTextReader
+#include "cFileText.h"	// cFileText or cFileTextReader
 
 namespace Gray
 {
+	const IniChar_t cIniFile::k_SectionDefault[1] = "";	// static "" = default section name for tags not in a section.
+
 	cIniFile::cIniFile()
 	{
 	}
@@ -59,7 +61,7 @@ namespace Gray
 			{
 				if (pSection == nullptr)
 				{
-					pSection = AddSection("", bStripComments);	// add root/null section at the top.
+					pSection = AddSection(k_SectionDefault, bStripComments);	// add root/null section at the top.
 				}
 				IniChar_t* pszLine = szBuffer;
 				if (bStripComments)
@@ -123,14 +125,15 @@ namespace Gray
 		return S_OK;
 	}
 
-	HRESULT cIniFile::PropEnum(IPROPIDX_t ePropIdx, OUT cStringI& rsValue, cStringI* psPropTag) const // virtual
+	HRESULT cIniFile::PropGetEnum(IPROPIDX_t ePropIdx, OUT cStringI& rsValue, OUT cStringI* psPropTag) const // virtual
 	{
 		//! IIniBaseEnumerator
 		//! Enumerate the sections.
-		if (!m_aSections.IsValidIndex(ePropIdx))
-			return HRESULT_WIN32_C(ERROR_UNKNOWN_PROPERTY);
+		//! @arg psPropTag = return the section type as [SECTION Value] if it applies.
 
-		const cIniSectionEntry* pSec = m_aSections.GetAt(ePropIdx);
+		const cIniSectionEntry* pSec = EnumSection(ePropIdx);
+		if (pSec == nullptr)
+			return HRESULT_WIN32_C(ERROR_UNKNOWN_PROPERTY);
 		rsValue = cIniSection::GetSectionTitleParse(pSec->get_SectionTitle(), psPropTag);
 		return (HRESULT)ePropIdx;
 	}
@@ -141,16 +144,17 @@ namespace Gray
 		CODEPROFILEFUNC();
 		if (pszSectionTitle == nullptr)
 		{
-			pszSectionTitle = "";
+			pszSectionTitle = k_SectionDefault;	// global scope. Not in a section.
 		}
-		StrLen_t iLen = StrT::Len(pszSectionTitle);
-		if (iLen >= StrT::k_LEN_MAX_KEY)
+		const StrLen_t iLen = StrT::Len(pszSectionTitle);
+		if (iLen >= StrT::k_LEN_MAX_KEY)	// not a valid name !
 		{
+			// iLen = StrT::k_LEN_MAX_KEY; // truncate?
 			return nullptr;
 		}
 		for (ITERATE_t i = 0; i < m_aSections.GetSize(); i++)
 		{
-			cIniSectionEntryPtr pSection(const_cast<cIniSectionEntry*>(m_aSections.GetAt(i)));
+			cIniSectionEntryPtr pSection(m_aSections.GetAt(i));
 			const IniChar_t* pszLine = pSection->get_SectionTitle();
 			if (StrT::CmpIN(pszLine, pszSectionTitle, iLen)) // NO match ?
 				continue;
@@ -169,10 +173,10 @@ namespace Gray
 		//! Create a new section in the file.
 		//! don't care if the key exists or not. dupes are OK.
 		//! @arg pszSectionTitle = "SECTIONTYPE SECTIONNAME" (ASSUME already stripped [])
-		//!  pszSectionTitle = "" = default;
+		//!  pszSectionTitle = "" = k_SectionDefault;
 		if (pszSectionTitle == nullptr)
 		{
-			pszSectionTitle = "";
+			pszSectionTitle = k_SectionDefault;
 		}
 		cIniSectionEntryPtr pSection = new cIniSectionEntry(pszSectionTitle, bStripComments, iLine);
 		m_aSections.Add(pSection);

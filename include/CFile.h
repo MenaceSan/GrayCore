@@ -90,17 +90,18 @@ namespace Gray
 		cStringF m_strFileName;		//!< store a copy of the full file path. MFC defined name. 
 
 	protected:
-		bool isFileOpen() const noexcept
-		{
-			return m_hFile.isValidHandle();
-		}
-
 		// virtual BOOL Open( const TCHAR* lpszFileName, UINT nOpenFlags, CFileException* pError = nullptr ) = 0; // MFC def.
 		HRESULT OpenCreate(cStringF sFilePath = _FN(""), OF_FLAGS_t nOpenFlags = OF_CREATE | OF_WRITE, _SECURITY_ATTRIBUTES* pSa = nullptr);
+
 	public:
 		virtual ~CFile()
 		{
 			Close();
+		}
+
+		bool isFileOpen() const noexcept
+		{
+			return m_hFile.isValidHandle();
 		}
 
 		// virtual CString GetFilePath() const	// DO NOT USE this. It conflicts with the messed up version of MFC. 
@@ -123,6 +124,7 @@ namespace Gray
 		HRESULT Read(void* pData, size_t nDataSize)
 		{
 			// don't call this directly use ReadX
+			// ERROR_HANDLE_EOF
 			return m_hFile.ReadX(pData, nDataSize);
 		}
 	};
@@ -245,18 +247,16 @@ namespace Gray
 		}
 
 		// File Open/Close
-		virtual bool isFileOpen() const noexcept
-		{
 #ifdef _MFC_VER
+		bool isFileOpen() const noexcept
+		{
 			return m_hFile != CFile::hFileNull;
-#else
-			return CFile::isFileOpen();
-#endif
 		}
+#endif
 
 		// MFC Open is BOOL return type.
 		virtual HRESULT OpenX(cStringF sFilePath = _FN(""), OF_FLAGS_t nOpenFlags = OF_READ | OF_SHARE_DENY_NONE);
-		void Close(void) noexcept override;
+		void Close() noexcept override;
 
 		HANDLE DetachFileHandle() noexcept;
 
@@ -277,8 +277,7 @@ namespace Gray
 		static HRESULT GRAYCALL DeletePath(const FILECHAR_t* pszFileName);	// NOTE: MFC Remove() returns void
 		static HRESULT GRAYCALL DeletePathX(const FILECHAR_t* pszFilePath, DWORD nFileFlags = 0);
 		static HRESULT GRAYCALL LoadFile(const FILECHAR_t* pszFilePath, OUT cHeapBlock& block, size_t nSizeExtra = 0);
-
-		UNITTEST_FRIEND(cFile);
+ 
 	};	
 } 
 

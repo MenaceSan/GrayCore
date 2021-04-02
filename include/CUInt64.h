@@ -361,8 +361,6 @@ namespace Gray
 
 		static void GRAYCALL Divide(const cUInt64& dividend, const cUInt64& divisor, OUT cUInt64& quotient, OUT cUInt64& remainder);
 		static void GRAYCALL EuclideanAlgorithm(const cUInt64& x, const cUInt64& y, OUT cUInt64& a, OUT cUInt64& b, OUT cUInt64& g);
-
-		UNITTEST_FRIEND(cUInt64);
 	};
 
 #pragma pack(pop)
@@ -408,6 +406,6 @@ namespace Gray
 		temp >>= uiBits;
 		return temp;
 	}
-};
+}
 
 #endif

@@ -43,14 +43,14 @@ namespace Gray
 		// for k_I_JUMP
 		if (m_OldCode[0] == k_I_JUMP)
 		{
-			::memcpy(&lRelAddr, m_OldCode + k_LEN_J, sizeof(lRelAddr));
+			cMem::Copy(&lRelAddr, m_OldCode + k_LEN_J, sizeof(lRelAddr));
 			return (FARPROC)(((UINT_PTR)m_pFuncOrig) + lRelAddr + k_LEN_J + k_LEN_JO);
 		}
 
 		// Look for other forms of chainable jmp commands. e.g.  0xFF
 		if (m_OldCode[0] == 0x48 && m_OldCode[1] == 0xff && m_OldCode[2] == 0x25)
 		{
-			::memcpy(&lRelAddr, m_OldCode + 3, sizeof(lRelAddr));
+			cMem::Copy(&lRelAddr, m_OldCode + 3, sizeof(lRelAddr));
 			return *((FARPROC*)(((UINT_PTR)m_pFuncOrig) + lRelAddr + 3 + k_LEN_JO));
 		}
 		if (m_OldCode[0] == 0xff && m_OldCode[1] == 0x25)
@@ -107,7 +107,7 @@ namespace Gray
 		// DEBUG_TRACE(("InstallHook: pFuncOrig = %08x, pFuncNew = %08x", (UINT_PTR)pFuncOrig, (UINT_PTR)pFuncNew ));
 		m_pFuncOrig = pFuncOrig;
 		SetProtectPages(false);
-		::memcpy(m_OldCode, (void*)pFuncOrig, sizeof(m_OldCode));		// save old code.
+		cMem::Copy(m_OldCode, (void*)pFuncOrig, sizeof(m_OldCode));		// save old code.
 
 		if (bSkipChainable && isChainable())
 		{
@@ -131,9 +131,9 @@ namespace Gray
 		// DEBUG_TRACE(("InstallHook JMP %08x", lRelAddr));
 		// create unconditional JMP to relative address is 5 bytes. X86/64 ONLY!!
 		m_Jump[0] = k_I_JUMP;
-		::memcpy(m_Jump + k_LEN_J, &lRelAddr, k_LEN_JO);
+		cMem::Copy(m_Jump + k_LEN_J, &lRelAddr, k_LEN_JO);
 
-		if (::memcmp(m_Jump, m_OldCode, sizeof(m_Jump)) == 0)
+		if (cMem::IsEqual(m_Jump, m_OldCode, sizeof(m_Jump)))
 		{
 			// We already injected this with some other cHookJump instance! This is bad. We are fighting ourselfs with duplicated code !! why?
 			// We must unwind in proper order or it will fail.
@@ -143,7 +143,7 @@ namespace Gray
 			return E_FAIL;
 		}
 
-		::memcpy((void*)pFuncOrig, m_Jump, sizeof(m_Jump));	// inject jump. we are armed!
+		cMem::Copy((void*)pFuncOrig, m_Jump, sizeof(m_Jump));	// inject jump. we are armed!
 
 		// DEBUG_MSG(("InstallHook: JMP-hook planted."));
 		return S_OK;
@@ -157,7 +157,7 @@ namespace Gray
 		ASSERT(m_pFuncOrig != nullptr);
 		GRAY_TRY
 		{
-			::memcpy((void*)m_pFuncOrig, m_OldCode, sizeof(m_Jump));	// SwapOld(pFuncOrig)
+			cMem::Copy((void*)m_pFuncOrig, m_OldCode, sizeof(m_Jump));	// SwapOld(pFuncOrig)
 			m_Jump[0] = k_I_NULL;	// destroy my jump. (must reconstruct it)
 			SetProtectPages(true);
 		}

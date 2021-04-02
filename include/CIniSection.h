@@ -54,7 +54,7 @@ namespace Gray
 		//! @struct Gray::cIniReader
 		//! Helper for reading/parsing an INI file/stream.
 
-		static bool GRAYCALL IsSectionHeader(const IniChar_t* pszLine);
+		static bool GRAYCALL IsSectionHeader(const IniChar_t* pszLine) noexcept;
 
 		static bool GRAYCALL IsLineComment(const IniChar_t* pszLine);
 		static IniChar_t* GRAYCALL FindLineArg(const IniChar_t* pszLine, bool bAllowSpace = false);
@@ -80,10 +80,10 @@ namespace Gray
 
 		friend class cIniFile;
 	public:
-		static const StrLen_t k_SECTION_SIZE_MAX = (256 * 1024); //!< (chars) max size for whole section. (Windows Me/98/95 = 32K for INI)
-		static const ITERATE_t k_LINE_QTY_MAX = (8 * 1024);	//!< max number of lines i support. (per section)
-		static const StrLen_t k_LINE_LEN_MAX = (4 * 1024);	//!< max size for a single line (in chars).
-		static const StrLen_t k_LINE_LEN_DEF = (1024);		//!< suggested/guessed/average size for lines (in chars). for alloc guessing.
+		static const StrLen_t k_SECTION_SIZE_MAX = 256 * 1024; //!< (chars) max size for whole section. (Windows Me/98/95 = 32K for INI)
+		static const ITERATE_t k_LINE_QTY_MAX = 8 * 1024;	//!< max number of lines i support. (per section)
+		static const StrLen_t k_LINE_LEN_MAX = 4 * 1024;	//!< max size for a single line (in chars).
+		static const StrLen_t k_LINE_LEN_DEF = 1024;		//!< suggested/guessed/average size for lines (in chars). for alloc guessing.
 
 	protected:
 		bool m_bStripComments;	//!< has been stripped of blank lines, comments, leading and trailing line spaces.
@@ -150,7 +150,7 @@ namespace Gray
 		static StrLen_t GRAYCALL IsLineTrigger(const IniChar_t* pszLine);
 		ITERATE_t FindTriggerName(const IniChar_t* pszTrigName) const;
 
-		virtual HRESULT PropEnum(IPROPIDX_t ePropIdx, OUT cStringI& rsValue, cStringI* psKey = nullptr) const override;
+		virtual HRESULT PropGetEnum(IPROPIDX_t ePropIdx, OUT cStringI& rsValue, OUT cStringI* psKey = nullptr) const override;
 		void ClearLineQty();
 
 		ITERATE_t FindKeyLine(const IniChar_t* pszKeyName, bool bPrefixOnly = false) const; //!< Find a key in the section (key=args)
@@ -237,7 +237,6 @@ namespace Gray
 		{
 			return IsSectionTypeMatch(m_sSectionTitle, pszSectionType);
 		}
-		UNITTEST_FRIEND(cIniSection);
 	};
 
 	class GRAYCORE_LINK cIniSectionEntry : public cRefBase, public cIniSection
@@ -267,11 +266,11 @@ namespace Gray
 
 		int get_HashCode() const noexcept
 		{
-			// Hash within this file.
+			// Hash within this file. HASHCODE_t
 			return (int)m_FilePos.get_Line1();
 		}
 	};
 	typedef cRefPtr<cIniSectionEntry> cIniSectionEntryPtr;
-};
+} 
 
 #endif

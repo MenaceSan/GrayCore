@@ -39,7 +39,7 @@ namespace Gray
 			this->m_p = ref.m_p; ref.m_p = nullptr;
 		}
 
-		bool isValidPtr() const noexcept
+		inline bool isValidPtr() const noexcept
 		{
 			//! Not nullptr?
 			return m_p != nullptr;
@@ -51,7 +51,7 @@ namespace Gray
 			ASSERT(m_p == nullptr);		// MUST not have current value.
 			return &m_p;
 		}
-		TYPE* get_Ptr() const noexcept
+		inline TYPE* get_Ptr() const noexcept
 		{
 			return m_p;
 		}
@@ -101,7 +101,7 @@ namespace Gray
 
 		//! Accessor ops.
 		//! @note These are dangerous ! They don't increment the reference count for use !!!
-		operator TYPE* () const noexcept
+		inline operator TYPE* () const noexcept
 		{
 			return m_p;
 		}
@@ -118,7 +118,7 @@ namespace Gray
 
 		TYPE* operator -> () const
 		{
-			// nullptr is not allowed.
+			// nullptr is NOT allowed.
 			ASSERT(m_p != nullptr); return m_p;
 		}
 

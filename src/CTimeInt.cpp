@@ -51,7 +51,7 @@ namespace Gray
 		//! @return The current time in seconds since Jan 1 1970 GMT (NOT LOCALIZED)
 		//! @note GetCurrentTime() is "#define" by _WIN32 to GetTickCount() so i cant use that name!
 		//! NOT adjusted for local time zone or DST.
-#ifdef UNDER_CE
+#if defined( UNDER_CE) || ! USE_CRT
 		cTimeFile tNow;
 		tNow.InitTimeNow();
 		return cTimeInt(tNow);

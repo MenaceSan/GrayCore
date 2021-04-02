@@ -37,7 +37,7 @@ namespace Gray
 		}
 	};
 
-	template <> inline void CloseHandleType(HKEY h) // static
+	template <> inline void CloseHandleType(HKEY h) noexcept  // static
 	{
 		//! ASSUME IsValidHandle(h)
 		if (cRegKeyName::IsKeyBase(h)) // never close base keys

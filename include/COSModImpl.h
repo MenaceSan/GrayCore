@@ -30,6 +30,7 @@ namespace Gray
 		//! e.g. cOSModImpl g_Module("ModuleName");
 		//! @todo Support _WIN32 DLL_THREAD_ATTACH and DLL_THREAD_DETACH ?
 		//! Similar to MFC AFX_EXTENSION_MODULE DLLModule or CAtlDllModuleT
+		//! @note See #include "GrayLib/include/System/cOSModDyn.h" for COSMODULE_RegisterModule_IMPL()
 		//! This might have a corresponding cXObjModulePtr. cIUnkPtr can be used alternatively.
 
 	public:
@@ -67,7 +68,8 @@ namespace Gray
 	};
 
 #ifndef GRAY_STATICLIB 
-	// ASSUME g_Module is defined for DLL/SO. (and is outside namespace)
+	// ASSUME g_Module is defined for DLL/SO. (and is outside namespace). 
+	// @note See #include "GrayLib/include/System/cOSModDyn.h" for COSMODULE_RegisterModule_IMPL()
 	// Declare/expose DllMain()
 #ifdef _WIN32	// _WINDLL
 #define COSMODULE_IMPL(N)  __DECL_EXPORT BOOL APIENTRY DllMain(HINSTANCE hInstDll, DWORD dwReason, LPVOID) { return N::g_Module.DllMain(hInstDll,dwReason); }

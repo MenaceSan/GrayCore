@@ -12,7 +12,6 @@
 #include "cSingleton.h"
 #include "cStream.h"
 #include "StrArg.h"
-#include "cUnitTestDecl.h"
 
 #if ! defined(UNDER_CE) 
 
@@ -126,7 +125,6 @@ namespace Gray
 		}
 
 		CHEAPOBJECT_IMPL;
-		UNITTEST_FRIEND(cAppConsole);
 	};
 }
 #endif	// UNDER_CE

@@ -227,8 +227,6 @@ namespace Gray
 		}
 
 		static cString GRAYCALL GetTimeSpanStr(double dDays, TIMEUNIT_TYPE eUnitHigh = TIMEUNIT_Day, int iUnitsDesired = 2, bool bShortText = false);
-
-		UNITTEST_FRIEND(cTimeDouble);
 	};
 
 	bool inline operator < (const cTimeDouble &dt1, const cTimeDouble &dt2)
@@ -255,5 +253,5 @@ namespace Gray
 	{
 		return(dt1.m_dateTime != dt2.m_dateTime);
 	}
-};
+}
 #endif // _INC_cTimeDouble_H

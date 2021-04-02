@@ -140,7 +140,7 @@ namespace Gray
 
 	//**************************************************************
 
-	bool GRAYCALL cIniReader::IsSectionHeader(const IniChar_t* pszLine) // static
+	bool GRAYCALL cIniReader::IsSectionHeader(const IniChar_t* pszLine) noexcept // static
 	{
 		//! is this line a [section header] of some sort ?
 		if (pszLine == nullptr)
@@ -383,7 +383,7 @@ namespace Gray
 		return(-1);	// cant find it.
 	}
 
-	HRESULT cIniSectionData::PropEnum(IPROPIDX_t ePropIdx, OUT cStringI& rsValue, cStringI* psKey) const // virtual
+	HRESULT cIniSectionData::PropGetEnum(IPROPIDX_t ePropIdx, OUT cStringI& rsValue, OUT cStringI* psKey) const // virtual
 	{
 		//! IIniBaseEnumerator
 		//! @arg = optionally return psKey. nullptr = don't care.

@@ -311,7 +311,7 @@ namespace Gray
 			}
 			AllocBuffer(iLen + iLenCat);
 			cMem::CopyOverlap(m_pchData + i + iLenCat, m_pchData + i, (iLen - i) * sizeof(_TYPE_CH));
-			::memcpy(m_pchData + i, pszStr, iLenCat * sizeof(_TYPE_CH));
+			cMem::Copy(m_pchData + i, pszStr, iLenCat * sizeof(_TYPE_CH));
 		}
 		return(GetLength());
 	}
@@ -438,9 +438,9 @@ namespace Gray
 		{
 			if (FAILED(hRes))
 				return hRes;
-			return(HRESULT_WIN32_C(ERROR_READ_FAULT));
+			return HRESULT_WIN32_C(ERROR_READ_FAULT) ;
 		}
-		return(iLenMax);
+		return iLenMax ;
 	}
 
 	template< typename _TYPE_CH>

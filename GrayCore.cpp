@@ -9,6 +9,11 @@
 #include "cLogMgr.h"
 #include "cUnitTest.h"
 #include "cOSModImpl.h"
+#include "SysRes.h"
+
+#if ! USE_CRT
+#include "NoCRT.inl"
+#endif
 
 namespace Gray
 {

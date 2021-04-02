@@ -11,7 +11,6 @@
 
 #include "cArraySortRef.h"
 #include "cArrayString.h"
-#include "cUnitTestDecl.h"
 
 namespace Gray
 {
@@ -24,19 +23,19 @@ namespace Gray
 	public:
 		typedef cArraySorted< cStringT<_TYPE_CH>, cStringT<_TYPE_CH>, const _TYPE_CH*> SUPER_t;
 		typedef cStringT<_TYPE_CH> STR_t;	// alias for container
-		typedef typename SUPER_t::REF_t REF_t;
+		typedef typename SUPER_t::ARG_t ARG_t;
 		typedef typename SUPER_t::KEY_t KEY_t;
 
 	public:
 		virtual ~cArraySortString()
 		{
 		}
-		virtual COMPARE_t CompareKey(KEY_t pszID1, REF_t sID2) const override
+		virtual COMPARE_t CompareKey(KEY_t pszID1, ARG_t sID2) const noexcept override
 		{
 			ASSERT(pszID1 != nullptr);
 			return StrT::CmpI<_TYPE_CH>(pszID1, sID2);
 		}
-		virtual COMPARE_t CompareData(REF_t sID1, REF_t sID2) const noexcept override
+		virtual COMPARE_t CompareData(ARG_t sID1, ARG_t sID2) const noexcept override
 		{
 			return StrT::CmpI<_TYPE_CH>(sID1, sID2);
 		}
@@ -102,13 +101,10 @@ namespace Gray
 			}
 			return k_ITERATE_BAD;
 		}
-
-		UNITTEST_FRIEND(cArraySortString);
 	};
 
 	typedef cArraySortString<char> cArraySortStringA;
 	typedef cArraySortString<wchar_t> cArraySortStringW;
-
 }
 
 #endif

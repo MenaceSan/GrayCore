@@ -77,7 +77,7 @@ namespace Gray
 		InitArgsInt(argc, ppszArgs);
 	}
 
-	void cAppArgs::InitArgsF( const FILECHAR_t* pszCommandArgs, const FILECHAR_t* pszSep)
+	void cAppArgs::InitArgsF(const FILECHAR_t* pszCommandArgs, const FILECHAR_t* pszSep)
 	{
 		//! set (unparsed) m_sArguments and parse pszCommandArgs to cArrayString. Windows WinMain() style init.
 		//! @arg pszCommandArgs = assumed to NOT contain the app path name.
@@ -272,21 +272,32 @@ namespace Gray
 
 	HRESULT cAppState::CheckValidSignatureI(UINT32 nGrayCoreVer, size_t nSizeofThis) const noexcept // protected
 	{
-		// Is the pAppEx what we think it is ?
-		// Assume cAppState is relatively stable annd wont just crash. CheckValidSignatureX called.
+		// Is the pAppEx what we think it is ? NOT inline compiled.
+		// Assume cAppState is relatively stable annd wont just crash. CheckValidSignatureX was called.
+
+		if (nGrayCoreVer != _INC_GrayCore_H)	// check this again in the compiled version.
+		{
+			// My *Core DLL is not the correct version 
+			DEBUG_ERR(("cAppState nGrayCoreVer"));
+			return HRESULT_WIN32_C(ERROR_PRODUCT_VERSION);
+		}
 
 		if (!m_Sig.IsValidSignature(nGrayCoreVer, nSizeofThis))
 		{
 			// Something is wrong. No idea.
+			DEBUG_ERR(("cAppState ! IsValidSignature"));
 			return HRESULT_WIN32_C(ERROR_INTERNAL_ERROR);
 		}
 
 		FILECHAR_t szValue[StrNum::k_LEN_MAX_DIGITS_INT + 2];
-		StrLen_t len = GetEnvironStr(k_EnvironName, szValue, STRMAX(szValue));		// record this globally to any consumer in the process space.
-		UINT_PTR uVal = StrT::toUP<FILECHAR_t>(szValue, nullptr, 16);
+		const StrLen_t len = GetEnvironStr(k_EnvironName, szValue, STRMAX(szValue));		// record this globally to any consumer in the process space.
+		UNREFERENCED_PARAMETER(len);
+
+		const UINT_PTR uVal = StrT::toUP<FILECHAR_t>(szValue, nullptr, 16);
 		if (uVal != (UINT_PTR)this)
 		{
 			// Mix of GRAY_STATICLIB and DLL linkage is not allowed.
+			DEBUG_ERR(("cAppState Mix of GRAY_STATICLIB and DLL linkage is not allowed"));
 			return HRESULT_WIN32_C(ERROR_INTERNAL_ERROR);
 		}
 
@@ -295,9 +306,9 @@ namespace Gray
 
 	APPSTATE_TYPE_ GRAYCALL cAppState::GetAppState() // static
 	{
-		if (cAppState::isSingleCreated())
+		if (isSingleCreated())
 		{
-			return cAppState::I().get_AppState();
+			return I().get_AppState();
 		}
 		else
 		{
@@ -347,6 +358,8 @@ namespace Gray
 		//! extern "C" int _C_Termination_Done; // undocumented C runtime variable - set to true during auto-finalization
 		//! return _C_Termination_Done;	// undocumented symbol is not good in DLL.
 		//! @note _C_Termination_Done wouldn't work properly in a DLL.
+		if (!isSingleCreated())
+			return true;
 		APPSTATE_TYPE_ eAppState = I().m_eAppState;
 		return eAppState == APPSTATE_Exit;
 	}
@@ -371,7 +384,7 @@ namespace Gray
 #elif defined(__linux__)
 		return StrT::CopyLen(pszValue, ::getenv(pszVarName), iLenMax);
 #endif
-	}
+}
 
 	cStringF GRAYCALL cAppState::GetEnvironStr(const FILECHAR_t* pszVarName) noexcept	// static
 	{
@@ -528,7 +541,7 @@ namespace Gray
 		if (!m_sTempDir.IsEmpty())
 		{
 			return m_sTempDir;	// cached value.
-		}
+	}
 
 		FILECHAR_t szTmp[_MAX_PATH];
 #ifdef UNDER_CE
@@ -556,14 +569,14 @@ namespace Gray
 				{
 					iLen = StrT::CopyLen(szTmp, _FN("/tmp"), STRMAX(szTmp));	// append tmp
 				}
-			}
+	}
 		}
 		cFilePath::AddFileDirSep(szTmp, iLen);
 #endif
 
 		m_sTempDir = szTmp;	// cache this.
 		return m_sTempDir;
-	}
+		}
 
 	cStringF cAppState::GetTempFile(const FILECHAR_t* pszFileTitle)
 	{
@@ -580,8 +593,8 @@ namespace Gray
 
 			char szNoise[(sizeof(noise) * 2) + 2];	// GetHexDigestSize
 			szNoise[0] = 'T';
-			StrLen_t nLen = cMem::GetHexDigest(szNoise+1, noise, sizeof(noise));
-			ASSERT(nLen == STRMAX(szNoise)-1);
+			StrLen_t nLen = cMem::GetHexDigest(szNoise + 1, noise, sizeof(noise));
+			ASSERT(nLen == STRMAX(szNoise) - 1);
 
 			sTmp = szNoise;
 			pszFileTitle = sTmp;
@@ -669,11 +682,11 @@ namespace Gray
 		//! Call this instead of abort() or exit() to preclude naughty libraries from exiting badly.
 		//! @arg uExitCode = APP_EXITCODE_t like return from "int main()"
 		//!		APP_EXITCODE_ABORT = 3 = like abort()
-		if (cAppState::isSingleCreated())
+		if (isSingleCreated())
 		{
 			// cAppExitCatcher should not block this now.
-			cAppState::I().put_AppState(APPSTATE_Exit);
-		}
+			I().put_AppState(APPSTATE_Exit);
+	}
 #ifdef _WIN32
 		::ExitProcess(uExitCode);
 #elif defined(__linux__)
@@ -704,7 +717,7 @@ namespace Gray
 		// __linux__ ?
 
 #endif
-	}
+			}
 
 	cString GRAYCALL cAppState::GetCurrentUserName(bool bForce) // static
 	{
@@ -718,7 +731,7 @@ namespace Gray
 		if (!bForce && !pThis->m_sUserName.IsEmpty())	// cached name,.
 		{
 			return pThis->m_sUserName;
-		}
+	}
 
 #if defined(_WIN32)
 		GChar_t szUserName[256];
@@ -783,7 +796,7 @@ namespace Gray
 		// TODO __linux__ user is admin group ??
 		return false;
 #endif
-	}
+		}
 
 	cStringF GRAYCALL cAppState::GetCurrentUserDir(const FILECHAR_t* pszSubFolder, bool bCreate) // static
 	{
@@ -851,11 +864,12 @@ namespace Gray
 		// (2b) More precisely! Get the microseconds part !
 		return (procTime + (t.ru_utime.tv_usec + t.ru_stime.tv_usec) * 1e-6);
 #endif
-	}
+		}
 #endif
 
 	//*******************************************************************
 
+#if USE_CRT
 	cAppExitCatcher::cAppExitCatcher() : cSingletonStatic<cAppExitCatcher>(this)
 	{
 		::atexit(ExitCatchProc);
@@ -889,11 +903,12 @@ namespace Gray
 
 	void __cdecl cAppExitCatcher::ExitCatchProc() // static
 	{
-		if (cAppExitCatcher::isSingleCreated())
+		if (isSingleCreated())
 		{
 			cAppExitCatcher::I().ExitCatch();
 		}
 	}
+#endif
 
 	//*******************************************************************
 
@@ -919,4 +934,4 @@ namespace Gray
 		m_AppState.InitAppState();	// set to APPSTATE_Run
 		m_AppState.InitArgs2(argc, argv);
 	}
-}
+	}

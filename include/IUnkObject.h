@@ -28,7 +28,7 @@ namespace Gray
 		STDMETHOD_(cString, get_Name)() const = 0;
 
 		//! Resource object instance can have its own symbolic name (AKA moniker). Default to UID if it has no SymName assigned.
-		STDMETHOD_(cStringA, get_SymName)() const = 0;
+		STDMETHOD_(cStringA, get_SymName)() const noexcept = 0;
 	};
 }
 

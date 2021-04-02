@@ -38,8 +38,7 @@ namespace Gray
 			// Create a daily file.
 			cTimeUnits tStart;
 			tStart.InitTimeNow();
-			cStringF sLogFileName;
-			sLogFileName.Format(_FN("UnitTestResults%04d%02d%02d_") _FN(GRAY_COMPILER_NAME) _FN("_") _FN(GRAY_BUILD_NAME) _FN(MIME_EXT_log),
+			cStringF sLogFileName = cStringF::GetFormatf(_FN("UnitTestResults%04d%02d%02d_") _FN(GRAY_COMPILER_NAME) _FN("_") _FN(GRAY_BUILD_NAME) _FN(MIME_EXT_log),
 				tStart.m_wYear, tStart.m_wMonth, tStart.m_wDay);
 			HRESULT hRes = m_File.OpenX(cFilePath::CombineFilePathX(pszFileDir, sLogFileName),
 				OF_CREATE | OF_SHARE_DENY_NONE | OF_READWRITE | OF_TEXT);

@@ -21,7 +21,6 @@
 #include "cArrayIUnk.h"
 #include "cException.h"
 #include "HResult.h"
-#include "cUnitTestDecl.h"
 #include "cTypeInfo.h"
 
 // #define _DEBUG_FAST	// put debug in release mode optimized code.
@@ -132,7 +131,6 @@ namespace Gray
 		virtual HRESULT WriteString(const wchar_t* pszStr) override;
 
 		CHEAPOBJECT_IMPL;
-		UNITTEST_FRIEND(cLogMgr);
 	};
 
 	//***********************************************************************************

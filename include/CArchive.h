@@ -10,7 +10,6 @@
 #endif
 
 #include "cStream.h"
-#include "cUnitTestDecl.h"
 
 namespace Gray
 {
@@ -44,13 +43,13 @@ namespace Gray
 		{
 		}
 
-		bool IsStoring() const noexcept
+		inline bool IsStoring() const noexcept
 		{
 			//! I am storing the object to the write archive cStreamOutput.
 			//! like MFC cArchive 
 			return m_bStoring;
 		}
-		bool IsLoading() const noexcept
+		inline bool IsLoading() const noexcept
 		{
 			//! I am loading the object from the read archive cStreamInput.
 			//! like MFC cArchive 
@@ -106,8 +105,6 @@ namespace Gray
 
 #include "cTypes.tbl"
 #undef CTYPE_DEF
-
-		UNITTEST_FRIEND(cArchive);
 	};
 }
 

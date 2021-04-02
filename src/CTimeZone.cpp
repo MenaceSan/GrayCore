@@ -38,22 +38,24 @@ namespace Gray
 			sm_bInitTimeZoneSet = true;
 #ifdef __linux__
 			::tzset();
-#elif ! defined(UNDER_CE)
+#elif USE_CRT && ! defined(UNDER_CE) 
 			::_tzset();
+#else
+			// Get TZ from some other place ???
 #endif
 		}
 
 #if defined(_WIN32)
 
-#ifdef UNDER_CE
+#if defined(UNDER_CE) || ! USE_CRT
 		// dwRet = TIME_ZONE_ID_DAYLIGHT, TIME_ZONE_ID_STANDARD, TIME_ZONE_ID_UNKNOWN=0
-		TIME_ZONE_INFORMATION tzi;
+		::TIME_ZONE_INFORMATION tzi;
 		DWORD dwRet = ::GetTimeZoneInformation(&tzi);
 		return (TZ_TYPE)(tzi.Bias);	// minutes.
 
 #elif defined(_MSC_VER) && _MSC_VER >= 1400
 		long nTimeZoneOffset = TZ_UTC;
-		if (_get_timezone(&nTimeZoneOffset))  //  in seconds between UTC and local time as an integer.
+		if (::_get_timezone(&nTimeZoneOffset))  //  in seconds between UTC and local time as an integer.
 		{
 			// error;
 			return TZ_UTC;
@@ -61,18 +63,18 @@ namespace Gray
 		return (TZ_TYPE)(nTimeZoneOffset / 60);	// to minutes
 #else
 		// assume _tzset(); called.
-		return (TZ_TYPE)(_timezone / 60);	// minutes
+		return (TZ_TYPE)(::_timezone / 60);	// minutes
 #endif
 
 #else	// __linux__
-		return (TZ_TYPE)(timezone / 60);		// minutes
+		return (TZ_TYPE)(::timezone / 60);		// minutes
 #endif
 
 #if 0 // defined(__linux__)
 		cTimeVal tv;
 		struct timezone tz;
 		cMem::Zero(&tz, sizeof(tz));
-		gettimeofday(&tv, &tz);
+		::gettimeofday(&tv, &tz);
 		return (TZ_TYPE)tz.tz_minuteswest;
 #endif
 	}

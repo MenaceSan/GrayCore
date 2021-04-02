@@ -218,10 +218,7 @@ namespace Gray
 		static cString GRAYCALL GetTimeSpanStr(TIMESECD_t dwSeconds, TIMEUNIT_TYPE eUnitHigh = TIMEUNIT_Day, int iUnitsDesired = 2, bool bShortText = false);
 		static cString GRAYCALL GetTimeDeltaBriefStr(TIMESECD_t dwSeconds);
 		static cString GRAYCALL GetTimeDeltaSecondsStr(TIMESECD_t dwSeconds);
-
-		UNITTEST_FRIEND(cTimeInt);
 	};
-
-};
+}
 
 #endif // _INC_cTimeInt_H

@@ -10,7 +10,6 @@
 #endif
 
 #include "cException.h"
-#include "cUnitTestDecl.h"
 
 #if defined(_CPPUNWIND)
 
@@ -55,7 +54,6 @@ namespace Gray
 #else
 		static void __cdecl SignalHandler(SYSCODE_t iSignal);
 #endif
-		UNITTEST_FRIEND(cException);
 	};
 }
 #endif

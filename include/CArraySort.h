@@ -28,10 +28,10 @@ namespace Gray
 	public:
 		typedef cArrayTyped<TYPE, TYPE_ARG> SUPER_t;
 		typedef TYPE_KEY KEY_t;
-		typedef typename SUPER_t::REF_t REF_t;
+		typedef TYPE_ARG ARG_t;
 
 	protected:
-		virtual COMPARE_t CompareKey(KEY_t key1, REF_t Data2) const
+		virtual COMPARE_t CompareKey(KEY_t key1, TYPE_ARG Data2) const noexcept
 		{
 			//! Compare by a key that may not be part of a data record (yet).
 			//! Default implementation. Overload this for proper implementation.
@@ -39,7 +39,7 @@ namespace Gray
 			return cMem::Compare(&key1, &Data2, sizeof(TYPE_KEY));
 		}
 
-		bool RemoveArgKey(REF_t pObj, KEY_t key)
+		bool RemoveArgKey(TYPE_ARG pObj, KEY_t key)
 		{
 			//! Can't use this for arrays that allow dupes ! (e.g. get_Value()) Use FindIForAK() instead.
 			ITERATE_t index = FindIForKey(key);
@@ -61,9 +61,9 @@ namespace Gray
 			// Make this virtual to allow derived classes to override this and make destructors work.
 		}
 
-		ITERATE_t FindINear(REF_t pNew, COMPARE_t& iCompareRes) const;
-		ITERATE_t FindINearKey(KEY_t key, COMPARE_t& iCompareRes) const;
-		ITERATE_t FindIForKey(KEY_t key) const
+		ITERATE_t FindINear(TYPE_ARG pNew, COMPARE_t& iCompareRes) const;
+		ITERATE_t FindINearKey(KEY_t key, COMPARE_t& iCompareRes) const noexcept;
+		ITERATE_t FindIForKey(KEY_t key) const noexcept
 		{
 			//! Find index for exact key match. Similar to FindIFor()
 			//! @return index into array. 0 based of course. -1 = failed
@@ -142,7 +142,7 @@ namespace Gray
 	};
 
 	template<class TYPE, class TYPE_ARG, typename TYPE_KEY>
-	ITERATE_t cArraySorted<TYPE, TYPE_ARG, TYPE_KEY>::FindINear(REF_t pNew, COMPARE_t& riCompareRes) const
+	ITERATE_t cArraySorted<TYPE, TYPE_ARG, TYPE_KEY>::FindINear(TYPE_ARG pNew, COMPARE_t& riCompareRes) const
 	{
 		//! Do a binary search for the elements key.
 		//! @return index
@@ -164,7 +164,7 @@ namespace Gray
 		while (iLow <= iHigh)
 		{
 			i = (iHigh + iLow) / 2;
-			iCompareRes = this->CompareData(pNew, this->ConstElementAt(i));	// virtual call.
+			iCompareRes = this->CompareData(pNew, this->GetAt(i));	// virtual call.
 			if (iCompareRes == COMPARE_Equal)
 				break;
 			if (iCompareRes > 0)
@@ -198,7 +198,7 @@ namespace Gray
 	}
 
 	template<class TYPE, class TYPE_ARG, typename TYPE_KEY>
-	ITERATE_t cArraySorted<TYPE, TYPE_ARG, TYPE_KEY>::FindINearKey(KEY_t key, COMPARE_t& riCompareRes) const
+	ITERATE_t cArraySorted<TYPE, TYPE_ARG, TYPE_KEY>::FindINearKey(KEY_t key, COMPARE_t& riCompareRes) const noexcept
 	{
 		//! Do a binary search for the key.
 		//! @return
@@ -221,7 +221,7 @@ namespace Gray
 		while (iLow <= iHigh)
 		{
 			i = (iHigh + iLow) / 2;
-			iCompareRes = CompareKey(key, this->ConstElementAt(i));
+			iCompareRes = CompareKey(key, this->GetAt(i));
 			if (iCompareRes == COMPARE_Equal)
 				break;
 			if (iCompareRes > 0)
@@ -252,14 +252,14 @@ namespace Gray
 	public:
 		typedef cArraySorted<TYPE, TYPE, TYPE> SUPER_t;
 		typedef typename SUPER_t::KEY_t KEY_t;
-		typedef typename SUPER_t::REF_t REF_t;
+		typedef typename SUPER_t::ARG_t ARG_t;
 
 	protected:
-		virtual COMPARE_t CompareData(REF_t Data1, REF_t Data2) const noexcept override
+		virtual COMPARE_t CompareData(ARG_t Data1, ARG_t Data2) const noexcept override
 		{
 			return cValT::Compare(Data1, Data2);
 		}
-		virtual COMPARE_t CompareKey(KEY_t Data1, REF_t Data2) const override
+		virtual COMPARE_t CompareKey(KEY_t Data1, ARG_t Data2) const noexcept override
 		{
 			return cValT::Compare(Data1, Data2);
 		}
@@ -285,15 +285,15 @@ namespace Gray
 
 	public:
 		typedef cArraySorted<TYPE, const TYPE&, const _TYPECH*> SUPER_t;
-		typedef typename SUPER_t::REF_t REF_t;
+		typedef typename SUPER_t::ARG_t ARG_t;
 		typedef typename SUPER_t::KEY_t KEY_t;
 
 	protected:
-		virtual COMPARE_t CompareData(REF_t Data1, REF_t Data2) const noexcept override
+		virtual COMPARE_t CompareData(ARG_t Data1, ARG_t Data2) const noexcept override
 		{
 			return StrT::CmpI<_TYPECH>(Data1.get_Name(), Data2.get_Name());
 		}
-		virtual COMPARE_t CompareKey(KEY_t key1, REF_t Data2) const  override
+		virtual COMPARE_t CompareKey(KEY_t key1, ARG_t Data2) const noexcept override
 		{
 			return StrT::CmpI<_TYPECH>(key1, Data2.get_Name());
 		}
@@ -302,7 +302,7 @@ namespace Gray
 		virtual ~cArraySortStructName()
 		{}
 
-		const TYPE* FindArgForKey(KEY_t key1) const
+		const TYPE* FindArgForKey(KEY_t key1) const noexcept
 		{
 			//! put the result in TYPE derived pointer.
 			ITERATE_t index = FindIForKey(key1);
@@ -323,11 +323,11 @@ namespace Gray
 
 	public:
 		typedef cArraySorted<TYPE, const TYPE&, TYPE_KEY> SUPER_t;
-		typedef typename SUPER_t::REF_t REF_t;
+		typedef typename SUPER_t::ARG_t ARG_t;
 		typedef typename SUPER_t::KEY_t KEY_t;
 
 	protected:
-		virtual COMPARE_t CompareData(REF_t Data1, REF_t Data2) const noexcept override
+		virtual COMPARE_t CompareData(ARG_t Data1, ARG_t Data2) const noexcept override
 		{
 			//! Compare a data record to another data record.
 			TYPE_KEY key1 = Data1.get_SortValue();
@@ -337,7 +337,7 @@ namespace Gray
 				return cValT::Compare((INT_PTR)&Data1, (INT_PTR)&Data2);
 			return iDiff;
 		}
-		virtual COMPARE_t CompareKey(KEY_t key1, REF_t Base) const override
+		virtual COMPARE_t CompareKey(KEY_t key1, ARG_t Base) const noexcept override
 		{
 			TYPE_KEY key2 = Base.get_SortValue();
 			return cValT::Compare(key1, key2);
@@ -365,21 +365,21 @@ namespace Gray
 
 	public:
 		typedef cArraySorted<TYPE, const TYPE&, _TYPE_HASH> SUPER_t;
-		typedef typename SUPER_t::REF_t REF_t;
+		typedef typename SUPER_t::ARG_t ARG_t;
 		typedef typename SUPER_t::KEY_t KEY_t;
 
 	protected:
-		virtual COMPARE_t CompareData(REF_t Data1, REF_t Data2) const noexcept override
+		virtual COMPARE_t CompareData(ARG_t Data1, ARG_t Data2) const noexcept override
 		{
 			//! Compare a data record to another data record.
 			_TYPE_HASH key1 = Data1.get_HashCode();
 			_TYPE_HASH key2 = Data2.get_HashCode();
 			return cValT::Compare(key1, key2);
 		}
-		virtual COMPARE_t CompareKey(KEY_t key1, REF_t Data2) const override
+		virtual COMPARE_t CompareKey(KEY_t key1, ARG_t Data2) const noexcept override
 		{
 			//! INT_MAX - INT_MIN must be positive !
-			//! @note x-y will not work for extreme values! use memcmp()
+			//! @note x-y will not work for extreme values! use cMem::Compare()
 			_TYPE_HASH key2 = Data2.get_HashCode();
 			return cValT::Compare(key1, key2);
 		}
@@ -393,7 +393,7 @@ namespace Gray
 			ITERATE_t index = FindIForKey(key1);
 			if (index < 0)
 				return nullptr;
-			return &(this->ConstElementAt(index));
+			return &(this->GetAt(index));
 		}
 	};
 
@@ -405,19 +405,18 @@ namespace Gray
 		//! @class Gray::cArraySortFacade
 		//! TYPE = the pointer or facade we are storing.
 		//! A sorted array of some TYPE_PTR pointers. overload this
-		//! Default Sort by memcmp()
+		//! Default Sort by cMem::Compare()
 
 	public:
 		typedef cArraySorted<TYPE, TYPE_PTR, TYPE_KEY> SUPER_t;
-		typedef typename SUPER_t::REF_t REF_t;
-		typedef typename SUPER_t::ELEM_t ELEM_t;				//
-
+		typedef typename SUPER_t::ARG_t ARG_t;
+ 
 	protected:
-		virtual COMPARE_t CompareData(REF_t pData1, REF_t pData2) const noexcept override
+		virtual COMPARE_t CompareData(ARG_t pData1, ARG_t pData2) const noexcept override
 		{
 			//! default = Binary compare the whole thing.
-			//! cValT::Compare(*pData1,*pData2) ??
-			return ::memcmp(pData1, pData2, sizeof(*pData1));
+			//! like cValT::Compare(*pData1,*pData2) ? 
+			return cMem::Compare(pData1, pData2, sizeof(*pData1));
 		}
 
 	public:
@@ -435,19 +434,24 @@ namespace Gray
 			return this->GetAt(i) != nullptr ;
 		}
 
-		REF_t GetAt(ITERATE_t index) const noexcept
+#if 0
+		TYPE_PTR GetAt(ITERATE_t index) const noexcept
 		{
+			//! Cast to TYPE_PTR helper.
 			//! @note caller should put the result in TYPE (cRefPtr) derived pointer.
-			return this->ConstElementAt(index);
+			return this->GetAt(index);
 		}
-		REF_t GetAtCheck(ITERATE_t nIndex) const
+#endif
+
+		TYPE GetAtCheck(ITERATE_t nIndex) const
 		{
+			//! Cast to TYPE_PTR ?
 			//! @note we should put the result in TYPE derived pointer.
 			if (!this->IsValidIndex(nIndex))
 			{
 				return nullptr;
 			}
-			return this->ConstElementAt(nIndex);
+			return this->GetAt(nIndex);
 		}
 
 		TYPE_PTR FindArgForKey(TYPE_KEY key1) const noexcept
@@ -472,7 +476,7 @@ namespace Gray
 			return k_ITERATE_BAD;
 		}
 
-		ELEM_t PopHead()
+		TYPE PopHead()
 		{
 			if (!this->GetSize())
 			{
@@ -480,7 +484,7 @@ namespace Gray
 			}
 			return SUPER_t::PopHead();
 		}
-		ELEM_t PopTail()
+		TYPE PopTail()
 		{
 			if (!this->GetSize())
 			{
@@ -509,11 +513,11 @@ namespace Gray
 
 	public:
 		typedef cArraySortFacade<TYPE, TYPE_PTR, TYPE_KEY> SUPER_t;
-		typedef typename SUPER_t::REF_t REF_t;
+		typedef typename SUPER_t::ARG_t ARG_t;
 		typedef typename SUPER_t::KEY_t KEY_t;
 
 	protected:
-		virtual COMPARE_t CompareData(REF_t pData1, REF_t pData2) const noexcept override
+		virtual COMPARE_t CompareData(ARG_t pData1, ARG_t pData2) const noexcept override
 		{
 			//! Compare a data record to another data record.
 			ASSERT(pData1 != nullptr);
@@ -525,7 +529,7 @@ namespace Gray
 				return cValT::Compare((INT_PTR)pData1, (INT_PTR)pData2);
 			return iDiff;
 		}
-		virtual COMPARE_t CompareKey(KEY_t key1, TYPE_PTR pBase) const override
+		virtual COMPARE_t CompareKey(KEY_t key1, TYPE_PTR pBase) const noexcept override
 		{
 			if (pBase == nullptr)
 				return COMPARE_Greater;
@@ -583,21 +587,21 @@ namespace Gray
 
 	public:
 		typedef cArraySortFacade<TYPE, TYPE_PTR, _TYPE_HASH> SUPER_t;
-		typedef typename SUPER_t::REF_t REF_t;
+		typedef typename SUPER_t::ARG_t ARG_t;
 		typedef typename SUPER_t::KEY_t KEY_t;
 
 	public:
 		virtual ~cArraySortFacadeHash()
 		{}
 
-		virtual COMPARE_t CompareData(REF_t pData1, REF_t pData2) const noexcept override
+		virtual COMPARE_t CompareData(ARG_t pData1, TYPE_PTR pData2) const noexcept override
 		{
 			//! Compare a data record to another data record.
 			_TYPE_HASH key1 = pData1->get_HashCode();
 			_TYPE_HASH key2 = pData2->get_HashCode();
 			return cValT::Compare(key1, key2);
 		}
-		virtual COMPARE_t CompareKey(KEY_t key1, REF_t pData2) const override
+		virtual COMPARE_t CompareKey(KEY_t key1, TYPE_PTR pData2) const noexcept override
 		{
 			//! @note x-y will not work for extreme values so we use cValT::Compare
 			//! INT_MAX - INT_MIN must be positive !
@@ -622,18 +626,18 @@ namespace Gray
 
 	public:
 		typedef cArraySortFacade<TYPE*, TYPE*, const _TYPECH*> SUPER_t;
-		typedef typename SUPER_t::REF_t REF_t;
+		typedef typename SUPER_t::ARG_t ARG_t;
 		typedef typename SUPER_t::KEY_t KEY_t;
 
 	protected:
-		virtual COMPARE_t CompareData(REF_t pData1, REF_t pData2) const noexcept override
+		virtual COMPARE_t CompareData(ARG_t pData1, ARG_t pData2) const noexcept override
 		{
 			//! Compare a data record to another data record.
 			ASSERT(pData1 != nullptr);
 			ASSERT(pData2 != nullptr);
 			return StrT::CmpI<_TYPECH>(pData1->get_Name(), pData2->get_Name());
 		}
-		virtual COMPARE_t CompareKey(KEY_t key1, REF_t pObj) const override
+		virtual COMPARE_t CompareKey(KEY_t key1, ARG_t pObj) const noexcept override
 		{
 			ASSERT(key1 != nullptr);
 			ASSERT(pObj != nullptr);
@@ -644,7 +648,7 @@ namespace Gray
 		virtual ~cArraySortPtrName()
 		{}
 
-		ITERATE_t FindIForAK(REF_t pBase) const
+		ITERATE_t FindIForAK(ARG_t pBase) const
 		{
 			if (pBase == nullptr)
 				return k_ITERATE_BAD;

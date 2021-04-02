@@ -43,7 +43,7 @@ namespace Gray
 			return i;
 		}
 
-		static bool constexpr IsValidApp(const void* pData) noexcept
+		static inline bool constexpr IsValidApp(const void* pData) noexcept
 		{
 			//! Is this pointer into App space? Not kernel space. Kernel Space <= 1G or 2G for __linux__
 			//! Can i read from this ?
@@ -52,7 +52,7 @@ namespace Gray
 
 			if (pData == nullptr)
 				return false;
-			UINT_PTR u = (UINT_PTR)pData;
+			const UINT_PTR u = (UINT_PTR)pData;
 			if (u < 16 * 1024)	// ASSUME memory in this range is never valid? Fail quickly. This is Kernel Space ONLY. <1G . PageSize ?
 				return false;	// 
 #ifdef _WIN32
@@ -87,7 +87,27 @@ namespace Gray
 		{
 			//! Compare two blocks of memory. ASSUME both are at least nSizeBlock sized.
 			//! Does not assume memory alignment.
+#if USE_CRT
 			return ::memcmp(p1, p2, nSizeBlock);
+#elif defined(__GNUC__)
+			return ::__builtin_memcmp(p1, p2, nSizeBlock);
+#else
+			const BYTE* p1B = (const BYTE*)p1;
+			const BYTE* p2B = (const BYTE*)p2;
+			for (size_t i = 0; i < nSizeBlock; i++)
+			{
+				register BYTE b1 = p1B[i];
+				register BYTE b2 = p2B[i];
+				if (b1 != b2)
+					return b1 - b2;
+			}
+			return 0;
+#endif
+		}
+
+		static inline bool IsEqual(const void* p1, const void* p2, size_t nSizeBlock) noexcept
+		{
+			return cMem::Compare(p1, p2, nSizeBlock) == 0;
 		}
 
 		static inline COMPARE_t CompareSecure(const void* p1, const void* p2, size_t nSizeBlock) noexcept
@@ -105,6 +125,24 @@ namespace Gray
 
 		static size_t GRAYCALL CompareIndex(const void* p1, const void* p2, size_t nSizeBlock);
 
+		static inline void Fill(void* pDst, size_t nSize, BYTE bVal) noexcept
+		{
+			//! Same as memset(). but with argument order change.
+#if USE_CRT
+			::memset(pDst, bVal, nSize);
+#elif defined(__GNUC__)
+			::__builtin_memset(pDst, bVal, nSize);
+#elif defined(_WIN32)
+			::FillMemory(pDst, nSize, bVal);
+#else
+			BYTE* pDstB = (BYTE*)pDst;
+			for (size_t i = 0; i < nSize; i++)
+			{
+				pDstB[j] = bVal;
+			}
+#endif
+		}
+
 		static inline void Zero(void* pData, size_t nSizeBlock) noexcept
 		{
 			//! Zero a block of memory.
@@ -112,7 +150,7 @@ namespace Gray
 #ifdef _WIN32
 			::ZeroMemory(pData, nSizeBlock);
 #else
-			::memset(pData, 0, nSizeBlock);
+			Fill(pData, nSizeBlock, 0);
 #endif
 		}
 		static inline void ZeroSecure(void* pData, size_t nSizeBlock) noexcept
@@ -140,16 +178,54 @@ namespace Gray
 		static inline void Copy(void* pDst, const void* pSrc, size_t nSizeBlock) noexcept
 		{
 			//! Copy a block of memory.
+			//! @arg nSizeBlock = if 0 then nullptr is ok.
 			//! same as CopyMemory(), RtlCopyMemory, memcpy()
 			//! @note: Some older architectures needed versions of this to do 'huge' memory copies.
+#if USE_CRT
 			::memcpy(pDst, pSrc, nSizeBlock);
+#elif defined(__GNUC__)
+			::__builtin_memcpy(pDst, pSrc, nSizeBlock);
+#elif defined(_WIN32)
+			::CopyMemory(pDst, pSrc, nSizeBlock);
+#else
+			register BYTE* pDstB = (BYTE*)pDst;
+			register const BYTE* pSrcB = (const BYTE*)pSrc;
+			for (size_t i = 0; i < nSizeBlock; i++)
+			{
+				pDstB[i] = pSrcB[i];
+			}
+#endif
 		}
 		static inline void CopyOverlap(void* pDst, const void* pSrc, size_t nSizeBlock) noexcept
 		{
 			//! Copy possibly overlapping blocks of memory. start from end or beginning if needed.
 			//! same as MoveMemory RtlMoveMemory, memmove, hmemcpy(),
 			//! @note: Some older architectures needed versions of this to do 'huge' memory moves.
+#if USE_CRT
 			::memmove(pDst, pSrc, nSizeBlock);
+#elif defined(_WIN32)
+			::MoveMemory(pDst, pSrc, nSizeBlock);
+#else
+			register BYTE* pDstB = (BYTE*)pDst;
+			register const BYTE* pSrcB = (const BYTE*)pSrc;
+			if (pDstB <= pSrcB || pDstB >= (pSrcB + nSizeBlock))
+			{
+				// Non-Overlapping Buffers. copy from lower addresses to higher addresses
+				Copy(pDst, pSrc, nSizeBlock);
+			}
+			else
+			{
+				// Overlapping Buffers. copy from higher addresses to lower addresses
+				pDstB += count - 1;
+				pSrcB += count - 1;
+				while (count--)
+				{
+					*pDstB = *pSrcB;
+					pDstB--;
+					pSrcB--;
+				}
+			}
+#endif
 		}
 		static inline void ReverseBytes(void* pDst, size_t nSizeBlock) noexcept
 		{
@@ -179,14 +255,6 @@ namespace Gray
 			}
 		}
 
-		static inline void Fill(void* pDst, size_t nSize, BYTE bVal) noexcept
-		{
-			//! Same as memset(). but with argument order change.
-			for (size_t j = 0; j < nSize; j++)
-			{
-				((BYTE*)pDst)[j] = bVal;
-			}
-		}
 		static inline void CopyRepeat(void* pDst, size_t nDstSize, const void* pSrc, size_t nSrcSize) noexcept
 		{
 			//! Fill pDst with repeating copies of pSrc. Wrap back to sart.
@@ -409,7 +477,7 @@ namespace Gray
 		bool IsEqualData(const void* pData, size_t nSize) const noexcept
 		{
 			//! compare blocks of data.
-			return m_nSize == nSize && !::memcmp(m_pData, pData, nSize);
+			return m_nSize == nSize && cMem::IsEqual(m_pData, pData, nSize);
 		}
 		bool IsEqualData(const cMemBlock* pData) const noexcept
 		{

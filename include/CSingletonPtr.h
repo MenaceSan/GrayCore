@@ -39,6 +39,7 @@ namespace Gray
 	{
 		//! @class Gray::cSingletonPtr
 		//! A reference to a cSingletonRefBase<> based TYPE or a type that has both cSingleton and cRefBase.
+		//! A Lazy loaded singleton.
 		typedef cRefPtr<TYPE> SUPER_t;
 
 	public:

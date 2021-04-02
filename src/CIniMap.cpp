@@ -77,7 +77,7 @@ namespace Gray
 		return SetVal(pszPropTag, pszValue);
 	}
 
-	HRESULT cIniMap::PropEnum(IPROPIDX_t ePropIdx, OUT cStringI& rsValue, cStringI* psKey) const // override
+	HRESULT cIniMap::PropGetEnum(IPROPIDX_t ePropIdx, OUT cStringI& rsValue, OUT cStringI* psKey) const // override
 	{
 		//! IIniBaseEnumerator
 		//! Enum the values and keys of the map.

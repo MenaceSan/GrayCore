@@ -147,6 +147,12 @@ namespace Gray
 		return S_OK;
 	}
 
+	bool cAtomManager::DebugTest() const
+	{
+		// Is the atom manager ok ?
+		return m_aName.isArraySorted();
+	}
+
 	//*********************************
 
 	void cAtomRef::EmptyAtom(bool isLast)
@@ -311,7 +317,7 @@ namespace Gray
 			if (i >= StrT::k_LEN_MAX_KEY)
 			{
 				pszTagRet[StrT::k_LEN_MAX_KEY - 1] = '\0';
-				return(0);
+				return 0;
 			}
 
 			pszTagRet[i] = ch;

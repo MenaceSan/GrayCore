@@ -19,7 +19,7 @@ namespace Gray
 	//! MUST Implement versions of this for each _TYPE_HAND.
 	//! Assume destruction or my caller will clear m_h
 	template< typename _TYPE_HAND >
-	static void inline CloseHandleType(_TYPE_HAND h); // Don't use/define a default implementation! This should fail at compile time if type is not implemented explicitly.
+	static void inline CloseHandleType(_TYPE_HAND h) noexcept; // Don't use/define a default implementation! This should fail at compile time if type is not implemented explicitly.
 
 	template< typename _TYPE_HAND, void (*_CLOSER)(_TYPE_HAND) = CloseHandleType >
 	class cHandlePtr : protected cNonCopyable
@@ -49,7 +49,7 @@ namespace Gray
 		{
 			return m_h != HANDLEPTR_NULL;
 		}
-		void CloseHandle()
+		void CloseHandle() noexcept
 		{
 			if (!isValidHandle())
 				return;

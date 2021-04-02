@@ -193,12 +193,12 @@ namespace Gray
 		static const TYPE* GetNonWhitespace(const TYPE* pStr, StrLen_t iLenMax = StrT::k_LEN_MAX) NOEXCEPT
 		{
 			// never return nullptr unless pStr = nullptr
-			return(pStr + GetNonWhitespaceI(pStr, iLenMax));
+			return pStr + GetNonWhitespaceI(pStr, iLenMax) ;
 		}
 		template< typename TYPE>
 		static TYPE* GetNonWhitespace(TYPE* pStr, StrLen_t iLenMax = StrT::k_LEN_MAX) NOEXCEPT
 		{
-			return(pStr + GetNonWhitespaceI(pStr, iLenMax));
+			return pStr + GetNonWhitespaceI(pStr, iLenMax) ;
 		}
 		template< typename TYPE >
 		GRAYCORE_LINK static StrLen_t GRAYCALL GetWhitespaceEnd(const TYPE* pStr, StrLen_t iLenChars = k_StrLen_UNK);
@@ -308,7 +308,7 @@ namespace Gray
 		GRAYCORE_LINK static ITERATE_t GRAYCALL ParseCmdsTmp(TYPE* pszTmp, StrLen_t iTmpSizeMax, const TYPE* pszCmdLine, TYPE** ppCmds, ITERATE_t iCmdQtyMax, const TYPE* pszSep = nullptr, STRP_MASK_t uFlags = STRP_DEF);
 
 		//**********************************************************************
-		// Numerics
+		// Numerics - All numerics can be done in Latin. So just convert to use StrNum
 
 		// string to numeric. similar to strtoul()
 		template< typename TYPE >
@@ -413,6 +413,8 @@ namespace Gray
 		if (pszStr == nullptr)
 			return 0;
 		return (StrLen_t) ::strlen(pszStr);
+#elif defined(__GNUC__)
+		return (StrLen_t) ::__builtin_strlen(p1, p2, nSizeBlock);
 #else
 		return Len(pszStr, k_LEN_MAX);
 #endif
@@ -433,10 +435,12 @@ namespace Gray
 
 	template<> inline UINT64 StrT::toUL<char>(const char* pszStr, const char** ppszStrEnd, RADIX_t nBaseRadix) NOEXCEPT
 	{
+		// Direct to Latin.
 		return StrNum::toUL(pszStr, ppszStrEnd, nBaseRadix);
 	}
 	template<> inline UINT64 StrT::toUL<wchar_t>(const wchar_t* pszStr, const wchar_t** ppszStrEnd, RADIX_t nBaseRadix) NOEXCEPT
 	{
+		// Convert to Latin.
 		char szTmp[StrNum::k_LEN_MAX_DIGITS_INT + 4];
 		StrNum::GetNumberString(szTmp, pszStr, StrNum::k_LEN_MAX_DIGITS_INT);
 		const char* ppszStrEndA = nullptr;
@@ -467,7 +471,7 @@ namespace Gray
 
 	template<> inline double StrT::toDouble<char>(const char* pszStr, const char** ppszStrEnd) // static
 	{
-#if 1
+#if USE_CRT
 		if (pszStr == nullptr)
 			return 0;
 		return ::strtod(pszStr, (char**)ppszStrEnd);	// const_cast
@@ -477,7 +481,7 @@ namespace Gray
 	}
 	template<> inline double StrT::toDouble<wchar_t>(const wchar_t* pszStr, const wchar_t** ppszStrEnd) // static
 	{
-#if 1
+#if USE_CRT
 		if (pszStr == nullptr)
 			return 0;
 		return ::wcstod(pszStr, (wchar_t**)ppszStrEnd);	// const_cast

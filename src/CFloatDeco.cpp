@@ -308,7 +308,7 @@ namespace Gray
 				if (i <= 0)
 				{
 					// Need to carry shift. e.g. 99.99 rounds up to 100
-					::memmove(pszOut + 1, pszOut, nMantLength + 1);
+					cMem::CopyOverlap(pszOut + 1, pszOut, nMantLength + 1);
 					pszOut[0] = '1';
 					nMantLength++;
 					break;
@@ -360,7 +360,7 @@ namespace Gray
 		else
 		{
 			// 1 digit place. e.g. 1234e30 -> 1.234e33
-			::memmove(&pszOut[2], &pszOut[1], nMantLength - 1);	// insert decimal point.
+			cMem::CopyOverlap(&pszOut[2], &pszOut[1], nMantLength - 1);	// insert decimal point.
 			pszOut[1] = '.';
 			i = nMantLength + 1;
 		}
@@ -429,7 +429,7 @@ namespace Gray
 			// Some decimal places and some whole numbers.
 			// 1234e-2 -> 12.34
 			ASSERT(nDecPlaceO < StrNum::k_LEN_MAX_DIGITS);
-			::memmove(&pszOut[nDecPlaceO + 1], &pszOut[nDecPlaceO], nMantLength - nDecPlaceO);	// make space.
+			cMem::CopyOverlap(&pszOut[nDecPlaceO + 1], &pszOut[nDecPlaceO], nMantLength - nDecPlaceO);	// make space.
 		}
 		else
 		{
@@ -438,7 +438,7 @@ namespace Gray
 			nDecPlaceO = -nDecPlaceO;
 			ASSERT(nMantLength + nDecPlaceO + 2 < StrNum::k_LEN_MAX_DIGITS);
 
-			::memmove(&pszOut[nDecPlaceO + 2], &pszOut[0], nMantLength);
+			cMem::CopyOverlap(&pszOut[nDecPlaceO + 2], &pszOut[0], nMantLength);
 			pszOut[0] = '0';
 			cValArray::FillQty<char>(pszOut + 2, nDecPlaceO, '0'); // pre-pad with 0.
 

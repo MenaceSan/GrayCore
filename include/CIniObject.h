@@ -26,18 +26,11 @@ namespace Gray
 		virtual const IniChar_t* get_PropName(IPROPIDX_t ePropIdx) const = 0;
 		virtual IPROPIDX_t FindProp(const IniChar_t* pszPropTag) const = 0;
 	};
-	DECLARE_INTERFACE(IIniObjectWriteN)
-	{
-		//! @interface Gray::IIniObjectWriteN
-		//! Set enumerated properties by index. (value is a string)
-		IGNORE_WARN_INTERFACE(IIniObjectWriteN);
-		virtual HRESULT PropSetN(IPROPIDX_t ePropIdx, const IniChar_t* pszValue) = 0;
-	};
+	 
 
 	class GRAYCORE_LINK cIniObject
 	: public IIniObjectDef
-	, public IIniObjectWriteN
-	, public IIniBaseSetter
+ 	, public IIniBaseSetter
 	, public IIniBaseGetter
 	, public IIniBaseEnumerator
 	{
@@ -52,7 +45,7 @@ namespace Gray
 		mutable PROPMASK_t m_nDirtyMask;	//!< bitmask of IPROPIDX_t to be written/persisted.
 
 	public:
-		cIniObject()
+		cIniObject() noexcept
 		: m_nDirtyMask(0)
 		{
 		}
@@ -72,14 +65,12 @@ namespace Gray
 			m_nDirtyMask = GetDirtyMask(get_PropQty()) - 1;
 		}
 
-		virtual HRESULT PropSet(const IniChar_t* pszPropTag, const IniChar_t* pszValue) override;
+		// virtual HRESULT PropSet(const IniChar_t* pszPropTag, const IniChar_t* pszValue) override;
 		virtual HRESULT PropGet(const IniChar_t* pszPropTag, OUT cStringI& rsValue) const override;
 
 		HRESULT FileWriteN(cStreamOutput& sOut, IPROPIDX_t ePropIdx) const;
 		HRESULT FileWrite(cStreamOutput& sOut, const IniChar_t* pszProp);
 		HRESULT FileWriteAll(cStreamOutput& sOut);
-
-		UNITTEST_FRIEND(cIniObject);
 	};
-};
+}
 #endif // _INC_cIniObject_H

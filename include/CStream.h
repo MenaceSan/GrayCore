@@ -10,12 +10,10 @@
 #endif
 
 #include "StrT.h"
-#include "cStreamProgress.h"
-#include "cTimeSys.h"
-#include "cMem.h"
+#include "cStreamProgress.h"  // STREAM_OFFSET_t , STREAM_POS_t, SEEK_ORIGIN_TYPE
+#include "cTimeSys.h"		// cTimeSys
 #include "cHeap.h"
 #include "HResult.h"
-#include "cUnitTestDecl.h"
 
 namespace Gray
 {
@@ -153,11 +151,11 @@ namespace Gray
 			//! Write a data block to the stream.
 			//! NOT pure virtual function. stub implementation.
 			//! @note In string only protocols this might not be supported. (in favor of WriteString() only)
-			//! @return Number of bytes written. <0 = error.
+			//! @return Number of bytes actually written. <0 = error.
 			ASSERT(0);	// should never get called. (should always be overloaded)
 			UNREFERENCED_PARAMETER(pData);
 			UNREFERENCED_PARAMETER(nDataSize);
-			return HRESULT_WIN32_C(ERROR_WRITE_FAULT);
+			return HRESULT_WIN32_C(ERROR_WRITE_FAULT);	// E_NOTIMPL
 		}
 
 		HRESULT WriteT(const void* pVal, size_t nDataSize)
@@ -194,33 +192,8 @@ namespace Gray
 			return WriteT(pBuffer, nSize);
 		}
 
-		virtual HRESULT WriteString(const char* pszStr)
-		{
-			//! Write just the chars of the string. NOT nullptr. like fputs()
-			//! Does NOT assume include NewLine or automatically add one.
-			//! @note This can get overloaded for string only protocols. like FILE, fopen()
-			//! @note MFC CStdioFile has void return for this.
-			//! @return Number of chars written. <0 = error.
-			if (pszStr == nullptr)
-				return 0;	// write nothing = S_OK.
-			const StrLen_t iLen = StrT::Len(pszStr);
-			return WriteT(pszStr, iLen * sizeof(char));
-		}
-		virtual HRESULT WriteString(const wchar_t* pszStr)
-		{
-			//! Write just the chars of the string. NOT nullptr. like fputs()
-			//! Does NOT assume include NewLine or automatically add one.
-			//! @note This can get overloaded for string only protocols. like FILE, fopen()
-			//! @note MFC CStdioFile has void return for this.
-			//! @return Number of chars written. <0 = error.
-			if (pszStr == nullptr)
-				return 0;	// write nothing = S_OK.
-			const StrLen_t iLen = StrT::Len(pszStr);
-			const HRESULT hRes = WriteT(pszStr, iLen * sizeof(wchar_t));
-			if (FAILED(hRes))
-				return hRes;
-			return hRes / sizeof(wchar_t);
-		}
+		virtual HRESULT WriteString(const char* pszStr);
+		virtual HRESULT WriteString(const wchar_t* pszStr);
 
 		template< typename _CH >
 		HRESULT WriteStringN(const _CH* pszStr)
@@ -473,9 +446,7 @@ namespace Gray
 		STREAM_POS_t SeekToEnd()
 		{
 			return cStreamInput::SeekToEnd();
-		}
-
-		UNITTEST_FRIEND(cStream);
+		} 
 	};
 
 	class GRAYCORE_LINK cStreamTransaction

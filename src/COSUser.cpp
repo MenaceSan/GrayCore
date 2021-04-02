@@ -89,10 +89,10 @@ namespace Gray
 
 	bool cOSUserToken::SetPrivilege(const GChar_t* pszToken, DWORD dwAttr)
 	{
-		//! @arg pszToken = SE_DEBUG_NAME, SE_RESTORE_NAME, SE_BACKUP_NAME
+		//! @arg pszToken = SE_DEBUG_NAME, SE_RESTORE_NAME, SE_BACKUP_NAME, SE_SHUTDOWN_NAME
 		//! @arg dwAttr = SE_PRIVILEGE_ENABLED or SE_PRIVILEGE_REMOVED
 
-		if (!this->isValidHandle())
+		if (!this->isValidHandle())	// open and has TOKEN_ADJUST_PRIVILEGES
 		{
 			HRESULT hRes = OpenProcessToken(TOKEN_ADJUST_PRIVILEGES);
 			if (FAILED(hRes))
@@ -101,13 +101,13 @@ namespace Gray
 			}
 		}
 
-		LUID luidDebug;
-		if (!_GTN(::LookupPrivilegeValue)(_GT(""), pszToken, &luidDebug))
+		::LUID luidDebug;	// 64 bit id.
+		if (!_GTN(::LookupPrivilegeValue)(_GT(""), pszToken, &luidDebug))	// map name to LUID
 		{
 			return false;
 		}
 
-		TOKEN_PRIVILEGES tokenPriv;
+		::TOKEN_PRIVILEGES tokenPriv;
 		tokenPriv.PrivilegeCount = 1;
 		tokenPriv.Privileges[0].Luid = luidDebug;
 		tokenPriv.Privileges[0].Attributes = dwAttr;
@@ -148,7 +148,7 @@ namespace Gray
 			return HResult::GetLastDef();
 		}
 
-		TOKEN_USER* pTokenUser = (TOKEN_USER*)Buffer;
+		::TOKEN_USER* pTokenUser = (::TOKEN_USER*)Buffer;
 		if (!sid.SetSID((SID*)pTokenUser->User.Sid))
 		{
 			return E_FAIL;
@@ -194,7 +194,7 @@ namespace Gray
 		}
 
 		cHeapBlock til((size_t)dwLengthNeeded);
-		TOKEN_MANDATORY_LABEL* pTIL = (TOKEN_MANDATORY_LABEL*)til.get_Data();
+		::TOKEN_MANDATORY_LABEL* pTIL = (::TOKEN_MANDATORY_LABEL*)til.get_Data();
 		if (pTIL == nullptr)
 		{
 			return E_OUTOFMEMORY;
@@ -206,7 +206,7 @@ namespace Gray
 		}
 
 		DWORD dwIntegrityLevel = *::GetSidSubAuthority(pTIL->Label.Sid,
-			(DWORD)(UCHAR)(*::GetSidSubAuthorityCount(pTIL->Label.Sid) - 1));
+			(DWORD)(BYTE)(*::GetSidSubAuthorityCount(pTIL->Label.Sid) - 1));
 #ifdef _DEBUG
 		if (dwIntegrityLevel < SECURITY_MANDATORY_MEDIUM_RID)
 		{
@@ -261,7 +261,7 @@ namespace Gray
 
 		DWORD dwLengthNeeded = 0;
 		if (!::GetTokenInformation(get_Handle(), TokenStatistics,
-			pStats, sizeof(struct _TOKEN_STATISTICS), &dwLengthNeeded))
+			pStats, sizeof(struct ::_TOKEN_STATISTICS), &dwLengthNeeded))
 		{
 			return HResult::GetLastDef();
 		}

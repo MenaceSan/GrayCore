@@ -11,7 +11,6 @@
 
 #include "StrChar.h"
 #include "StrConst.h"
-#include "cUnitTestDecl.h"
 
 namespace Gray
 {
@@ -77,8 +76,6 @@ namespace Gray
 
 		template < typename _TYPE >
 		static StrLen_t _cdecl ValArrayToAF(OUT char* pszDst, StrLen_t iSizeDstMax, size_t nSrcQty, ...);
-
-		UNITTEST_FRIEND(StrNum);
 	};
 
 	template<> inline INT32 StrNum::toValue<INT32>(const char* pszInp, const char** ppszInpEnd)

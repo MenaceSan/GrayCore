@@ -10,7 +10,6 @@
 #endif
 
 #include "cThreadLock.h"
-#include "cUnitTestDecl.h"
 #include "cMem.h"
 
 #if USE_INTEL
@@ -89,7 +88,7 @@ namespace Gray
 			if (!isHookInstalled() || m_pFuncOrig == nullptr)
 				return false;
 			// ASSUME SetProtectPages()
-			if (::memcmp((const void*)m_pFuncOrig, m_Jump, sizeof(m_Jump)))
+			if (!cMem::IsEqual((const void*)m_pFuncOrig, m_Jump, sizeof(m_Jump)))
 				return false;	// NOT set !!
 			return true;
 		}
@@ -99,8 +98,6 @@ namespace Gray
 
 		HRESULT InstallHook(FARPROC pFuncOrig, FARPROC pFuncNew, bool bSkipChainable = false);
 		void RemoveHook();
-
-		UNITTEST_FRIEND(cHookJump);
 	};
 
 	class GRAYCORE_LINK cHookSwapLock : public cThreadGuardFast

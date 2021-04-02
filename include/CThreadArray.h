@@ -25,8 +25,7 @@ namespace Gray
 
 	public:
 		typedef cArrayPtr<TYPE> SUPER_t;
-		typedef typename SUPER_t::REF_t REF_t;
-		typedef typename SUPER_t::ELEM_t ELEM_t;
+ 	 
 	public:
 		mutable cThreadLockCount m_Lock;
 	public:
@@ -38,7 +37,7 @@ namespace Gray
 		}
 		ITERATE_t GetSize() const
 		{
-			//! Used for statistical purposes. This may change of course.
+			//! Used for statistical purposes. This may change of course. expose protected.
 			return SUPER_t::GetSize();	// just for stats purposes.
 		}
 		void SetSize(ITERATE_t nNewSize)
@@ -46,13 +45,13 @@ namespace Gray
 			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			SUPER_t::SetSize(nNewSize);	// just for stats purposes.
 		}
-		ITERATE_t Add(REF_t pObj)
+		ITERATE_t Add(TYPE* pObj)
 		{
 			// add to tail
 			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			return SUPER_t::Add(pObj); // add to tail
 		}
-		REF_t GetAtCheck(ITERATE_t nIndex) const
+		TYPE* GetAtCheck(ITERATE_t nIndex) const
 		{
 			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			return SUPER_t::GetAtCheck(nIndex);
@@ -61,14 +60,14 @@ namespace Gray
 		{
 			//! Find the index of a specified entry.
 			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
-			return(SUPER_t::FindIFor(pObj) >= 0);
+			return SUPER_t::FindIFor(pObj) >= 0 ;
 		}
-		ELEM_t PopHead()
+		TYPE* PopHead()
 		{
 			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			return SUPER_t::PopHead();
 		}
-		ELEM_t PopTail()
+		TYPE* PopTail()
 		{
 			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			return SUPER_t::PopTail();
@@ -188,6 +187,7 @@ namespace Gray
 		typedef cArraySortName<TYPE, _TYPECH> SUPER_t;
 	public:
 		mutable cThreadLockCount m_Lock;
+
 	public:
 		cThreadLockArrayName()
 		{
@@ -209,12 +209,12 @@ namespace Gray
 		cRefPtr<TYPE> FindArgForKey(const _TYPECH* pszKey) const
 		{
 			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
-			return(SUPER_t::FindArgForKey(pszKey));
+			return SUPER_t::FindArgForKey(pszKey) ;
 		}
 		ITERATE_t Add(TYPE* pObj)
 		{
 			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
-			return(SUPER_t::Add(pObj));
+			return SUPER_t::Add(pObj) ;
 		}
 		bool RemoveArgKey(TYPE* pObj)
 		{

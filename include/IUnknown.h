@@ -50,7 +50,7 @@ typedef struct _GUID
 public:
 	inline bool operator == ( const _GUID& other ) const
 	{
-		return ! ::memcmp( this, &other, sizeof(other));
+		return cMem::IsEqual( this, &other, sizeof(other));
 	}
 public:
 	UINT32 Data1;

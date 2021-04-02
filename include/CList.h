@@ -11,7 +11,6 @@
 
 #include "GrayCore.h"
 #include "HResult.h"
-// #include "cUnitTestDecl.h"
 #include "cDebugAssert.h"
  
 namespace Gray
@@ -179,8 +178,6 @@ namespace Gray
 				return false;
 			return pNode->get_Parent() == this;
 		}
-
-		// UNITTEST_FRIEND(cList);
 	};
 
 	//*************************************************

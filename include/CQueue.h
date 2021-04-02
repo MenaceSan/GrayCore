@@ -76,8 +76,7 @@ namespace Gray
 		}
 
 		HRESULT SeekQ(STREAM_OFFSET_t iOffset, SEEK_ORIGIN_TYPE eSeekOrigin = SEEK_Set);	// support parents SeekX
-
-		UNITTEST_FRIEND(cQueue);
+ 
 	};
 
 	//*********************************************************************
@@ -225,6 +224,7 @@ namespace Gray
 		virtual TYPE* GetWritePrepared(ITERATE_t iNeedCount)
 		{
 			//! get start of data i could write directly. contiguous
+			UNREFERENCED_PARAMETER(iNeedCount);
 			if (!isValidPtr())
 				return nullptr;
 			return this->get_Data() + this->m_iWriteLast;
@@ -526,11 +526,12 @@ namespace Gray
 		{
 			//! insert data at the head of the queue. first out.
 			BYTE* pWriteSpace = GetWritePrepared((ITERATE_t)iLen);
-			if (get_WriteSpaceQty() < iLen)
+			UNREFERENCED_PARAMETER(pWriteSpace);
+			if ((size_t)get_WriteSpaceQty() < iLen)
 				return false;
-			BYTE* pData = get_Data();
-			cMem::CopyOverlap(pData + m_iReadLast + iLen, pData + m_iReadLast, get_ReadQty());
-			cMem::Copy(pData + m_iReadLast, pDataSrc, iLen);
+			BYTE* pDataHead = get_Data();
+			cMem::CopyOverlap(pDataHead + m_iReadLast + iLen, pDataHead + m_iReadLast, get_ReadQty());
+			cMem::Copy(pDataHead + m_iReadLast, pDataSrc, iLen);
 			AdvanceWrite((ITERATE_t)iLen);
 			return true;
 		}

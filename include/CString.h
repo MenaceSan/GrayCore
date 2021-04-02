@@ -15,8 +15,7 @@
 #include "cHeapObject.h"
 #include "cRefPtr.h"
 #include "StrT.h"
-#include "cUnitTestDecl.h"
-
+ 
 #if defined(_MFC_VER) // Only need minimal sub-set if using MFC. __ATLSTR_H__
 #include <cstringt.h>	// __ATLSIMPSTR_H__
 #endif
@@ -36,8 +35,8 @@ namespace Gray
 	class GRAYCORE_LINK CStringData : public cRefBase, public cHeapObject	// ref count
 	{
 		//! @class Gray::CStringData
+		//! Contain a UTF8 or UNICODE string.
 		//! Equiv to the MFC ATL:CStringData. Variable size allocation for this.
-		//! May contain UTF8 or UNICODE string.
 		CHEAPOBJECT_IMPL;
 
 	private:
@@ -72,7 +71,7 @@ namespace Gray
 			cHeap::FreePtr(pObj);
 		}
 
-		StrLen_t get_CharCount() const noexcept
+		inline StrLen_t get_CharCount() const noexcept
 		{
 			//! @return Number of chars. (not necessarily bytes)
 			return m_nCharCount;
@@ -145,6 +144,7 @@ namespace Gray
 
 		CStringData* GetData() const noexcept
 		{
+			//! Get my internal storage object.
 			//! like MFC
 			DEBUG_CHECK(m_pchData != &m_Nil);
 			DEBUG_CHECK(m_pchData != nullptr);
@@ -631,8 +631,6 @@ namespace Gray
 		static THIS_t _cdecl GetErrorStringf(HRESULT nFormatID, void* pSource, ...);
 
 		static THIS_t GRAYCALL GetSizeK(UINT64 uVal, UINT nKUnit = 1024, bool bSpace = false);
-
-		UNITTEST_FRIEND(cString);
 	};
 
 	typedef cStringT< wchar_t > cStringW;
@@ -686,6 +684,6 @@ namespace Gray
 
 #undef cStringT_DEF
 
-};
+}
 
 #endif // _INC_cString_H

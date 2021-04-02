@@ -3,7 +3,7 @@
 //! c++ Collections. MFC compatible.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
-
+ 
 #ifndef _INC_cArray_H
 #define _INC_cArray_H
 #ifndef NO_PRAGMA_ONCE
@@ -31,7 +31,8 @@ namespace Gray
 		//! @class Gray::CArray
 		//! Minimal array template of elements. like MFC version. use cArrayTyped<> instead !
 		//! @note MFC 8.0 uses INT_PTR for GetSize()
-		//! ARG_TYPE = const TYPE&	typically
+		//! TYPE = what is stored.
+		//! ARG_TYPE = const TYPE& or TYPE depending on what makes sense for SetAt() and Add operations.
 
 		typedef CArray<TYPE, ARG_TYPE> THIS_t;
 
@@ -90,29 +91,31 @@ namespace Gray
 		// Accessing elements
 		const TYPE& GetAt(ITERATE_t nIndex) const
 		{
-			ASSERT(IsValidIndex(nIndex));
+			DEBUG_CHECK(IsValidIndex(nIndex));
 			return m_pData[nIndex];
 		}
 		TYPE& ElementAt(ITERATE_t nIndex)
 		{
-			ASSERT(IsValidIndex(nIndex));
+			DEBUG_CHECK(IsValidIndex(nIndex));
 			return m_pData[nIndex];
 		}
-
 		void SetAt(ITERATE_t nIndex, ARG_TYPE newElement) // throw
 		{
 			//! @note Destructor is automatically called.
-			ASSERT(IsValidIndex(nIndex));
+			DEBUG_CHECK(IsValidIndex(nIndex));
 			m_pData[nIndex] = newElement;	// may call a copy constructor.
 		}
 
 		// Direct Access to the element data (may return nullptr)
 		inline const TYPE* GetData() const
 		{
+			// DANGER.
 			return m_pData;
 		}
 		inline TYPE* GetData()
 		{
+			// Get a pointer that i might be able to change directly.
+			// DANGER.
 			return m_pData;
 		}
 		void SetDataArrayPtr(TYPE* pData, ITERATE_t nSize)
@@ -136,11 +139,11 @@ namespace Gray
 		void Copy(const CArray& src);
 
 		// overloaded operator helpers
-		inline TYPE& operator[](ITERATE_t nIndex)
+		inline TYPE& operator[](ITERATE_t nIndex) // throw
 		{
 			return ElementAt(nIndex);
 		}
-		inline const TYPE& operator[](ITERATE_t nIndex) const
+		inline const TYPE& operator[](ITERATE_t nIndex) const // throw
 		{
 			return GetAt(nIndex);
 		}
@@ -349,11 +352,8 @@ namespace Gray
 		typedef ITERATE_t iterator;			// like STL
 		typedef ITERATE_t const_iterator;	// like STL
 
-		typedef TYPE ELEM_t;				//!< What type is stored.
-		typedef ARG_TYPE REF_t;				//!< How to refer to this? value or ref or pointer?
-
 	protected:
-		virtual COMPARE_t CompareData(REF_t Data1, REF_t Data2) const noexcept
+		virtual COMPARE_t CompareData(ARG_TYPE Data1, ARG_TYPE Data2) const noexcept
 		{
 			//! Compare a data record to another data record.
 			//! ASSUME this is the same as comparing keys. Otherwise you must overload this.
@@ -396,20 +396,6 @@ namespace Gray
 			return true;
 		}
 
-		// New
-		bool IsValidIndex(ITERATE_t i) const noexcept
-		{
-			return IS_INDEX_GOOD(i, this->m_nSize);
-		}
-		ITERATE_t ClampValidIndex(ITERATE_t i) const noexcept
-		{
-			//! @return -1 = empty array.
-			if (i < 0)
-				i = 0;
-			if (i >= this->m_nSize)
-				return(this->m_nSize - 1);
-			return i;
-		}
 		size_t GetHeapStats(OUT ITERATE_t& iAllocCount) const noexcept
 		{
 			//! @return sizeof all children alloc(s). not size of *this
@@ -419,10 +405,25 @@ namespace Gray
 			return cHeap::GetSize(this->m_pData);
 		}
 
-		void AssertValidIndex(ITERATE_t nIndex) const
+		// New
+		inline bool IsValidIndex(ITERATE_t i) const noexcept
+		{
+			return IS_INDEX_GOOD(i, this->m_nSize);
+		}
+		inline ITERATE_t ClampValidIndex(ITERATE_t i) const noexcept
+		{
+			//! @return -1 = empty array.
+			if (i < 0)
+				i = 0;
+			if (i >= this->m_nSize)
+				return this->m_nSize - 1;
+			return i;
+		}
+		void AssertValidIndex(ITERATE_t nIndex) const // throw
 		{
 			ASSERT_THROW(IsValidIndex(nIndex));
 		}
+
 		const TYPE& GetAtSecure(ITERATE_t nIndex) const // throw
 		{
 			//! throw an exception if we are out or range.
@@ -436,19 +437,16 @@ namespace Gray
 			return this->m_pData[nIndex];
 		}
 
-		REF_t ConstElementAt(ITERATE_t nIndex) const // throw
-		{
-			// Same as GetAt ?
-			AssertValidIndex(nIndex);
-			return this->m_pData[nIndex];
-		}
 		inline TYPE& operator[](ITERATE_t nIndex) // throw
 		{
+			// AKA GetAtSecure
+			AssertValidIndex(nIndex);
 			return this->ElementAt(nIndex);
 		}
 		inline const TYPE& operator[](ITERATE_t nIndex) const // throw
 		{
-			// Const array should return const values.
+			// AKA ElementAtSecure
+			// Const array should return const values. GetAt()
 			AssertValidIndex(nIndex);
 			return this->m_pData[nIndex];
 		}
@@ -463,22 +461,20 @@ namespace Gray
 		}
 		TYPE& ElementAtHead()
 		{
+			// AKA 
 			return this->ElementAt(0);
 		}
 		TYPE& ElementAtTail()
 		{
+			// AKA 
 			return this->ElementAt(this->GetSize() - 1);
 		}
-		REF_t ConstHead() const
-		{
-			return ConstElementAt(0);
-		}
-		REF_t ConstTail() const
-		{
-			return ConstElementAt(this->GetSize() - 1);
-		}
 
-		REF_t GetAtTail()
+		const TYPE& GetAtHead() const
+		{
+			return this->GetAt(0);
+		}
+		const TYPE& GetAtTail() const
 		{
 			return this->GetAt(this->GetSize() - 1);
 		}
@@ -535,20 +531,20 @@ namespace Gray
 
 		void RemoveLast()
 		{
-			this->RemoveAt((this->GetSize()) - 1);
+			this->RemoveAt(this->GetSize() - 1);
 		}
-		ELEM_t PopHead()
+		TYPE PopHead()
 		{
 			ASSERT(this->GetSize() > 0);
-			ELEM_t tmp = this->GetAt(0);	// copy it.
+			TYPE tmp = this->GetAt(0);	// copy it.
 			this->RemoveAt(0);
 			return tmp;
 		}
-		ELEM_t PopTail()
+		TYPE PopTail()
 		{
 			ASSERT(this->GetSize() > 0);
-			ITERATE_t i = (this->GetSize()) - 1;
-			ELEM_t tmp = this->GetAt(i);	// copy it.
+			ITERATE_t i = this->GetSize() - 1;
+			TYPE tmp = this->GetAt(i);	// copy it.
 			this->RemoveAt(i);
 			return tmp;
 		}
@@ -635,8 +631,8 @@ namespace Gray
 		ITERATE_t iQty = this->GetSize() - 1;
 		for (ITERATE_t i = 0; i < iQty; i++)
 		{
-			REF_t a = this->ConstElementAt(i);
-			REF_t b = this->ConstElementAt(i + 1);
+			const TYPE& a = this->GetAt(i);
+			const TYPE& b = this->GetAt(i + 1);
 			if (CompareData(a, b) > 0)
 			{
 				return false;
@@ -652,8 +648,8 @@ namespace Gray
 		ITERATE_t iQty = this->GetSize() - 1;
 		for (ITERATE_t i = 0; i < iQty; i++)
 		{
-			const TYPE& a = this->ConstElementAt(i);
-			const TYPE& b = this->ConstElementAt(i + 1);
+			const TYPE& a = this->GetAt(i);
+			const TYPE& b = this->GetAt(i + 1);
 			if (CompareData(a, b) >= 0)
 			{
 				return false;
@@ -699,19 +695,17 @@ namespace Gray
 
 	//*************************************************
 
-	template <class TYPE, class TYPE_ARG = TYPE*>
-	class cArrayFacade : public cArrayTyped < TYPE, TYPE_ARG >
+	template <class TYPE, class ARG_TYPE = TYPE*>
+	class cArrayFacade : public cArrayTyped < TYPE, ARG_TYPE >
 	{
 		//! @class Gray::cArrayFacade
 		//! An array of some type of pointer using cPtrFacade. Allow dupes.
 		//! base for cArrayPtr, cArryNew, cArrayIUnk and cArrayRef
+		//! TYPE = some cPtrFacade derived
 
 	public:
-		typedef cArrayTyped<TYPE, TYPE_ARG> SUPER_t;
-		typedef cArrayFacade<TYPE, TYPE_ARG> THIS_t;
-
-		typedef typename SUPER_t::ELEM_t ELEM_t;			// GCC needs this silliness.
-		typedef typename SUPER_t::REF_t REF_t;				// 
+		typedef cArrayTyped<TYPE, ARG_TYPE> SUPER_t;
+		typedef cArrayFacade<TYPE, ARG_TYPE> THIS_t;
 
 	public:
 		virtual ~cArrayFacade()
@@ -720,25 +714,28 @@ namespace Gray
 			this->RemoveAll();
 		}
 
-		virtual COMPARE_t CompareData(REF_t pData1, REF_t pData2) const noexcept override
+		virtual COMPARE_t CompareData(ARG_TYPE pData1, ARG_TYPE pData2) const noexcept override
 		{
 			//! Compare a data record to another data record. Use cValT::Compare()??
 			// return cValT::Compare(Data1,Data2);
 			return cMem::Compare(pData1, pData2, sizeof(*pData2));
 		}
 
-		REF_t GetAt(ITERATE_t index) const // Override
+#if 0
+		const TYPE& GetAt(ITERATE_t index) const
 		{
-			return SUPER_t::ConstElementAt(index);
+			// Cast to pointer . helper.
+			return SUPER_t::GetAt(index);
 		}
-		REF_t GetAtCheck(ITERATE_t index) const
+#endif
+		TYPE GetAtCheck(ITERATE_t index) const
 		{
 			//! Just return nullptr if index out of bounds. Safe. GetAtSafe()
 			if (!SUPER_t::IsValidIndex(index))
 			{
 				return nullptr;
 			}
-			return SUPER_t::ConstElementAt(index);
+			return SUPER_t::GetAt(index);
 		}
 
 		TYPE PopHead()
@@ -768,14 +765,12 @@ namespace Gray
 
 	public:
 		typedef cArrayFacade<TYPE*, TYPE*> SUPER_t;
-		typedef typename SUPER_t::REF_t REF_t;				// How to refer to this? value or ref or pointer?
-		typedef typename SUPER_t::ELEM_t ELEM_t;			// How to refer to this? value or ref or pointer?
 
 	public:
 		void DeleteAt(ITERATE_t i)
 		{
 			//! Dynamic heap allocated object is deleted.
-			REF_t pObj = this->GetAt(i);
+			TYPE* pObj = this->GetAt(i);	// make copy.
 			this->RemoveAt(i);
 			delete pObj;
 		}
@@ -784,7 +779,7 @@ namespace Gray
 			//! Similar to RemoveAll(), DisposeAll() except it calls 'delete' to try to dereference all the entries.
 			//! @note often delete has the effect of removing itself from the list. Beware of this.
 
-			ITERATE_t iSize = this->GetSize();
+			const ITERATE_t iSize = this->GetSize();
 			if (iSize <= 0)
 				return;
 			{
@@ -795,7 +790,7 @@ namespace Gray
 				ASSERT(orig.GetSize() == iSize);
 				for (ITERATE_t i = iSize - 1; i >= 0; i--)	// reverse order they got added?
 				{
-					REF_t pObj = orig.GetAt(i);
+					TYPE* pObj = orig.GetAt(i);
 					if (pObj != nullptr)
 					{
 						delete pObj;

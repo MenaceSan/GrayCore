@@ -40,8 +40,8 @@ namespace Gray
 #undef TYPE
 #undef StrTTbl
 
- // use the C lib. else StrFormat
-#undef USE_CRT
+ // use the C lib else internal StrFormat
+// #undef USE_CRT
 
 	template<> GRAYCORE_LINK StrLen_t GRAYCALL StrT::vsprintfN<char>(OUT char* pszOut, StrLen_t iLenOutMax, const char* pszFormat, va_list vlist)
 	{

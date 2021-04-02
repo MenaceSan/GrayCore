@@ -12,7 +12,6 @@
 #endif
 
 #include "cTimeSys.h"
-#include "cUnitTestDecl.h"
 #include "cDebugAssert.h"
 
 namespace Gray
@@ -45,10 +44,10 @@ namespace Gray
 		~cCodeProfileFunc()
 		{
 			if (sm_bActive)	// inline check for maximum speed.
+			{
 				StopTime();
+			}
 		}
-
-		UNITTEST_FRIEND(cCodeProfiler);
 	};
 
 	// cCodeProfileFunc usage requires only single declaration at beginning of function

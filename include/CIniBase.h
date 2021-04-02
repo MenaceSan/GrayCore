@@ -34,9 +34,10 @@ namespace Gray
 	DECLARE_INTERFACE(IIniBaseEnumerator) 
 	{
 		//! @interface Gray::IIniBaseEnumerator
-		//! Read/Enumerate the object properties. 0 to max defined tags.
+		//! Read/Enumerate the object properties. 0 to max defined tags. assume also supports IIniBaseGetter
 		IGNORE_WARN_INTERFACE(IIniBaseEnumerator);
-		virtual HRESULT PropEnum(IPROPIDX_t ePropIdx, OUT cStringI& rsValue, cStringI* psPropTag = nullptr) const = 0;
+		virtual HRESULT PropGetEnum(IPROPIDX_t ePropIdx, OUT cStringI& rsValue, OUT cStringI* psPropTag = nullptr) const = 0;
+		// virtual HRESULT PropSetEnum(IPROPIDX_t ePropIdx, const IniChar_t* pszValue) = 0;
 	};
 } 
 

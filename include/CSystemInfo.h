@@ -94,7 +94,6 @@ namespace Gray
 		static void GRAYCALL SystemBeep();
 
 		CHEAPOBJECT_IMPL;
-		UNITTEST_FRIEND(cSystemInfo);
 	};
 } 
 

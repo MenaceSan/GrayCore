@@ -23,7 +23,7 @@ namespace Gray
 		//! @class Gray::StrBuilder
 		//! Similar to .NET StringBuilder
 		//! Fill a buffer with stuff. Track how much space is left. NOT dynamic resized.
-		//! Like cQueue 
+		//! Like cQueue or cStreamOutput
 
 		typedef cMemBlock SUPER_t;
 		friend class StrFormat<_TYPE_CH>;
@@ -66,7 +66,7 @@ namespace Gray
 			//! Do i have enough room to write iNeedCount of TYPE?
 			//! Allocate as much as i can and truncate the rest.
 			//! paired with AdvanceWrite
-
+			UNREFERENCED_PARAMETER(iNeedCount);
 			if (!isValidPtr())	// just estimating.
 				return nullptr;
 			return get_DataWork() + this->m_iWriteLast;
@@ -106,7 +106,7 @@ namespace Gray
 		}
 		inline StrLen_t get_Length() const noexcept
 		{
-			//! get Length used. not including '\0';
+			//! get Length used/filled. not including '\0';
 			return m_iWriteLast;
 		}
 		inline const _TYPE_CH* get_Str() const noexcept
@@ -146,7 +146,7 @@ namespace Gray
 			const StrLen_t nLenRet = MIN(iRepeat, nLenSpace);
 			if (pszWrite != nullptr)
 			{
-				cValArray::FillQty<_TYPE_CH>(pszWrite, nLenRet, ' ');
+				cValArray::FillQty<_TYPE_CH>(pszWrite, nLenRet, ch);
 			}
 			AdvanceWrite(nLenRet);
 			return nLenRet;
@@ -170,6 +170,7 @@ namespace Gray
 
 		StrLen_t AddStr(const _TYPE_CH* pszStr)
 		{
+			// AKA WriteString()
 			return AddStr2(pszStr, StrT::Len(pszStr));
 		}
 
@@ -204,7 +205,7 @@ namespace Gray
 			nLenRet = MIN(nLenRet, (StrLen_t)nSize);
 			if (pszWrite != nullptr)
 			{
-				::memcpy(pszWrite, pSrc, nLenRet);
+				cMem::Copy(pszWrite, pSrc, nLenRet);
 			}
 			AdvanceWrite(nLenRet);
 		}

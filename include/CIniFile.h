@@ -13,7 +13,6 @@
 #include "cArrayRef.h"
 #include "HResult.h"
 #include "FileName.h"
-#include "cUnitTestDecl.h"
 
 namespace Gray
 {
@@ -28,33 +27,34 @@ namespace Gray
 		cArrayRef<cIniSectionEntry> m_aSections;	//!< store all my sections. not sorted, dupes allowed.
 
 	public:
+		static const IniChar_t k_SectionDefault[1];	// "" = default section name for tags not in a section.
+
+	public:
 		cIniFile();
 		virtual ~cIniFile();
 
-		bool isRead() const
+		ITERATE_t get_SectionsQty() const noexcept
 		{
 			//! Was this read ?
-			return m_aSections.GetSize() > 0;
+			return m_aSections.GetSize();
+		}
+		cIniSectionEntryPtr EnumSection(ITERATE_t i = 0) const
+		{
+			return m_aSections.GetAtCheck(i);
 		}
 
 		HRESULT ReadIniStream(cStreamInput& s, bool bStripComments = false);
 		HRESULT ReadIniFile(const FILECHAR_t* pszFilePath, bool bStripComments = false);
 		HRESULT WriteIniFile(const FILECHAR_t* pszFilePath) const;
 
-		cIniSectionEntryPtr EnumSection(ITERATE_t i = 0) const
-		{
-			return m_aSections.GetAtCheck(i);
-		}
-		virtual HRESULT PropEnum(IPROPIDX_t ePropIdx, OUT cStringI& rsValue, cStringI* psPropTag = nullptr) const override;
+		HRESULT PropGetEnum(IPROPIDX_t ePropIdx, OUT cStringI& rsValue, OUT cStringI* psPropTag = nullptr) const override;
 		cIniSectionEntryPtr FindSection(const IniChar_t* pszSectionTitle = nullptr, bool bPrefix = false) const;
 
 		const IniChar_t* FindKeyLinePtr(const IniChar_t* pszSectionTitle, const IniChar_t* pszKey) const;
 		virtual cIniSectionEntryPtr AddSection(const IniChar_t* pszSectionTitle = nullptr, bool bStripComments = false, int iLine = 0);
 		HRESULT SetKeyLine(const IniChar_t* pszSectionTitle, const IniChar_t* pszKey, const IniChar_t* pszLine);
 		HRESULT SetKeyArg(const IniChar_t* pszSectionTitle, const IniChar_t* pszKey, const IniChar_t* pszArg);
-
-		UNITTEST_FRIEND(cIniFile);
 	};
-};
+} 
 
 #endif // _INC_cIniFile_H

@@ -21,14 +21,20 @@ namespace Gray
 		//! @struct Gray::cAppCommand
 		//! a command line switch that does something. similar to MFC CCmdTarget ?
 		//! Abstract Base class for a command handler (plugin).
+		//! typically static allocated.
 
+	public:
 		const FILECHAR_t* m_pszSwitch;		//!< abbreviated -switch or /switch (case sensative) optional, nullptr allowed
 		const ATOMCHAR_t* m_pszName;		//!< symbolic name for -switch or /switch (case insensative). MUST be unique.
 		const char* m_pszHelpArgs;			//!< describe any extra args this function might take. "[optional arg]. nullptr = takes none.
 		const char* m_pszHelp;				//!< help description.
 
+	public:
 		cAppCommand(const FILECHAR_t* pszSwitch, const ATOMCHAR_t* pszName, const char* pszHelpArgs, const char* pszHelp) noexcept
 			: m_pszSwitch(pszSwitch), m_pszName(pszName), m_pszHelpArgs(pszHelpArgs), m_pszHelp(pszHelp)
+		{
+		}
+		virtual ~cAppCommand()
 		{
 		}
 
@@ -42,7 +48,7 @@ namespace Gray
 		: public cSingletonStatic < cAppImpl > // use static theApp
 	{
 		//! @class Gray::cAppImpl
-		//! Entry point for my implemented application.
+		//! Entry point for my implemented application. I am not a _WINDLL.
 		//! like (CWinApp for MFC) (maybe windowed or console)
 		//! I am NOT a library/DLL. I am an application implementation. NOT the same as (or to be merged with) cAppState.
 		//! Basic framework for my application I implement. Assume a static like cAppImpl theApp is defined some place.

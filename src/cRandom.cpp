@@ -86,7 +86,7 @@ namespace Gray
 			if (iSizeLeft < sizeof(uVal))
 			{
 				// running out of room.
-				::memcpy(puData, &uVal, iSizeLeft);	// partial fill.
+				cMem::Copy(puData, &uVal, iSizeLeft);	// partial fill.
 				break;	// done.
 			}
 			puData[0] = uVal;
@@ -115,7 +115,7 @@ namespace Gray
 			if (iSizeLeft < sizeof(uVal))
 			{
 				// running out of room.
-				::memcpy(puData, &uVal, iSizeLeft);
+				cMem::Copy(puData, &uVal, iSizeLeft);
 				break;	// done.
 			}
 			puData[0] = uVal;
@@ -231,7 +231,7 @@ namespace Gray
 		if (iSize > sizeof(m_nSeed))
 			iSize = sizeof(m_nSeed);
 		m_nSeed = 0;	// Clear any under flow.
-		::memcpy(&m_nSeed, pData, iSize);
+		cMem::Copy(&m_nSeed, pData, iSize);
 	}
 
 	UINT cRandomDef::GetRandNext()

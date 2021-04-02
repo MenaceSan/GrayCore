@@ -12,7 +12,6 @@
 
 #include "StrConst.h"
 #include "StrArg.h"
-#include "cUnitTestDecl.h"
 #include "cDebugAssert.h"
 #include "HResult.h"
 #include <time.h>	// system time_t for count of seconds. int32 or int64.
@@ -244,7 +243,7 @@ namespace Gray
 
 		bool operator == (const cTimeUnits& rTu) const
 		{
-			return(!::memcmp(this, &rTu, sizeof(rTu)));	// All of it ?
+			return cMem::IsEqual(this, &rTu, sizeof(rTu)) ;	// All of it ?
 		}
 
 		void put_DosDate(UINT32 ulDosDate);
@@ -314,8 +313,6 @@ namespace Gray
 			, m_nTZ((TIMEUNIT_t)nTZ)
 		{
 		}
-
-		UNITTEST_FRIEND(cTimeUnits);
 	};
 
 	//*******************************************************

@@ -11,7 +11,6 @@
 
 #include "StrChar.h"
 #include "StrConst.h"
-#include "cUnitTestDecl.h"
 
 namespace Gray
 {
@@ -49,8 +48,6 @@ namespace Gray
 
 		static StrLen_t GRAYCALL UTF8toUNICODE(OUT wchar_t* pOut, StrLen_t iSizeOutMaxChars, const char* pInp, StrLen_t iSizeInpBytes = k_StrLen_UNK);
 		static StrLen_t GRAYCALL UNICODEtoUTF8(OUT char* pOut, StrLen_t iSizeOutMaxBytes, const wchar_t* pInp, StrLen_t iSizeInpChars = k_StrLen_UNK);
-
-		UNITTEST_FRIEND(StrU);
 	};
 }
 

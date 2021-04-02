@@ -13,8 +13,8 @@
 #include "HResult.h"
 #include "cTimeSys.h" // TIMESYSD_t
 #include "cNonCopyable.h"
-#include "cUnitTestDecl.h"
-#include "cDebugAssert.h"
+#include "cDebugAssert.h"	// ASSERT
+#include "cStreamProgress.h"  // STREAM_OFFSET_t , STREAM_POS_t, SEEK_ORIGIN_TYPE
 
 namespace Gray
 {
@@ -29,33 +29,6 @@ namespace Gray
 	typedef void* HMODULE;		//!< ::dlclose() is different for __linux__ than _WIN32
 	typedef void* HINSTANCE;
 #endif
-
-	enum SEEK_ORIGIN_TYPE
-	{
-		//! @enum Gray::SEEK_ORIGIN_TYPE
-		//! What are we moving relative to ? SEEK_SET,SEEK_CUR,SEEK_END or FILE_BEGIN,FILE_CURRENT,FILE_END
-		//! SEEK_SET defined for both __linux__ and _WIN32
-		//! same as enum tagSTREAM_SEEK
-
-		SEEK_Set = 0,		//!< SEEK_SET = FILE_BEGIN = STREAM_SEEK_SET = 0 = relative to the start of the file.
-		SEEK_Cur = 1,		//!< SEEK_CUR = FILE_CURRENT = STREAM_SEEK_CUR = 1 = relative to the current position.
-		SEEK_End = 2,		//!< SEEK_END = FILE_END = STREAM_SEEK_END = 2 = relative to the end of the file.
-
-		SEEK_MASK = 0x0007,		//!< | _BITMASK(SEEK_Set) allow extra bits above SEEK_ORIGIN_TYPE ?
-	};
-
-#if defined(_MFC_VER) && ( _MFC_VER > 0x0600 )
-	typedef LONGLONG	STREAM_OFFSET_t;
-	typedef ULONGLONG	STREAM_POS_t;		// same as FILE_SIZE_t.
-#define USE_FILE_POS64
-
-#else
-	typedef LONG_PTR	STREAM_OFFSET_t;	//!< Might be 64 or 32 bit relative value (signed). TODO SET USE_FILE_POS64
-	typedef ULONG_PTR	STREAM_POS_t;		//!< NOT same as FILE_SIZE_t in 32 bit? Why not ?
-
-#endif	// ! _MFC_VER
-
-	constexpr STREAM_POS_t k_STREAM_POS_ERR = (STREAM_POS_t)(-1);	// like INVALID_SET_FILE_POINTER
 
 	class GRAYCORE_LINK cOSHandle : protected cNonCopyable
 	{
@@ -134,6 +107,7 @@ namespace Gray
 			//! default implementation for closing OS HANDLE.
 			//! ASSUME IsValidHandle(h)
 			//! @return true = ok;
+			DEBUG_CHECK(IsValidHandle(h));	
 #ifdef _WIN32
 			const BOOL bRet = ::CloseHandle(h); // ignored bool return.
 			return bRet;
@@ -326,9 +300,7 @@ namespace Gray
 			return ::dup(m_h);
 		}
 #endif
-
-		UNITTEST_FRIEND(cOSHandle);
+ 
 	};
-
-};
+} 
 #endif // _INC_cOSHandle_H

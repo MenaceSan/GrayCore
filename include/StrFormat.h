@@ -93,7 +93,7 @@ namespace Gray
 		//! similar to expressions.
 	public:
 		static bool GRAYCALL HasTemplateBlock(const IniChar_t* pszInp);
-		static StrLen_t GRAYCALL ReplaceTemplateBlock(StrBuilder<IniChar_t>& out, const IniChar_t* pszInp, IIniBaseGetter* pBlockReq, bool bRecursing = false);
+		static StrLen_t GRAYCALL ReplaceTemplateBlock(StrBuilder<IniChar_t>& out, const IniChar_t* pszInp, const IIniBaseGetter* pBlockReq, bool bRecursing = false);
 	};
 
 	template< typename TYPE>

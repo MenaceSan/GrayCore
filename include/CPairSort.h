@@ -40,13 +40,13 @@ namespace Gray
 			this->QSort();
 			return i;
 		}
-		virtual COMPARE_t CompareKey(KEY_t Key, REF_t Data2) const override
+		virtual COMPARE_t CompareKey(KEY_t Key, ARG_t Data2) const noexcept override
 		{
 			//! Compare by a key that may not be part of a data record yet.
 			//! @note If we reach here assume the key is the whole record !
 			return cValT::Compare(Key, *((_TYPE_KEY*)Data2));
 		}
-		virtual COMPARE_t CompareData(REF_t Data1, REF_t Data2) const noexcept override
+		virtual COMPARE_t CompareData(ARG_t Data1, ARG_t Data2) const noexcept override
 		{
 			//! Compare a data record to another data record.
 			return cValT::Compare(*((_TYPE_KEY*)Data1), *((_TYPE_KEY*)Data2));
@@ -81,13 +81,13 @@ namespace Gray
 		{
 		}
 
-		virtual COMPARE_t CompareKey(KEY_t pszKey, REF_t Data2) const override
+		virtual COMPARE_t CompareKey(KEY_t pszKey, ARG_t Data2) const noexcept override
 		{
 			//! Compare by a key that may not be part of a data record yet.
 			//! @note If we reach here assume the key is the whole record !
 			return StrT::CmpI((const ATOMCHAR_t*)pszKey, *(const ATOMCHAR_t**)Data2);
 		}
-		virtual COMPARE_t CompareData(REF_t Data1, REF_t Data2) const noexcept override
+		virtual COMPARE_t CompareData(ARG_t Data1, ARG_t Data2) const noexcept override
 		{
 			//! Compare a data record to another data record.
 			return StrT::CmpI(*(const ATOMCHAR_t**)Data1, *(const ATOMCHAR_t**)Data2);

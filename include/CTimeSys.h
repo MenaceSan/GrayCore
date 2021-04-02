@@ -10,8 +10,7 @@
 #pragma once
 #endif
 
-#include "cUnitTestDecl.h"
-#include "cDebugAssert.h"
+#include "GrayCore.h"
 #include <time.h> // timespec
 
 namespace Gray
@@ -208,9 +207,7 @@ namespace Gray
 			//! How old is this? (in seconds)
 			//! current time - this time.
 			return get_AgeSys() / k_FREQ;
-		}
-
-		UNITTEST_FRIEND(cTimeSys);
+		} 
 	};
 
 	//****************************************************************************

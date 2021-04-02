@@ -10,7 +10,6 @@
 #endif
 
 #include "cOSHandle.h"
-#include "cUnitTestDecl.h"
 
 #if defined(_WIN32) && ! defined(UNDER_CE)
 
@@ -123,8 +122,6 @@ namespace Gray
 			//! @return (SIZE_T) -1 = FAILURE.
 			return ::HeapSize(m_hHeap, dwFlags, pMem);
 		}
-
-		UNITTEST_FRIEND(cWinHeap);
 	};
 }
 

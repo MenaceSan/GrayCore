@@ -384,7 +384,7 @@ namespace Gray
 
 			if (i >= TIMEUNIT_Second)	// sub seconds print as a decimal.
 				break;
-			const int nQtyOfUnit = (int)floor(dDays / dUnits);
+			const int nQtyOfUnit = (int)(dDays / dUnits);	// same as ::floor()
 
 			if (iMsgLen)
 			{

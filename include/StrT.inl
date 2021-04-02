@@ -702,7 +702,7 @@ namespace Gray
 				i = StrT::Len(pSrc, iLenMaxChars);
 				if (pDst != pSrc) // same string.
 				{
-					// Must do backwards copy like memmove().
+					// Must do backwards copy like cMem::CopyOverlap().
 					int j = i;
 					for (; --j >= 0; )
 						pDst[j] = pSrc[j];
@@ -775,8 +775,8 @@ namespace Gray
 		StrLen_t iLenRest = StrT::Len(pDst2 + iDstSegLen);
 		if (iDstIdx + iSrcLen + iLenRest >= iDstLenMax)	// not big enough!
 			return 0;
-		::memmove(pDst2 + iSrcLen, pDst2 + iDstSegLen, (iLenRest + 1) * sizeof(TYPE));	// make room.
-		::memcpy(pDst2, pSrc, iSrcLen * sizeof(TYPE));
+		cMem::CopyOverlap(pDst2 + iSrcLen, pDst2 + iDstSegLen, (iLenRest + 1) * sizeof(TYPE));	// make room.
+		cMem::Copy(pDst2, pSrc, iSrcLen * sizeof(TYPE));
 		return iSrcLen;
 	}
 

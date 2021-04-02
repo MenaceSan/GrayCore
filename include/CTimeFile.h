@@ -150,8 +150,6 @@ namespace Gray
 		bool GetTimeUnits(OUT cTimeUnits& rTu, TZ_TYPE nTimeZoneOffset) const;
 
 		cString GetTimeFormStr(const GChar_t* pszFormat, TZ_TYPE nTimeZoneOffset = TZ_LOCAL) const;
-
-		UNITTEST_FRIEND(cTimeFile);
 	};
 
 	template <>
@@ -201,6 +199,6 @@ namespace Gray
 		// cTimeUnits::GetTimeSpanStr
 
 	};
-};
+}
 
 #endif // _INC_cTimeFile_H

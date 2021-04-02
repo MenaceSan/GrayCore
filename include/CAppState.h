@@ -18,7 +18,6 @@
 #include "cThreadLock.h"
 #include "cBits.h"
 #include "cOSProcess.h"
-#include "cUnitTestDecl.h"
 
 namespace Gray
 {
@@ -40,7 +39,7 @@ namespace Gray
 	{
 		//! @class Gray::cAppArgs
 		//! Parse and store command line args used to start an app. Handle Windows and POSIX/DOS formats.
-		//! Use FILECHAR_t
+		//! Use FILECHAR_t. see k_ARG_ARRAY_MAX
 		//! Like MFC CCommandLineInfo
 
 	private:
@@ -244,7 +243,6 @@ namespace Gray
 		static void GRAYCALL AbortApp(APP_EXITCODE_t uExitCode = APP_EXITCODE_ABORT);
 
 		CHEAPOBJECT_IMPL;
-		UNITTEST_FRIEND(cAppState);
 	};
 
 	class GRAYCORE_LINK cAppStateMain
@@ -288,6 +286,7 @@ namespace Gray
 		}
 	};
 
+#if USE_CRT
 	class GRAYCORE_LINK cAppExitCatcher : public cSingletonStatic < cAppExitCatcher >
 	{
 		//! @class Gray::cAppExitCatcher
@@ -301,5 +300,7 @@ namespace Gray
 		cAppExitCatcher();
 		~cAppExitCatcher();
 	};
+#endif
+
 }
 #endif // _INC_cAppState_H

@@ -119,11 +119,15 @@ namespace Gray
 		return Make(FACILITY_POSIX, (iErrno) & 0x0000FFFF);
 	}
 
-#ifndef UNDER_CE
+#if !defined(UNDER_CE) 
 	HRESULT GRAYCALL HResult::GetPOSIXLast() noexcept // static 
 	{
 		//! Get last POSIX error code. 'errno' converted to HRESULT
+#if USE_CRT
 		return FromPOSIX(errno);
+#else
+		return GetLast();
+#endif
 	}
 #endif
 

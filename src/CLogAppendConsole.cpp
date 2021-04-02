@@ -10,7 +10,7 @@
 #include "cAppState.h"
 #include "cOSProcess.h"
 
-#if !defined(UNDER_CE) && USE_CRT
+#if !defined(UNDER_CE)  
 
 namespace Gray
 {
@@ -33,7 +33,7 @@ namespace Gray
 		HRESULT hRes = cAppConsole::I().WriteStrOut(pszText);
 		if (FAILED(hRes))
 			return hRes;
-		return(1);	// something was written.
+		return 1;	// something was written.
 	}
 
 	cLogAppendConsole* GRAYCALL cLogAppendConsole::AddAppenderCheck(cLogNexus* pLogger, bool bAttachElseAlloc) // static

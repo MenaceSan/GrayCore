@@ -27,6 +27,7 @@ namespace Gray
 	{
 		//! @class Gray::cRandomBase
 		//! Generic abstract base class for a integer/binary (pseudo) random number generator.
+		//! Derived Providers will natively give up N bits of randomness per call/tick.
 		//! Similar to .NET System.Random
 		//! @note derived class MUST implement get_RandUns or GetRandUX to generate at least 32 bits or 31 bits of random data.
 
@@ -59,8 +60,6 @@ namespace Gray
 		//! unsigned integer is NON inclusive range. from 0 to nScale-1
 		virtual UINT GetRandUX(UINT nScale); // get integer random number in desired interval. (Non inclusive)
 		int GetRandIRange(int iRangeLo, int iRangeHi);    // output random int
-
-		UNITTEST_FRIEND(cRandom);
 	};
 
 	class GRAYCORE_LINK cRandomPerf : public IRandomNoise, public cSingleton < cRandomPerf >
@@ -125,7 +124,7 @@ namespace Gray
 			if (m_Src.isValidPtr())
 			{
 				// todo repeat like cMem::CopyRepeat() ?
-				::memcpy(pData, m_Src.GetOffset(m_nOffset), len);
+				cMem::Copy(pData, m_Src.GetOffset(m_nOffset), len);
 				m_nOffset += len;
 				ASSERT(m_Src.IsValidIndex2(m_nOffset));		// did we overflow?!
 			}
@@ -164,5 +163,5 @@ namespace Gray
 	};
 
 	extern GRAYCORE_LINK cRandomDef g_Rand;	//!< the global random number generator. NOT thread safe. but does that matter?
-};
+} 
 #endif

@@ -174,7 +174,7 @@ namespace Gray
 			m_eType = FILESYS_NFS;
 			break;
 		}
-		memcpy(&m_nSerialNumber, (void*)&fs.f_fsid, sizeof(m_nSerialNumber));		// 64 bits.
+		cMem::Copy(&m_nSerialNumber, (void*)&fs.f_fsid, sizeof(m_nSerialNumber));		// 64 bits.
 		m_bCaseSensitive = (m_eType == FILESYS_NFS);
 #endif
 		return S_OK;
@@ -778,7 +778,7 @@ namespace Gray
 		for (int i = 0; i < (int)hResCount; i++)
 		{
 			// Move each of the files.
-			cFileFindEntry& FileEntry = filedir.GetEnumFile(i); // entry in the local directory.
+			const cFileFindEntry& FileEntry = filedir.GetEnumFile(i); // entry in the local directory.
 			if (nFileFlags & FOF_FILESONLY)
 			{
 				if (FileEntry.isAttrDir())

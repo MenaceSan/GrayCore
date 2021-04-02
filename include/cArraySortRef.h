@@ -21,7 +21,7 @@ namespace Gray
 		//! A sorted array of cRefPtr<TYPE> objects.
 		//! the array has a reference to the element. similar to cArrayRef but sorted
 		//! It will get deleted when the reference count is 0.
-		//! default sort by memcmp() pointers.
+		//! default sort by cMem::Compare() pointers.
 
 		typedef cArraySortFacade< cRefPtr<TYPE>, TYPE*, TYPE_KEY > SUPER_t;
 
@@ -65,11 +65,11 @@ namespace Gray
 
 	public:
 		typedef cArraySortRef<TYPE, _TYPE_HASH> SUPER_t;
-		typedef typename SUPER_t::REF_t REF_t;
+		typedef typename SUPER_t::ARG_t ARG_t;
 		typedef typename SUPER_t::KEY_t KEY_t;
 
 	protected:
-		virtual COMPARE_t CompareData(REF_t pData1, REF_t pData2) const noexcept override
+		virtual COMPARE_t CompareData(ARG_t pData1, ARG_t pData2) const noexcept override
 		{
 			//! Compare a data record to another data record.
 			ASSERT_N(pData1 != nullptr);
@@ -78,7 +78,7 @@ namespace Gray
 			KEY_t key2 = pData2->get_HashCode();
 			return cValT::Compare(key1, key2);
 		}
-		virtual COMPARE_t CompareKey(KEY_t key1, REF_t pBase) const override
+		virtual COMPARE_t CompareKey(KEY_t key1, ARG_t pBase) const noexcept override
 		{
 			//! INT_MAX - INT_MIN must be positive !
 			//! @note x-y will not work for extreme values so we use cValT::Compare
@@ -120,11 +120,11 @@ namespace Gray
 
 	public:
 		typedef cArraySortRef<TYPE, TYPE_KEY> SUPER_t;
-		typedef typename SUPER_t::REF_t REF_t;
+		typedef typename SUPER_t::ARG_t ARG_t;
 		typedef typename SUPER_t::KEY_t KEY_t;
 
 	protected:
-		virtual COMPARE_t CompareData(REF_t pData1, REF_t pData2) const noexcept override
+		virtual COMPARE_t CompareData(ARG_t pData1, ARG_t pData2) const noexcept override
 		{
 			//! Compare a data record to another data record.
 			ASSERT(pData1 != nullptr);
@@ -136,7 +136,7 @@ namespace Gray
 				return cValT::Compare((INT_PTR)pData1, (INT_PTR)pData2);
 			return iDiff;
 		}
-		virtual COMPARE_t CompareKey(KEY_t key1, REF_t pBase) const override
+		virtual COMPARE_t CompareKey(KEY_t key1, ARG_t pBase) const noexcept override
 		{
 			if (pBase == nullptr)
 				return COMPARE_Greater;
@@ -204,18 +204,18 @@ namespace Gray
 
 	public:
 		typedef cArraySortRef<TYPE, const _TYPECH*> SUPER_t;
-		typedef typename SUPER_t::REF_t REF_t;
+		typedef typename SUPER_t::ARG_t ARG_t;
 		typedef typename SUPER_t::KEY_t KEY_t;
 
 	protected:
-		virtual COMPARE_t CompareData(REF_t pData1, REF_t pData2) const noexcept override
+		virtual COMPARE_t CompareData(ARG_t pData1, ARG_t pData2) const noexcept override
 		{
 			//! Compare a data record to another data record.
 			ASSERT_N(pData1 != nullptr);
 			ASSERT_N(pData2 != nullptr);
 			return StrT::CmpI<_TYPECH>(pData1->get_Name(), pData2->get_Name());
 		}
-		virtual COMPARE_t CompareKey(KEY_t key1, REF_t pObj) const override
+		virtual COMPARE_t CompareKey(KEY_t key1, ARG_t pObj) const noexcept override
 		{
 			ASSERT_N(key1 != nullptr);
 			ASSERT_N(pObj != nullptr);

@@ -459,7 +459,7 @@ namespace Gray
 		return StrT::FindStr(pszInp, "<?") != nullptr && StrT::FindStr(pszInp, "?>") != nullptr;
 	}
 
-	StrLen_t GRAYCALL StrTemplate::ReplaceTemplateBlock(StrBuilder<IniChar_t>& out, const IniChar_t* pszInp, IIniBaseGetter* pBlockReq, bool bRecursing)
+	StrLen_t GRAYCALL StrTemplate::ReplaceTemplateBlock(StrBuilder<IniChar_t>& out, const IniChar_t* pszInp, const IIniBaseGetter* pBlockReq, bool bRecursing)
 	{
 		//! Replace strings in a marked/delimited block using results from pBlockReq
 		//! Used for <?X?> replacement in scripts. also recursive like: <? FUNCTION("i say <VAR.X?>") ?>
@@ -515,19 +515,19 @@ namespace Gray
 
 			if (ch == '>' && pszInp[i - 1] == '?') // found end of block.
 			{
-				// NOTE: take the tag from output side in case it is the product of recursive blocks.
-				const StrLen_t iTagLen = (out.get_Length() - iBeginBlock) - 4;
-				cStringI sTag(out.get_DataWork() + iBeginBlock + 2, iTagLen);
+				// NOTE: take the Template Expression from output side in case it is the product of recursive blocks.
+				const StrLen_t iTemplateLen = (out.get_Length() - iBeginBlock) - 4;
+				cStringI sTemplate(out.get_DataWork() + iBeginBlock + 2, iTemplateLen);
 				iBeginBlock = -1;
 
 				HRESULT hRes;
 				if (pBlockReq != nullptr)
 				{
 					cStringI sVal;
-					hRes = pBlockReq->PropGet(sTag, OUT sVal);
+					hRes = pBlockReq->PropGet(sTemplate, OUT sVal);
 					if (SUCCEEDED(hRes))
 					{
-						out.AdvanceWrite(-(iTagLen + 4));	// back up.
+						out.AdvanceWrite(-(iTemplateLen + 4));	// back up.
 						out.AddStr2(sVal.get_CPtr(), sVal.GetLength());
 					}
 				}
@@ -538,7 +538,7 @@ namespace Gray
 				if (FAILED(hRes))
 				{
 					// Just in case this really is a >= operator ?
-					DEBUG_ERR(("StrTemplate '%s' ERR='%s'", LOGSTR(sTag), LOGERR(hRes)));
+					DEBUG_ERR(("StrTemplate '%s' ERR='%s'", LOGSTR(sTemplate), LOGERR(hRes)));
 				}
 				if (bRecursing)
 				{

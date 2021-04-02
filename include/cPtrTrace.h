@@ -13,7 +13,6 @@
 #include "PtrCast.h"
 #include "cDebugAssert.h"
 #include "cTypeInfo.h"
-#include "cUnitTestDecl.h"
 
 namespace Gray
 {
@@ -43,8 +42,6 @@ namespace Gray
 
 		void TraceOpen(void* p);
 		void TraceClose(void* p);
-
-		UNITTEST_FRIEND(cPtrTrace);
 	};
 }
 

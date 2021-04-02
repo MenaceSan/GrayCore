@@ -29,13 +29,15 @@ namespace Gray
 		friend class cAtomRef;
 
 	private:
-		cAtomRef m_aEmpty;	//!< static "\0" atom. never use nullptr. ATOMCODE_t = 0. same as SetAtomStatic
 		static const int kRefsBase = 3;	// We only have 3 refs = we can be deleted. Magic number.
 
 		mutable cThreadLockCount m_Lock;	// make it thread safe.
 		cArraySortName< cAtomDef, ATOMCHAR_t > m_aName;	//!< Sorted by ATOMCHAR_t Text. NO DUPES
 		cArraySortHash< cAtomDef, ATOMCODE_t > m_aHash;	//!< Sorted by ATOMCODE_t GetHashCode32(s) NO DUPES.
 		cArraySortHash< cAtomDef, ATOMCODE_t > m_aStatic;	//!< Put atoms here to persist. NO DUPES.
+
+	public:
+		const cAtomRef m_aEmpty;	//!< static "\0" atom. never use nullptr. ATOMCODE_t = 0. same as SetAtomStatic
 
 	protected:
 		bool RemoveAtom(cAtomDef* pDef);
@@ -52,9 +54,9 @@ namespace Gray
 		cAtomRef FindAtomHashCode(ATOMCODE_t idAtom) const;
 
 		HRESULT DebugDumpFile(cStreamOutput& o) const;
+		bool DebugTest() const;
 
 		CHEAPOBJECT_IMPL;
-		UNITTEST_FRIEND(cAtom)
 	};
 }
 

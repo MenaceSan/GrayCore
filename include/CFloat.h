@@ -12,7 +12,7 @@
 
 #include "cTypes.h"
 #include "cBits.h"
-#include "cUnitTestDecl.h"
+#include "cMem.h"
 #include "cDebugAssert.h"
 
 namespace Gray
@@ -56,7 +56,7 @@ namespace Gray
 			//! Warning in __GNUC__ reinterpret_ warning: dereferencing type-punned pointer will break strict-aliasing rules [-Wstrict-aliasing]
 			UINT32 dst = 0;
 			STATIC_ASSERT(sizeof(src) == sizeof(dst), toBits);
-			::memcpy(&dst, &src, sizeof(dst));
+			cMem::Copy(&dst, &src, sizeof(dst));
 			return dst;
 		}
 		static inline float fromBits(UINT32 src) noexcept
@@ -65,7 +65,7 @@ namespace Gray
 			//! Warning in __GNUC__ reinterpret_ warning: dereferencing type-punned pointer will break strict-aliasing rules [-Wstrict-aliasing]
 			float dst = 0;
 			STATIC_ASSERT(sizeof(src) == sizeof(dst), fromBits);
-			::memcpy(&dst, &src, sizeof(dst));
+			cMem::Copy(&dst, &src, sizeof(dst));
 			return dst;
 		}
 
@@ -75,8 +75,6 @@ namespace Gray
 		{
 			return (m_v.u_dw & k_MANT_MASK);
 		}
-
-		UNITTEST_FRIEND(cFloat);
 	};
 
 	class GRAYCORE_LINK cFloat64
@@ -116,7 +114,7 @@ namespace Gray
 			//! Warning in __GNUC__ reinterpret_ warning: dereferencing type-punned pointer will break strict-aliasing rules [-Wstrict-aliasing]
 			UINT64 dst;
 			STATIC_ASSERT(sizeof(src) == sizeof(dst), toBits);
-			::memcpy(&dst, &src, sizeof(dst));
+			cMem::Copy(&dst, &src, sizeof(dst));
 			return dst;
 		}
 		static inline double fromBits(UINT64 src) noexcept
@@ -125,7 +123,7 @@ namespace Gray
 			//! Warning in __GNUC__ reinterpret_ warning: dereferencing type-punned pointer will break strict-aliasing rules [-Wstrict-aliasing]
 			double dst;
 			STATIC_ASSERT(sizeof(src) == sizeof(dst), fromBits);
-			::memcpy(&dst, &src, sizeof(dst));
+			cMem::Copy(&dst, &src, sizeof(dst));
 			return dst;
 		}
 

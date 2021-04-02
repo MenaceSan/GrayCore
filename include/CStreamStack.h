@@ -34,7 +34,7 @@ namespace Gray
 			DEBUG_CHECK(get_AutoReadCommit() > 0);
 		}
 
-		virtual HRESULT ReadX(void* pData, size_t nDataSize) override = 0;	// MUST be overridden. and call ReadFill() at some point.
+		HRESULT ReadX(void* pData, size_t nDataSize) override = 0;	// MUST be overridden. and call ReadFill() at some point.
 	};
 
 	class GRAYCORE_LINK cStreamStackOut : public cStreamQueue // cStreamOutput, protected cStreamStack
@@ -57,7 +57,7 @@ namespace Gray
 		{
 		}
 
-		virtual HRESULT WriteX(const void* pData, size_t nDataSize) override = 0; // cStreamOutput override calls WriteFlush() // MUST be overridden
+		HRESULT WriteX(const void* pData, size_t nDataSize) override = 0; // cStreamOutput override calls WriteFlush() // MUST be overridden
 	};
 
 	class GRAYCORE_LINK cStreamStackPackets : public cStreamStackOut
@@ -73,8 +73,8 @@ namespace Gray
 			: cStreamStackOut(pStreamOut, nSizeBuffer)
 		{
 		}
-		virtual HRESULT WriteX(const void* pData, size_t nDataSize) override;
+		HRESULT WriteX(const void* pData, size_t nDataSize) override;
 	};
-};
+}
 
 #endif

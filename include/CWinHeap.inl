@@ -123,7 +123,7 @@ namespace Gray
 			void* pDst = AllocPtr2(dwSize, dwFlags);
 			if (pDst != nullptr)
 			{
-				::memcpy(pDst, pSrc, dwSize);
+				cMem::Copy(pDst, pSrc, dwSize);
 			}
 			return pDst;
 		}

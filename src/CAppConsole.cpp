@@ -88,7 +88,7 @@ namespace Gray
 		{
 			// redirect un-buffered STDOUT to the console
 			DWORD nStdHandle;
-			FILE* pFileDest;
+			::FILE* pFileDest;
 			OF_FLAGS_t nFileFlags = OF_WRITE | OF_TEXT;
 			switch (i)
 			{

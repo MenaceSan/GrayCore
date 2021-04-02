@@ -12,7 +12,6 @@
 
 #include "cArraySortRef.h"
 #include "cBits.h"
-#include "cUnitTestDecl.h"
 
 namespace Gray
 {
@@ -41,7 +40,7 @@ namespace Gray
 		}
 		bool isValid() const noexcept
 		{
-			return(m_j >= 0);
+			return m_j >= 0;
 		}
 	};
 
@@ -69,12 +68,12 @@ namespace Gray
 		ITERATE_t GetHashArray(TYPE_HASHCODE rid) const
 		{
 			//! @return the hash table array/bucket number for TYPE_HASHCODE rid.
-			return((ITERATE_t)(rid & (k_HASH_ARRAY_QTY - 1)));
+			return (ITERATE_t)(rid & (k_HASH_ARRAY_QTY - 1));
 		}
 		ITERATE_t GetArraySize(ITERATE_t iArray) const
 		{
 			ASSERT(IS_INDEX_GOOD(iArray, k_HASH_ARRAY_QTY));
-			return(m_aTable[iArray].GetSize());
+			return m_aTable[iArray].GetSize();
 		}
 		iterator FindIForKey(TYPE_HASHCODE rid) const
 		{
@@ -132,8 +131,6 @@ namespace Gray
 		{
 			RemoveAll();
 		}
-
-		UNITTEST_FRIEND(cHashTable);
 	};
 
 	template<class TYPE, typename TYPE_HASHCODE = HASHCODE_t, int TYPE_HASHBITS = 5 >
@@ -143,7 +140,7 @@ namespace Gray
 		//! ASSUME TYPE is just a class that has a get_HashCode() method.
 	public:
 		typedef cHashTableT< cArraySortStructHash<TYPE, TYPE_HASHCODE>, TYPE, TYPE_HASHCODE, TYPE_HASHBITS > SUPER_t;
-		typedef const TYPE& REF_t;		// How to refer to this? value or ref or pointer?
+		typedef const TYPE& ARG_t;		// How to refer to this? value or ref or pointer?
 
 	public:
 		const TYPE* FindArgForKey(TYPE_HASHCODE rid) const
@@ -155,7 +152,7 @@ namespace Gray
 		{
 			//! get from hash table. i must exist.
 			ASSERT(IS_INDEX_GOOD_ARRAY(i.m_i, this->m_aTable));
-			return(this->m_aTable[i.m_i].ConstElementAt(i.m_j));
+			return this->m_aTable[i.m_i].ConstElementAt(i.m_j);
 		}
 		cHashIterator FindHash(TYPE_HASHCODE rid) const
 		{
@@ -163,13 +160,13 @@ namespace Gray
 			ITERATE_t index = this->m_aTable[iBucket].FindArgForKey(rid);
 			return cHashIterator(iBucket, index);
 		}
-		const TYPE& Add(REF_t rNew)
+		const TYPE& Add(ARG_t rNew)
 		{
 			ITERATE_t iBucket = this->GetHashArray(rNew.get_HashCode());
 			ITERATE_t index = this->m_aTable[iBucket].Add(rNew);
 			return this->m_aTable[iBucket].GetAt(index);
 		}
-		TYPE* AddSpecial(REF_t rNew)
+		TYPE* AddSpecial(ARG_t rNew)
 		{
 			// Add only new hash node. return index ONLY if existing hash node.
 			ITERATE_t iBucket = this->GetHashArray(rNew.get_HashCode());
@@ -214,12 +211,12 @@ namespace Gray
 		{
 			//! Walk hash table.
 			ASSERT(IS_INDEX_GOOD_ARRAY(i.m_i, this->m_aTable));
-			return(this->m_aTable[i.m_i].ConstElementAt(i.m_j));
+			return this->m_aTable[i.m_i].GetAt(i.m_j);
 		}
 
 		PTR_t GetAt(TYPE_HASHCODE rid, ITERATE_t index) const
 		{
-			return(this->m_aTable[this->GetHashArray(rid)].ConstElementAt(index));
+			return this->m_aTable[this->GetHashArray(rid)].GetAt(index);
 		}
 		void DisposeAll()
 		{

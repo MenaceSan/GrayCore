@@ -18,14 +18,25 @@
 
 namespace Gray
 {
+
+#if defined(UNDER_CE) || defined(__linux__)
+	typedef HANDLE FILEDESC_t;		//!< Posix file descriptor id. return value for _fileno() is same as HANDLE in __linux__ and UNDER_CE
+#else
+	typedef int FILEDESC_t;		//!< Posix file descriptor id for std C. used for separate _fileno in FILE*. return value for fileno()
+#endif
+
 	cFileText::cFileText()
-		: m_pStream(nullptr)
-		, m_iCurLineNum(0)
+		: m_iCurLineNum(0)
+#if USE_CRT
+		,  m_pStream(nullptr)
+#endif		 
 	{
 	}
 	cFileText::cFileText(cStringF sFilePath, OF_FLAGS_t nOpenFlags)
-		: m_pStream(nullptr)
-		, m_iCurLineNum(0)
+		: m_iCurLineNum(0)
+#if USE_CRT
+		, m_pStream(nullptr)
+#endif		 
 	{
 		OpenX(sFilePath, nOpenFlags);
 	}
@@ -35,13 +46,15 @@ namespace Gray
 		Close();
 	}
 
+#if USE_CRT
 	const FILECHAR_t* cFileText::get_ModeCPtr() const
 	{
 		//! get the proper fopen() mode arguments.
-		UINT nOpenFlags = get_ModeFlags();
+		const UINT nOpenFlags = get_ModeFlags();
 
 		if (nOpenFlags & OF_READWRITE)	// "r+b"
 			return _FN("ab+");
+
 		if (nOpenFlags & OF_CACHE_SEQ)
 		{
 			// Only used sequentially.
@@ -54,7 +67,7 @@ namespace Gray
 
 		if (!(nOpenFlags & OF_TEXT))	// OF_BINARY
 		{
-			return((isModeWrite()) ? _FN("wb") : _FN("rb"));
+			return isModeWrite() ? _FN("wb") : _FN("rb");
 		}
 
 		// text modes. (Never do "\r\n" translation?! it messes up the ftell()
@@ -65,16 +78,60 @@ namespace Gray
 		else
 			return _FN("r");
 	}
+#endif
+
+	HRESULT cFileText::OpenFileHandle(HANDLE h, OF_FLAGS_t nOpenFlags)
+	{
+		// Use _fdopen() to get the backing OSHandle.
+
+		m_nOpenFlags = nOpenFlags;
+
+#if USE_CRT
+
+#ifdef __GNUC__
+		m_pStream = ::fdopen((FILEDESC_t)h, StrArg<char>(get_ModeCPtr()));
+#else
+		FILEDESC_t hConHandle = ::_open_osfhandle((intptr_t)h, O_TEXT); // convert OS HANDLE to C file int handle. _O_TEXT
+		m_pStream = ::_fdopen(hConHandle, StrArg<char>(get_ModeCPtr()));
+#endif
+		if (m_pStream == nullptr)
+		{
+			return HRESULT_WIN32_C(ERROR_INVALID_TARGET_HANDLE); // Why ??
+		}
+		int iRet = ::setvbuf(m_pStream, nullptr, _IONBF, 0);	// 
+		if (iRet != 0)
+		{
+			// invalid mode parameter or to some other error allocating or assigning the buffer.
+			return HResult::GetPOSIXLastDef(E_FAIL);
+		}
+		sm_iFilesOpen++;
+#if defined(_MFC_VER)
+		m_hFile = h;
+#else
+		m_hFile.AttachHandle(h);
+#endif
+
+#else
+
+#endif
+
+		return S_OK;
+	}
 
 	HRESULT cFileText::OpenX(cStringF sFilePath, OF_FLAGS_t nOpenFlags)
 	{
 		//! Open a text file.
 		//! @arg nOpenFlags = OF_READ|OF_WRITE|OF_READWRITE
+
+		m_iCurLineNum = 0;
+
+#if USE_CRT
 		HRESULT hRes = OpenSetup(sFilePath, nOpenFlags);
 		if (FAILED(hRes))
 		{
-			return(hRes);
+			return hRes;
 		}
+
 		ASSERT(m_pStream == nullptr);
 		const FILECHAR_t* pszMode = get_ModeCPtr();
 
@@ -98,12 +155,12 @@ namespace Gray
 			return HResult::FromPOSIX(eRet);
 #else
 			// Assume HResult::GetLast() was set.
-			return(HResult::GetLastDef());
+			return HResult::GetLastDef();
 #endif
 		}
+
 		sm_iFilesOpen++;
 		DEBUG_CHECK(sm_iFilesOpen >= 0);
-		m_iCurLineNum = 0;
 
 		// Get the low level handle for it. m_hFile cFile functions use it instead.
 		// NOTE: the POSIX 'int' handle (low level file descriptor) is not the same as the OS HANDLE in windows.
@@ -123,36 +180,9 @@ namespace Gray
 		m_hFile.AttachHandle((HANDLE) ::_get_osfhandle(iFileNo)); // _fileno is macro. _MFC_VER
 #endif
 		return S_OK;
-	}
-
-	HRESULT cFileText::OpenFileHandle(HANDLE h, OF_FLAGS_t nOpenFlags)
-	{
-		// Use _fdopen() to get the backing OSHandle.
-
-		m_nOpenFlags = nOpenFlags;
-#ifdef __GNUC__
-		m_pStream = ::fdopen((FILEDESC_t)h, StrArg<char>(get_ModeCPtr()));
 #else
-		FILEDESC_t hConHandle = ::_open_osfhandle((intptr_t)h, O_TEXT); // convert OS HANDLE to C file int handle. _O_TEXT
-		m_pStream = ::_fdopen(hConHandle, StrArg<char>(get_ModeCPtr()));
+		return SUPER_t::OpenX(sFilePath, nOpenFlags);
 #endif
-		if (m_pStream == nullptr)
-		{
-			return HRESULT_WIN32_C(ERROR_INVALID_TARGET_HANDLE); // Why ??
-		}
-		int iRet = ::setvbuf(m_pStream, nullptr, _IONBF, 0);	// 
-		if (iRet != 0)
-		{
-			// invalid mode parameter or to some other error allocating or assigning the buffer.
-			return HResult::GetPOSIXLastDef(E_FAIL);
-		}
-		sm_iFilesOpen++;
-#if defined(_MFC_VER)
-		m_hFile = h;
-#else
-		m_hFile.AttachHandle(h);
-#endif
-		return S_OK;
 	}
 
 	void cFileText::Close() noexcept	// virtual
@@ -160,6 +190,8 @@ namespace Gray
 		// virtuals don't work in destruct.
 		if (!isFileOpen())
 			return;
+
+#if USE_CRT
 		if (isModeWrite())
 		{
 			::fflush(m_pStream);
@@ -167,9 +199,12 @@ namespace Gray
 		bool bSuccess = (::fclose(m_pStream) == 0);
 		DEBUG_CHECK(bSuccess);
 		UNREFERENCED_PARAMETER(bSuccess);
+		m_pStream = nullptr;
+#else
+
+#endif
 
 		DetachFileHandle();
-		m_pStream = nullptr;
 	}
 
 	HRESULT cFileText::SeekX(STREAM_OFFSET_t offset, SEEK_ORIGIN_TYPE eSeekOrigin) // virtual
@@ -182,8 +217,16 @@ namespace Gray
 		//!  new file pointer position % int32.
 		if (!isFileOpen())
 			return E_HANDLE;
+
+#if USE_CRT
 		if (::fseek(m_pStream, (long)offset, eSeekOrigin) != 0)
 			return HResult::GetLastDef();
+#else
+		HRESULT hRes = SUPER_t::SeekX(offset, eSeekOrigin);
+		if (FAILED(hRes))
+			return hRes;
+#endif
+
 		if (eSeekOrigin == SEEK_Set) // SEEK_SET = FILE_BEGIN
 		{
 			if (offset == 0)
@@ -194,6 +237,15 @@ namespace Gray
 		}
 		m_iCurLineNum = k_ITERATE_BAD;	// invalid. no idea what the line number is now!
 		return S_OK;	
+	}
+
+#if USE_CRT
+	FILE* cFileText::DetachFileStream() noexcept
+	{
+		FILE* pStream = m_pStream;
+		DetachFileHandle();
+		m_pStream = nullptr;
+		return pStream;
 	}
 
 	STREAM_POS_t cFileText::GetPosition() const // virtual
@@ -218,12 +270,17 @@ namespace Gray
 		}
 		return S_OK;
 	}
+#endif
 
 	bool cFileText::isEOF() const
 	{
 		if (!isFileOpen())
 			return true;
-		return(::feof(m_pStream)) ? true : false;
+#if USE_CRT
+		return ::feof(m_pStream) ? true : false;
+#else
+		return false;
+#endif
 	}
 
 	HRESULT cFileText::GetStreamError() const
@@ -231,7 +288,11 @@ namespace Gray
 		// errno in M$
 		if (!isFileOpen())
 			return HRESULT_WIN32_C(ERROR_INVALID_TARGET_HANDLE);
+#if USE_CRT
 		return HResult::FromPOSIX(::ferror(m_pStream));
+#else
+		return HResult::GetLast();
+#endif
 	}
 
 	HRESULT cFileText::ReadX(void* pBuffer, size_t nSizeMax) // virtual
@@ -245,8 +306,10 @@ namespace Gray
 			return E_INVALIDARG;
 		if (!isFileOpen())
 			return HRESULT_WIN32_C(ERROR_INVALID_TARGET_HANDLE);
+
+#if USE_CRT
 		if (isEOF())
-			return(0);	// LINUX will ASSERT if we read past end.
+			return 0;	// LINUX will ASSERT if we read past end.
 		size_t uRet = ::fread(pBuffer, 1, nSizeMax, m_pStream);
 		ASSERT(uRet >= 0);
 		if (uRet > nSizeMax)
@@ -255,6 +318,11 @@ namespace Gray
 		}
 		// m_iCurLineNum++; // no idea.
 		return (HRESULT)uRet;	// size we got. 0 = end of file?
+
+#else
+
+		return 0;
+#endif
 	}
 
 	HRESULT cFileText::WriteX(const void* pData, size_t nDataSize) // virtual
@@ -265,6 +333,8 @@ namespace Gray
 		//! @return >0 = success else fail.
 		if (pData == nullptr)
 			return E_INVALIDARG;
+
+#if USE_CRT
 		if (!isFileOpen())
 			return HRESULT_WIN32_C(ERROR_INVALID_TARGET_HANDLE);
 		size_t uRet = ::fwrite(pData, nDataSize, 1, m_pStream);
@@ -272,7 +342,12 @@ namespace Gray
 		{
 			return HResult::GetDef(GetStreamError(), HRESULT_WIN32_C(ERROR_WRITE_FAULT));
 		}
-		m_iCurLineNum++;
+#else
+
+#endif
+
+		m_iCurLineNum++;	// count lines ??
+
 		return((HRESULT)nDataSize);
 	}
 
@@ -290,10 +365,16 @@ namespace Gray
 		if (!isFileOpen())
 			return HRESULT_WIN32_C(ERROR_INVALID_TARGET_HANDLE);
 
+#if USE_CRT
 		if (::fputs(pszStr, m_pStream) < 0)
 		{
 			return HResult::GetDef(GetStreamError(), HRESULT_WIN32_C(ERROR_WRITE_FAULT));
 		}
+#else
+
+#endif
+
+		m_iCurLineNum++;	// count lines ??
 		return 1;
 	}
 
@@ -301,8 +382,8 @@ namespace Gray
 	HRESULT cFileText::ReadStringLine(wchar_t* pszBuffer, StrLen_t iSizeMax) // virtual
 	{
 		//! override cStream
-		//! Read a line of text. like fgets()
-		//! @return length of the string read in chars. (includes \r\n) (not including null)
+		//! Read a single line of text. like fgets()
+		//! @return length of the string read in chars. (includes \r\n) (not including '\0')
 		ASSERT(0);
 		return E_NOTIMPL;
 	}
@@ -320,6 +401,8 @@ namespace Gray
 
 		if (pszBuffer == nullptr)
 			return E_INVALIDARG;
+
+#if USE_CRT
 		if (!isFileOpen())
 			return HRESULT_WIN32_C(ERROR_INVALID_TARGET_HANDLE);
 		if (isEOF())
@@ -335,12 +418,16 @@ namespace Gray
 			}
 			return HResult::GetDef(GetStreamError(), HRESULT_WIN32_C(ERROR_READ_FAULT));
 		}
+#else
+
+#endif
+
 		if (m_iCurLineNum >= 0)
 			m_iCurLineNum++;
 		return StrT::Len(pszBuffer);	// Return length in chars.
 	}
 
-	HRESULT cFileText::ReadStringLineA(cStringA& r)
+	HRESULT cFileText::ReadStringLineA(OUT cStringA& r)
 	{
 		//! Read an ASCII or UTF8 string/line from the file.
 		//! Read to the end of the single line.
@@ -366,6 +453,4 @@ namespace Gray
 		return true;
 	}
 }
-
-#endif // USE_CRT
-
+#endif

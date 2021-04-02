@@ -10,7 +10,6 @@
 #endif
 
 #include "cTimeUnits.h"
-#include "cUnitTestDecl.h"
 #include "StrConst.h"
 
 namespace Gray
@@ -56,8 +55,6 @@ namespace Gray
 		static const cTimeZone* GRAYCALL FindTimeZone(TZ_TYPE nTimeZoneOffset);
 		static const cTimeZone* GRAYCALL FindTimeZone(const GChar_t* pszName);
 		static const cTimeZone* GRAYCALL FindTimeZoneHead(const GChar_t* pszName);
-
-		UNITTEST_FRIEND(cTimeZone);
 	};
 }
 

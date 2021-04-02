@@ -32,6 +32,7 @@ namespace Gray
 		//! Only get numeric type chars.
 		//! Like a simple version of StrU::UNICODEtoUTF8() and Opposite of StrU::UTF8toUNICODE()
 		//! @note ASSUME pszOut[k_LEN_MAX_DIGITS]
+		//! @return the length of the string that might be a number. Hit end or first char that cant be a number.
 
 		if (pszInp == nullptr)
 			return 0;
@@ -46,7 +47,7 @@ namespace Gray
 			// if (ch == ':' || ch == ';' || ch == '(' || ch == ')')	// not a number!
 			// 	break;
 			// allow and characters that might be part of a number. Digit, '.', 'e','E','+', '-', 'A' - 'Z', 'a' - 'z' for hex values,
-			// allow comma ?
+			// allow comma and math seperators?
 			pszOut[nLen] = (char)ch;
 		}
 
@@ -226,7 +227,7 @@ namespace Gray
 		//! Leading zero on hex string. (if room)
 		//! @arg
 		//!  nBaseRadix = 10 default
-		//!  iStrMax = _CVTBUFSIZE = _countof(Dst) = includes room for '\0'. (just like memcpy)
+		//!  iStrMax = _CVTBUFSIZE = _countof(Dst) = includes room for '\0'. (just like cMem::Copy)
 		//! @return
 		//!  length of the string.
 
@@ -246,7 +247,7 @@ namespace Gray
 	StrLen_t GRAYCALL StrNum::ILtoA(INT64 nVal, OUT char* pszOut, StrLen_t iStrMax, RADIX_t nBaseRadix)
 	{
 		//! Make a string from a number. like ltoa(). upper case radix default.
-		//! @arg iStrMax = _countof(Dst) = includes room for '\0'. (just like memcpy)
+		//! @arg iStrMax = _countof(Dst) = includes room for '\0'. (just like cMem::Copy)
 		//! @return
 		//!  length of the string.
 

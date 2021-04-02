@@ -149,7 +149,6 @@ namespace Gray
 #ifdef _WIN32
 		// Load or enum resources ?? cWinResource, cAppRes
 #endif
-		UNITTEST_FRIEND(cOSModule);
 	};
 
 	template<class TYPE = FARPROC>

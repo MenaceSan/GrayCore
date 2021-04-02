@@ -52,8 +52,7 @@ namespace Gray
 	, public IIniBaseGetter
 	, public IIniBaseEnumerator
 	, public cArraySortStructHash<cIniKeyValue>
-	//, public IIniObjectWriteN
-	{
+ 	{
 		//! @class Gray::cIniMap
 		//! A bag of tuples. A collection of key/value pairs stored as strings.
 		//! Can be used for HTTP cookie sets, cXmlAttributeSet, JSON objects.
@@ -74,7 +73,7 @@ namespace Gray
 
 		virtual HRESULT PropSet(const IniChar_t* pszPropTag, const IniChar_t* pszValue) override;
 		virtual HRESULT PropGet(const IniChar_t* pszPropTag, OUT cStringI& rsValue) const override;
-		virtual HRESULT PropEnum(IPROPIDX_t ePropIdx, OUT cStringI& rsValue, cStringI* psKey = nullptr) const override;
+		virtual HRESULT PropGetEnum(IPROPIDX_t ePropIdx, OUT cStringI& rsValue, OUT cStringI* psKey = nullptr) const override;
 
 		void SetCopy(const cIniMap& rAttribs);
 

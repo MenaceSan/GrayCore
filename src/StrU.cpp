@@ -134,6 +134,7 @@ namespace Gray
 	{
 		//! Convert a single UTF8 encoded character (multi chars) to a single UNICODE char.
 		//! @return The length used from input string. < iSizeInpBytes, 0=FAILED
+		//! like _WIN32 MultiByteToWideChar()
 		//!	multi byte chars can be up to 4 bytes long! StrU::k_UTF8_SIZE_MAX
 		//!
 		//! Bytes bits representation:
@@ -178,7 +179,7 @@ namespace Gray
 	{
 		//! Convert a single UNICODE char to UTF8 encoded char (maybe using multi chars).
 		//! @return The length < iSizeOutMaxBytes, 0=FAILED
-		//!
+		//! like _WIN32 ::WideCharToMultiByte()
 		//! bytes bits representation:
 		//! 1 7	0bbbbbbb
 		//! 2 11 110bbbbb 10bbbbbb

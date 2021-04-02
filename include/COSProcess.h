@@ -59,7 +59,7 @@ namespace Gray
 #ifdef _WIN32
 		APP_EXITCODE_STILL_ACTIVE = STILL_ACTIVE,	//!< _WIN32 Process has not exited yet. STATUS_PENDING
 #elif defined(__linux__)
-		APP_EXITCODE_STILL_ACTIVE = 0x103,			//!< Process has not exited yet.
+		APP_EXITCODE_STILL_ACTIVE = 0x103,			//!< 259 = Process has not exited yet.
 #endif
 		APP_EXITCODE_UNK = SHRT_MAX,		//!< handle not valid ?
 	};
@@ -155,8 +155,9 @@ namespace Gray
 
 		HRESULT TerminateProcess(APP_EXITCODE_t uExitCode) const noexcept
 		{
-			//! terminate some process. inject uExitCode.
+			//! Hard terminate some process. inject uExitCode. May not save work.
 			//! m_nPid may be invalid after this!
+			//! in _WIN32 Is would be more polite to send PostThreadMessage(WM_CLOSE) and wait for a bit, to allow programs to save.
 
 			if (!isValidProcess())
 				return S_FALSE;
@@ -178,8 +179,8 @@ namespace Gray
 #if defined(_WIN32) && ! defined(UNDER_CE)
 			return ::GetPriorityClass(get_ProcessHandle());
 #elif defined(__linux__)
+			// TODO __linux__ get_PriorityClass
 			ASSERT(0);
-			// TODO __linux__
 			return 0;
 #endif
 }
@@ -276,8 +277,6 @@ namespace Gray
 #endif
 		static HWND GRAYCALL FindWindowForProcessID(PROCESSID_t nProcessID, DWORD dwStyleFlags, const GChar_t* pszClassName = nullptr); // WS_VISIBLE
 #endif // _WIN32
-
-		UNITTEST_FRIEND(cOSProcess);
 	};
 }
 

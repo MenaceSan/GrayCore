@@ -12,7 +12,7 @@
 #endif
 
 #include "Index.h"
-#include "cUnitTestDecl.h"
+#include "cDebugAssert.h"	// ASSERT
 
 namespace Gray
 {
@@ -585,8 +585,7 @@ namespace Gray
 		{
 			return m_nCount;	//!< get the count as it was when we created this.
 		}
-
-		UNITTEST_FRIEND(cInterlockedVal);
+ 
 	};
 
 #ifndef GRAY_STATICLIB // force implementation/instantiate for DLL/SO.

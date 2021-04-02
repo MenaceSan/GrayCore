@@ -7,6 +7,22 @@
 
 namespace Gray
 {
+	bool cThreadState::WaitForThreadExit(TIMESYSD_t iTimeMSec) noexcept // virtual
+	{
+		// similar to ::pthread_join() but with a timer.
+		const cTimeSys tStart(cTimeSys::GetTimeNow());
+		for (;;)
+		{
+			if (!m_bThreadRunning)
+				return true;
+			UINT tDiff = (UINT)tStart.get_AgeSys();
+			if (tDiff > (UINT)iTimeMSec)	// -1 = INFINITE
+				break;
+			cThreadId::SleepCurrent((tDiff > 400) ? 200 : 10);	// milliseconds
+		}
+		return false;	// didn't stop in time! may have to hard terminate
+	}
+
 #ifdef __linux__
 	const pthread_mutex_t cThreadLockMutex::k_MutexInit = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
 #endif

@@ -7,6 +7,7 @@
 #include "cHeap.h"
 #include "cThreadLock.h"
 #include "cStack.h"		// include this some palce just to compile.
+#include "StrT.h"
 
 namespace Gray
 {
@@ -17,13 +18,45 @@ namespace Gray
 
 		cStreamBase* pThis = const_cast<cStreamBase*>(this);
 		STREAM_POS_t nCurrent = GetPosition();	// save current position.
-		pThis->SeekX(0, SEEK_End);		// seek to the end to find the length.
+		HRESULT hRes = pThis->SeekX(0, SEEK_End);		// seek to the end to find the length.
+		if (FAILED(hRes))
+			return k_STREAM_POS_ERR;
 		STREAM_POS_t nLength = GetPosition();
-		pThis->SeekX((STREAM_OFFSET_t)nCurrent, SEEK_Set);		// restore the position pointer back.
+		hRes = pThis->SeekX((STREAM_OFFSET_t)nCurrent, SEEK_Set);		// restore the position pointer back.
+		if (FAILED(hRes))
+			return k_STREAM_POS_ERR;
 		return nLength;
 	}
 
 	//*************************************************************************
+
+	 HRESULT cStreamOutput::WriteString(const char* pszStr) // virtual
+	{
+		//! Write just the chars of the string. NOT nullptr. like fputs()
+		//! Does NOT assume include NewLine or automatically add one.
+		//! @note This can get overloaded for string only protocols. like FILE, fopen()
+		//! @note MFC CStdioFile has void return for this.
+		//! @return Number of chars written. <0 = error.
+		if (pszStr == nullptr)
+			return 0;	// write nothing = S_OK.
+		const StrLen_t iLen = StrT::Len(pszStr);
+		return WriteT(pszStr, iLen * sizeof(char));
+	}
+	 HRESULT cStreamOutput::WriteString(const wchar_t* pszStr) //  virtual
+	{
+		//! Write just the chars of the string. NOT nullptr. like fputs()
+		//! Does NOT assume include NewLine or automatically add one.
+		//! @note This can get overloaded for string only protocols. like FILE, fopen()
+		//! @note MFC CStdioFile has void return for this.
+		//! @return Number of chars written. <0 = error.
+		if (pszStr == nullptr)
+			return 0;	// write nothing = S_OK.
+		const StrLen_t iLen = StrT::Len(pszStr);
+		const HRESULT hRes = WriteT(pszStr, iLen * sizeof(wchar_t));
+		if (FAILED(hRes))
+			return hRes;
+		return hRes / sizeof(wchar_t);
+	}
 
 	HRESULT cStreamOutput::WriteStream(cStreamInput& stmIn, STREAM_POS_t nSizeMax, IStreamProgressCallback* pProgress, TIMESYSD_t nTimeout)
 	{

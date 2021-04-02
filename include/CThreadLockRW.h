@@ -131,7 +131,7 @@ namespace Gray
 		inline void DecReadLockCount()
 		{
 		}
-		UNITTEST_FRIEND(cThreadLockRW);
+
 	};
 
 	class cThreadGuardRead : public cLockerT < cThreadLockRW >

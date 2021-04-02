@@ -142,7 +142,7 @@ namespace Gray
 		STDMETHOD(QueryInterface)(const IID& riid, /* [iid_is][out] */ void __RPC_FAR* __RPC_FAR* ppvObject) override
 		{
 			//! like COM IUnknown::QueryInterface
-			if (cMem::Compare(&riid, &__uuidof(IUnknown), sizeof(riid)) == 0)
+			if (cMem::IsEqual(&riid, &__uuidof(IUnknown), sizeof(riid)))
 			{
 				*ppvObject = this;
 				_InternalAddRef();
@@ -286,7 +286,7 @@ namespace Gray
 			ReleasePtr();
 		}
 
-		bool isValidPtr() const noexcept
+		inline bool isValidPtr() const noexcept
 		{
 			//! Not nullptr?
 #ifdef _DEBUG

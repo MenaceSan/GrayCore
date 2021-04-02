@@ -13,7 +13,6 @@
 
 #include "cNonCopyable.h"
 #include "cThreadLock.h"
-#include "cUnitTestDecl.h"
 #include "cTypeInfo.h"
 #include "cHeapObject.h"
 #include "cObject.h"
@@ -124,7 +123,6 @@ namespace Gray
 
 	public:
 		static void GRAYCALL ReleaseModule(HMODULE hMod);
-		UNITTEST_FRIEND(cSingleton);
 	};
 
 	template <class TYPE>

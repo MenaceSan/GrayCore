@@ -12,7 +12,7 @@
 namespace Gray
 {
 
-#if ! defined(UNDER_CE) && ! defined(_CPPUNWIND)
+#if USE_CRT && ! defined(UNDER_CE) && ! defined(_CPPUNWIND)
 #include <setjmp.h>
 #include <signal.h>
 
@@ -79,7 +79,7 @@ namespace Gray
 			return true;	// We failed.
 		}
 		GRAY_TRY_END
-#else
+#elif USE_CRT
 		//! __linux__ / POSIX version of IsBadReadPtr()
 		UNREFERENCED_PARAMETER(bWriteAccess);  // TODO bWriteAccess
 		JMP_t pfnPrevHandler = nullptr;
@@ -104,6 +104,8 @@ namespace Gray
 
 		::signal(SIGSEGV, pfnPrevHandler);		// undo signal.
 		return false;	// its good.
+#else
+		return false;
 #endif
 	}
 
@@ -113,13 +115,13 @@ namespace Gray
 		//! Does not assume memory alignment for uintptr_t block compares.
 
 		if (p1 == p2)
-			return nSizeBlock;
+			return nSizeBlock; // is equal.
 		if (p1 == nullptr || p2 == nullptr)
 			return 0;
 
 		size_t i = 0;
 
-		if (nSizeBlock >= sizeof(uintptr_t))
+		if (nSizeBlock >= sizeof(uintptr_t))	// compare using max size registers.
 		{
 			// TODO Alignment of pointers may be important?!? if not uintptr_t aligned this will fail on PPC?
 
@@ -138,7 +140,7 @@ namespace Gray
 			}
 		}
 
-		// Do odd part at the end.
+		// Do odd part at the end. BYTE aligned.
 		BYTE nDiffB = 0;
 		for (; i < nSizeBlock; i++)
 		{
@@ -147,7 +149,7 @@ namespace Gray
 				return i;
 		}
 
-		return nSizeBlock;
+		return nSizeBlock;	// is equal.
 	}
 
 	StrLen_t GRAYCALL cMem::ConvertToString(char* pszDst, StrLen_t iSizeDstMax, const BYTE* pSrc, size_t nSrcQty) // static
@@ -255,8 +257,8 @@ namespace Gray
 	COMPARE_t GRAYCALL cMemBlock::Compare(const void* pData1, size_t iLen1, const void* pData2, size_t iLen2) // static
 	{
 		//! @return COMPARE_Equal
-		size_t iLenMin = MIN(iLen1, iLen2);
-		COMPARE_t iRet = cMem::Compare(pData1, pData2, iLenMin);
+		const size_t iLenMin = MIN(iLen1, iLen2);
+		const COMPARE_t iRet = cMem::Compare(pData1, pData2, iLenMin);
 		if (iRet != COMPARE_Equal)
 			return iRet;
 		return cValT::Compare(iLen1, iLen2);	// longer wins. if otherwise equal. (but not same length)

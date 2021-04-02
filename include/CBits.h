@@ -10,7 +10,6 @@
 #endif
 
 #include "GrayCore.h"
-#include "cUnitTestDecl.h"
 
 namespace Gray
 {
@@ -171,7 +170,6 @@ namespace Gray
 			// TODO or,and,xor/not // 
 		}
 #endif
-		UNITTEST_FRIEND(cBits);
 	};
 
 	// Override implementations of templates.

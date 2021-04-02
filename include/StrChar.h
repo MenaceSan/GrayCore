@@ -9,7 +9,6 @@
 #pragma once
 #endif
 
-#include "cUnitTestDecl.h"
 #include "cValArray.h"
 
 #ifdef _WIN32
@@ -291,8 +290,6 @@ namespace Gray
 		static int  GRAYCALL Hex2U(wchar_t ch);
 		static char GRAYCALL U2Radix(UINT uVal, RADIX_t uRadix = 10);
 		static int GRAYCALL Radix2U(wchar_t ch, RADIX_t uRadix = 10);
-
-		UNITTEST_FRIEND(StrChar);
 	};
 }
 #endif // StrChar

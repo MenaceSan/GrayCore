@@ -216,8 +216,6 @@ namespace Gray
 			return static_cast<SECURITY_ATTRIBUTES*>(this);
 		}
 		bool isValid() const noexcept;
-
-		UNITTEST_FRIEND(cSecurityAttributes);
 	};
 
 	class GRAYCORE_LINK cSecurityAttribsLowIntegrity : public cSecurityAttributes
@@ -255,6 +253,6 @@ namespace Gray
 		cSecurityId m_sid;	//!< for WELL_KNOWN_SID_TYPE
 		cSecurityACL m_dacl;
 	};
-};
+}
 #endif	// _WIN32
 #endif	// cSecurityAttributes

@@ -226,16 +226,16 @@ namespace Gray
 		//!   ERROR_INVALID_USER_BUFFER = too many async calls ?? wait
 		//!   ERROR_IO_PENDING = must wait!?
 
-		HRESULT nLengthWritten = m_hFile.WriteX(pData, nDataSize);
-		if (FAILED(nLengthWritten))
+		HRESULT hResLengthWritten = m_hFile.WriteX(pData, nDataSize);
+		if (FAILED(hResLengthWritten))
 		{
-			if (nLengthWritten == E_HANDLE)	// handle is junk!! No idea why. Clear it.
+			if (hResLengthWritten == E_HANDLE)	// handle is junk!! No idea why. Clear it.
 			{
 				Close();
 			}
-			DEBUG_ASSERT(nLengthWritten == (HRESULT)nDataSize, "Write");
+			DEBUG_ASSERT(hResLengthWritten == (HRESULT)nDataSize, "Write");
 		}
-		return (HRESULT)nLengthWritten;
+		return (HRESULT)hResLengthWritten;
 	}
 
 #endif // ! _MFC_VER
@@ -254,7 +254,7 @@ namespace Gray
 	{
 		//! get the EXTension including the .
 		//! Must replace the stupid MFC version of this.
-		return(cFilePath::GetFileNameExt(get_FilePath(), get_FilePath().GetLength()));
+		return cFilePath::GetFileNameExt(get_FilePath(), get_FilePath().GetLength());
 	}
 
 	bool cFile::IsFileExt(const FILECHAR_t* pszExt) const noexcept
@@ -408,18 +408,18 @@ namespace Gray
 
 	HANDLE cFile::DetachFileHandle() noexcept
 	{
-		if (!isFileOpen())
-		{
-			return INVALID_HANDLE_VALUE; //  CFile::hFileNull;
-		}
-		sm_iFilesOpen--;
-		DEBUG_CHECK(sm_iFilesOpen >= 0);
 #ifdef _MFC_VER
 		HANDLE h = m_hFile;
+		if (h == CFile::hFileNull)
+			return INVALID_HANDLE_VALUE;
 		m_hFile = CFile::hFileNull;
 #else
-		HANDLE h = m_hFile.DetachHandle();	// fclose() did all the work. Dont do anything with this handle.
+		if (!m_hFile.isValidHandle())
+			return INVALID_HANDLE_VALUE; //  CFile::hFileNull;
+		HANDLE h = m_hFile.DetachHandle();	// Dont do anything with this handle. assume caller takes care or it.
 #endif
+		sm_iFilesOpen--;
+		DEBUG_CHECK(sm_iFilesOpen >= 0);
 		return h;
 	}
 
@@ -485,7 +485,7 @@ namespace Gray
 #ifdef _DEBUG
 		if (timeLastWrite == timeCreation)
 		{
-			ASSERT(!cMem::Compare(&CreationTime, &LastWriteTime, sizeof(LastWriteTime)));
+			ASSERT(cMem::IsEqual(&CreationTime, &LastWriteTime, sizeof(LastWriteTime)));
 		}
 #endif
 		return SetFileTime(&CreationTime, nullptr, &LastWriteTime);

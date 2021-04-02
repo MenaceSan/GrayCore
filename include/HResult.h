@@ -22,7 +22,7 @@ namespace Gray
 #if defined(_CPPUNWIND)
 #define THROW_DEF throw()		// indicate that a function can throw exceptions.
 #else
-#define THROW_DEF __noop
+#define THROW_DEF  
 #endif
 
 #ifndef SUCCEEDED	// __linux__
@@ -247,7 +247,7 @@ namespace Gray
 
 		static HRESULT GRAYCALL FromPOSIX(int iErrNo) noexcept;	// from <errno.h> style
 
-#ifndef UNDER_CE
+#if !defined(UNDER_CE)
 		static HRESULT GRAYCALL GetPOSIXLast() noexcept;
 		static HRESULT GRAYCALL GetPOSIXLastDef(HRESULT hResDef = E_FAIL) noexcept // static 
 		{

@@ -117,7 +117,7 @@ namespace Gray
 		const StrLen_t m_iTabSize;		//!< for proper tracking of the column number on errors. and m_CursorPos. 0 = not used/don't care.
 
 	public:
-		cTextReader(const char* pszStart, StrLen_t nLenMax = StrT::k_LEN_MAX, StrLen_t nTabSize = cStrConst::k_TabSize)
+		cTextReader(const char* pszStart, StrLen_t nLenMax = StrT::k_LEN_MAX, StrLen_t nTabSize = cStrConst::k_TabSize) noexcept
 			: cTextPos(0, 0, 0)
 			, m_pszStart(pszStart)
 			, m_nLenMax(nLenMax)
@@ -190,9 +190,9 @@ namespace Gray
 			return nLen;
 		}
 
-		bool isEOF() const
+		bool isEOF() const noexcept
 		{
-			return(get_CursorChar() == '\0');
+			return get_CursorChar() == '\0';
 		}
 
 		void SetStartPtr(const char* pszStart, StrLen_t nLenMax = StrT::k_LEN_MAX)

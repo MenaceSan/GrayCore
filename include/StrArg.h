@@ -16,7 +16,7 @@
 namespace Gray
 {
 	// Convert some type into a string. ALA ToString()
-	// Define temporary string values for use as sprintf() arguments.
+	// Define (thread safe) temporary string values for use as sprintf() arguments.
 	// Use cTempPool
 
 	template< typename TYPE>

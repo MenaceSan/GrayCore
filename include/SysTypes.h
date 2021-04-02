@@ -68,9 +68,10 @@
 // __MINGW32__, __BORLANDC__, __WATCOMC__
 
 #if defined(_MSC_VER) && (_MSC_VER >= 1000)
-// Remove globally annoying warnings.
+// Remove globally annoying/pointless warnings.
 #pragma warning(disable:4800)	// "forcing value to bool 'true' or 'false' (performance warning)" (convert BOOL/int to bool)
 #pragma warning(disable:4251)	// 'CC' needs to have DLL - interface to be used by clients of class 'Gray::HResult' (FOR DLLs ONLY and inline type children)
+#pragma warning(disable:26812)	// C26812. https://docs.microsoft.com/en-us/cpp/code-quality/c26812?view=msvc-160 The enum type type-name is unscoped. Prefer 'enum class' over 'enum' (Enum.3)
 
 // Useless MSVC2010 warnings: at /W4 level
 #pragma warning(disable:4510)	// default constructor could not be generated
@@ -78,7 +79,7 @@
 #pragma warning(disable:4610)	// class 'Gray::cTypeInfo' can never be instantiated - user defined constructor required
 
 #endif // _MSC_VER >= 1000
-
+ 
 #ifndef USE_CRT
 #define USE_CRT 1	// 1 = use all normal CRT functions. 0 = attempt to use minimal/no CRT. msvcp140.dll and vcruntime140.dll
 #endif
@@ -198,13 +199,13 @@
 //*******************************************
 // ASSUME these ANSI C standard types are universal. rely on CRT.
 
-#include <stddef.h> // offsetof(), size_t
-#include <stdlib.h> // _MAX_PATH, __max(), __min() if !defined(__OpenBSD__) ?
-#include <string.h>	// memcpy()
 #include <stdarg.h>	// va_list ...
 #include <limits.h> // INT_MAX, (PATH_MAX in Linux)  is std::numeric_limits<T>::max() in <limits> better ?
 
 #if USE_CRT
+#include <stddef.h> // offsetof(), size_t
+#include <stdlib.h> // _MAX_PATH, __max(), __min() if !defined(__OpenBSD__) ?
+#include <string.h>	// memcpy()
 #include <stdio.h>	// define FILE _vsnprintf_s printf() function
 #endif
 
@@ -273,9 +274,6 @@
 
 #if defined(_WIN32) && ! defined(WIN32)
 #define WIN32	// Some external stuff needs this alternate define. like JS (JavaScript)
-#endif
-#if defined(DEBUG) && ! defined(_DEBUG)
-#define _DEBUG	// Make sure everyone uses this define.
 #endif
 
 #if defined(_MSC_VER) || defined(__BORLANDC__)

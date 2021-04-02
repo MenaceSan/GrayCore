@@ -6,7 +6,7 @@
 //! @note char != signed or unsigned char according to M$ ??
 //! @note long and int may really be the same but not for linking purposes.
 //! http://jk-technology.com/c/inttypes.html
-//! @note order is important here for variant type enum.
+//! @note order is same here for variant type enum. Optional types make it not match perfectly to variant.
 
 CTYPE_DEF(Bool,		bool,				CTYPE_FLAG_Numeric,							"1",	false, true,		UINT,	"only value of first bit is used. not same as _WIN32 BOOL")
 
@@ -44,4 +44,4 @@ CTYPE_DEF(Long,		long,				CTYPE_FLAG_Numeric|CTYPE_FLAG_NumSigned,	"1",	(-214748
 CTYPE_DEF(ULong,	unsigned long,		CTYPE_FLAG_Numeric,							"01",	0, 0xffffffffU,						ULong,	"ULONG")
 #endif
 
-// long double, not supported in M$
+// long double, (80 bit) not supported in M$

@@ -291,15 +291,15 @@ namespace Gray
 			// clear list only if changed?
 			RemoveAll();
 		}
-		ITERATE_t get_FileCount() const
+		ITERATE_t get_FileCount() const noexcept
 		{
 			return m_aFiles.GetSize();
 		}
 		const cFileFindEntry& GetEnumFile(ITERATE_t i) const
 		{
-			return m_aFiles.ConstElementAt(i);
+			return m_aFiles.GetAt(i);
 		}
-		cFileFindEntry& GetEnumFile(ITERATE_t i)
+		cFileFindEntry& RefEnumFile(ITERATE_t i)
 		{
 			return m_aFiles.ElementAt(i);
 		}
@@ -307,7 +307,7 @@ namespace Gray
 		{
 			//! Get the file title + ext.
 			ASSERT(m_aFiles.IsValidIndex(i));
-			const cFileFindEntry& rFileEntry = m_aFiles.ConstElementAt(i);
+			const cFileFindEntry& rFileEntry = m_aFiles.GetAt(i);
 			return rFileEntry.m_sFileName;
 		}
 		cStringF GetEnumPath(ITERATE_t i) const
@@ -331,8 +331,6 @@ namespace Gray
 
 		HRESULT ReadDirAnyExt(const FILECHAR_t* pszFilePath, ITERATE_t iFilesMax = k_FilesMax);
 		HRESULT ReadDirPreferredExt(const FILECHAR_t* pszFilePath, const FILECHAR_t* const* pszExtTable);
-
-		UNITTEST_FRIEND(cFileDir);
 	};
 
 #ifndef GRAY_STATICLIB // force implementation/instantiate for DLL/SO.

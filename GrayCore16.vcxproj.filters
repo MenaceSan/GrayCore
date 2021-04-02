@@ -236,9 +236,6 @@
     <ClInclude Include="include\cFilePath.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="include\cFileTextReader.h">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="include\cFile.h">
       <Filter>include</Filter>
     </ClInclude>
@@ -399,6 +396,9 @@
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="include\cQueueChunked.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cStreamTextReader.h">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>
@@ -609,9 +609,6 @@
     <ClCompile Include="src\cFilePath.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\cFileTextReader.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\cFile.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -684,6 +681,10 @@
     <ClCompile Include="src\cRegKey.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\cStreamTextReader.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="NoCRT.inl" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="src\GrayCore.rc">

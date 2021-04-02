@@ -13,7 +13,6 @@
 #include "HResult.h"
 #include "cObject.h" 		// DECLARE_DYNAMIC()
 #include "cString.h"
-#include "cUnitTestDecl.h"
 
 namespace Gray
 {
@@ -92,7 +91,7 @@ namespace Gray
 	public:
 		cException(const LOGCHAR_t* pszDescription, LOGLEV_TYPE eLogLevel = LOGLEV_ERROR) noexcept
 			: m_eSeverity(eLogLevel)
-#if ! defined(_MFC_VER) && defined(_MSC_VER) && ! defined(UNDER_CE) // not using _MFC_VER.
+#if ! defined(_MFC_VER) && defined(_MSC_VER) && defined(_CPPUNWIND) // not using _MFC_VER.
 			, cExceptionBase(pszDescription)
 #endif
 			, m_pszDescription((pszDescription == nullptr) ? k_szDescriptionDefault : pszDescription)
@@ -121,7 +120,6 @@ namespace Gray
 		}
 #endif // ! _MFC_VER
 
-		UNITTEST_FRIEND(cException);
 	};
 
 	class GRAYCORE_LINK cExceptionHResult : public cException

@@ -13,7 +13,7 @@
 #include "cLogAppender.h"
 #include "cArrayString.h"
  
-#if !defined(UNDER_CE) && USE_CRT
+#if !defined(UNDER_CE)
 
 namespace Gray
 {

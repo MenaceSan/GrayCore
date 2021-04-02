@@ -44,6 +44,9 @@ namespace Gray
 			//! Show my help text via console or dialog .
 			//! pszArg = nullptr or extra arg for specific help.
 
+			UNREFERENCED_PARAMETER(iArgN);
+			UNREFERENCED_PARAMETER(pszArg);
+
 			cString sText = cAppState::get_AppFileTitle() + STR_NL;
 			sText += cAppImpl::I().get_HelpText();
 
@@ -71,6 +74,8 @@ namespace Gray
 		HRESULT DoCommand(int iArgN, const FILECHAR_t* pszArg) override
 		{
 			// TODO  pop message box or use console ? to wait for user input.
+			UNREFERENCED_PARAMETER(iArgN);
+			UNREFERENCED_PARAMETER(pszArg);
 
 			return E_NOTIMPL;
 		}
@@ -214,7 +219,7 @@ namespace Gray
 		if (FAILED(hRes))
 		{
 			// Stop processing. report error.
-			cLogMgr::I().addEventF(LOG_ATTR_INIT, LOGLEV_CRIT, "Command line '%s' failed '%s'", LOGSTR(pszCmd), LOGERR(hRes));
+			LOGF((LOG_ATTR_INIT, LOGLEV_CRIT, "Command line '%s' failed '%s'", LOGSTR(pszCmd), LOGERR(hRes)));
 			return hRes;
 		}
 

@@ -10,7 +10,6 @@
 #endif
 
 #include "GrayCore.h"
-#include "cUnitTestDecl.h"
 
 #ifndef UNDER_CE
 #include <typeinfo>		// type_info& typeid(class type) std:: // doe sthis always need _CPPRTTI ??
@@ -56,8 +55,6 @@ namespace Gray
 		}
 
 		const char* GetMemberName(int i) const;
-
-		UNITTEST_FRIEND(cTypeInfo);
 	};
 }
 #endif

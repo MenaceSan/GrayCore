@@ -51,7 +51,7 @@ namespace Gray
 			//! Overload this template for any specific TYPE Compare.
 			//! obviously TYPE must also support >. We assume all types already support ==.
 			//! @note we need this because INT_MAX-INT_MIN is not positive !!! (and 0-0xFFFFFFFF is not negative)
-			//! @note also memcmp() is a backwards numeric compare for USE_LITTLE_ENDIAN (Intel) machines.
+			//! @note also cMem::Compare() is a backwards numeric compare for USE_LITTLE_ENDIAN (Intel) machines.
 			if (a > b)
 				return COMPARE_Greater; // is greater than.
 			if (a == b)
@@ -73,7 +73,7 @@ namespace Gray
 	typedef int ITERATE_t;		//!< like size_t but signed
 #endif
 	const ITERATE_t k_ITERATE_BAD = -1;
-	const ITERATE_t k_ARG_ARRAY_MAX = 128;		// Max number of arguments in user entered array. arbitrary.
+	const ITERATE_t k_ARG_ARRAY_MAX = 256;		// arbitrary Max number of arguments in user entered array. 
 
 	typedef size_t COUNT_t;		//!< like size_t but a count of things that might NOT be bytes. ASSUME unsigned. _countof(x)
 

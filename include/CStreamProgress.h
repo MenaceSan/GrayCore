@@ -9,10 +9,36 @@
 #pragma once
 #endif
 
-#include "cOSHandle.h"  // STREAM_POS_t
+#include "cDebugAssert.h"
 
 namespace Gray
 {
+	enum SEEK_ORIGIN_TYPE
+	{
+		//! @enum Gray::SEEK_ORIGIN_TYPE
+		//! What are we moving relative to ? SEEK_SET,SEEK_CUR,SEEK_END or FILE_BEGIN,FILE_CURRENT,FILE_END
+		//! SEEK_SET defined for both __linux__ and _WIN32
+		//! same as enum tagSTREAM_SEEK
+
+		SEEK_Set = 0,		//!< SEEK_SET = FILE_BEGIN = STREAM_SEEK_SET = 0 = relative to the start of the file.
+		SEEK_Cur = 1,		//!< SEEK_CUR = FILE_CURRENT = STREAM_SEEK_CUR = 1 = relative to the current position.
+		SEEK_End = 2,		//!< SEEK_END = FILE_END = STREAM_SEEK_END = 2 = relative to the end of the file.
+
+		SEEK_MASK = 0x0007,		//!< | _BITMASK(SEEK_Set) allow extra bits above SEEK_ORIGIN_TYPE ?
+	};
+
+#if defined(_MFC_VER) && ( _MFC_VER > 0x0600 )
+	typedef LONGLONG	STREAM_OFFSET_t;
+	typedef ULONGLONG	STREAM_POS_t;		// same as FILE_SIZE_t.
+#define USE_FILE_POS64
+
+#else
+	typedef LONG_PTR	STREAM_OFFSET_t;	//!< Might be 64 or 32 bit relative value (signed). TODO SET USE_FILE_POS64
+	typedef ULONG_PTR	STREAM_POS_t;		//!< NOT same as FILE_SIZE_t in 32 bit? Why not ?
+
+#endif	// ! _MFC_VER
+
+	constexpr STREAM_POS_t k_STREAM_POS_ERR = (STREAM_POS_t)(-1);	// like INVALID_SET_FILE_POINTER
 	template< typename TYPE = STREAM_POS_t >
 	class cStreamProgressT
 	{
@@ -25,8 +51,8 @@ namespace Gray
 
 	public:
 		cStreamProgressT(TYPE nAmount = 0, TYPE nTotal = 0)
-		: m_nAmount(nAmount)
-		, m_nTotal(nTotal)
+			: m_nAmount(nAmount)
+			, m_nTotal(nTotal)
 		{
 		}
 		bool isComplete() const
@@ -50,7 +76,7 @@ namespace Gray
 			//! @return From 0 to 100. MULDIV
 			if (m_nTotal == 0) // no idea.
 				return 0;
-			return (int)((m_nAmount*100) / m_nTotal);
+			return (int)((m_nAmount * 100) / m_nTotal);
 		}
 		bool isValidPercent() const
 		{
@@ -81,18 +107,18 @@ namespace Gray
 		float m_nAmount;	//!< Current progress 0 to 1.0 (m_nTotal)
 
 	public:
-		cStreamProgressF()
-		: m_nTotal(1.0f)
-		, m_nAmount(0.0f)
+		cStreamProgressF() noexcept
+			: m_nTotal(1.0f)
+			, m_nAmount(0.0f)
 		{}
 
-		void InitPercent()
+		void InitPercent() noexcept
 		{
 			m_nTotal = 1.0f;	// of everything.
 			m_nAmount = 0.0f;
 		}
 #if 0
-		void put_PercentComplete( float fComplete = 1.0f ) noexcept
+		void put_PercentComplete(float fComplete = 1.0f) noexcept
 		{
 			m_nAmount = fComplete;	// indicate we are done.
 		}
@@ -120,15 +146,15 @@ namespace Gray
 
 	public:
 		cStreamProgressChunk(cStreamProgressF& prog, int iSubChunks, int iParentChunks = 1)
-		: m_Prog(prog)
-		, m_iChunk(0)
-		, m_iChunks(iSubChunks)
+			: m_Prog(prog)
+			, m_iChunk(0)
+			, m_iChunks(iSubChunks)
 		{
 			//! Start a sub-chunk of the task. expect iChunks in this task. IncChunk() will be called.
 			//! iParentChunks = the number of m_nTotal we represent.
 			//! ASSUME caller will IncChunk(iParentChunks) after this is destructed.
 			m_ProgPrev = m_Prog;
-			ASSERT(m_iChunks >= 0);
+			ASSERT(iSubChunks >= 0);
 			if (m_iChunks == 0)
 			{
 				prog.m_nTotal = 0;
@@ -183,6 +209,6 @@ namespace Gray
 			return S_OK;	// S_OK=just keep going.
 		}
 	};
-} 
+}
 
 #endif

@@ -16,23 +16,25 @@
 #include "StrT.h"
 #include "cObject.h"
 #include "cLogLevel.h"
-#ifndef _MFC_VER	// NOT using _MFC_VER.
-#include <exception> // use STL based exception class.
+#include "HResult.h"
+
+#if defined(_CPPUNWIND) && ! defined(_MFC_VER)	// NOT using _MFC_VER.
+#include <exception> // use STL based std::exception class.
 #endif
 
 namespace Gray
 {
 
-#if ! defined(_CPPUNWIND)	// STL _HAS_EXCEPTIONS
+#if ! defined(_CPPUNWIND)	// like STL _HAS_EXCEPTIONS ?
 	class cExceptionBase	// stub this out if no throws allowed.
 	{
 		//! @class Gray::cExceptionBase
-		//! Common base for STL or MFC.
+		//! Stub out common base for exceptions. Normally this would be for MFC opr STL/std style execptions.
 	public:
 		virtual ~cExceptionBase()
 		{
 		}
-		virtual const char* what() const THROW_DEF = 0;	// can throw ? strange.
+		virtual const char* what() const = 0;	// can throw ? strange. THROW_DEF
 	};
 #elif defined(_MFC_VER)
 	// MFC throw a pointer to this structure to track an error. must call Delete() to destruct.

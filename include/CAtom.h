@@ -11,7 +11,6 @@
 
 #include "cString.h"
 #include "HResult.h"
-#include "cUnitTestDecl.h"
 
 namespace Gray
 {
@@ -29,7 +28,6 @@ namespace Gray
 
 		friend class cAtomRef;
 		friend class cAtomManager;
-		UNITTEST_FRIEND(cAtom);
 
 	private:
 		cStringA m_s;				//!< the string being represented. should we allocate this differently. is cStringA wasteful ?
@@ -70,8 +68,6 @@ namespace Gray
 		typedef cAtomRef THIS_t;
 		typedef cRefPtr<cAtomDef> SUPER_t;
 
-		UNITTEST_FRIEND(cAtom);
- 
 	private:
 		static cAtomRef GRAYCALL FindorCreateAtomStr(const ATOMCHAR_t* pszText) noexcept;
 		static cAtomRef GRAYCALL FindorCreateAtomStr(const STR_t& sText) noexcept;

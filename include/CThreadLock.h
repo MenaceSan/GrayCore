@@ -128,9 +128,7 @@ namespace Gray
 #else
 			::usleep((uMs) * 1000);	// Sleep current thread.
 #endif
-		};
-
-		UNITTEST_FRIEND(cThreadLock);
+		} 	 
 	};
 
 	class GRAYCORE_LINK cThreadState
@@ -160,6 +158,8 @@ namespace Gray
 			//! Thread MUST periodically check this !
 			return m_bThreadStopping;
 		}
+
+		virtual bool WaitForThreadExit(TIMESYSD_t iTimeMSec) noexcept;
 
 		virtual bool RequestStopThread(bool bWillWait = false) noexcept
 		{

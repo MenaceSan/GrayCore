@@ -43,7 +43,7 @@ namespace Gray
 		template <class TYPE>
 		static inline bool IsEqualQty(const TYPE* pArray1, const TYPE* pArray2, ITERATE_t nQty) noexcept
 		{
-			//! Test 2 arrays of a TYPE. like memcmp.
+			//! Test 2 arrays of a TYPE. like cMem::Compare.
 			if (pArray1 == pArray2)
 				return true;
 			for (ITERATE_t i = 0; i < nQty; i++)
@@ -57,7 +57,7 @@ namespace Gray
 		template <class TYPE>
 		static inline COMPARE_t CompareQty(const TYPE* pArray1, const TYPE* pArray2, ITERATE_t nQty) noexcept
 		{
-			//! Compare 2 arrays of a TYPE. like memcmp.
+			//! Compare 2 arrays of a TYPE. like cMem::Compare.
 			if (pArray1 == pArray2)
 				return COMPARE_Equal;
 			for (ITERATE_t i = 0; i < nQty; i++)
@@ -101,7 +101,7 @@ namespace Gray
 		template <class TYPE>
 		static inline void CopyQty(TYPE* pDst, const TYPE* pSrc, ITERATE_t nQty) noexcept
 		{
-			//! Forward Copy array of values. like memcpy.
+			//! Forward Copy array of values. like cMem::Copy.
 			//! element-copy using class assignment operators for array.
 
 			if (nQty <= 0)
@@ -112,14 +112,14 @@ namespace Gray
 
 			for (ITERATE_t i = 0; i < nQty; i++)
 			{
-				pDst[i] = pSrc[i];
+				pDst[i] = pSrc[i];	// use copy operator.
 			}
 		}
 
 		template <class TYPE>
 		static inline void CopyQtyRev(TYPE* pDst, const TYPE* pSrc, ITERATE_t nQty) noexcept
 		{
-			//! Reverse Copy array of values. like memmove.
+			//! Reverse Copy array of values. like cMem::CopyOverlap.
 			for (ITERATE_t i = nQty; i > 0;)
 			{
 				i--;
@@ -232,14 +232,14 @@ namespace Gray
 	inline void cValArray::FillQty<BYTE>(BYTE* pData, ITERATE_t nQty, BYTE bFill) noexcept // static
 	{
 		//! FillMemory BYTEs like memset()
-		::memset(pData, bFill, (size_t)nQty);
+		cMem::Fill(pData, (size_t)nQty, bFill);
 	}
 	template <>
 	inline void cValArray::FillSize<BYTE>(void* pData, size_t nSizeBlock, BYTE bFill) noexcept // static
 	{
 		//! FillMemory BYTEs like memset()
-		::memset(pData, bFill, nSizeBlock);
+		cMem::Fill(pData, nSizeBlock, bFill);
 	}
 }
 
-#endif // _INC_cValT_H
+#endif // _INC_cValArray_H
