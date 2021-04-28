@@ -106,7 +106,7 @@ namespace Gray
 				this->RemoveAt(0);	// roll off extras from head.
 				iQty--;
 			}
-			this->AddTail(pszStr);
+			this->Add(pszStr);
 			return iQty;
 		}
 		ITERATE_t FindCmpI(const _TYPE_CH* pszFind) const

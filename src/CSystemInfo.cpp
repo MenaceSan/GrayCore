@@ -35,9 +35,10 @@ namespace Gray
 		: cSingleton<cSystemInfo>(this, typeid(cSystemInfo))
 	{
 #ifdef _WIN32
-		// Windows 10 nerfs GetVersionEx(). must call RtlGetVersion(). M$ A*holes.
+		// In Windows 10 the M$ A*holes nerf GetVersionEx(). must call RtlGetVersion(). 
 		// http://www.codeproject.com/Articles/678606/Part-Overcoming-Windows-s-deprecation-of-GetVe?msg=5080848#xx5080848xx
 		// GetVersionEx was declared deprecated ?? M$ is crazy. recommended alternatives don't really do what we want.
+		// same as ? HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion
 
 		cMem::Zero(&m_OsInfo, sizeof(m_OsInfo));
 		m_OsInfo.dwOSVersionInfoSize = sizeof(m_OsInfo);

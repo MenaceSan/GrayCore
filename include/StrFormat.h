@@ -75,7 +75,7 @@ namespace Gray
 
 		void RenderString(StrBuilder<TYPE>& out, const TYPE* pszParam, StrLen_t nParamLen, short nPrecision) const;
 		void RenderUInt(StrBuilder<TYPE>& out, const TYPE* pszPrefix, RADIX_t nRadix, char chRadixA, UINT64 uVal) const;
-		void RenderFloat(StrBuilder<TYPE>& out, char chRadixA, double dVal) const;
+		void RenderFloat(StrBuilder<TYPE>& out, char chE, double dVal) const;
 
 		void RenderParam(StrBuilder<TYPE>& out, va_list* pvlist) const;
 

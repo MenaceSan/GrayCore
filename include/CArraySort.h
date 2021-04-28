@@ -13,7 +13,6 @@
 #include "cArray.h"
 #include "StrT.h"
 #include "cValArray.h"
-#include "cUnitTestDecl.h"
 
 namespace Gray
 {
@@ -89,7 +88,7 @@ namespace Gray
 				if (CompareKey(nKey, this->GetAt(i)) != COMPARE_Equal)
 					break;
 			}
-			return(i + 1);
+			return i + 1;
 		}
 		ITERATE_t FindILastForKey(TYPE_KEY nKey) const
 		{
@@ -106,7 +105,7 @@ namespace Gray
 				if (CompareKey(nKey, this->GetAt(i)) != COMPARE_Equal)
 					break;
 			}
-			return(i - 1);	// last
+			return i - 1;	// last
 		}
 
 		ITERATE_t AddPresorted(ITERATE_t index, COMPARE_t iCompareRes, TYPE_ARG pNew)
@@ -129,14 +128,14 @@ namespace Gray
 			return true;
 		}
 
-		ITERATE_t Add(TYPE_ARG pNew);
+		ITERATE_t Add(TYPE_ARG pNew);	// add in sorted order.
 
-		void AddArray(const SUPER_t& a)
+		void AddArray(const SUPER_t& src)
 		{
-			//! Add all the entries in array a to this array. sorted add.
-			for (ITERATE_t i = 0; i < a.GetSize(); i++)
+			//! Add all the entries in array a to this array. sorted add. like InsertArray() sort of.
+			for (ITERATE_t i = 0; i < src.GetSize(); i++)
 			{
-				Add(a[i]);
+				Add(src[i]);
 			}
 		}
 	};
@@ -308,7 +307,7 @@ namespace Gray
 			ITERATE_t index = FindIForKey(key1);
 			if (index < 0)
 				return nullptr;
-			return &(this->ConstElementAt(index));
+			return &(this->GetAt(index));
 		}
 	};
 
@@ -352,7 +351,7 @@ namespace Gray
 			ITERATE_t index = FindIForKey(key1);
 			if (index < 0)
 				return nullptr;
-			return &(this->ConstElementAt(index));
+			return &(this->GetAt(index));
 		}
 	};
 

@@ -19,11 +19,11 @@
 
 namespace Gray
 {
-	cFileStatus::cFileStatus()
+	cFileStatus::cFileStatus() noexcept
 		: m_Size((FILE_SIZE_t)-1)
 		, m_Attributes(0)
 	{
-		ASSERT(!isFileValid());
+		DEBUG_CHECK(!isFileValid());
 	}
 	cFileStatus::cFileStatus(const FILECHAR_t* pszFilePath)
 		: m_Size((FILE_SIZE_t)-1)
@@ -34,14 +34,14 @@ namespace Gray
 		ReadFileStatus(pszFilePath);
 	}
 
-	void cFileStatus::InitFileStatus()
+	void cFileStatus::InitFileStatus() noexcept
 	{
 		m_timeCreate.InitTime();
 		m_timeChange.InitTime(); // All OS support this.
 		m_timeLastAccess.InitTime();
 		m_Size = (FILE_SIZE_t)-1;	// Set to an invalid value.
 		m_Attributes = 0;
-		ASSERT(!isFileValid());
+		DEBUG_CHECK(!isFileValid());
 	}
 
 	void cFileStatus::InitFileStatus(const cFileStatusSys& statusSys)

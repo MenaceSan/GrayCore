@@ -18,7 +18,7 @@ namespace Gray
 	class GRAYCORE_LINK cListNodeBase 
 	{
 		//! @class Gray::cListNodeBase
-		//! base class for a single node in a cListBase.
+		//! base class for a single node in a cListBase. AKA 
 		//! derive a class from cListNodeBase to be a node member in a cListBase.
 		//! Single owner = This item belongs to JUST ONE cListBase (m_pParent)
 		//! Double linked list.
@@ -113,7 +113,7 @@ namespace Gray
 	protected:
 		//! Override this to get called when an item is removed from this list.
 		//! Never called directly. ALWAYS called from pObRec->RemoveFromParent()
-		virtual void RemoveListNode(cListNodeBase* pNode);	//!< allow Override of this. called when child pObRec removed from list.
+		virtual void RemoveListNode(cListNodeBase* pNode);	//!< allow Override of this. called when child removed from list.
 
 	public:
 		cListBase() noexcept

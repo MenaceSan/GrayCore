@@ -146,12 +146,7 @@ namespace Gray
 			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			return SUPER_t::Add(pObj); // add to tail
 		}
-		ITERATE_t AddTail(TYPE* pObj)
-		{
-			// add to tail = latest. aka Push to stack.
-			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
-			return SUPER_t::AddTail(pObj); // add to tail
-		}
+		 
 		bool RemoveArg(TYPE* pObj)
 		{
 			//! @return true = removed. false = was not here.
@@ -277,16 +272,19 @@ namespace Gray
 		}
 		ITERATE_t Add(TYPE* pObj)
 		{
+			// AKA Push = add to Tail.
 			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			return SUPER_t::Add(pObj);	// AddTail
 		}
 		cRefPtr<TYPE> PopHead()
 		{
+			// Act as a Queue, not a stack.
 			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			return SUPER_t::PopHead();	// pull off head
 		}
 		cRefPtr<TYPE> PopTail()
 		{
+			// Act as a stack, not a Queue
 			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			return SUPER_t::PopTail();
 		}
@@ -359,8 +357,9 @@ namespace Gray
 		}
 		ITERATE_t Add(TYPE* pObj)
 		{
+			// add to tail.
 			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
-			return SUPER_t::Add(pObj) ;	// AddTail
+			return SUPER_t::Add(pObj) ;	 
 		}
 		ITERATE_t AddAfter(TYPE* pObj)
 		{
@@ -369,11 +368,13 @@ namespace Gray
 		}
 		cRefPtr<TYPE> PopHead()
 		{
+			// as Queue
 			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			return SUPER_t::PopHead();	// pull off tail
 		}
 		cRefPtr<TYPE> PopTail()
 		{
+			// as Stack
 			cThreadGuard threadguard(m_Lock);	// thread sync critical section.
 			return SUPER_t::PopTail();
 		}

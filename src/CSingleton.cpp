@@ -82,7 +82,7 @@ namespace Gray
 			ASSERT(isSingleCreated());
 			ASSERT(pReg != nullptr);
 			ASSERT(m_aSingletons.FindIFor(pReg) < 0); // not already here.
-			return m_aSingletons.AddTail(pReg);
+			return m_aSingletons.Add(pReg);
 		}
 		bool RemoveReg(cSingletonRegister* pReg)
 		{

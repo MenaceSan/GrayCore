@@ -89,11 +89,13 @@ namespace Gray
 		typedef cFileStatus SUPER_t;
 		typedef cFileFindEntry THIS_t;
 
-	public:
+		friend class cFileFind;
+
+	protected:
 		cStringF m_sFileName;	//!< relative file title. (NOT FULL PATH) checks USE_UNICODE_FN and FILECHAR_t.
 
 	public:
-		cFileFindEntry()
+		cFileFindEntry() noexcept
 		{
 			InitFileStatus();
 		}
@@ -107,14 +109,20 @@ namespace Gray
 			, m_sFileName(pszFileName)
 		{
 		}
-		bool IsFileEqualTo(const THIS_t& rEntry) const
+
+		inline cStringF get_Name() const noexcept
+		{
+			return m_sFileName;
+		}
+
+		bool IsFileEqualTo(const THIS_t& rEntry) const noexcept
 		{
 			// Does file system use case ?
 			if (m_sFileName.CompareNoCase(rEntry.m_sFileName) != 0)
 				return false;
 			return SUPER_t::IsFileEqualTo(rEntry);
 		}
-		bool IsFileEqualTo(const THIS_t* pEntry) const
+		bool IsFileEqualTo(const THIS_t* pEntry) const noexcept
 		{
 			// Does file system use case ?
 			if (pEntry == nullptr)
@@ -129,7 +137,7 @@ namespace Gray
 		{
 			return !IsFileEqualTo(rEntry);
 		}
-		bool isDot() const
+		inline bool isDot() const
 		{
 			if (m_sFileName[0] != '.')
 				return false;
@@ -137,7 +145,7 @@ namespace Gray
 				return true;
 			return false;
 		}
-		bool isDots() const noexcept
+		inline bool isDots() const noexcept
 		{
 			//! ignore the . and .. that old systems can give us.
 			if (m_sFileName[0] != '.')
@@ -150,10 +158,6 @@ namespace Gray
 				return true;
 			return false;
 		}
-		cStringF get_Name() const
-		{
-			return m_sFileName;
-		}
 	};
 
 	class GRAYCORE_LINK cFileFind
@@ -164,7 +168,7 @@ namespace Gray
 		//! @note Don't delete files while reading here. no idea what effect that has. Use cFileDir.
 
 	public:
-		cFileFindEntry m_FileEntry;	//!< The current entry. by calls to FindFile() and FindFileNext()
+		cFileFindEntry m_FileEntry;		//!< The current entry. by calls to FindFile() and FindFileNext()
 
 	private:
 		cStringF m_sDirPath;			//!< Assume it ends with k_DirSep
@@ -202,7 +206,7 @@ namespace Gray
 		{
 			//! Get Full file path.
 			//! like MFC CFileFind::GetFilePath()
-			return cFilePath::CombineFilePathX(m_sDirPath, m_FileEntry.m_sFileName);
+			return cFilePath::CombineFilePathX(m_sDirPath, m_FileEntry.get_Name());
 		}
 		bool isDots() const noexcept
 		{
@@ -281,7 +285,7 @@ namespace Gray
 
 		static HRESULT GRAYCALL DeletePathX(const FILECHAR_t* pszPath, DWORD nFileFlags = 0);
 
-		cStringF get_DirPath() const
+		cStringF get_DirPath() const noexcept
 		{
 			return m_sDirPath;
 		}
@@ -306,9 +310,8 @@ namespace Gray
 		cStringF GetEnumTitleX(ITERATE_t i) const
 		{
 			//! Get the file title + ext.
-			ASSERT(m_aFiles.IsValidIndex(i));
 			const cFileFindEntry& rFileEntry = m_aFiles.GetAt(i);
-			return rFileEntry.m_sFileName;
+			return rFileEntry.get_Name();
 		}
 		cStringF GetEnumPath(ITERATE_t i) const
 		{

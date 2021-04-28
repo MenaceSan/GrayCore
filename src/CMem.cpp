@@ -30,6 +30,8 @@ namespace Gray
 	uintptr_t VOLATILE cMem::sm_bDontOptimizeOut0 = 0;	//!< used to trick the optimizer. Always 0.
 	uintptr_t VOLATILE cMem::sm_bDontOptimizeOutX = 1;	//!< used to trick the optimizer. Unknown value.
  
+	const cMemBlock cMemBlock::k_EmptyBlock ; // const
+
 	bool GRAYCALL cMem::IsCorrupt(const void* pData, size_t nLen, bool bWriteAccess) noexcept // static
 	{
 		//! Is this pointer valid to read/write to ? On heap, stack or static const data space.
@@ -252,16 +254,14 @@ namespace Gray
 		return S_FALSE;	// zero
 	}
 
-	//**********************************************************
-
-	COMPARE_t GRAYCALL cMemBlock::Compare(const void* pData1, size_t iLen1, const void* pData2, size_t iLen2) // static
+	COMPARE_t GRAYCALL cMem::Compare(const void* pData1, size_t iLen1, const void* pData2, size_t iLen2) // static
 	{
 		//! @return COMPARE_Equal
 		const size_t iLenMin = MIN(iLen1, iLen2);
 		const COMPARE_t iRet = cMem::Compare(pData1, pData2, iLenMin);
 		if (iRet != COMPARE_Equal)
 			return iRet;
-		return cValT::Compare(iLen1, iLen2);	// longer wins. if otherwise equal. (but not same length)
+		return cValT::Compare(iLen1, iLen2);	// the longer one wins. if otherwise equal. (but not same length)
 	}
 
 	//**********************************************************

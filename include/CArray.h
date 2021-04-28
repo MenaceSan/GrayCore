@@ -3,7 +3,7 @@
 //! c++ Collections. MFC compatible.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
- 
+
 #ifndef _INC_cArray_H
 #define _INC_cArray_H
 #ifndef NO_PRAGMA_ONCE
@@ -84,17 +84,24 @@ namespace Gray
 			return (ITERATE_t)(cHeap::GetSize(m_pData) / sizeof(TYPE));
 		}
 
+		inline static ITERATE_t GetCountMalloc(ITERATE_t i)
+		{
+			//! over allocate to allow room to grow.
+			return i + (i / 16);
+		}
+
 		// Operations
 		//! Clean up
 		void RemoveAll();
 
 		// Accessing elements
-		const TYPE& GetAt(ITERATE_t nIndex) const
+		const TYPE& GetAt(ITERATE_t nIndex) const noexcept
 		{
+			// I can make a const pointer from this. NOT just a copy.
 			DEBUG_CHECK(IsValidIndex(nIndex));
 			return m_pData[nIndex];
 		}
-		TYPE& ElementAt(ITERATE_t nIndex)
+		TYPE& ElementAt(ITERATE_t nIndex) 
 		{
 			DEBUG_CHECK(IsValidIndex(nIndex));
 			return m_pData[nIndex];
@@ -130,7 +137,7 @@ namespace Gray
 		void SetAtGrow(ITERATE_t nIndex, ARG_TYPE newElement);
 		ITERATE_t Add(ARG_TYPE newElement)
 		{
-			//! Add to the end.
+			//! Add to the end. AKA push_back(), Push()
 			const ITERATE_t nIndex = m_nSize;
 			SetAtGrow(nIndex, newElement);
 			return nIndex;
@@ -154,9 +161,44 @@ namespace Gray
 		void RemoveAt(ITERATE_t nIndex, ITERATE_t iQty);
 
 		void MoveElement(ITERATE_t iFrom, ITERATE_t iTo); // throw
+
+		void InsertArray(ITERATE_t i, const TYPE* pCopy, ITERATE_t countCopy);
 	};
 
 	//************************************************************************
+
+	template <class TYPE, class ARG_TYPE>
+	void CArray<TYPE, ARG_TYPE>::InsertArray(ITERATE_t i, const TYPE* pCopy, ITERATE_t countCopy)
+	{
+		//! Insert an array into this array.
+		//! Like MFC CArray::Append() ? sort of.
+
+		ASSERT_VALID(this);
+
+		if (countCopy <= 0)
+			return;
+		const ITERATE_t nCountOld = this->GetSize();
+		if (i < 0 || i > nCountOld)
+			i = nCountOld;
+
+		ASSERT(!cMem::IsInsideBlock(pCopy, this->GetData() + i, nCountOld - i));   // append to self not supported.
+
+		const ITERATE_t nCountNew = nCountOld + countCopy;		// new size.
+		const ITERATE_t allocateCount = GetCountMalloc(nCountNew);
+		m_pData = (TYPE*)cHeap::ReAllocPtr(m_pData, allocateCount * sizeof(TYPE));
+		ASSERT_N(m_pData != nullptr);
+		m_nSize = nCountNew;
+
+		// Move existing elements.
+		cMem::CopyOverlap(m_pData + i + countCopy, m_pData + i, (nCountOld - i) * sizeof(TYPE));
+		// construct new elements
+		cValArray::ConstructElementsX<TYPE>(m_pData + i, countCopy);
+		if (pCopy != nullptr)
+		{
+			// Copy over new.
+			cValArray::CopyQty(m_pData + i, pCopy, countCopy);
+		}
+	}
 
 	template <class TYPE, class ARG_TYPE>
 	void CArray<TYPE, ARG_TYPE>::RemoveAll()
@@ -193,13 +235,13 @@ namespace Gray
 			// MFC will heuristically determine growth when nGrowBy == 0 (this avoids heap fragmentation in many situations)
 
 			ASSERT(nNewSize > m_nSize);
-			ITERATE_t allocateExtra = 0;
+			ITERATE_t allocateCount = nNewSize;
 			if (m_nSize != 0)	// not the first time we have done this.
 			{
-				allocateExtra = (nNewSize / 16);
+				allocateCount = GetCountMalloc(allocateCount);
 			}
 
-			m_pData = (TYPE*)cHeap::ReAllocPtr(m_pData, (nNewSize + allocateExtra) * sizeof(TYPE));
+			m_pData = (TYPE*)cHeap::ReAllocPtr(m_pData, allocateCount * sizeof(TYPE));
 			ASSERT_N(m_pData != nullptr);
 
 			// construct new elements
@@ -221,16 +263,12 @@ namespace Gray
 	void CArray<TYPE, ARG_TYPE>::SetAtGrow(ITERATE_t nIndex, ARG_TYPE newElement)
 	{
 		ASSERT_VALID(this);
-		ASSERT(nIndex >= 0);
-		if (nIndex < m_nSize)
+		if (nIndex >= m_nSize)
 		{
-			m_pData[nIndex] = newElement;
-			return;
+			// must grow.
+			SetSize(nIndex + 1);
 		}
-
-		SetSize(nIndex + 1);
-		ASSERT_N(m_pData != nullptr);
-		m_pData[nIndex] = newElement;
+		SetAt(nIndex, newElement);
 	}
 
 	template <class TYPE, class ARG_TYPE>
@@ -241,17 +279,20 @@ namespace Gray
 		//! dangerous for types that have internal pointers !
 		ASSERT(IsValidIndex(iFrom));
 		ASSERT(IsValidIndex(iTo));
-		cValArray::MoveElement(&m_pData[iTo], &m_pData[iFrom]);
+		cValArray::MoveElement1(&m_pData[iFrom], &m_pData[iTo]);
 	}
 
 	template <class TYPE, class ARG_TYPE>
 	void CArray<TYPE, ARG_TYPE>::InsertAt(ITERATE_t nIndex, ARG_TYPE newElement)
 	{
 		//! Insert at this location, move anything after this.
+		// newElement as interior pointer is ok.
+
 		ASSERT_VALID(this);
 		ASSERT(nIndex >= 0);    // will expand to meet need
 
-		if (nIndex >= m_nSize)
+		const ITERATE_t nCountOld = m_nSize;
+		if (nIndex >= nCountOld)
 		{
 			// adding after the end of the array
 			SetSize(nIndex + 1);   // grow so nIndex is valid
@@ -259,15 +300,13 @@ namespace Gray
 		else
 		{
 			// inserting in the middle of the array
-			ITERATE_t nOldSize = m_nSize;
 			SetSize(m_nSize + 1);  // grow it to new size
 			// destroy initial data before copying over it (inefficient i know but is very convenient)
-			MoveElement(nOldSize, nIndex);
+			MoveElement(nCountOld, nIndex);
 		}
 
 		// insert new value in the gap
-		ASSERT(nIndex + 1 <= m_nSize);
-		m_pData[nIndex] = newElement;	// ASSUME copy constructor will be called!
+		SetAt(nIndex, newElement);	// ASSUME copy constructor will be called!
 	}
 
 	template <class TYPE, class ARG_TYPE>
@@ -277,7 +316,7 @@ namespace Gray
 		ASSERT_VALID(this);
 		if (nIndex < 0)
 			return;
-		ITERATE_t nMoveCount = m_nSize - (nIndex + 1);
+		const ITERATE_t nMoveCount = m_nSize - (nIndex + 1);
 		if (nMoveCount < 0)
 			return;
 		cValArray::DestructElementsX<TYPE>(&m_pData[nIndex], 1);
@@ -344,6 +383,7 @@ namespace Gray
 	{
 		//! @class Gray::cArrayTyped
 		//! Equivalent to MFC CArray with added functions not in MFC
+		//! @note Use this instead of CArray directly.
 		//! TYPE = the type stored. ARG_TYPE = how it should be referenced. const TYPE&	typically
 	public:
 		typedef CArray<TYPE, ARG_TYPE> SUPER_t;
@@ -451,38 +491,33 @@ namespace Gray
 			return this->m_pData[nIndex];
 		}
 
+#if 0
 		TYPE& Head() // throw
 		{
+			// aka front()
 			return this->ElementAt(0);
 		}
 		TYPE& Tail()
 		{
+			// AKA back()
 			return this->ElementAt(this->GetSize() - 1);
 		}
-		TYPE& ElementAtHead()
-		{
-			// AKA 
-			return this->ElementAt(0);
-		}
-		TYPE& ElementAtTail()
-		{
-			// AKA 
-			return this->ElementAt(this->GetSize() - 1);
-		}
+#endif
 
 		const TYPE& GetAtHead() const
 		{
+			// aka front()
 			return this->GetAt(0);
 		}
 		const TYPE& GetAtTail() const
 		{
+			// AKA back()
 			return this->GetAt(this->GetSize() - 1);
 		}
 
 		void UnLinkIndex(ITERATE_t nIndex)
 		{
-			//! Remove the object from the list.
-			//! DO NOT call its normal destructor!
+			//! DANGER. Remove the object from the list. DO NOT call its normal destructor!
 			ASSERT(IsValidIndex(nIndex));
 			cMem::CopyOverlap(&(this->m_pData[nIndex]), &(this->m_pData[nIndex + 1]), ((this->m_nSize - nIndex) - 1) * sizeof(TYPE));
 			this->m_nSize--;
@@ -525,7 +560,7 @@ namespace Gray
 		}
 		bool HasArg(ARG_TYPE arg) const noexcept
 		{
-			//! Find the index of a specified entry.
+			//! Find the index of a specified value entry match.
 			return FindIFor(arg) >= 0;
 		}
 
@@ -535,6 +570,7 @@ namespace Gray
 		}
 		TYPE PopHead()
 		{
+			// pop from front of queue.
 			ASSERT(this->GetSize() > 0);
 			TYPE tmp = this->GetAt(0);	// copy it.
 			this->RemoveAt(0);
@@ -542,6 +578,8 @@ namespace Gray
 		}
 		TYPE PopTail()
 		{
+			// pop from top of stack.
+			// AKA Pop()
 			ASSERT(this->GetSize() > 0);
 			ITERATE_t i = this->GetSize() - 1;
 			TYPE tmp = this->GetAt(i);	// copy it.
@@ -559,25 +597,31 @@ namespace Gray
 		}
 		void UnLinkArg(ARG_TYPE arg)
 		{
+			// DANGER. remove without call to destructor.
 			ITERATE_t nIndex = FindIFor(arg);
 			if (nIndex < 0)
 				return;
 			UnLinkIndex(nIndex);
 		}
-		ITERATE_t AddTail(ARG_TYPE newElement) // a "Push"
-		{
-			// add to tail. alias
-			return this->Add(newElement);
-		}
-		ITERATE_t PushTail(ARG_TYPE newElement)
-		{
-			// add to tail. alias
-			return this->Add(newElement);
-		}
+
 		void AddHead(ARG_TYPE newElement)
 		{
 			// NOT a normal stack or queue. Adds are usually to the tail.
-			this->InsertAt(0, newElement);
+			SUPER_t::InsertAt(0, newElement);
+		}
+		void InsertArray(ITERATE_t i, const TYPE* pCopy, ITERATE_t countCopy)
+		{
+#ifdef _MFC_VER
+			ASSERT(0);
+			// SUPER_t::InsertAt(i, pCopy, countCopy);
+#else
+			SUPER_t::InsertArray(i, pCopy, countCopy);
+#endif
+		}
+		void InsertArray(ITERATE_t i, const THIS_t& src)
+		{
+			// Emulate MFC. but also resolve overload conflict.
+			InsertArray(i, src.GetData(), src.GetSize());
 		}
 
 		TYPE* get_DataWork() const noexcept
@@ -585,20 +629,6 @@ namespace Gray
 			return this->m_pData;
 		}
 
-		void AddArray(const SUPER_t& src)
-		{
-			//! Append an array to the end of this.
-			//! Like MFC CArray::Append()
-			ASSERT_VALID(this);
-			ASSERT(this != &src);   // cannot append to itself
-			ITERATE_t nOldSize = this->GetSize();
-			ITERATE_t nSrcSize = src.GetSize();
-			if (nSrcSize > 0)
-			{
-				this->SetSize(nOldSize + nSrcSize);
-				cValArray::CopyQty<TYPE>(this->GetData() + nOldSize, src.GetData(), nSrcSize);
-			}
-		}
 
 		bool IsEqualArray(const SUPER_t& aValues) const
 		{

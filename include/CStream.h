@@ -301,7 +301,7 @@ namespace Gray
 			//! @return HRESULT_WIN32_C(ERROR_IO_INCOMPLETE) = need more data.
 			UNREFERENCED_PARAMETER(pData);
 			UNREFERENCED_PARAMETER(nDataSize);
-			return 0;
+			return 0;	// nothing read.
 		}
 
 		HRESULT ReadAll(OUT cHeapBlock& block, size_t nSizeExtra = 0)
@@ -313,7 +313,7 @@ namespace Gray
 			const size_t nLengthAlloc = (size_t)nLengthStream;
 			if (nullptr == block.AllocPtr(nLengthAlloc + nSizeExtra))
 				return E_OUTOFMEMORY;
-			return ReadT(block.get_Data(), nLengthAlloc);	// must get all.
+			return ReadT(block.get_DataV(), nLengthAlloc);	// must get all.
 		}
 
 		virtual HRESULT ReadStringLine(OUT char* pszBuffer, StrLen_t iSizeMax);
@@ -323,6 +323,7 @@ namespace Gray
 		HRESULT ReadT(OUT void* pVal, size_t nSize)
 		{
 			//! Read all nSize or fail HRESULT_WIN32_C(ERROR_IO_INCOMPLETE).
+			//! @arg nSize = 0 = S_OK;
 			//! @return >= 0 = actual size read. or < 0 = error
 			//!  HRESULT_WIN32_C(ERROR_IO_INCOMPLETE) = need more data.
 
@@ -333,7 +334,7 @@ namespace Gray
 			}
 			return hRes;
 		}
-		template< typename TYPE >
+		template< typename TYPE = BYTE >
 		HRESULT ReadT(OUT TYPE& val);
 
 		template< typename TYPE >

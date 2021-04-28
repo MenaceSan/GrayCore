@@ -194,7 +194,7 @@ namespace Gray
 		}
 
 		cHeapBlock til((size_t)dwLengthNeeded);
-		::TOKEN_MANDATORY_LABEL* pTIL = (::TOKEN_MANDATORY_LABEL*)til.get_Data();
+		::TOKEN_MANDATORY_LABEL* pTIL = (::TOKEN_MANDATORY_LABEL*)til.get_DataV();
 		if (pTIL == nullptr)
 		{
 			return E_OUTOFMEMORY;

@@ -72,10 +72,10 @@ namespace Gray
 		FILEATTR_MASK_t m_Attributes;		//!< Mask of FILEATTR_TYPE_ attribute bits. FILEATTR_None
 
 	public:
-		cFileStatus();
+		cFileStatus() noexcept;
 		cFileStatus(const FILECHAR_t* pszFilePath);
 
-		void InitFileStatus();
+		void InitFileStatus() noexcept;
 		void InitFileStatus(const cFileStatusSys& statusSys);
 
 #if defined(__linux__)

@@ -124,9 +124,8 @@ namespace Gray
 			if (m_Src.isValidPtr())
 			{
 				// todo repeat like cMem::CopyRepeat() ?
-				cMem::Copy(pData, m_Src.GetOffset(m_nOffset), len);
+				cMem::Copy(pData, m_Src.GetSpan(m_nOffset, len), len);
 				m_nOffset += len;
-				ASSERT(m_Src.IsValidIndex2(m_nOffset));		// did we overflow?!
 			}
 			else
 			{

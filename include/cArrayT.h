@@ -78,21 +78,24 @@ namespace Gray
 		//! An array that is contained in a single pointer like cString.
 		//! NO MFC compatibility.
 
+		typedef cRefPtr< cArrayDataT<TYPE> > SUPER_t;
+		typedef cArrayT<TYPE> THIS_t;
+
 		static cArrayDataT<TYPE>* CreateData(ITERATE_t nCount)
 		{
-			// allocate space and call its constructor
+			// allocate space and call its constructor. assume will call put_Ptr()
 			if (nCount == 0)
 				return nullptr;
-			cArrayDataT<TYPE>* pDataNew = new(nCount * sizeof(TYPE)) cArrayDataT<TYPE>;	// allocate space 
-			ASSERT(pDataNew != nullptr);
-			pDataNew->put_Count(nCount);
-			cValArray::ConstructElementsX(pDataNew->get_Data(), nCount);
-			return pDataNew;
+			cArrayDataT<TYPE>* pNew = new(nCount * sizeof(TYPE)) cArrayDataT<TYPE>;	// allocate space 
+			ASSERT(pNew != nullptr);
+			pNew->put_Count(nCount);
+			cValArray::ConstructElementsX(pNew->get_Data(), nCount);
+			return pNew;
 		}
 
 		void SetCopyFrom(const cArrayDataT<TYPE>* pOld, ITERATE_t nCountNew, ITERATE_t nCountOld)
 		{
-			//! deep copy the array. private reference.
+			//! deep copy (and resize) the array. private reference.
 			//! like CopyBeforeWrite()
 
 			cArrayDataT<TYPE>* pNew = CreateData(nCountNew);
@@ -110,7 +113,7 @@ namespace Gray
 		cArrayT() noexcept
 		{
 		}
-		cArrayT(ITERATE_t nCount) : cRefPtr(CreateData(nCount))
+		explicit cArrayT(ITERATE_t nCount) : cRefPtr(CreateData(nCount))
 		{
 		}
 
@@ -130,6 +133,11 @@ namespace Gray
 				return 0;
 			return pData->get_Count();
 		}
+		inline ITERATE_t GetSize() const noexcept
+		{
+			// ALIAS for MFC compat.
+			return get_Count();
+		}
 		inline bool IsValidIndex(ITERATE_t i) const noexcept
 		{
 			return IS_INDEX_GOOD(i, this->get_Count());
@@ -147,20 +155,20 @@ namespace Gray
 				return nullptr;
 			return p->get_Data();
 		}
-
-		inline TYPE GetAt(ITERATE_t nIndex) const noexcept
+		inline TYPE* GetData() const noexcept
 		{
+			// ALIAS for MFC compat.
+			return get_DataWork();
+		}
+
+		inline const TYPE& GetAt(ITERATE_t nIndex) const noexcept
+		{
+			// I can make a const pointer from this and know what its life span is. NOT just a copy.
 			DEBUG_CHECK(IsValidIndex(nIndex));
 			return get_Ptr()->get_Data()[nIndex];
 		}
 		inline TYPE& ElementAt(ITERATE_t nIndex) noexcept
 		{
-			DEBUG_CHECK(IsValidIndex(nIndex));
-			return get_Ptr()->get_Data()[nIndex];
-		}
-		inline const TYPE& ConstElementAt(ITERATE_t nIndex) const noexcept
-		{
-			// same as GetAt() but more explicit
 			DEBUG_CHECK(IsValidIndex(nIndex));
 			return get_Ptr()->get_Data()[nIndex];
 		}
@@ -205,9 +213,15 @@ namespace Gray
 			SetCopyFrom(a.get_Ptr(), nCount, nCount);
 		}
 
+		inline static ITERATE_t GetCountMalloc(ITERATE_t i)
+		{
+			//! over allocate to allow room to grow.
+			return i + (i / 16);
+		}
+
 		void put_Count(ITERATE_t nCountNew)
 		{
-			// realloc my size for array.
+			// realloc my size for array. all reference counts will see this change!
 
 			ASSERT(IS_INDEX_GOOD(nCountNew, cHeap::k_ALLOC_MAX)); // reasonable arbitrary limit.
 
@@ -251,13 +265,13 @@ namespace Gray
 				// MFC will heuristically determine growth when nGrowBy == 0 (this avoids heap fragmentation in many situations)
 				ASSERT(nCountNew > nCountOld);
 
-				ITERATE_t allocateExtra = 0;
+				ITERATE_t allocateCount = nCountNew;
 				if (nCountOld != 0)	// not the first time we have done this.
 				{
-					allocateExtra = (nCountNew / 16);
+					allocateCount = GetCountMalloc(allocateCount);
 				}
 
-				pNew = (cArrayDataT<TYPE>*)cHeap::ReAllocPtr(pOld, sizeof(cArrayDataT<TYPE>) + (nCountNew + allocateExtra) * sizeof(TYPE));
+				pNew = (cArrayDataT<TYPE>*)cHeap::ReAllocPtr(pOld, sizeof(cArrayDataT<TYPE>) + allocateCount * sizeof(TYPE));
 				ASSERT_N(pNew != nullptr);
 
 				// construct new elements
@@ -265,41 +279,103 @@ namespace Gray
 			}
 
 			pNew->put_Count(nCountNew);
-			this->AttachPtr(pNew);		// replace realloced pointer. (if it changed at all)
+			this->AttachPtr(pNew);		// replace realloced pointer. (if it changed at all) No ref count change.
 		}
 
-		// Potentially growing the array
 		void SetAtGrow(ITERATE_t nIndex, const TYPE& newElement)
 		{
-			const ITERATE_t nCount = get_Count();
-			if (nIndex >= nCount)
+			const ITERATE_t nCountOld = get_Count();
+			if (nIndex >= nCountOld)
 			{
-				put_Count(nIndex + 1);	// Grow.
+				// must grow.
+				put_Count(nIndex + 1);
 			}
-			get_Ptr()->get_Data()[nIndex] = newElement;	// SetAt
+			SetAt(nIndex, newElement);
 		}
+
 		ITERATE_t Add(const TYPE& newElement)
 		{
-			//! Add to the end.
-			const ITERATE_t nCount = get_Count();
-			SetAtGrow(nCount, newElement);
-			return nCount;
+			//! Add to the end. AKA push_back()
+			const ITERATE_t nCountOld = get_Count();
+			put_Count(nCountOld + 1);	// Grow.
+			SetAt(nCountOld, newElement);
+			return nCountOld;
 		}
 
 		void InsertAt(ITERATE_t nIndex, const TYPE& newElement)
 		{
+			// newElement as interior pointer is ok.
 			ASSERT(nIndex >= 0);    // will expand to meet need
-			const ITERATE_t nCount = get_Count();
-			put_Count(nCount + 1);  // grow it to new size
-			auto p = get_Ptr();
-			if (nIndex < nCount)
+			const ITERATE_t nCountOld = get_Count();
+			if (nIndex >= nCountOld)
 			{
-				cValArray::MoveElement(p->get_Data() + nIndex, p->get_Data() + nCount);	// make space.
+				put_Count(nIndex + 1);  // grow it to new size
 			}
+			else
+			{
+				put_Count(nCountOld + 1);  // grow it to new size
+				TYPE* pData = get_Ptr()->get_Data();
+				cValArray::MoveElement1(pData + nCountOld, pData + nIndex);	// make space.
+			}
+
 			// insert new value in the gap
-			ASSERT(nIndex + 1 <= nCount);
-			p->get_Data()[nIndex] = newElement;	// ASSUME copy constructor will be called!
+			SetAt(nIndex, newElement);	
 		}
+
+		void InsertArray(ITERATE_t i, const TYPE* pCopy, ITERATE_t countCopy)
+		{
+			//! Add array to the end. 
+			//! Like MFC CArray::Append() ?
+			if (countCopy <= 0)
+				return;
+
+			cArrayDataT<TYPE>* pNew;
+			cArrayDataT<TYPE>* pOld = get_Ptr();
+			if (pOld == nullptr)
+			{
+				// i = 0;
+				this->put_Ptr(pNew = CreateData(countCopy));
+			}
+			else
+			{
+				const ITERATE_t nCountOld = pOld->get_Count();
+				if (i < 0 || i > nCountOld)
+					i = nCountOld;
+
+				ASSERT(!cMem::IsInsideBlock(pCopy, pOld->get_Data() + i, nCountOld - i));   // append to self not supported.
+
+				const int iRefCounts = pOld->get_RefCount();
+				if (iRefCounts != 1)
+				{
+					// TODO MUST MAKE PRIVATE COPY !!!
+				}
+
+				ITERATE_t nCountNew = nCountOld + countCopy;		// new size.
+				ITERATE_t allocateCount = GetCountMalloc(nCountNew);
+
+				pNew = (cArrayDataT<TYPE>*)cHeap::ReAllocPtr(pOld, sizeof(cArrayDataT<TYPE>) + allocateCount * sizeof(TYPE));
+				ASSERT_N(pNew != nullptr);
+				pNew->put_Count(nCountNew);
+				this->AttachPtr(pNew);		// replace realloced pointer. (if it changed at all) No ref count change.
+
+				TYPE* pData = pNew->get_Data();
+				// Move existing elements.
+				cMem::CopyOverlap(pData + i + countCopy, pData + i, (nCountOld - i) * sizeof(TYPE));
+				// construct new elements
+				cValArray::ConstructElementsX<TYPE>(pData + i, countCopy);
+			}
+
+			if (pCopy != nullptr)
+			{
+				// Copy new.
+				cValArray::CopyQty(pNew->get_Data() + i, pCopy, countCopy);
+			}
+		}
+		void InsertArray(ITERATE_t i, const THIS_t& src)
+		{
+			InsertArray(i, src.get_DataWork(), src.GetSize());
+		}
+
 		void RemoveAt(ITERATE_t nIndex)
 		{
 			//! NOTE: Any destructor effecting the array MAY be reentrant ?!

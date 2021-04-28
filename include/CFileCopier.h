@@ -34,7 +34,7 @@ namespace Gray
 			return S_FALSE;	// not needed i guess.
 		}
 
-		// TODO Request to Stream ??
+		// TODO Request to Stream ?? Send a Stream ?
 
 		virtual HRESULT RequestFile(const FILECHAR_t* pszSrcName, const FILECHAR_t* pszDestPath, IStreamProgressCallback* pProgress = nullptr, FILE_SIZE_t nOffsetStart = 0, FILE_SIZE_t* pnRequestSizeEst = nullptr)
 		{
@@ -52,7 +52,8 @@ namespace Gray
 		{
 			//! Send a file to a remote/server from local storage. or delete the remote side file. (pszSrcPath=nullptr,nSize=0)
 			//! ASSUME blocking call.
-			//! @arg pszSrcPath = a local file.
+			//! @arg pszSrcPath = a local file. nullptr = delete the DestName.
+			//! @arg pszDestPath = the remote side file path.
 			//! @note I cannot set the modification time stamp for the file here.
 			UNREFERENCED_PARAMETER(pszSrcPath);
 			UNREFERENCED_PARAMETER(pszDestName);
@@ -64,6 +65,7 @@ namespace Gray
 		virtual HRESULT SendAttr(const FILECHAR_t* pszDestName, cTimeFile timeChanged)
 		{
 			//! Optionally set the remote side time stamp for a file.
+			//! @arg pszDestPath = the remote side file path.
 			//! ASSUME blocking call.
 			UNREFERENCED_PARAMETER(pszDestName);
 			UNREFERENCED_PARAMETER(timeChanged);

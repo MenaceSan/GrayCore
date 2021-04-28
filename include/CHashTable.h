@@ -44,7 +44,7 @@ namespace Gray
 		}
 	};
 
-	template<class _TYPEARRAY, class TYPE, typename TYPE_HASHCODE = HASHCODE_t, int TYPE_HASHBITS = 5 >
+	template<class _TYPEARRAY, typename TYPE_HASHCODE = HASHCODE_t, int TYPE_HASHBITS = 5 >
 	class cHashTableT
 	{
 		//! @class Gray::cHashTableT
@@ -52,33 +52,68 @@ namespace Gray
 		//! @note beware TYPE_HASHBITS can make this object huge! TYPE_HASHBITS=5 = 32 buckets.
 
 	public:
+		static const int k_HASHBITS = TYPE_HASHBITS;	// BIT_ENUM_t
 		static const ITERATE_t k_HASH_ARRAY_QTY = _1BITMASK(TYPE_HASHBITS);
 		typedef cHashIterator iterator;	// like STL.
+
+	protected:
 		_TYPEARRAY m_aTable[k_HASH_ARRAY_QTY];
 
 	public:
-		int get_HashBits() const
-		{
-			return TYPE_HASHBITS;
-		}
-		ITERATE_t get_HashArrayQty() const
-		{
-			return k_HASH_ARRAY_QTY;
-		}
-		ITERATE_t GetHashArray(TYPE_HASHCODE rid) const
+		inline ITERATE_t GetHashArray(TYPE_HASHCODE rid) const noexcept
 		{
 			//! @return the hash table array/bucket number for TYPE_HASHCODE rid.
 			return (ITERATE_t)(rid & (k_HASH_ARRAY_QTY - 1));
 		}
-		ITERATE_t GetArraySize(ITERATE_t iArray) const
+
+		inline const _TYPEARRAY& GetArray(ITERATE_t iArray) const
 		{
-			ASSERT(IS_INDEX_GOOD(iArray, k_HASH_ARRAY_QTY));
+			DEBUG_CHECK(IS_INDEX_GOOD(iArray, k_HASH_ARRAY_QTY));
+			return m_aTable[iArray];
+		}
+		inline _TYPEARRAY& RefArray(ITERATE_t iArray)
+		{
+			DEBUG_CHECK(IS_INDEX_GOOD(iArray, k_HASH_ARRAY_QTY));
+			return m_aTable[iArray];
+		}
+		inline ITERATE_t GetArraySize(ITERATE_t iArray) const noexcept
+		{
+			DEBUG_CHECK(IS_INDEX_GOOD(iArray, k_HASH_ARRAY_QTY));
 			return m_aTable[iArray].GetSize();
 		}
+
+		bool IsEmpty() const noexcept
+		{
+			for (ITERATE_t i = 0; i < k_HASH_ARRAY_QTY; i++)
+			{
+				if (!m_aTable[i].IsEmpty())
+					return false;
+			}
+			return true;
+		}
+		ITERATE_t get_TotalCount() const noexcept
+		{
+			ITERATE_t iTotalCount = 0;
+			for (ITERATE_t i = 0; i < k_HASH_ARRAY_QTY; i++)
+			{
+				iTotalCount += m_aTable[i].GetSize();
+			}
+			return iTotalCount;
+		}
+
+		void RemoveAll()
+		{
+			// AKA Empty()
+			for (ITERATE_t i = 0; i < k_HASH_ARRAY_QTY; i++)
+			{
+				this->m_aTable[i].RemoveAll();
+			}
+		}
+
 		iterator FindIForKey(TYPE_HASHCODE rid) const
 		{
 			ITERATE_t iBucket = GetHashArray(rid);
-			return(cHashIterator(iBucket, m_aTable[iBucket].FindIForKey(rid)));
+			return cHashIterator(iBucket, m_aTable[iBucket].FindIForKey(rid));
 		}
 		TYPE_HASHCODE FindKeyFree(TYPE_HASHCODE rid) const
 		{
@@ -94,52 +129,22 @@ namespace Gray
 			//! delete it
 			return m_aTable[GetHashArray(rid)].RemoveKey(rid);
 		}
-		bool IsEmpty() const
-		{
-			for (ITERATE_t i = 0; i < k_HASH_ARRAY_QTY; i++)
-			{
-				if (!m_aTable[i].IsEmpty())
-					return false;
-			}
-			return true;
-		}
-		ITERATE_t get_TotalCount() const
-		{
-			ITERATE_t iTotalCount = 0;
-			for (ITERATE_t i = 0; i < k_HASH_ARRAY_QTY; i++)
-			{
-				iTotalCount += m_aTable[i].GetSize();
-			}
-			return iTotalCount;
-		}
+
 		void RemoveAt(iterator& i)
 		{
 			ASSERT(IS_INDEX_GOOD(i.m_i, k_HASH_ARRAY_QTY));
 			m_aTable[i.m_i].RemoveAt(i.m_j);
 			i.SkipRemoved();
 		}
-
-		void RemoveAll()
-		{
-			for (ITERATE_t i = 0; i < k_HASH_ARRAY_QTY; i++)
-			{
-				this->m_aTable[i].RemoveAll();
-			}
-		}
-
-		void Empty()
-		{
-			RemoveAll();
-		}
 	};
 
 	template<class TYPE, typename TYPE_HASHCODE = HASHCODE_t, int TYPE_HASHBITS = 5 >
-	class cHashTableStruct : public cHashTableT < cArraySortStructHash<TYPE, TYPE_HASHCODE>, TYPE, TYPE_HASHCODE, TYPE_HASHBITS >
+	class cHashTableStruct : public cHashTableT < cArraySortStructHash<TYPE, TYPE_HASHCODE>, TYPE_HASHCODE, TYPE_HASHBITS >
 	{
 		//! @class Gray::cHashTableStruct
 		//! ASSUME TYPE is just a class that has a get_HashCode() method.
 	public:
-		typedef cHashTableT< cArraySortStructHash<TYPE, TYPE_HASHCODE>, TYPE, TYPE_HASHCODE, TYPE_HASHBITS > SUPER_t;
+		typedef cHashTableT< cArraySortStructHash<TYPE, TYPE_HASHCODE>, TYPE_HASHCODE, TYPE_HASHBITS > SUPER_t;
 		typedef const TYPE& ARG_t;		// How to refer to this? value or ref or pointer?
 
 	public:
@@ -152,7 +157,7 @@ namespace Gray
 		{
 			//! get from hash table. i must exist.
 			ASSERT(IS_INDEX_GOOD_ARRAY(i.m_i, this->m_aTable));
-			return this->m_aTable[i.m_i].ConstElementAt(i.m_j);
+			return this->m_aTable[i.m_i].GetAt(i.m_j);
 		}
 		cHashIterator FindHash(TYPE_HASHCODE rid) const
 		{
@@ -184,7 +189,7 @@ namespace Gray
 	};
 
 	template<class TYPE, typename TYPE_HASHCODE = HASHCODE_t, int TYPE_HASHBITS = 5 >
-	class cHashTableRef : public cHashTableT < cArraySortHash<TYPE, TYPE_HASHCODE>, TYPE, TYPE_HASHCODE, TYPE_HASHBITS >
+	class cHashTableRef : public cHashTableT < cArraySortHash<TYPE, TYPE_HASHCODE>, TYPE_HASHCODE, TYPE_HASHBITS >
 	{
 		//! @class Gray::cHashTableRef
 		//! ASSUME TYPE is cRefBase and implements get_HashCode()
@@ -229,7 +234,7 @@ namespace Gray
 	};
 
 	// Iterate through all members. iterator i;
-#define FOR_HASH_TABLE(h,i)	for ( ; i.m_i<h.k_HASH_ARRAY_QTY; i.m_i++ ) for ( i.m_j=0; i.m_j<h.m_aTable[i.m_i].GetSize(); i.m_j++ )
+#define FOR_HASH_TABLE(h,i)	for ( ; i.m_i<h.k_HASH_ARRAY_QTY; i.m_i++ ) for ( i.m_j=0; i.m_j<h.GetArraySize(i.m_i); i.m_j++ )
 }
 
 #endif // _INC_CHASH_H

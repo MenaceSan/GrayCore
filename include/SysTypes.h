@@ -71,7 +71,10 @@
 // Remove globally annoying/pointless warnings.
 #pragma warning(disable:4800)	// "forcing value to bool 'true' or 'false' (performance warning)" (convert BOOL/int to bool)
 #pragma warning(disable:4251)	// 'CC' needs to have DLL - interface to be used by clients of class 'Gray::HResult' (FOR DLLs ONLY and inline type children)
+
 #pragma warning(disable:26812)	// C26812. https://docs.microsoft.com/en-us/cpp/code-quality/c26812?view=msvc-160 The enum type type-name is unscoped. Prefer 'enum class' over 'enum' (Enum.3)
+#pragma warning(disable:26485)	// C26485. Expression '' No array to pointer decay. (bounds.3)
+#pragma warning(disable:26481)	// C26481 Dont use pointer arithmetic. use span instead
 
 // Useless MSVC2010 warnings: at /W4 level
 #pragma warning(disable:4510)	// default constructor could not be generated
@@ -80,7 +83,7 @@
 
 #endif // _MSC_VER >= 1000
  
-#ifndef USE_CRT
+#ifndef USE_CRT		// NO CRT would be paired with GRAY_STATICLIB
 #define USE_CRT 1	// 1 = use all normal CRT functions. 0 = attempt to use minimal/no CRT. msvcp140.dll and vcruntime140.dll
 #endif
 

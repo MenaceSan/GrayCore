@@ -10,7 +10,6 @@
 #endif
 
 #include "cIniBase.h"
-#include "cUnitTestDecl.h"
 
 namespace Gray
 {

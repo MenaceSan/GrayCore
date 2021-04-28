@@ -261,6 +261,7 @@ namespace Gray
 
 		void SetHeapBlock(void* pData, size_t nSize)
 		{
+			//! Like SetBlock() but clearly is a heap pointer.
 			//! Dangerous to allow anyone to poke a new pData pointer and nSize into this. 
 			//! We will free pData on destructor!
 			m_pData = pData;
@@ -271,11 +272,13 @@ namespace Gray
 			//! Someone has copied this buffer.
 			SetEmptyBlock();
 		}
+
 		void* AllocPtr(size_t nSize)
 		{
-			//! Allocate a memory block of size. assume m_pData points to uninitialized data.
+			//! Allocate a NEW memory block of size. assume m_pData points to uninitialized data.
 			//! @note cHeap::AllocPtr(0) != nullptr ! maybe ?
 			//! Some really old/odd code relies on AllocPtr(0) having/returning a real pointer? not well defined.
+			//! @note why not prefer using ReAlloc() ?
 			cHeap::FreePtr(m_pData);
 			if (nSize == 0)
 			{
@@ -295,6 +298,7 @@ namespace Gray
 		bool Alloc(const void* pData, size_t nSize)
 		{
 			//! Allocate then copy something into it.
+			//! @note why not prefer using ReAlloc() ?
 
 			ASSERT(pData == nullptr || !this->IsInternalPtr(pData));	// NOT from inside myself ! // Check before Alloc
 			if (AllocPtr(nSize) == nullptr)
@@ -307,9 +311,10 @@ namespace Gray
 			}
 			return true;
 		}
+
 		bool ReAlloc(size_t nSize)
 		{
-			//! If already allocated re-use the current block if possible.
+			//! If already allocated re-use the current block if possible. else alloc new.
 			//! copy existing data to new block if move is needed. preserve data.
 			if (nSize != m_nSize)
 			{
@@ -324,6 +329,7 @@ namespace Gray
 		}
 		bool ReAlloc(const void* pData, size_t nSize)
 		{
+			//! realloc then copy stuff into it.
 			ASSERT(pData == nullptr || !this->IsInternalPtr(pData));	// NOT from myself ! // Check before Alloc
 			if (!ReAlloc(nSize))
 			{
@@ -354,38 +360,37 @@ namespace Gray
 			//! Copy from h into me. 
 			if (&rSrc == this)
 				return true;
-			return Alloc(rSrc.get_Data(), rSrc.get_DataSize());
+			return Alloc(rSrc.get_DataV(), rSrc.get_DataSize());
 		}
 
-		void* get_Data() const noexcept
+#if 0 // def _DEBUG
+		void* get_DataV() const noexcept
 		{
+			//! override get_Data() so we can check for validity.
 			//! Might be nullptr. that's OK.
-			//! NOTE: This hides the cMemBlock implimentation so call isCorrupt()
-#ifdef _DEBUG
+			//! NOTE: This hides the cMemBlock implimentation so it can call isCorrupt(). This is slower !
 			DEBUG_CHECK(!isCorrupt());
-#endif
 			return m_pData;
 		}
 		inline BYTE* get_DataBytes() const noexcept
 		{
 			//! Get as a BYTE pointer.
 			//! possibly nullptr.
-			return (BYTE*)get_Data();
+			return (BYTE*)get_DataV();
 		}
 		inline char* get_DataA() const noexcept
 		{
 			//! Get as a char pointer.
-			return (char*)get_Data();
+			return (char*)get_DataV();
 		}
 		inline wchar_t* get_DataW() const noexcept
 		{
 			//! Get as a wchar_t pointer.
-			return (wchar_t*)get_Data();
+			return (wchar_t*)get_DataV();
 		}
-
 		operator void* () const noexcept
 		{
-			return get_Data();
+			return get_DataV();
 		}
 		operator BYTE* () const noexcept
 		{
@@ -395,6 +400,8 @@ namespace Gray
 		{
 			return get_DataA();	// for use with []
 		}
+#endif
+
 	};
 }
 

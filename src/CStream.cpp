@@ -11,7 +11,7 @@
 
 namespace Gray
 {
- 	STREAM_POS_t cStreamBase::GetLength() const // virtual
+	STREAM_POS_t cStreamBase::GetLength() const // virtual
 	{
 		//! default implementation using SeekX and GetPosition. override this for better implementation.
 		//! @return total length of the stream in bytes. if available. not the same as Read Length.
@@ -30,7 +30,7 @@ namespace Gray
 
 	//*************************************************************************
 
-	 HRESULT cStreamOutput::WriteString(const char* pszStr) // virtual
+	HRESULT cStreamOutput::WriteString(const char* pszStr) // virtual
 	{
 		//! Write just the chars of the string. NOT nullptr. like fputs()
 		//! Does NOT assume include NewLine or automatically add one.
@@ -42,7 +42,7 @@ namespace Gray
 		const StrLen_t iLen = StrT::Len(pszStr);
 		return WriteT(pszStr, iLen * sizeof(char));
 	}
-	 HRESULT cStreamOutput::WriteString(const wchar_t* pszStr) //  virtual
+	HRESULT cStreamOutput::WriteString(const wchar_t* pszStr) //  virtual
 	{
 		//! Write just the chars of the string. NOT nullptr. like fputs()
 		//! Does NOT assume include NewLine or automatically add one.
@@ -73,10 +73,10 @@ namespace Gray
 			size_t nSizeBlock = cStream::k_FILE_BLOCK_SIZE;
 			if (dwAmount + nSizeBlock > nSizeMax)
 			{
-				nSizeBlock = nSizeMax - dwAmount;
+				nSizeBlock = (size_t)(nSizeMax - dwAmount);
 			}
-			
-			HRESULT hResRead = stmIn.ReadX(Data.get_Data(), nSizeBlock);
+
+			HRESULT hResRead = stmIn.ReadX(Data.get_DataV(), nSizeBlock);
 			if (FAILED(hResRead))
 			{
 				if (hResRead == HRESULT_WIN32_C(ERROR_HANDLE_EOF))	// legit end of file. Done.
@@ -101,7 +101,7 @@ namespace Gray
 			}
 
 			ASSERT((size_t)hResRead <= nSizeBlock);
-			HRESULT hResWrite = this->WriteX(Data.get_Data(), hResRead);
+			HRESULT hResWrite = this->WriteX(Data.get_DataV(), hResRead);
 			if (FAILED(hResWrite))
 			{
 				return hResWrite;
@@ -147,7 +147,7 @@ namespace Gray
 		BYTE bSize;
 		while (nSize >= k_SIZE_MASK)
 		{
-			bSize = (BYTE)((nSize &~k_SIZE_MASK) | k_SIZE_MASK);
+			bSize = (BYTE)((nSize & ~k_SIZE_MASK) | k_SIZE_MASK);
 			HRESULT hRes = WriteT(&bSize, 1);
 			if (FAILED(hRes))
 				return hRes;
@@ -175,7 +175,7 @@ namespace Gray
 			HRESULT hRes = ReadT(&bSize, sizeof(bSize));
 			if (FAILED(hRes))
 				return hRes;
-			nSize |= ((size_t)(bSize &~k_SIZE_MASK)) << nBits;
+			nSize |= ((size_t)(bSize & ~k_SIZE_MASK)) << nBits;
 			if (!(bSize & k_SIZE_MASK))	// end marker.
 				break;
 			nBits += 7;

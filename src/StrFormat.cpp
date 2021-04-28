@@ -196,23 +196,26 @@ namespace Gray
 	}
 
 	template< typename TYPE>
-	void StrFormat<TYPE>::RenderFloat(StrBuilder<TYPE>& out, char chRadixA, double dVal) const
+	void StrFormat<TYPE>::RenderFloat(StrBuilder<TYPE>& out, char chE, double dVal) const
 	{
+		// %g
+		// @arg chE = <0 e.g. -'e' = optional.
+
 		StrLen_t nPrecision = m_nPrecision;
 		if (nPrecision < 0)
 		{
-			nPrecision = 6;	// default. for decimal places or whole string depending on chRadixA < 0
+			nPrecision = 6;	// default. for decimal places or whole string depending on chLogA < 0
 		}
 
 		TYPE szTmp[StrNum::k_LEN_MAX_DIGITS + 4];
 		if (m_bPlusSign && dVal >= 0)
 		{
 			szTmp[0] = '+';	// prefix.
-			nPrecision = 1 + StrT::DtoA<TYPE>(dVal, szTmp + 1, StrNum::k_LEN_MAX_DIGITS - 1, nPrecision, chRadixA);		// default = 6.
+			nPrecision = 1 + StrT::DtoA<TYPE>(dVal, szTmp + 1, StrNum::k_LEN_MAX_DIGITS - 1, nPrecision, chE);		// default = 6.
 		}
 		else
 		{
-			nPrecision = StrT::DtoA<TYPE>(dVal, szTmp, StrNum::k_LEN_MAX_DIGITS, nPrecision, chRadixA);		// default = 6.
+			nPrecision = StrT::DtoA<TYPE>(dVal, szTmp, StrNum::k_LEN_MAX_DIGITS, nPrecision, chE);		// default = 6.
 		}
 
 		RenderString(out, szTmp, nPrecision, (short)nPrecision);

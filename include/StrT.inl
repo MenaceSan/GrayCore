@@ -12,7 +12,6 @@
 
 #include "StrConst.h"
 #include "StrA.h"
-#include "cUnitTestDecl.h"
 
 namespace Gray
 {

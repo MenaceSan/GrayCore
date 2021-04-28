@@ -203,15 +203,14 @@ namespace Gray
 		}
 
 		template <class TYPE>
-		static void GRAYCALL MoveElement(TYPE* pTo, TYPE* pFrom) // throw
+		static void GRAYCALL MoveElement1(TYPE* pFrom, TYPE* pTo) // throw
 		{
-			//! shift the whole array. move an index to another place.
-			//! Similar to Swap() but only one element is moved. (sort of)
+			//! move an index from another place. shift the whole array by 1 to make space.
 			//! dangerous for types that have internal pointers !
 			BYTE bTmp[sizeof(TYPE)];
 			cMem::Copy(bTmp, pFrom, sizeof(TYPE));
 			// shift old data to fill gap
-			cMem::CopyOverlap(pTo+1, pTo, (pFrom - pTo) * sizeof(TYPE));
+			cMem::CopyOverlap(pTo + 1, pTo, (pFrom - pTo) * sizeof(TYPE));	// destroys old pFrom location.
 			// re-init slots we copied from
 			cMem::Copy(pTo, bTmp, sizeof(TYPE));
 		}

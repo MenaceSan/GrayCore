@@ -109,9 +109,9 @@ namespace Gray
 		//! current File/cXmlReader/cJSONReader/Etc parsing position. include cTextPos
 		//! similar to cStreamInput but for a memory buffer.
 		//! cTextPos = Current cursor position for m_pszCursor in the file. used for error messages, etc.
+
 	protected:
-		const char* m_pszStart;	//!< starting read position in the data parsing stream/buffer. cTextPos cursor = m_pszStart + m_lOffset.
-		StrLen_t m_nLenMax;		//!< don't advance cTextPos::m_lOffset past this.
+		cMemBlock m_Text;	//!< the UTF8 text to be read. don't advance cTextPos::m_lOffset outside this.
 
 	public:
 		const StrLen_t m_iTabSize;		//!< for proper tracking of the column number on errors. and m_CursorPos. 0 = not used/don't care.
@@ -119,42 +119,40 @@ namespace Gray
 	public:
 		cTextReader(const char* pszStart, StrLen_t nLenMax = StrT::k_LEN_MAX, StrLen_t nTabSize = cStrConst::k_TabSize) noexcept
 			: cTextPos(0, 0, 0)
-			, m_pszStart(pszStart)
-			, m_nLenMax(nLenMax)
+			, m_Text(pszStart, nLenMax)
 			, m_iTabSize(nTabSize)
 		{
 		}
 
 		StrLen_t get_LenMax() const noexcept
 		{
-			return m_nLenMax;
+			return (StrLen_t)m_Text.get_DataSize();
 		}
 		StrLen_t get_LenRemaining() const noexcept
 		{
-			if (m_nLenMax < (StrLen_t)m_lOffset)
+			const StrLen_t nLenMax = get_LenMax();
+			if (nLenMax <= (StrLen_t)m_lOffset)
 				return 0;
-			return m_nLenMax - (StrLen_t)m_lOffset;
+			return nLenMax - (StrLen_t)m_lOffset;
 		}
 		bool isValidIndex() const noexcept
 		{
-			return ((UINT)m_lOffset) < (UINT)m_nLenMax; // includes m_lOffset >= 0
+			return m_Text.IsValidIndex(m_lOffset); // includes m_lOffset >= 0
 		}
 		bool isValidPos() const noexcept
 		{
 			//! is invalid values? Not k_Invalid
-			return m_pszStart != nullptr && isValidIndex(); // includes m_lOffset >= 0
+			return m_Text.isValidPtr() && isValidIndex(); // includes m_lOffset >= 0
 		}
 		const char* get_CursorPtr() const noexcept
 		{
-			ASSERT(isValidPos());
-			return m_pszStart + this->m_lOffset;
+			return (const char*)m_Text.GetSpan1(this->m_lOffset);
 		}
 		char get_CursorChar() const noexcept
 		{
-			ASSERT(m_pszStart != nullptr);
-			if (!isValidIndex())
+			if (!isValidPos())
 				return '\0';
-			return m_pszStart[this->m_lOffset];
+			return *get_CursorPtr();
 		}
 
 		void IncToks(StrLen_t nLen = 1)
@@ -197,8 +195,7 @@ namespace Gray
 
 		void SetStartPtr(const char* pszStart, StrLen_t nLenMax = StrT::k_LEN_MAX)
 		{
-			m_pszStart = pszStart;
-			m_nLenMax = nLenMax;
+			m_Text.SetBlock((void*)pszStart, nLenMax);
 			InitTop();
 		}
 	};

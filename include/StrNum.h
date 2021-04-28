@@ -105,18 +105,22 @@ namespace Gray
 
 	template<> inline StrLen_t StrNum::ValueToA<INT32>(INT32 val, OUT char* pszOut, StrLen_t iStrMax)
 	{
+		// assume RADIX_t = 10
 		return StrNum::ILtoA(val, pszOut, iStrMax);
 	}
 	template<> inline StrLen_t StrNum::ValueToA<UINT32>(UINT32 val, OUT char* pszOut, StrLen_t iStrMax)
 	{
+		// assume RADIX_t = 10
 		return StrNum::ULtoA(val, pszOut, iStrMax);
 	}
 	template<> inline StrLen_t StrNum::ValueToA<INT64>(INT64 val, OUT char* pszOut, StrLen_t iStrMax)
 	{
+		// assume RADIX_t = 10
 		return StrNum::ILtoA(val, pszOut, iStrMax);
 	}
 	template<> inline StrLen_t StrNum::ValueToA<UINT64>(UINT64 val, OUT char* pszOut, StrLen_t iStrMax)
 	{
+		// assume RADIX_t = 10
 		return StrNum::ULtoA(val, pszOut, iStrMax);
 	}
 	template<> inline StrLen_t StrNum::ValueToA<float>(float val, OUT char* pszOut, StrLen_t iStrMax)
@@ -162,7 +166,7 @@ namespace Gray
 	StrLen_t GRAYCALL StrNum::ValArrayToA(OUT char* pszDst, StrLen_t iSizeDstMax, const _TYPE* pSrc, size_t nSrcQty) // static
 	{
 		//! @todo Merge with cMem::ConvertToString
-		//! Write bytes out to a string as comma separated base 10 number values. 
+		//! Write values out to a string as comma separated base 10 numbers. 
 		//! Try to use SetHexDigest() instead.
 		//! opposite of cMem::ReadFromString().
 		//! @return the actual size of the string.
@@ -191,6 +195,7 @@ namespace Gray
 	StrLen_t _cdecl StrNum::ValArrayToAF(OUT char* pszDst, StrLen_t iSizeDstMax, size_t nSrcQty, ...) // static
 	{
 		//! @todo ValArrayToAF
+		//! Write values out to a string as comma separated base 10 numbers. 
 		//
 		return -1;
 	}

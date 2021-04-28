@@ -95,7 +95,7 @@ namespace Gray
 			if (h == HANDLE_NULL)	//!< 0 is never a valid handle value for _WIN32. (0=stdin for __linux__)
 				return false;
 #endif
-			return(h != INVALID_HANDLE_VALUE);	//  -1
+			return h != INVALID_HANDLE_VALUE ;	//  -1
 		}
 		bool isValidHandle() const noexcept
 		{

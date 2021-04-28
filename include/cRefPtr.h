@@ -255,6 +255,7 @@ namespace Gray
 		cRefPtr(const TYPE* p2) noexcept
 			: cPtrFacade<TYPE>(const_cast<TYPE*>(p2))
 		{
+			//! copy
 			//! @note default = assignment will auto destroy previous and use this constructor.
 			IncRefFirst();
 		}
@@ -308,7 +309,7 @@ namespace Gray
 				return true;
 			return false;
 		}
-		void put_Ptr(TYPE* p)
+		void put_Ptr(TYPE* p)	// override
 		{
 			//! Attach the pointer and add a ref.
 			if (!IsEqual(p))
@@ -318,7 +319,7 @@ namespace Gray
 				IncRefFirst();
 			}
 		}
-		void ReleasePtr()
+		void ReleasePtr()  // override
 		{
 			//! just set this to nullptr.
 			TYPE* p2 = this->m_p;  // make local copy.

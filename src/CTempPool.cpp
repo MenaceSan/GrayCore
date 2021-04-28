@@ -55,7 +55,7 @@ namespace Gray
 				m_iCountCur = 0;
 		}
 		m_aBlocks[m_iCountCur].AllocPtr(nLenNeed);	// alloc to the size we need.
-		return(m_aBlocks[m_iCountCur].get_Data());
+		return m_aBlocks[m_iCountCur].get_DataV();
 	}
 
 	void* cTempPool::GetTempV(size_t nLenNeed, const void* pData)

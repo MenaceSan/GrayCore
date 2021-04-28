@@ -359,7 +359,7 @@ namespace Gray
 			return DtoAG2(dVal, pszOut, iDecPlacesWanted, chE);
 		}
 		char szTmp[StrNum::k_LEN_MAX_DIGITS + 4];	// MUST allow at least this size.
-		StrNum::DtoAG2(dVal, szTmp, iDecPlacesWanted, chE); // StrLen_t iStrLen = 
+		DtoAG2(dVal, szTmp, iDecPlacesWanted, chE); // StrLen_t iStrLen = 
 		return StrT::CopyLen(pszOut, szTmp, iStrMax);	// Copy to smaller buffer.
 	}
 

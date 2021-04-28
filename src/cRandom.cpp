@@ -23,8 +23,8 @@ namespace Gray
 	void cRandomBase::InitSeed(IRandomNoise* pSrc, size_t iSize)
 	{
 		cHeapBlock block(iSize);
-		HRESULT iSizeRet = pSrc->GetNoise(block.get_Data(), iSize);
-		InitSeed(block.get_Data(), (size_t)iSizeRet);	// pure virtual
+		HRESULT iSizeRet = pSrc->GetNoise(block.get_DataV(), iSize);
+		InitSeed(block.get_DataV(), (size_t)iSizeRet);	// pure virtual
 	}
 
 	void cRandomBase::InitSeedOS(size_t iSize)

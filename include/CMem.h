@@ -30,20 +30,30 @@ namespace Gray
 		static void __cdecl IsValidFailHandler(int nSig);	// JMP_t
 #endif
 
-		static inline const BYTE* ToBytePtr(const void* p) noexcept
+		template <typename T>
+		static constexpr const T* ToPtr(const void* p) noexcept
 		{
-			return (const BYTE*)p;
+			// Cast void pointer to a type.
+			// put C26493 - "don't use c-style casts". warning in one place.
+			return (const T*)p;
+		}
+		template <typename T>
+		static constexpr T* ToPtr(void* p) noexcept
+		{
+			// Cast void pointer to a type.
+			// put C26493 - "don't use c-style casts". warning in one place.
+			return (T*)p;
 		}
 
-		static ptrdiff_t inline Diff(const void* pEnd, const void* pStart) noexcept
+		static constexpr ptrdiff_t Diff(const void* pEnd, const void* pStart) noexcept
 		{
 			//! @return Difference in bytes. Assume it is a reasonable sized block? like GET_INDEX_IN()
-			const ptrdiff_t i = ToBytePtr(pEnd) - ToBytePtr(pStart);	// like INT_PTR
+			const ptrdiff_t i = ToPtr<BYTE>(pEnd) - ToPtr<BYTE>(pStart);	// like INT_PTR
 			// DEBUG_CHECK(i > -(INT_PTR)(cHeap::k_ALLOC_MAX) && i < (INT_PTR)(cHeap::k_ALLOC_MAX));	// k_ALLOC_MAX
 			return i;
 		}
 
-		static inline bool constexpr IsValidApp(const void* pData) noexcept
+		static bool constexpr IsValidApp(const void* pData) noexcept
 		{
 			//! Is this pointer into App space? Not kernel space. Kernel Space <= 1G or 2G for __linux__
 			//! Can i read from this ?
@@ -70,6 +80,12 @@ namespace Gray
 			return IsValidApp(pData);
 		}
 
+		static constexpr bool IsInsideBlock(const void* p, const void* pBlock, size_t len) noexcept
+		{
+			const ptrdiff_t d = Diff(p, pBlock);
+			return d >= 0 && d < (ptrdiff_t)len;
+		}
+
 		static inline bool IsZeros(const void* pData, size_t nSize) noexcept
 		{
 			//! Is all zeros ? nSize = 0 = true.
@@ -77,7 +93,7 @@ namespace Gray
 				return true;
 			for (size_t i = 0; i < nSize; i++)
 			{
-				if (ToBytePtr(pData)[i] != 0)
+				if (ToPtr<BYTE>(pData)[i] != 0)
 					return false;
 			}
 			return true;
@@ -92,8 +108,8 @@ namespace Gray
 #elif defined(__GNUC__)
 			return ::__builtin_memcmp(p1, p2, nSizeBlock);
 #else
-			const BYTE* p1B = (const BYTE*)p1;
-			const BYTE* p2B = (const BYTE*)p2;
+			const BYTE* p1B = ToPtr<BYTE>(p1);
+			const BYTE* p2B = ToPtr<BYTE>(p2);
 			for (size_t i = 0; i < nSizeBlock; i++)
 			{
 				register BYTE b1 = p1B[i];
@@ -105,6 +121,8 @@ namespace Gray
 #endif
 		}
 
+		static COMPARE_t GRAYCALL Compare(const void* pData1, size_t iLen1, const void* pData2, size_t iLen2);
+
 		static inline bool IsEqual(const void* p1, const void* p2, size_t nSizeBlock) noexcept
 		{
 			return cMem::Compare(p1, p2, nSizeBlock) == 0;
@@ -113,8 +131,8 @@ namespace Gray
 		static inline COMPARE_t CompareSecure(const void* p1, const void* p2, size_t nSizeBlock) noexcept
 		{
 			//! constant-time buffer comparison. NOT efficient. Prevents timing based hacks.
-			const BYTE* pB1 = ToBytePtr(p1);
-			const BYTE* pB2 = ToBytePtr(p2);
+			const BYTE* pB1 = ToPtr<BYTE>(p1);
+			const BYTE* pB2 = ToPtr<BYTE>(p2);
 			BYTE nDiff = 0;
 			for (size_t i = 0; i < nSizeBlock; i++)
 			{
@@ -135,7 +153,7 @@ namespace Gray
 #elif defined(_WIN32)
 			::FillMemory(pDst, nSize, bVal);
 #else
-			BYTE* pDstB = (BYTE*)pDst;
+			BYTE* pDstB = ToPtr<BYTE>(pDst);
 			for (size_t i = 0; i < nSize; i++)
 			{
 				pDstB[j] = bVal;
@@ -157,7 +175,7 @@ namespace Gray
 		{
 			//! This is for security purposes. Not for initialization. Zero destructed values so they leave no trace. 
 			//! like SecureZeroMeory() and RtlSecureZeroMemory(). ensure it doesn't get optimized out. (like in an inline destructor)
-			VOLATILE BYTE* p2 = (BYTE*)pData;	// 'volatile' will ensure it doesn't get optimized out.
+			VOLATILE BYTE* p2 = ToPtr<BYTE>(pData);	// 'volatile' will ensure it doesn't get optimized out.
 			while (nSizeBlock--)
 				*p2++ = 0;
 		}
@@ -188,8 +206,8 @@ namespace Gray
 #elif defined(_WIN32)
 			::CopyMemory(pDst, pSrc, nSizeBlock);
 #else
-			register BYTE* pDstB = (BYTE*)pDst;
-			register const BYTE* pSrcB = (const BYTE*)pSrc;
+			register BYTE* pDstB = ToPtr<BYTE>(pDst);
+			register const BYTE* pSrcB = ToPtr<BYTE>(pSrc);
 			for (size_t i = 0; i < nSizeBlock; i++)
 			{
 				pDstB[i] = pSrcB[i];
@@ -206,8 +224,8 @@ namespace Gray
 #elif defined(_WIN32)
 			::MoveMemory(pDst, pSrc, nSizeBlock);
 #else
-			register BYTE* pDstB = (BYTE*)pDst;
-			register const BYTE* pSrcB = (const BYTE*)pSrc;
+			register BYTE* pDstB = ToPtr<BYTE>(pDst);
+			register const BYTE* pSrcB = ToPtr<BYTE>(pSrc);
 			if (pDstB <= pSrcB || pDstB >= (pSrcB + nSizeBlock))
 			{
 				// Non-Overlapping Buffers. copy from lower addresses to higher addresses
@@ -229,8 +247,8 @@ namespace Gray
 		}
 		static inline void ReverseBytes(void* pDst, size_t nSizeBlock) noexcept
 		{
-			register BYTE* pSrcB = (BYTE*)pDst;
-			register BYTE* pDstB = (BYTE*)pDst + nSizeBlock - 1;
+			register BYTE* pSrcB = ToPtr<BYTE>(pDst);
+			register BYTE* pDstB = ToPtr<BYTE>(pDst) + nSizeBlock - 1;
 			nSizeBlock /= 2;
 			while (nSizeBlock--)
 			{
@@ -246,8 +264,8 @@ namespace Gray
 			}
 			else
 			{
-				register BYTE* pDstB = (BYTE*)pDst + nSizeBlock - 1;
-				register const BYTE* pSrcB = ToBytePtr(pSrc);
+				register BYTE* pDstB = ToPtr<BYTE>(pDst) + nSizeBlock - 1;
+				register const BYTE* pSrcB = ToPtr<BYTE>(pSrc);
 				while (nSizeBlock--)
 				{
 					*pDstB-- = *pSrcB++;
@@ -260,9 +278,11 @@ namespace Gray
 			//! Fill pDst with repeating copies of pSrc. Wrap back to sart.
 			for (size_t i = 0; i < nDstSize;)
 			{
+				register BYTE* pDstB = ToPtr<BYTE>(pDst);
+				register const BYTE* pSrcB = ToPtr<BYTE>(pSrc);
 				for (size_t j = 0; j < nSrcSize && i < nDstSize; j++, i++)
 				{
-					((BYTE*)pDst)[i] = ToBytePtr(pSrc)[j];
+					pDstB[i] = pSrcB[j];
 				}
 			}
 		}
@@ -297,8 +317,8 @@ namespace Gray
 
 			if (pvMem1 == pvMem2)	// no change.
 				return;
-			BYTE* pMem1 = (BYTE*)pvMem1;
-			BYTE* pMem2 = (BYTE*)pvMem2;
+			BYTE* pMem1 = ToPtr<BYTE>(pvMem1);
+			BYTE* pMem2 = ToPtr<BYTE>(pvMem2);
 			for (; nBlockSize--; pMem1++, pMem2++)
 			{
 				cValT::Swap(*pMem1, *pMem2);
@@ -370,6 +390,7 @@ namespace Gray
 			//! size in bytes.
 			return TYPE_SIZE;
 		}
+
 		const BYTE* get_DataBytes() const noexcept
 		{
 			return m_Data;
@@ -383,12 +404,15 @@ namespace Gray
 	class GRAYCORE_LINK cMemBlock
 	{
 		//! @class Gray::cMemBlock
-		//! A pointer to memory block/blob with unknown ownership. heap, stack or const. don't free on destruct.
+		//! A pointer to memory block/blob with unknown ownership. may be heap, stack or const. don't free on destruct.
 		//! May be static init?
 
 	protected:
 		size_t m_nSize;		//!< size_t of m_pData in bytes. May be determined at runtime.
 		void* m_pData;
+
+	public:
+		static const cMemBlock k_EmptyBlock;
 
 	public:
 		cMemBlock() noexcept
@@ -435,6 +459,10 @@ namespace Gray
 			return (char*)m_pData;
 		}
 
+		operator void* () const noexcept
+		{
+			return get_DataV();
+		}
 		operator const BYTE* () const noexcept
 		{
 			//! Get as a BYTE pointer.
@@ -454,19 +482,20 @@ namespace Gray
 		bool IsValidIndex2(size_t i) const noexcept
 		{
 			//! Is i inside the known valid range for the block? or at end?
-			if (i == m_nSize)	// at end ?
+			if (i == m_nSize)	// at end is ok
 				return true;
 			return IS_INDEX_GOOD(i, m_nSize);
 		}
-		bool IsInternalPtr(const void* p) const noexcept
+
+		inline bool IsInternalPtr(const void* p) const noexcept
 		{
 			//! Is p inside the known valid range for the block? Inclusive = Can be equal to end.
-			return IsValidIndex(cMem::Diff(p, get_DataBytes()));
+			return IsValidIndex(cMem::Diff(p, get_DataV()));
 		}
-		bool IsInternalPtr2(const void* p) const noexcept
+		inline bool IsInternalPtr2(const void* p) const noexcept
 		{
 			//! Is p inside the known valid range for the block? Exclusive = Cant be equal to end!
-			return IsValidIndex2(cMem::Diff(p, get_DataBytes()));
+			return IsValidIndex2(cMem::Diff(p, get_DataV()));
 		}
 
 		bool IsZeros() const noexcept
@@ -483,7 +512,7 @@ namespace Gray
 		{
 			//! compare blocks of data.
 			if (pData == nullptr)
-				return false;
+				return false;	// isValidPtr() ?
 			return IsEqualData(pData->m_pData, pData->m_nSize);
 		}
 		bool IsEqualData(const cMemBlock& data) const noexcept
@@ -496,10 +525,19 @@ namespace Gray
 		//! @note ONLY works for literal "static string", or BYTE[123] you cannot use a 'BYTE* x' here!
 #define IsEqualLiteral(x) IsEqualData( STRLIT2(x))
 
-		BYTE* GetOffset(size_t nOffset) const
+		BYTE* GetSpan1(size_t nOffset) const noexcept
 		{
-			//! Get as a byte pointer.
-			ASSERT(IsValidIndex(nOffset));
+			// get pointer that is good for just one byte.
+			DEBUG_CHECK(IsValidIndex(nOffset));
+			return get_DataBytes() + nOffset;
+		}
+		BYTE* GetSpan(size_t nOffset, size_t size) const noexcept
+		{
+			//! Get a pointer into the buffer as a byte pointer.
+			//! Ensure the data is valid !
+			DEBUG_CHECK(IsValidIndex(nOffset));
+			DEBUG_CHECK(IsValidIndex2(nOffset + size));
+			UNREFERENCED_PARAMETER(size);	// debug only.
 			return get_DataBytes() + nOffset;
 		}
 		const void* get_DataEnd() const noexcept
@@ -510,13 +548,13 @@ namespace Gray
 
 		void put_DataPtr(void* pStart) noexcept
 		{
-			// Set Data pointer but leave size.
+			//! Set Data pointer but leave size.
 			m_pData = pStart;
 			// ASSERT(is pStart reasonable?)
 		}
 		void put_DataSize(size_t nSize) noexcept
 		{
-			// Set size but leave data pointer.
+			//! Set size but leave data pointer.
 			m_nSize = nSize;
 		}
 
@@ -539,8 +577,6 @@ namespace Gray
 		{
 			return cMem::ConvertToString(pszDst, iDstSizeMax, get_DataBytes(), m_nSize);
 		}
-
-		static COMPARE_t GRAYCALL Compare(const void* pData1, size_t iLen1, const void* pData2, size_t iLen2);
 	};
 
 	struct GRAYCORE_LINK cMemT : public cValT	// Value of some type in memory.
@@ -622,7 +658,7 @@ namespace Gray
 		template <typename TYPE>
 		static inline void SetUnaligned(void* pData, TYPE nVal) noexcept
 		{
-			//! Get a data value from an unaligned TYPE pointer.
+			//! Get a data value from an unknown unaligned TYPE pointer.
 			//! Like the _WIN32 UNALIGNED macro.
 			//! @note some architectures will crash if you try to access unaligned data. (PowerPC)
 			//! In this case we need to memcpy() to a temporary buffer first.

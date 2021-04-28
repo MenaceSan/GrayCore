@@ -56,15 +56,15 @@ namespace Gray
 		if (uVal >= uRadix)
 			return '?'; // unknown char for this ?!
 		if (uVal < 10)
-			return((char)('0' + uVal));
-		return((char)('A' + uVal - 10));
+			return (char)('0' + uVal);
+		return (char)('A' + uVal - 10);
 	}
 	int GRAYCALL StrChar::Radix2U(wchar_t ch, RADIX_t uRadix) // static
 	{
 		//! @return the value from the uRadix char
 		//! -1 = invalid char.
 		UNREFERENCED_PARAMETER(uRadix);
-		ASSERT(uRadix >= k_uRadixMin && uRadix <= k_uRadixMax); // sane range.
+		DEBUG_CHECK(uRadix >= k_uRadixMin && uRadix <= k_uRadixMax); // sane range.
 		int iVal;
 		if (StrChar::IsDigit(ch))
 			iVal = ch - '0';	// StrChar::Dec2U
@@ -73,8 +73,9 @@ namespace Gray
 		else if (IsLowerA(ch))	// allow > Radix ?
 			iVal = ch - 'a' + 10;
 		else // > uRadix
-			return(-1);	// invalid symbol for uRadix
-		ASSERT(iVal < uRadix);
+			return -1;	// invalid symbol for uRadix
+		if (iVal >= uRadix)
+			return -1;	// invalid symbol for uRadix
 		return iVal;
 	}
 
@@ -97,12 +98,11 @@ namespace Gray
 		//! -1 = invalid char.
 
 		if (StrChar::IsDigit(ch))
-			return(ch - '0');	// StrChar::Dec2U
+			return ch - '0';	// StrChar::Dec2U
 		else if (ch >= 'A' && ch <= 'F') // StrChar::IsUpperA(ch))
-			return(ch - 'A' + 10);	
+			return ch - 'A' + 10;
 		else if (ch >= 'a' && ch <= 'f') // StrChar::IsLowerA(ch))
-			return(ch - 'a' + 10);
-		return(-1);	// invalid symbol.
+			return ch - 'a' + 10;
+		return -1;	// invalid symbol.
 	}
 }
- 

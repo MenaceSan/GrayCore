@@ -55,35 +55,35 @@ namespace Gray
 		}
 
 		// cRefPtr is protected so expose the parts i allow. cPtrFacade
-		void ReleasePtr()
+		void ReleasePtr() 
 		{
 			SUPER_t::ReleasePtr();
 		}
-		bool isValidPtr() const
+		inline bool isValidPtr() const noexcept
 		{
 			return SUPER_t::isValidPtr();
 		}
-		TYPE* get_Ptr() const
+		inline TYPE* get_Ptr() const noexcept
 		{
 			//! expose this otherwise protected function.
 			//! For use with SMARTS_CAST(x) and SMART_CAST(x) or just use TYPE::get_Single() ? 
-			ASSERT_N(this->m_p != nullptr);
+			DEBUG_CHECK(this->m_p != nullptr);
 			return this->m_p;
 		}
 
-		operator TYPE* () const noexcept
+		inline operator TYPE* () const noexcept
 		{
 			DEBUG_CHECK(this->m_p != nullptr);
 			return m_p;
 		}
-		operator TYPE& () const noexcept
+		inline operator TYPE& () const noexcept
 		{
 			DEBUG_CHECK(this->m_p != nullptr);
 			return *m_p;
 		}
-		TYPE* operator -> () const
+		inline TYPE* operator -> () const noexcept
 		{
-			ASSERT_N(this->m_p != nullptr);
+			DEBUG_CHECK(this->m_p != nullptr);
 			return this->m_p;
 		}
 	};

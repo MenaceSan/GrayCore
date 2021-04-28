@@ -516,7 +516,7 @@ namespace Gray
 		m_iBufferUsed = section.get_BufferUsed();
 
 		cMem::Copy(m_ppLines, section.m_ppLines, m_iLinesUsed * sizeof(IniChar_t*));
-		cMem::Copy(m_Buffer.get_Data(), section.m_Buffer.get_Data(), m_Buffer.get_DataSize());
+		cMem::Copy(m_Buffer.get_DataV(), section.m_Buffer.get_DataV(), m_Buffer.get_DataSize());
 
 		MoveLineOffsets(0, StrT::Diff(m_Buffer.get_DataA(), section.m_Buffer.get_DataA()));
 	}

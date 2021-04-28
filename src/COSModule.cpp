@@ -85,6 +85,7 @@ namespace Gray
 
 	void cOSModule::FreeModuleLast()
 	{
+		//! decrement my ref count for this module.
 		//! Assume someone else will clear m_hModule
 		//! @note
 		//!  if this is the last ref to the DLL then it will be unloaded!
@@ -95,8 +96,9 @@ namespace Gray
 			return;
 		if (m_uFlags & cOSModule::k_Load_NoRefCount)	// Don't free.
 			return;
-		if (!(m_uFlags & cOSModule::k_Load_Preload))
+		if (!(m_uFlags & cOSModule::k_Load_Preload) && !(m_uFlags & cOSModule::k_Load_ByName))
 		{
+			// Log this.
 			DEBUG_MSG(("FreeModuleLast('%s')", LOGSTR(get_Name())));
 		}
 #ifdef _WIN32
@@ -197,7 +199,7 @@ namespace Gray
 #ifdef _WIN32
 #if ( _WIN32_WINNT > 0x0500 ) && ! defined(UNDER_CE)
 		if (!_FNF(::GetModuleHandleEx)(
-			(uFlags&k_Load_NoRefCount) ? GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT : 0,
+			(uFlags & k_Load_NoRefCount) ? GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT : 0,
 			pszModuleName, &m_hModule))
 		{
 			ClearModule();
@@ -213,7 +215,7 @@ namespace Gray
 		{
 			return false;
 		}
-		if (!(uFlags&k_Load_NoRefCount))
+		if (!(uFlags & k_Load_NoRefCount))
 		{
 			// get a new ref by loading it by its name.
 #ifndef UNDER_CE
@@ -234,7 +236,7 @@ namespace Gray
 		m_hModule = ::dlopen(pszModuleName, (uFlags & k_Load_OSMask) | RTLD_NOLOAD);	//  (since glibc 2.2) 
 		if (!isValidModule())
 			return false;
-		if (!(uFlags&k_Load_NoRefCount))
+		if (!(uFlags & k_Load_NoRefCount))
 		{
 			HMODULE hMod2 = ::dlopen(get_Name(), uFlags & k_Load_OSMask);
 			if (hMod2 == HMODULE_NULL)
@@ -245,11 +247,11 @@ namespace Gray
 			{
 				m_hModule = hMod2;
 			}
-		}
+	}
 #endif
 		m_uFlags = uFlags;	// found the handle. Do i need to unload it?
 		return true;
-	}
+}
 
 	HRESULT cOSModule::LoadModule(const FILECHAR_t* pszModuleName, UINT32 uFlags)
 	{
@@ -297,7 +299,8 @@ namespace Gray
 	{
 		//! Load this module ONLY if it exposes this symbol.
 		//! @return HRESULT_WIN32_C(ERROR_CALL_NOT_IMPLEMENTED) = I don't have this symbol
-		//!  'The specified module could not be found. (08007007e)' = a dependant DLL could not be loaded !
+		//!  'The specified module could not be found. (08007007e)' = HRESULT_WIN32_C(ERROR_MOD_NOT_FOUND) = Not what it seems. Might be one of my dependencies could not be found!
+//! 
 #if 0
 		HRESULT hRes = LoadModule(pszModuleName, k_Load_Preload | k_Load_ByName);
 		if (FAILED(hRes))
@@ -314,7 +317,7 @@ namespace Gray
 		{
 			// It was k_Load_Preload Loaded ! reload correctly.
 			hRes = LoadModule(get_Name(), k_Load_Normal);
-		}
+	}
 #else
 		HRESULT hRes = LoadModule(pszModuleName, k_Load_ByName);
 		if (FAILED(hRes))
@@ -322,7 +325,7 @@ namespace Gray
 		FARPROC pAddr = GetSymbolAddress(pszSymbolName);
 		if (pAddr == nullptr)
 		{
-			FreeThisModule();
+			FreeThisModule();	// dec ref count.
 			return HRESULT_WIN32_C(ERROR_CALL_NOT_IMPLEMENTED);
 		}
 #endif
@@ -330,4 +333,3 @@ namespace Gray
 		return hRes;
 	}
 }
- 

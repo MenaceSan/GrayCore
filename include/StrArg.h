@@ -11,7 +11,6 @@
 
 #include "StrChar.h"
 #include "StrConst.h"
-#include "cUnitTestDecl.h"
 
 namespace Gray
 {
