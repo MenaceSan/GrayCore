@@ -77,7 +77,7 @@ namespace Gray
 		if (!IsLogged(uAttrMask, eLogLevel))
 		{
 			// Pre-Check if anyone cares before creating cLogEvent
-			return HRESULT_WIN32_C(ERROR_EMPTY); // no appenders care about this.
+			return HRESULT_WIN32_C(ERROR_EMPTY); // no log appenders care about this. toss it.
 		}
 
 		cLogEventPtr pEvent(new cLogEvent(uAttrMask, eLogLevel, sMsg, sContext));

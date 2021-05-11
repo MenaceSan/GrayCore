@@ -170,7 +170,6 @@ namespace Gray
 		//! Try to use SetHexDigest() instead.
 		//! opposite of cMem::ReadFromString().
 		//! @return the actual size of the string.
-		//! @note using Base64 would be better.
 
 		iSizeDstMax -= 4;	// room to terminate < max sized number.
 		StrLen_t iLenOut = 0;

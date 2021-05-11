@@ -57,7 +57,7 @@ namespace Gray
 		const FILECHAR_t* m_pszAppName;		//!< Specifies the name of my application. (display friendly)
 		TIMESYSD_t m_nMinTickTime;			//!< Minimum amount of time to spend in the OnTickApp() (mSec). cThreadId::SleepCurrent() if there is extra time.
 		cAppState& m_State;					//!< Quick reference to cAppState singleton.
-		bool m_bCloseSignal;				//!< Polite request to close the application. checked in Run() and OnTickApp()
+		bool m_bCloseSignal;				//!< Polite request to close the application. checked in Run() and OnTickApp() >= APPSTATE_RunExit APPSTATE_Exit
 
 		cArrayPtr<cAppCommand> m_aCommands;		//! built a list of possible commands. Dynamically add new command handlers to the app. to process cAppArgs.
 

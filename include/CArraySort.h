@@ -45,7 +45,7 @@ namespace Gray
 			if (index <= k_ITERATE_BAD)
 				return false;
 			TYPE_ARG pObjOld = this->GetAt(index);
-			if (!(pObjOld == pObj))	// not the current one !! weird!
+			if (!(pObjOld == pObj))	// not the current one !! weird! we don't allow dupes !
 			{
 				ASSERT(0);
 				return false;

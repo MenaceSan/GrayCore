@@ -48,7 +48,8 @@ namespace Gray
 		cArrayString<FILECHAR_t> m_asArgs;		//!< Array of parsed m_sArguments. [0]=appname.exe, [1]=first arg. NOT nullptr terminated like APP_ARGS_t. Honors quoted text.
 
 	private:
-		void InitArgsInt(ITERATE_t argc, APP_ARGS_t ppszArgs);
+		void InitArgsLine(ITERATE_t argc, APP_ARGS_t ppszArgs);
+		void InitArgsArray(ITERATE_t argc, APP_ARGS_t ppszArgs);
 
 	public:
 		static constexpr bool IsArgSwitch(wchar_t ch) noexcept

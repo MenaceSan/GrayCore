@@ -179,7 +179,7 @@ namespace Gray
 		static bool GRAYCALL Exists(const FILECHAR_t* pszFilePath)
 		{
 			//! boolean true if this file exists? I can read it. Does not mean I can write to it.
-			HRESULT hRes = ReadFileStatus2(pszFilePath, nullptr, true);
+			const HRESULT hRes = ReadFileStatus2(pszFilePath, nullptr, true);
 			return SUCCEEDED(hRes);
 		}
 

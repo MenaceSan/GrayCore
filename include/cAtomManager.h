@@ -23,7 +23,7 @@ namespace Gray
 		//! an alpha sorted string lookup table. CASE IGNORED !
 		//! @note Internal collection for the atoms. Don't use this publicly. Use cAtomRef.
 		//! @note cAtomRef can be defined in the C++ init code. So the cAtomManager must be safe to run at init time.
-		//! e.g. static const cAtomRef a_Root("Root");
+		//! e.g. static const cAtomRef a_Root(CATOM_N(Root)); //  
 
 		friend class cSingleton < cAtomManager >;
 		friend class cAtomRef;

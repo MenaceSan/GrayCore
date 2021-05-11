@@ -112,7 +112,7 @@ namespace Gray
 
 			for (ITERATE_t i = 0; i < nQty; i++)
 			{
-				pDst[i] = pSrc[i];	// use copy operator.
+				pDst[i] = pSrc[i];	// use copy operator =.
 			}
 		}
 

@@ -51,7 +51,7 @@ namespace Gray
 
 	void cListBase::RemoveListNode(cListNodeBase* pNodeRemove) // virtual Override this = called when removed from list.
 	{
-		//! Some object is being removed from my list.
+		//! Some child object is being removed from my list.
 		//! Override this to get called when an item is removed from this list.
 		//! just remove from list. It may or may not be deleting itself.
 		//! @note Only called from RemoveFromParent(). this is protected.
@@ -64,19 +64,27 @@ namespace Gray
 		cListNodeBase* pNodePrev = pNodeRemove->get_Prev();
 
 		if (pNodeNext != nullptr)
+		{
+			// ASSUME pNodeNext->m_pPrev was pointing at this.
 			pNodeNext->m_pPrev = pNodePrev;
+		}
 		else
+		{
 			m_pTail = pNodePrev;
+		}
 		if (pNodePrev != nullptr)
+		{
+			// ASSUME pNodePrev->m_pNext was pointing at this.
 			pNodePrev->m_pNext = pNodeNext;
+		}
 		else
+		{
 			m_pHead = pNodeNext;
+		}
 
 		m_iCount--;
-
 		pNodeRemove->m_pNext = nullptr;
 		pNodeRemove->m_pPrev = nullptr;
-
 		pNodeRemove->put_Parent(nullptr);	// officially removed from list. may be virtual.
 		ASSERT(!pNodeRemove->hasParent());
 	}

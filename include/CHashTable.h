@@ -173,7 +173,9 @@ namespace Gray
 		}
 		TYPE* AddSpecial(ARG_t rNew)
 		{
-			// Add only new hash node. return index ONLY if existing hash node.
+			//! Add only new hash node. 
+			//! @return pointer ONLY if existing hash node. nullptr = it was new.
+
 			ITERATE_t iBucket = this->GetHashArray(rNew.get_HashCode());
 			COMPARE_t iCompareRes;
 			ITERATE_t index = this->m_aTable[iBucket].FindINear(rNew, iCompareRes);

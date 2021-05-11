@@ -160,7 +160,7 @@ namespace Gray
 		//! Try to use SetHexDigest() instead.
 		//! opposite of cMem::ReadFromString().
 		//! @return the actual size of the string.
-		//! @note using Base64 would be better.
+		//! @note using hex or Base64 would be better?
 
 		iSizeDstMax -= 4;	// room to terminate < max sized number.
 		StrLen_t iLenOut = 0;
@@ -185,7 +185,7 @@ namespace Gray
 	{
 		//! Read/Parse bytes in from string as comma separated base 10 number values. opposite of cMem::ConvertToString().
 		//! @return the number of bytes read.
-		//! @note using Base64 would be better.
+		//! @note using hex or Base64 would be better.
 
 		size_t i = 0;
 		for (; i < iDstMax;)

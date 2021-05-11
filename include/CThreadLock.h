@@ -105,7 +105,7 @@ namespace Gray
 			return ::pthread_self();
 #endif
 		}
-		static inline bool IsValidId(THREADID_t id) noexcept
+		static constexpr bool IsValidId(THREADID_t id) noexcept
 		{
 			//! Is this thread valid? the system thread is considered valid.
 			return id != cThreadId::k_NULL;
@@ -119,6 +119,7 @@ namespace Gray
 			return ::pthread_equal(a, b);
 #endif
 		}
+
 		static inline void SleepCurrent(TIMESYS_t uMs = cTimeSys::k_FREQ) noexcept
 		{
 			//! Sleep current thread for n Milliseconds. cTimeSys::k_FREQ

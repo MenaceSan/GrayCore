@@ -383,11 +383,7 @@ namespace Gray
 			//! Get as a char pointer.
 			return (char*)get_DataV();
 		}
-		inline wchar_t* get_DataW() const noexcept
-		{
-			//! Get as a wchar_t pointer.
-			return (wchar_t*)get_DataV();
-		}
+		 
 		operator void* () const noexcept
 		{
 			return get_DataV();

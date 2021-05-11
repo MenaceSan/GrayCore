@@ -58,7 +58,7 @@ namespace Gray
 
 		static const RADIX_t k_uRadixMin = 2;		//!< binary
 		static const RADIX_t k_uRadixDef = 10;		//!< base 10.
-		static const RADIX_t k_uRadixMax = 10 + 26;	//!< numbers + letters.
+		static const RADIX_t k_uRadixMax = 10 + 26;	//!< numbers + letters. Allow Base64 ??
 
 		static const char k_Vowels[5];	//!< Does not include Y. AEIOU
 

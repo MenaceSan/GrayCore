@@ -33,19 +33,22 @@ namespace Gray
 			//! @note often DisposeThis() has the effect of removing itself from the list. We protect against this.
 			//! ASSUME TYPE supports DisposeThis(); like cXObject
 
-			ITERATE_t iSize = this->GetSize();
+			const ITERATE_t iSize = this->GetSize();
 			if (iSize > 0)
 			{
 				{	// save original list, call DisposeThis on everything from original list
 					cArrayRef<TYPE> orig;
-					orig.SetCopy(*this);
+					orig.SetCopy(*this);	// create a copy with another ref to each.
 
 					ASSERT(orig.GetSize() == iSize);
 					for (ITERATE_t i = 0; i < iSize; i++)
 					{
 						TYPE* pObj = orig.GetAt(i);
-						if (pObj != nullptr)
+						if (pObj != nullptr)	// do we allow nullptr ?
+						{
+							ASSERT(pObj->get_RefCount() > 0);
 							pObj->DisposeThis();
+						}
 					}
 				}
 				this->RemoveAll();

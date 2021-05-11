@@ -19,7 +19,7 @@ namespace Gray
 		//! @class Gray::cNewPtr
 		//! These are sort of dumb "smart pointers" but assume a single reference.
 		//! A single reference to a dynamically allocated (heap) class not based on cRefBase. Free on destruct.
-		//! Works like STL "auto_ptr<TYPE>" or boost::unique_ptr<>, std::unique_ptr<>
+		//! Works like OLD STL "auto_ptr<TYPE>" or boost::unique_ptr<TYPE>, std::unique_ptr<TYPE>
 
 		typedef cNewPtr<TYPE> THIS_t;
 		typedef cPtrFacade<TYPE> SUPER_t;
@@ -40,6 +40,7 @@ namespace Gray
 			: cPtrFacade<TYPE>(nullptr)
 		{
 			//! copy the contents? beware performance problems here. I don't know if its a derived type or array?
+			//! @note DANGER! Hidden action.
 		}
 
 	public:
@@ -82,18 +83,18 @@ namespace Gray
 		// Accessor ops.
 		TYPE& operator * () const
 		{
-			ASSERT(this->isValidPtr()); return(*this->m_p);
+			ASSERT(this->isValidPtr()); return *this->m_p;
 		}
 
 		TYPE* operator -> () const
 		{
-			ASSERT(this->isValidPtr()); return(this->m_p);
+			ASSERT(this->isValidPtr()); return this->m_p;
 		}
 
 		// Comparisons.
 		bool operator != (const TYPE* p2) const noexcept
 		{
-			return(p2 != this->m_p);
+			return p2 != this->m_p;
 		}
 #if _MSC_VER < 1300	// VC 7.0 has trouble converting to const
 		bool operator == (const TYPE* p2) const noexcept
@@ -152,6 +153,7 @@ namespace Gray
 			: cNewPtr<TYPE>(Dupe(rObj))
 		{
 			//! copy the contents? beware performance problems here. I don't know if its a derived type or array?
+			//! @note DANGER! Hidden action.
 		}
 		explicit cNewPtr2(TYPE* pObj)
 			: cNewPtr<TYPE>(pObj)

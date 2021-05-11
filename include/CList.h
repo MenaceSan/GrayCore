@@ -8,14 +8,14 @@
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
-
-#include "GrayCore.h"
+ 
 #include "HResult.h"
 #include "cDebugAssert.h"
- 
+#include "cHeapObject.h"
+
 namespace Gray
 {
-	class GRAYCORE_LINK cListNodeBase 
+	class GRAYCORE_LINK cListNodeBase : public cHeapObject
 	{
 		//! @class Gray::cListNodeBase
 		//! base class for a single node in a cListBase. AKA 

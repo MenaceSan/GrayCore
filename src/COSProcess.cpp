@@ -79,7 +79,7 @@ namespace Gray
 		//! @arg pszExeName = the app file to start. 
 		//! @arg pszCurrentDir = cFilePath::GetFileDir( pszExeName )
 		//! similar to POSIX execvp()
- 
+
 		if (StrT::IsWhitespace(pszExeName))
 			return E_INVALIDARG;
 
@@ -141,6 +141,7 @@ namespace Gray
 		m_nPid = procInf.dwProcessId;
 		ASSERT(m_nPid > 0);
 		m_hProcess.AttachHandle(procInf.hProcess);
+		m_ThreadId = procInf.dwThreadId;
 		m_hThread.AttachHandle(procInf.hThread); // procInf.dwThreadId
 
 #elif defined(__linux__)
@@ -265,12 +266,27 @@ namespace Gray
 
 #ifdef _WIN32
 
+	HRESULT cOSProcess::CloseProcess()
+	{
+		//! Attempt to politely close the process first. More polite than direct call to TerminateThread()
+		//! send ::PostThreadMessage(WM_CLOSE) and wait for a bit, to allow programs to save.
+		//! https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-postthreadmessagea
+
+		if (!m_ThreadId.isValidId())	// Didnt get an id.
+			return E_HANDLE;
+		if (!_GTN(::PostThreadMessage)(m_ThreadId.GetThreadId(), WM_CLOSE, 0, 0))
+		{
+			return HResult::GetLastDef(E_HANDLE);
+		}
+		return S_OK;
+	}
+
 	HRESULT cOSProcess::CreateRemoteThread(THREAD_FUNC_t pvFunc, const void* pvArgs, OUT cOSHandle& thread)
 	{
-		// Create a thread (and run it) in the context of some other process
-		// https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-createremotethread
-		// PROCESS_CREATE_THREAD|PROCESS_QUERY_INFORMATION|PROCESS_VM_READ|PROCESS_VM_WRITE|PROCESS_VM_OPERATION
-		// NOTE: ASSUME pvArgs is a valid pointer in the apps context. i.e. VirtualAlloc etc.
+		//! Create a thread (and run it) in the context of some other process
+		//! https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-createremotethread
+		//! PROCESS_CREATE_THREAD|PROCESS_QUERY_INFORMATION|PROCESS_VM_READ|PROCESS_VM_WRITE|PROCESS_VM_OPERATION
+		//! NOTE: ASSUME pvArgs is a valid pointer in the apps context. i.e. VirtualAlloc etc.
 
 		// Load our DLL 
 		DWORD dwThreadId = 0;
@@ -351,7 +367,7 @@ namespace Gray
 #endif
 		szCmdLine[STRMAX(szCmdLine)] = '\0';	// Extra safe termination.
 		return szCmdLine;
-		}
+	}
 
 	HRESULT cOSProcess::WaitForProcessExit(TIMESYSD_t nTimeWait, APP_EXITCODE_t* pnExitCode)
 	{
@@ -404,7 +420,7 @@ namespace Gray
 		if (pnExitCode != nullptr)
 		{
 			*pnExitCode = WEXITSTATUS(iStatus);
-	}
+		}
 #endif
 		return S_OK;
 	}
@@ -494,7 +510,7 @@ namespace Gray
 		{
 			m_nPid = ::GetProcessId(m_hProcess.get_Handle());	// XP SP1 Function.
 		}
-}
+	}
 #endif
 
 }

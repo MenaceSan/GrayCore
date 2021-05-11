@@ -261,7 +261,7 @@ namespace Gray
 		//!  pszFormat = (const char*) TIME_FORMAT_DEFAULT
 		//!  nTimeZoneOffset = (seconds) what TZ was this recorded in (_timezone), TZ_UTC, TZ_GMT, TZ_EST, TZ_LOCAL
 
-		GChar_t szTemp[256];	// estimate reasonable max size.
+		GChar_t szTemp[cTimeUnits::k_FormStrMax];	// estimate reasonable max size.
 		StrLen_t iLenChars = GetTimeFormStr(szTemp, STRMAX(szTemp), pszFormat, nTimeZoneOffset);
 		if (iLenChars <= 0)
 		{

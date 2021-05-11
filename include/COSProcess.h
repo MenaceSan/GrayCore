@@ -77,6 +77,7 @@ namespace Gray
 #ifdef _WIN32
 		cOSHandle m_hProcess;	//!< open handle to the process. cOSModule
 	public:
+		cThreadId m_ThreadId;	//!< Only if i launched this myself.
 		cOSHandle m_hThread;	//!< may have this or not. Only if i launched this myself.
 #elif defined(__linux__)
 	protected:
@@ -93,9 +94,9 @@ namespace Gray
 		cOSProcess(PROCESSID_t nPid, HANDLE hProc, HANDLE hThread) noexcept
 			: m_nPid(nPid)
 			, m_hProcess(hProc)
-			, m_hThread(hThread)	
+			, m_hThread(hThread)
 		{
-			// _WIN32 = ::GetCurrentProcess() = 0xFFFFFFFF as a shortcut. HMODULE_CURPROC
+			//! _WIN32 = ::GetCurrentProcess() = 0xFFFFFFFF as a shortcut. HMODULE_CURPROC
 		}
 		HANDLE get_ProcessHandle() const noexcept
 		{
@@ -118,18 +119,19 @@ namespace Gray
 
 		bool isValidProcess() const noexcept
 		{
-			// Is the process in memory/valid/active now ?
+			//! Is the process in memory/valid/active now ?
 #ifdef _WIN32
 			return m_hProcess.isValidHandle();
 #elif defined(__linux__)
 			return m_nPid != 0;
 #endif
-	}
+		}
 
 		PROCESSID_t get_ProcessId() const noexcept
 		{
 			return m_nPid;
 		}
+
 		virtual cStringF get_ProcessPath() const;
 		cStringF get_ProcessName() const;
 		HRESULT OpenProcessId(PROCESSID_t dwProcessID, DWORD dwDesiredAccess = 0, bool bInheritHandle = false);
@@ -146,8 +148,9 @@ namespace Gray
 			//! No need to close this handle!
 #ifdef _WIN32
 			// 0xFFFFFFFF = current process. https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getcurrentprocess
-			m_nPid = ::GetCurrentProcessId();
+			m_nPid = ::GetCurrentProcessId(); // cAppState::get_CurrentProcessId();
 			m_hProcess.AttachHandle(::GetCurrentProcess());
+			m_ThreadId.InitCurrentId();
 #elif defined(__linux__)
 			m_nPid = ::getpid();
 #endif
@@ -157,7 +160,7 @@ namespace Gray
 		{
 			//! Hard terminate some process. inject uExitCode. May not save work.
 			//! m_nPid may be invalid after this!
-			//! in _WIN32 Is would be more polite to send PostThreadMessage(WM_CLOSE) and wait for a bit, to allow programs to save.
+			//! in _WIN32 Is would be more polite to call CloseProcess() first. send ::PostThreadMessage(WM_CLOSE) and wait for a bit, to allow programs to save.
 
 			if (!isValidProcess())
 				return S_FALSE;
@@ -172,6 +175,10 @@ namespace Gray
 			return S_OK;
 		}
 
+#ifdef _WIN32
+		HRESULT CloseProcess();
+#endif
+
 		//! CPU priority level for scheduling.
 		DWORD get_PriorityClass() const noexcept
 		{
@@ -183,7 +190,8 @@ namespace Gray
 			ASSERT(0);
 			return 0;
 #endif
-}
+		}
+
 		bool put_PriorityClass(DWORD dwPriorityClass) const noexcept
 		{
 			//! Set the threads priority.
@@ -203,7 +211,7 @@ namespace Gray
 
 		void* AllocMemory(size_t nSize) const noexcept
 		{
-			// Allocate space in the process memory.
+			//! Allocate space in the process memory.
 			return ::VirtualAllocEx(get_ProcessHandle(), NULL, nSize, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
 		}
 

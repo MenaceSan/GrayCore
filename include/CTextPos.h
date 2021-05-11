@@ -49,13 +49,13 @@ namespace Gray
 		bool isTopLine() const noexcept
 		{
 			//! is it on the top line? k_Zero
-			return(m_lOffset == 0 && m_iLineNum == 0);
+			return m_lOffset == 0 && m_iLineNum == 0 ;
 		}
 
 		bool isValidPos() const noexcept
 		{
 			//! is invalid values? Not k_Invalid
-			return(m_iLineNum >= 0); // m_lOffset >= 0
+			return m_iLineNum >= 0 ; // m_lOffset >= 0
 		}
 		STREAM_POS_t get_Offset() const noexcept
 		{
@@ -110,6 +110,8 @@ namespace Gray
 		//! similar to cStreamInput but for a memory buffer.
 		//! cTextPos = Current cursor position for m_pszCursor in the file. used for error messages, etc.
 
+		typedef cTextPos SUPER_t;
+
 	protected:
 		cMemBlock m_Text;	//!< the UTF8 text to be read. don't advance cTextPos::m_lOffset outside this.
 
@@ -137,16 +139,16 @@ namespace Gray
 		}
 		bool isValidIndex() const noexcept
 		{
-			return m_Text.IsValidIndex(m_lOffset); // includes m_lOffset >= 0
+			return m_Text.IsValidIndex((size_t)m_lOffset); // includes m_lOffset >= 0
 		}
 		bool isValidPos() const noexcept
 		{
 			//! is invalid values? Not k_Invalid
-			return m_Text.isValidPtr() && isValidIndex(); // includes m_lOffset >= 0
+			return SUPER_t::isValidPos() && m_Text.isValidPtr() && isValidIndex(); // includes m_lOffset >= 0
 		}
 		const char* get_CursorPtr() const noexcept
 		{
-			return (const char*)m_Text.GetSpan1(this->m_lOffset);
+			return (const char*)m_Text.GetSpan1((size_t)this->m_lOffset);
 		}
 		char get_CursorChar() const noexcept
 		{
@@ -161,12 +163,12 @@ namespace Gray
 			// Skip over some known token. It is not a new line. It has no tabs. It is not past the end of the data.
 #ifdef _DEBUG
 			ASSERT(isValidPos());
-			char ch = get_CursorChar();
+			const char ch = get_CursorChar();
 			ASSERT(!StrChar::IsSpaceX(ch) && ch != '\0');
 #endif
 			IncOffset(nLen); // eat chars
 		}
-		void IncTab(StrLen_t nLenChar = 1)
+		void IncTab(StrLen_t nLenChar = 1) noexcept
 		{
 			// Skip to next tab stop
 			m_lOffset += nLenChar; // eat tab
@@ -175,7 +177,7 @@ namespace Gray
 			else
 				m_iColNum = (m_iColNum / m_iTabSize + 1) * m_iTabSize;
 		}
-		StrLen_t IncLineCR(StrLen_t nLenChar = 1)
+		StrLen_t IncLineCR(StrLen_t nLenChar = 1) noexcept
 		{
 			// Check for \r\n sequence, and treat this as a single character
 			IncLine(nLenChar);	// bump down to the next line

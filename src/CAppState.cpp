@@ -46,7 +46,7 @@ namespace Gray
 		return m_asArgs.GetAtCheck(i);
 	}
 
-	void cAppArgs::InitArgsInt(ITERATE_t argc, APP_ARGS_t ppszArgs)
+	void cAppArgs::InitArgsArray(ITERATE_t argc, APP_ARGS_t ppszArgs)
 	{
 		//! set pre-parsed arguments. like normal 'c' main()
 		//! m_asArgs[0] = app name.
@@ -56,13 +56,9 @@ namespace Gray
 			m_asArgs.SetAt(i, ppszArgs[i]);
 		}
 	}
-
-	void cAppArgs::InitArgs2(int argc, APP_ARGS_t ppszArgs)
+	void cAppArgs::InitArgsLine(ITERATE_t argc, APP_ARGS_t ppszArgs)
 	{
-		//! Posix, _CONSOLE or DOS style arguments. main() style init.
-		//! set pre-parsed arguments from console style start. ppszArgs[0] = app path
-		//! @note M$ unit tests will block arguments!
-
+		// build m_sArguments
 		ASSERT_N(ppszArgs != nullptr);
 
 		// build m_sArguments from APP_ARGS_t
@@ -73,8 +69,16 @@ namespace Gray
 				m_sArguments += _FN(" ");
 			m_sArguments += ppszArgs[i];
 		}
+	}
 
-		InitArgsInt(argc, ppszArgs);
+	void cAppArgs::InitArgs2(int argc, APP_ARGS_t ppszArgs)
+	{
+		//! Posix, _CONSOLE or DOS style arguments. main() style init.
+		//! set pre-parsed arguments from console style start. ppszArgs[0] = app path
+		//! @note M$ unit tests will block arguments!
+
+		InitArgsLine(argc, ppszArgs);
+		InitArgsArray(argc, ppszArgs);
 	}
 
 	void cAppArgs::InitArgsF(const FILECHAR_t* pszCommandArgs, const FILECHAR_t* pszSep)
@@ -105,7 +109,7 @@ namespace Gray
 		FILECHAR_t szTmp[StrT::k_LEN_MAX];
 		ITERATE_t iArgsQty = StrT::ParseCmdsTmp<FILECHAR_t>(szTmp, STRMAX(szTmp), pszCommandArgs, apszArgs + iSkip, _countof(apszArgs) - iSkip, pszSep, STRP_DEF);
 
-		InitArgsInt(iArgsQty + iSkip, apszArgs);	// skip first.
+		InitArgsArray(iArgsQty + iSkip, apszArgs);	// skip first.
 	}
 
 	ITERATE_t cAppArgs::FindCommandArg(const FILECHAR_t* pszCommandArgFind, bool bRegex, bool bIgnoreCase) const

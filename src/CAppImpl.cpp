@@ -168,19 +168,20 @@ namespace Gray
 		//! @return true = OK. false = exit now.
 
 		// AttachToCurrentThread();
-		return true;
+		return true;	// Run() will be called.
 	}
 
 	bool cAppImpl::OnTickApp() // virtual 
 	{
 		//! Override this to make the application do something. Main loop of main thread.
 		//! @return false = exit
-		return !m_bCloseSignal;	// just keep going.
+		return !m_bCloseSignal && m_State.isAppStateRun();	// just keep going. not APPSTATE_Exit
 	}
 
 	HRESULT cAppImpl::RunCommand(ITERATE_t i, const FILECHAR_t* pszCmd)
 	{
 		// Run a single command and set up its arguments.
+		// @arg i = index in m_Args array.
 
  		while (cAppArgs::IsArgSwitch(*pszCmd))
 		{
@@ -195,10 +196,11 @@ namespace Gray
 		{
 			sCmd2 = cStringF(pszCmd, StrT::Diff(pszArgEq, pszCmd));
 			pszCmd = sCmd2;
+			pszArgEq++;
 		}
 
 		cAppCommand* pCmd = nullptr;
-		for (int j = 0; j < m_aCommands.GetSize(); j++)
+		for (int j = 0; j < m_aCommands.GetSize(); j++)	// find handler for this type of command.
 		{
 			cAppCommand* pCmd2 = m_aCommands[j];
 			if (pCmd2->IsMatch(pszCmd))
@@ -237,7 +239,7 @@ namespace Gray
 
 		for (; i < j; i++)
 		{
-			m_State.m_ArgsValid.SetBit(i);	// consumed
+			m_State.m_ArgsValid.SetBit(i+1);	// consumed
 		}
 
 		return i;
@@ -249,7 +251,8 @@ namespace Gray
 
 		const cAppArgs& args = m_State.m_Args;
 		ITERATE_t i = 1;
-		for (; i < args.get_ArgsQty(); i++)
+		const ITERATE_t nQty = args.get_ArgsQty();
+		for (; i < nQty; i++)
 		{
 			if (m_State.m_ArgsValid.IsSet((BIT_ENUM_t)i))	// already processed this argument. (out of order ?). don't process it again. no double help.
 				continue;
@@ -261,7 +264,7 @@ namespace Gray
 				cLogMgr::I().addEventF(LOG_ATTR_INIT, LOGLEV_CRIT, "Command line '%s' failed '%s'", LOGSTR(sCmd), LOGERR(hRes));
 				return hRes;
 			}
-			i = hRes;
+			i = hRes;	// maybe skip some args ?
 		}
 
 		return i;

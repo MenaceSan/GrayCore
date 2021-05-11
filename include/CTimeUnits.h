@@ -167,6 +167,8 @@ namespace Gray
 		static const int k_nMicroSeconds = 1000000;			//!< millionth of a second.
 
 		static const CTimeUnit k_Units[TIMEUNIT_QTY];			//!< Metadata for time units.
+
+		static const StrLen_t k_FormStrMax = 256;	// max reasonable size for time.
 		static const GChar_t* k_StrFormats[TIME_FORMAT_QTY + 1];	//!< standard strftime() type formats.
 
 		static const BYTE k_MonthDays[2][TIMEMONTH_QTY];		//!< Jan=0

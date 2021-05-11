@@ -448,6 +448,13 @@ namespace Gray
 			//! get as void pointer. Might be nullptr. that's OK.
 			return m_pData;
 		}
+		template <typename TYPE> 
+		inline TYPE* get_Data()
+		{
+			//! get as TYPE pointer. Might be nullptr. that's OK.
+			return (TYPE*)m_pData;
+		}
+
 		inline BYTE* get_DataBytes() const noexcept
 		{
 			//! Get as a BYTE pointer.
@@ -458,6 +465,7 @@ namespace Gray
 			//! Get as a char pointer.
 			return (char*)m_pData;
 		}
+		 
 
 		operator void* () const noexcept
 		{

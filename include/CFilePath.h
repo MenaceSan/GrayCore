@@ -114,7 +114,10 @@ namespace Gray
 
 		static StrLen_t GRAYCALL MakeProperPath(FILECHAR_t* pszFileOut, StrLen_t iLenMax = _MAX_PATH, const FILECHAR_t* pszFileInp = nullptr, FILECHAR_t chSep = k_DirSep);
 		static cStringF GRAYCALL MakeProperPathX(const FILECHAR_t* pszFileInp, FILECHAR_t chSep = k_DirSep);
+
 		static StrLen_t GRAYCALL AddFileDirSep(FILECHAR_t* pszOut, StrLen_t iLen = k_StrLen_UNK, FILECHAR_t chSep = k_DirSep);
+		static cStringF GRAYCALL RemoveFileDirSep(cStringF sDir);
+
 		static StrLen_t GRAYCALL CombineFilePathA(FILECHAR_t* pszOut, StrLen_t iLenMax, StrLen_t iLen, const FILECHAR_t* pszName, FILECHAR_t chSep = k_DirSep);
 		static StrLen_t GRAYCALL CombineFilePath(FILECHAR_t* pszFilePathOut, StrLen_t iLenMax, const FILECHAR_t* pszDir, const FILECHAR_t* pszName, FILECHAR_t chSep = k_DirSep); // .NET Combine
 		static cStringF GRAYCALL CombineFilePathX(const FILECHAR_t* pszBase, const FILECHAR_t* pszName, FILECHAR_t chSep = k_DirSep);

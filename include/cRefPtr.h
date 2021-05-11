@@ -22,7 +22,7 @@ namespace Gray
 	{
 		//! @class Gray::cRefBase
 		//! base class for some derived object that is to be reference counted via cRefPtr.
-		//! similar to std::shared_ptr<TYPE> ?
+		//! cRefPtr is similar to std::shared_ptr<TYPE> except the object must be based on cRefBase
 		//! @note These objects are normally cHeapObject, but NOT ALWAYS ! (allow static versions using StaticConstruct() and k_REFCOUNT_STATIC)
 		//! @note These objects emulate the COM IUnknown. we may use cIUnkPtr<> for this also.
 		//! Use IUNKNOWN_DISAMBIG(cRefBase) with this
@@ -301,12 +301,20 @@ namespace Gray
 			//! Mostly just for _DEBUG usage.
 			if (this->m_p == nullptr)	// nullptr is not corrupt.
 				return false;
-			// ASSERT( DYNPTR_CAST(TYPE,this->m_p) != nullptr );
+			if (!cMem::IsValidApp(this->m_p))	// isCorruptPtr
+				return true;
 			cRefBase* p = DYNPTR_CAST(cRefBase, this->m_p);
 			if (p == nullptr)
 				return true;
 			if (p->get_RefCount() <= 0)
 				return true;
+
+#if 0	// Is TYPE properly defined at this location in the header file ?? Might not compile.
+			TYPE* p2 = DYNPTR_CAST(TYPE, p);	
+			if (p2 == nullptr)
+				return true;
+#endif
+
 			return false;
 		}
 		void put_Ptr(TYPE* p)	// override

@@ -17,9 +17,8 @@ namespace Gray
 {
 	template<class _TYPE_REC>
 	class cListNodeRef
-		: public cListNodeT < _TYPE_REC >
+		: public cListNodeT < _TYPE_REC >		// cHeapObject
 		, public cRefBase
-		, public cHeapObject
 	{
 		//! @class Gray::cListNodeRef
 		//! A smart pointer to reference counted node in a linked list. Attaching to my parent/list puts a Smart Pointer reference on me.

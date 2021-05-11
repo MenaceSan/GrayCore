@@ -548,6 +548,19 @@ namespace Gray
 		}
 		return iLen;
 	}
+	cStringF GRAYCALL cFilePath::RemoveFileDirSep(cStringF sDir)
+	{
+		//! Remove the / or \ from the end of this directory.
+		//! reverse of AddFileDirSep
+		 
+		StrLen_t len = sDir.GetLength();
+		if (len <= 1)
+			return sDir;
+		StrLen_t len2 = len - 1;
+		if (!IsCharDirSep(sDir[len2]))
+			return sDir;
+		return cStringF(sDir, len2);
+	}
 
 	StrLen_t GRAYCALL cFilePath::CombineFilePathA(FILECHAR_t* pszOut, StrLen_t iLenMax, StrLen_t iLen, const FILECHAR_t* pszName, FILECHAR_t chSep) // static
 	{
@@ -949,7 +962,7 @@ namespace Gray
 
 	cStringF GRAYCALL cFilePath::MakeProperPathX(const FILECHAR_t* pszFileInp, FILECHAR_t chSep) // static
 	{
-		//! Make sure all forward/back slashes are chSep.
+		//! Make sure all forward/back slashes are same chSep.
 		FILECHAR_t szFilePath[_MAX_PATH];
 		MakeProperPath(szFilePath, STRMAX(szFilePath), pszFileInp, chSep);
 		return szFilePath;
