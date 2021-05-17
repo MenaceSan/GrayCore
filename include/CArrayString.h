@@ -112,7 +112,7 @@ namespace Gray
 		ITERATE_t FindCmpI(const _TYPE_CH* pszFind) const
 		{
 			//! find the (whole) string in the unsorted array of strings. Case Ignored.
-			ITERATE_t iQty = this->GetSize();
+			const ITERATE_t iQty = this->GetSize();
 			for (ITERATE_t i = 0; i < iQty; i++)
 			{
 				if (!StrT::CmpI(this->GetAt(i).get_CPtr(), pszFind))
@@ -138,6 +138,7 @@ namespace Gray
 		}
 		STR_t GetAtCheck(ITERATE_t i) const
 		{
+			//! @return "" = if index is out of range.
 			if (!SUPER_t::IsValidIndex(i))
 				return cStrConst::k_Empty.Get<_TYPE_CH>();	// STR_t("")
 			return SUPER_t::GetAt(i);

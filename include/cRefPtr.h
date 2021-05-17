@@ -228,7 +228,7 @@ namespace Gray
 		//! Template for a type specific Smart (reference counted) Pointer
 		//! Smart pointer to an object. like "com_ptr_t" _com_ptr_t or cComPtr. https://msdn.microsoft.com/en-us/library/hh279674.aspx
 		//! Just a ref to the object of some type. TYPE must be based on cRefBase
-		//! similar to boost::shared_ptr<TYPE>
+		//! similar to boost::shared_ptr<TYPE> and std::shared_ptr<> but the object MUST be based on cRefBase.
 		//! @todo something like USE_IUNK_TRACE ??
 
 		typedef cRefPtr<TYPE> THIS_t;
@@ -320,7 +320,7 @@ namespace Gray
 		void put_Ptr(TYPE* p)	// override
 		{
 			//! Attach the pointer and add a ref.
-			if (!IsEqual(p))
+			if (!SUPER_t::IsEqual(p))
 			{
 				ReleasePtr();
 				this->AttachPtr(p);

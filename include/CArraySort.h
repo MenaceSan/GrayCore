@@ -26,7 +26,7 @@ namespace Gray
 
 	public:
 		typedef cArrayTyped<TYPE, TYPE_ARG> SUPER_t;
-		typedef TYPE_KEY KEY_t;
+		typedef TYPE_KEY KEY_t;		// make a typedef for this type.
 		typedef TYPE_ARG ARG_t;
 
 	protected:
@@ -250,8 +250,10 @@ namespace Gray
 
 	public:
 		typedef cArraySorted<TYPE, TYPE, TYPE> SUPER_t;
+#ifdef __GNUC__
 		typedef typename SUPER_t::KEY_t KEY_t;
 		typedef typename SUPER_t::ARG_t ARG_t;
+#endif
 
 	protected:
 		virtual COMPARE_t CompareData(ARG_t Data1, ARG_t Data2) const noexcept override
@@ -284,8 +286,10 @@ namespace Gray
 
 	public:
 		typedef cArraySorted<TYPE, const TYPE&, const _TYPECH*> SUPER_t;
+#ifdef __GNUC__
 		typedef typename SUPER_t::ARG_t ARG_t;
 		typedef typename SUPER_t::KEY_t KEY_t;
+#endif
 
 	protected:
 		virtual COMPARE_t CompareData(ARG_t Data1, ARG_t Data2) const noexcept override
@@ -322,8 +326,10 @@ namespace Gray
 
 	public:
 		typedef cArraySorted<TYPE, const TYPE&, TYPE_KEY> SUPER_t;
+#ifdef __GNUC__
 		typedef typename SUPER_t::ARG_t ARG_t;
 		typedef typename SUPER_t::KEY_t KEY_t;
+#endif
 
 	protected:
 		virtual COMPARE_t CompareData(ARG_t Data1, ARG_t Data2) const noexcept override
@@ -364,8 +370,10 @@ namespace Gray
 
 	public:
 		typedef cArraySorted<TYPE, const TYPE&, _TYPE_HASH> SUPER_t;
+#ifdef __GNUC__
 		typedef typename SUPER_t::ARG_t ARG_t;
 		typedef typename SUPER_t::KEY_t KEY_t;
+#endif
 
 	protected:
 		virtual COMPARE_t CompareData(ARG_t Data1, ARG_t Data2) const noexcept override
@@ -404,12 +412,15 @@ namespace Gray
 		//! @class Gray::cArraySortFacade
 		//! TYPE = the pointer or facade we are storing.
 		//! A sorted array of some TYPE_PTR pointers. overload this
+		//! Sorted by TYPE_KEY get_SortVal
 		//! Default Sort by cMem::Compare()
 
 	public:
 		typedef cArraySorted<TYPE, TYPE_PTR, TYPE_KEY> SUPER_t;
+#ifdef __GNUC__
 		typedef typename SUPER_t::ARG_t ARG_t;
- 
+#endif
+
 	protected:
 		virtual COMPARE_t CompareData(ARG_t pData1, ARG_t pData2) const noexcept override
 		{
@@ -512,8 +523,10 @@ namespace Gray
 
 	public:
 		typedef cArraySortFacade<TYPE, TYPE_PTR, TYPE_KEY> SUPER_t;
+#ifdef __GNUC__
 		typedef typename SUPER_t::ARG_t ARG_t;
-		typedef typename SUPER_t::KEY_t KEY_t;
+		typedef typename SUPER_t::KEY_t KEY_t;	// TYPE_KEY
+#endif
 
 	protected:
 		virtual COMPARE_t CompareData(ARG_t pData1, ARG_t pData2) const noexcept override
@@ -586,8 +599,10 @@ namespace Gray
 
 	public:
 		typedef cArraySortFacade<TYPE, TYPE_PTR, _TYPE_HASH> SUPER_t;
+#ifdef __GNUC__
 		typedef typename SUPER_t::ARG_t ARG_t;
 		typedef typename SUPER_t::KEY_t KEY_t;
+#endif
 
 	public:
 		virtual ~cArraySortFacadeHash()
@@ -625,8 +640,10 @@ namespace Gray
 
 	public:
 		typedef cArraySortFacade<TYPE*, TYPE*, const _TYPECH*> SUPER_t;
+#ifdef __GNUC__
 		typedef typename SUPER_t::ARG_t ARG_t;
 		typedef typename SUPER_t::KEY_t KEY_t;
+#endif
 
 	protected:
 		virtual COMPARE_t CompareData(ARG_t pData1, ARG_t pData2) const noexcept override

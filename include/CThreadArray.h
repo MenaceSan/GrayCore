@@ -255,7 +255,7 @@ namespace Gray
 			//! Used for statistical purposes. This may change of course.
 			return SUPER_t::IsEmpty();
 		}
-		ITERATE_t GetSize() const
+		ITERATE_t GetSize() const noexcept
 		{
 			//! Used for statistical purposes. This may change of course.
 			return SUPER_t::GetSize();

@@ -113,7 +113,6 @@ namespace Gray		//!< The main namespace for all Core functions.
 	typedef UINT_PTR	HASHCODE_t;				//!< could hold a pointer converted to a number? maybe 64 or 32 bit ? same as size_t.
 	typedef UINT32		HASHCODE32_t;			//!< always 32 bits.
 	const HASHCODE_t	k_HASHCODE_CLEAR = 0;		//!< not a valid index.
-
-};
+}
 
 #endif	// _INC_GRAYCORE

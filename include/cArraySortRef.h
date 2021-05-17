@@ -18,7 +18,7 @@ namespace Gray
 	class cArraySortRef : public cArraySortFacade < cRefPtr<TYPE>, TYPE*, TYPE_KEY >
 	{
 		//! @class Gray::cArraySortRef
-		//! A sorted array of cRefPtr<TYPE> objects.
+		//! A sorted array of cRefPtr<TYPE> objects. TYPE_KEY = get_SortVal()
 		//! the array has a reference to the element. similar to cArrayRef but sorted
 		//! It will get deleted when the reference count is 0.
 		//! default sort by cMem::Compare() pointers.
@@ -68,8 +68,10 @@ namespace Gray
 
 	public:
 		typedef cArraySortRef<TYPE, _TYPE_HASH> SUPER_t;
+#ifdef __GNUC__
 		typedef typename SUPER_t::ARG_t ARG_t;
 		typedef typename SUPER_t::KEY_t KEY_t;
+#endif
 
 	protected:
 		virtual COMPARE_t CompareData(ARG_t pData1, ARG_t pData2) const noexcept override
@@ -123,8 +125,10 @@ namespace Gray
 
 	public:
 		typedef cArraySortRef<TYPE, TYPE_KEY> SUPER_t;
+#ifdef __GNUC__
 		typedef typename SUPER_t::ARG_t ARG_t;
-		typedef typename SUPER_t::KEY_t KEY_t;
+		typedef typename SUPER_t::KEY_t KEY_t;	// TYPE_KEY
+#endif
 
 	protected:
 		virtual COMPARE_t CompareData(ARG_t pData1, ARG_t pData2) const noexcept override
@@ -207,8 +211,10 @@ namespace Gray
 
 	public:
 		typedef cArraySortRef<TYPE, const _TYPECH*> SUPER_t;
+#ifdef __GNUC__
 		typedef typename SUPER_t::ARG_t ARG_t;
 		typedef typename SUPER_t::KEY_t KEY_t;
+#endif
 
 	protected:
 		virtual COMPARE_t CompareData(ARG_t pData1, ARG_t pData2) const noexcept override

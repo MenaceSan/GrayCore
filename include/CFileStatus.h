@@ -84,7 +84,7 @@ namespace Gray
 
 		static bool IsLinuxHidden(const FILECHAR_t* pszName) noexcept
 		{
-			//! Is this a hidden file on __linux__ (NFS) ?
+			//! Is this a hidden file on __linux__ (NFS) ? all files starting with dot.
 			if (pszName == nullptr)
 				return true;
 			return pszName[0] == '.';

@@ -23,8 +23,10 @@ namespace Gray
 	public:
 		typedef cArraySorted< cStringT<_TYPE_CH>, cStringT<_TYPE_CH>, const _TYPE_CH*> SUPER_t;
 		typedef cStringT<_TYPE_CH> STR_t;	// alias for container
+#ifdef __GNUC__
 		typedef typename SUPER_t::ARG_t ARG_t;	// GCC seems to require this odd redefinition.
 		typedef typename SUPER_t::KEY_t KEY_t;
+#endif
 
 	public:
 		virtual ~cArraySortString()
@@ -45,21 +47,21 @@ namespace Gray
 			return this->Add(STR_t(pszStr));
 		}
 
-		ITERATE_t FindKeyRoot(const _TYPE_CH* pszRoot)
+		ITERATE_t FindKeyRoot(const _TYPE_CH* pszRoot) const noexcept
 		{
-			//! pszRoot is a root of one of the listed paths ? opposite of FindKeyDerived
+			//! Is pszRoot a root of one of the listed paths ? opposite of FindKeyDerived
 			//! e.g. pszRoot = a, element[x] = abc
-			//! like cFilePath::IsRelativeRoot
+			//! like cFilePath::IsRelativeRoot()
 			//! @return -1 = found nothing that would be derived from pszRoot.
 
-			StrLen_t iStrLen = StrT::Len(pszRoot);
+			const StrLen_t iStrLen = StrT::Len(pszRoot);
 			ITERATE_t iHigh = this->GetSize() - 1;
 			ITERATE_t iLow = 0;
 			while (iLow <= iHigh)
 			{
-				ITERATE_t i = (iHigh + iLow) / 2;
-				STR_t sCur = this->GetAt(i);
-				COMPARE_t iCompare = StrT::CmpIN<_TYPE_CH>(pszRoot, sCur, iStrLen);
+				const ITERATE_t i = (iHigh + iLow) / 2;
+				const STR_t sCur = this->GetAt(i);
+				const COMPARE_t iCompare = StrT::CmpIN<_TYPE_CH>(pszRoot, sCur, iStrLen);
 				if (iCompare == COMPARE_Equal)
 					return i;	// pszRoot is a parent of
 				if (iCompare > 0)
@@ -74,9 +76,9 @@ namespace Gray
 			return k_ITERATE_BAD;
 		}
 
-		ITERATE_t FindKeyDerived(const _TYPE_CH* pszDerived)
+		ITERATE_t FindKeyDerived(const _TYPE_CH* pszDerived) const noexcept
 		{
-			//! one of the listed paths is a root of pszDerived ? pszDerived is a child. opposite of FindKeyRoot
+			//! Is one of the listed paths a root of pszDerived ? pszDerived is a child. opposite of FindKeyRoot
 			//! e.g. pszDerived = abc, element[x] = a
 			//! like cFilePath::IsRelativeRoot
 			//! @return -1 = found nothing that would be root of pszDerived.
@@ -85,9 +87,9 @@ namespace Gray
 			ITERATE_t iLow = 0;
 			while (iLow <= iHigh)
 			{
-				ITERATE_t i = (iHigh + iLow) / 2;
-				STR_t sCur = this->GetAt(i);
-				COMPARE_t iCompare = StrT::CmpIN<_TYPE_CH>(pszDerived, sCur, sCur.GetLength());
+				const ITERATE_t i = (iHigh + iLow) / 2;
+				const STR_t sCur = this->GetAt(i);
+				const COMPARE_t iCompare = StrT::CmpIN<_TYPE_CH>(pszDerived, sCur, sCur.GetLength());
 				if (iCompare == COMPARE_Equal)
 					return(i);	// pszDerived is a child of sCur (derived from root sCur)
 				if (iCompare > 0)

@@ -75,7 +75,7 @@ namespace Gray
 #ifdef _DEBUG
 				if (m_pData == nullptr)
 				{
-					HRESULT hRes = HResult::GetLastDef();
+					const HRESULT hRes = HResult::GetLastDef();
 					DEBUG_ERR(("GlobalLock ERR='%s' for h=0%x", LOGERR(hRes), m_hData));
 				}
 #endif
@@ -138,7 +138,7 @@ namespace Gray
 		}
 		HANDLE_t DetachHandle() noexcept
 		{
-			HANDLE_t hTmp = m_hData;
+			const HANDLE_t hTmp = m_hData;
 			m_hData = HANDLE_NULL;
 			m_pData = nullptr;
 			return hTmp;

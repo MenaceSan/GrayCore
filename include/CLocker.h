@@ -35,6 +35,7 @@ namespace Gray
 		}
 		inline LONG get_LockCount() const noexcept
 		{
+			// @note use LONG for IUnknown compatibility.
 			DEBUG_CHECK(m_nLockCount >= 0);
 			return m_nLockCount;
 		}
