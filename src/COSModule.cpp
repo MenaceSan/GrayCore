@@ -92,6 +92,7 @@ namespace Gray
 		//! @note
 		//!  If we free a DLL that has vtable stuff in it,
 		//!  any objects based on these vtables are now broken!
+
 		if (!isValidModule())
 			return;
 		if (m_uFlags & cOSModule::k_Load_NoRefCount)	// Don't free.

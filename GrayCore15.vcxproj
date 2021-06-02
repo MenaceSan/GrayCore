@@ -549,7 +549,7 @@
     <ClInclude Include="include\cArchive.h" />
     <ClInclude Include="include\cArray.h" />
     <ClInclude Include="include\cArrayIUnk.h" />
-    <ClInclude Include="include\cArrayNew.h" />
+    <ClInclude Include="include\cArrayUnique.h" />
     <ClInclude Include="include\cArrayRef.h" />
     <ClInclude Include="include\cArraySort.h" />
     <ClInclude Include="include\cArraySortRef.h" />
@@ -597,7 +597,7 @@
     <ClInclude Include="include\cMem.h" />
     <ClInclude Include="include\cMemPage.h" />
     <ClInclude Include="include\cMime.h" />
-    <ClInclude Include="include\cNewPtr.h" />
+    <ClInclude Include="include\cUniquePtr.h" />
     <ClInclude Include="include\cNonCopyable.h" />
     <ClInclude Include="include\cObject.h" />
     <ClInclude Include="include\cObjectFactory.h" />

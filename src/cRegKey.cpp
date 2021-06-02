@@ -14,6 +14,8 @@
 #define HKEY_DYN_DATA               (( HKEY ) (ULONG_PTR)((LONG)0x80000006) )
 #endif
 
+#ifdef _WIN32
+#pragma comment(lib, "advapi32.lib")	// RegCloseKey, etc.
 
 namespace Gray
 {
@@ -49,3 +51,5 @@ namespace Gray
 		return _FN("H??");
 	}
 }
+
+#endif

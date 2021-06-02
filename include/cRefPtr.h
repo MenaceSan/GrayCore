@@ -15,9 +15,15 @@
 #include "IUnknown.h"
 #include "cTimeSys.h"	// TIMESYSD_t
 #include "cMem.h"
+#include "cPtrTrace.h"
 
 namespace Gray
 {
+
+#if defined(_DEBUG) && ! defined(UNDER_CE)
+#define USE_PTRTRACE_REF
+#endif
+
 	class GRAYCORE_LINK cRefBase : public IUnknown	// virtual
 	{
 		//! @class Gray::cRefBase
@@ -27,9 +33,7 @@ namespace Gray
 		//! @note These objects emulate the COM IUnknown. we may use cIUnkPtr<> for this also.
 		//! Use IUNKNOWN_DISAMBIG(cRefBase) with this
 
-#ifdef _DEBUG
-		static const int k_REFCOUNT_DEBUG = 0x20000000;		//!< mark this as debug.
-#endif
+		static const int k_REFCOUNT_DEBUG = 0x20000000;		//!< mark this as debug. (even in release mode)
 		static const int k_REFCOUNT_STATIC = 0x40000000;	//!< for structures that are 'static' or stack based. never use delete
 		static const int k_REFCOUNT_DESTRUCT = 0x80000000;	//!< we are in the process of destruction.
 		static const int k_REFCOUNT_MASK = 0xE0000000;		//!< hide extra information in the m_nRefCount
@@ -115,7 +119,7 @@ namespace Gray
 		bool isValidObj() const noexcept
 		{
 			// Is this really a valid object?
-			// does it have proper vtable ?
+			// IS_TYPE_OF = does it have proper vtable ?
 			if (!cMem::IsValidPtr(this))
 				return false;
 #if defined(_DEBUG) && ! defined(__GNUC__)
@@ -129,12 +133,14 @@ namespace Gray
 		STDMETHOD_(ULONG, AddRef)(void) override
 		{
 			//! like COM IUnknown::AddRef
+			//! @return count after this increment.
 			_InternalAddRef();
 			return (ULONG)get_RefCount();
 		}
 		STDMETHOD_(ULONG, Release)(void) override
 		{
 			//! like COM IUnknown::Release
+			//! @return count after this decrement.
 			int iRefCount = get_RefCount();
 			_InternalRelease();	// this could get deleted here!
 			return (ULONG)(iRefCount - 1);
@@ -204,32 +210,33 @@ namespace Gray
 			m_nRefCount.put_Value(k_REFCOUNT_DESTRUCT);
 		}
 
-#ifdef _DEBUG
 		bool isSmartDebug() const noexcept
 		{
 			//! Is this object marked as debug?
 			return(m_nRefCount.get_Value() & k_REFCOUNT_DEBUG) ? true : false;
 		}
-		void SetSmartDebug() noexcept
+		bool SetSmartDebug() noexcept
 		{
 			//! Mark this object as debug. maybe object is in the act of destruction?
 			if (isSmartDebug())	// already marked.
-				return;
+				return false;
 			m_nRefCount.AddX(k_REFCOUNT_DEBUG);
+			return true;
 		}
-#endif
 	};
 
 	template<class TYPE = cRefBase >
 	class cRefPtr
-		: public cPtrFacade < TYPE >
+		: public cPtrFacade<TYPE>
+#ifdef USE_PTRTRACE_REF
+		, public cPtrTrace
+#endif
 	{
 		//! @class Gray::cRefPtr
-		//! Template for a type specific Smart (reference counted) Pointer
+		//! Template for a type specific Smart (reference counted) pointer based on cRefBase.
 		//! Smart pointer to an object. like "com_ptr_t" _com_ptr_t or cComPtr. https://msdn.microsoft.com/en-us/library/hh279674.aspx
 		//! Just a ref to the object of some type. TYPE must be based on cRefBase
 		//! similar to boost::shared_ptr<TYPE> and std::shared_ptr<> but the object MUST be based on cRefBase.
-		//! @todo something like USE_IUNK_TRACE ??
 
 		typedef cRefPtr<TYPE> THIS_t;
 		typedef cPtrFacade<TYPE> SUPER_t;
@@ -242,6 +249,12 @@ namespace Gray
 			{
 				cRefBase* p = this->m_p;
 				p->IncRefCount();
+#ifdef USE_PTRTRACE_REF
+				if (p->isSmartDebug())
+				{
+					TraceAttach(p);	// Assume m_Src will get set via call to Attach() later ?? REFPTR_ATTACH
+				}
+#endif
 #ifdef _DEBUG
 				DEBUG_CHECK(!isCorruptPtr());
 #endif
@@ -250,38 +263,55 @@ namespace Gray
 
 	public:
 		cRefPtr() noexcept
+#ifdef USE_PTRTRACE_REF
+			: cPtrTrace(typeid(TYPE))
+#endif
 		{
 		}
 		cRefPtr(const TYPE* p2) noexcept
 			: cPtrFacade<TYPE>(const_cast<TYPE*>(p2))
+#ifdef USE_PTRTRACE_REF
+			, cPtrTrace(typeid(TYPE))
+#endif
 		{
-			//! copy
+			//! add a new ref.
 			//! @note default = assignment will auto destroy previous and use this constructor.
 			IncRefFirst();
 		}
 		cRefPtr(const THIS_t& ref) noexcept
 			: cPtrFacade<TYPE>(ref.get_Ptr())
+#ifdef USE_PTRTRACE_REF
+			, cPtrTrace(typeid(TYPE), static_cast<cRefBase*>(ref.get_Ptr()), ref.m_Src)
+#endif
 		{
 			//! create my own copy constructor.
 			IncRefFirst();
 		}
 
-#if 0
-		cRefPtr(THIS_t&& ref) noexcept
-			: cPtrFacade<TYPE>(ref)
+#ifdef USE_PTRTRACE_REF
+		cRefPtr(const TYPE* p2, const cDebugSourceLine& src)
+			: cPtrFacade<TYPE>(const_cast<TYPE*>(p2))
+			, cPtrTrace(typeid(TYPE), static_cast<cRefBase*>(const_cast<TYPE*>(p2)), src)
 		{
-			//! move constructor from cPtrFacade
+			//! for use with REF_PTR(v) macro. like cRefPtr<T> name(REF_PTR(v)); NOT using REFPTR_ATTACH
+			IncRefFirst();
+		}
+		cRefPtr(THIS_t&& ref) noexcept
+			: cPtrFacade<TYPE>(ref.get_Ptr())
+			, cPtrTrace(typeid(TYPE), static_cast<cRefBase*>(ref.get_Ptr()), ref.m_Src)
+		{
+			//! move constructor.
+			//! move constructor must be done manually in this case. Since we track pointer to the instance.
+			if (ref.isValidPtr())
+			{
+				// cRefBase* p = this->m_p;
+				// only if if (p->isSmartDebug()) // ?
+				IncRefFirst();
+				ref.ReleasePtr();
+			}
 		}
 #endif
 
-		cRefPtr(const TYPE* p2, TIMESYSD_t dwWaitMS)
-			: cPtrFacade<TYPE>(const_cast<TYPE*>(p2))
-		{
-			//! This is to fake out cThreadLockRef in single thread mode.
-			//! @arg dwWaitMS = ignored.
-			UNREFERENCED_PARAMETER(dwWaitMS);
-			IncRefFirst();
-		}
 		~cRefPtr()
 		{
 			ReleasePtr();
@@ -309,8 +339,8 @@ namespace Gray
 			if (p->get_RefCount() <= 0)
 				return true;
 
-#if 0	// Is TYPE properly defined at this location in the header file ?? Might not compile.
-			TYPE* p2 = DYNPTR_CAST(TYPE, p);	
+#if 0	// Is TYPE properly defined at this location in the header file ?? Forward ref might not compile here.
+			TYPE* p2 = DYNPTR_CAST(TYPE, p);
 			if (p2 == nullptr)
 				return true;
 #endif
@@ -337,13 +367,32 @@ namespace Gray
 				DEBUG_CHECK(!isCorruptPtr());
 #endif
 				this->m_p = nullptr;	// make sure possible destructors called in DecRefCount don't reuse this.
+#ifdef USE_PTRTRACE_REF
+				if (p2->isSmartDebug())
+				{
+					TraceRelease(static_cast<cRefBase*>(p2));
+				}
+#endif
 				p2->DecRefCount();	// this might delete this ?
 			}
 		}
+
+		bool SetSmartDebug()	// override
+		{
+			if (!isValidPtr())
+				return false;
+			if (!get_Ptr()->SetSmartDebug())
+				return false;
+#ifdef USE_PTRTRACE_REF
+			TraceAttach(static_cast<cRefBase*>(get_Ptr()));
+#endif
+			return true;
+		}
+
 		int get_RefCount() const noexcept
 		{
 			//! @return cRefBase::get_RefCount
-			if (this->m_p == nullptr)
+			if (!isValidPtr())
 				return 0;
 			return this->m_p->get_RefCount();
 		}
@@ -362,15 +411,6 @@ namespace Gray
 			return *this;
 		}
 
-#if 0
-		THIS_t& operator = (THIS_t&& ref)
-		{
-			//! move assignment operator
-			this->m_p = ref.m_p; ref.m_p = nullptr;
-			return *this;
-		}
-#endif
-
 #if 1
 		template<class _TYPE_2> operator cRefPtr<_TYPE_2>() const
 		{
@@ -382,11 +422,17 @@ namespace Gray
 
 	};
 
+#ifdef USE_PTRTRACE_REF
+#define REFPTR_ATTACH(p)	(p).Attach((p).get_Ptr(), DEBUGSOURCELINE);	// attach trace to DEBUGSOURCELINE.
+#else
+#define REFPTR_ATTACH(p)	__noop
+#endif
+
 	// The lowest (un-type checked) smart pointer.
 	typedef GRAYCORE_LINK cRefPtr<> cRefBasePtr;
 
 #ifndef GRAY_STATICLIB // force implementation/instantiate for DLL/SO.
-	template class GRAYCORE_LINK cRefPtr < cRefBase >;
+	template class GRAYCORE_LINK cRefPtr<cRefBase>;
 #endif
 
 }

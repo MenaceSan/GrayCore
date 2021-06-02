@@ -475,7 +475,7 @@ copy $(TargetDir)\$(TargetName).pdb ..\..\bin\$(OutDir)
 				RelativePath=".\CArrayIRef.h">
 			</File>
 			<File
-				RelativePath=".\cArrayNew.h">
+				RelativePath=".\cArrayUnique.h">
 			</File>
 			<File
 				RelativePath=".\cArrayRef.h">
@@ -586,7 +586,7 @@ copy $(TargetDir)\$(TargetName).pdb ..\..\bin\$(OutDir)
 				RelativePath=".\cLogMgr.h">
 			</File>
 			<File
-				RelativePath=".\cNewPtr.h">
+				RelativePath=".\cUniquePtr.h">
 			</File>
 			<File
 				RelativePath=".\cNonCopyable.h">

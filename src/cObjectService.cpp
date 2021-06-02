@@ -13,7 +13,7 @@ namespace Gray
 #ifndef _MFC_VER
 	void CObject::Serialize(cArchive& a) // virtual
 	{
-		// Emulate MFC method.
+		// Emulate MFC method. cArchive = CArchive
 		UNREFERENCED_REFERENCE(a);
 	}
 #endif

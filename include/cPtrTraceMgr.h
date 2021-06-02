@@ -23,13 +23,13 @@ namespace Gray
 		: public cSingleton < cPtrTraceMgr >
 	{
 		//! @class Gray::cPtrTraceMgr
-		//! USE_IUNK_TRACE = We are tracing all calls to cIUnkPtr<> so we can figure out who is not releasing their ref.
+		//! USE_PTRTRACE_IUNK = We are tracing all calls to cIUnkPtr<> so we can figure out who is not releasing their ref.
 		friend class cSingleton < cPtrTraceMgr >;
 		friend class cPtrTrace;
 
 	public:
 		mutable cThreadLockCount m_Lock;
-		cArraySortVal<cPtrTrace*> m_aTraces;
+		cArraySortVal<cPtrTrace*> m_aTraces;	//!< may be up-cast cPtrTrace to cIUnkBasePtr or cRefPtr
 
 	protected:
 		cPtrTraceMgr() noexcept
@@ -41,7 +41,7 @@ namespace Gray
 		}
 
 	public:
-		virtual void TraceDump(cLogProcessor& log, ITERATE_t iCountExpected);
+		virtual int TraceDump(cLogProcessor* pLog, ITERATE_t iCountExpected);
 		CHEAPOBJECT_IMPL;
 	};
 }

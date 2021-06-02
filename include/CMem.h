@@ -335,7 +335,7 @@ namespace Gray
 			return (StrLen_t)((nSize * 2) + 1);
 		}
 		static StrLen_t GRAYCALL GetHexDigest(OUT char* pszHexString, const BYTE* pData, size_t nSizeData);
-		static HRESULT GRAYCALL SetHexDigest(const char* pszHexString, OUT BYTE* pData, size_t nSizeData);
+		static HRESULT GRAYCALL SetHexDigest(const char* pszHexString, OUT BYTE* pData, size_t nSizeData, bool testEnd = true);
 	};
 
 	template <UINT32 _SIGVALID = 0xCA11AB1E>

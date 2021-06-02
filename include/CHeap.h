@@ -252,6 +252,7 @@ namespace Gray
 		}
 		void FreeSecure()
 		{
+			//! For cryptographic information. Clear previous contents when free.
 			if (!isValidPtr())
 				return;
 			cMem::ZeroSecure(m_pData, get_DataSize());
@@ -383,7 +384,7 @@ namespace Gray
 			//! Get as a char pointer.
 			return (char*)get_DataV();
 		}
-		 
+
 		operator void* () const noexcept
 		{
 			return get_DataV();

@@ -14,19 +14,18 @@
 #include "cPtrTrace.h"
 #include "IUnknown.h"
 
-#if 0 // defined(_DEBUG) && ! defined(UNDER_CE)
-#define USE_IUNK_TRACE
+#if defined(_DEBUG) && ! defined(UNDER_CE)
+// #define USE_PTRTRACE_IUNK
 #endif
 
 namespace Gray
 {
-	template<class TYPE = IUnknown>	class cIUnkTraceOpaque;
 	class cLogProcessor;
 
 	template<class TYPE = IUnknown>
 	class cIUnkPtr
-		: public cPtrFacade < TYPE >
-#ifdef USE_IUNK_TRACE
+		: public cPtrFacade<TYPE>
+#ifdef USE_PTRTRACE_IUNK
 		, public cPtrTrace
 #endif
 	{
@@ -35,15 +34,11 @@ namespace Gray
 		//! like _WIN32 ATL CComPtr<> or "com_ptr_t"
 		//! TYPE must be based on IUnknown
 
-#ifdef USE_IUNK_TRACE
-		friend class cIUnkTraceOpaque < TYPE >;
-		friend class cIUnkTraceOpaque < IUnknown >;
-#endif
 		typedef cIUnkPtr<TYPE> THIS_t;
 		typedef cPtrFacade<TYPE> SUPER_t;
 
-	protected:
 #ifdef _DEBUG
+	public:
 		static void AssertIUnk(TYPE* p2)
 		{
 			if (p2 == nullptr)
@@ -53,60 +48,61 @@ namespace Gray
 		}
 #endif
 
-		void SetFirstIUnk(TYPE* p2)
+	protected:
+		void IncRefFirst()
 		{
 			//! Initialize the pointer value and add a single reference.
 			//! Compliment ReleasePtr()
 			//! @note IncRefCount can throw !
-			if (p2 != nullptr)
+			if (m_p != nullptr)
 			{
 #ifdef _DEBUG
-				int iRefCount = (int)p2->AddRef();
+				const int iRefCount = (int)m_p->AddRef();
 				ASSERT(iRefCount >= 1);
-				AssertIUnk(p2);
+				AssertIUnk(m_p);
 #else
-				p2->AddRef();
+				m_p->AddRef();
 #endif
-#ifdef USE_IUNK_TRACE
-				TraceOpen(p2);	// NOTE: m_Src not set! use IUNK_ATTACH()
+#ifdef USE_PTRTRACE_IUNK
+				TraceAttach(m_p);	// NOTE: m_Src not set! use IUNK_ATTACH() later
 #endif
 			}
-			this->m_p = p2;
 		}
 
 	public:
 		//! Construct and destruction
 		cIUnkPtr()
-#ifdef USE_IUNK_TRACE
+#ifdef USE_PTRTRACE_IUNK
 			: cPtrTrace(typeid(TYPE))
 #endif
 		{
 		}
 		cIUnkPtr(const TYPE* p2)
-#ifdef USE_IUNK_TRACE
-			: cPtrTrace(typeid(TYPE))
+			: cPtrFacade<TYPE>(const_cast<TYPE*>(p2))
+#ifdef USE_PTRTRACE_IUNK
+			, cPtrTrace(typeid(TYPE))
 #endif
 		{
-			SetFirstIUnk(const_cast<TYPE*>(p2));
+			//! copy
+			IncRefFirst();
 		}
 		cIUnkPtr(const THIS_t& ref)
-#ifdef USE_IUNK_TRACE
-			: cPtrTrace(typeid(TYPE))
+			: cPtrFacade<TYPE>(ref.get_Ptr())
+#ifdef USE_PTRTRACE_IUNK
+			, cPtrTrace(typeid(TYPE), ref.get_Ptr(), ref.m_Src)
 #endif
 		{
-			//! using the assignment auto constructor is not working so use this.
-			SetFirstIUnk(ref.get_Ptr());
+			//! copy. using the assignment auto constructor is not working so use this.
+			IncRefFirst();
 		}
 
-#if 1
-		cIUnkPtr(THIS_t&& ref) // noexcept
-#ifdef USE_IUNK_TRACE
-			: cPtrTrace(ref)
-#endif
+#ifdef USE_PTRTRACE_IUNK
+		cIUnkPtr(const TYPE* p2, const cDebugSourceLine& src)
+			: cPtrFacade<TYPE>(const_cast<TYPE*>(p2))
+			, cPtrTrace(typeid(TYPE), p2, src)
 		{
-			//! move constructor.
-			//! would ': cPtrFacade<TYPE>(ref)' deal with cPtrTrace correctly? 			
-			this->m_p = ref.m_p; ref.m_p = nullptr;
+			//! for use with IUNK_PTR(v) macro. like cIUnkPtr<T> name(IUNK_PTR(v)); NOT using IUNK_ATTACH
+			IncRefFirst();
 		}
 #endif
 
@@ -120,13 +116,13 @@ namespace Gray
 			//! @return the current reference count. Add and remove a ref to get the count.
 			if (this->m_p == nullptr)
 				return 0;
-			int iRefCount = (int) this->m_p->AddRef();	// ULONG
+			const int iRefCount = (int)this->m_p->AddRef();	// ULONG
 			this->m_p->Release();
 			return iRefCount - 1;
 		}
 		TYPE** get_PPtr()
 		{
-			//! use IUNK_GETPPTR() macro to track this with USE_IUNK_TRACE.
+			//! use IUNK_GETPPTR() macro to track this with USE_PTRTRACE_IUNK.
 			//! QueryInterface() or similar wants a pointer to a pointer to fill in my interface.
 			ReleasePtr();
 			ASSERT(!this->isValidPtr());
@@ -136,7 +132,7 @@ namespace Gray
 		{
 			//! get a ** to assign the pointer.
 			//! assume the caller has added the first reference for me. Don't call AddRef! 
-			//! use IUNK_GETPPTRV() macro to track this with USE_IUNK_TRACE.
+			//! use IUNK_GETPPTRV() macro to track this with USE_PTRTRACE_IUNK.
 			//! QueryInterface() and others don't like the typing.
 			ReleasePtr();
 			ASSERT(!this->isValidPtr());
@@ -154,7 +150,8 @@ namespace Gray
 			if (p2 != this->m_p)
 			{
 				ReleasePtr();
-				SetFirstIUnk(p2);
+				this->m_p = p2;
+				IncRefFirst();
 			}
 		}
 
@@ -169,7 +166,7 @@ namespace Gray
 			}
 			// Query for TYPE interface. acts like IUNK_GETPPTRV(pInterface, riid)
 			TYPE* pInterface = nullptr;
-			HRESULT hRes = p2->QueryInterface(riid, reinterpret_cast<void**>(&pInterface));
+			HRESULT hRes = p2->QueryInterface(riid, OUT reinterpret_cast<void**>(&pInterface));
 			if (FAILED(hRes))
 			{
 				// pInterface = nullptr;
@@ -181,8 +178,8 @@ namespace Gray
 			ASSERT(pInterface != nullptr);
 			AssertIUnk(pInterface);
 #endif
-#ifdef USE_IUNK_TRACE
-			TraceOpen(pInterface);	// NOTE: m_Src not set! use IUNK_ATTACH()
+#ifdef USE_PTRTRACE_IUNK
+			TraceAttach(p2);	// NOTE: m_Src not set! use IUNK_ATTACH()
 #endif
 
 			// Save the interface without AddRef()ing. ASSUME QueryInterface already did that.
@@ -216,11 +213,11 @@ namespace Gray
 #ifdef _DEBUG
 			AssertIUnk(this->m_p);
 #endif
-#ifdef USE_IUNK_TRACE
-			TraceClose(p2);
+#ifdef USE_PTRTRACE_IUNK
+			TraceRelease();
 #endif
 			this->m_p = nullptr;	// make sure possible destructors called in DecRefCount don't reuse this.
-			int iRefCount = (int)p2->Release();	// this might delete this ?
+			const int iRefCount = (int)p2->Release();	// this might delete this ?
 			return iRefCount;
 		}
 
@@ -236,50 +233,44 @@ namespace Gray
 			put_Ptr(p2.get_Ptr());
 			return *this;
 		}
-#if 0
-		THIS_t& operator = (THIS_t&& ref)
-		{
-			//! move assignment operator
-			this->m_p = ref.m_p; ref.m_p = nullptr;
-			return *this;
-		}
-#endif
 
 		//! Accessor ops.
 		TYPE& operator * () const
 		{
-			ASSERT(this->isValidPtr()); return *this->m_p;
+			ASSERT(this->isValidPtr()); 
+			return *this->m_p;
 		}
 
 		TYPE* operator -> () const
 		{
-			ASSERT(this->isValidPtr()); return(this->m_p);
+			ASSERT(this->isValidPtr());
+			return this->m_p;
 		}
 	};
 
 	// The lowest (un-type checked) smart/reference counted pointer.
 	typedef GRAYCORE_LINK cIUnkPtr<> cIUnkBasePtr;
 
-#ifdef USE_IUNK_TRACE
+#ifdef USE_PTRTRACE_IUNK
 	template<class TYPE>
-	class cIUnkTraceOpaque
+	class cIUnkTraceHelper
 	{
-		//! @class Gray::cIUnkTraceOpaque
-		//! This represents an "open" handle instance to a cIUnkPtr<IUnknown> as passed into an opaque function that might return a pointer with an AddRef().
+		//! @class Gray::cIUnkTraceHelper
 		//! Use this and the corresponding IUNK_GETPPTR macros to insulate against COM (e.g. DirectX) calls that return interfaces with an implied AddRef().
+		//! This represents an "open" handle instance to a cIUnkPtr<IUnknown> as passed into an opaque function that might return a pointer with an AddRef().
 		//! a single reference to an IUnknown
 		//! auto stack based only.
 	private:
 		cIUnkPtr<TYPE>& m_rpIObj;	//!< track the open IUnk
 
 	public:
-		cIUnkTraceOpaque(cIUnkPtr<TYPE>& rpObj, const cDebugSourceLine& src)
+		cIUnkTraceHelper(cIUnkPtr<TYPE>& rpObj, const cDebugSourceLine& src)
 			: m_rpIObj(rpObj)
 		{
 			ASSERT(rpObj.get_Ptr() == nullptr);
 			rpObj.m_Src = src;	// last open on this handle.
 		}
-		~cIUnkTraceOpaque()
+		~cIUnkTraceHelper()
 		{
 			//! We allowed something to place a pointer here, so check it.
 			TYPE* p = m_rpIObj.get_Ptr();
@@ -288,7 +279,7 @@ namespace Gray
 #ifdef _DEBUG
 				m_rpIObj.AssertIUnk(p);
 #endif
-				m_rpIObj.TraceOpen(p);
+				m_rpIObj.TraceAttach(p);
 			}
 		}
 		operator TYPE** () const
@@ -303,17 +294,17 @@ namespace Gray
 		}
 	};
 
-#define IUNK_GETPPTR(p,TYPE)	cIUnkTraceOpaque<TYPE>(p,DEBUGSOURCELINE)
-#define IUNK_GETPPTRV(p,TYPE)	cIUnkTraceOpaque<TYPE>(p,DEBUGSOURCELINE)
-#define IUNK_ATTACH(p)			ASSERT((p).get_Ptr()!=nullptr); (p).m_Src = DEBUGSOURCELINE; (p).TraceOpen((p).get_Ptr());	// attach trace.
+#define IUNK_GETPPTR(p,TYPE)	cIUnkTraceHelper<TYPE>(p,DEBUGSOURCELINE)
+#define IUNK_GETPPTRV(p,TYPE)	cIUnkTraceHelper<TYPE>(p,DEBUGSOURCELINE)
+#define IUNK_ATTACH(p)			(p).Attach((p).get_Ptr(), DEBUGSOURCELINE);	// attach cPtrTrace to DEBUGSOURCELINE.
 #else
 #define IUNK_GETPPTR(p,TYPE)	(p).get_PPtr()
 #define IUNK_GETPPTRV(p,TYPE)	(p).get_PPtrV()
-#define IUNK_ATTACH(p)			__noop		// No trace.
-#endif	// USE_IUNK_TRACE
+#define IUNK_ATTACH(p)			__noop		// No trace. do nothing.
+#endif	// USE_PTRTRACE_IUNK
 
 #ifndef GRAY_STATICLIB // force implementation/instantiate for DLL/SO.
-	template class GRAYCORE_LINK cIUnkPtr < IUnknown >;
+	template class GRAYCORE_LINK cIUnkPtr<IUnknown>;
 #endif
 
 }

@@ -39,7 +39,7 @@ namespace Gray
 		: m_time(nTime)
 		{
 		}
-		CTime(const cTimeFile& fileTime, int nDST = -1);
+		CTime(const cTimeFile& fileTime, int nDST = -1) noexcept;
 
 		const CTime& operator=(const CTime& timeSrc) noexcept
 		{
@@ -54,19 +54,19 @@ namespace Gray
 
 		bool operator<=(TIMESEC_t nTime) const noexcept
 		{
-			return(m_time <= nTime);
+			return m_time <= nTime ;
 		}
 		bool operator==(TIMESEC_t nTime) const noexcept
 		{
-			return(m_time == nTime);
+			return m_time == nTime ;
 		}
 		bool operator!=(TIMESEC_t nTime) const noexcept
 		{
-			return(m_time != nTime);
+			return m_time != nTime ;
 		}
 		bool operator>=(CTime ttime) const noexcept
 		{
-			return(m_time >= ttime.m_time);
+			return m_time >= ttime.m_time ;
 		}
 
 		operator TIMESEC_t() const noexcept
@@ -155,55 +155,55 @@ namespace Gray
 			return GetTimeNow();
 		}
 
-		void InitTimeNow();
-		void InitTimeNowPlusSec(TIMESECD_t iOffsetInSeconds);
-		void InitTime(TIMESEC_t nTime = k_nZero);
+		void InitTime(TIMESEC_t nTime = k_nZero) noexcept;
+		void InitTimeNow() noexcept;
+		void InitTimeNowPlusSec(TIMESECD_t iOffsetInSeconds) noexcept;
 
-		cTimeFile GetAsFileTime() const;
+		cTimeFile GetAsFileTime() const noexcept;
 		bool GetTimeUnits(OUT cTimeUnits& rTu, TZ_TYPE nTimeZoneOffset= TZ_UTC) const;
 
 		// non MFC CTime operations.
-		TIMESECD_t GetSecondsSince(const cTimeInt& time) const
+		TIMESECD_t GetSecondsSince(const cTimeInt& time) const noexcept
 		{
 			//! difference in seconds,
 			//! - = this is in the past. (time in future)
 			//! + = this is in the future. (time in past)
-			return((TIMESECD_t)(GetTime() - time.GetTime()));
+			return (TIMESECD_t)(GetTime() - time.GetTime()) ;
 		}
-		TIMESECD_t get_TimeTilSec() const
+		TIMESECD_t get_TimeTilSec() const noexcept
 		{
 			//! difference in seconds
 			//! - = this is in the past.
 			//! + = this is in the future.
 			cTimeInt timeNow;
 			timeNow.InitTimeNow();
-			return((TIMESECD_t)(GetTime() - timeNow.GetTime()));
+			return (TIMESECD_t)(GetTime() - timeNow.GetTime()) ;
 		}
-		TIMESECD_t get_AgeSec() const
+		TIMESECD_t get_AgeSec() const noexcept
 		{
 			//! How old is this? (in seconds)
 			//! current time - this time.
-			return(-get_TimeTilSec());
+			return -get_TimeTilSec() ;
 		}
-		bool isTimeFuture() const
+		bool isTimeFuture() const noexcept
 		{
 			return((unsigned)GetTime() > (unsigned)GetTimeNow().GetTime());
 		}
 
-		static inline bool IsTimeValid(TIMESEC_t nTime)
+		static inline bool IsTimeValid(TIMESEC_t nTime) noexcept
 		{
-			return(nTime > k_nZero);
+			return nTime > k_nZero ;
 		}
-		bool isTimeValid() const
+		bool isTimeValid() const noexcept
 		{
 			//! MFC does 64 -> 32 bits.
-			return(IsTimeValid((TIMESEC_t)GetTime()));
+			return IsTimeValid((TIMESEC_t)GetTime()) ;
 		}
-		int get_TotalDays() const // like in COleDateTimeSpan
+		int get_TotalDays() const noexcept // like in COleDateTimeSpan
 		{
 			//! Needs to be more consistent than accurate. just for compares.
 			//! Should turn over at midnight.
-			return((int)(GetTime() / cTimeUnits::k_nSecondsPerDay));
+			return (int)(GetTime() / cTimeUnits::k_nSecondsPerDay) ;
 		}
 
 		// to/from strings.

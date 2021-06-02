@@ -6,8 +6,12 @@
 #include "cOSHandle.h"
 #include "cOSHandleSet.h"
 #include "cTimeVal.h"
+
 #ifdef __linux__
 #include <sys/ioctl.h>
+#endif
+#if defined(_WIN32)
+#pragma comment(lib, "kernel32.lib")	 // CloseHandle, etc
 #endif
 
 namespace Gray

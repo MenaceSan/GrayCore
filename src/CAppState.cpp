@@ -15,6 +15,7 @@
 
 #if defined(_WIN32) && ! defined(UNDER_CE)
 #include <shlobj.h>		// M$ documentation says this nowhere, but this is the header file for SHGetPathFromIDList shfolder.h
+#pragma comment(lib, "shell32.lib")	 // SHGetFolderPath
 #elif defined(__linux__)
 #include <unistd.h>		// char *getlogin(void);
 #endif
@@ -202,10 +203,15 @@ namespace Gray
 
 		if (GetEnvironStr(k_EnvironName, nullptr, 0) == 0)
 		{
-			// MUST not already exist !
+			// MUST not already exist in this process space! Checks for DLL hell.
 			FILECHAR_t szValue[StrNum::k_LEN_MAX_DIGITS_INT + 2];
 			StrT::ULtoA((UINT_PTR)this, szValue, STRMAX(szValue), 16);
 			SetEnvironStr(k_EnvironName, szValue);		// record this globally to any consumer in the process space.
+		}
+		else
+		{
+			// This is BAD !!! DLL HELL!
+			ASSERT(0);
 		}
 	}
 

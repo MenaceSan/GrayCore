@@ -2,10 +2,10 @@ rem Assume we have built all the binaries. This will copy them all to the approp
 rem Assume NuGet tools are installed /Programs/NuGet.exe .
 rem https://digitalhouseblog.wordpress.com/2019/08/22/how-to-make-a-nuget-package-for-c/
 rem https://docs.microsoft.com/en-us/nuget/reference/nuget-exe-cli-reference -> https://www.nuget.org/downloads
-
+rem use for v141 or v142
 @ECHO OFF
 set CodeVer=1.6.5
-set ToolVer=v141
+set ToolVer=v142
 set BinDir=..\..\..\bin
 set DstDir=%BinDir%\graycore-%ToolVer%.%CodeVer%
 @ECHO on
@@ -94,6 +94,8 @@ rem add to local test server.
 rem /Programs/NuGet.exe add graycore-v142.1.6.5.nupkg -source C:\Dennis\Source\bin\packages
 /Programs/NuGet.exe add "%BinDir%\graycore-%ToolVer%.%CodeVer%.nupkg" -source "%BinDir%\packages"
 IF ERRORLEVEL 1 GOTO ERRORDETECTED
+
+ECHO SUCCESS !
 
 GOTO DONE
 

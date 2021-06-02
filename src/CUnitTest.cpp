@@ -14,7 +14,7 @@
 #include "cAppConsole.h"
 #include "cSingletonPtr.h"
 #include "cFileDir.h"
-#include "cNewPtr.h"
+#include "cUniquePtr.h"
 #include "cSystemHelper.h"
 #include "cTypes.h"
 #include "cTimeDouble.h"
@@ -204,13 +204,24 @@ do ordain and establish this constitution of the United States of America\n\n");
 		STATIC_ASSERT(iOffset > 8, iOffset);	// check offsetof().
 #endif
 
-	// Test some size assumptions. cPtrFacade
-		cNewPtr<int> pNewObj;
-		STATIC_ASSERT(sizeof(cNewPtr<int>) == sizeof(void*), cNewPtr);
+		// Test some size assumptions. cPtrFacade
+		cUniquePtr<int> pNewObj;
+		STATIC_ASSERT(sizeof(cUniquePtr<int>) == sizeof(void*), cUniquePtr);
+		STATIC_ASSERT(sizeof(cPtrFacade<int>) == sizeof(void*), cPtrFacade);
+
 		cRefBasePtr pRefObj;
-		STATIC_ASSERT(sizeof(cRefBasePtr) == sizeof(void*), cRefBasePtr);
+#ifdef USE_PTRTRACE_REF
+		STATIC_ASSERT(sizeof(pRefObj) == sizeof(void*) + sizeof(cPtrTrace), cRefBasePtr);
+#else
+		STATIC_ASSERT(sizeof(pRefObj) == sizeof(void*), cRefBasePtr);
+#endif
+
 		cIUnkBasePtr pIRefObj;
-		STATIC_ASSERT(sizeof(cIUnkBasePtr) >= sizeof(void*), cIUnkBasePtr);	// may have extra stuff!
+#ifdef USE_PTRTRACE_IUNK		// may have extra stuff!
+		STATIC_ASSERT(sizeof(pIRefObj) == sizeof(void*) + sizeof(cPtrTrace), cIUnkBasePtr);
+#else
+		STATIC_ASSERT(sizeof(pIRefObj) == sizeof(void*), cIUnkBasePtr);
+#endif
 
 		// Test CHECKPTR_CAST(TYPE2, get_Single());
 		cAppState* pTest1 = cAppState::get_Single();
@@ -262,7 +273,7 @@ do ordain and establish this constitution of the United States of America\n\n");
 	{
 		//! Create the cUnitTest object and run the cUnitTest.
 		ASSERT(this != nullptr);
-		cNewPtr<cUnitTest> pUnitTest(CreateObjectT());
+		cUniquePtr<cUnitTest> pUnitTest(CreateObjectT());
 		pUnitTest->RunUnitTest();
 	}
 
@@ -521,6 +532,13 @@ do ordain and establish this constitution of the United States of America\n\n");
 		szDashes[STRMAX(szDashes)] = '\0';
 		UNITTEST_TRUE(!cMem::IsCorrupt(szDashes, sizeof(szDashes), true));
 
+		// Watch out for memory leaks.
+#if defined(USE_PTRTRACE_REF) || defined(USE_PTRTRACE_IUNK)
+		cPtrTraceMgr& traceMgr = cPtrTraceMgr::I();
+		const int nPtrTrace1 = traceMgr.m_aTraces.GetSize();
+		cPtrTraceMgr::I().TraceDump(m_pLog, 0);
+#endif
+
 		ITERATE_t iTestsRun = 0;
 		for (ITERATE_t i = 0; i < m_aUnitTests.GetSize(); i++)
 		{
@@ -559,6 +577,14 @@ do ordain and establish this constitution of the United States of America\n\n");
 				return E_FAIL;
 			}
 
+#if defined(USE_PTRTRACE_REF) || defined(USE_PTRTRACE_IUNK)
+			const int nPtrTrace2 = traceMgr.m_aTraces.GetSize();
+			if (nPtrTrace2 != nPtrTrace1)
+			{
+				m_pLog->addDebugInfoF("cUnitTest cPtrTraceMgr Leak %d", nPtrTrace2);
+			}
+#endif
+
 			// How long did it take?
 			ASSERT(tPerfStop.get_Perf() >= tPerfStart.get_Perf());
 			TIMEPERF_t iPerfDiff = tPerfStop.get_Perf() - tPerfStart.get_Perf();
@@ -584,8 +610,8 @@ do ordain and establish this constitution of the United States of America\n\n");
 			m_pLog->addDebugInfoF("cUnitTest FAILED to find test for '%s'", LOGSTR(m_aTestNames[0]));
 		}
 
-#ifdef USE_IUNK_TRACE
-		cPtrTraceMgr::I().TraceDump(*m_pLog, 0);
+#if defined(USE_PTRTRACE_IUNK) || defined(USE_PTRTRACE_REF)
+		cPtrTraceMgr::I().TraceDump(m_pLog, 0);
 #endif
 		RunCleanup();
 

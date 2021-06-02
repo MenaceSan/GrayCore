@@ -41,6 +41,7 @@ namespace Gray
 		//! __linux__ link with "dl" library
 		//! other times use 1. static binding or 2. delayed binding to DLL
 		//! @todo Get module footprint info. how much memory does it use?
+		//! @not VERY IMPORTANT!! for M$ C++ 2019, Objects allocated (new) in a DLL have a vtable assigned by the module. when unloaded this vtable is unloaded. This means all these objects are corrupt. Even though the memory they occupy is still valid.
 
 	private:
 		HMODULE m_hModule;		//!< sometimes the same as HINSTANCE ? = loading address of the code. NOT cOSHandle.
@@ -101,7 +102,7 @@ namespace Gray
 		bool isResourceModule() const noexcept
 		{
 			// We cant call this. its not loaded as code.
-			return m_uFlags & (k_Load_Preload | k_Load_Resource);
+			return (m_uFlags & (k_Load_Preload | k_Load_Resource)) != 0;
 		}
 
 		StrLen_t GetModulePath(FILECHAR_t* pszModuleName, StrLen_t nSizeMax) const;
@@ -127,7 +128,7 @@ namespace Gray
 		}
 		void ClearModule() noexcept
 		{
-			// Dont decrement load count (FreeModuleLast) even if i should.
+			// Don't decrement load count (FreeModuleLast) even if i should.
 			m_hModule = HMODULE_NULL;
 			m_uFlags = k_Load_Normal;
 #ifdef __linux__
@@ -136,7 +137,7 @@ namespace Gray
 		}
 		HMODULE DetachModule() noexcept
 		{
-			HMODULE hModule = m_hModule;
+			const HMODULE hModule = m_hModule;
 			ClearModule();
 			return hModule;
 		}

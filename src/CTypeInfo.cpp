@@ -16,10 +16,20 @@ namespace Gray
 #undef CTYPE_DEF
 #endif
 
-	const char* cTypeInfo::GetMemberName(int i) const
+#ifdef _CPPRTTI
+
+	const void** GRAYCALL cTypeInfo::Get_vtable(void* p) // static 
 	{
-		//! read the vptr/vtable to get a list of names of the virtual exposed members.
-		//! @todo Get List of members.
+		// Get the vtable of the object.
+		// Assume this is a 'new' returned pointer.
+
+		return nullptr;
+	}
+
+	const char* GRAYCALL cTypeInfo::GetMemberName_TODO(const void** vtable, int i)   // static
+	{
+		//! read the __vfptr/vtable AKA _vptr, vftable to get a list of names of the virtual exposed members.
+		//! @todo enum List of members.
 		//! @return nullptr = end of list.
 		if (i < 0)
 			return nullptr;
@@ -31,4 +41,6 @@ namespace Gray
 
 		return "test";
 	}
+#endif
+
 }

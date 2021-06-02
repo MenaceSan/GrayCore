@@ -27,7 +27,7 @@
     <ClInclude Include="cArray.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="cArrayNew.h">
+    <ClInclude Include="cArrayUnique.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="cArrayRef.h">
@@ -105,7 +105,7 @@
     <ClInclude Include="cMime.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="cNewPtr.h">
+    <ClInclude Include="cUniquePtr.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="cNonCopyable.h">

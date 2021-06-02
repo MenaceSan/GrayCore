@@ -22,12 +22,12 @@ namespace Gray
 	{
 		//! @interface Gray::IHeapObject
 		//! This is a base interface supported by objects/classes that are ALWAYS assumed allocated on the heap.
-		//! Use this because multiple inheritance can hide my top heap (freeable) pointer.
+		//! Use this because multiple inheritance can hide my top heap (free-able) pointer.
 		//! Top should implement some version of cHeapObject. e.g. "x = new cXObject"
 
 		IGNORE_WARN_INTERFACE(IHeapObject);
 
-		virtual const void* get_HeapPtr() const noexcept = 0;	//!< Get the top level (outermost, freeable) class pointer. I can delete get_HeapPtr().
+		virtual const void* get_HeapPtr() const noexcept = 0;	//!< Get the top level (outermost, free-able) class pointer. I can delete get_HeapPtr().
 
 		// Add this to each IHeapObject rooted object to get the base heap allocation pointer. Avoids problems with multiple inheritance and heap allocated objects.
 #define CHEAPOBJECT_IMPL const void* get_HeapPtr() const noexcept override { return this; }

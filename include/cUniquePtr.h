@@ -1,10 +1,10 @@
 //
-//! @file cNewPtr.h
+//! @file cUniquePtr.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_cNewPtr_H
-#define _INC_cNewPtr_H
+#ifndef _INC_cUniquePtr_H
+#define _INC_cUniquePtr_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
@@ -14,21 +14,21 @@
 namespace Gray
 {
 	template<class TYPE>
-	class cNewPtr : public cPtrFacade < TYPE >
+	class cUniquePtr : public cPtrFacade < TYPE >
 	{
-		//! @class Gray::cNewPtr
+		//! @class Gray::cUniquePtr
 		//! These are sort of dumb "smart pointers" but assume a single reference.
 		//! A single reference to a dynamically allocated (heap) class not based on cRefBase. Free on destruct.
 		//! Works like OLD STL "auto_ptr<TYPE>" or boost::unique_ptr<TYPE>, std::unique_ptr<TYPE>
 
-		typedef cNewPtr<TYPE> THIS_t;
+		typedef cUniquePtr<TYPE> THIS_t;
 		typedef cPtrFacade<TYPE> SUPER_t;
 
 	public:
-		cNewPtr() noexcept
+		cUniquePtr() noexcept
 		{
 		}
-		explicit cNewPtr(TYPE* pObj) noexcept
+		explicit cUniquePtr(TYPE* pObj) noexcept
 			: cPtrFacade<TYPE>(pObj)
 		{
 			// explicit to make sure we don't copy an allocated pointer accidentally.
@@ -36,7 +36,7 @@ namespace Gray
 
 	private:
 		// Don't allow this ! copy would be risky.
-		cNewPtr(const THIS_t& rObj) noexcept
+		cUniquePtr(const THIS_t& rObj) noexcept
 			: cPtrFacade<TYPE>(nullptr)
 		{
 			//! copy the contents? beware performance problems here. I don't know if its a derived type or array?
@@ -44,7 +44,7 @@ namespace Gray
 		}
 
 	public:
-		~cNewPtr()
+		~cUniquePtr()
 		{
 			FreeLast();
 		}
@@ -102,10 +102,10 @@ namespace Gray
 			return(p2 == this->m_p);
 		}
 #endif
-
-	protected:
+ 
 		void AsignPtr(TYPE* p2) noexcept
 		{
+			// AKA put_Ptr() ??
 			if (p2 != this->m_p)
 			{
 				FreeLast();
@@ -121,6 +121,8 @@ namespace Gray
 				ref.m_p = nullptr;	// transferred.
 			}
 		}
+
+	private:
 		void FreeLast() noexcept
 		{
 			if (this->m_p != nullptr)
@@ -133,30 +135,30 @@ namespace Gray
 	};
 
 	template<class TYPE>
-	class cNewPtr2 : public cNewPtr < TYPE >
+	class cUniquePtr2 : public cUniquePtr < TYPE >
 	{
-		//! @class Gray::cNewPtr2
-		//! cNewPtr Allow a copy constructor that does deep copy.
-		typedef cNewPtr2<TYPE> THIS_t;
-		typedef cNewPtr<TYPE> SUPER_t;
+		//! @class Gray::cUniquePtr2
+		//! cUniquePtr Allow a copy constructor that does deep copy.
+		typedef cUniquePtr2<TYPE> THIS_t;
+		typedef cUniquePtr<TYPE> SUPER_t;
 
 	public:
-		cNewPtr2()
+		cUniquePtr2()
 		{
 		}
-		cNewPtr2(const THIS_t& rObj)
-			: cNewPtr<TYPE>(Dupe(rObj))
+		cUniquePtr2(const THIS_t& rObj)
+			: cUniquePtr<TYPE>(Dupe(rObj))
 		{
 			//! copy the contents? beware performance problems here. I don't know if its a derived type or array?
 		}
-		cNewPtr2(const SUPER_t& rObj)
-			: cNewPtr<TYPE>(Dupe(rObj))
+		cUniquePtr2(const SUPER_t& rObj)
+			: cUniquePtr<TYPE>(Dupe(rObj))
 		{
 			//! copy the contents? beware performance problems here. I don't know if its a derived type or array?
 			//! @note DANGER! Hidden action.
 		}
-		explicit cNewPtr2(TYPE* pObj)
-			: cNewPtr<TYPE>(pObj)
+		explicit cUniquePtr2(TYPE* pObj)
+			: cUniquePtr<TYPE>(pObj)
 		{
 			// explicit to make sure we don't copy an allocated pointer accidentally.
 		}
@@ -182,4 +184,4 @@ namespace Gray
 		}
 	};
 }
-#endif // _INC_cNewPtr_H
+#endif // _INC_cUniquePtr_H

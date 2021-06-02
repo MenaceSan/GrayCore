@@ -14,7 +14,7 @@
 
 namespace Gray
 {
-	static cArrayPtr<const HResultCode> s_HResult_CodeSets;	// local private Facility_t sets .
+	static cArrayPtr<const HResultCode> s_HResult_CodeSets;	// local private Facility_t sets . Must call HResult::AddCodesDefault();
 	const va_list HResult::k_va_list_empty = 0;	// For faking out the va_list. __GNUC__ doesn't allow a pointer to va_list. So use this to simulate nullptr.
 
 	const HResult::Facility_t HResult::k_Facility[] =
@@ -165,7 +165,8 @@ namespace Gray
 
 	void GRAYCALL HResult::AddCodesDefault() // static
 	{
-		//! configure error text for normal system errors.
+		//! configure error text for normal system errors. 
+		//! static library must pull this code intentionally.
 		//! @todo get rid of these in favor of dynamic loading of s_HResult_CodeSets from file.
 		// A _WIN32 code packed in HRESULT. Some are not handled by FormatMessage(). WinINet for instance.
 
@@ -221,6 +222,7 @@ namespace Gray
 	const char* GRAYCALL HResult::GetTextBase(HRESULT hRes) // static
 	{
 		//! Get raw unformatted text for HRESULT codes from s_HResult_CodeSets first
+		//! ASSUME we called AddCodesDefault() already.
 
 		if (hRes == S_OK)
 		{

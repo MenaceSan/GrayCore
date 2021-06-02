@@ -36,6 +36,7 @@ namespace Gray
 	public:
 		const char* m_pszModuleName;	//!< Just derive this from the file name ?
 		HMODULE m_hModule;	//!< My HMODULE assigned to me when loaded DllMain(). An address. should be same as GetModuleHandleForAddr(&g_Module)
+		bool m_bProcessAttached = false;
 
 #ifdef _MFC_VER
 		::AFX_EXTENSION_MODULE m_AFXExt;		// I might be a MFC extension module. hResource, IsInit

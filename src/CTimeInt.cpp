@@ -23,7 +23,7 @@ namespace Gray
 {
 
 #ifndef _MFC_VER
-	CTime::CTime(const cTimeFile& fileTime, int nDST)
+	CTime::CTime(const cTimeFile& fileTime, int nDST) noexcept
 	{
 		//! cTimeFile = 64-bit 100-nanoseconds since January 1, 1601 GMT
 		//! convert to TIMESEC_t (1970) (C-runtime local time)
@@ -60,7 +60,7 @@ namespace Gray
 #endif
 	}
 
-	cTimeFile cTimeInt::GetAsFileTime() const
+	cTimeFile cTimeInt::GetAsFileTime() const noexcept
 	{
 		//! @return
 		//!  cTimeFile = 64-bit 100-nanosecond since January 1, 1601 GMT
@@ -70,7 +70,7 @@ namespace Gray
 		return cTimeFile(nTmp);
 	}
 
-	void cTimeInt::InitTime(TIMESEC_t itime)
+	void cTimeInt::InitTime(TIMESEC_t itime) noexcept
 	{
 		//! @arg itime <= 0 = invalid time.
 #ifdef _MFC_VER
@@ -80,13 +80,13 @@ namespace Gray
 #endif
 	}
 
-	void cTimeInt::InitTimeNow()
+	void cTimeInt::InitTimeNow() noexcept
 	{
 		//! Now();
 		InitTime(GetTimeNow().GetTime());
 	}
 
-	void cTimeInt::InitTimeNowPlusSec(TIMESECD_t iOffsetInSeconds)
+	void cTimeInt::InitTimeNowPlusSec(TIMESECD_t iOffsetInSeconds) noexcept
 	{
 		//! @note Assume iOffset is in seconds
 		//! @note ASSUME TIMESEC_t is signed.

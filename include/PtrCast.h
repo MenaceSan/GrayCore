@@ -42,7 +42,7 @@ namespace Gray
 	template <class _TYPE_TO, class _TYPE_FROM >
 	inline _TYPE_TO* check_cast(_TYPE_FROM* p)
 	{
-		//! like static_cast<>() but with some extra checking.
+		//! like static_cast<>() but with some extra checking. // dynamic for DEBUG only.
 		//! up-casting can be dangerous. We assume it is safe in this case but check it anyhow. 
 		//! a static_cast that gets verified in _DEBUG mode. fast normal static_cast in release mode.
 		//! nullptr is valid.
@@ -52,7 +52,7 @@ namespace Gray
 		return static_cast<_TYPE_TO*>(p);
 	};
 
-#define CHECKPTR_CAST(t,p)	(::Gray::check_cast<t>(p))
+#define CHECKPTR_CAST(t,p)	(::Gray::check_cast<t>(p))	// dynamic for DEBUG only.
 }
 
 #endif

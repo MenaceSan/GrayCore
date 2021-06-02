@@ -189,7 +189,7 @@ SOURCE=.\CLogBase.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\cNewPtr.h
+SOURCE=.\cUniquePtr.h
 # End Source File
 # Begin Source File
 

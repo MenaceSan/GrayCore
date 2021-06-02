@@ -35,7 +35,7 @@ namespace Gray
 	};
 
 	template <class TYPE>
-	class cSingletonPtr : protected cRefPtr < TYPE >		// protected for read only.
+	class cSingletonPtr : protected cRefPtr < TYPE >		// cRefPtr protected for read only.
 	{
 		//! @class Gray::cSingletonPtr
 		//! A reference to a cSingletonRefBase<> based TYPE or a type that has both cSingleton and cRefBase.
@@ -66,9 +66,18 @@ namespace Gray
 		inline TYPE* get_Ptr() const noexcept
 		{
 			//! expose this otherwise protected function.
-			//! For use with SMARTS_CAST(x) and SMART_CAST(x) or just use TYPE::get_Single() ? 
 			DEBUG_CHECK(this->m_p != nullptr);
 			return this->m_p;
+		}
+		template <class _DST_TYPE>
+		_DST_TYPE* get_PtrT() const
+		{
+			//! Cast pointer to another type.
+			//! This is probably a compile time up-cast but check it anyhow.
+			//! This shouldn't return nullptr if not starting as nullptr.
+			if (this == nullptr)
+				return nullptr;
+			return CHECKPTR_CAST(_DST_TYPE, get_Ptr());	// dynamic for DEBUG only. Should NEVER return nullptr here !
 		}
 
 		inline operator TYPE* () const noexcept

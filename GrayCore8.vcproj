@@ -2269,7 +2269,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\cArrayNew.h"
+				RelativePath=".\cArrayUnique.h"
 				>
 			</File>
 			<File
@@ -2401,7 +2401,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\cNewPtr.h"
+				RelativePath=".\cUniquePtr.h"
 				>
 			</File>
 			<File

@@ -44,9 +44,6 @@
     <ClInclude Include="include\cMime.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="include\cNewPtr.h">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="include\cNonCopyable.h">
       <Filter>include</Filter>
     </ClInclude>
@@ -299,9 +296,6 @@
     <ClInclude Include="include\cLogMgr.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="include\cArrayNew.h">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="include\cArraySort.h">
       <Filter>include</Filter>
     </ClInclude>
@@ -399,6 +393,12 @@
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="include\cStreamTextReader.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cUniquePtr.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cArrayUnique.h">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>

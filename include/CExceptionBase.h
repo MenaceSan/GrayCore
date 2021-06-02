@@ -18,12 +18,34 @@
 #include "cLogLevel.h"
 #include "HResult.h"
 
+#include <setjmp.h>
 #if defined(_CPPUNWIND) && ! defined(_MFC_VER)	// NOT using _MFC_VER.
 #include <exception> // use STL based std::exception class.
 #endif
 
 namespace Gray
 {
+	class cExceptionJmp
+	{
+		//! @class Gray::cExceptionJump
+		//! Wrap the c setjmp(), longjmp() to make something like an exception. DANGER: NO unwind.
+		//! https://en.wikipedia.org/wiki/Setjmp.h
+
+		::jmp_buf _buf;		//! hold results of setjmp()
+
+		int Init()
+		{
+			//! @return 0 = do nothing. setup ok. 1 = this is a jump return.
+			return ::setjmp(OUT _buf);
+		}
+
+		void Jump(int ret)
+		{
+			//! @arg ret = return value to Init(). 0 = call again?, > 0 = errors.
+			::longjmp(_buf, ret);
+			// no return.
+		}
+	};
 
 #if ! defined(_CPPUNWIND)	// like STL _HAS_EXCEPTIONS ?
 	class cExceptionBase	// stub this out if no throws allowed.
@@ -47,7 +69,7 @@ namespace Gray
 #endif
 
 	class GRAYCORE_LINK cException;	// Base for my custom exceptions. Also based on cExceptionBase
-	
+
 	// Abstract the several different types of exception handling as macros.
 #if ! defined(_CPPUNWIND)	// No exception allowed. use STL _HAS_EXCEPTIONS ?
 	// #define GRAY_THROW		// no throws allowed.
@@ -77,6 +99,6 @@ namespace Gray
 #define GRAY_TRY_END			}
 #endif
 
-} 
+}
 
 #endif // _INC_cExceptionBase_H

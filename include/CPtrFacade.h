@@ -19,7 +19,7 @@ namespace Gray
 	{
 		//! @class Gray::cPtrFacade
 		//! a class that acts like (wraps) a pointer to TYPE. Not specific to TYPE=cRefBase.
-		//! Base for: cExceptionHolder, cLockerT, cNewPtr, cRefPtr, cIUnkPtr, etc.
+		//! Base for: cExceptionHolder, cLockerT, cUniquePtr, cRefPtr, cIUnkPtr, etc.
 		//! sizeof(void*)
 		//! TODO cPtrNotNull<> // a pointer that can never be nullptr. like gsl::not_null<T>
 
@@ -31,7 +31,7 @@ namespace Gray
 	public:
 		cPtrFacade(TYPE* p = nullptr) noexcept
 			: m_p(p)
-		{ 
+		{
 			// copy
 		}
 		cPtrFacade(THIS_t&& ref) noexcept
@@ -63,6 +63,7 @@ namespace Gray
 			//! override this to increment a ref count.
 			//! similar to AttachPtr() but can add a ref.
 			//! override this to increment a ref count 
+			DEBUG_ASSERT(m_p == nullptr || m_p == p, "put_Ptr");
 			m_p = p;
 		}
 		void ReleasePtr() noexcept
@@ -74,9 +75,9 @@ namespace Gray
 
 		void AttachPtr(TYPE* p) noexcept
 		{
+			//! @note DANGER DONT call this unless you have a good reason. And you know what you are doing !
 			//! like put_Ptr() BUT sets the pointer WITHOUT adding a ref (if overload applicable). like get_PPtr(). 
 			//! used with Com interfaces where QueryInterface already increments the ref count.
-			//! @note DANGER DONT call this unless you have a good reason.
 			m_p = p;
 		}
 		TYPE* DetachPtr() noexcept
@@ -112,7 +113,7 @@ namespace Gray
 
 		inline TYPE& get_Ref() const noexcept
 		{
-			DEBUG_CHECK(m_p != nullptr); 
+			DEBUG_CHECK(m_p != nullptr);
 			return *m_p;
 		}
 
@@ -146,11 +147,30 @@ namespace Gray
 		{
 			return p2 == m_p;
 		}
+
+		template <class _DST_TYPE>
+		_DST_TYPE* get_PtrT() const
+		{
+			//! Cast pointer to another type.
+			//! This is probably a safe compile time up-cast but check it anyhow.
+			//! This shouldn't return nullptr if not starting as nullptr.
+			if (m_p == nullptr)	// this is ok.
+				return nullptr;
+			return CHECKPTR_CAST(_DST_TYPE, m_p);	// dynamic for DEBUG only. Should NEVER return nullptr here !
+		}
+		template <class _DST_TYPE>
+		_DST_TYPE* get_PtrDyn() const
+		{
+			//! Cast pointer to another type. dynamic_cast
+			//! run time dynamic_cast to a (possible) peer type. can return nullptr.
+			//! Similar to COM QueryInterface() this checks (dynamically) to see if the class is supported.
+			return DYNPTR_CAST(_DST_TYPE, m_p);
+		}
 	};
 
+	// TODO DELETE  
 	// Similar to COM QueryInterface() this checks to see if the class is supported.
-#define SMART_CAST(_DSTCLASS,p)		DYNPTR_CAST(_DSTCLASS,(p).get_Ptr())
-#define SMARTS_CAST(_DSTCLASS,p)	CHECKPTR_CAST(_DSTCLASS,(p).get_Ptr())
+#define FACADE_DY_CAST(_DST_TYPE,p) DYNPTR_CAST(_DST_TYPE,(p).get_Ptr())
 
 }
 

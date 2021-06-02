@@ -67,7 +67,7 @@ namespace Gray
 	{
 		//! @class Gray::CObject
 		//! Generic base class of all stuff. May be used to replace/emulate _CPPRTTI?
-		//! Emulate the MFC CObject base class.
+		//! Emulate the MFC CObject base class. https://docs.microsoft.com/en-us/cpp/mfc/reference/cobject-class?view=msvc-160
 		//! May be base for stack or heap allocated object.
 
 	public:
@@ -101,9 +101,22 @@ namespace Gray
 			ASSERT(isValidCheck());
 		}
 
-		virtual void Serialize(cArchive& a);	// Emulate MFC method.
+		virtual void Serialize(cArchive& a);	// Emulate MFC method. cArchive = CArchive
 	};
 #endif // _MFC_VER
+
+
+	class GRAYCORE_LINK cObject : public CObject
+	{
+
+#if ! defined(_MFC_VER)
+		virtual bool isValidCheck() const noexcept	//!< memory allocation and structure definitions are valid.
+		{
+			return true;
+		}
+#endif
+
+	};
 
 #ifndef _MFC_VER
 	// Dynamic cObject is one that can be created knowing only its name and perhaps some interface that it supports. using cObjectFactoryT<T>

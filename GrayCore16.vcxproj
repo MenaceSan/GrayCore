@@ -560,6 +560,7 @@
       </ImportLibrary>
       <TargetMachine>MachineX86</TargetMachine>
       <Version>1.6</Version>
+      <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
     </Link>
     <PostBuildEvent>
       <Command>
@@ -848,13 +849,13 @@
     <ClInclude Include="include\cArchive.h" />
     <ClInclude Include="include\cArray.h" />
     <ClInclude Include="include\cArrayIUnk.h" />
-    <ClInclude Include="include\cArrayNew.h" />
     <ClInclude Include="include\cArrayRef.h" />
     <ClInclude Include="include\cArraySort.h" />
     <ClInclude Include="include\cArraySortRef.h" />
     <ClInclude Include="include\cArraySortString.h" />
     <ClInclude Include="include\cArrayString.h" />
     <ClInclude Include="include\cArrayT.h" />
+    <ClInclude Include="include\cArrayUnique.h" />
     <ClInclude Include="include\cAtom.h" />
     <ClInclude Include="include\cAtomManager.h" />
     <ClInclude Include="include\cBits.h" />
@@ -896,7 +897,6 @@
     <ClInclude Include="include\cMem.h" />
     <ClInclude Include="include\cMemPage.h" />
     <ClInclude Include="include\cMime.h" />
-    <ClInclude Include="include\cNewPtr.h" />
     <ClInclude Include="include\cNonCopyable.h" />
     <ClInclude Include="include\cObject.h" />
     <ClInclude Include="include\cObjectFactory.h" />
@@ -949,6 +949,7 @@
     <ClInclude Include="include\cTypeInfo.h" />
     <ClInclude Include="include\cTypes.h" />
     <ClInclude Include="include\cUInt64.h" />
+    <ClInclude Include="include\cUniquePtr.h" />
     <ClInclude Include="include\cUnitTest.h" />
     <ClInclude Include="include\cUnitTestDecl.h" />
     <ClInclude Include="include\cValArray.h" />

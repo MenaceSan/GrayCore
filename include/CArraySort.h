@@ -60,14 +60,14 @@ namespace Gray
 			// Make this virtual to allow derived classes to override this and make destructors work.
 		}
 
-		ITERATE_t FindINear(TYPE_ARG pNew, COMPARE_t& iCompareRes) const;
-		ITERATE_t FindINearKey(KEY_t key, COMPARE_t& iCompareRes) const noexcept;
+		ITERATE_t FindINear(TYPE_ARG pNew, OUT COMPARE_t& iCompareRes) const noexcept;
+		ITERATE_t FindINearKey(KEY_t key, OUT COMPARE_t& iCompareRes) const noexcept;
 		ITERATE_t FindIForKey(KEY_t key) const noexcept
 		{
 			//! Find index for exact key match. Similar to FindIFor()
 			//! @return index into array. 0 based of course. -1 = failed
 			COMPARE_t iCompareRes;
-			ITERATE_t index = FindINearKey(key, iCompareRes);
+			const ITERATE_t index = FindINearKey(key, OUT iCompareRes);
 			if (iCompareRes != COMPARE_Equal)
 				return k_ITERATE_BAD;
 			return index;
@@ -141,7 +141,7 @@ namespace Gray
 	};
 
 	template<class TYPE, class TYPE_ARG, typename TYPE_KEY>
-	ITERATE_t cArraySorted<TYPE, TYPE_ARG, TYPE_KEY>::FindINear(TYPE_ARG pNew, COMPARE_t& riCompareRes) const
+	ITERATE_t cArraySorted<TYPE, TYPE_ARG, TYPE_KEY>::FindINear(TYPE_ARG pNew, OUT COMPARE_t& riCompareRes) const noexcept
 	{
 		//! Do a binary search for the elements key.
 		//! @return index
@@ -185,7 +185,7 @@ namespace Gray
 		//! Insertion sort. duplicates are destroyed.
 		//! @return index in the array. (temporary if sorted)
 		COMPARE_t iCompareRes;
-		ITERATE_t index = FindINear(pNew, iCompareRes);
+		const ITERATE_t index = FindINear(pNew, OUT iCompareRes);
 		if (iCompareRes == COMPARE_Equal)
 		{
 			// duplicates don't normally happen, but just replace the old one just in case.
@@ -197,7 +197,7 @@ namespace Gray
 	}
 
 	template<class TYPE, class TYPE_ARG, typename TYPE_KEY>
-	ITERATE_t cArraySorted<TYPE, TYPE_ARG, TYPE_KEY>::FindINearKey(KEY_t key, COMPARE_t& riCompareRes) const noexcept
+	ITERATE_t cArraySorted<TYPE, TYPE_ARG, TYPE_KEY>::FindINearKey(KEY_t key, OUT COMPARE_t& riCompareRes) const noexcept
 	{
 		//! Do a binary search for the key.
 		//! @return

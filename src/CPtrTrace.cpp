@@ -19,57 +19,81 @@ GRAYCORE_LINK GUID IID_IUnknown = { 0x00000000, 0x0000, 0x0000, { 0xC0, 0x00, 0x
 
 namespace Gray
 {
-	void cPtrTraceMgr::TraceDump(cLogProcessor& log, ITERATE_t iCountExpected) // virtual
+	int cPtrTraceMgr::TraceDump(cLogProcessor* pLog, ITERATE_t iCountExpected) // virtual
 	{
 		//! Dump all the IUnks that are left not released !!!
 
 		cThreadGuard threadguard(m_Lock);	// thread sync critical section.
-		ITERATE_t iCount = m_aTraces.GetSize();
+		const ITERATE_t iCount = m_aTraces.GetSize();
 		int iLockCountTotal = 0;
 
 		for (ITERATE_t i = 0; i < iCount; i++)
 		{
-			cPtrTrace* pIUnkTrace = m_aTraces.GetAt(i);
-			if (pIUnkTrace == nullptr)
+			cPtrTrace* pTrace = m_aTraces.GetAt(i);
+			if (pTrace == nullptr)
 				break;
-			cIUnkBasePtr* p2 = (cIUnkBasePtr*)pIUnkTrace;
-			int iLockCount2 = p2->get_RefCount();
-			log.addInfoF("IUnknown=0%x, Type=%s, Locks=%d, File='%s',%d",
-				(UINT_PTR)p2->get_Ptr(), LOGSTR(pIUnkTrace->m_pszType), iLockCount2,
-				LOGSTR(pIUnkTrace->m_Src.m_pszFile), pIUnkTrace->m_Src.m_uLine);
+
+			IUnknown* p1 = pTrace->m_pIUnk;	// The stored pointer. should be valid!
+			ASSERT(p1 != nullptr);
+
+			// pTrace -> cPtrFacade
+			const int iLockCount2 = p1->AddRef() - 1;
+			ASSERT(iLockCount2 >= 1);
+			p1->Release();
+
+			if (pLog != nullptr)
+			{
+				pLog->addInfoF("IUnknown=0%x, Locks=%d, Type=%s, File='%s',%d",
+					(UINT_PTR)p1, iLockCount2,
+					LOGSTR(pTrace->m_TypeInfo.name()),
+					LOGSTR(pTrace->m_Src.m_pszFile), pTrace->m_Src.m_uLine);
+			}
+
 			iLockCountTotal += iLockCount2;
 		}
-
-		log.addEventF(LOG_ATTR_DEBUG, (iCount == iCountExpected) ? LOGLEV_INFO : LOGLEV_ERROR,
-			"IUnk Dump of %d objects %d locks (of %d expected).",
-			iCount, iLockCountTotal, iCountExpected);
+		if (pLog != nullptr)
+		{
+			pLog->addEventF(LOG_ATTR_DEBUG, (iCount == iCountExpected) ? LOGLEV_INFO : LOGLEV_ERROR,
+				"IUnk Dump of %d objects %d locks (of %d expected).",
+				iCount, iLockCountTotal, iCountExpected);
+		}
+		return iLockCountTotal;
 	}
 
 	//****************************************************
 
 	bool cPtrTrace::sm_bActive = false;
 
-	void cPtrTrace::TraceOpen(void* p)
+	void cPtrTrace::TraceAttach(IUnknown* p)
 	{
-		UNREFERENCED_PARAMETER(p);
+		//! Called when cPtrTrace is created.
 		if (!sm_bActive)	// not tracking this now.
 			return;
 		if (cAppState::isInCExit())	// can't track this here.
 			return;
+		ASSERT(m_pIUnk == nullptr || m_pIUnk == p);
 		cPtrTraceMgr& mgr = cPtrTraceMgr::I();
 		cThreadGuard threadguard(mgr.m_Lock);	// thread sync critical section.
+		ASSERT(mgr.m_aTraces.FindIForKey(this) <= k_ITERATE_BAD); // no dupe.
 		mgr.m_aTraces.Add(this);
+		m_pIUnk = p;
 	}
 
-	void cPtrTrace::TraceClose(void* p)
+	void cPtrTrace::TraceRelease(IUnknown* p)
 	{
-		UNREFERENCED_PARAMETER(p);
-		if (!sm_bActive)	// not tracking this now.
+		//! Called when cPtrTrace is destroyed. 
+		if (!sm_bActive)	// not tracking this now. m_aTraces MUST be EMPTY!
 			return;
 		if (cAppState::isInCExit())	// can't track this here.
+		{
+			sm_bActive = false;
 			return;
+		}
+		ASSERT(m_pIUnk != nullptr);
 		cPtrTraceMgr& mgr = cPtrTraceMgr::I();
 		cThreadGuard threadguard(mgr.m_Lock);	// thread sync critical section.
-		mgr.m_aTraces.RemoveArgKey(this);
+		bool bRet = mgr.m_aTraces.RemoveArgKey(this);
+		ASSERT(bRet);	// Must succeed
+		m_pIUnk = nullptr;
 	}
 }

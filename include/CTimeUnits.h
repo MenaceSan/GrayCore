@@ -20,9 +20,9 @@ namespace Gray
 {
 	// Base type used for cTimeInt Might be 64 bits ?? or _USE_32BIT_TIME_T
 	typedef time_t TIMESEC_t;	//!< absolute seconds since January 1, 1970. (GMT?)(signed) NOTE: Changing to __time64_t just adds more range with same values. (>2038)
-	typedef int TIMESECD_t;		//!< signed delta seconds from some epoch.
+	typedef int TIMESECD_t;		//!< signed delta seconds from some epoch. like: std::chrono::seconds
 
-	typedef short TIMEUNIT_t;	//!< Arbitrary time unit. (e.g. number of minutes or seconds). Allow negative for null ? Max 16 bits.
+	typedef short TIMEUNIT_t;	//!< Arbitrary time value of type TIMEUNIT_TYPE. (e.g. number of minutes or seconds). Allow negative for null ? Max 16 bits. 
 
 	enum TZ_TYPE
 	{
@@ -159,7 +159,7 @@ namespace Gray
 		TIMEUNIT_t m_wMillisecond;	//!< 1000th = thousandth. 0 to 1000
 		TIMEUNIT_t m_wMicrosecond;	//!< 1000000th = millionth. 0 to 1000. TIMEUNIT_Microsecond
 
-		TIMEUNIT_t m_nTZ;			//!< TZ_TYPE where m_wHour has NOT yet been adjusted. TIMEUNIT_TZ
+		TIMEUNIT_t m_nTZ;			//!< TZ_TYPE for m_wHour. TIMEUNIT_TZ
 
 		static const TIMESECD_t k_nSecondsPerDay = (24 * 60 * 60);		//!< seconds in a day = 86400
 		static const TIMESECD_t k_nSecondsPerHour = (60 * 60);		//!< seconds in a hour = 3600

@@ -221,34 +221,43 @@ namespace Gray
 		return iLen;
 	}
 
-	HRESULT GRAYCALL cMem::SetHexDigest(const char* pszHexString, OUT BYTE* pData, size_t nSizeData) // static 
+	HRESULT GRAYCALL cMem::SetHexDigest(const char* pszHexString, OUT BYTE* pData, size_t nSizeData, bool testEnd ) // static 
 	{
 		//! Set binary pDigest from string pszHexString
 		//! opposite of cMem::GetHexDigest
+		//! @arg pszHexString = input hex string . ASSUME large enough.
 		//! @arg nSizeData = The number of expected output digits.
 		//! @note using Base64 would be better.
 		//! @return S_FALSE = was zero value.
 
-		if (pszHexString == nullptr)
+		if (pszHexString == nullptr || pData == nullptr)
 			return E_POINTER;
+
 		bool bNonZero = false;
 		for (size_t i = 0; i < nSizeData; i++)
 		{
 			// 2 hex chars per byte.
-			if (*pszHexString == '\0') // not long enough!
+			char ch = *pszHexString++;
+			if (ch == '\0') // not long enough!
 				return HRESULT_WIN32_C(RPC_X_BYTE_COUNT_TOO_SMALL);
-			int bHex1 = StrChar::Hex2U(*pszHexString++);
+			int bHex1 = StrChar::Hex2U(ch);
 			if (bHex1 < 0)
 				return HRESULT_WIN32_C(ERROR_SXS_XML_E_INVALID_HEXIDECIMAL);
-			int bHex2 = StrChar::Hex2U(*pszHexString++);
+			ch = *pszHexString++;
+			int bHex2 = StrChar::Hex2U(ch);
 			if (bHex2 < 0)
 				return HRESULT_WIN32_C(ERROR_SXS_XML_E_INVALID_HEXIDECIMAL);
 			pData[i] = (BYTE)((bHex1 * 0x10) + bHex2);
 			if (pData[i] != 0)
 				bNonZero = true;
 		}
-		if (StrChar::IsDigitX(*pszHexString, 0x10)) // too long! or not terminated.
-			return HRESULT_WIN32_C(ERROR_BUFFER_OVERFLOW);
+
+		if (testEnd)
+		{
+			if (StrChar::IsDigitX(*pszHexString, 0x10)) // too long! or not terminated.
+				return HRESULT_WIN32_C(ERROR_BUFFER_OVERFLOW);
+		}
+
 		if (bNonZero)
 			return S_OK;
 		return S_FALSE;	// zero

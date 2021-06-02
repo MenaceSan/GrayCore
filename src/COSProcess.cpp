@@ -16,6 +16,8 @@
 
 #ifdef _WIN32
 
+#pragma comment(lib, "user32.lib")	// GetWindow, etc.
+
 #pragma pack(push,1)
 struct CATTR_PACKED __PEB
 {

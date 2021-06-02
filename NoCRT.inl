@@ -47,7 +47,7 @@ void operator delete[](void* p, size_t n) throw()
 
 type_info::~type_info()
 {
-	// RTTI
+	//  
 }
 
 #ifdef _M_CEE_PURE
@@ -62,10 +62,10 @@ typedef void(__cdecl* _PVFV)(void);
 extern "C"
 {
 	GRAYCORE_LINK int _Init_global_epoch = 0;	// epoch_start
-	GRAYCORE_LINK int _fltused = 0x9875;
-	GRAYCORE_LINK ULONG _tls_index = 0;
-
 	__declspec(thread) int _Init_thread_epoch = 0;	// epoch_start
+
+	GRAYCORE_LINK int _fltused = 0x9875;
+	GRAYCORE_LINK ULONG _tls_index = 0;		// Thread Local Storage.
 
 	// "intrinsic function, cannot be defined"  but are also not provided.
 
@@ -99,12 +99,23 @@ extern "C"
 #ifdef _CPPRTTI
 	void* __CLRCALL_OR_CDECL __RTtypeid(void* inptr) noexcept(false)           // Pointer to polymorphic object
 	{
+		// https://gist.github.com/cheadaq/1382068
+		// https://www.winehq.org/pipermail/wine-cvs/2012-September/089847.html
+		// https://www.codeproject.com/script/Content/ViewAssociatedFile.aspx?rzp=%2FKB%2Fsystem%2Fdetect-driver%2F%2FDetectDriverSrc.zip&zep=DetectDriverSrc%2FDetectDriver%2Fsrc%2FdrvCppLib%2Frtti.cpp&obid=58895&obtid=2&ovid=2
+
+		if (inptr == nullptr)
+		{
+			// throw ? _CxxThrowException
+			return nullptr
+		}
+
+
 		return nullptr;
 	}
 
 	void* __CLRCALL_OR_CDECL __RTDynamicCast(
 		void* inptr,            // Pointer to polymorphic object
-		LONG VfDelta,            // Offset of vfptr in object
+		LONG VfDelta,            // Offset of vtable/vfptr in object
 		void* srcVoid,          // Static type of object pointed to by inptr
 		void* targetVoid,       // Desired result of cast
 		BOOL isReference)        // TRUE if input is reference, FALSE if input is ptr

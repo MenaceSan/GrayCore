@@ -103,7 +103,7 @@ namespace Gray
 	cSingletonRegister::cSingletonRegister(const TYPEINFO_t& rAddrCode) noexcept
 	{
 #ifndef UNDER_CE
-		// Track the module that created the singleton. Maybe in a DLL ?
+		//! Track the module that created the singleton. Maybe in a DLL ? @note __vfptr is based on allocation (new) NOT the same as the code that impliments it !!!
 		m_hModuleLoaded = cOSModule::GetModuleHandleForAddr(&rAddrCode);
 #endif
 	}

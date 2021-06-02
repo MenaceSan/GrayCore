@@ -138,6 +138,13 @@ namespace Gray
 			// Add newline.
 			return AddChar('\n');
 		}
+		bool AddNl2()
+		{
+			// Add newline ONLY if there is already text.
+			if (m_iWriteLast <= 0)
+				return false;
+			return AddChar('\n');
+		}
 
 		StrLen_t AddCharRepeat(_TYPE_CH ch, StrLen_t iRepeat)
 		{

@@ -20,7 +20,7 @@
     <ClInclude Include="include\cArrayIUnk.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="include\cArrayNew.h">
+    <ClInclude Include="include\cArrayUnique.h">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="include\cArrayRef.h">
@@ -164,7 +164,7 @@
     <ClInclude Include="include\cMime.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="include\cNewPtr.h">
+    <ClInclude Include="include\cUniquePtr.h">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="include\cNonCopyable.h">

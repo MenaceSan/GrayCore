@@ -27,6 +27,10 @@ namespace Gray
 	bool cOSModImpl::OnProcessAttach() // virtual 
 	{
 		// DLL_PROCESS_ATTACH
+
+		ASSERT(!m_bProcessAttached);
+		m_bProcessAttached = true;
+
 		DEBUG_MSG(("%s:OnProcessAttach 0%x", LOGSTR(m_pszModuleName), (UINT)(UINT_PTR)m_hModule));
 
 #ifdef _MFC_VER
@@ -42,7 +46,7 @@ namespace Gray
 	{
 		// NOTE: In the LoadModule (dynamic) case this will get called BEFORE the constructor for cOSModDyn.
 
-		if (!IsLoaded())	// Race is over.
+		if (!IsLoaded())	// Wait for the race to be over. m_hModule MUST be set.
 			return true;
 
 #if defined(_DEBUG) && ! defined(UNDER_CE)
