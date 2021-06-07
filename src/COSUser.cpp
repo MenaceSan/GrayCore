@@ -87,11 +87,9 @@ namespace Gray
 		return S_OK;
 	}
 
-	bool cOSUserToken::SetPrivilege(const GChar_t* pszToken, DWORD dwAttr)
+	bool cOSUserToken::SetPrivilege(::LUID luidDebug, DWORD dwAttr)
 	{
-		//! @arg pszToken = SE_DEBUG_NAME, SE_RESTORE_NAME, SE_BACKUP_NAME, SE_SHUTDOWN_NAME
 		//! @arg dwAttr = SE_PRIVILEGE_ENABLED or SE_PRIVILEGE_REMOVED
-
 		if (!this->isValidHandle())	// open and has TOKEN_ADJUST_PRIVILEGES
 		{
 			HRESULT hRes = OpenProcessToken(TOKEN_ADJUST_PRIVILEGES);
@@ -99,12 +97,6 @@ namespace Gray
 			{
 				return false;
 			}
-		}
-
-		::LUID luidDebug;	// 64 bit id.
-		if (!_GTN(::LookupPrivilegeValue)(_GT(""), pszToken, &luidDebug))	// map name to LUID
-		{
-			return false;
 		}
 
 		::TOKEN_PRIVILEGES tokenPriv;
@@ -118,16 +110,31 @@ namespace Gray
 		return true;
 	}
 
-	bool cOSUserToken::SetPrivilege(const FILECHAR_t* pszToken)
+	bool cOSUserToken::SetPrivilege(const wchar_t* pszToken, DWORD dwAttr)
 	{
-		return SetPrivilege(pszToken, SE_PRIVILEGE_ENABLED);
-	}
+		//! @arg pszToken = SE_DEBUG_NAME, SE_RESTORE_NAME, SE_BACKUP_NAME, SE_SHUTDOWN_NAME
+		//! @arg dwAttr = SE_PRIVILEGE_ENABLED or SE_PRIVILEGE_REMOVED
 
-	bool cOSUserToken::RemovePrivilege(const FILECHAR_t* pszToken)
+		::LUID luidDebug;	// 64 bit id.
+		if (!::LookupPrivilegeValueW(L"", pszToken, &luidDebug))	// map name to LUID
+		{
+			return false;
+		}
+		return SetPrivilege(luidDebug, dwAttr);
+	}
+	bool cOSUserToken::SetPrivilege(const char* pszToken, DWORD dwAttr)
 	{
-		return SetPrivilege(pszToken, SE_PRIVILEGE_REMOVED);
-	}
+		//! @arg pszToken = SE_DEBUG_NAME, SE_RESTORE_NAME, SE_BACKUP_NAME, SE_SHUTDOWN_NAME
+		//! @arg dwAttr = SE_PRIVILEGE_ENABLED or SE_PRIVILEGE_REMOVED
 
+		::LUID luidDebug;	// 64 bit id.
+		if (!::LookupPrivilegeValueA("", pszToken, &luidDebug))	// map name to LUID
+		{
+			return false;
+		}
+		return SetPrivilege(luidDebug, dwAttr);
+	}
+ 
 	HRESULT cOSUserToken::GetSID(cSecurityId& sid)
 	{
 		//! Open the current process token if not already open.

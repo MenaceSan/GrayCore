@@ -73,7 +73,7 @@ namespace Gray
 			//! printable?  k_ASCII is not printable = DEL.
 			return ch >= k_Space && ch < k_ASCII;
 		}
-		static inline bool IsAlNum(wchar_t ch) noexcept
+		static constexpr bool IsAlNum(wchar_t ch) noexcept
 		{
 			//! a-z, 0-9
 			return IsAlphaA(ch) || IsDigit(ch);
@@ -117,7 +117,7 @@ namespace Gray
 			//! islower(ch) in base ASCII set
 			return ch >= 'a' && ch <= 'z';
 		}
-		static inline bool IsAlphaA(wchar_t ch) noexcept
+		static constexpr bool IsAlphaA(wchar_t ch) noexcept
 		{
 			//! _isalpha() isalpha()
 			return IsUpperA(ch) || IsLowerA(ch);
@@ -143,29 +143,29 @@ namespace Gray
 			//! _isalpha() UNICODE set
 			return ((unsigned)ch) >= 0x100 && ((unsigned)ch) <= 0x1FF;
 		}
-		static inline bool IsUpperUSet(wchar_t ch) noexcept
+		static constexpr bool IsUpperUSet(wchar_t ch) noexcept
 		{
 			//! Unicode set. even is upper case.
 			return IsAlphaUSet(ch) && (ch & 1) == 0;
 		}
-		static inline bool IsLowerUSet(wchar_t ch) noexcept
+		static constexpr bool IsLowerUSet(wchar_t ch) noexcept
 		{
 			//! Unicode set. odd if lower case.
 			return IsAlphaUSet(ch) && (ch & 1) == 1;
 		}
 
-		static inline bool IsUpperAX(wchar_t ch) noexcept
+		static constexpr bool IsUpperAX(wchar_t ch) noexcept
 		{
 			//! isupper(ch) in extended ASCII set.
 			return IsUpperA(ch) || IsUpperAXSet(ch);
 		}
-		static inline bool IsLowerAX(wchar_t ch) noexcept
+		static constexpr bool IsLowerAX(wchar_t ch) noexcept
 		{
 			//! islower(ch) in extended ASCII set.
 			return IsLowerA(ch) || IsLowerAXSet(ch);
 		}
 
-		static inline bool IsUpper(wchar_t ch) noexcept
+		static constexpr bool IsUpper(wchar_t ch) noexcept
 		{
 			//! isupper(ch) in UNICODE
 			if (IsAscii(ch))
@@ -174,7 +174,7 @@ namespace Gray
 			}
 			return IsUpperAXSet(ch) || IsUpperUSet(ch);
 		}
-		static inline bool IsLower(wchar_t ch) noexcept
+		static constexpr bool IsLower(wchar_t ch) noexcept
 		{
 			//! islower(ch) in UNICODE
 			if (IsAscii(ch))
@@ -184,33 +184,33 @@ namespace Gray
 			return IsLowerAXSet(ch) || IsLowerUSet(ch);
 		}
 
-		static inline bool IsAlpha(wchar_t ch) noexcept
+		static constexpr bool IsAlpha(wchar_t ch) noexcept
 		{
 			//! _isalpha() isalpha() for English/ASCII set. NOT numeric or other.
 			//! _WIN32 IsCharAlpha()
 			return IsLowerAX(ch) || IsUpperAX(ch) || IsAlphaUSet(ch);
 		}
-		static inline bool IsCSymF(wchar_t ch) noexcept
+		static constexpr bool IsCSymF(wchar_t ch) noexcept
 		{
 			//! Would this be a valid 'c' symbolic name ?
 			//! __iscsym or __iscsymf (first char)
 			return IsAlphaA(ch) || ch == '_';
 		}
-		static inline bool IsCSym(wchar_t ch) noexcept
+		static constexpr bool IsCSym(wchar_t ch) noexcept
 		{
 			//! Would this be a valid 'c' symbolic name ?
 			//! __iscsym or __iscsymf
 			return IsAlphaA(ch) || ch == '_' || IsDigit(ch);
 		}
 
-		static inline wchar_t ToUpperA(wchar_t ch) noexcept
+		static constexpr wchar_t ToUpperA(wchar_t ch) noexcept
 		{
 			//! replace std::toupper() for ASCII
 			if (IsLowerA(ch))
 				return (ch - 'a') + 'A';
 			return ch;
 		}
-		static inline wchar_t ToUpperW(wchar_t ch) noexcept
+		static constexpr wchar_t ToUpperW(wchar_t ch) noexcept
 		{
 			//! std::toupper() for UNICODE
 			if (IsAscii(ch))
@@ -227,14 +227,14 @@ namespace Gray
 			}
 			return ch;
 		}
-		static inline wchar_t ToLowerA(wchar_t ch) noexcept
+		static constexpr wchar_t ToLowerA(wchar_t ch) noexcept
 		{
 			//! replace std::tolower() for ASCII // ch|0x20 sort of
 			if (IsUpperA(ch))
 				return (ch - 'A') + 'a';
 			return ch;
 		}
-		static inline wchar_t ToLowerW(wchar_t ch) noexcept
+		static constexpr wchar_t ToLowerW(wchar_t ch) noexcept
 		{
 			//! std::tolower() for UNICODE
 			if (IsAscii(ch))
@@ -252,7 +252,7 @@ namespace Gray
 			return ch;
 		}
 
-		static inline COMPARE_t CmpI(char a, char b) noexcept
+		static constexpr COMPARE_t CmpI(char a, char b) noexcept
 		{
 			//! Compare 2 characters ignoring case.
 			//! Are they the same ignoring case ?
@@ -264,7 +264,7 @@ namespace Gray
 			return ch1 - ch2;
 		}
 
-		static inline COMPARE_t CmpI(wchar_t a, wchar_t b) noexcept
+		static constexpr COMPARE_t CmpI(wchar_t a, wchar_t b) noexcept
 		{
 			//! Compare 2 characters ignoring case.
 			//! Are they the same ignoring case ?
@@ -276,7 +276,7 @@ namespace Gray
 			return ch1 - ch2;
 		}
 
-		static inline int Dec2U(wchar_t ch) noexcept
+		static constexpr int Dec2U(wchar_t ch) noexcept
 		{
 			//! Get decimal digit value.
 			// ASSERT(ch>='0'&&ch<=??);

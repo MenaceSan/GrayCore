@@ -33,7 +33,7 @@ namespace Gray
 		//! @class GrayLib::cSecurityId
 		//! A users id; or id group. http://msdn.microsoft.com/en-us/library/aa379594%28v=VS.85%29.aspx
 		//! ATL calls this CSid
-		//! Variable Sized.
+		//! Variable Sized. Opaque structure.
 		//! some _WIN32 calls expect LocalFree() to be called for SID pointer returned.
 		//! @note AllocateAndInitializeSid() would need to use FreeSid() NOT LocalFree(). so don't use it!
 		//! The first character is always an S. It identifies it as a SID

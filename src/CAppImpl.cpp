@@ -22,10 +22,10 @@ namespace Gray
 		// assume switch prefix (-/) has already been stripped.
 		if (m_pszSwitch != nullptr) // optional
 		{
-			if (sArg.Compare(m_pszSwitch) == 0)	// case sensative.
+			if (sArg.Compare(m_pszSwitch) == 0)	// case Sensitive.
 				return true;
 		}
-		return sArg.CompareNoCase(m_pszName) == 0;
+		return sArg.CompareNoCase(StrArg<FILECHAR_t>(m_pszName)) == 0;
 	}
 
 	class cAppCmdHelp : public cAppCommand
@@ -183,15 +183,15 @@ namespace Gray
 		// Run a single command and set up its arguments.
 		// @arg i = index in m_Args array.
 
- 		while (cAppArgs::IsArgSwitch(*pszCmd))
+		while (cAppArgs::IsArgSwitch(*pszCmd))
 		{
 			pszCmd++;
 		}
 
 		// use "Cmd=Val" syntax?
 		// args can come from parse for = sign else get from the next arg in sequence (that isnt starting with IsSwitch(-/)) 
-		cStringF sCmd2; 
-		const FILECHAR_t* pszArgEq = StrT::FindChar(pszCmd, '=');
+		cStringF sCmd2;
+		const FILECHAR_t* pszArgEq = StrT::FindChar<FILECHAR_t>(pszCmd, '=');
 		if (pszArgEq != nullptr)
 		{
 			sCmd2 = cStringF(pszCmd, StrT::Diff(pszArgEq, pszCmd));
@@ -239,7 +239,7 @@ namespace Gray
 
 		for (; i < j; i++)
 		{
-			m_State.m_ArgsValid.SetBit(i+1);	// consumed
+			m_State.m_ArgsValid.SetBit(i + 1);	// consumed
 		}
 
 		return i;

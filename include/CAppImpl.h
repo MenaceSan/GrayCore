@@ -24,8 +24,8 @@ namespace Gray
 		//! typically static allocated.
 
 	public:
-		const FILECHAR_t* m_pszSwitch;		//!< abbreviated -switch or /switch (case sensative) optional, nullptr allowed
-		const ATOMCHAR_t* m_pszName;		//!< symbolic name for -switch or /switch (case insensative). MUST be unique.
+		const FILECHAR_t* m_pszSwitch;		//!< abbreviated -switch or /switch (case sensitive) optional, nullptr allowed
+		const ATOMCHAR_t* m_pszName;		//!< symbolic name for -switch or /switch (case insensitive). MUST be unique.
 		const char* m_pszHelpArgs;			//!< describe any extra args this function might take. "[optional arg]. nullptr = takes none.
 		const char* m_pszHelp;				//!< help description.
 
@@ -62,7 +62,7 @@ namespace Gray
 		cArrayPtr<cAppCommand> m_aCommands;		//! built a list of possible commands. Dynamically add new command handlers to the app. to process cAppArgs.
 
 	public:
-		cAppImpl(const FILECHAR_t* pszAppName );
+		cAppImpl(const FILECHAR_t* pszAppName);
 		virtual ~cAppImpl();
 
 		cAppCommand* RegisterCommand(cAppCommand& cmd);
@@ -76,7 +76,7 @@ namespace Gray
 		}
 
 		virtual cString get_HelpText() const;
- 
+
 		virtual BOOL InitInstance();
 		virtual bool OnTickApp();
 		virtual int Run();

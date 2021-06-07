@@ -95,7 +95,7 @@ namespace Gray
 
 		if (!isValidModule())
 			return;
-		if (m_uFlags & cOSModule::k_Load_NoRefCount)	// Don't free.
+		if (m_uFlags & cOSModule::k_Load_NoRefCount)	// Don't free. I didnt load this.
 			return;
 		if (!(m_uFlags & cOSModule::k_Load_Preload) && !(m_uFlags & cOSModule::k_Load_ByName))
 		{

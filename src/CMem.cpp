@@ -156,8 +156,8 @@ namespace Gray
 
 	StrLen_t GRAYCALL cMem::ConvertToString(char* pszDst, StrLen_t iSizeDstMax, const BYTE* pSrc, size_t nSrcQty) // static
 	{
-		//! Write bytes out to a string as comma separated base 10 number values. 
-		//! Try to use SetHexDigest() instead.
+		//! Write bytes out to a string as comma separated base 10 number values. Not efficient!
+		//! Try to use SetHexDigest() instead?
 		//! opposite of cMem::ReadFromString().
 		//! @return the actual size of the string.
 		//! @note using hex or Base64 would be better?
@@ -172,6 +172,28 @@ namespace Gray
 			}
 
 			StrLen_t iLenThis = StrNum::UtoA(pSrc[i], pszDst + iLenOut, iSizeDstMax - iLenOut, 10);
+			if (iLenThis <= 0)
+				break;
+			iLenOut += iLenThis;
+			if (iLenOut >= iSizeDstMax)
+				break;
+		}
+		return iLenOut;
+	}
+
+	StrLen_t GRAYCALL cMem::ConvertToString(wchar_t* pszDst, StrLen_t iSizeDstMax, const BYTE* pSrc, size_t nSrcQty) // static 
+	{
+		//! Write bytes out to a string as comma separated base 10 number values. Not efficient!
+		iSizeDstMax -= 4;	// room to terminate < max sized number.
+		StrLen_t iLenOut = 0;
+		for (size_t i = 0; i < nSrcQty; i++)
+		{
+			if (i > 0)
+			{
+				pszDst[iLenOut++] = ',';
+			}
+
+			StrLen_t iLenThis = 0;; // TODO --  StrNum::UtoA(pSrc[i], pszDst + iLenOut, iSizeDstMax - iLenOut, 10);
 			if (iLenThis <= 0)
 				break;
 			iLenOut += iLenThis;

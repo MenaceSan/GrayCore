@@ -30,6 +30,7 @@ namespace Gray
 	HRESULT CFile::OpenCreate(cStringF sFilePath, OF_FLAGS_t nOpenFlags, _SECURITY_ATTRIBUTES* pSa)
 	{
 		//! Open a file handle.
+		//! Allow convert from UTF8 to UNICODE (_WIN32) or assume native UTF8 allowed.
 		//! 1. OF_EXIST = just test if this file exists, don't really open it.
 		//! 2. OF_READ = open for read. file must exist.
 		//! 3. OF_WRITE = open for over write. file must exist unless OF_CREATE is set.

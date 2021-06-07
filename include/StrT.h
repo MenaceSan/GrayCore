@@ -116,7 +116,7 @@ namespace Gray
 		}
 
 		template< typename TYPE >
-		static StrLen_t Len(const TYPE* pszStr, StrLen_t iLenMax) NOEXCEPT
+		static constexpr StrLen_t Len(const TYPE* pszStr, StrLen_t iLenMax) NOEXCEPT
 		{
 			//! Get length (up to iLenMax <= k_LEN_MAX ) avoiding read errors for un-terminated sources. like strlen() but with limit. AKA strnlen().
 			//! @return the length of the string up to (including) iLenMax
@@ -148,6 +148,7 @@ namespace Gray
 		GRAYCORE_LINK static COMPARE_t GRAYCALL CmpI(const TYPE* pszStr1, const TYPE* pszStr2) NOEXCEPT;
 		template< typename TYPE >
 		GRAYCORE_LINK static COMPARE_t GRAYCALL CmpIN(const TYPE* pszStr1, const TYPE* pszStr2, StrLen_t iLenMaxChars) NOEXCEPT;
+
 		template< typename TYPE >
 		GRAYCORE_LINK static COMPARE_t GRAYCALL CmpHeadI(const TYPE* pszFind, const TYPE* pszTableElem);
 		template< typename TYPE >
@@ -155,8 +156,10 @@ namespace Gray
 		template< typename TYPE >
 		GRAYCORE_LINK static bool GRAYCALL EndsWithI(const TYPE* pszStr2, const TYPE* pszPostfix, StrLen_t nLenStr = k_StrLen_UNK);
 
+		// TODO constexpr ?
 		template< typename TYPE >
 		GRAYCORE_LINK static HASHCODE32_t GRAYCALL GetHashCode32(const TYPE* pszStr, StrLen_t nLen = k_StrLen_UNK, HASHCODE32_t nHash = k_HASHCODE_CLEAR) NOEXCEPT;
+
 		template< typename TYPE >
 		GRAYCORE_LINK static TYPE* GRAYCALL FindChar(const TYPE* pszStr, TYPE ch, StrLen_t iLen = StrT::k_LEN_MAX) NOEXCEPT;
 		template< typename TYPE >
@@ -179,7 +182,7 @@ namespace Gray
 		GRAYCORE_LINK static StrLen_t GRAYCALL FindWord(const TYPE* pTextSearch, const TYPE* pszKeyWord, StrLen_t iLenMax = StrT::k_LEN_MAX);
 
 		template< typename TYPE>
-		static StrLen_t GetNonWhitespaceI(const TYPE* pStr, StrLen_t iLenMax = StrT::k_LEN_MAX) NOEXCEPT
+		static constexpr StrLen_t GetNonWhitespaceI(const TYPE* pStr, StrLen_t iLenMax = StrT::k_LEN_MAX) NOEXCEPT
 		{
 			//! Skip tabs and spaces but NOT new lines. NOT '\0' either.
 			if (pStr == nullptr)
@@ -461,7 +464,7 @@ namespace Gray
 		char szTmp[StrNum::k_LEN_MAX_DIGITS_INT + 4];
 		StrNum::GetNumberString(szTmp, pszStr, StrNum::k_LEN_MAX_DIGITS_INT);
 		const char* ppszStrEndA;
-		INT64 nVal = StrNum::toIL(szTmp, &ppszStrEndA, nBaseRadix);
+		const INT64 nVal = StrNum::toIL(szTmp, &ppszStrEndA, nBaseRadix);
 		if (ppszStrEnd != nullptr)
 		{
 			*ppszStrEnd = pszStr + StrT::Diff(ppszStrEndA, szTmp);
@@ -490,7 +493,7 @@ namespace Gray
 		char szTmp[StrNum::k_LEN_MAX_DIGITS + 4];
 		StrNum::GetNumberString(szTmp, pszStr, StrNum::k_LEN_MAX_DIGITS);
 		const char* ppszStrEndA;
-		double nVal = StrNum::toDouble(szTmp, &ppszStrEndA);
+		const double nVal = StrNum::toDouble(szTmp, &ppszStrEndA);
 		if (ppszStrEnd != nullptr)
 		{
 			*ppszStrEnd = pszStr + StrT::Diff(ppszStrEndA, szTmp);

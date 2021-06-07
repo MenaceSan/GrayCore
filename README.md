@@ -113,8 +113,8 @@ NuGet packages:
 https://www.nuget.org/packages?q=graycore
 Build native NuGet package for *Release  and *debug configs and multiple tool chains/CRT versions and platforms
 
-graycore-v141.1.6.5 = seperate package for the v141 tool chain. VS2017
-graycore-v142.1.6.5 = seperate package for the v142 tool chain. VS2019
+graycore-v141.1.6.5 = separate package for the v141 tool chain. VS2017
+graycore-v142.1.6.5 = separate package for the v142 tool chain. VS2019
 
 Contains options for:
 Configuration = *release* or *debug*  

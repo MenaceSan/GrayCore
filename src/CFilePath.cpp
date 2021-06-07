@@ -724,7 +724,7 @@ namespace Gray
 		return pszFullPath;
 	}
 
-	COMPARE_t GRAYCALL cFilePath::ComparePath(const FILECHAR_t* pszName1, const FILECHAR_t* pszName2, StrLen_t iLenMax) // static
+	COMPARE_t GRAYCALL cFilePath::ComparePath(const FILECHAR_t* pszName1, const FILECHAR_t* pszName2, StrLen_t iLenMax) noexcept // static
 	{
 		//! Compare 2 paths. equate \ and //
 		//! @note file Path/Name may or may not be case sensitive! Linux = sensitive , Windows/Dos = not case sensitive.
@@ -734,7 +734,6 @@ namespace Gray
 		//!  iLenMax=_MAX_PATH
 		//! @return
 		//!  0 = same. COMPARE_Equal
-		//!
 
 		if (pszName1 == nullptr || pszName2 == nullptr)
 		{
@@ -770,7 +769,7 @@ namespace Gray
 			if (IsCharDirSep(ch2))
 				ch2 = k_DirSep;
 			if (ch1 != ch2)
-				return(ch1 - ch2);
+				return ch1 - ch2;
 		}
 		return COMPARE_Equal;	// they are the same.
 	}
@@ -1044,15 +1043,20 @@ namespace Gray
 	const wchar_t* GRAYCALL cFilePath::MakeFileNameLongW(const FILECHAR_t* pszFilePath) // static 
 	{
 		//! Add _WIN32 k_NamePrefix if the filename is too long for the system call.
-		if (StrT::StartsWithI<FILECHAR_t>(pszFilePath, k_NamePrefix))	// already prefixed.
+		//! Convert UTF8 to UNICODE if necessary.
+
+		if (StrT::StartsWithI<FILECHAR_t>(pszFilePath, k_NamePrefix))	// already prefixed. So do nothing.
 			return StrArg<wchar_t>(pszFilePath);
+
 		cStringF sPathNew = k_NamePrefix;
 		sPathNew += pszFilePath;
-		return  StrArg<wchar_t>(sPathNew);
+		return  StrArg<wchar_t>(sPathNew);	//  UTF8 to UNICODE if necessary.
 	}
 	const wchar_t* GRAYCALL cFilePath::GetFileNameLongW(cStringF sFilePath) // static 
 	{
 		//! Add _WIN32 k_NamePrefix if the filename is too long for the system call.
+		//! Convert UTF8 to UNICODE if necessary.
+
 		if (sFilePath.GetLength() <= _MAX_PATH)	// short names don't need this.
 			return StrArg<wchar_t>(sFilePath.get_CPtr());
 		return MakeFileNameLongW(sFilePath);
@@ -1060,6 +1064,8 @@ namespace Gray
 	const wchar_t* GRAYCALL cFilePath::GetFileNameLongW(const FILECHAR_t* pszFilePath) // static 
 	{
 		//! Add _WIN32 k_NamePrefix if the filename is too long for the system call.
+		//! Convert UTF8 to UNICODE if necessary.
+
 		if (StrT::Len(pszFilePath) <= _MAX_PATH)	// short names don't need this.
 			return StrArg<wchar_t>(pszFilePath);
 		return MakeFileNameLongW(pszFilePath);

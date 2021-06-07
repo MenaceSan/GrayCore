@@ -34,12 +34,7 @@ namespace Gray
 		ATOMCODE_t m_nHashCode;		//!< GetHashCode32() for m_s; case independent. e.g. THIS==this==same atom.
 
 	private:
-		cAtomDef(cStringA s) noexcept
-			: m_s(s)
-			, m_nHashCode(StrT::GetHashCode32<ATOMCHAR_t>(s, k_StrLen_UNK, 0))
-		{
-			// Private construct.
-		}
+		cAtomDef(cStringA s) noexcept;
 
 	public:
 		ATOMCODE_t get_HashCode() const noexcept

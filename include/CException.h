@@ -107,7 +107,7 @@ namespace Gray
 
 		DECLARE_DYNAMIC(cException);	// For MFC support.
 
-		//! overloaded to provide context specific error messages.
+		//! overloaded to provide context specific error messages. In English or default OS language. (as GChar_t)
 		//! @note stupid BOOL return is for MFC compatibility.
 		virtual BOOL GetErrorMessage(GChar_t* lpszError, UINT nLenMaxError = cExceptionHolder::k_MSG_MAX_SIZE, UINT* pnHelpContext = nullptr);
 		cStringL get_ErrorStr(); // similar to STL what()
@@ -115,7 +115,7 @@ namespace Gray
 #ifndef _MFC_VER	// using _MFC_VER.
 		virtual const char* what() const THROW_DEF
 		{
-			//! STL. store the GetErrorMessage string some place ?
+			//! for STL. store the GetErrorMessage string some place ?
 			return m_pszDescription;
 		}
 #endif // ! _MFC_VER

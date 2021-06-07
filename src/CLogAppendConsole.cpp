@@ -117,7 +117,7 @@ namespace Gray
 		// NOT in console. So we must use a pop up.
 
 #ifdef _WIN32
-		int iRet = _GTN(MessageBox)(HWND_DESKTOP, sMsg, cAppState::get_AppFileTitle(), uFlags);		// wait to attach debug.
+		int iRet = _FNF(MessageBox)(HWND_DESKTOP, StrArg<FILECHAR_t>(sMsg), cAppState::get_AppFileTitle(), uFlags);		// wait to attach debug.
 
 #elif defined( __linux__)
 		cOSProcess proc;

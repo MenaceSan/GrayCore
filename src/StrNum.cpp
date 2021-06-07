@@ -47,7 +47,7 @@ namespace Gray
 			// if (ch == ':' || ch == ';' || ch == '(' || ch == ')')	// not a number!
 			// 	break;
 			// allow and characters that might be part of a number. Digit, '.', 'e','E','+', '-', 'A' - 'Z', 'a' - 'z' for hex values,
-			// allow comma and math seperators?
+			// allow comma and math separators?
 			pszOut[nLen] = (char)ch;
 		}
 

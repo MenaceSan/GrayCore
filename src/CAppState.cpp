@@ -276,7 +276,7 @@ namespace Gray
 	}
 	cStringF GRAYCALL cAppState::get_AppFileDir() // static
 	{
-		//! Get the directory the app EXE is in.
+		//! Get the directory the current app EXE is in.
 		return cFilePath::GetFileDir(cAppState::get_AppFilePath());
 	}
 
@@ -376,7 +376,7 @@ namespace Gray
 
 	StrLen_t GRAYCALL cAppState::GetEnvironStr(const FILECHAR_t* pszVarName, FILECHAR_t* pszValue, StrLen_t iLenMax) noexcept	// static
 	{
-		//! Get a named environment variable by name.
+		//! Get a named environment variable by name. %SystemRoot%
 		//! @arg iLenMax = 0 just return the length i would have needed.
 		//! @return
 		//!  pszValue = the output value for the pszVarName. nullptr = i just wanted the length.

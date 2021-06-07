@@ -33,7 +33,8 @@ namespace Gray
 		APPSTATE_QTY,
 	};
 
-	typedef const FILECHAR_t* const* APP_ARGS_t;	//!< the args passed to main() nullptr terminated array.
+	typedef const FILECHAR_t* const * APP_ARGS_t;	//!< the args passed to main() nullptr terminated array. const 
+	typedef FILECHAR_t** APP_ARGW_t;	// _WIN32 really defined this as LPWSTR*
 
 	class GRAYCORE_LINK cAppArgs
 	{
@@ -57,7 +58,7 @@ namespace Gray
 			//! Is FILECHAR_t char 'ch' a command line switch char?
 			return ch == '-' || ch == '/';
 		}
-		static inline bool IsArg(const FILECHAR_t* pszArg)
+		static inline bool IsArg(const FILECHAR_t* pszArg) noexcept
 		{
 			if (StrT::IsWhitespace<FILECHAR_t>(pszArg))
 				return false;

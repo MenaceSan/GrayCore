@@ -20,8 +20,13 @@
 #define USE_UNICODE 0				// same as _MBCS
 #endif
 #endif
+
 #ifndef USE_UNICODE_FN
-#define USE_UNICODE_FN USE_UNICODE			//!< make file names UNICODE as well?
+#if defined(_MFC_VER)
+#define USE_UNICODE_FN USE_UNICODE
+#else 
+#define USE_UNICODE_FN 0			//!< make file names UTF-8 by default. (no UNICODE like _WIN32 might want) (__linux__ files should always be UTF-8)
+#endif
 #endif
 
 namespace Gray		//!< The main namespace for all Core functions.

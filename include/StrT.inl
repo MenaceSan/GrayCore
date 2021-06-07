@@ -203,7 +203,7 @@ namespace Gray
 
 		if (pszStr == nullptr)
 			return k_HASHCODE_CLEAR;
-		if (nLen <= k_StrLen_UNK)
+		if (nLen <= k_StrLen_UNK)	// nLen was not supplied. I must figure it out.
 			nLen = StrT::Len(pszStr, k_LEN_MAX);
 		if (nLen <= 0)
 			return k_HASHCODE_CLEAR;

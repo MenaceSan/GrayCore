@@ -60,7 +60,7 @@ namespace Gray
 		{
 			//! is this NOT a valid malloc() heap pointer?
 			//! @note this should only ever be used in debug code. and only in an ASSERT.
-			if (pData == nullptr)	// nullptr is not corrupt.
+			if (pData == nullptr)	// nullptr is not corrupt. freeing it does nothing.
 				return false;
 			return !IsValidHeap(pData);
 		}
@@ -78,6 +78,7 @@ namespace Gray
 			}
 			return pData;
 		}
+
 		static void GRAYCALL FreePtr(void* pData) noexcept;
 		static void* GRAYCALL ReAllocPtr(void* pData, size_t nSize);
 	};
@@ -203,7 +204,7 @@ namespace Gray
 			Alloc(ref.m_pData, ref.get_DataSize());
 			return *this;
 		}
-		THIS_t& operator = (THIS_t&& ref)
+		THIS_t& operator = (THIS_t&& ref) noexcept
 		{
 			//! move assignment operator
 			m_pData = ref.m_pData; ref.m_pData = nullptr;

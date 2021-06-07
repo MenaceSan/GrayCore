@@ -34,9 +34,7 @@ enum FOF_TYPE_
 	// NON WIN32 standard.
 	FOF_X_FollowLinks = 0x10000,
 	FOF_X_WantDots = 0x20000,
-#if ! USE_UNICODE_FN
-	FOF_X_UTF8 = 0x40000,			//!< store file names as UTF8. even if USE_UNICODE.
-#endif
+ 
 };
 
 namespace Gray
@@ -92,7 +90,7 @@ namespace Gray
 		friend class cFileFind;
 
 	protected:
-		cStringF m_sFileName;	//!< relative file title. (NOT FULL PATH) checks USE_UNICODE_FN and FILECHAR_t.
+		cStringF m_sFileName;	//!< relative file title. (NOT FULL PATH) if FILECHAR_t is NOT USE_UNICODE_FN then is UTF8.
 
 	public:
 		cFileFindEntry() noexcept

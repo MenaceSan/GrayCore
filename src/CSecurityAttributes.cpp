@@ -132,8 +132,11 @@ namespace Gray
 
 	bool cSecurityId::SetStringSID(const GChar_t* pszSID)
 	{
-		//! e.g. S-1-5-21-3686267286-921206174-156832652-1000
+		//! e.g. "S-1-5-21-3686267286-921206174-156832652-1000"
 		//! _GT("S-1-1-0") = share to all users.
+		
+		// If get_SID() already has a value is it freed ?
+		Free();
 		if (!::ConvertStringSidToSid(pszSID, (PSID *)get_PPtrData()))
 		{
 			return false;

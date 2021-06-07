@@ -326,7 +326,8 @@ namespace Gray
 		}
 
 		// read/write a string of comma separated numbers.
-		static StrLen_t GRAYCALL ConvertToString(char* pszDst, StrLen_t iSizeDstMax, const BYTE* pSrc, size_t iLenSrc);
+		static StrLen_t GRAYCALL ConvertToString(char* pszDst, StrLen_t iSizeDstMax, const BYTE* pSrc, size_t nSrcQty);
+		static StrLen_t GRAYCALL ConvertToString(wchar_t* pszDst, StrLen_t iSizeDstMax, const BYTE* pSrc, size_t nSrcQty);
 		static size_t GRAYCALL ReadFromString(BYTE* pDst, size_t iLenBytesMax, const char* pszSrc);
 
 		static inline StrLen_t GetHexDigestSize(size_t nSize) noexcept
@@ -581,10 +582,7 @@ namespace Gray
 		{
 			cMem::ZeroSecure(m_pData, m_nSize);
 		}
-		StrLen_t ConvertToString(char* pszDst, StrLen_t iDstSizeMax) const
-		{
-			return cMem::ConvertToString(pszDst, iDstSizeMax, get_DataBytes(), m_nSize);
-		}
+
 	};
 
 	struct GRAYCORE_LINK cMemT : public cValT	// Value of some type in memory.

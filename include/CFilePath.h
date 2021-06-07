@@ -144,7 +144,7 @@ namespace Gray
 		static bool GRAYCALL MakeFilePathUpDir(FILECHAR_t* pszName);
 
 		//! @note Path may or may not be case sensitive!
-		static COMPARE_t GRAYCALL ComparePath(const FILECHAR_t* pszPath1, const FILECHAR_t* pszPath2, StrLen_t iLenMax = _MAX_PATH);
+		static COMPARE_t GRAYCALL ComparePath(const FILECHAR_t* pszPath1, const FILECHAR_t* pszPath2, StrLen_t iLenMax = _MAX_PATH) noexcept;
 
 #ifdef _WIN32
 		static const wchar_t* GRAYCALL MakeFileNameLongW(const FILECHAR_t* pszFilePath);

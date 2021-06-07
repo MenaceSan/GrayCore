@@ -33,7 +33,7 @@ namespace Gray
 
 		static UINT32 GRAYCALL toU(const char* pszInp, const char** ppszInpEnd = (const char**)nullptr, RADIX_t nBaseRadix = 0) noexcept
 		{
-			//! Just cast down from 64.
+			//! Read number from string. Just cast down from 64.
 			return (UINT32)toUL(pszInp, ppszInpEnd, nBaseRadix);
 		}
 		static INT32 GRAYCALL toI(const char* pszInp, const char** ppszInpEnd = (const char**)nullptr, RADIX_t nBaseRadix = 10) noexcept

@@ -43,9 +43,10 @@ namespace Gray
 		HRESULT OpenProcessToken(DWORD dwDesiredAccess, HANDLE hProcess = INVALID_HANDLE_VALUE);
 		HRESULT LogonUserX(const char* pszName, const char* pszPass);
 
-		bool SetPrivilege(const GChar_t* pszToken, DWORD dwAttr);
-		bool SetPrivilege(const FILECHAR_t* pszToken);
-		bool RemovePrivilege(const FILECHAR_t* pszToken);
+		bool SetPrivilege(::LUID luidDebug, DWORD dwAttr);
+
+		bool SetPrivilege(const wchar_t* pszToken, DWORD dwAttr = SE_PRIVILEGE_ENABLED);
+		bool SetPrivilege(const char* pszToken, DWORD dwAttr = SE_PRIVILEGE_ENABLED);
 
 		HRESULT GetIntegrityLevel();
 		int get_IntegrityLevel();

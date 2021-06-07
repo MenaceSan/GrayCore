@@ -332,14 +332,8 @@ namespace Gray
 			}
 		}
 
-		m_FileEntry.m_sFileName = m_FindInfo.cFileName;		// How should we deal with UNICODE names ?
-#if ! USE_UNICODE_FN
-		// May optionally want UNICODE
-		if (!(m_nFileFlags&FOF_X_UTF8))
-		{
-			// Convert all UNICODES to ? like the ANSI functions do.
-		}
-#endif
+		m_FileEntry.m_sFileName = m_FindInfo.cFileName;		// How should we deal with USE_UNICODE_FN names ? Use UTF8
+
 		if (!(m_nFileFlags&FOF_X_WantDots) && isDots())	// ignore the . and .. that old systems can give us.
 		{
 			return FindFileNext(false);

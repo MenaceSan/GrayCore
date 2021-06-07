@@ -155,6 +155,15 @@ namespace Gray
 
 	//*********************************
 
+	cAtomDef::cAtomDef(cStringA s) noexcept
+		: m_s(s)
+		, m_nHashCode(StrT::GetHashCode32<ATOMCHAR_t>(s, s.GetLength(), 0))
+	{
+		// Private construct.
+	}
+
+	//*********************************
+
 	void cAtomRef::EmptyAtom(bool isLast)
 	{
 		//! Free this ref count. Delete if there are no more refs
