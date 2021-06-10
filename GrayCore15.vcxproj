@@ -522,6 +522,8 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <None Include="build\BuildNuGetImage-v141.bat" />
+    <None Include="build\BuildNuGetImage-v142.bat" />
     <None Include="build\BuildNuGetImage.bat" />
     <None Include="build\Directory.Build.props" />
     <None Include="build\graycore-v141.nuspec" />
@@ -549,6 +551,7 @@
     <ClInclude Include="include\cArchive.h" />
     <ClInclude Include="include\cArray.h" />
     <ClInclude Include="include\cArrayIUnk.h" />
+    <ClInclude Include="include\cArrayT.h" />
     <ClInclude Include="include\cArrayUnique.h" />
     <ClInclude Include="include\cArrayRef.h" />
     <ClInclude Include="include\cArraySort.h" />
@@ -597,6 +600,11 @@
     <ClInclude Include="include\cMem.h" />
     <ClInclude Include="include\cMemPage.h" />
     <ClInclude Include="include\cMime.h" />
+    <ClInclude Include="include\cObjectService.h" />
+    <ClInclude Include="include\cQueueChunked.h" />
+    <ClInclude Include="include\cResourceDir.h" />
+    <ClInclude Include="include\cStack.h" />
+    <ClInclude Include="include\cStreamTextReader.h" />
     <ClInclude Include="include\cUniquePtr.h" />
     <ClInclude Include="include\cNonCopyable.h" />
     <ClInclude Include="include\cObject.h" />
@@ -707,7 +715,6 @@
     <ClCompile Include="src\cFilePath.cpp" />
     <ClCompile Include="src\cFileStatus.cpp" />
     <ClCompile Include="src\cFileText.cpp" />
-    <ClCompile Include="src\cFileTextReader.cpp" />
     <ClCompile Include="src\cFloatDeco.cpp" />
     <ClCompile Include="src\cHeap.cpp" />
     <ClCompile Include="src\cHookJump.cpp" />
@@ -733,10 +740,12 @@
     <ClCompile Include="src\cPtrTrace.cpp" />
     <ClCompile Include="src\cQueue.cpp" />
     <ClCompile Include="src\cRandom.cpp" />
+    <ClCompile Include="src\cRegKey.cpp" />
     <ClCompile Include="src\cSecurityAttributes.cpp" />
     <ClCompile Include="src\cSingleton.cpp" />
     <ClCompile Include="src\cStream.cpp" />
     <ClCompile Include="src\cStreamStack.cpp" />
+    <ClCompile Include="src\cStreamTextReader.cpp" />
     <ClCompile Include="src\cString.cpp" />
     <ClCompile Include="src\cSystemInfo.cpp" />
     <ClCompile Include="src\cTempPool.cpp" />

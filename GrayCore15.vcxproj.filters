@@ -389,6 +389,24 @@
     <ClInclude Include="include\Index.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="include\cArrayT.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cObjectService.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cQueueChunked.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cResourceDir.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cStack.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cStreamTextReader.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.md" />
@@ -440,6 +458,12 @@
       <Filter>build</Filter>
     </None>
     <None Include="build\GrayCore.nuget.targets">
+      <Filter>build</Filter>
+    </None>
+    <None Include="build\BuildNuGetImage-v141.bat">
+      <Filter>build</Filter>
+    </None>
+    <None Include="build\BuildNuGetImage-v142.bat">
       <Filter>build</Filter>
     </None>
   </ItemGroup>
@@ -506,9 +530,6 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\cFileText.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\cFileTextReader.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\cFloatDeco.cpp">
@@ -668,6 +689,12 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\cObjectService.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cRegKey.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cStreamTextReader.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
