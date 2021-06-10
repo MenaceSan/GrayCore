@@ -779,6 +779,8 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <None Include="build\BuildNuGetImage-v141.bat" />
+    <None Include="build\BuildNuGetImage-v142.bat" />
     <None Include="build\BuildNuGetImage.bat" />
     <None Include="build\Directory.Build.props" />
     <None Include="build\graycore-v141.nuspec" />

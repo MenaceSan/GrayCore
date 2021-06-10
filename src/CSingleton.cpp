@@ -36,16 +36,19 @@ namespace Gray
 			//! This is called by the C static runtime
 			//! @note Destroying Singletons from a DLL that has already unloaded will crash.
 
-			for (ITERATE_t iCount = 0; !m_aSingletons.IsEmpty(); iCount++)
+			ITERATE_t iQty = m_aSingletons.GetSize();
+			for (ITERATE_t i = 0; !m_aSingletons.IsEmpty(); i++)
 			{
-				if (iCount >= SHRT_MAX)
+				if (i >= SHRT_MAX)
 				{
 					// Some sort of deadlock of singletons creating/using each other in destructors.
-					ASSERT(iCount < SHRT_MAX);
+					DEBUG_ASSERT(i < SHRT_MAX, "m_aSingletons SHRT_MAX");
 					break;
 				}
 				cSingletonRegister* pReg = m_aSingletons.PopTail();
 				delete pReg;	// should remove itself from m_aSingletons
+				iQty--;
+				DEBUG_ASSERT(m_aSingletons.GetSize() <= iQty, "m_aSingletons");
 			}
 			sm_bIsDestroyed = true;
 		}

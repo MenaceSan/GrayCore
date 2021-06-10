@@ -22,7 +22,7 @@ namespace Gray
 	{
 		//! @enum Gray::LOGLEV_TYPE
 		//! log level = criticalness/importance level of a logged event. higher = more severe/important.
-		//! Similar to _WIN32 DPFLTR_ERROR_LEVEL = DEBUGLVL_ERROR or .NET System.Diagnostics.EventLogEntryType
+		//! Similar to _WIN32 TRACE_LEVEL_VERBOSE <EvnTrace.h>, DPFLTR_ERROR_LEVEL, DEBUGLVL_ERROR or .NET System.Diagnostics.EventLogEntryType
 #define LOGLEVELDEF(a,b,c,d) LOGLEV_##a,
 #include "cLogLevel.tbl"
 #undef LOGLEVELDEF

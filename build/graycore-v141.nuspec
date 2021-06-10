@@ -3,7 +3,7 @@
   <metadata>
     <id>graycore-v141</id>
     <version>1.6.5</version>
-    <description>Binaries and developer files (headers/libraries) for GrayCore C++ Library for CRT v141.</description>
+    <description>Binaries and developer files (headers/libraries) for GrayCore C++ Library for Windows cruntime v141.</description>
     <authors>Dennis Robinson</authors>
 
     <owners>menasoft.com</owners>
@@ -11,8 +11,8 @@
     <license type="expression">MIT</license>
     <icon>GrayWorldLogoSm.jpg</icon>
     <projectUrl>https://www.menasoft.com/graydox/d8/df5/namespaceGray.html</projectUrl>
-    <title>GrayCore C++ Library for cruntime v141</title>
-    <summary>GrayCore C++ Library for cruntime v141</summary>
+    <title>GrayCore C++ Library for Windows cruntime v141</title>
+    <summary>GrayCore C++ Library for Windows cruntime v141</summary>
     <copyright>Copyright 2020 Dennis Robinson (menasoft.com)</copyright>
     <tags>native nativepackage v141 CoApp menasoft</tags>
     <repository type="git" url="https://github.com/MenaceSan/GrayCore.git" branch="master" />

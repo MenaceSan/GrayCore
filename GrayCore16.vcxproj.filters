@@ -453,6 +453,12 @@
     <None Include="build\Directory.Build.props">
       <Filter>build</Filter>
     </None>
+    <None Include="build\BuildNuGetImage-v141.bat">
+      <Filter>build</Filter>
+    </None>
+    <None Include="build\BuildNuGetImage-v142.bat">
+      <Filter>build</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">

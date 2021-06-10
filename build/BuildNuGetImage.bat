@@ -1,11 +1,14 @@
-rem Assume we have built all the binaries. This will copy them all to the appropriate folder structure to prepare for NuGet packing.
+rem Assume we have built all the binaries. 
+rem for DebugDLL, ReleaseDLL, ReleaseStat, DebugStat x Win32, x64
+rem TODO msbuild buildapp.csproj -t:HelloWorld -p:Configuration=Release
+rem This will copy them all to the appropriate folder structure to prepare for NuGet packing.
 rem Assume NuGet tools are installed /Programs/NuGet.exe .
 rem https://digitalhouseblog.wordpress.com/2019/08/22/how-to-make-a-nuget-package-for-c/
 rem https://docs.microsoft.com/en-us/nuget/reference/nuget-exe-cli-reference -> https://www.nuget.org/downloads
 rem use for v141 or v142
 @ECHO OFF
+IF "%CrtVer%" == "" set ToolVer=v142
 set CodeVer=1.6.5
-set ToolVer=v142
 set BinDir=..\..\..\bin
 set DstDir=%BinDir%\graycore-%ToolVer%.%CodeVer%
 @ECHO on
