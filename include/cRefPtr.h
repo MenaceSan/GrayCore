@@ -379,12 +379,12 @@ namespace Gray
 
 		bool SetSmartDebug()	// override
 		{
-			if (!isValidPtr())
+			if (!this->isValidPtr())
 				return false;
-			if (!get_Ptr()->SetSmartDebug())
+			if (!this->get_Ptr()->SetSmartDebug())
 				return false;
 #ifdef USE_PTRTRACE_REF
-			TraceAttach(static_cast<cRefBase*>(get_Ptr()));
+			TraceAttach(static_cast<cRefBase*>(this->get_Ptr()));
 #endif
 			return true;
 		}
