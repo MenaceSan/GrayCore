@@ -23,6 +23,7 @@ namespace Gray
 		// Get the vtable of the object.
 		// Assume this is a 'new' returned pointer.
 
+		UNREFERENCED_PARAMETER(p);
 		return nullptr;
 	}
 
@@ -38,6 +39,7 @@ namespace Gray
 
 		// _MSC_VER
 		// __GNUC__
+		UNREFERENCED_PARAMETER(vtable);
 
 		return "test";
 	}

@@ -37,7 +37,13 @@ namespace Gray
 	public:
 		inline int Init() noexcept
 		{
+			//! Set the return point for longjmp. 
+			//! This might not work if C++ exceptions are turned on.
+			//! warning C4611: interaction between '_setjmp' and C++ object destruction is non-portable
 			//! @return 0 = default value. do nothing. assume immediate  return = not longjmp. >= 1 = this is a longjmp() return.
+
+#pragma warning(disable:4611)	// warning C4611: interaction between '_setjmp' and C++ object destruction is non-portable
+
 			return ::setjmp(OUT _buf);
 		}
 

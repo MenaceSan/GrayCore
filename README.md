@@ -4,26 +4,27 @@ C++ core library providing very basic utility functionality without using any ST
 
 GRAY_VERSION_S = Version 1.6.5
 
-https://www.menasoft.com/graydox/d8/df5/namespaceGray.html
-https://github.com/MenaceSan/GrayCore
+https://www.menasoft.com/graydox/d8/df5/namespaceGray.html  
+https://github.com/MenaceSan/GrayCore  
+https://www.nuget.org/packages?q=graycore  
 
 The Gray libraries are a set of source code modules written mostly in C++ over 10 years or so and used in a variety of projects.
 They are compilable in MSVC and GNU compilers and will run in several flavors of Windows, WinCE, Linux.
 
 Main libraries are:
 @verbatim
-GrayCore,
-GrayLib,
-Gray3D,
-GrayCodec,
-GrayDotNet,
-GrayGraph,
-GrayGUI,
-GrayJSX,
-GrayKernel for Windows kernel drivers/services,
-GrayLUA,
-GrayMapData,
-GrayPerfMon
+GrayCore,  
+GrayLib,  
+Gray3D,  
+GrayCodec,  
+GrayDotNet,  
+GrayGraph,  
+GrayGUI,  
+GrayJSX,  
+GrayKernel for Windows kernel drivers/services,  
+GrayLUA,  
+GrayMapData,  
+GrayPerfMon  
 @endverbatim
 
 Main applications are:

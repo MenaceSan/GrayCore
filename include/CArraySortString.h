@@ -23,10 +23,9 @@ namespace Gray
 	public:
 		typedef cArraySorted< cStringT<_TYPE_CH>, cStringT<_TYPE_CH>, const _TYPE_CH*> SUPER_t;
 		typedef cStringT<_TYPE_CH> STR_t;	// alias for container
-#ifdef __GNUC__
-		typedef typename SUPER_t::ARG_t ARG_t;	// GCC seems to require this odd redefinition.
+
+		typedef typename SUPER_t::ARG_t ARG_t; // template weirdness.
 		typedef typename SUPER_t::KEY_t KEY_t;
-#endif
 
 	public:
 		virtual ~cArraySortString()

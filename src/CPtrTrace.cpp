@@ -82,6 +82,7 @@ namespace Gray
 	void cPtrTrace::TraceRelease(IUnknown* p)
 	{
 		//! Called when cPtrTrace is destroyed. 
+		UNREFERENCED_PARAMETER(p);
 		if (!sm_bActive)	// not tracking this now. m_aTraces MUST be EMPTY!
 			return;
 		if (cAppState::isInCExit())	// can't track this here.

@@ -7,7 +7,7 @@ rem https://digitalhouseblog.wordpress.com/2019/08/22/how-to-make-a-nuget-packag
 rem https://docs.microsoft.com/en-us/nuget/reference/nuget-exe-cli-reference -> https://www.nuget.org/downloads
 rem use for v141 or v142
 @ECHO OFF
-IF "%CrtVer%" == "" set ToolVer=v142
+IF "%ToolVer%" == "" set ToolVer=v142
 set CodeVer=1.6.5
 set BinDir=..\..\..\bin
 set DstDir=%BinDir%\graycore-%ToolVer%.%CodeVer%
