@@ -4,7 +4,7 @@
 //! @copyright (c) 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#if 0 // ! USE_CRT
+#if ! USE_CRT
 #include "include/cHeap.h"
 
 #ifdef _MSC_VER

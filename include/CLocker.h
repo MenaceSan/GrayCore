@@ -80,7 +80,8 @@ namespace Gray
 		//! TYPE must support Unlock() and probably Lock() or be based on cLockableBase*
 		//! m_p = the lock we are locking.
 		//! Similar to ATL CCritSecLock, std::unique_lock
- 
+		//! like: std::scoped_lock<>
+
 	public:
 		explicit cLockerT(TYPE* pLock, bool bLockSuccess) noexcept
 			: cPtrFacade<TYPE>(bLockSuccess ? pLock : nullptr)

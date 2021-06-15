@@ -58,12 +58,12 @@ namespace Gray
 			_CLOSER(h);
 		}
 
-		inline ~cHandlePtr()
+		inline ~cHandlePtr() noexcept
 		{
 			CloseHandle();
 		}
 
-		void AttachHandle(_TYPE_HAND h)
+		void AttachHandle(_TYPE_HAND h) noexcept
 		{
 			if (m_h == h)
 				return;
@@ -81,10 +81,7 @@ namespace Gray
 		{
 			return m_h;
 		}
-		inline _TYPE_HAND operator -> () const noexcept
-		{
-			return m_h;
-		}
+	
 		inline _TYPE_HAND get_Handle() const noexcept
 		{
 			return m_h;

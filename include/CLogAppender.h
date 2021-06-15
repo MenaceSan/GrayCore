@@ -204,7 +204,7 @@ namespace Gray
 			va_start(vargs, pszFormat);
 			const HRESULT hRes = addEventV(uAttrMask, eLogLevel, pszFormat, vargs);
 			va_end(vargs);
-			return(hRes);
+			return hRes;
 		}
 
 		HRESULT _cdecl addInfoF(const LOGCHAR_t* pszFormat, ...)
@@ -214,7 +214,7 @@ namespace Gray
 			va_start(vargs, pszFormat);
 			const HRESULT hRes = addEventV(LOG_ATTR_0, LOGLEV_INFO, pszFormat, vargs);
 			va_end(vargs);
-			return(hRes);
+			return hRes;
 		}
 
 		HRESULT _cdecl addDebugErrorF(const LOGCHAR_t* pszFormat, ...)
@@ -225,7 +225,7 @@ namespace Gray
 			va_start(vargs, pszFormat);
 			const HRESULT hRes = addEventV(LOG_ATTR_DEBUG, LOGLEV_ERROR, pszFormat, vargs);
 			va_end(vargs);
-			return(hRes);
+			return hRes;
 		}
 		HRESULT _cdecl addDebugWarnF(const LOGCHAR_t* pszFormat, ...)
 		{
@@ -233,7 +233,7 @@ namespace Gray
 			va_start(vargs, pszFormat);
 			const HRESULT hRes = addEventV(LOG_ATTR_DEBUG, LOGLEV_WARN, pszFormat, vargs);
 			va_end(vargs);
-			return(hRes);
+			return hRes;
 		}
 		HRESULT _cdecl addDebugInfoF(const LOGCHAR_t* pszFormat, ...)
 		{
@@ -241,7 +241,7 @@ namespace Gray
 			va_start(vargs, pszFormat);
 			const HRESULT hRes = addEventV(LOG_ATTR_DEBUG, LOGLEV_INFO, pszFormat, vargs);
 			va_end(vargs);
-			return(hRes);
+			return hRes;
 		}
 		HRESULT _cdecl addDebugTraceF(const LOGCHAR_t* pszFormat, ...)
 		{
@@ -249,7 +249,7 @@ namespace Gray
 			va_start(vargs, pszFormat);
 			const HRESULT hRes = addEventV(LOG_ATTR_DEBUG, LOGLEV_TRACE, pszFormat, vargs);
 			va_end(vargs);
-			return(hRes);
+			return hRes;
 		}
 	};
 

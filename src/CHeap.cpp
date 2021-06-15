@@ -87,14 +87,14 @@ namespace Gray
 
 	bool GRAYCALL cHeap::IsValidInside(const void* pData, ptrdiff_t iOffset) noexcept // static
 	{
-		//! Is this offset inside the valid heap block.
+		//! Is this offset inside the valid heap block (pData).
 		//! @note this should only ever be used in debug code. and only in an ASSERT.
 		CODEPROFILEFUNC();
-		if (iOffset < 0)
+		if (iOffset < 0)	// never ok. even if aligned.
 			return false;
 		if (!cHeap::IsValidHeap(pData))
 			return false;
-		size_t nSize = cHeap::GetSize(pData);
+		const size_t nSize = cHeap::GetSize(pData);
 		if ((size_t)iOffset >= nSize)
 			return false;
 		return true;
@@ -104,9 +104,10 @@ namespace Gray
 	{
 		//! free a pointer to a block allocated on the heap.
 		//! Same footprint as C free()
-		CODEPROFILEFUNC();
+		//! Should it throw if pData is invalid ? nullptr is ok.
 		if (pData == nullptr)
 			return;
+		CODEPROFILEFUNC();
 #if defined(_DEBUG)
 		DEBUG_CHECK(cHeap::IsValidHeap(pData));
 #endif
@@ -122,11 +123,12 @@ namespace Gray
 #endif
 	}
 
-	void* GRAYCALL cHeap::AllocPtr(size_t iSize) // static
+	void* GRAYCALL cHeap::AllocPtr(size_t iSize) // static // throw(std::bad_alloc)
 	{
 		//! Allocate a block of memory on the application heap. assume nothing about its current contents. uninitialized.
 		//! Same footprint as C malloc()
-		//! 0 size is allowed for some reason. (maybe returns NON nullptr)
+		//! Will it throw if out of memory? (or the heap is invalid/corrupted)
+		//! iSize = 0 is allowed for some reason. (maybe returns NON nullptr)
 
 		CODEPROFILEFUNC();
 #ifdef _DEBUG
@@ -159,6 +161,8 @@ namespace Gray
 	{
 		//! allocate a different sized block but preserve existing content.
 		//! Same footprint as C realloc()
+		//! Should it throw if pData is invalid ? nullptr is ok.
+		//! Will it throw if out of memory? (or the heap is invalid/corrupted)
 
 		CODEPROFILEFUNC();
 		ASSERT(iSize < k_ALLOC_MAX); // 256 * 64K

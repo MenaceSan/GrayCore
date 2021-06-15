@@ -253,6 +253,7 @@ namespace Gray
 	{
 		//! @class Gray::cThreadLockMutex
 		//! Base class for data structure that may be locked for multi threaded/process access.
+		//! similar to std::mutex
 		//! These are expensive size wise but fast.
 		//! lock something and wait for it to be freed.
 		//! @note reentrant, multi locks on a single thread are allowed and counted.
@@ -335,7 +336,7 @@ namespace Gray
 			//! This will wait forever for the resource to be free !
 			//! @note It should NOT wait if it is in the same thread.
 #ifdef _WIN32
-			HRESULT hRes = m_Mutex.WaitForSingleObject(cTimeSys::k_INF);
+			const HRESULT hRes = m_Mutex.WaitForSingleObject(cTimeSys::k_INF);
 			if (hRes != S_OK)
 			{
 				return false;
@@ -373,14 +374,14 @@ namespace Gray
 			//! Try to lock the mutex. give up after a certain amount of time if it is locked by another thread.
 			//! dwDelayMS = amount of time to wait. 0 = don't wait
 #ifdef _WIN32
-			HRESULT hRes = m_Mutex.WaitForSingleObject(dwDelayMS);
+			const HRESULT hRes = m_Mutex.WaitForSingleObject(dwDelayMS);
 			if (hRes != S_OK)
 			{
 				return false;
 			}
 #elif defined(__USE_XOPEN2K)	// __linux__
 			cTimeSpec tSpec(dwDelayMS);
-			int iRet = ::pthread_mutex_timedlock(&m_Mutex, &tSpec);
+			const int iRet = ::pthread_mutex_timedlock(&m_Mutex, &tSpec);
 			if (iRet != 0)
 			{
 				return false;
