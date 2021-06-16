@@ -18,7 +18,7 @@
 #include "cLogLevel.h"
 #include "HResult.h"
 
-#include <setjmp.h>		// jmp_buf, setjmp, longjmp 
+#include <setjmp.h>		// jmp_buf, setjmp(), longjmp() 
 #if defined(_CPPUNWIND) && ! defined(_MFC_VER)	// NOT using _MFC_VER.
 #include <exception> // use STL based std::exception class.
 #endif

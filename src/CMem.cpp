@@ -16,14 +16,14 @@ namespace Gray
 #include <setjmp.h>
 #include <signal.h>
 
-	static jmp_buf s_CMem_IsValidFailJmpBuf;
-	typedef void(__cdecl * JMP_t)(int);
+	static cExceptionJmp s_CMem_IsValidFailJmpBuf;
+	typedef void(__cdecl * SIGNAL_t)(int);
 
-	void __cdecl cMem::IsValidFailHandler(int nSig)	// JMP_t static
+	void __cdecl cMem::IsValidFailHandler(int nSig)	// SIGNAL_t static
 	{
 		//! @todo make s_CMem_IsValidFailJmpBuf thread safe.
 		UNREFERENCED_PARAMETER(nSig);
-		::longjmp(s_CMem_IsValidFailJmpBuf, 1);
+		s_CMem_IsValidFailJmpBuf.Jump(1);
 	}
 #endif
 
@@ -84,14 +84,14 @@ namespace Gray
 #elif USE_CRT
 		//! __linux__ / POSIX version of IsBadReadPtr()
 		UNREFERENCED_PARAMETER(bWriteAccess);  // TODO bWriteAccess
-		JMP_t pfnPrevHandler = nullptr;
-		if (::setjmp(s_CMem_IsValidFailJmpBuf))
+		SIGNAL_t pPrevSignal = nullptr;
+		if (s_CMem_IsValidFailJmpBuf.Init() != 0)
 		{
 			// We failed.
-			::signal(SIGSEGV, pfnPrevHandler);
+			::signal(SIGSEGV, pPrevSignal);
 			return true;
 		}
-		pfnPrevHandler = ::signal(SIGSEGV, IsValidFailHandler);
+		pPrevSignal = ::signal(SIGSEGV, IsValidFailHandler);
 
 		// NOTE: Aligned blocks might make this faster.
 		sm_bDontOptimizeOut0 = 0;	// Always 0
@@ -104,7 +104,7 @@ namespace Gray
 			}
 		}
 
-		::signal(SIGSEGV, pfnPrevHandler);		// undo signal.
+		::signal(SIGSEGV, pPrevSignal);		// undo signal.
 		return false;	// its good.
 #else
 		return false;

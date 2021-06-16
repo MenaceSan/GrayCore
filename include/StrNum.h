@@ -136,7 +136,7 @@ namespace Gray
 	size_t GRAYCALL StrNum::ToValArray(OUT _TYPE* pOut, size_t iQtyMax, const char* pszInp) // static
 	{
 		//! @todo Merge with cMem::ReadFromString
-		//! Similar to StrT::ParseCmds()
+		//! Similar to StrT::ParseArray()
 
 		if (pszInp == nullptr)
 			return 0;

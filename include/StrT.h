@@ -76,7 +76,7 @@ namespace Gray
 		static const char k_szBlockStart[STR_BLOCK_QTY + 1]; //!< array of STR_BLOCK_TYPE	"\"{[("
 		static const char k_szBlockEnd[STR_BLOCK_QTY + 1];
 
-		static const char k_szEscEncode[12];	//!< The encoded version of escape chars.
+		static const char k_szEscEncode[12];	//!< The encoded version of escape chars. quotes, etc.
 		static const char k_szEscDecode[12];
 
 		// NON modifying methods first.
@@ -306,9 +306,9 @@ namespace Gray
 		GRAYCORE_LINK static StrLen_t GRAYCALL ReplaceX(TYPE* pDst, StrLen_t iDstLenMax, StrLen_t nDstIdx, StrLen_t iDstSegLen, const TYPE* pSrc, StrLen_t iSrcLen = k_StrLen_UNK);
 
 		template< typename TYPE >
-		GRAYCORE_LINK static ITERATE_t GRAYCALL ParseCmds(TYPE* pszCmdLine, StrLen_t nCmdLenMax, TYPE** ppCmds, ITERATE_t iQtyMax, const TYPE* pszSep = nullptr, STRP_MASK_t uFlags = STRP_DEF);
+		GRAYCORE_LINK static ITERATE_t GRAYCALL ParseArray(TYPE* pszCmdLine, StrLen_t nCmdLenMax, TYPE** ppCmds, ITERATE_t iCmdQtyMax, const TYPE* pszSep = nullptr, STRP_MASK_t uFlags = STRP_DEF);
 		template< typename TYPE >
-		GRAYCORE_LINK static ITERATE_t GRAYCALL ParseCmdsTmp(TYPE* pszTmp, StrLen_t iTmpSizeMax, const TYPE* pszCmdLine, TYPE** ppCmds, ITERATE_t iCmdQtyMax, const TYPE* pszSep = nullptr, STRP_MASK_t uFlags = STRP_DEF);
+		GRAYCORE_LINK static ITERATE_t GRAYCALL ParseArrayTmp(TYPE* pszTmp, StrLen_t iTmpSizeMax, const TYPE* pszCmdLine, TYPE** ppCmds, ITERATE_t iCmdQtyMax, const TYPE* pszSep = nullptr, STRP_MASK_t uFlags = STRP_DEF);
 
 		//**********************************************************************
 		// Numerics - All numerics can be done in Latin. So just convert to use StrNum

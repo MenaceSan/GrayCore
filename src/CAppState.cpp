@@ -108,7 +108,7 @@ namespace Gray
 
 		// skip first argument as it is typically the name of my app EXE.
 		FILECHAR_t szTmp[StrT::k_LEN_MAX];
-		ITERATE_t iArgsQty = StrT::ParseCmdsTmp<FILECHAR_t>(szTmp, STRMAX(szTmp), pszCommandArgs, apszArgs + iSkip, _countof(apszArgs) - iSkip, pszSep, STRP_DEF);
+		ITERATE_t iArgsQty = StrT::ParseArrayTmp<FILECHAR_t>(szTmp, STRMAX(szTmp), pszCommandArgs, apszArgs + iSkip, _countof(apszArgs) - iSkip, pszSep, STRP_DEF);
 
 		InitArgsArray(iArgsQty + iSkip, apszArgs);	// skip first.
 	}

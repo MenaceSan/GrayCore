@@ -46,8 +46,8 @@ StrTTbl(StrLen_t,TrimWhitespaceEnd,(TYPE* pStr, StrLen_t iLenChars ))
 StrTTbl(TYPE*,TrimWhitespace,(TYPE* pStr, StrLen_t iLenMax))
 StrTTbl(StrLen_t,ReplaceX,(TYPE* pDst, StrLen_t iDstLenMax, StrLen_t iDstIdx, StrLen_t iDstSegLen, const TYPE* pSrc, StrLen_t iSrcLen))
 
-StrTTbl(ITERATE_t,ParseCmds,(TYPE* pszCmdLine, StrLen_t nCmdLenMax, TYPE** ppCmd, ITERATE_t iCmdQtyMax, const TYPE* pszSep, STRP_MASK_t uFlags))
-StrTTbl(ITERATE_t,ParseCmdsTmp,(TYPE* pszTmp, StrLen_t iTmpSizeMax, const TYPE* pszCmdLine, TYPE** ppCmd, ITERATE_t iCmdQtyMax, const TYPE* pszSep, STRP_MASK_t uFlags))
+StrTTbl(ITERATE_t,ParseArray,(TYPE* pszCmdLine, StrLen_t nCmdLenMax, TYPE** ppCmd, ITERATE_t iCmdQtyMax, const TYPE* pszSep, STRP_MASK_t uFlags))
+StrTTbl(ITERATE_t,ParseArrayTmp,(TYPE* pszTmp, StrLen_t iTmpSizeMax, const TYPE* pszCmdLine, TYPE** ppCmd, ITERATE_t iCmdQtyMax, const TYPE* pszSep, STRP_MASK_t uFlags))
 StrTTbl(StrLen_t,MatchRegEx,(const TYPE* pText, const TYPE* pPattern, bool bIgnoreCase, StrLen_t nTextMax))
 
 StrTTbl(TYPE*,FindBlockEnd,(STR_BLOCK_TYPE eBlockType, const TYPE* pszLine, StrLen_t iLenMaxChars))

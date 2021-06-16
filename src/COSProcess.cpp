@@ -160,7 +160,7 @@ namespace Gray
 
 			char* args[k_ARG_ARRAY_MAX];	// arbitrary max.
 			char szTmp[StrT::k_LEN_MAX];
-			int iArgs = StrT::ParseCmdsTmp<FILECHAR_t>(szTmp, STRMAX(szTmp), pszArgs, args + 1, _countof(args) - 2, " ", STRP_DEF);
+			int iArgs = StrT::ParseArrayTmp<FILECHAR_t>(szTmp, STRMAX(szTmp), pszArgs, args + 1, _countof(args) - 2, " ", STRP_DEF);
 			args[0] = (char*)pszExeName;
 			args[iArgs + 1] = nullptr;	// terminated.
 

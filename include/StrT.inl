@@ -1050,9 +1050,9 @@ namespace Gray
 	//******************************************************************************
 
 	template< typename TYPE>
-	ITERATE_t GRAYCALL StrT::ParseCmds(TYPE* pszCmdLine, StrLen_t nCmdLenMax, TYPE** ppCmd, ITERATE_t iCmdQtyMax, const TYPE* pszSep, STRP_MASK_t uFlags)
+	ITERATE_t GRAYCALL StrT::ParseArray(TYPE* pszCmdLine, StrLen_t nCmdLenMax, TYPE** ppCmd, ITERATE_t iCmdQtyMax, const TYPE* pszSep, STRP_MASK_t uFlags)
 	{
-		//! Parse a separated list of tokens/arguments to a function/command
+		//! Parse a separated list of tokens/arguments to a function/command. inline.
 		//! @arg
 		//!  pszCmdLine = NOTE: this is modified / chopped up buffer.
 		//!  ppCmd = an array of pointers inside pszCmdLine
@@ -1236,15 +1236,18 @@ namespace Gray
 	}
 
 	template< typename TYPE>
-	ITERATE_t GRAYCALL StrT::ParseCmdsTmp(TYPE* pszTmp, StrLen_t iTmpSizeMax, const TYPE* pszCmdLine, TYPE** ppCmd, ITERATE_t iCmdQtyMax, const TYPE* pszSep, STRP_MASK_t uFlags)
+	ITERATE_t GRAYCALL StrT::ParseArrayTmp(TYPE* pszTmp, StrLen_t iTmpSizeMax, const TYPE* pszCmdLine, TYPE** ppCmd, ITERATE_t iCmdQtyMax, const TYPE* pszSep, STRP_MASK_t uFlags)
 	{
 		//! Make a temporary copy of the string for parsing. 
 		//! @arg iTmpSizeMax = StrT::k_LEN_MAX
 		//! @arg uFlags = deal with quoted and escaped strings.
 		//! @return Quantity of arguments
-		StrLen_t iLenChars = StrT::CopyLen<TYPE>(pszTmp, pszCmdLine, iTmpSizeMax);
-		UNREFERENCED_PARAMETER(iLenChars);
-		return ParseCmds(pszTmp, iTmpSizeMax, ppCmd, iCmdQtyMax, pszSep, uFlags);
+		if (pszTmp != pszCmdLine)
+		{
+			StrLen_t iLenChars = StrT::CopyLen<TYPE>(pszTmp, pszCmdLine, iTmpSizeMax);
+ 			UNREFERENCED_PARAMETER(iLenChars);
+		}
+		return ParseArray(pszTmp, iTmpSizeMax, ppCmd, iCmdQtyMax, pszSep, uFlags);
 	}
 
 	//***********************************************************

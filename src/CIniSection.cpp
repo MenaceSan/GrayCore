@@ -802,7 +802,7 @@ namespace Gray
 
 		// NOTE: Leave empty lines.
 		ASSERT(m_iLinesAlloc >= 1);	// ASSUME m_iLinesAlloc has been set big enough.
-		m_iLinesUsed = StrT::ParseCmds(pDataNew, iLen + 1, m_ppLines, m_iLinesAlloc, pszSep, uFlags);
+		m_iLinesUsed = StrT::ParseArray(pDataNew, iLen + 1, m_ppLines, m_iLinesAlloc, pszSep, uFlags);
 
 		if (uFlags & STRP_EMPTY_STOP) // did we really use it all ? How much did we use ?
 		{
