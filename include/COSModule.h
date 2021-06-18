@@ -188,7 +188,7 @@ namespace Gray
 		}
 		bool isValidFunc() const
 		{
-			return(m_pFunc != nullptr);
+			return m_pFunc != nullptr ;
 		}
 		operator TYPE () const
 		{

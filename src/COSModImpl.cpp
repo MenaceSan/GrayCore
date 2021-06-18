@@ -76,6 +76,8 @@ namespace Gray
 		switch (dwReason)
 		{
 		case DLL_PROCESS_DETACH:
+			if (this == nullptr)	// i've seen this happen in release mode. VS2019. just do nothing.
+				return false;
 			ASSERT(hMod == m_hModule);
 			this->OnProcessDetach();
 			break;

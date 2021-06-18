@@ -59,6 +59,10 @@ namespace Gray
 			//! delete any singletons in hMod space.
 			//! When a module is released, all its singletons from it MUST be destroyed. 
 			//! @return Number of releases.
+ 
+			if (this == nullptr)		// this should never happen. but check for it in Release mode.
+				return 0;
+
 			ITERATE_t iCount = 0;
 			for (ITERATE_t i = m_aSingletons.GetSize() - 1; i >= 0; i--)
 			{

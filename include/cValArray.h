@@ -11,7 +11,7 @@
 #endif
 
 #include "Index.h"
-#include "cMem.h"
+#include "cHeap.h"
 #include <new>	// STL overload the new operator to allow call of constructor directly.
 
 namespace Gray

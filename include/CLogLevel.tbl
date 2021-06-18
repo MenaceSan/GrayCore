@@ -1,9 +1,10 @@
 //
 //! @file cLogLevel.tbl
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
+//! similar to TRACE_LEVEL_FATAL in #include <evntrace.h> but backwards
+
 LOGLEVELDEF(ANY,	0,	"",				"Anything. All. Very minor detail.")
-LOGLEVELDEF(TRACE,	1,	"Trace:",		"Low level debug trace. common event")
+LOGLEVELDEF(TRACE,	1,	"Trace:",		"Low level debug trace. common event. Verbose.")
 LOGLEVELDEF(INFO,	2,	"Info:",		"Miscellaneous normal events.")
 LOGLEVELDEF(MAJOR,	3,	"Major:",		"Miscellaneous major events.")
 LOGLEVELDEF(WARN,	4,	"WARNING:",		"Strange events.")

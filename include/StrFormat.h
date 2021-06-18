@@ -64,7 +64,7 @@ namespace Gray
 	class GRAYCORE_LINK StrFormat : public StrFormatBase
 	{
 		//! @class Gray::StrFormat
-		//! A single formatter for a string. Like printf().
+		//! A formatter for a string. Like printf().
 		//! Hold a single printf type format parameter/specifier and render it.
 
 	public:
@@ -82,6 +82,7 @@ namespace Gray
 		static void GRAYCALL V(StrBuilder<TYPE>& out, const TYPE* pszFormat, va_list vlist);
 		static inline StrLen_t GRAYCALL V(TYPE* pszOut, StrLen_t nLenOutMax, const TYPE* pszFormat, va_list vlist);
 
+		// variadic.
 		static inline void _cdecl F(StrBuilder<TYPE>& out, const TYPE* pszFormat, ...);
 		static inline StrLen_t _cdecl F(TYPE* pszOut, StrLen_t nLenOutMax, const TYPE* pszFormat, ...);
 	};

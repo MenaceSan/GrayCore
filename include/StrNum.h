@@ -42,7 +42,7 @@ namespace Gray
 			return (INT32)toIL(pszInp, ppszInpEnd, nBaseRadix);
 		}
 
-		static StrLen_t GRAYCALL ULtoAK(UINT64 uVal, OUT char* pszOut, StrLen_t iStrMax, UINT nKUnit, bool bSpace);
+		static StrLen_t GRAYCALL ULtoAK(UINT64 uVal, OUT char* pszOut, StrLen_t iStrMax, UINT nKUnit, bool bSpaceBeforeUnit = false);
 
 		static char* GRAYCALL ULtoA2(UINT64 uVal, OUT char* pszOut, StrLen_t iStrMax, RADIX_t nBaseRadix = 10, char chRadixA = 'A');
 		static StrLen_t GRAYCALL ULtoA(UINT64 nVal, OUT char* pszOut, StrLen_t iStrMax, RADIX_t nBaseRadix = 10);

@@ -148,7 +148,7 @@ namespace Gray
 
 	//*************************************************************************************
 
-	StrLen_t GRAYCALL StrNum::ULtoAK(UINT64 uVal, OUT char* pszOut, StrLen_t iStrMax, UINT nKUnit, bool bSpace)
+	StrLen_t GRAYCALL StrNum::ULtoAK(UINT64 uVal, OUT char* pszOut, StrLen_t iStrMax, UINT nKUnit, bool bSpaceBeforeUnit)
 	{
 		//! Make string describing a value in K/M/G/T/P/E/Z/Y units. (Kilo,Mega,Giga,Tera,Peta,Exa,Zetta,Yotta)
 		//! @arg nKUnit = 1024 default
@@ -179,7 +179,7 @@ namespace Gray
 			iLenUse = DtoAG(dVal, pszOut, iStrMax, 2, '\0');	// NOT 'inf' or NaN has no units.
 			if (iLenUse > 0 && iLenUse <= iStrMax - 3 && !StrChar::IsAlpha(pszOut[0]))
 			{
-				if (bSpace)	// insert a space or not?
+				if (bSpaceBeforeUnit)	// insert a space or not?
 				{
 					pszOut[iLenUse++] = ' ';
 				}
@@ -211,7 +211,7 @@ namespace Gray
 
 		while (pDigits > pszOut)
 		{
-			UINT64 d = uVal % nBaseRadix;
+			const UINT64 d = uVal % nBaseRadix;
 			*(--pDigits) = (char)(d + ((d < 10) ? '0' : (chRadixA - 10))); // StrChar::U2Radix
 			uVal /= nBaseRadix;
 			if (!uVal)

@@ -10,7 +10,7 @@
 #endif
 
 #include "StrT.h"
-#include "cMem.h"
+#include "cHeap.h"
 #include "StrConst.h"
 
 namespace Gray
@@ -183,7 +183,7 @@ namespace Gray
 
 		StrLen_t _cdecl Join(const _TYPE_CH* psz1, ...)
 		{
-			// Join a nullptr terminated list. AKA Concat
+			// Join a nullptr terminated list of strings. AKA Concat
 			StrLen_t len = 0;
 			va_list vargs;
 			va_start(vargs, psz1);
@@ -237,6 +237,9 @@ namespace Gray
 			AdvanceWrite(nLenRet);
 		}
 
+		// StrLen_t AddIL(INT64 nVal, RADIX_t nBaseRadix = 10);
+		// StrLen_t AddUL(UINT64 nVal, RADIX_t nBaseRadix = 10, char chRadixA = 'A');
+
 		void _cdecl AddFormat(const _TYPE_CH* pszFormat, ...);
 	};
 
@@ -256,12 +259,12 @@ namespace Gray
 		_TYPE_CH* GetWritePrepared(StrLen_t iNeedCount) override
 		{
 			// Get more space ?
-			const StrLen_t nLenSpace = get_WriteSpaceQty();
+			const StrLen_t nLenSpace = this->get_WriteSpaceQty();
 			if (iNeedCount > nLenSpace)
 			{
 				// realloc for more space.
 
-				const StrLen_t nOldAlloc = get_AllocQty();
+				const StrLen_t nOldAlloc = this->get_AllocQty();
 				if (nOldAlloc < StrT::k_LEN_MAX) // we hit the end?
 				{
 					StrLen_t nNewAlloc = nOldAlloc + (iNeedCount - nLenSpace);	// Min size for new alloc.
@@ -276,7 +279,7 @@ namespace Gray
 
 					nNewAlloc++;	// room for '\0'
 					const size_t nAllocSize = nNewAlloc * sizeof(_TYPE_CH);
-					SetBlock(cHeap::ReAllocPtr(get_DataV(), nAllocSize), nAllocSize);
+					this->SetBlock(cHeap::ReAllocPtr(this->get_DataV(), nAllocSize), nAllocSize);
 				}
 			}
 
@@ -290,11 +293,9 @@ namespace Gray
 		}
 		virtual ~StrBuilderDyn()
 		{
-			cHeap::FreePtr(get_DataV());
+			cHeap::FreePtr(this->get_DataV());
 		}
 	};
 }
 
 #endif
-
-
