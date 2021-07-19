@@ -27,25 +27,6 @@
 
 namespace Gray
 {
-	class GRAYCORE_LINK cLogSubject : public cLogProcessor
-	{
-		//! @class Gray::cLogSubject
-		//! A logger dedicated to a certain subject matter.
-		//! declared statically for each subject we might want to log.
-		//! equivalent to the Logger in Log4J
-		//! all log messages should enter the log system here ideally. NOT through cLogMgr::I() directly.
-		//! ideally subjects are hierarchical ALA Log4J
-		//! e.g. "Root.Server.Clients.Login" so they can be filter via hierarchy wildcards.
-
-	public:
-		const char* m_pszSubject;	//!< static string. general subject matter tag.
-	public:
-		cLogSubject(const char* pszSubject);
-		virtual ~cLogSubject();
-
-		virtual HRESULT addEvent(cLogEvent* pEvent) override; // ILogProcessor
-	};
-
 	class GRAYCORE_LINK cLogNexus
 		: public cLogProcessor	// can submit directly instead of using cLogSubject = default
 	{
@@ -68,12 +49,12 @@ namespace Gray
 		cLogNexus(LOG_ATTR_MASK_t uAttrMask = LOG_ATTR_ALL_MASK, LOGLEV_TYPE eLogLevel = LOGLEV_ANY);
 		virtual ~cLogNexus() noexcept;
 
-		const cLogNexus* get_ThisLogNexus() const override
+		const cLogNexus* get_ThisLogNexus() const noexcept override
 		{
 			//! Is this a log nexus or just a processor?
 			return this;
 		}
-		bool IsLogged(LOG_ATTR_MASK_t uAttrMask, LOGLEV_TYPE eLogLevel) const override // fast pre-check.
+		bool IsLogged(LOG_ATTR_MASK_t uAttrMask, LOGLEV_TYPE eLogLevel) const noexcept override // fast pre-check.
 		{
 			//! @note Check IsLogged(x) before generating the message! for speed
 			return m_LogFilter.IsLogged(uAttrMask, eLogLevel);
@@ -131,6 +112,25 @@ namespace Gray
 		virtual HRESULT WriteString(const wchar_t* pszStr) override;
 
 		CHEAPOBJECT_IMPL;
+	};
+
+	class GRAYCORE_LINK cLogSubject : public cLogProcessor //  cSingleton < const char* > ! TODO
+	{
+		//! @class Gray::cLogSubject
+		//! A logger dedicated to a certain subject matter that feeds into cLogMgr.
+		//! declared statically for each subject we might want to log.
+		//! equivalent to the Logger in Log4J
+		//! all log messages should enter the log system here ideally. NOT through cLogMgr::I() directly.
+		//! ideally subjects are hierarchical ALA Log4J
+		//! e.g. "Root.Server.Clients.Login" so they can be filter via hierarchy wildcards.
+
+	public:
+		const char* m_pszSubject;	//!< static string. general subject matter tag.
+	public:
+		cLogSubject(const char* pszSubject);
+		virtual ~cLogSubject();
+
+		virtual HRESULT addEvent(cLogEvent* pEvent) override; // ILogProcessor
 	};
 
 	//***********************************************************************************

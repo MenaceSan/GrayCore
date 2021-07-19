@@ -65,7 +65,7 @@ namespace Gray
 	{
 		//! @class Gray::StrFormat
 		//! A formatter for a string. Like printf().
-		//! Hold a single printf type format parameter/specifier and render it.
+		//! Hold state values for a single printf type format parameter/specifier and render it.
 
 	public:
 		typedef StrLen_t(_cdecl* STRFORMAT_t)(TYPE* pszOut, StrLen_t iLenOutMax, const TYPE* pszFormat, ...);	// signature for testing.

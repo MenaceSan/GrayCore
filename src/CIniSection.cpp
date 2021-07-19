@@ -18,7 +18,7 @@ namespace Gray
 		//! Write a section header with no arguments.
 		//! pszSectionTitle = "SECTIONTYPE SECTIONNAME"
 
-		ASSERT_N(pszSectionTitle != nullptr);
+		ASSERT_NN(pszSectionTitle);
 		ASSERT(pszSectionTitle[0] != '\0');
 
 		HRESULT hRes;
@@ -46,7 +46,7 @@ namespace Gray
 	{
 		//! Write a section header with a raw (NOT quoted) argument.
 
-		ASSERT_N(pszSectionType != nullptr);
+		ASSERT_NN(pszSectionType);
 		ASSERT(pszSectionType[0] != '\0');
 
 		if (StrT::IsNullOrEmpty(pszSectionName))
@@ -79,7 +79,7 @@ namespace Gray
 	HRESULT _cdecl cIniWriter::WriteSectionHeadFormat(const IniChar_t* pszSectionType, const IniChar_t* pszFormat, ...)
 	{
 		//! Write out the section header.
-		ASSERT_N(!StrT::IsNullOrEmpty(pszFormat));
+		ASSERT(!StrT::IsNullOrEmpty(pszFormat));
 
 		IniChar_t szTmp[_MAX_PATH];
 		va_list vargs;
@@ -500,7 +500,7 @@ namespace Gray
 		CODEPROFILEFUNC();
 		if (iDiffChars == 0)
 			return;
-		ASSERT_N(m_ppLines != nullptr);
+		ASSERT_NN(m_ppLines);
 		for (ITERATE_t i = iLineStart; i < m_iLinesUsed; i++)
 		{
 			m_ppLines[i] += iDiffChars;

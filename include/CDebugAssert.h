@@ -59,15 +59,11 @@ namespace Gray
 		static AssertCallback_t* sm_pAssertCallback;		//!< redirect callback on Assert_Fail usually used for unit tests.
 		static bool sm_bAssertTest;		//!<  Just testing. not a real assert.
 
-		static bool CALLBACK Assert_System(const char* pszExp, const cDebugSourceLine& src);
+		static bool CALLBACK AssertCallbackDefault(const char* pszExp, const cDebugSourceLine& src);
+
 		static bool GRAYCALL Assert_Fail(const char* pszExp, const cDebugSourceLine src);
-		static CATTR_NORETURN void GRAYCALL Assert_Throw(const char* pszExp, const cDebugSourceLine src);
 		static bool GRAYCALL Debug_Fail(const char* pszExp, const cDebugSourceLine src) noexcept;
 	};
-
-#define ASSERT_THROW(exp)		if (!(exp)) { ::Gray::cDebugAssert::Assert_Throw(#exp, DEBUGSOURCELINE ); } // Show the compiler that we wont proceed.
-
-#define ASSERT_N(exp) ASSERT_THROW(exp)	// Null check, Cant ignore this !
 
 #if defined(_DEBUG) || defined(_DEBUG_FAST)
 	// debug checks
@@ -75,6 +71,8 @@ namespace Gray
 	// overload the assert statements
 #undef ASSERT
 #define ASSERT(exp)				(void)((!!(exp)) || (::Gray::cDebugAssert::Assert_Fail(#exp, DEBUGSOURCELINE ), 0))
+#define ASSERT_NN(p)			ASSERT(p!=nullptr)	// Null check, Cant ignore this !
+
 #undef DEBUG_CHECK
 #define DEBUG_CHECK(exp)		(void)((!!(exp)) || (::Gray::cDebugAssert::Debug_Fail(#exp, DEBUGSOURCELINE ), 0))
 #undef DEBUG_ASSERT
@@ -86,6 +84,7 @@ namespace Gray
 #ifndef ASSERT
 #define ASSERT(exp)			__noop	// acts like UNREFERENCED_PARAMETER() ?
 #endif	// ASSERT
+#define ASSERT_NN(p)		__noop
 #ifndef DEBUG_CHECK
 #define DEBUG_CHECK(exp)	__noop
 #endif	// DEBUG_CHECK
@@ -95,6 +94,6 @@ namespace Gray
 
 #endif	// ! _DEBUG
 
-} 
+}
 
 #endif // _INC_cDebugAssert_H

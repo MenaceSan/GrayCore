@@ -51,7 +51,7 @@ namespace Gray
 		STRP_START_WHITE = 0x01,		//!< remove start whitespace from each token
 		STRP_SPACE_SEP = 0x02,		//!< allow space separator only if non space not already used.
 		STRP_END_WHITE = 0x04,		//!< trim end whitespace off token.
-		STRP_CHECK_BLOCKS = 0x08,		//!< check for special nested block sequences. "{[("
+		STRP_CHECK_BLOCKS = 0x08,		//!< check for special nested block sequences. "{[(". But not STR_BLOCK_QUOTE
 		STRP_DEF = 0x0F,			//!< default parsing for a line with , separators.
 
 		STRP_MERGE_CRNL = 0x10,		//!< merge "\r\n" (may also be separators.) (newline = linefeed)

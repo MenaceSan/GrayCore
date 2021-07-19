@@ -374,7 +374,7 @@ do ordain and establish this constitution of the United States of America\n\n");
 		uts.m_iFailures++;	// Count fail and continue.
 		UNREFERENCED_PARAMETER(pszExp);
 		UNREFERENCED_REFERENCE(src);
-		return true;	// fall through to log and continue.	NOT cDebugAssert::Assert_System()
+		return true;	// fall through to log and continue.	NOT cDebugAssert::AssertCallbackDefault()
 	}
 
 	const FILECHAR_t* cUnitTests::get_TestOutDir() const

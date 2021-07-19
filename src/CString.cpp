@@ -63,7 +63,7 @@ namespace Gray
 				if (nOldLen == iNewLength)	// no change.
 					return;
 				pDataNew = (CStringData*)cHeap::ReAllocPtr(pDataOld, sizeof(CStringData) + iStringLengthBytes);
-				ASSERT_N(pDataNew != nullptr);
+				ASSERT_NN(pDataNew);
 			}
 			else
 			{
@@ -71,7 +71,7 @@ namespace Gray
 				// NOTE: we maybe duping our self. (to change length)
 				ASSERT(iRefCounts > 1);
 				pDataNew = new(iStringLengthBytes) CStringData;
-				ASSERT_N(pDataNew != nullptr);
+				ASSERT_NN(pDataNew);
 				pDataNew->IncRefCount();
 				StrT::CopyLen(reinterpret_cast<_TYPE_CH*>(pDataNew->GetString()), m_pchData, MIN(iNewLength, nOldLen) + 1); // Copy from old
 				pDataOld->DecRefCount();	// release ref to previous string.
@@ -292,7 +292,7 @@ namespace Gray
 	{
 		//! insert in the middle.
 		//! @return New length.
-		ASSERT_N(pszStr != nullptr);
+		ASSERT_NN(pszStr);
 		if (iLenCat <= k_StrLen_UNK)
 		{
 			iLenCat = StrT::Len(pszStr);

@@ -76,8 +76,8 @@ namespace Gray
 		virtual COMPARE_t CompareData(ARG_t pData1, ARG_t pData2) const noexcept override
 		{
 			//! Compare a data record to another data record.
-			ASSERT_N(pData1 != nullptr);
-			ASSERT_N(pData2 != nullptr);
+			ASSERT_NN(pData1);
+			ASSERT_NN(pData2);
 			KEY_t key1 = pData1->get_HashCode();
 			KEY_t key2 = pData2->get_HashCode();
 			return cValT::Compare(key1, key2);
@@ -86,7 +86,7 @@ namespace Gray
 		{
 			//! INT_MAX - INT_MIN must be positive !
 			//! @note x-y will not work for extreme values so we use cValT::Compare
-			ASSERT_N(pBase != nullptr);
+			ASSERT_NN(pBase);
 			KEY_t key2 = pBase->get_HashCode();
 			return cValT::Compare(key1, key2);
 		}
@@ -217,14 +217,14 @@ namespace Gray
 		virtual COMPARE_t CompareData(ARG_t pData1, ARG_t pData2) const noexcept override
 		{
 			//! Compare a data record to another data record.
-			ASSERT_N(pData1 != nullptr);
-			ASSERT_N(pData2 != nullptr);
+			ASSERT_NN(pData1 );
+			ASSERT_NN(pData2 );
 			return StrT::CmpI<_TYPECH>(pData1->get_Name(), pData2->get_Name());
 		}
 		virtual COMPARE_t CompareKey(KEY_t key1, ARG_t pObj) const noexcept override
 		{
-			ASSERT_N(key1 != nullptr);
-			ASSERT_N(pObj != nullptr);
+			ASSERT_NN(key1);
+			ASSERT_NN(pObj);
 			return StrT::CmpI<_TYPECH>(key1, pObj->get_Name());
 		}
 	public:

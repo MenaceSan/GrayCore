@@ -60,7 +60,7 @@ namespace Gray
 	void cAppArgs::InitArgsLine(ITERATE_t argc, APP_ARGS_t ppszArgs)
 	{
 		// build m_sArguments
-		ASSERT_N(ppszArgs != nullptr);
+		ASSERT_NN(ppszArgs);
 
 		// build m_sArguments from APP_ARGS_t
 		m_sArguments.Empty();
@@ -737,7 +737,7 @@ namespace Gray
 		//! (i have this users accounts privs)
 
 		cAppState* pThis = cAppState::get_Single();
-		ASSERT_N(pThis != nullptr);
+		ASSERT_NN(pThis);
 		if (!bForce && !pThis->m_sUserName.IsEmpty())	// cached name,.
 		{
 			return pThis->m_sUserName;

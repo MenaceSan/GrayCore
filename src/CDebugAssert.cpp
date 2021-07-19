@@ -16,17 +16,18 @@
 
 namespace Gray
 {
-	AssertCallback_t* cDebugAssert::sm_pAssertCallback = cDebugAssert::Assert_System;	// default = pass to assert.
+	AssertCallback_t* cDebugAssert::sm_pAssertCallback = cDebugAssert::AssertCallbackDefault;	// default = pass to assert.
 	bool cDebugAssert::sm_bAssertTest = false;
 
 	//*************************************************************************
 
-	bool CALLBACK cDebugAssert::Assert_System(const char* pszExp, const cDebugSourceLine& src) // static
+	bool CALLBACK cDebugAssert::AssertCallbackDefault(const char* pszExp, const cDebugSourceLine& src) // static
 	{
+		//! sm_pAssertCallback may point to this. Maybe for unit tests.
 		//! AssertCallback_t to use the system assert dialog. Use with sm_pAssertCallback.
 		//! @return true = continue and ignore the assert.
 
-		// if (sm_pAssertCallback == cDebugAssert::Assert_System && !cAppState::isDebuggerPresent()) return;	// Ignore it if no debugger present ?
+		// if (sm_pAssertCallback == cDebugAssert::AssertCallbackDefault && !cAppState::isDebuggerPresent()) return;	// Ignore it if no debugger present ?
 
 #if defined(__linux__)
 		__assert_fail(pszExp, src.m_pszFile, src.m_uLine, "");
@@ -53,7 +54,7 @@ namespace Gray
 
 		if (sm_pAssertCallback != nullptr)	// Divert the assert for testing? else just log it and keep going.
 		{
-			// maybe do special processing for unit tests.
+			// do normal assert stuff. OR maybe do special processing for unit tests. May not return.
 			if (!sm_pAssertCallback(pszExp, src)) // AssertCallback_t
 				return false;
 		}
@@ -66,30 +67,6 @@ namespace Gray
 		// cExceptionAssert?
 		// true = Keep going?
 		return false;
-	}
-
-	void GRAYCALL cDebugAssert::Assert_Throw(const char* pszExp, const cDebugSourceLine src) // static
-	{
-		//! This assert cannot be ignored. We must throw cExceptionAssert after this. Things will be horribly corrupted if we don't?
-		//! Leave this in release code.
-		//! Similar to AfxThrowInvalidArgException()
-
-		if (sm_bAssertTest)	// Allow me to test the throw.
-		{
-			sm_bAssertTest = false;	// Test complete.
-		}
-		else
-		{
-			cLogMgr::I().addEventF(LOG_ATTR_DEBUG | LOG_ATTR_INTERNAL, LOGLEV_CRIT,
-				"Assert Throw:'%s' file '%s', line %d",
-				LOGSTR(pszExp), LOGSTR(src.m_pszFile), src.m_uLine);
-		}
-
-#ifdef _CPPUNWIND
-		GRAY_THROW cExceptionAssert(pszExp, LOGLEV_CRIT, src);
-#else
-		// TODO signal or log instead of throw??
-#endif
 	}
 
 	bool GRAYCALL cDebugAssert::Debug_Fail(const char* pszExp, const cDebugSourceLine src) noexcept // static

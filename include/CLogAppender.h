@@ -156,7 +156,7 @@ namespace Gray
 		//! @interface Gray::ILogProcessor
 		//! All events funnel through addEvent().
 		IGNORE_WARN_INTERFACE(ILogProcessor);
-		virtual bool IsLogged(LOG_ATTR_MASK_t uAttrMask, LOGLEV_TYPE eLogLevel) const = 0; // fast pre-check. can call before building message.
+		virtual bool IsLogged(LOG_ATTR_MASK_t uAttrMask, LOGLEV_TYPE eLogLevel) const noexcept = 0; // fast pre-check. can call before building message.
 		virtual HRESULT addEvent(cLogEvent * pEvent) = 0;
 	};
 
@@ -173,12 +173,12 @@ namespace Gray
 		virtual ~cLogProcessor()
 		{
 		}
-		virtual const cLogNexus* get_ThisLogNexus() const
+		virtual const cLogNexus* get_ThisLogNexus() const noexcept
 		{
 			//! Is this a cLogNexus or just a cLogProcessor? like dynamic_cast<>
 			return nullptr;
 		}
-		bool IsLogged(LOG_ATTR_MASK_t uAttrMask, LOGLEV_TYPE eLogLevel) const override // fast pre-check.
+		bool IsLogged(LOG_ATTR_MASK_t uAttrMask, LOGLEV_TYPE eLogLevel) const noexcept override // fast pre-check.
 		{
 			//! would this message be logged? should i bother building it ? fast.
 			UNREFERENCED_PARAMETER(uAttrMask);

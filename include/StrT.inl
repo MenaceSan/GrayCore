@@ -895,7 +895,7 @@ namespace Gray
 		//! @return pStrOut
 		//! @note should we check for internal chars < 32 NOT encoded ? THIS would be an error !!!
 
-		ASSERT_N(pStrOut != nullptr);
+		ASSERT_NN(pStrOut);
 		if (pStrIn == nullptr)
 			return 0;
 
@@ -954,7 +954,7 @@ namespace Gray
 		//! Remove the opening and closing quotes. Put enclosed string (decoded) into pStrOut.
 		//! @return the consumed length of pStrIn. NOT the length of pStrOut.
 
-		ASSERT_N(pStrOut != nullptr);
+		ASSERT_NN(pStrOut);
 		if (pStrIn == nullptr)
 			return 0;
 
@@ -991,8 +991,8 @@ namespace Gray
 		//!   new length of the string. same or more than input
 		//! @note Only double quotes and "\\\b\f\n\r\t" are needed for JSON strings.
 
-		ASSERT_N(pStrIn != nullptr);
-		ASSERT_N(pStrIn != pStrOut);
+		ASSERT_NN(pStrIn);
+		ASSERT(pStrIn != pStrOut);
 
 		StrLen_t iOut = 0;
 		for (StrLen_t iIn = 0; iOut < iLenOutMax; iIn++, iOut++)
@@ -1074,7 +1074,7 @@ namespace Gray
 #endif
 
 		ASSERT(iCmdQtyMax >= 1);	// else why bother?
-		ASSERT_N(ppCmd != nullptr);
+		ASSERT_NN(ppCmd);
 		ITERATE_t iQty = 0;
 		if (pszCmdLine == nullptr)
 		{
@@ -1195,7 +1195,7 @@ namespace Gray
 
 			if ((uFlags & STRP_CHECK_BLOCKS ) && StrChar::IsAscii(ch))
 			{
-				// Special block char ?
+				// Special block char ? but not STR_BLOCK_QUOTE
 				// has some other block ending ? Thats weird.
 				if (StrT::HasChar(k_szBlockEnd + STR_BLOCK_QUOTE + 1, (char)ch))
 				{
@@ -1261,8 +1261,8 @@ namespace Gray
 		//! @arg nTextMax > 0 = allow partial matches. effectively adds a * to the end.
 		//! @return length of the match in pText. if < Len(pText) then its only a partial match. pText has extra stuff.
 
-		ASSERT_N(pText != nullptr);
-		ASSERT_N(pPattern != nullptr);
+		ASSERT_NN(pText );
+		ASSERT_NN(pPattern );
 
 		StrLen_t i = 0;
 		for (;; i++, pPattern++)

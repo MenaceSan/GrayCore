@@ -457,7 +457,7 @@ namespace Gray
 	{
 		// Does the string include "<?something?>" ?
 
-		ASSERT_N(pszInp != nullptr);
+		ASSERT_NN(pszInp);
 
 		return StrT::FindStr(pszInp, "<?") != nullptr && StrT::FindStr(pszInp, "?>") != nullptr;
 	}
@@ -476,7 +476,7 @@ namespace Gray
 		//! @return
 		//!   length of input used or k_ITERATE_BAD
 
-		ASSERT_N(pszInp != nullptr);
+		ASSERT_NN(pszInp);
 
 		StrLen_t iBeginBlock = -1;	// output index.
 		StrLen_t i = 0;	// input index.

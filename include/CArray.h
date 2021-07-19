@@ -13,6 +13,7 @@
 #include "cHeap.h"
 #include "cObject.h"
 #include "cValArray.h"
+#include "cExceptionAssert.h"		// THROW_IF_NOT
 #ifdef _MFC_VER
 #include <afxtempl.h>	// CArray from _MFC_VER 
 #endif
@@ -186,7 +187,7 @@ namespace Gray
 		const ITERATE_t nCountNew = nCountOld + countCopy;		// new size.
 		const ITERATE_t allocateCount = GetCountMalloc(nCountNew);
 		m_pData = (TYPE*)cHeap::ReAllocPtr(m_pData, allocateCount * sizeof(TYPE));
-		ASSERT_N(m_pData != nullptr);
+		ASSERT_NN(m_pData);
 		m_nSize = nCountNew;
 
 		// Move existing elements.
@@ -242,7 +243,7 @@ namespace Gray
 			}
 
 			m_pData = (TYPE*)cHeap::ReAllocPtr(m_pData, allocateCount * sizeof(TYPE));
-			ASSERT_N(m_pData != nullptr);
+			ASSERT_NN(m_pData);
 
 			// construct new elements
 			cValArray::ConstructElementsX<TYPE>(&m_pData[m_nSize], nNewSize - m_nSize);
@@ -461,7 +462,7 @@ namespace Gray
 		}
 		void AssertValidIndex(ITERATE_t nIndex) const // throw
 		{
-			ASSERT_THROW(IsValidIndex(nIndex));
+			THROW_IF_NOT(IsValidIndex(nIndex));
 		}
 
 		const TYPE& GetAtSecure(ITERATE_t nIndex) const // throw

@@ -295,8 +295,8 @@ namespace Gray
 		//!  Number of wide chars copied. not including '\0'.
 		//
 
-		ASSERT_N(pwOut != nullptr);
-		ASSERT_N(pInp != nullptr);
+		ASSERT_NN(pwOut);
+		ASSERT_NN(pInp);
 		if (iSizeOutMaxChars <= 0)
 		{
 			DEBUG_CHECK(iSizeOutMaxChars > 0);

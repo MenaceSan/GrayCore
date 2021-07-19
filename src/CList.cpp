@@ -57,7 +57,7 @@ namespace Gray
 		//! @note Only called from RemoveFromParent(). this is protected.
 		//! Never called directly. ALWAYS called from pNodeRemove->RemoveFromParent()
 
-		ASSERT_N(pNodeRemove != nullptr);
+		ASSERT_NN(pNodeRemove);
 		ASSERT(IsMyChild(pNodeRemove));
 
 		cListNodeBase* pNodeNext = pNodeRemove->get_Next();

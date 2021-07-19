@@ -234,7 +234,7 @@ namespace Gray
 		{
 			//! paired with GetWritePrepared
 			//! iCount <0 is ok.
-			ASSERT_N(iCount <= get_WriteSpaceQty());
+			ASSERT(iCount <= get_WriteSpaceQty());
 			this->m_iWriteLast += iCount;
 			ASSERT(this->m_iWriteLast <= get_AllocQty());
 		}
@@ -344,7 +344,7 @@ namespace Gray
 			TYPE* pWrite = GetWritePrepared(iQty);
 			const ITERATE_t iWriteSpace = get_WriteSpaceQty();
 			const ITERATE_t iWriteQty = MIN(iWriteSpace, iQty);
-			ASSERT_N(this->m_iWriteLast + iWriteQty <= get_AllocQty());		// assume enough space.
+			ASSERT(this->m_iWriteLast + iWriteQty <= get_AllocQty());		// assume enough space.
 
 			if (pData != nullptr && pWrite != nullptr)
 			{

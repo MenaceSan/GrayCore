@@ -120,7 +120,12 @@ namespace Gray
 		}
 #endif // ! _MFC_VER
 
+		static CATTR_NORETURN void GRAYCALL ThrowEx(const char* pszExp, const cDebugSourceLine src);
 	};
+
+#ifndef THROW_IF_NOT	// 
+#define THROW_IF_NOT(exp)	if (!(exp)) { ::Gray::cException::ThrowEx(#exp, DEBUGSOURCELINE ); } // Show the compiler that we wont proceed.
+#endif
 
 	class GRAYCORE_LINK cExceptionHResult : public cException
 	{

@@ -11,7 +11,7 @@ namespace Gray
 	{
 		//! get value type converted to int.
 		//! error as if using scanf("%d")
-		ASSERT_N(piValue != nullptr);
+		ASSERT_NN(piValue );
 		const char* pszVal = m_sVal.c_str();
 		const char* pszEnd = nullptr;
 		*piValue = StrT::toI(pszVal, &pszEnd);
@@ -23,7 +23,7 @@ namespace Gray
 	{
 		//! get value type converted to double.
 		//! error as if using scanf("%lf")
-		ASSERT_N(pdValue != nullptr);
+		ASSERT_NN(pdValue);
 		const char* pszVal = m_sVal.c_str();
 		const char* pszEnd = nullptr;
 		*pdValue = StrT::toDouble(pszVal, &pszEnd);

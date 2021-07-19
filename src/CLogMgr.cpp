@@ -17,25 +17,6 @@ namespace Gray
 
 	//************************************************************************
 
-	cLogSubject::cLogSubject(const char* pszSubject)
-		: m_pszSubject(pszSubject)
-	{
-	}
-
-	cLogSubject::~cLogSubject()
-	{
-	}
-
-	HRESULT cLogSubject::addEvent(cLogEvent* pEvent) // virtual
-	{
-		//! Prefix the event with the subject.
-		//! @return <0 = failed, 0=not processed by anyone, # = number of processors.
-		pEvent->m_pszSubject = m_pszSubject;	// categorize with this subject.
-		return cLogMgr::I().addEvent(pEvent);
-	}
-
-	//************************************************************************
-
 	cLogNexus::cLogNexus(LOG_ATTR_MASK_t uAttrMask, LOGLEV_TYPE eLogLevel)
 		: m_LogFilter(uAttrMask, eLogLevel)
 	{
@@ -316,5 +297,26 @@ namespace Gray
 		this->addEventS(LOG_ATTR_PRINT, LOGLEV_INFO, pszStr, "");
 		return S_OK;
 	}
+
+
+	//************************************************************************
+
+	cLogSubject::cLogSubject(const char* pszSubject)
+		: m_pszSubject(pszSubject)
+	{
+	}
+
+	cLogSubject::~cLogSubject()
+	{
+	}
+
+	HRESULT cLogSubject::addEvent(cLogEvent* pEvent) // virtual
+	{
+		//! Prefix the event with the subject.
+		//! @return <0 = failed, 0=not processed by anyone, # = number of processors.
+		pEvent->m_pszSubject = m_pszSubject;	// categorize with this subject.
+		return cLogMgr::I().addEvent(pEvent);
+	}
+
 }
  

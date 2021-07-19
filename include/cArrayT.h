@@ -12,6 +12,7 @@
 
 #include "cRefPtr.h"
 #include "cHeapObject.h"
+#include "cExceptionAssert.h"		// THROW_IF_NOT
 
 namespace Gray
 {
@@ -99,7 +100,7 @@ namespace Gray
 			//! like CopyBeforeWrite()
 
 			cArrayDataT<TYPE>* pNew = CreateData(nCountNew);
-			ASSERT_N(pNew != nullptr || nCountNew == 0);
+			ASSERT(pNew != nullptr || nCountNew == 0);
 
 			if (pNew != nullptr)
 			{
@@ -182,7 +183,7 @@ namespace Gray
 
 		void AssertValidIndex(ITERATE_t nIndex) const // throw
 		{
-			ASSERT_THROW(IsValidIndex(nIndex));
+			THROW_IF_NOT(IsValidIndex(nIndex));
 		}
 		inline TYPE& operator[](ITERATE_t nIndex) // throw
 		{
@@ -272,7 +273,7 @@ namespace Gray
 				}
 
 				pNew = (cArrayDataT<TYPE>*)cHeap::ReAllocPtr(pOld, sizeof(cArrayDataT<TYPE>) + allocateCount * sizeof(TYPE));
-				ASSERT_N(pNew != nullptr);
+				ASSERT_NN(pNew);
 
 				// construct new elements
 				cValArray::ConstructElementsX<TYPE>(pNew->get_Data() + nCountOld, nCountNew - nCountOld);
@@ -354,7 +355,7 @@ namespace Gray
 				ITERATE_t allocateCount = GetCountMalloc(nCountNew);
 
 				pNew = (cArrayDataT<TYPE>*)cHeap::ReAllocPtr(pOld, sizeof(cArrayDataT<TYPE>) + allocateCount * sizeof(TYPE));
-				ASSERT_N(pNew != nullptr);
+				ASSERT_NN(pNew);
 				pNew->put_Count(nCountNew);
 				this->AttachPtr(pNew);		// replace realloced pointer. (if it changed at all) No ref count change.
 

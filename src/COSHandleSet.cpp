@@ -11,9 +11,9 @@ namespace Gray
 {
 	HRESULT cOSHandleSet::WaitForObjects(TIMESYSD_t dwMilliseconds, bool bWaitForAll)
 	{
-		//! Wait for any or all of these handles to be signaled.
+		//! Wait for any or all of these handles to be signaled. 			//! MAX of 0x80 items. STATUS_ABANDONED_WAIT_0 MAXIMUM_WAIT_OBJECTS
 		//! @return HRESULT_WIN32_C(ERROR_WAIT_TIMEOUT) after dwMilliseconds
-		//! @note WIN32 does not use select() here because it is in a strange ws2_32.dll AND MUST CALL WSAStartup()
+		//! @note WIN32 does not use select() here because it is in a strange ws2_32.dll AND MUST CALL ::WSAStartup()
 #ifdef __linux__
 		cTimeVal timeWait(dwMilliseconds);
 		int iRet = ::select(m_hHandleMax + 1, &m_fds, nullptr, nullptr, &timeWait);

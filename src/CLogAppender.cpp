@@ -34,20 +34,27 @@ namespace Gray
 			s.AddStr("!");
 		}
 #endif
+		if (m_pszSubject != nullptr)
+		{
+			// Show subject as Prefix?
+			// sep ?
+		}
 		if (!m_sContext.IsEmpty())
 		{
 			s.AddStr(m_sContext);
+			// sep ?
 		}
 
 		s.AddStr(m_sMsg);
 		StrLen_t iLen = m_sMsg.GetLength();
 		ASSERT(iLen > 0);
 
-		bool bHasCRLF = (m_sMsg[iLen - 1] == '\r' || m_sMsg[iLen - 1] == '\n');
-		if (!cBits::HasMask(get_LogAttrMask(), (LOG_ATTR_MASK_t)LOG_ATTR_NOCRLF) && !bHasCRLF)
+		bool bHasCRLF = (m_sMsg[iLen - 1] == '\r' || m_sMsg[iLen - 1] == '\n');	// FILE_EOL ?
+		if (!bHasCRLF && !cBits::HasMask(get_LogAttrMask(), (LOG_ATTR_MASK_t)LOG_ATTR_NOCRLF))
 		{
 			s.AddStr(FILE_EOL);
 		}
+
 		return s.get_Str();
 	}
 

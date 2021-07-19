@@ -5,10 +5,28 @@
 #include "pch.h"
 #include "cExceptionAssert.h"
 #include "cDebugAssert.h"
+#include "cLogMgr.h"
 #include "StrArg.h"
 
 namespace Gray
 {
+	void GRAYCALL cException::ThrowEx(const char* pszExp, const cDebugSourceLine src) // static
+	{
+		//! This assert cannot be ignored. We must throw cExceptionAssert after this. Things will be horribly corrupted if we don't?
+		//! Leave this in release code.
+		//! Similar to AfxThrowInvalidArgException()
+
+		cLogMgr::I().addEventF(LOG_ATTR_DEBUG | LOG_ATTR_INTERNAL, LOGLEV_CRIT,
+			"Assert Throw:'%s' file '%s', line %d",
+			LOGSTR(pszExp), LOGSTR(src.m_pszFile), src.m_uLine);
+
+#ifdef _CPPUNWIND
+		GRAY_THROW cExceptionAssert(pszExp, LOGLEV_CRIT, src);
+#else
+		// TODO signal or log instead of throw??
+#endif
+	}
+
 	cExceptionAssert::cExceptionAssert(const LOGCHAR_t* pExp, LOGLEV_TYPE eLogLevel, const cDebugSourceLine& src)
 		: cException("Assert", eLogLevel)
 		, m_pExp(pExp)

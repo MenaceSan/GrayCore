@@ -271,25 +271,27 @@ namespace Gray
 		static TIMEDOW_TYPE GRAYCALL GetDOW(TIMEUNIT_t wYear, TIMEUNIT_t wMonth, TIMEUNIT_t wDay);
 		static int GRAYCALL GetDOY(TIMEUNIT_t wYear, TIMEUNIT_t wMonth, TIMEUNIT_t wDay);
 
-		TIMESECD_t get_SecondOfDay() const
+		TIMESECD_t get_SecondOfDay() const noexcept
 		{
 			return m_wSecond + (m_wMinute * 60) + (TIMESECD_t)(m_wHour * 60 * 60);
 		}
-		bool isValidMonth() const
+		bool isValidMonth() const noexcept
 		{
 			return m_wMonth >= 1 && m_wMonth <= 12;
 		}
 		TIMEUNIT_t get_DaysInMonth() const
 		{
 			// How many days in m_wMonth ?
-			ASSERT_THROW(isValidMonth());
+			if (!isValidMonth())
+				return 0;
 			int iLeapYear = IsLeapYear(m_wYear);
 			return k_MonthDays[iLeapYear][m_wMonth - 1];
 		}
 		TIMEUNIT_t get_DayOfYear() const
 		{
 			// What day of m_wYear is this ?
-			ASSERT_THROW(isValidMonth());
+			if (!isValidMonth())
+				return 0;
 			int iLeapYear = IsLeapYear(m_wYear);
 			return k_MonthDaySums[iLeapYear][m_wMonth - 1] + (m_wDay - 1);
 		}

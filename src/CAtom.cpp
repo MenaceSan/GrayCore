@@ -299,7 +299,7 @@ namespace Gray
 
 		if (pszExp == nullptr)
 			return 0;
-		ASSERT_N(pszTagRet != nullptr);
+		ASSERT_NN(pszTagRet);
 
 		ATOMCHAR_t ch = pszExp[0];
 		StrLen_t i = 0;

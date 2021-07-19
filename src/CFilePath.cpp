@@ -400,7 +400,7 @@ namespace Gray
 		//! @return
 		//!  length of the string.
 
-		ASSERT_N(pszOut != nullptr);
+		ASSERT_NN(pszOut );
 		if (pszPath == nullptr)
 		{
 			*pszOut = '\0';
@@ -530,7 +530,7 @@ namespace Gray
 		//! Might be LINUX
 		//! @return Length
 
-		ASSERT_N(pszOut != nullptr);
+		ASSERT_NN(pszOut);
 		if (iLen < 0)
 		{
 			iLen = StrT::Len(pszOut);
@@ -897,7 +897,7 @@ namespace Gray
 		//!  Length of pszFileOut
 
 		ASSERT(IsCharDirSep(chSep));
-		ASSERT_N(pszFileOut != nullptr);
+		ASSERT_NN(pszFileOut );
 
 		if (pszFileInp == nullptr)	// in place.
 			pszFileInp = pszFileOut;

@@ -254,7 +254,7 @@ namespace Gray
 			//! C = contiguous entries in the first block.
 			//! @return a pointer to new data.
 			ASSERT(!isEmptyQ());
-			ASSERT_N(m_pFirst != nullptr);
+			ASSERT_NN(m_pFirst);
 			return m_pFirst->get_ReadPtr();
 		}
 		void AdvanceRead(ITERATE_t iCount = 1)

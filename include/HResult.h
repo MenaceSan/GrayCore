@@ -214,7 +214,10 @@ namespace Gray
 #ifdef _WIN32
 		static inline HRESULT FromWaitRet(DWORD dwRet) noexcept
 		{
+			//! MAX of 0x80 items. STATUS_ABANDONED_WAIT_0 MAXIMUM_WAIT_OBJECTS
 			//! Get HRESULT from return value from _WIN32 WaitForSingleObject(), SleepEx(), WaitForMultipleObjects()
+			//! @return >0 = WAIT_OBJECT_0 + i
+
 			if (dwRet == WAIT_FAILED)		// 0xFFFFFFFF
 				return E_HANDLE;
 			if (dwRet == WAIT_TIMEOUT)	// 258L

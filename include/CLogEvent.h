@@ -26,7 +26,7 @@ namespace Gray
 		TIMESEC_t m_time;				//!< cTimeInt. when did this happen? maybe not set until needed. ! isTimeValid()
 
 	public:
-		cLogEvent(LOG_ATTR_MASK_t uAttrMask = LOG_ATTR_0, LOGLEV_TYPE eLogLevel = LOGLEV_ANY, cStringL sMsg = "", cStringL sContext = "")
+		cLogEvent(LOG_ATTR_MASK_t uAttrMask = LOG_ATTR_0, LOGLEV_TYPE eLogLevel = LOGLEV_ANY, cStringL sMsg = "", cStringL sContext = "") noexcept
 		: cLogEventParams(uAttrMask, eLogLevel)
 		, m_pszSubject(nullptr)
 		, m_sContext(sContext)
@@ -34,7 +34,7 @@ namespace Gray
 		, m_time(0)
 		{
 		}
-		~cLogEvent()
+		~cLogEvent() noexcept
 		{
 		}
 
