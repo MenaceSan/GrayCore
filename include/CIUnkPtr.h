@@ -54,17 +54,17 @@ namespace Gray
 			//! Initialize the pointer value and add a single reference.
 			//! Compliment ReleasePtr()
 			//! @note IncRefCount can throw !
-			if (m_p != nullptr)
+			if (this->m_p != nullptr)
 			{
 #ifdef _DEBUG
-				const int iRefCount = (int)m_p->AddRef();
+				const int iRefCount = (int)this->m_p->AddRef();
 				ASSERT(iRefCount >= 1);
-				AssertIUnk(m_p);
+				AssertIUnk(this->m_p);
 #else
-				m_p->AddRef();
+				this->m_p->AddRef();
 #endif
 #ifdef USE_PTRTRACE_IUNK
-				TraceAttach(m_p);	// NOTE: m_Src not set! use IUNK_ATTACH() later
+				TraceAttach(this->m_p);	// NOTE: m_Src not set! use IUNK_ATTACH() later
 #endif
 			}
 		}

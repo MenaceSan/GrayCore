@@ -225,7 +225,7 @@ namespace Gray
 		{
 			//! get start of data i could write directly. contiguous
 			UNREFERENCED_PARAMETER(iNeedCount);
-			if (!isValidPtr())
+			if (!this->isValidPtr())
 				return nullptr;
 			return this->get_Data() + this->m_iWriteLast;
 		}

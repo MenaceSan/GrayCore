@@ -17,6 +17,7 @@ namespace Gray
 	{
 		//! @class Gray::cNonCopyable
 		//! Block C++ usage of default copy constructor. base a class on this with protected type.
+		//! Similar to use of IS_DELETE = delete
 		//! http://stackoverflow.com/questions/4172722/what-is-the-rule-of-three
 		//! @note don't use inheritance for templates defined in DLL/SO that might have statics. Use the NonCopyable_IMPL instead. 
 		//!  Avoid GRAYCORE_LINK for templates.

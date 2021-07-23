@@ -288,7 +288,7 @@ namespace Gray
 
 	public:
 		StrBuilderDyn(StrLen_t nSizeStart = k_nGrowSizeChunk)
-			: StrBuilder((_TYPE_CH*)cHeap::AllocPtr((size_t)(nSizeStart * sizeof(_TYPE_CH))), nSizeStart)
+			: StrBuilder<_TYPE_CH>((_TYPE_CH*)cHeap::AllocPtr((size_t)(nSizeStart * sizeof(_TYPE_CH))), nSizeStart)
 		{
 		}
 		virtual ~StrBuilderDyn()

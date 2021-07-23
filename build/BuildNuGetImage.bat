@@ -5,6 +5,7 @@ rem This will copy them all to the appropriate folder structure to prepare for N
 rem Assume NuGet tools are installed /Programs/NuGet.exe .
 rem https://digitalhouseblog.wordpress.com/2019/08/22/how-to-make-a-nuget-package-for-c/
 rem https://docs.microsoft.com/en-us/nuget/reference/nuget-exe-cli-reference -> https://www.nuget.org/downloads
+rem https://www.nuget.org/packages?q=graycore  
 rem use for v141 or v142
 @ECHO OFF
 IF "%ToolVer%" == "" set ToolVer=v142

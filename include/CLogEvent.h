@@ -17,10 +17,10 @@ namespace Gray
 	class GRAYCORE_LINK cLogEvent : public cLogEventParams, public cRefBase
 	{
 		//! @class Gray::cLogEvent
-		//! Store a single event instance for asynchronous processing.
+		//! Store a single log event instance for asynchronous processing.
 
 	public:
-		const char* m_pszSubject;		//!< general subject matter tag.
+		const char* m_pszSubject;		//!< general subject matter tag. can be filled in by cLogSubject
 		cStringL m_sContext;			//!< extra context info. format ? e.g. What script/class/etc name is this event from? 
 		cStringL m_sMsg;				//!< message text
 		TIMESEC_t m_time;				//!< cTimeInt. when did this happen? maybe not set until needed. ! isTimeValid()

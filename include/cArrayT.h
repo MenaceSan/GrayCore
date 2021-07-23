@@ -151,7 +151,7 @@ namespace Gray
 		inline TYPE* get_DataWork() const noexcept
 		{
 			// Get a pointer to the array.
-			auto p = get_Ptr();
+			auto p = this->get_Ptr();
 			if (p == nullptr)
 				return nullptr;
 			return p->get_Data();
@@ -166,19 +166,19 @@ namespace Gray
 		{
 			// I can make a const pointer from this and know what its life span is. NOT just a copy.
 			DEBUG_CHECK(IsValidIndex(nIndex));
-			return get_Ptr()->get_Data()[nIndex];
+			return this->get_Ptr()->get_Data()[nIndex];
 		}
 		inline TYPE& ElementAt(ITERATE_t nIndex) noexcept
 		{
 			DEBUG_CHECK(IsValidIndex(nIndex));
-			return get_Ptr()->get_Data()[nIndex];
+			return this->get_Ptr()->get_Data()[nIndex];
 		}
 		inline void SetAt(ITERATE_t nIndex, const TYPE& newElement) noexcept
 		{
 			// If multiple refs to this then we should copy/split it ?
 			// @note DANGER - this is a reference counted object. Any changes to it will make changes to all references !! Make a deep copy if required.
 			DEBUG_CHECK(IsValidIndex(nIndex));
-			get_Ptr()->get_Data()[nIndex] = newElement;
+			this->get_Ptr()->get_Data()[nIndex] = newElement;
 		}
 
 		void AssertValidIndex(ITERATE_t nIndex) const // throw
@@ -189,22 +189,22 @@ namespace Gray
 		{
 			//! throw an exception if we are out of range.
 			AssertValidIndex(nIndex);
-			return get_Ptr()->get_Data()[nIndex];
+			return this->get_Ptr()->get_Data()[nIndex];
 		}
 		inline const TYPE& operator[](ITERATE_t nIndex) const // throw
 		{
 			//! throw an exception if we are out of range.
 			AssertValidIndex(nIndex);
-			return get_Ptr()->get_Data()[nIndex];
+			return this->get_Ptr()->get_Data()[nIndex];
 		}
 
 		ITERATE_t get_CountMalloc() const noexcept
 		{
 			//! Get quantity of objects truly allocated. (may not be same as m_nSize or even properly aligned with TYPE)
 			//! like STL capacity()
-			if (!isValidPtr())
+			if (!this->isValidPtr())
 				return 0;
-			return get_Ptr()->get_CountMalloc();
+			return this->get_Ptr()->get_CountMalloc();
 		}
 
 		void SetCopy(const cArrayT<TYPE>& a)
@@ -315,7 +315,7 @@ namespace Gray
 			else
 			{
 				put_Count(nCountOld + 1);  // grow it to new size
-				TYPE* pData = get_Ptr()->get_Data();
+				TYPE* pData = this->get_Ptr()->get_Data();
 				cValArray::MoveElement1(pData + nCountOld, pData + nIndex);	// make space.
 			}
 
@@ -330,8 +330,8 @@ namespace Gray
 			if (countCopy <= 0)
 				return;
 
-			cArrayDataT<TYPE>* pNew;
-			cArrayDataT<TYPE>* pOld = get_Ptr();
+			cArrayDataT<TYPE>* pNew = nullptr;
+			cArrayDataT<TYPE>* pOld = this->get_Ptr();
 			if (pOld == nullptr)
 			{
 				// i = 0;
@@ -382,7 +382,7 @@ namespace Gray
 			//! NOTE: Any destructor effecting the array MAY be reentrant ?!
 			if (nIndex < 0)
 				return;
-			auto p = get_Ptr();
+			auto p = this->get_Ptr();
 			if (p == nullptr)
 				return;
 			const ITERATE_t nCount = p->get_Count();

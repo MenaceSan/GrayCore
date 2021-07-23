@@ -83,12 +83,12 @@ namespace Gray
 		inline operator TYPE* () const noexcept
 		{
 			DEBUG_CHECK(this->m_p != nullptr);
-			return m_p;
+			return this->m_p;
 		}
 		inline operator TYPE& () const noexcept
 		{
 			DEBUG_CHECK(this->m_p != nullptr);
-			return *m_p;
+			return *this->m_p;
 		}
 		inline TYPE* operator -> () const noexcept
 		{

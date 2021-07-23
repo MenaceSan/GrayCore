@@ -71,7 +71,7 @@ namespace Gray
 	class GRAYCORE_LINK cLogEventParams
 	{
 		//! @class Gray::cLogEventParams
-		//! Filterable Parameters associated with a particular log event instance.
+		//! Filtering parameters associated with a particular log event instance.
 
 	protected:
 		LOG_ATTR_MASK_t m_uAttrMask;		//!< Special attributes for the event. (regardless of level) similar to pszSubject?
@@ -147,8 +147,6 @@ namespace Gray
 		}
 	};
 
-	// CLogFormat = what should each event line contain from cLogEvent?
-
 	//***********************************************************************
 
 	DECLARE_INTERFACE(ILogProcessor)
@@ -167,7 +165,7 @@ namespace Gray
 		, public cStreamOutput	// for WriteString raw dump messages into the system.
 	{
 		//! @class Gray::cLogProcessor
-		//! Build/submit a log message to be submitted to the log system.
+		//! Build/submit a log message cLogEvent to be submitted to the log system.
 
 	public:
 		virtual ~cLogProcessor()
@@ -317,7 +315,7 @@ namespace Gray
 		//! Once some error triggers, then we can emit all these detail messages to some file for processing.
 		//! If no trigger occurs in time then trash these messages.
 
-		TIMESYS_t m_nCacheHold;	// How long to hold messages.
+		TIMESYS_t m_nCacheHold;	// How long to hold messages. toss detail messages if nothing special happens.
 
 	};
 }
