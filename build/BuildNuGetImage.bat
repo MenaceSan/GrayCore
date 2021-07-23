@@ -9,7 +9,7 @@ rem https://www.nuget.org/packages?q=graycore
 rem use for v141 or v142
 @ECHO OFF
 IF "%ToolVer%" == "" set ToolVer=v142
-set CodeVer=1.6.7
+set CodeVer=1.6.8
 set BinDir=..\..\..\bin
 set DstDir=%BinDir%\graycore-%ToolVer%.%CodeVer%
 @ECHO on
@@ -90,12 +90,12 @@ xcopy /Q /R /Y "%BinDir%\x64%ToolVer%\ReleaseStat\GrayCore.pdb" "%DstDir%\lib\x6
 IF ERRORLEVEL 1 GOTO ERRORDETECTED
 
 rem now zip it up.
-rem e.g. /Programs/NuGet.exe pack GrayCore-v142.nuspec -BasePath "C:\Dennis\Source\bin\graycore-v142.1.6.7" -OutputDirectory "C:\Dennis\Source\bin"
+rem e.g. /Programs/NuGet.exe pack GrayCore-v142.nuspec -BasePath "C:\Dennis\Source\bin\graycore-v142.1.6.8" -OutputDirectory "C:\Dennis\Source\bin"
 /Programs/NuGet.exe pack GrayCore-%ToolVer%.nuspec -BasePath "%DstDir%" -OutputDirectory "%BinDir%" 
 IF ERRORLEVEL 1 GOTO ERRORDETECTED
 
 rem add to local test server.
-rem /Programs/NuGet.exe add graycore-v142.1.6.7.nupkg -source C:\Dennis\Source\bin\packages
+rem /Programs/NuGet.exe add graycore-v142.1.6.8.nupkg -source C:\Dennis\Source\bin\packages
 /Programs/NuGet.exe add "%BinDir%\graycore-%ToolVer%.%CodeVer%.nupkg" -source "%BinDir%\packages"
 IF ERRORLEVEL 1 GOTO ERRORDETECTED
 
