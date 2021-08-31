@@ -14,12 +14,10 @@
 
 namespace Gray
 {
-#define HANDLEPTR_NULL	nullptr		//!< NOT the same as an OS HANDLE, Not an int in Linux. Always void* based.
-
 	//! MUST Implement versions of this for each _TYPE_HAND.
 	//! Assume destruction or my caller will clear m_h
 	template< typename _TYPE_HAND >
-	static void inline CloseHandleType(_TYPE_HAND h) noexcept; // Don't use/define a default implementation! This should fail at compile time if type is not implemented explicitly.
+	static void inline CloseHandleType(_TYPE_HAND h) noexcept; // Don't use/define a default implementation! This should fail at compile time if _TYPE_HAND is not implemented explicitly.
 
 	template< typename _TYPE_HAND, void (*_CLOSER)(_TYPE_HAND) = CloseHandleType >
 	class cHandlePtr : protected cNonCopyable
@@ -35,12 +33,13 @@ namespace Gray
 		//!  UnhookWindowsHookEx(HHOOK)
 		//! _WIN32 http://msdn.microsoft.com/en-us/library/ms724515(VS.85).aspx
 
+#define HANDLEPTR_NULL	nullptr		//!< NOT the same as an OS HANDLE, Not an int in Linux. Always void* based.
 
 	protected:
-		_TYPE_HAND m_h;	//!< nullptr or HANDLEPTR_NULL
+		_TYPE_HAND m_h;	//!< nullptr or HANDLEPTR_NULL. A pointer of some sort.
 
 	public:
-		explicit inline cHandlePtr(_TYPE_HAND h = nullptr) noexcept
+		explicit inline cHandlePtr(_TYPE_HAND h = HANDLEPTR_NULL) noexcept
 			: m_h(h)
 		{
 		}

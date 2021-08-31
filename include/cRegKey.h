@@ -1,5 +1,6 @@
 //
 //! @file cRegKey.h
+//! Wrap a handle to a windows registry key.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 #ifndef _INC_cRegKey_H

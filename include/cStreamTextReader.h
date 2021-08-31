@@ -1,10 +1,10 @@
 //
-//! @file cFileTextReader.h
+//! @file cStreamTextReader.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
-#ifndef _INC_cFileTextReader_H
-#define _INC_cFileTextReader_H
+#ifndef _INC_cStreamTextReader_H
+#define _INC_cStreamTextReader_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
@@ -17,13 +17,13 @@ namespace Gray
 	class GRAYCORE_LINK cStreamTextReader : public cStreamStackInp
 	{
 		//! @class Gray::cFileTextReader 
-		//! read text lines from a buffer / stream. Similar to FILE*
+		//! read text lines from a buffer / stream. Similar to FILE*, cTextFile.
 		//! Allow control of read buffer size and line length.
 		//! Faster than cStreamInput::ReadStringLine() since it buffers ? maybe ?
 		//! m_nGrowSizeMax = max line size.
 
 	private:
-		cStreamInput& m_reader;
+		cStreamInput& m_reader;		//!< Source stream.
 		ITERATE_t m_iCurLineNum;	//!< track the line number we are on currently. (0 based) (for cTextPos)
 
 	public:

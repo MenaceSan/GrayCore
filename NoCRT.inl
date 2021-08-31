@@ -5,7 +5,7 @@
 //
 
 #if ! USE_CRT
-#include "include/cHeap.h"
+#include "include/cHeap.h"		// cMem
 
 #ifdef _MSC_VER
 // M$ will use CRT hidden/embedded in output code.
@@ -23,6 +23,8 @@
 
 // NOT REQUIRED: ALLOW C/C++: Language: Enable Run-time type information:  No (/GR-)  _CPPRTTI 
 // NOT REQUIRED: Linker: Input: Ignore all Default Libraries. Disable linking of all standard libraries(/NODEFAULTLIB)
+
+using namespace Gray;
 
 void* operator new(size_t n) // throw(std::bad_alloc)
 {
@@ -128,6 +130,7 @@ extern "C"
 
 	void __cdecl _Init_thread_header(int* const pOnce) noexcept
 	{
+		// _Init_thread_epoch
 	}
 	void __cdecl _Init_thread_footer(int* const pOnce) noexcept
 	{
@@ -135,7 +138,7 @@ extern "C"
 
 	int __cdecl atexit(_PVFV const function)
 	{
-		// call function at exit.
+		// call a function at exit.
 		return 0;
 	}
 
@@ -167,7 +170,9 @@ extern "C"
 	extern "C" BOOL WINAPI _DllMainCRTStartup(HINSTANCE const instance, DWORD const reason, LPVOID const reserved)
 	{
 		// Naked entry point for the DLL.
-		// Init and call __DECL_EXPORT BOOL APIENTRY DllMain
+		// TODO: Init and call __DECL_EXPORT BOOL APIENTRY DllMain
+
+		// _Init_global_epoch
 
 		return 0;
 	}

@@ -60,22 +60,22 @@ namespace Gray
 
 	//**************************************************************
 
-	cLogThrottle::cLogThrottle()
+	cLogThrottle::cLogThrottle() noexcept
 		: m_fLogThrottle(2000.0f)
 		, m_TimeLogLast(cTimeSys::k_CLEAR)
 		, m_nQtyLogLast(0)
 	{
 	}
 
-	cLogThrottle::~cLogThrottle()
+	cLogThrottle::~cLogThrottle() noexcept
 	{
 	}
 
 	//************************************************************************
 
-	HRESULT cLogProcessor::addEventS(LOG_ATTR_MASK_t uAttrMask, LOGLEV_TYPE eLogLevel, cStringL sMsg, cStringL sContext /* = "" */) //
+	HRESULT cLogProcessor::addEventS(LOG_ATTR_MASK_t uAttrMask, LOGLEV_TYPE eLogLevel, cStringL sMsg, cStringL sContext /* = "" */) noexcept
 	{
-		//! Dispatch the event to all matching appenders.
+		//! Dispatch the event to all matching appenders. noexcept = logger should nver throw !
 		//! ASSUME new line.
 		//! @note This can be called by multiple threads!
 		//! @note This could be called in odd interrupt context so don't use dynamic stuff
@@ -91,7 +91,7 @@ namespace Gray
 		return addEvent(pEvent);
 	}
 
-	HRESULT cLogProcessor::addEventV(LOG_ATTR_MASK_t uAttrMask, LOGLEV_TYPE eLogLevel, const LOGCHAR_t* pszFormat, va_list vargs)	// , cStringL sContext /* = "" */
+	HRESULT cLogProcessor::addEventV(LOG_ATTR_MASK_t uAttrMask, LOGLEV_TYPE eLogLevel, const LOGCHAR_t* pszFormat, va_list vargs) noexcept	// , cStringL sContext /* = "" */
 	{
 		//! Add a log message (line) to the system in the sprintf() format (with arguments)
 		//! ASSUME new line.

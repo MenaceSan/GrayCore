@@ -83,7 +83,7 @@
     <ClInclude Include="include\cFileText.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="include\cFileTextReader.h">
+    <ClInclude Include="include\cStreamTextReader.h">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="include\cFloat.h">

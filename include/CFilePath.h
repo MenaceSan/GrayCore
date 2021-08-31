@@ -118,13 +118,13 @@ namespace Gray
 		static StrLen_t GRAYCALL AddFileDirSep(FILECHAR_t* pszOut, StrLen_t iLen = k_StrLen_UNK, FILECHAR_t chSep = k_DirSep);
 		static cStringF GRAYCALL RemoveFileDirSep(cStringF sDir);
 
-		static StrLen_t GRAYCALL CombineFilePathA(FILECHAR_t* pszOut, StrLen_t iLenMax, StrLen_t iLen, const FILECHAR_t* pszName, FILECHAR_t chSep = k_DirSep);
-		static StrLen_t GRAYCALL CombineFilePath(FILECHAR_t* pszFilePathOut, StrLen_t iLenMax, const FILECHAR_t* pszDir, const FILECHAR_t* pszName, FILECHAR_t chSep = k_DirSep); // .NET Combine
+		static StrLen_t GRAYCALL CombineFilePathA(FILECHAR_t* pszFilePath, StrLen_t iLenMax, StrLen_t iLen, const FILECHAR_t* pszName, FILECHAR_t chSep = k_DirSep);
+		static StrLen_t GRAYCALL CombineFilePath(FILECHAR_t* pszFilePath, StrLen_t iLenMax, const FILECHAR_t* pszDir, const FILECHAR_t* pszName, FILECHAR_t chSep = k_DirSep); // .NET Combine
 		static cStringF GRAYCALL CombineFilePathX(const FILECHAR_t* pszBase, const FILECHAR_t* pszName, FILECHAR_t chSep = k_DirSep);
 		static cStringF _cdecl CombineFilePathF(FILECHAR_t chSep, const FILECHAR_t* pszBase, ...);
 
-		static StrLen_t GRAYCALL ExtractDir(FILECHAR_t* pszPath, StrLen_t iLen = k_StrLen_UNK, bool bTrailingSep = true);
-		static StrLen_t GRAYCALL ExtractDirCopy(FILECHAR_t* pszDirPath, StrLen_t iLenMax, const FILECHAR_t* pszFilePathSrc, bool bTrailingSep = true);
+		static StrLen_t GRAYCALL ExtractDir(OUT FILECHAR_t* pszPath, StrLen_t iLen = k_StrLen_UNK, bool bTrailingSep = true);
+		static StrLen_t GRAYCALL ExtractDirCopy(OUT FILECHAR_t* pszDirPath, StrLen_t iLenMax, const FILECHAR_t* pszFilePathSrc, bool bTrailingSep = true);
 		static cStringF GRAYCALL GetFileDir(const FILECHAR_t* pszFilePath, bool bTrailingSep = true);
 
 		static bool GRAYCALL IsRelativeRoot(const FILECHAR_t* pszFullPath, const FILECHAR_t* pszRootDir, StrLen_t iLen = k_StrLen_UNK);

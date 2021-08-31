@@ -110,25 +110,24 @@ namespace Gray
 			m_eType = FILESYS_NTFS;
 		m_bCaseSensitive = (dwFlags & FILE_CASE_SENSITIVE_SEARCH);
 
-#if 0
+#if 0 // 0
 		// szPath without trailing backslash and FILEDEVICE_PREFIX
 		//  FILEDEVICE_PREFIX "X:"
 		//  FILEDEVICE_PREFIX "PhysicalDrive0"
 		//  "\\\\\?\\Volume{433619ed-c6ea-11d9-a3b2-806d6172696f}
 
-		// cOSHandle hDevice
-		HANDLE hDevice = ::CreateFile(szPath, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0, HANDLE_NULL);
-		if (hDevice != INVALID_HANDLE_VALUE)
+		cOSHandle hDevice(_FNF(::CreateFile)(pszDeviceId, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0, HANDLE_NULL));
+		if (hDevice.isValidHandle())
 		{
 			DWORD dwOutBytes = 0;           // IOCTL output length
-			STORAGE_PROPERTY_QUERY Query;   // input param for query
+			::STORAGE_PROPERTY_QUERY Query;   // input param for query
 
 			// specify the query type
 			Query.PropertyId = StorageDeviceProperty;
 			Query.QueryType = PropertyStandardQuery;
 
 			char OutBuf[1024] = { 0 };  // good enough, usually about 100 bytes
-			PSTORAGE_DEVICE_DESCRIPTOR pDevDesc = (PSTORAGE_DEVICE_DESCRIPTOR)OutBuf;
+			::STORAGE_DEVICE_DESCRIPTOR* pDevDesc = (::STORAGE_DEVICE_DESCRIPTOR*)OutBuf;
 			pDevDesc->Size = sizeof(OutBuf);
 
 			// Query using IOCTL_STORAGE_QUERY_PROPERTY
@@ -138,12 +137,10 @@ namespace Gray
 				pDevDesc, pDevDesc->Size,               // output data buffer
 				&dwOutBytes,                           // out's length
 				(LPOVERLAPPED)nullptr);
-
-			::CloseHandle(hDevice);
 			if (bRet)
 			{
 				// here we are
-				BusType = pDevDesc->BusType;
+				// BusType = pDevDesc->BusType;
 			}
 		}
 #endif

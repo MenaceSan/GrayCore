@@ -75,7 +75,7 @@ namespace Gray
 
 		static bool inline IsValidPtr(const void* pData) noexcept
 		{
-			//! Can i read or write to this ?
+			//! Can i read or write to this ? nullptr => false
 			//! if DEBUG call IsCorrupt(pData,1) ??
 			return IsValidApp(pData);
 		}
@@ -89,7 +89,7 @@ namespace Gray
 		static inline bool IsZeros(const void* pData, size_t nSize) noexcept
 		{
 			//! Is all zeros ? nSize = 0 = true.
-			if (!IsValidApp(pData))
+			if (!IsValidApp(pData))	// nullptr or corrupt?
 				return true;
 			for (size_t i = 0; i < nSize; i++)
 			{
@@ -103,6 +103,7 @@ namespace Gray
 		{
 			//! Compare two blocks of memory. ASSUME both are at least nSizeBlock sized.
 			//! Does not assume memory alignment.
+			//! @note 0 nSizeBlock is always equal. return 0. pointers should not be null if nSizeBlock > 0
 #if USE_CRT
 			return ::memcmp(p1, p2, nSizeBlock);
 #elif defined(__GNUC__)

@@ -59,7 +59,7 @@ namespace Gray
 			//! @note Check IsLogged(x) before generating the message! for speed
 			return m_LogFilter.IsLogged(uAttrMask, eLogLevel);
 		}
-		HRESULT addEvent(cLogEvent* pEvent) override;
+		HRESULT addEvent(cLogEvent* pEvent) noexcept override;
 		HRESULT FlushLogs() override;
 
 		// manage appenders
@@ -103,8 +103,8 @@ namespace Gray
 #ifdef _CPPUNWIND
 		// Logging of cException.
 		// has no arguments
-		void LogExceptionV(cExceptionHolder* pEx, const LOGCHAR_t* pszCatchContext, va_list vargs);
-		void _cdecl LogExceptionF(cExceptionHolder* pEx, const LOGCHAR_t* pszCatchContext, ...);
+		void LogExceptionV(cExceptionHolder* pEx, const LOGCHAR_t* pszCatchContext, va_list vargs) noexcept;
+		void _cdecl LogExceptionF(cExceptionHolder* pEx, const LOGCHAR_t* pszCatchContext, ...) noexcept;
 #endif
 
 		//! cStreamOutput - for raw dumping of text into the log system.
@@ -130,7 +130,7 @@ namespace Gray
 		cLogSubject(const char* pszSubject);
 		virtual ~cLogSubject();
 
-		virtual HRESULT addEvent(cLogEvent* pEvent) override; // ILogProcessor
+		virtual HRESULT addEvent(cLogEvent* pEvent) noexcept override; // ILogProcessor
 	};
 
 	//***********************************************************************************

@@ -137,8 +137,8 @@ namespace Gray
 		mutable UINT m_nQtyLogLast;			//!< Qty of messages since m_TimeLogLast.
 
 	public:
-		cLogThrottle();
-		~cLogThrottle();
+		cLogThrottle() noexcept;
+		~cLogThrottle() noexcept;
 
 		float get_LogThrottle() const noexcept
 		{
@@ -152,10 +152,10 @@ namespace Gray
 	DECLARE_INTERFACE(ILogProcessor)
 	{
 		//! @interface Gray::ILogProcessor
-		//! All events funnel through addEvent().
+		//! All events funnel through addEvent(). noexcept = never throw !
 		IGNORE_WARN_INTERFACE(ILogProcessor);
 		virtual bool IsLogged(LOG_ATTR_MASK_t uAttrMask, LOGLEV_TYPE eLogLevel) const noexcept = 0; // fast pre-check. can call before building message.
-		virtual HRESULT addEvent(cLogEvent * pEvent) = 0;
+		virtual HRESULT addEvent(cLogEvent * pEvent) noexcept = 0;
 	};
 
 	class cLogNexus;
@@ -190,10 +190,10 @@ namespace Gray
 		}
 
 		// Helpers.
-		HRESULT addEventS(LOG_ATTR_MASK_t uAttrMask, LOGLEV_TYPE eLogLevel, cStringL sMsg, cStringL sContext = "");
-		HRESULT addEventV(LOG_ATTR_MASK_t uAttrMask, LOGLEV_TYPE eLogLevel, const LOGCHAR_t* pszFormat, va_list vargs);
+		HRESULT addEventS(LOG_ATTR_MASK_t uAttrMask, LOGLEV_TYPE eLogLevel, cStringL sMsg, cStringL sContext = "") noexcept;
+		HRESULT addEventV(LOG_ATTR_MASK_t uAttrMask, LOGLEV_TYPE eLogLevel, const LOGCHAR_t* pszFormat, va_list vargs) noexcept;
 
-		HRESULT _cdecl addEventF(LOG_ATTR_MASK_t uAttrMask, LOGLEV_TYPE eLogLevel, const LOGCHAR_t* pszFormat, ...)
+		HRESULT _cdecl addEventF(LOG_ATTR_MASK_t uAttrMask, LOGLEV_TYPE eLogLevel, const LOGCHAR_t* pszFormat, ...) noexcept
 		{
 			//! @arg uAttrMask = LOG_ATTR_DEBUG|LOG_ATTR_INTERNAL
 			//! @arg eLogLevel = LOGLEV_TRACE, LOGLEV_ERROR
@@ -277,7 +277,7 @@ namespace Gray
 		//! Remove myself from the list of valid appenders.
 		bool RemoveAppenderThis();
 
-		HRESULT addEvent(cLogEvent* pEvent) override
+		HRESULT addEvent(cLogEvent* pEvent) noexcept override
 		{
 			//! Push the message where it is supposed to go.
 			//! ILogProcessor

@@ -573,7 +573,7 @@
     <ClInclude Include="include\cFilePath.h" />
     <ClInclude Include="include\cFileStatus.h" />
     <ClInclude Include="include\cFileText.h" />
-    <ClInclude Include="include\cFileTextReader.h" />
+    <ClInclude Include="include\cStreamTextReader.h" />
     <ClInclude Include="include\cFloat.h" />
     <ClInclude Include="include\cFloatDeco.h" />
     <ClInclude Include="include\cHandlePtr.h" />

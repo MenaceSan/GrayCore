@@ -27,7 +27,7 @@ namespace Gray
 	class GRAYCORE_LINK cRefBase : public IUnknown	// virtual
 	{
 		//! @class Gray::cRefBase
-		//! base class for some derived object that is to be reference counted via cRefPtr.
+		//! base class for some derived object that is to be reference counted via cRefPtr. Use with a "Smart Pointer"
 		//! cRefPtr is similar to std::shared_ptr<TYPE> except the object must be based on cRefBase
 		//! @note These objects are normally cHeapObject, but NOT ALWAYS ! (allow static versions using StaticConstruct() and k_REFCOUNT_STATIC)
 		//! @note These objects emulate the COM IUnknown. we may use cIUnkPtr<> for this also.
@@ -70,7 +70,7 @@ namespace Gray
 			const int iRefCount = m_nRefCount.Dec();
 			if (iRefCount == 0)
 			{
-				onFinalRelease();
+				onFinalRelease(); // free my memory.
 			}
 			else
 			{
@@ -86,6 +86,7 @@ namespace Gray
 		}
 		virtual ~cRefBase() noexcept
 		{
+			//! I have no references and i'm being destroyed.
 			//! ASSUME StaticDestruct() was called if needed.
 			DEBUG_CHECK(get_RefCount() == 0);
 		}
@@ -113,7 +114,7 @@ namespace Gray
 			//!  use StaticConstruct() for these.
 			//! MFC CCmdTarget has similar OnFinalRelease()
 			SetDestructing();
-			delete this;
+			delete this;	// will call my destructor.
 		}
 
 		bool isValidObj() const noexcept
@@ -141,7 +142,7 @@ namespace Gray
 		{
 			//! like COM IUnknown::Release
 			//! @return count after this decrement.
-			int iRefCount = get_RefCount();
+			const int iRefCount = get_RefCount();
 			_InternalRelease();	// this could get deleted here!
 			return (ULONG)(iRefCount - 1);
 		}
@@ -197,7 +198,7 @@ namespace Gray
 			m_nRefCount.put_Value(0);
 		}
 
-		bool isDestructing() noexcept
+		bool isDestructing() const noexcept
 		{
 			return(m_nRefCount.get_Value() & k_REFCOUNT_DESTRUCT) ? true : false;
 		}
@@ -217,7 +218,7 @@ namespace Gray
 		}
 		bool SetSmartDebug() noexcept
 		{
-			//! Mark this object as debug. maybe object is in the act of destruction?
+			//! Mark this object as debug. Trace it. maybe object is in the act of destruction?
 			if (isSmartDebug())	// already marked.
 				return false;
 			m_nRefCount.AddX(k_REFCOUNT_DEBUG);
@@ -234,7 +235,7 @@ namespace Gray
 	{
 		//! @class Gray::cRefPtr
 		//! Template for a type specific Smart (reference counted) pointer based on cRefBase.
-		//! Smart pointer to an object. like "com_ptr_t" _com_ptr_t or cComPtr. https://msdn.microsoft.com/en-us/library/hh279674.aspx
+		//! "Smart pointer" to an object. like "com_ptr_t" _com_ptr_t or cComPtr. https://msdn.microsoft.com/en-us/library/hh279674.aspx
 		//! Just a ref to the object of some type. TYPE must be based on cRefBase
 		//! similar to boost::shared_ptr<TYPE> and std::shared_ptr<> but the object MUST be based on cRefBase.
 

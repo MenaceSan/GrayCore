@@ -638,7 +638,7 @@
     <ClCompile Include="cFilePath.cpp" />
     <ClCompile Include="cFileStatus.cpp" />
     <ClCompile Include="cFileText.cpp" />
-    <ClCompile Include="cFileTextReader.cpp" />
+    <ClCompile Include="cStreamTextReader.cpp" />
     <ClCompile Include="cFloat.cpp" />
     <ClCompile Include="cFloatDeco.cpp" />
     <ClCompile Include="cHashTable.cpp" />
@@ -739,7 +739,7 @@
     <ClInclude Include="cAtom.h" />
     <ClInclude Include="cBits.h" />
     <ClInclude Include="cCodeProfiler.h" />
-    <ClInclude Include="cFileTextReader.h" />
+    <ClInclude Include="cStreamTextReader.h" />
     <ClInclude Include="cFloat.h" />
     <ClInclude Include="cFloatDeco.h" />
     <ClInclude Include="cObjectFactory.h" />

@@ -400,7 +400,7 @@ namespace Gray
 		//! @return
 		//!  length of the string.
 
-		ASSERT_NN(pszOut );
+		ASSERT_NN(pszOut);
 		if (pszPath == nullptr)
 		{
 			*pszOut = '\0';
@@ -552,7 +552,7 @@ namespace Gray
 	{
 		//! Remove the / or \ from the end of this directory.
 		//! reverse of AddFileDirSep
-		 
+
 		StrLen_t len = sDir.GetLength();
 		if (len <= 1)
 			return sDir;
@@ -562,15 +562,16 @@ namespace Gray
 		return cStringF(sDir, len2);
 	}
 
-	StrLen_t GRAYCALL cFilePath::CombineFilePathA(FILECHAR_t* pszOut, StrLen_t iLenMax, StrLen_t iLen, const FILECHAR_t* pszName, FILECHAR_t chSep) // static
+	StrLen_t GRAYCALL cFilePath::CombineFilePathA(FILECHAR_t* pszFilePath, StrLen_t iLenMax, StrLen_t iLen, const FILECHAR_t* pszName, FILECHAR_t chSep) // static
 	{
-		//! Append file/subdir pszName to existing pszOut path.
+		//! Append file/subdir pszName to existing pszFilePath path.
 		//! @arg chSep = k_DirSep default.
 		//! @return New total Length
 
-		if (iLen < 0)
+		ASSERT_NN(pszFilePath);
+		if (iLen < 0) // k_StrLen_UNK
 		{
-			iLen = StrT::Len(pszOut);
+			iLen = StrT::Len(pszFilePath);
 		}
 		if (pszName == nullptr)
 		{
@@ -580,15 +581,15 @@ namespace Gray
 		{
 			if (iLen < iLenMax - 1)
 			{
-				iLen = AddFileDirSep(pszOut, iLen, chSep);
+				iLen = AddFileDirSep(pszFilePath, iLen, chSep);
 			}
 			while (IsCharDirSep(pszName[0]))
 				pszName++;
 		}
-		return iLen + StrT::CopyLen(pszOut + iLen, SkipRelativePrefix(pszName), iLenMax - iLen);
+		return iLen + StrT::CopyLen(pszFilePath + iLen, SkipRelativePrefix(pszName), iLenMax - iLen);
 	}
 
-	StrLen_t GRAYCALL cFilePath::CombineFilePath(FILECHAR_t* pszOut, StrLen_t iLenMax, const FILECHAR_t* pszDir, const FILECHAR_t* pszName, FILECHAR_t chSep) // static
+	StrLen_t GRAYCALL cFilePath::CombineFilePath(FILECHAR_t* pszFilePath, StrLen_t iLenMax, const FILECHAR_t* pszDir, const FILECHAR_t* pszName, FILECHAR_t chSep) // static
 	{
 		//! combine pszDir and pszName to make a single path. MakeProperPath.
 		//! Similar to Shell PathAppend()
@@ -599,11 +600,11 @@ namespace Gray
 		//!  pszOut = pszDir + k_DirSep + pszName
 		//! @note Resolve all relativism's in MakeProperPath
 
-		ASSERT(pszOut != nullptr);
-		ASSERT(pszOut != pszName);
-		StrLen_t iLen = (pszDir == nullptr) ? k_StrLen_UNK : StrT::CopyLen(pszOut, pszDir, iLenMax);
-		iLen = CombineFilePathA(pszOut, iLenMax, iLen, pszName, chSep);
-		return MakeProperPath(pszOut, iLenMax, pszOut, chSep);
+		ASSERT_NN(pszFilePath);
+		ASSERT(pszFilePath != pszName);
+		StrLen_t iLen = (pszDir == nullptr) ? k_StrLen_UNK : StrT::CopyLen(pszFilePath, pszDir, iLenMax);
+		iLen = CombineFilePathA(pszFilePath, iLenMax, iLen, pszName, chSep);
+		return MakeProperPath(pszFilePath, iLenMax, pszFilePath, chSep);
 	}
 
 	cStringF GRAYCALL cFilePath::CombineFilePathX(const FILECHAR_t* pszDir, const FILECHAR_t* pszName, FILECHAR_t chSep) // static
@@ -660,6 +661,7 @@ namespace Gray
 		//! a reverse compare of 2 paths. is pszRelativePath the same as pszFullPath assuming a root.
 		//! e.g. pszFullPath="a\b\c", pszRelativePath="b\c" = true
 
+		ASSERT_NN(pszFullPath);
 		StrLen_t iLenFullPath = StrT::Len(pszFullPath);
 		StrLen_t iLenRelativePath = StrT::Len(pszRelativePath);
 		if (iLenRelativePath > iLenFullPath)
@@ -897,7 +899,7 @@ namespace Gray
 		//!  Length of pszFileOut
 
 		ASSERT(IsCharDirSep(chSep));
-		ASSERT_NN(pszFileOut );
+		ASSERT_NN(pszFileOut);
 
 		if (pszFileInp == nullptr)	// in place.
 			pszFileInp = pszFileOut;
@@ -967,7 +969,7 @@ namespace Gray
 		return szFilePath;
 	}
 
-	StrLen_t GRAYCALL cFilePath::ExtractDir(FILECHAR_t* pszFilePath, StrLen_t iLen, bool bTrailingSep) // static
+	StrLen_t GRAYCALL cFilePath::ExtractDir(OUT FILECHAR_t* pszFilePath, StrLen_t iLen, bool bTrailingSep) // static
 	{
 		//! Remove the file name from this and just leave the path.
 		//! bTrailingSep = leave the trailing /
@@ -976,6 +978,8 @@ namespace Gray
 		//!  length of the new string.
 
 		FILECHAR_t* pszTitle = GetFileName(pszFilePath, iLen);
+		if (pszTitle == nullptr)
+			return 0;
 
 		for (; pszTitle > pszFilePath; pszTitle--)
 		{
@@ -995,7 +999,7 @@ namespace Gray
 		return StrT::Diff(pszTitle, pszFilePath);
 	}
 
-	StrLen_t GRAYCALL cFilePath::ExtractDirCopy(FILECHAR_t* pszDirPath, StrLen_t iLenMax, const FILECHAR_t* pszFilePathSrc, bool bTrailingSep) // static
+	StrLen_t GRAYCALL cFilePath::ExtractDirCopy(OUT FILECHAR_t* pszDirPath, StrLen_t iLenMax, const FILECHAR_t* pszFilePathSrc, bool bTrailingSep) // static
 	{
 		//! Remove the file name from this and just leave the path. (was ExtractDir)
 		//! @arg bTrailingSep = leave the trailing /

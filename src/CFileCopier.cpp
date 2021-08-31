@@ -9,7 +9,6 @@
 
 namespace Gray
 {
-
 	HRESULT GRAYCALL cFileCopier::CopyFileStream(cStreamInput& stmIn, const FILECHAR_t* pszDstFileName, bool bFailIfExists, IStreamProgressCallback* pProgress)
 	{
 		//! Copy this (opened OF_READ) file to some other file name/path. (pszDstFileName)
@@ -151,6 +150,7 @@ namespace Gray
 #endif
 		if (!bRet)
 		{
+			// Will use POSIX error if __linux__
 			return HResult::GetLastDef(HRESULT_WIN32_C(ERROR_FILE_NOT_FOUND));
 		}
 		return S_OK;
@@ -216,4 +216,3 @@ namespace Gray
 		return cFileStatus::WriteFileTimes(makeFilePath(pszDestName), &timeChanged, &timeChanged);
 	}
 }
- 

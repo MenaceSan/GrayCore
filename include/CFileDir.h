@@ -172,8 +172,8 @@ namespace Gray
 		cStringF m_sDirPath;			//!< Assume it ends with k_DirSep
 		DWORD m_nFileFlags;				//!< Options such as follow the links in the directory. Act as though these are regular files.
 #ifdef _WIN32
-		WIN32_FIND_DATAW m_FindInfo;	//!< Always UNICODE as base.
-		HANDLE m_hContext;				//!< Handle for my search. NOT OSHandle, uses FindClose()
+		::WIN32_FIND_DATAW m_FindInfo;	//!< Always UNICODE as base.
+		HANDLE m_hContext;				//!< Handle for my search. NOT cOSHandle, uses FindClose()
 #elif defined(__linux__)
 		cStringF m_sWildcardFilter;		//!< Need to perform wildcard (strip out the *.EXT part) later/manually in Linux.
 	public:

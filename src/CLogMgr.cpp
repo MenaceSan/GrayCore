@@ -26,15 +26,19 @@ namespace Gray
 	{
 	}
 
-	HRESULT cLogNexus::addEvent(cLogEvent* pEvent) // virtual
+	HRESULT cLogNexus::addEvent(cLogEvent* pEvent) noexcept // virtual
 	{
-		//! add a new log event and send it to all applicable Appenders.
+		//! add a new log event and send/route it to all applicable Appenders.
 		//! @return <0 = failed, 0=not processed by anyone, # = number of processors.
 
 		CODEPROFILEFUNC();
 		if (pEvent == nullptr)
 			return E_POINTER;
-		ASSERT(cLogMgr::isSingleCreated());
+		if (!cLogMgr::isSingleCreated())
+		{
+			DEBUG_CHECK(cLogMgr::isSingleCreated());
+			return HRESULT_WIN32_C(ERROR_EMPTY);
+		}
 		if (!IsLogged(pEvent->get_LogAttrMask(), pEvent->get_LogLevel()))	// I don't care about these ?
 		{
 			return HRESULT_WIN32_C(ERROR_EMPTY); // no appenders care about this.
@@ -225,7 +229,7 @@ namespace Gray
 	}
 
 #ifdef _CPPUNWIND
-	void cLogMgr::LogExceptionV(cExceptionHolder* pEx, const LOGCHAR_t* pszCatchContext, va_list vargs)
+	void cLogMgr::LogExceptionV(cExceptionHolder* pEx, const LOGCHAR_t* pszCatchContext, va_list vargs) noexcept
 	{
 		//! An exception occurred. record it.
 		//! if ( this == nullptr ) may be OK?
@@ -278,7 +282,7 @@ namespace Gray
 		}
 	}
 
-	void _cdecl cLogMgr::LogExceptionF(cExceptionHolder* pEx, const LOGCHAR_t* pszCatchContext, ...)
+	void _cdecl cLogMgr::LogExceptionF(cExceptionHolder* pEx, const LOGCHAR_t* pszCatchContext, ...) noexcept
 	{
 		va_list vargs;
 		va_start(vargs, pszCatchContext);
@@ -310,7 +314,7 @@ namespace Gray
 	{
 	}
 
-	HRESULT cLogSubject::addEvent(cLogEvent* pEvent) // virtual
+	HRESULT cLogSubject::addEvent(cLogEvent* pEvent) noexcept // virtual
 	{
 		//! Prefix the event with the subject.
 		//! @return <0 = failed, 0=not processed by anyone, # = number of processors.

@@ -10,6 +10,7 @@
 #endif
 
 #include "cFile.h"
+#include "cHandlePtr.h"
 #include "cTextPos.h"
 #include "cStreamTextReader.h"
 
@@ -19,7 +20,7 @@ namespace Gray
 	{
 		//! @class Gray::cFileTextReader 
 		//! read text lines from a file stream.
-		//! Try to use this instead of cFileText. 
+		//! Try to use this instead of cFileText below. 
 		//! Replace the FILE* streaming file i/o reader fread() with something more under our control.
 
 		typedef cFile SUPER_t;
@@ -28,7 +29,7 @@ namespace Gray
 		cStreamTextReader m_Reader;			
 
 	public:
-		cFileTextReader(size_t nSizeLineMax = cStream::k_FILE_BLOCK_SIZE * 2)
+		cFileTextReader(size_t nSizeLineMax = cStream::k_FILE_BLOCK_SIZE * 2) noexcept
 			: m_Reader(*this, nSizeLineMax)
 		{
 		}
@@ -52,6 +53,11 @@ namespace Gray
 	};
 
 #if USE_CRT
+	template <> inline void CloseHandleType(::FILE* p) noexcept  // static
+	{
+		::fclose(p); // ignored BOOL return.
+	}
+
 	class GRAYCORE_LINK cFileText : public cFile	// Try to be compatible with MFC CStdioFile
 	{
 		//! @class Gray::cFileText
@@ -63,10 +69,8 @@ namespace Gray
 
 		typedef cFile SUPER_t;
 
-#if USE_CRT
 	protected:
 		::FILE* m_pStream;	//!< the current open script/text type file. named as MFC CStdioFile.
-#endif
 
 	private:
 		ITERATE_t m_iCurLineNum;	//!< track the line number we are on currently. (0 based) (for cTextPos)
@@ -104,7 +108,6 @@ namespace Gray
 		void Close() noexcept override;
 		HRESULT SeekX(STREAM_OFFSET_t offset = 0, SEEK_ORIGIN_TYPE eSeekOrigin = SEEK_Set) override;
 
-#if USE_CRT		 
 		::FILE* get_FileStream() const noexcept
 		{
 			// operator FILE* () const { return m_pStream; }	// Dangerous.
@@ -116,7 +119,6 @@ namespace Gray
 		// override
 		STREAM_POS_t GetPosition() const override;
 		HRESULT FlushX() override;
-#endif
 
 		HRESULT WriteString(const char* pszStr) override;
 		HRESULT WriteString(const wchar_t* pszStr) override
