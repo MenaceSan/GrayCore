@@ -43,6 +43,7 @@ namespace Gray
 
 		static const size_t k_ALLOC_MAX = 0x1000000; //!< 256 * 64K = (arbitrary) largest reasonable single malloc.
 
+		static HANDLE g_hHeap;				// ::GetProcessHeap()
 		static ITERATE_t sm_nAllocs;		//!< count total allocations (i.e. Number of calls to malloc() minus calls to free())
 #ifdef USE_HEAP_STATS
 		static size_t sm_nAllocTotalBytes;	//!< Keep running count of total memory allocated.

@@ -118,7 +118,7 @@ namespace Gray
 			//! ~2 sec accurate for FAT32
 			return cValT::Compare(m_timeChange.get_FAT32(), t2.get_FAT32()) == COMPARE_Equal;
 		}
-		static TIMESEC_t GRAYCALL MakeFatTime(TIMESEC_t tTime) noexcept
+		static constexpr TIMESEC_t MakeFatTime(TIMESEC_t tTime) noexcept
 		{
 			//! (accurate to 2 seconds)
 			return tTime & ~1;

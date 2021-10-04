@@ -26,7 +26,8 @@ namespace Gray
 	{
 		//! is digit in uRadix range? or Hex digit (if uRadix=16).
 		//! replaces isxdigit() and istxdigit()
-		RADIX_t wRadix10 = (uRadix > 10) ? 10U : uRadix;
+
+		const RADIX_t wRadix10 = (uRadix > 10) ? 10U : uRadix;
 		if (ch >= '0' && ch < (wchar_t)('0' + wRadix10))
 			return true;
 		uRadix -= 10;
@@ -39,7 +40,7 @@ namespace Gray
 
 	bool GRAYCALL StrChar::IsVowel(wchar_t ch)
 	{
-		wchar_t chName = StrChar::ToLowerA(ch);
+		const wchar_t chName = StrChar::ToLowerA(ch);
 		for (size_t x = 0; x < _countof(k_Vowels); x++)
 		{
 			if (chName == k_Vowels[x])

@@ -28,7 +28,7 @@ enum WELL_KNOWN_SID_TYPE
 
 namespace Gray
 {
-	class GRAYCORE_LINK cSecurityId : private cWinLocalT < SID >
+	class GRAYCORE_LINK cSecurityId : private cWinLocalT < ::SID >
 	{
 		//! @class GrayLib::cSecurityId
 		//! A users id; or id group. http://msdn.microsoft.com/en-us/library/aa379594%28v=VS.85%29.aspx
@@ -48,12 +48,12 @@ namespace Gray
 		cSecurityId(WELL_KNOWN_SID_TYPE eWellKnownSidType);
 		~cSecurityId();
 
-		SID* get_SID() const noexcept
+		::SID* get_SID() const noexcept
 		{
 			// like PSID and PISID // variable length?
 			return SUPER_t::get_Data();
 		}
-		operator SID*() const noexcept
+		operator ::SID*() const noexcept
 		{
 			return get_SID();
 		}
@@ -86,14 +86,14 @@ namespace Gray
 
 		typedef cWinLocalT<ACL> SUPER_t;
 	public:
-		cSecurityACL(SID* pSidFirst = nullptr, DWORD dwAccessMask = GENERIC_ALL);
+		cSecurityACL(::SID* pSidFirst = nullptr, DWORD dwAccessMask = GENERIC_ALL);
 		~cSecurityACL();
 
-		ACL* get_ACL() const
+		::ACL* get_ACL() const
 		{
 			return SUPER_t::get_Data();
 		}
-		operator ACL*()
+		operator ::ACL*()
 		{
 			return get_ACL();
 		}
@@ -124,7 +124,7 @@ namespace Gray
 		static const FILECHAR_t* k_szLowIntegrity;	// L"S:(ML;;NW;;;LW)";
 
 	public:
-		cSecurityDesc(ACL* pDacl = nullptr);
+		cSecurityDesc(::ACL* pDacl = nullptr);
 		cSecurityDesc(const FILECHAR_t* pszSaclName);
 		~cSecurityDesc();
 
@@ -135,7 +135,7 @@ namespace Gray
 		{
 			return get_Data();
 		}
-		static bool GRAYCALL IsValid(SECURITY_DESCRIPTOR* pSD) noexcept
+		static bool GRAYCALL IsValid(::SECURITY_DESCRIPTOR* pSD) noexcept
 		{
 			if (pSD == nullptr) 	// null is valid.
 				return true;
@@ -145,17 +145,17 @@ namespace Gray
 		{
 			return IsValid(get_Data());
 		}
-		ACL* GetSacl(BOOL* pbSaclPresent = nullptr, BOOL* pbSaclDefaulted = nullptr) const
+		::ACL* GetSacl(BOOL* pbSaclPresent = nullptr, BOOL* pbSaclDefaulted = nullptr) const
 		{
 			//! Get attached cSecurityACL. No need to free this pointer.
-			ACL* pSacl = nullptr;
+			::ACL* pSacl = nullptr;
 			if (!::GetSecurityDescriptorSacl(get_Data(), pbSaclPresent, &pSacl, pbSaclDefaulted))
 			{
 				return nullptr;
 			}
 			return(pSacl);
 		}
-		BOOL SetSacl(ACL* pSacl, bool bSaclPresent = true, bool bSaclDefaulted = false)
+		BOOL SetSacl(::ACL* pSacl, bool bSaclPresent = true, bool bSaclDefaulted = false)
 		{
 			return ::SetSecurityDescriptorSacl(get_Data(), bSaclPresent, pSacl, bSaclDefaulted);
 		}
@@ -170,21 +170,21 @@ namespace Gray
 		}
 #endif
 
-		ACL* GetDacl(BOOL* pbDaclPresent = nullptr, BOOL* pbDaclDefaulted = nullptr) const
+		::ACL* GetDacl(BOOL* pbDaclPresent = nullptr, BOOL* pbDaclDefaulted = nullptr) const
 		{
 			//! Get attached cSecurityACL. No need to free this pointer.
-			ACL* pDacl = nullptr;
+			::ACL* pDacl = nullptr;
 			if (!::GetSecurityDescriptorDacl(get_Data(), pbDaclPresent, &pDacl, pbDaclDefaulted))
 			{
 				return nullptr;
 			}
 			return(pDacl);
 		}
-		BOOL SetDacl(ACL* pDacl, bool bDaclPresent = true, bool bDaclDefaulted = false)
+		BOOL SetDacl(::ACL* pDacl, bool bDaclPresent = true, bool bDaclDefaulted = false)
 		{
 			return ::SetSecurityDescriptorDacl(get_Data(), bDaclPresent, pDacl, bDaclDefaulted);
 		}
-		BOOL SetOwner(PSID pOwner = nullptr, BOOL bOwnerDefaulted = true)
+		BOOL SetOwner(::PSID pOwner = nullptr, BOOL bOwnerDefaulted = true)
 		{
 			// default = clear.
 			return ::SetSecurityDescriptorOwner(get_Data(), pOwner, bOwnerDefaulted);
@@ -193,7 +193,7 @@ namespace Gray
 		bool AttachToObject(HANDLE hObject, SE_OBJECT_TYPE type = SE_KERNEL_OBJECT) const;
 	};
 
-	class GRAYCORE_LINK cSecurityAttributes : public SECURITY_ATTRIBUTES
+	class GRAYCORE_LINK cSecurityAttributes : public ::SECURITY_ATTRIBUTES
 	{
 		//! @class GrayLib::cSecurityAttributes
 		//! Windows security attributes. for CreateFile etc.
@@ -207,13 +207,13 @@ namespace Gray
 		void UpdateSecurityDescriptor();
 
 	public:
-		cSecurityAttributes(bool bInheritHandle = false, ACL* pDacl = nullptr);
+		cSecurityAttributes(bool bInheritHandle = false, ::ACL* pDacl = nullptr);
 		cSecurityAttributes(bool bInheritHandle, const FILECHAR_t* pszSaclName);
 		~cSecurityAttributes(void);
 
-		operator SECURITY_ATTRIBUTES*()
+		operator ::SECURITY_ATTRIBUTES*()
 		{
-			return static_cast<SECURITY_ATTRIBUTES*>(this);
+			return static_cast<::SECURITY_ATTRIBUTES*>(this);
 		}
 		bool isValid() const noexcept;
 	};
@@ -254,5 +254,6 @@ namespace Gray
 		cSecurityACL m_dacl;
 	};
 }
+
 #endif	// _WIN32
 #endif	// cSecurityAttributes

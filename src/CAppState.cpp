@@ -12,6 +12,7 @@
 #include "cExceptionAssert.h"
 #include "cUnitTest.h"
 #include "cRandom.h"
+#include "cHandlePtr.h"
 
 #if defined(_WIN32) && ! defined(UNDER_CE)
 #include <shlobj.h>		// M$ documentation says this nowhere, but this is the header file for SHGetPathFromIDList shfolder.h
@@ -22,6 +23,11 @@
 
 namespace Gray
 {
+	inline void CloseHandleType_Sid(::PSID h) noexcept
+	{
+		::FreeSid(h);
+	}
+
 	HMODULE cAppState::sm_hInstance = HMODULE_NULL; //!< the current applications HINSTANCE handle/base address. _IMAGE_DOS_HEADER
 
 	cStringF cAppArgs::get_ArgsStr() const noexcept
@@ -394,7 +400,7 @@ namespace Gray
 #elif defined(__linux__)
 		return StrT::CopyLen(pszValue, ::getenv(pszVarName), iLenMax);
 #endif
-}
+	}
 
 	cStringF GRAYCALL cAppState::GetEnvironStr(const FILECHAR_t* pszVarName) noexcept	// static
 	{
@@ -551,7 +557,7 @@ namespace Gray
 		if (!m_sTempDir.IsEmpty())
 		{
 			return m_sTempDir;	// cached value.
-	}
+		}
 
 		FILECHAR_t szTmp[_MAX_PATH];
 #ifdef UNDER_CE
@@ -579,14 +585,14 @@ namespace Gray
 				{
 					iLen = StrT::CopyLen(szTmp, _FN("/tmp"), STRMAX(szTmp));	// append tmp
 				}
-	}
+			}
 		}
 		cFilePath::AddFileDirSep(szTmp, iLen);
 #endif
 
 		m_sTempDir = szTmp;	// cache this.
 		return m_sTempDir;
-		}
+	}
 
 	cStringF cAppState::GetTempFile(const FILECHAR_t* pszFileTitle)
 	{
@@ -696,7 +702,7 @@ namespace Gray
 		{
 			// cAppExitCatcher should not block this now.
 			I().put_AppState(APPSTATE_Exit);
-	}
+		}
 #ifdef _WIN32
 		::ExitProcess(uExitCode);
 #elif defined(__linux__)
@@ -727,7 +733,7 @@ namespace Gray
 		// __linux__ ?
 
 #endif
-			}
+	}
 
 	cString GRAYCALL cAppState::GetCurrentUserName(bool bForce) // static
 	{
@@ -741,7 +747,7 @@ namespace Gray
 		if (!bForce && !pThis->m_sUserName.IsEmpty())	// cached name,.
 		{
 			return pThis->m_sUserName;
-	}
+		}
 
 #if defined(_WIN32)
 		GChar_t szUserName[256];
@@ -779,15 +785,15 @@ namespace Gray
 #elif defined(_WIN32)
 	// _WIN32 shell has IsUserAnAdmin()
 	// CAUSES PROGRAM TO NOT WORK ON WIN9X (STATIC LINKAGE TO CheckTokenMembership)
-		SID_IDENTIFIER_AUTHORITY NtAuthority = { SECURITY_NT_AUTHORITY };
-		PSID AdministratorsGroup;
+		cHandlePtr<::PSID, CloseHandleType_Sid> AdministratorsGroup;
+		::SID_IDENTIFIER_AUTHORITY NtAuthority = { SECURITY_NT_AUTHORITY };
 		BOOL b = ::AllocateAndInitializeSid(
 			&NtAuthority,
 			2,
 			SECURITY_BUILTIN_DOMAIN_RID,
 			DOMAIN_ALIAS_RID_ADMINS,
 			0, 0, 0, 0, 0, 0,
-			&AdministratorsGroup);
+			&AdministratorsGroup.ref_Handle());
 		if (!b)
 		{
 			return false;
@@ -796,8 +802,7 @@ namespace Gray
 		{
 			b = false;
 		}
-		::FreeSid(AdministratorsGroup);
-		return(b);
+		return b;
 #elif defined(__linux__)
 		if (!StrT::CmpI<GChar_t>(GetCurrentUserName(), _GT("root")))
 			return true;
@@ -806,7 +811,7 @@ namespace Gray
 		// TODO __linux__ user is admin group ??
 		return false;
 #endif
-		}
+	}
 
 	cStringF GRAYCALL cAppState::GetCurrentUserDir(const FILECHAR_t* pszSubFolder, bool bCreate) // static
 	{
@@ -874,7 +879,7 @@ namespace Gray
 		// (2b) More precisely! Get the microseconds part !
 		return (procTime + (t.ru_utime.tv_usec + t.ru_stime.tv_usec) * 1e-6);
 #endif
-		}
+	}
 #endif
 
 	//*******************************************************************

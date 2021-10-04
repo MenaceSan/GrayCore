@@ -64,9 +64,7 @@ namespace Gray		//!< The main namespace for all Core functions.
 	// Get rid of C++11 features. e.g. "= delete" and override
 #define noexcept
 #define override	// tell the compiler this is an intentional override
-#define IS_DELETE
 #else
-#define IS_DELETE = delete		// to get rid of this normally default supplied method.
 #endif
 
 #if defined(_MSC_VER) && _MSC_VER <= 1916 // VS2017 has internal errors when noexcept is used.

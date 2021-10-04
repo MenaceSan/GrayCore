@@ -69,9 +69,11 @@ namespace Gray
 		if (iRange == 0)
 			return iRangeLo;
 		if (iRange < 0)
-			return iRangeLo - GetRandUX(-iRange);
-		else
-			return iRangeLo + GetRandUX(iRange);
+		{
+			iRangeLo = iRangeHi;
+			iRange = -iRange;
+		}
+		return iRangeLo + GetRandUX(iRange);
 	}
 
 	HRESULT cRandomBase::GetNoise(void* pvData, size_t iSize) // override

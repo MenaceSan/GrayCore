@@ -67,7 +67,7 @@ namespace Gray
 			{
 				AttachHandle(Handle.Duplicate());
 			}
-			return (*this);
+			return *this ;
 		}
 
 		inline ~cOSHandle()

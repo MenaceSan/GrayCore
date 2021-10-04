@@ -85,7 +85,7 @@ namespace Gray
 			return (ITERATE_t)(cHeap::GetSize(m_pData) / sizeof(TYPE));
 		}
 
-		inline static ITERATE_t GetCountMalloc(ITERATE_t i)
+		constexpr static ITERATE_t GetCountMalloc(ITERATE_t i)
 		{
 			//! over allocate to allow room to grow.
 			return i + (i / 16);

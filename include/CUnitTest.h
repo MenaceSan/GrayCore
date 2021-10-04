@@ -202,7 +202,7 @@ namespace Gray
 #define UNITTEST_TRUE(x)			ASSERT(x)	// UNITTEST_TRUE is different from a normal ASSERT ? ::Microsoft::VisualStudio::CppUnitTestFramework::Assert::IsTrue(x) 
 #define UNITTEST_TRUE2(x,d)			ASSERT(x)	// UNITTEST_TRUE with a description
 
-	// declare a global exposed cUnitTest. Dont use this directly but use UNITTEST2_* to  support M$ test. 
+	// declare a global exposed cUnitTest. Don't use this directly but use UNITTEST2_* to  support M$ test. 
 #define UNITTEST_REGISTER_NAME(n)	g_UnitTest_##n
 #define UNITTEST_REGISTER(n,lvl)		__DECL_EXPORT cUnitTestRegisterT< UNITTEST_N(n) > UNITTEST_REGISTER_NAME(n)( #n, lvl ) 	// instantiate to register cUnitTest  .
 

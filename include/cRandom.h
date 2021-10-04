@@ -125,14 +125,13 @@ namespace Gray
 			{
 				// todo repeat like cMem::CopyRepeat() ?
 				cMem::Copy(pData, m_Src.GetSpan(m_nOffset, len), len);
-				m_nOffset += len;
 			}
 			else
 			{
 				// No m_Src supplied so fill with fixed data.
-				cMem::Fill(pData, len, 0x2a);
-				m_nOffset += len;
+				cMem::Fill(pData, len, 0x2a);		
 			}
+			m_nOffset += len;
 			return (HRESULT)len;
 		}
 	};

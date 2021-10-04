@@ -108,10 +108,6 @@ namespace Gray
 			: m_TimeSys(k_CLEAR)
 		{
 		}
-		cTimeSys(const cTimeSys& t) noexcept
-			: m_TimeSys(t.m_TimeSys)
-		{
-		}
 		cTimeSys(TIMESYS_t t) noexcept
 			: m_TimeSys(t)
 		{
@@ -273,7 +269,7 @@ namespace Gray
 		TIMEPERF_t get_AgePerf() const noexcept
 		{
 			//! how long ago was this ?
-			cTimePerf tStop(true);
+			const cTimePerf tStop(true);
 			return GetAgeDiff(tStop);
 		}
 

@@ -90,7 +90,7 @@ namespace Gray
 	public:
 		int m_nDiffSeconds;
 	public:
-		cTimeSpan()
+		cTimeSpan() : m_nDiffSeconds(0)
 		{
 		}
 	};
@@ -190,7 +190,7 @@ namespace Gray
 			return((unsigned)GetTime() > (unsigned)GetTimeNow().GetTime());
 		}
 
-		static inline bool IsTimeValid(TIMESEC_t nTime) noexcept
+		static constexpr bool IsTimeValid(TIMESEC_t nTime) noexcept
 		{
 			return nTime > k_nZero ;
 		}

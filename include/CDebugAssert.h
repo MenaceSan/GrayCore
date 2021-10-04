@@ -54,7 +54,7 @@ namespace Gray
 	{
 		//! @struct Gray::cDebugAssert
 		//! Log assert events before handling as normal system assert().
-		//! like M$ Assert.IsTrue()
+		//! like M$ test Assert.IsTrue()
 
 		static AssertCallback_t* sm_pAssertCallback;		//!< redirect callback on Assert_Fail usually used for unit tests.
 		static bool sm_bAssertTest;		//!<  Just testing. not a real assert.

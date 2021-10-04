@@ -190,14 +190,14 @@ namespace Gray
 		inline THREADID_t get_ThreadLockOwner() const
 		{
 			//! @return cThreadId::k_NULL = not locked.
-			THREADID_t nTid1 = m_nLockThreadID;
+			const THREADID_t nTid1 = m_nLockThreadID;
 			ASSERT(nTid1 == cThreadId::k_NULL || cThreadId::IsValidId(nTid1));
 			return nTid1;
 		}
 		inline bool isThreadLockedByCurrent() const noexcept
 		{
-			THREADID_t nTid1 = m_nLockThreadID;
-			THREADID_t nTid2 = cThreadId::GetCurrentId();
+			const THREADID_t nTid1 = m_nLockThreadID;
+			const THREADID_t nTid2 = cThreadId::GetCurrentId();
 			return cThreadId::IsEqualId(nTid1, nTid2);
 		}
 	};
@@ -228,7 +228,7 @@ namespace Gray
 		{
 			//! Special case if a thread is hard terminated.
 			//! Only clear if nTid is the current owner.
-			THREADID_t nTidowner = InterlockedN::CompareExchange(&m_nLockThreadID, cThreadId::k_NULL, nTid);
+			const THREADID_t nTidowner = InterlockedN::CompareExchange(&m_nLockThreadID, cThreadId::k_NULL, nTid);
 			return cThreadId::IsEqualId(nTidowner, nTid);
 		}
 

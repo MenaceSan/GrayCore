@@ -18,6 +18,7 @@
 
 namespace Gray
 {
+	HANDLE cHeap::g_hHeap = ::GetProcessHeap();		// Global.
 	ITERATE_t cHeap::sm_nAllocs = 0;
 #ifdef USE_HEAP_STATS
 	size_t cHeap::sm_nAllocTotalBytes = 0;
@@ -117,7 +118,7 @@ namespace Gray
 		cHeap::sm_nAllocTotalBytes -= nSizeAllocated;
 #endif
 #if defined(_WIN32) && ! USE_CRT
-		::LocalFree(pData);
+		::HeapFree(g_Heap, 0, pData);
 #else
 		::free(pData);
 #endif
@@ -135,7 +136,7 @@ namespace Gray
 		DEBUG_ASSERT(iSize < k_ALLOC_MAX, "AllocPtr"); // 256 * 64K - remove/change this if it becomes a problem
 #endif
 #if defined(_WIN32) && ! USE_CRT
-		void* pData = ::LocalAlloc(LPTR, iSize);		// nh_malloc_dbg.
+		void* pData = ::HeapAlloc(g_Heap, 0, iSize);		// nh_malloc_dbg.
 #else
 		void* pData = ::malloc(iSize);		// nh_malloc_dbg.
 #endif
@@ -179,7 +180,7 @@ namespace Gray
 			cHeap::sm_nAllocs--;
 		}
 #if defined(_WIN32) && ! USE_CRT
-		void* pData2 = ::LocalReAlloc(pData, iSize, LPTR);
+		void* pData2 = ::HeapReAlloc(g_Heap, 0, pData, iSize );
 #else
 		void* pData2 = ::realloc(pData, iSize);		// nh_malloc_dbg.
 #endif
@@ -238,7 +239,7 @@ namespace Gray
 #if defined(__linux__)
 		return ::malloc_usable_size((void*)pData);
 #elif defined(_WIN32) && ! USE_CRT
-		return ::LocalSize((void*)pData);
+		return ::HeapSize(g_Heap, 0, (void*)pData);
 #elif defined(_WIN32)
 		return ::_msize((void*)pData);
 #else
@@ -379,7 +380,7 @@ namespace Gray
 #if defined(_WIN32) && ! defined(UNDER_CE) && USE_CRT
 		::_aligned_free(pData);	// CAN'T just use free() ! we need to undo the padding.
 #elif defined(_WIN32) && ! USE_CRT
-		::LocalFree(pData);
+		::LocalFree(g_hHeap, 0, pData);
 #else
 		::free(pData); // Linux just used free() for memalign() and malloc().
 #endif
@@ -399,7 +400,7 @@ namespace Gray
 #elif defined(__linux__)
 		void* pData = ::memalign(iAlignment, iSize);
 #elif defined(_WIN32) && ! USE_CRT
-		void* pData = ::LocalAlloc(LPTR, iSize);
+		void* pData = ::HeapAlloc(g_Heap, 0, iSize);
 #elif defined(_WIN32) && USE_CRT
 		void* pData = ::_aligned_malloc(iSize, iAlignment);		// nh_malloc_dbg.
 #else

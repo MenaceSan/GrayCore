@@ -19,7 +19,7 @@ namespace Gray
 	struct GRAYCORE_LINK cMem	// static cSingleton
 	{
 		//! @struct Gray::cMem
-		//! a void type memory block. test bytes, Move memory bytes around.
+		//! static helpers for dealing with memory blocks. test bytes, Move memory bytes around.
 		//! May be on heap, const memory space or static in stack. do NOT assume. use cHeap.
 
 		static VOLATILE uintptr_t sm_bDontOptimizeOut0;	//!< static global byte to fool the optimizer into preserving this data.
@@ -331,7 +331,7 @@ namespace Gray
 		static StrLen_t GRAYCALL ConvertToString(wchar_t* pszDst, StrLen_t iSizeDstMax, const BYTE* pSrc, size_t nSrcQty);
 		static size_t GRAYCALL ReadFromString(BYTE* pDst, size_t iLenBytesMax, const char* pszSrc);
 
-		static inline StrLen_t GetHexDigestSize(size_t nSize) noexcept
+		static constexpr StrLen_t GetHexDigestSize(size_t nSize) noexcept
 		{
 			//!< How much space does the hex digest need?
 			return (StrLen_t)((nSize * 2) + 1);
@@ -406,7 +406,7 @@ namespace Gray
 	class GRAYCORE_LINK cMemBlock
 	{
 		//! @class Gray::cMemBlock
-		//! A pointer to memory block/blob with unknown ownership. may be heap, stack or const. don't free on destruct.
+		//! A pointer to memory block/blob with known size and unknown ownership. may be heap, stack or const. don't free on destruct.
 		//! May be static init?
 
 	protected:

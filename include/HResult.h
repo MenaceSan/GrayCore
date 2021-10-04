@@ -28,7 +28,7 @@ namespace Gray
 #ifndef SUCCEEDED	// __linux__
 #define SUCCEEDED(x)		(((HRESULT)(x)) >= S_OK)
 #define FAILED(x)			(((HRESULT)(x)) < S_OK)
-#endif // __linux__
+#endif // SUCCEEDED __linux__
 
 	enum FACILITY_TYPE : WORD
 	{
@@ -148,7 +148,7 @@ namespace Gray
 			return m_hRes;
 		}
 
-		static inline DWORD GetCode(HRESULT hRes) noexcept
+		static constexpr DWORD GetCode(HRESULT hRes) noexcept
 		{
 			//! Get just the facility sub code portion of the HRESULT. may be LSTATUS/error_status_t
 			//! HRESULT_CODE(hRes) = WORD or LSTATUS
@@ -159,7 +159,7 @@ namespace Gray
 			return GetCode(m_hRes);
 		}
 
-		static inline FACILITY_TYPE GetFacility(HRESULT hRes) noexcept
+		static constexpr FACILITY_TYPE GetFacility(HRESULT hRes) noexcept
 		{
 			//! HRESULT_FACILITY(hRes)
 			return (FACILITY_TYPE)(((hRes) >> 16) & 0x1fff);
@@ -252,7 +252,7 @@ namespace Gray
 
 #if !defined(UNDER_CE)
 		static HRESULT GRAYCALL GetPOSIXLast() noexcept;
-		static HRESULT GRAYCALL GetPOSIXLastDef(HRESULT hResDef = E_FAIL) noexcept // static 
+		static HRESULT GetPOSIXLastDef(HRESULT hResDef = E_FAIL) noexcept // static 
 		{
 			return GetDef(GetPOSIXLast(), hResDef);
 		}

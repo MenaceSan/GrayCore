@@ -50,12 +50,12 @@ namespace Gray
 		TYPE m_nTotal;		//!< Total size of the stream. 0 = i have no idea how big the total is.
 
 	public:
-		cStreamProgressT(TYPE nAmount = 0, TYPE nTotal = 0)
+		cStreamProgressT(TYPE nAmount = 0, TYPE nTotal = 0) noexcept
 			: m_nAmount(nAmount)
 			, m_nTotal(nTotal)
 		{
 		}
-		bool isComplete() const
+		bool isComplete() const noexcept
 		{
 			if (m_nTotal == 0) // no idea.
 				return true;
@@ -63,7 +63,7 @@ namespace Gray
 				return true;
 			return false;
 		}
-		float get_PercentFloat() const
+		float get_PercentFloat() const noexcept
 		{
 			//! Get percent of total.
 			//! @return 0.0f to 1.0f
@@ -71,20 +71,20 @@ namespace Gray
 				return 0;
 			return (float)(((double)m_nAmount) / ((double)m_nTotal));
 		}
-		int get_PercentInt() const
+		int get_PercentInt() const noexcept
 		{
 			//! @return From 0 to 100. MULDIV
 			if (m_nTotal == 0) // no idea.
 				return 0;
 			return (int)((m_nAmount * 100) / m_nTotal);
 		}
-		bool isValidPercent() const
+		bool isValidPercent() const noexcept
 		{
 			if (m_nTotal <= 0)	// no idea.
 				return false;
-			return(m_nAmount <= m_nTotal);
+			return m_nAmount <= m_nTotal ;
 		}
-		void InitZero()
+		void InitZero() noexcept
 		{
 			m_nAmount = 0;
 			m_nTotal = 0;	// 0 = i have no idea how big the total is.
@@ -164,7 +164,7 @@ namespace Gray
 				prog.m_nTotal = (((float)iParentChunks) * prog.m_nTotal) / ((float)m_iChunks);	// MULDIV
 			}
 		}
-		~cStreamProgressChunk()
+		~cStreamProgressChunk() noexcept
 		{
 			//! complete the task.
 			if (m_ProgPrev.m_nTotal >= 1.0f)
@@ -176,7 +176,7 @@ namespace Gray
 				m_Prog = m_ProgPrev;	// back out my changes and assume IncChunk() will be called from my parent.
 			}
 		}
-		void IncChunk(int iChunks = 1)
+		void IncChunk(int iChunks = 1) noexcept
 		{
 			//! We are making some progress at the current task.
 			//! ASSERT(prog.m_nTotal);

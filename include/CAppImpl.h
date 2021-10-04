@@ -16,6 +16,8 @@
 #ifndef _MFC_VER
 namespace Gray
 {
+	typedef HRESULT(GRAYCALL* AppCommandF_t)(int iArgN, const FILECHAR_t* pszArg); // FARPROC
+
 	struct GRAYCORE_LINK cAppCommand
 	{
 		//! @struct Gray::cAppCommand
@@ -28,10 +30,15 @@ namespace Gray
 		const ATOMCHAR_t* m_pszName;		//!< symbolic name for -switch or /switch (case insensitive). MUST be unique.
 		const char* m_pszHelpArgs;			//!< describe any extra args this function might take. "[optional arg]. nullptr = takes none.
 		const char* m_pszHelp;				//!< help description.
+		AppCommandF_t m_pCommand;	//!< we can override or use this function pointer to implement.
 
 	public:
-		cAppCommand(const FILECHAR_t* pszSwitch, const ATOMCHAR_t* pszName, const char* pszHelpArgs, const char* pszHelp) noexcept
-			: m_pszSwitch(pszSwitch), m_pszName(pszName), m_pszHelpArgs(pszHelpArgs), m_pszHelp(pszHelp)
+		cAppCommand(const FILECHAR_t* pszSwitch, const ATOMCHAR_t* pszName
+			, const char* pszHelpArgs, const char* pszHelp
+			, AppCommandF_t pCommand = nullptr) noexcept
+			: m_pszSwitch(pszSwitch), m_pszName(pszName)
+			, m_pszHelpArgs(pszHelpArgs), m_pszHelp(pszHelp)
+			, m_pCommand(pCommand)
 		{
 		}
 		virtual ~cAppCommand()
@@ -40,8 +47,13 @@ namespace Gray
 
 		bool IsMatch(cStringF sArg) const;
 
-		// return # of EXTRA args consumed.
-		virtual HRESULT DoCommand(int iArgN, const FILECHAR_t* pszArg) = 0;	//!< call this if we see the m_pszCmd switch. can consume more arguments (or not).
+		// return # of EXTRA args consumed. or <0 = error.
+		virtual HRESULT DoCommand(int iArgN, const FILECHAR_t* pszArg) 	//!< call this if we see the m_pszCmd switch. can consume more arguments (or not).
+		{
+			if (m_pCommand == nullptr)
+				return E_NOTIMPL;
+			return m_pCommand(iArgN, pszArg);
+		}
 	};
 
 	class GRAYCORE_LINK cAppImpl

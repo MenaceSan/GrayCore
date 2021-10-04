@@ -318,6 +318,8 @@ namespace Gray
 	{
 		//! Prefix the event with the subject.
 		//! @return <0 = failed, 0=not processed by anyone, # = number of processors.
+		if (pEvent == nullptr)
+			return E_POINTER;
 		pEvent->m_pszSubject = m_pszSubject;	// categorize with this subject.
 		return cLogMgr::I().addEvent(pEvent);
 	}

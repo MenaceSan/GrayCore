@@ -11,9 +11,10 @@ https://www.nuget.org/packages?q=graycore
 The Gray libraries are a set of source code modules written mostly in C++ over 10 years or so and used in a variety of projects.
 They are compilable in MSVC and GNU compilers and will run in several flavors of Windows, WinCE, Linux.
 
-Main libraries are:
+GrayCore is the "Core" library used by a family of "Gray" libraries:
+
+The main dependent libraries are:
 @verbatim
-GrayCore,  
 GrayLib,  
 Gray3D,  
 GrayCodec,  
