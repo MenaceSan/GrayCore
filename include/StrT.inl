@@ -19,10 +19,8 @@ namespace Gray
 	// Compares and searches
 
 	template< typename TYPE>
-	COMPARE_t GRAYCALL StrT::Cmp(const TYPE* pszStr1, const TYPE* pszStr2) NOEXCEPT
+	COMPARE_t GRAYCALL StrT::Cmp(const TYPE* pszStr1, const TYPE* pszStr2) noexcept
 	{
-		//! replace _strcmp()
-		//! How does pszStr1 compare to pszStr2
 		if (pszStr1 == pszStr2)
 			return COMPARE_Equal;
 		if (pszStr1 == nullptr)
@@ -39,10 +37,8 @@ namespace Gray
 		}
 	}
 	template< typename TYPE>
-	COMPARE_t GRAYCALL StrT::CmpN(const TYPE* pszStr1, const TYPE* pszStr2, StrLen_t iLenMaxChars) NOEXCEPT
+	COMPARE_t GRAYCALL StrT::CmpN(const TYPE* pszStr1, const TYPE* pszStr2, StrLen_t iLenMaxChars) noexcept
 	{
-		//! How does pszStr1 compare to pszStr2
-		//! replace strncmp()
 		if (pszStr1 == pszStr2)
 			return COMPARE_Equal;
 		if (pszStr1 == nullptr)
@@ -63,7 +59,7 @@ namespace Gray
 	}
 
 	template< typename TYPE>
-	COMPARE_t GRAYCALL StrT::CmpI(const TYPE* pszStr1, const TYPE* pszStr2) NOEXCEPT
+	COMPARE_t GRAYCALL StrT::CmpI(const TYPE* pszStr1, const TYPE* pszStr2) noexcept
 	{
 		//! @note for some reason the M$ version fails in static initializers in release mode !?
 		//! replace _strcmpi strcmpi _stricmp
@@ -84,7 +80,7 @@ namespace Gray
 	}
 
 	template< typename TYPE>
-	COMPARE_t GRAYCALL StrT::CmpIN(const TYPE* pszStr1, const TYPE* pszStr2, StrLen_t iLenMaxChars) NOEXCEPT
+	COMPARE_t GRAYCALL StrT::CmpIN(const TYPE* pszStr1, const TYPE* pszStr2, StrLen_t iLenMaxChars) noexcept
 	{
 		//! Find matching string up to length iLenMaxChars. (unless '/0' is found)
 		//! replaces _strnicmp strnicmp
@@ -159,16 +155,6 @@ namespace Gray
 	template< typename TYPE>
 	COMPARE_t GRAYCALL StrT::CmpHeadI(const TYPE* pszFindHead, const TYPE* pszTableElem)
 	{
-		//! Does pszTabkleElem start with the prefix pszFindHead?
-		//! Compare only up to the length of pszTableElem.
-		//! If pszFindHead has more chars but are separated by non alnum() then ignore.
-		//! Follows the rules for symbolic names.
-		//! similar to StartsWithI ?
-		//! @note
-		//!  we may want to allow /- in names for HTTP?
-		//! @return
-		//!  0 = match.
-
 		if (pszTableElem == nullptr)
 			return COMPARE_Less;
 		if (pszFindHead == nullptr)
@@ -191,16 +177,8 @@ namespace Gray
 	}
 
 	template< typename TYPE>
-	HASHCODE32_t GRAYCALL StrT::GetHashCode32(const TYPE* pszStr, StrLen_t nLen, HASHCODE32_t nHash) NOEXCEPT
+	HASHCODE32_t GRAYCALL StrT::GetHashCode32(const TYPE* pszStr, StrLen_t nLen, HASHCODE32_t nHash) noexcept
 	{
-		//! Get a HASHCODE32_t for the string. Ignore case.
-		//! based on http://www.azillionmonkeys.com/qed/hash.html super fast hash.
-		//! Need not be truly unique. Just most likely unique. Low chance of collision in random set.
-		//! Even distribution preferred. Simple CRC32 does not produce good distribution?
-		//! Never return 0 except for empty string. not k_HASHCODE_CLEAR
-		//! Others: http://sites.google.com/site/murmurhash/, boost string_hash()
-		//! @note equivalent UNICODE and char strings should return the same HASHCODE32_t.
-
 		if (pszStr == nullptr)
 			return k_HASHCODE_CLEAR;
 		if (nLen <= k_StrLen_UNK)	// nLen was not supplied. I must figure it out.
@@ -240,7 +218,7 @@ namespace Gray
 	//***********************************************************
 
 	template< typename TYPE>
-	StrLen_t GRAYCALL StrT::FindCharN(const TYPE* pszStr, TYPE chFind) NOEXCEPT
+	StrLen_t GRAYCALL StrT::FindCharN(const TYPE* pszStr, TYPE chFind) noexcept
 	{
 		//! Find index of the first occurrence of a single char in a string.
 		//! @return -1 = k_StrLen_UNK = not found.
@@ -259,7 +237,7 @@ namespace Gray
 	}
 
 	template< typename TYPE>
-	TYPE* GRAYCALL StrT::FindChar(const TYPE* pszStr, TYPE chFind, StrLen_t iLenMax) NOEXCEPT
+	TYPE* GRAYCALL StrT::FindChar(const TYPE* pszStr, TYPE chFind, StrLen_t iLenMax) noexcept
 	{
 		//! Find first occurrence of a single char in a string.
 		//! replace strchr(), and memchr()
@@ -426,7 +404,7 @@ namespace Gray
 	//*************************************************************
 
 	template< typename TYPE>
-	bool GRAYCALL StrT::IsWhitespace(const TYPE* pStr, StrLen_t iLenMaxChars) NOEXCEPT
+	bool GRAYCALL StrT::IsWhitespace(const TYPE* pStr, StrLen_t iLenMaxChars) noexcept
 	{
 		//! Is the whole string whitespace, empty or nullptr?
 		//! Like .NET String.IsNullOrWhiteSpace()
@@ -468,7 +446,7 @@ namespace Gray
 	}
 
 	template< typename TYPE>
-	bool GRAYCALL StrT::IsPrintable(const TYPE* pStr, StrLen_t iLenChars) NOEXCEPT
+	bool GRAYCALL StrT::IsPrintable(const TYPE* pStr, StrLen_t iLenChars) noexcept
 	{
 		//! Is this a normally printable string?
 		if (pStr == nullptr)
@@ -678,18 +656,8 @@ namespace Gray
 	// String Modifiers
 
 	template< typename TYPE>
-	StrLen_t GRAYCALL StrT::CopyLen(TYPE* pDst, const TYPE* pSrc, StrLen_t iLenMaxChars) NOEXCEPT
+	StrLen_t GRAYCALL StrT::CopyLen(TYPE* pDst, const TYPE* pSrc, StrLen_t iLenMaxChars) noexcept
 	{
-		//! Copy a string. replaces strncpy (sort of)
-		//! @arg iLenMaxChars = _countof(Dst) = includes room for '\0'. (just like memcpy)
-		//! so iLenMaxChars=_countof(Dst) is OK !
-		//! @note
-		//!  DO NOT assume pSrc is null terminated. tho it might be. just use iLenMaxChars
-		//! @note
-		//!  This will ALWAYS terminate the string (unlike strncpy)
-		//! @return
-		//!  Length of pDst in chars. (Not including '\0')
-
 		if (pDst == nullptr || iLenMaxChars <= 0)
 			return 0;
 		StrLen_t i = 0;

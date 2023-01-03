@@ -67,7 +67,7 @@ namespace Gray
 			{
 				AttachHandle(Handle.Duplicate());
 			}
-			return *this ;
+			return *this;
 		}
 
 		inline ~cOSHandle()
@@ -95,7 +95,7 @@ namespace Gray
 			if (h == HANDLE_NULL)	//!< 0 is never a valid handle value for _WIN32. (0=stdin for __linux__)
 				return false;
 #endif
-			return h != INVALID_HANDLE_VALUE ;	//  -1
+			return h != INVALID_HANDLE_VALUE;	//  -1
 		}
 		bool isValidHandle() const noexcept
 		{
@@ -107,7 +107,7 @@ namespace Gray
 			//! default implementation for closing OS HANDLE.
 			//! ASSUME IsValidHandle(h)
 			//! @return true = ok;
-			DEBUG_CHECK(IsValidHandle(h));	
+			DEBUG_CHECK(IsValidHandle(h));
 #ifdef _WIN32
 			const BOOL bRet = ::CloseHandle(h); // ignored bool return.
 			return bRet;
@@ -173,26 +173,30 @@ namespace Gray
 			return (HRESULT)nLengthWritten;
 		}
 
-		HRESULT ReadX(void* pData, size_t nDataSize) const
+		/// <summary>
+		/// Low level read from the OS file handle m_h.
+		/// </summary>
+		/// <param name="pData">buffer</param>
+		/// <param name="nDataSize">max amount of data to read</param>
+		/// <returns>lt 0 = error. 0=might be EOF?, length of data read lt nDataSize</returns>
+		HRESULT ReadX(void* pData, size_t nDataSize) const noexcept
 		{
-			//! @return HRESULT_WIN32_C(ERROR_HANDLE_EOF) = EOF.
+			// HRESULT_WIN32_C(ERROR_HANDLE_EOF) = No more data = EOF.
+			// HRESULT_WIN32_C(ERROR_READ_FAULT), etc
 			if (nDataSize <= 0)
 				return S_OK;
 #ifdef _WIN32
-			DWORD nLengthRead;
-			const bool bRet = ::ReadFile(m_h, pData, (DWORD)nDataSize, &nLengthRead, nullptr);
+			DWORD nLengthRead = 0;
+			const bool bRet = ::ReadFile(m_h, pData, CastN(DWORD, nDataSize), &nLengthRead, nullptr);
 			if (!bRet)
 #elif defined(__linux__)
-			int nLengthRead = ::read(m_h, pData, (long)nDataSize);
-			if (nLengthRead == 0)	// EOF 
-				return HRESULT_WIN32_C(ERROR_HANDLE_EOF);
+			int nLengthRead = ::read(m_h, pData, CastN(long, nDataSize));
 			if (nLengthRead < 0)
 #endif
 			{
-				// ERROR_HANDLE_EOF = No more data = EOF.
 				return HResult::GetLastDef(HRESULT_WIN32_C(ERROR_READ_FAULT));
 			}
-			return (HRESULT)nLengthRead;
+			return CastN(HRESULT, nLengthRead);
 		}
 
 		HRESULT FlushX() const noexcept
@@ -210,39 +214,45 @@ namespace Gray
 			return S_OK;
 		}
 
-		STREAM_POS_t SeekRaw(STREAM_OFFSET_t lOffset, SEEK_ORIGIN_TYPE eSeekOrigin) const noexcept
+		STREAM_POS_t SeekRaw(STREAM_OFFSET_t nOffset, SEEK_ORIGIN_TYPE eSeekOrigin) const noexcept
 		{
 			//! Change or get the current file position pointer.
+			//! eSeekOrigin = SEEK_ORIGIN_TYPE SEEK_Cur
 			//! @note it is legal to seek beyond the end of the file to grow it !
 #ifdef _WIN32
 #ifdef USE_FILE_POS64
-			LARGE_INTEGER NewFilePointer;
-			NewFilePointer.QuadPart = lOffset;
+			::LARGE_INTEGER NewFilePointer;
+			NewFilePointer.QuadPart = nOffset;
 			if (!::SetFilePointerEx(m_h, NewFilePointer, &NewFilePointer, eSeekOrigin))
 			{
 				return k_STREAM_POS_ERR;	// HResult::GetLast()
 			}
 			return NewFilePointer.QuadPart;
 #else
-			DWORD dwRet = ::SetFilePointer(m_h, (LONG)lOffset, nullptr, eSeekOrigin);
+			DWORD dwRet = ::SetFilePointer(m_h, (LONG)nOffset, nullptr, eSeekOrigin);
 			if (dwRet == INVALID_SET_FILE_POINTER)
 				return k_STREAM_POS_ERR;	// HResult::GetLast()
 			return dwRet;
 #endif // USE_FILE_POS64
 #else
-			//! Use _tell( m_hFile ) for __linux__ ?
-			return (STREAM_POS_t) ::lseek(m_h, 0, SEEK_CUR);
+			//! Use return _tell( m_hFile ) for __linux__ ? off_t
+			return (STREAM_POS_t) ::lseek(m_h, nOffset, eSeekOrigin);
 #endif
 		}
 
-		HRESULT SeekX(STREAM_OFFSET_t lOffset, SEEK_ORIGIN_TYPE eSeekOrigin) const
+		HRESULT SeekX(STREAM_OFFSET_t nOffset, SEEK_ORIGIN_TYPE eSeekOrigin) const noexcept
 		{
 			//! Change or get the current file position pointer.
 			//! @arg eSeekOrigin = // SEEK_SET ?
 			//! @return the New position % int, <0=FAILED
 			//! @note it is legal to seek beyond the end of the file to grow it !
 
-			const STREAM_POS_t nPos = SeekRaw(lOffset, eSeekOrigin);
+			if (!isValidHandle())
+			{
+				return E_HANDLE;
+			}
+
+			const STREAM_POS_t nPos = SeekRaw(nOffset, eSeekOrigin);
 			if (nPos == k_STREAM_POS_ERR)
 			{
 				return HResult::GetLastDef();
@@ -300,7 +310,7 @@ namespace Gray
 			return ::dup(m_h);
 		}
 #endif
- 
+
 	};
-} 
+}
 #endif // _INC_cOSHandle_H

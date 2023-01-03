@@ -65,7 +65,7 @@ namespace Gray
 	{
 		//! @arg iSizeMax = Maximum number of characters to be copied into pszBuffer (including room for the the terminating '\0' character).
 		//! @return
-		//!  length of the string read in chars. (includes \r\n) (not including null)
+		//!  length of the string read in chars. (includes \r\n) (not including null). 0 = EOF
 
 		if (iSizeMax <= 0)
 			return 0;
@@ -79,7 +79,7 @@ namespace Gray
 		return (HRESULT)nSizeCopy;
 	}
 
-	HRESULT cStreamTextReader::SeekX(STREAM_OFFSET_t iOffset, SEEK_ORIGIN_TYPE eSeekOrigin) // override;
+	HRESULT cStreamTextReader::SeekX(STREAM_OFFSET_t iOffset, SEEK_ORIGIN_TYPE eSeekOrigin) noexcept // override;
 	{
 		//! Seek to a particular position in the file. 
 		//! This will corrupt m_iCurLineNum. The caller must manage that themselves.

@@ -92,7 +92,7 @@ namespace Gray
 			return  ch == '?' || ch == '*';
 		}
 
-		static FILECHR_TYPE_ GRAYCALL GetFileCharType(wchar_t ch, FILESYS_TYPE eSys = FILESYS_DEFAULT);
+		static FILECHR_TYPE_ GRAYCALL GetFileCharType(wchar_t ch, FILESYS_TYPE eSys = FILESYS_DEFAULT) NOEXCEPT;
 		static bool GRAYCALL IsFileNameValid(const FILECHAR_t* pszName, FILECHR_MASK_t uCharMask = FILECHR_All, FILESYS_TYPE eSys = FILESYS_DEFAULT);
 		static bool GRAYCALL IsFileNameExt(const FILECHAR_t* pszFileName, const FILECHAR_t* pszExt) noexcept;
 		static bool GRAYCALL HasTitleWildcards(const FILECHAR_t* pszPath);

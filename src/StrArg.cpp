@@ -94,26 +94,26 @@ namespace Gray
 	}
 
 	// force implementation/instantiate for DLL/SO.
-	template GRAYCORE_LINK const wchar_t* GRAYCALL StrArg<wchar_t>(const char* pszStrInp);		// Force Instantiation for DLL.
-	template GRAYCORE_LINK const char* GRAYCALL StrArg<char>(const wchar_t* pszStrInp);		// Force Instantiation for DLL.
+	template GRAYCORE_LINK const wchar_t* GRAYCALL StrArg<wchar_t>(const char* pszStrInp);		// Force implementation/instantiate for DLL/SO.
+	template GRAYCORE_LINK const char* GRAYCALL StrArg<char>(const wchar_t* pszStrInp);		// Force implementation/instantiate for DLL/SO.
 
-	template GRAYCORE_LINK const wchar_t* GRAYCALL StrArg<wchar_t>(wchar_t ch, StrLen_t nRepeat);		// Force Instantiation for DLL.
-	template GRAYCORE_LINK const char* GRAYCALL StrArg<char>(char ch, StrLen_t nRepeat);		// Force Instantiation for DLL.
+	template GRAYCORE_LINK const wchar_t* GRAYCALL StrArg<wchar_t>(wchar_t ch, StrLen_t nRepeat);		// Force implementation/instantiate for DLL/SO.
+	template GRAYCORE_LINK const char* GRAYCALL StrArg<char>(char ch, StrLen_t nRepeat);		// Force implementation/instantiate for DLL/SO.
 
-	template GRAYCORE_LINK const wchar_t* GRAYCALL StrArg<wchar_t>(INT32 v);		// Force Instantiation for DLL.
-	template GRAYCORE_LINK const char* GRAYCALL StrArg<char>(INT32 v);		// Force Instantiation for DLL.
+	template GRAYCORE_LINK const wchar_t* GRAYCALL StrArg<wchar_t>(INT32 v);		// Force implementation/instantiate for DLL/SO.
+	template GRAYCORE_LINK const char* GRAYCALL StrArg<char>(INT32 v);		// Force implementation/instantiate for DLL/SO.
 
-	template GRAYCORE_LINK const wchar_t* GRAYCALL StrArg<wchar_t>(UINT32 uVal, RADIX_t uRadix);		// Force Instantiation for DLL.
-	template GRAYCORE_LINK const char* GRAYCALL StrArg<char>(UINT32 uVal, RADIX_t uRadix);		// Force Instantiation for DLL.
+	template GRAYCORE_LINK const wchar_t* GRAYCALL StrArg<wchar_t>(UINT32 uVal, RADIX_t uRadix);		// Force implementation/instantiate for DLL/SO.
+	template GRAYCORE_LINK const char* GRAYCALL StrArg<char>(UINT32 uVal, RADIX_t uRadix);		// Force implementation/instantiate for DLL/SO.
 
 #ifdef USE_INT64
-	template GRAYCORE_LINK const wchar_t* GRAYCALL StrArg<wchar_t>(INT64 v);		// Force Instantiation for DLL.
-	template GRAYCORE_LINK const char* GRAYCALL StrArg<char>(INT64 v);		// Force Instantiation for DLL.
+	template GRAYCORE_LINK const wchar_t* GRAYCALL StrArg<wchar_t>(INT64 v);		// Force implementation/instantiate for DLL/SO.
+	template GRAYCORE_LINK const char* GRAYCALL StrArg<char>(INT64 v);		// Force implementation/instantiate for DLL/SO.
 
-	template GRAYCORE_LINK const wchar_t* GRAYCALL StrArg<wchar_t>(UINT64 uVal, RADIX_t uRadix);		// Force Instantiation for DLL.
-	template GRAYCORE_LINK const char* GRAYCALL StrArg<char>(UINT64 uVal, RADIX_t uRadix);		// Force Instantiation for DLL.
+	template GRAYCORE_LINK const wchar_t* GRAYCALL StrArg<wchar_t>(UINT64 uVal, RADIX_t uRadix);		// Force implementation/instantiate for DLL/SO.
+	template GRAYCORE_LINK const char* GRAYCALL StrArg<char>(UINT64 uVal, RADIX_t uRadix);		// Force implementation/instantiate for DLL/SO.
 #endif
 
-	template GRAYCORE_LINK const wchar_t* GRAYCALL StrArg<wchar_t>(double v);		// Force Instantiation for DLL.
-	template GRAYCORE_LINK const char* GRAYCALL StrArg<char>(double v);		// Force Instantiation for DLL.
+	template GRAYCORE_LINK const wchar_t* GRAYCALL StrArg<wchar_t>(double v);		// Force implementation/instantiate for DLL/SO.
+	template GRAYCORE_LINK const char* GRAYCALL StrArg<char>(double v);		// Force implementation/instantiate for DLL/SO.
 }

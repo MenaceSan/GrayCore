@@ -69,6 +69,12 @@ namespace Gray
 		return false;
 	}
 
+	void GRAYCALL cDebugAssert::ThrowEx_Fail(const char* pszExp, const cDebugSourceLine src)	// static
+	{
+		// hidden impl for use by low level functions.
+		cException::ThrowEx(pszExp, src);
+	}
+
 	bool GRAYCALL cDebugAssert::Debug_Fail(const char* pszExp, const cDebugSourceLine src) noexcept // static
 	{
 		//! A 'softer' version of assert. non-fatal checks. for use in constructors, etc.

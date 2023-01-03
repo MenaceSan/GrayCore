@@ -34,7 +34,7 @@ namespace Gray
 			DEBUG_CHECK(get_AutoReadCommit() > 0);
 		}
 
-		HRESULT ReadX(void* pData, size_t nDataSize) override = 0;	// MUST be overridden. and call ReadFill() at some point.
+		HRESULT ReadX(void* pData, size_t nDataSize) noexcept override = 0;	// MUST be overridden. and call ReadFill() at some point.
 	};
 
 	class GRAYCORE_LINK cStreamStackOut : public cStreamQueue // cStreamOutput, protected cStreamStack

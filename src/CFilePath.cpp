@@ -24,7 +24,7 @@ namespace Gray
 	const FILECHAR_t cFilePath::k_NamePrefix[5] = _FN("\\\\?\\");	//!< pre-pend "\\?\" to the path to extend this limit to 32,767 on NTFS.
 #endif
 
-	FILECHR_TYPE_ GRAYCALL cFilePath::GetFileCharType(wchar_t ch, FILESYS_TYPE eSys) // static
+	FILECHR_TYPE_ GRAYCALL cFilePath::GetFileCharType(wchar_t ch, FILESYS_TYPE eSys) NOEXCEPT // static
 	{
 		//! Is the char valid for a filename on FILECHR_TYPE_?
 		//! The valid characters for a filename in DOS manual (DOS 5: page 72)
@@ -548,17 +548,21 @@ namespace Gray
 		}
 		return iLen;
 	}
+
+	/// <summary>
+	/// Remove the / or \ from the end of this directory.
+	/// reverse of AddFileDirSep()
+	/// </summary>
+	/// <param name="sDir"></param>
+	/// <returns></returns>
 	cStringF GRAYCALL cFilePath::RemoveFileDirSep(cStringF sDir)
 	{
-		//! Remove the / or \ from the end of this directory.
-		//! reverse of AddFileDirSep
-
 		StrLen_t len = sDir.GetLength();
 		if (len <= 1)
 			return sDir;
 		StrLen_t len2 = len - 1;
 		if (!IsCharDirSep(sDir[len2]))
-			return sDir;
+			return sDir;	// no change.
 		return cStringF(sDir, len2);
 	}
 

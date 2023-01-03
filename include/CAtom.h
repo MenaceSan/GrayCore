@@ -1,7 +1,6 @@
 //
 //! @file cAtom.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cAtom_H
 #define _INC_cAtom_H
@@ -19,58 +18,31 @@ namespace Gray
 #define CATOM_STR(a)		a		//!< Part of a static atom quoted string. for concatenate use. e.g. "Tag_%s"
 #define CATOM_CAT(a,b)		a##b	//!< https://gcc.gnu.org/onlinedocs/cpp/Concatenation.html#Concatenation
 #define CATOM_N(a)	#a		//!< A static atom i know is defined some place, but i just want to use the string here. Typically used by property bag. (e.g."SymName","Root")
-
-	class GRAYCORE_LINK cAtomDef : public cRefBase // CStringData
+ 
+	/// <summary>
+	/// A single string name shared by all.
+	/// Similar to the _WIN32 ATOM GlobalAddAtom(). but not system shared of course.
+	/// case independent. e.g. "THIS"=="this"=>same atom.
+	/// commonly used atoms should be constructed at startup/init time: e.g. static const cAtomRef a_Root("Root");
+	/// </summary>
+	class GRAYCORE_LINK cAtomRef : public cRefPtr<cStringDataT<ATOMCHAR_t>>
 	{
-		//! @class Gray::cAtomDef
-		//! A single string name shared by all.
-		//! @note Internal holder for the atom. DON'T USE THIS publicly. Use cAtomRef.
-
-		friend class cAtomRef;
 		friend class cAtomManager;
-
-	private:
-		cStringA m_s;				//!< the string being represented. should we allocate this differently. is cStringA wasteful ?
-		ATOMCODE_t m_nHashCode;		//!< GetHashCode32() for m_s; case independent. e.g. THIS==this==same atom.
-
-	private:
-		cAtomDef(cStringA s) noexcept;
 
 	public:
-		ATOMCODE_t get_HashCode() const noexcept
-		{
-			//! GetHashCode32() for m_s; case independent. e.g. THIS==this==same atom.
-			//! supported for cArraySort
-			return m_nHashCode;
-		}
-		const ATOMCHAR_t* get_Name() const noexcept
-		{
-			//! supported for cArraySort
-			return m_s.get_CPtr();
-		}
-	};
- 
-	class GRAYCORE_LINK cAtomRef : public cRefPtr<cAtomDef> 
-	{
-		//! @class Gray::cAtomRef
-		//! A single string name shared by all.
-		//! Similar to the _WIN32 ATOM GlobalAddAtom(). but not system shared of course.
-		//! case independent. e.g. THIS==this=>same atom.
-		//! commonly used atoms should be constructed at startup/init time: e.g. static const cAtomRef a_Root("Root");
-
-		friend class cAtomManager;
 		typedef cStringA STR_t;
 		typedef cAtomRef THIS_t;
-		typedef cRefPtr<cAtomDef> SUPER_t;
+		typedef cStringDataT<ATOMCHAR_t> DATA_t;
+		typedef cRefPtr<DATA_t> SUPER_t;
 
 	private:
 		static cAtomRef GRAYCALL FindorCreateAtomStr(const ATOMCHAR_t* pszText) noexcept;
 		static cAtomRef GRAYCALL FindorCreateAtomStr(const STR_t& sText) noexcept;
 
-		explicit inline cAtomRef(cAtomDef* pDef) noexcept 	// cAtomManager only.
+		explicit inline cAtomRef(DATA_t* pDef) noexcept 	// cAtomManager only.
 			: SUPER_t(pDef)
 		{
-			// this is allowed to be nullptr as a temporary value. in cAtomManager.
+			// this is allowed to be nullptr as a temporary value. in cAtomManager. FindArgForKey, etc.
 		}
 
 		void EmptyAtom(bool isLast);
@@ -102,17 +74,17 @@ namespace Gray
 
 		ATOMCODE_t get_HashCode() const noexcept
 		{
-			//! particular hash value is not important.
-			//! Value just needs to be unique and consistent on a single machine.
+			//! particular hash value is not important. Value just needs to be unique and consistent.
 			DEBUG_CHECK(isValidPtr());
 			return get_Ptr()->get_HashCode();
 		}
 
-		const STR_t& get_StrA() const noexcept
+		STR_t get_StrA() const noexcept
 		{
 			DEBUG_CHECK(isValidPtr());
-			return get_Ptr()->m_s;
+			return STR_t(get_Ptr());
 		}
+
 		const ATOMCHAR_t* get_CPtr() const noexcept       //!< as a C string
 		{
 			DEBUG_CHECK(isValidPtr());
@@ -126,25 +98,33 @@ namespace Gray
 
 		bool isValidCheck() const noexcept
 		{
-			return isValidPtr() && get_Ptr()->m_s.isValidCheck();
+			return isValidPtr() && get_Ptr()->isValidString();
 		}
 		bool IsEmpty() const noexcept
 		{
-			return !isValidPtr() || get_Ptr()->m_s.IsEmpty();
+			return !isValidPtr() || get_Ptr()->get_CharCount() <= 0;
 		}
 		StrLen_t GetLength() const noexcept
 		{		
-			return get_Ptr()->m_s.GetLength();
+			return get_Ptr()->get_CharCount();
 		}
 
-		COMPARE_t CompareNoCase(const ATOMCHAR_t* pStr) const
+#if 0
+		COMPARE_t CompareNoCase(const ATOMCHAR_t* pStr) const noexcept
 		{
 			DEBUG_CHECK(isValidPtr());
-			return get_Ptr()->m_s.CompareNoCase(pStr);
+			return get_Ptr()->CompareNoCase(pStr);
+		}
+#endif
+
+		bool IsEqualNoCase(const ATOMCHAR_t* pStr) const noexcept
+		{
+			DEBUG_CHECK(isValidPtr());
+			return get_Ptr()->IsEqualNoCase(pStr);
 		}
 		bool operator==(const ATOMCHAR_t* pStr) const
 		{
-			return !CompareNoCase(pStr);
+			return IsEqualNoCase(pStr);
 		}
 
 		const THIS_t& operator=(const THIS_t& atom)
@@ -158,7 +138,7 @@ namespace Gray
 		}
 		const THIS_t& operator=(const ATOMCHAR_t* pStr)
 		{
-			if (CompareNoCase(pStr) != COMPARE_Equal)
+			if (!IsEqualNoCase(pStr))
 			{
 				EmptyAtom(true);
 				put_Ptr(FindorCreateAtomStr(pStr));
@@ -167,7 +147,7 @@ namespace Gray
 		}
 		const THIS_t& operator=(const STR_t& sStr)
 		{
-			if (CompareNoCase(sStr) != COMPARE_Equal)
+			if (!IsEqualNoCase(sStr))
 			{
 				EmptyAtom(true);
 				put_Ptr(FindorCreateAtomStr(sStr));
@@ -179,15 +159,34 @@ namespace Gray
 		{
 			EmptyAtom(false);
 		}
+		/// <summary>
+		/// Make this atom permanent. never removed from the atom table.
+		/// </summary>
 		void SetAtomStatic();
 
-		static cAtomRef GRAYCALL FindAtomStr(const ATOMCHAR_t* pszText);	// dont create.
+		/// <summary>
+		/// Find the atom in the atom table ONLY if it exists. DO NOT CREATE!
+		/// </summary>
+		/// <param name="pszText"></param>
+		/// <returns>m_aEmpty atom if not found.</returns>
+		static cAtomRef GRAYCALL FindAtomStr(const ATOMCHAR_t* pszText);
+
+		/// <summary>
+		/// Get this hash id if a valid atom hash exists. DO NOT CREATE!
+		/// </summary>
+		/// <param name="idAtom"></param>
+		/// <returns>m_aEmpty atom if not found.</returns>
 		static cAtomRef GRAYCALL FindAtomHashCode(ATOMCODE_t idAtomCode);
 
 		static HRESULT GRAYCALL CheckSymbolicStr(const ATOMCHAR_t* pszTag, bool bAllowDots = false);
 		static StrLen_t GRAYCALL GetSymbolicStr(OUT ATOMCHAR_t* pszTag, const ATOMCHAR_t* pszExp, bool bAllowDots = false);
 
 #ifdef _DEBUG
+		/// <summary>
+		/// Dump all the atoms to a file.
+		/// </summary>
+		/// <param name="pszFilePath"></param>
+		/// <returns></returns>
 		static HRESULT GRAYCALL DebugDumpFile(const FILECHAR_t* pszFilePath);
 #endif
 	};

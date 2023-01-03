@@ -167,23 +167,29 @@ namespace Gray
 
 		CODEPROFILEFUNC();
 		ASSERT(iSize < k_ALLOC_MAX); // 256 * 64K
+		void* pData2 = nullptr;
 		if (pData == nullptr)
 		{
 			if (iSize <= 0)	// just do nothing. this is ok.
 				return nullptr;
+#if defined(_WIN32) && !USE_CRT
+			pData2 = ::HeapAlloc(g_hHeap, 0, iSize);  // nh_malloc_dbg.
+#else
+			pData2 = ::malloc(iSize);     // nh_malloc_dbg.
+#endif
 		}
 		else
 		{
+#if defined(_WIN32) && !USE_CRT
+			pData2 = ::HeapReAlloc(g_hHeap, 0, pData, iSize);
+#else
+			pData2 = ::realloc(pData, iSize);  // nh_malloc_dbg.
+#endif
 #ifdef USE_HEAP_STATS
 			cHeap::sm_nAllocTotalBytes -= cHeap::GetSize(pData);
 #endif
 			cHeap::sm_nAllocs--;
 		}
-#if defined(_WIN32) && ! USE_CRT
-		void* pData2 = ::HeapReAlloc(g_Heap, 0, pData, iSize );
-#else
-		void* pData2 = ::realloc(pData, iSize);		// nh_malloc_dbg.
-#endif
 		if (pData2 == nullptr)
 		{
 			// I asked for too much!
@@ -380,7 +386,7 @@ namespace Gray
 #if defined(_WIN32) && ! defined(UNDER_CE) && USE_CRT
 		::_aligned_free(pData);	// CAN'T just use free() ! we need to undo the padding.
 #elif defined(_WIN32) && ! USE_CRT
-		::LocalFree(g_hHeap, 0, pData);
+		::HeapFree(g_hHeap, 0, pData);
 #else
 		::free(pData); // Linux just used free() for memalign() and malloc().
 #endif

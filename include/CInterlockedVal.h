@@ -105,14 +105,14 @@ namespace Gray
 #endif
 	}
 
-	inline bool InterlockedSetIfEqual(_Inout_ INT32 VOLATILE *pDest, INT32 nValNew, INT32 nValComp) noexcept
+	inline bool InterlockedSetIfEqual(_Inout_ INT32 VOLATILE* pDest, INT32 nValNew, INT32 nValComp) noexcept
 	{
 		//! most common use of InterlockedCompareExchange
 		//! It's more efficient to use the z flag than to do another compare
 		//! value returned in eax
 		return nValComp == InterlockedCompareExchange(pDest, nValNew, nValComp);
 	}
-	inline INT32 __cdecl InterlockedIncrement(INT32 VOLATILE *pDest) noexcept
+	inline INT32 __cdecl InterlockedIncrement(INT32 VOLATILE* pDest) noexcept
 	{
 		INT32 lValNew;
 #if defined(__GNUC__)
@@ -130,7 +130,7 @@ namespace Gray
 		return lValNew;
 #endif
 	}
-	inline INT32  __cdecl InterlockedDecrement(INT32 VOLATILE *pDest) noexcept
+	inline INT32  __cdecl InterlockedDecrement(INT32 VOLATILE* pDest) noexcept
 	{
 		INT32 lValNew;
 #if defined(__GNUC__)
@@ -148,7 +148,7 @@ namespace Gray
 		return lValNew;
 #endif
 	}
-	inline INT32  __cdecl InterlockedExchange(INT32 VOLATILE *pDest, INT32 Value) noexcept
+	inline INT32  __cdecl InterlockedExchange(INT32 VOLATILE* pDest, INT32 Value) noexcept
 	{
 		INT32 nValComp;
 		do
@@ -157,7 +157,7 @@ namespace Gray
 		} while (!InterlockedSetIfEqual(pDest, Value, nValComp));
 		return nValComp;
 	}
-	inline INT32  __cdecl InterlockedExchangeAdd(INT32 VOLATILE *pDest, INT32 Value) noexcept
+	inline INT32  __cdecl InterlockedExchangeAdd(INT32 VOLATILE* pDest, INT32 Value) noexcept
 	{
 		INT32 nValComp;
 		do
@@ -176,16 +176,16 @@ namespace Gray
 	{
 		//! Windows has native 64 bit interlocked support,
 		//! but only on Windows 2003 servers and above.
-		INT64 __cdecl _InterlockedIncrement64(_Inout_ INT64 VOLATILE *pDest);
-		INT64 __cdecl _InterlockedDecrement64(_Inout_ INT64 VOLATILE *pDest);
-		INT64 __cdecl _InterlockedExchange64(_Inout_ INT64 VOLATILE *pDest, IN INT64 Value);
-		INT64 __cdecl _InterlockedExchangeAdd64(_Inout_ INT64 VOLATILE *pDest, IN INT64 Value);
-		INT64 __cdecl _InterlockedCompareExchange64(_Inout_ INT64 VOLATILE *Destination, IN INT64 ExChange, IN INT64 nValComp);
+		INT64 __cdecl _InterlockedIncrement64(_Inout_ INT64 VOLATILE* pDest);
+		INT64 __cdecl _InterlockedDecrement64(_Inout_ INT64 VOLATILE* pDest);
+		INT64 __cdecl _InterlockedExchange64(_Inout_ INT64 VOLATILE* pDest, IN INT64 Value);
+		INT64 __cdecl _InterlockedExchangeAdd64(_Inout_ INT64 VOLATILE* pDest, IN INT64 Value);
+		INT64 __cdecl _InterlockedCompareExchange64(_Inout_ INT64 VOLATILE* Destination, IN INT64 ExChange, IN INT64 nValComp);
 		// #pragma intrinsic( _InterlockedIncrement64, _InterlockedDecrement64, _InterlockedExchange64, _InterlockedExchangeAdd64, _InterlockedCompareExchange64 )
 	} // "C"
 #else
 
-	inline INT64 __cdecl _InterlockedCompareExchange64(_Inout_ INT64 VOLATILE *pDest, IN INT64 nValNew, IN INT64 nValComp) noexcept
+	inline INT64 __cdecl _InterlockedCompareExchange64(_Inout_ INT64 VOLATILE* pDest, IN INT64 nValNew, IN INT64 nValComp) noexcept
 	{
 		//! No native support for interlock 64, so i must implement it myself.
 		//! Place 64 bit nValNew in *pDest if ( *pDest == nValComp )
@@ -248,7 +248,7 @@ namespace Gray
 #endif
 	}
 
-	inline bool _InterlockedSetIfEqual64(_Inout_ INT64 VOLATILE *pDest, INT64 nValNew, INT64 nValComp) noexcept
+	inline bool _InterlockedSetIfEqual64(_Inout_ INT64 VOLATILE* pDest, INT64 nValNew, INT64 nValComp) noexcept
 	{
 		//! No native support for interlock 64, so i must implement it myself.
 		//! most common use of InterlockedCompareExchange
@@ -277,7 +277,7 @@ namespace Gray
 		return nValComp == _InterlockedCompareExchange64(pDest, nValNew, nValComp);
 #endif
 	}
-	inline INT64 __cdecl _InterlockedIncrement64(_Inout_ INT64 VOLATILE *pDest) noexcept
+	inline INT64 __cdecl _InterlockedIncrement64(_Inout_ INT64 VOLATILE* pDest) noexcept
 	{
 		INT64 nValComp;
 		INT64 nValNew;
@@ -288,7 +288,7 @@ namespace Gray
 		} while (!_InterlockedSetIfEqual64(pDest, nValNew, nValComp));
 		return nValNew;
 	}
-	inline INT64 __cdecl _InterlockedDecrement64(_Inout_ INT64 VOLATILE *pDest) noexcept
+	inline INT64 __cdecl _InterlockedDecrement64(_Inout_ INT64 VOLATILE* pDest) noexcept
 	{
 		INT64 nValComp;
 		INT64 nValNew;
@@ -299,7 +299,7 @@ namespace Gray
 		} while (!_InterlockedSetIfEqual64(pDest, nValNew, nValComp));
 		return nValNew;
 	}
-	inline INT64 __cdecl _InterlockedExchange64(_Inout_ INT64 VOLATILE *pDest, IN INT64 Value) noexcept
+	inline INT64 __cdecl _InterlockedExchange64(_Inout_ INT64 VOLATILE* pDest, IN INT64 Value) noexcept
 	{
 		INT64 nValComp;
 		do
@@ -308,7 +308,7 @@ namespace Gray
 		} while (!_InterlockedSetIfEqual64(pDest, Value, nValComp));
 		return nValComp;
 	}
-	inline INT64 __cdecl _InterlockedExchangeAdd64(_Inout_ INT64 VOLATILE *pDest, IN INT64 Value) noexcept
+	inline INT64 __cdecl _InterlockedExchangeAdd64(_Inout_ INT64 VOLATILE* pDest, IN INT64 Value) noexcept
 	{
 		INT64 nValComp;
 		do
@@ -529,13 +529,13 @@ namespace Gray
 
 	//*****************************************************
 
-	template< typename TYPE = void >	// INT_PTR = INT32 for 32 bit, INT64 for 64 bit.
+	/// <summary>
+	/// An interlocked pointer to something. (pointer size may vary based on architecture)
+	/// Cast it as needed. INT_PTR = INT32 for 32 bit, INT64 for 64 bit.
+	/// </summary>
+	template< typename TYPE = void >
 	class GRAYCORE_LINK __DECL_ALIGN(_SIZEOF_PTR) cInterlockedPtr : protected cInterlockedVal < INT_PTR >
 	{
-		//! @class Gray::cInterlockedPtr
-		//! An interlocked pointer to something. (pointer size may vary based on architecture)
-		//! Cast it as needed.
-
 	public:
 		cInterlockedPtr(TYPE* pVal) noexcept : cInterlockedVal<INT_PTR>((INT_PTR)pVal)
 		{
@@ -549,7 +549,7 @@ namespace Gray
 			return (const TYPE*)(this->m_nValue);
 		}
 
-		const cInterlockedPtr<TYPE>& operator = (TYPE* pValNew)
+		const cInterlockedPtr<TYPE>& operator = (TYPE * pValNew)
 		{
 			// InterlockedExchangePointer()
 			this->Exchange((INT_PTR)pValNew);
@@ -585,7 +585,7 @@ namespace Gray
 		{
 			return m_nCount;	//!< get the count as it was when we created this.
 		}
- 
+
 	};
 
 #ifndef GRAY_STATICLIB // force implementation/instantiate for DLL/SO.

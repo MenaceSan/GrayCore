@@ -14,11 +14,13 @@
 
 namespace Gray
 {
+	/// <summary>
+	/// Non-sorted array of strings.
+	/// </summary>
+	/// <typeparam name="_TYPE_CH"></typeparam>
 	template< typename _TYPE_CH = TCHAR >
 	class GRAYCORE_LINK cArrayString : public cArrayTyped < cStringT<_TYPE_CH>, const _TYPE_CH* >
 	{
-		//! @class Gray::cArrayString
-		//! Non-sorted array of strings.
 		typedef cStringT<_TYPE_CH> STR_t;
 		typedef cArrayTyped< cStringT<_TYPE_CH>, const _TYPE_CH* > SUPER_t;
 		typedef cArrayString<_TYPE_CH> THIS_t;
@@ -174,7 +176,6 @@ namespace Gray
 
 	typedef cArrayString<char> cArrayStringA;
 	typedef cArrayString<wchar_t> cArrayStringW;
-
 }
 
 #endif	// _INC_cArrayString_H

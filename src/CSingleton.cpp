@@ -23,7 +23,7 @@ namespace Gray
 
 	private:
 		cArrayPtr<cSingletonRegister> m_aSingletons;	//!< my list of registered singletons. In proper order.
-		static bool sm_bIsDestroyed;	//!< safety catch for threads that are running past the exit code. cAppState::().isInCExit()
+		static bool sm_bIsDestroyed;	//!< App is closing. safety catch for threads that are running past the exit code. cAppState::().isInCExit()
 
 	public:
 		cSingletonManager() noexcept
@@ -99,6 +99,7 @@ namespace Gray
 		}
 		static bool isDestroyed() noexcept
 		{
+			//! App is closing.
 			return sm_bIsDestroyed;
 		}
 	};

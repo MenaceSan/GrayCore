@@ -116,7 +116,7 @@ namespace Gray
 		bool IsFileEqualTo(const THIS_t& rEntry) const noexcept
 		{
 			// Does file system use case ?
-			if (m_sFileName.CompareNoCase(rEntry.m_sFileName) != 0)
+			if (!m_sFileName.IsEqualNoCase(rEntry.m_sFileName))
 				return false;
 			return SUPER_t::IsFileEqualTo(rEntry);
 		}

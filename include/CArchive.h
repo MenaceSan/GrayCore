@@ -13,15 +13,16 @@
 
 namespace Gray
 {
+	/// <summary>
+	/// Form a bidirectional (typeless) binary stream of serialized data.
+	/// @note this is inherently dangerous to use since it contains no default/automatic typing/versioning information.
+	/// @note put cVariant into the archive if you desire typing information. (and some version change resistance)
+	/// This is extensible to any type.
+	/// Similar to the MFC CArchive type. except << >> are overridden by the type of the Archive (store vs retrieve).
+	/// i.e. store and retrieve a particular structure can use the same code.
+	/// </summary>
 	class GRAYCORE_LINK cArchive
 	{
-		//! @class Gray::cArchive
-		//! Form a bidirectional (typeless) binary stream of serialized data.
-		//! @note this is inherently dangerous to use since it contains no default/automatic typing/versioning information.
-		//! @note put cVariant into the archive if you desire typing information. (and some version change resistance)
-		//! This is extensible to any type.
-		//! Similar to the MFC CArchive type. except << >> are overridden by the type of the Archive (store vs retrieve).
-		//! i.e. store and retrieve a particular structure can use the same code.
 	private:
 		const bool m_bStoring;		//!< What mode is this in? true = writing to the m_pStream cStreamOutput. else reading cStreamInput.
 		cStreamBase* const m_pStream;	//!< cStreamInput or cStreamOutput depending on m_bStoring
@@ -43,16 +44,21 @@ namespace Gray
 		{
 		}
 
+		/// <summary>
+		/// I am storing the object to the write archive cStreamOutput. like MFC cArchive 
+		/// </summary>
+		/// <returns></returns>
 		inline bool IsStoring() const noexcept
 		{
-			//! I am storing the object to the write archive cStreamOutput.
-			//! like MFC cArchive 
 			return m_bStoring;
 		}
+
+		/// <summary>
+		/// I am loading the object from the read archive cStreamInput. like MFC cArchive 
+		/// </summary>
+		/// <returns></returns>
 		inline bool IsLoading() const noexcept
 		{
-			//! I am loading the object from the read archive cStreamInput.
-			//! like MFC cArchive 
 			return !m_bStoring;
 		}
 

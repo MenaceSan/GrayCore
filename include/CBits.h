@@ -208,7 +208,7 @@ namespace Gray
 #else
 
 	template <>
-	inline BIT_ENUM_t cBits::Count1Bits<UINT32>(UINT32 nVal) noexcept
+	constexpr BIT_ENUM_t cBits::Count1Bits<UINT32>(UINT32 nVal) noexcept
 	{
 		//! A math trick for counting 1 bits in 32 bit numbers.
 		nVal = (nVal & 0x55555555) + ((nVal & 0xAAAAAAAA) >> 1);
@@ -271,7 +271,7 @@ namespace Gray
 #endif	// _MSC_VER
 
 	template <>
-	inline BYTE cBits::Reverse<BYTE>(BYTE nVal) noexcept
+	constexpr BYTE cBits::Reverse<BYTE>(BYTE nVal) noexcept
 	{
 		//! Reverse the order of the 8 bits. using 32 or 64 bit temporary.
 		//! http://graphics.stanford.edu/~seander/bithacks.html#ReverseByteWith32Bits

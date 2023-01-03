@@ -114,8 +114,10 @@ namespace Gray		//!< The main namespace for all Core functions.
 #endif // _WIN32 && MSVS2005
 
 	typedef UINT_PTR	HASHCODE_t;				//!< could hold a pointer converted to a number? maybe 64 or 32 bit ? same as size_t.
-	typedef UINT32		HASHCODE32_t;			//!< always 32 bits.
-	const HASHCODE_t	k_HASHCODE_CLEAR = 0;		//!< not a valid index.
+	typedef UINT32		HASHCODE32_t;			//!< always 32 bits. consistent value.
+	constexpr HASHCODE_t k_HASHCODE_CLEAR = 0;		//!< not a valid index.
+
+#define CastN(T,N)	static_cast<T>(N)	// no clear rule on type cast for arithmetic values. T{ 1 } or T(1) or static_cast<T>(1)
 }
 
 #endif	// _INC_GRAYCORE

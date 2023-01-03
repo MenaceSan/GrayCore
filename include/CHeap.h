@@ -245,14 +245,14 @@ namespace Gray
 			iAllocCount++;	// count total allocations used.
 			return get_AllocSize();
 		}
-		void Free()
+		void Free() noexcept
 		{
 			if (!isValidPtr())
 				return;
 			cHeap::FreePtr(m_pData);
 			SetEmptyBlock();
 		}
-		void FreeSecure()
+		void FreeSecure() noexcept
 		{
 			//! For cryptographic information. Clear previous contents when free.
 			if (!isValidPtr())
@@ -262,7 +262,7 @@ namespace Gray
 			SetEmptyBlock();	// m_pData = nullptr
 		}
 
-		void SetHeapBlock(void* pData, size_t nSize)
+		void SetHeapBlock(void* pData, size_t nSize) noexcept
 		{
 			//! Like SetBlock() but clearly is a heap pointer.
 			//! Dangerous to allow anyone to poke a new pData pointer and nSize into this. 
@@ -270,7 +270,7 @@ namespace Gray
 			m_pData = pData;
 			m_nSize = nSize;
 		}
-		void DetachHeapBlock()
+		void DetachHeapBlock() noexcept
 		{
 			//! Someone has copied this buffer.
 			SetEmptyBlock();

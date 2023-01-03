@@ -72,8 +72,8 @@ namespace Gray
 #else
 	typedef int ITERATE_t;		//!< like size_t but signed
 #endif
-	const ITERATE_t k_ITERATE_BAD = -1;
-	const ITERATE_t k_ARG_ARRAY_MAX = 256;		// arbitrary Max number of arguments in user entered array. 
+	constexpr ITERATE_t k_ITERATE_BAD = -1;
+	constexpr ITERATE_t k_ARG_ARRAY_MAX = 256;		// arbitrary Max number of arguments in user entered array. 
 
 	typedef size_t COUNT_t;		//!< like size_t but a count of things that might NOT be bytes. ASSUME unsigned. _countof(x)
 
@@ -84,7 +84,7 @@ namespace Gray
 #define IS_INDEX_GOOD_ARRAY(i,a)	IS_INDEX_GOOD(i,_countof(a))
 
 	template< typename TYPE >
-	static inline ptrdiff_t GET_INDEX_IN(TYPE a, TYPE b)
+	static inline ptrdiff_t GET_INDEX_IN(TYPE a, TYPE b) noexcept
 	{
 		//! diff 2 pointers of the same type to get index diff. 
 		//! INT_PTR is same type as intptr_t, ITERATE_t or ptrdiff_t ?

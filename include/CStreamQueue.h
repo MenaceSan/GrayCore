@@ -46,7 +46,7 @@ namespace Gray
 		{
 			return SUPER_t::WriteX(pData, nDataSize);
 		}
-		HRESULT ReadX(void* pData, size_t nDataSize) override
+		HRESULT ReadX(void* pData, size_t nDataSize) noexcept override
 		{
 			return SUPER_t::ReadX(pData, nDataSize);
 		}
@@ -63,7 +63,7 @@ namespace Gray
 			this->put_AutoReadCommit((ITERATE_t)nSizeMin);
 			return (size_t)iAutoReadCommit;
 		}
-		HRESULT SeekX(STREAM_OFFSET_t offset, SEEK_ORIGIN_TYPE eSeekOrigin = SEEK_Set) override
+		HRESULT SeekX(STREAM_OFFSET_t offset, SEEK_ORIGIN_TYPE eSeekOrigin = SEEK_Set) noexcept override
 		{
 			return SUPER_t::SeekQ(offset, eSeekOrigin);
 		}
@@ -124,7 +124,7 @@ namespace Gray
 			UNREFERENCED_PARAMETER(nSizeMin);
 			return 0;	// Indicate this does nothing.
 		}
-		HRESULT SeekX(STREAM_OFFSET_t offset, SEEK_ORIGIN_TYPE eSeekOrigin = SEEK_Set) override
+		HRESULT SeekX(STREAM_OFFSET_t offset, SEEK_ORIGIN_TYPE eSeekOrigin = SEEK_Set) noexcept override
 		{
 			return this->SeekQ(offset, eSeekOrigin);
 		}
@@ -142,7 +142,7 @@ namespace Gray
 		{
 			return SUPER_t::WriteX(pData, nDataSize);
 		}
-		HRESULT ReadX(void* pData, size_t nDataSize) override
+		HRESULT ReadX(void* pData, size_t nDataSize) noexcept override
 		{
 			return SUPER_t::ReadX(pData, nDataSize);
 		}
@@ -166,13 +166,13 @@ namespace Gray
 		{
 			// Write only
 		}
-		char* ref_StrA()
+		char* get_PtrA()
 		{
 			return StrBuilder<char>::get_DataWork();
 		}
 		operator char* ()
 		{
-			return ref_StrA();
+			return get_PtrA();
 		}
 
 		STREAM_POS_t GetLength() const override

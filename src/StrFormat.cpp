@@ -553,12 +553,12 @@ namespace Gray
 		return i;
 	}
 
-	template class GRAYCORE_LINK StrBuilder<char>;		// Force Instantiation for DLL.
+	template class GRAYCORE_LINK StrBuilder<char>;		// Force implementation/instantiate for DLL/SO.
 	template class GRAYCORE_LINK StrBuilder<wchar_t>;	// Force Instantiation for DLL.
 
 	template class GRAYCORE_LINK StrBuilderDyn<char>;		// Force Instantiation for DLL.
 	template class GRAYCORE_LINK StrBuilderDyn<wchar_t>;	// Force Instantiation for DLL.
 
 	template class GRAYCORE_LINK StrFormat<char>;		// Force Instantiation for DLL.
-	template class GRAYCORE_LINK StrFormat<wchar_t>;	// Force Instantiation for DLL.
+	template class GRAYCORE_LINK StrFormat<wchar_t>;	// Force implementation/instantiate for DLL/SO.
 }

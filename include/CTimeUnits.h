@@ -19,7 +19,7 @@
 namespace Gray
 {
 	// Base type used for cTimeInt Might be 64 bits ?? or _USE_32BIT_TIME_T
-	typedef time_t TIMESEC_t;	//!< absolute seconds since January 1, 1970. (GMT?)(signed) NOTE: Changing to __time64_t just adds more range with same values. (>2038)
+	typedef time_t TIMESEC_t;	//!< absolute seconds since January 1, 1970. (GMT?)(signed?) NOTE: Changing to __time64_t just adds more range with same values. (>2038)
 	typedef int TIMESECD_t;		//!< signed delta seconds from some epoch. like: std::chrono::seconds
 
 	typedef short TIMEUNIT_t;	//!< Arbitrary time value of type TIMEUNIT_TYPE. (e.g. number of minutes or seconds). Allow negative for null ? Max 16 bits. 
@@ -28,6 +28,7 @@ namespace Gray
 	{
 		//! @enum Gray::TZ_TYPE
 		//! Known/Common Time Zones. Subtract offset from UTC for specific Time Zones (and maybe DST) in minutes.
+		//! Do not assume anything about DST usage / rules.
 		//! e.g. 45 minutes TZ offset is possible.
 		//! http://www.timeanddate.com/time/map/
 
@@ -75,7 +76,7 @@ namespace Gray
 	enum TIMEDOW_TYPE
 	{
 		//! @enum Gray::TIMEDOW_TYPE
-		//! DAys of the week. 0 based.
+		//! Days of the week. 0 based.  MFC GetDayOfWeek is +1
 		TIMEDOW_Sun = 0,	//!< 0 based as in SYSTEMTIME.wDayOfWeek, and struct tm.tm_wday
 		TIMEDOW_Mon,
 		TIMEDOW_Tue,
@@ -217,9 +218,9 @@ namespace Gray
 			//! Day of year. 0 based
 			return GetDOY(m_wYear, m_wMonth, m_wDay);
 		}
-		TIMEMONTH_TYPE get_Month() const
+		TIMEMONTH_TYPE get_Month() const noexcept
 		{
-			return (TIMEMONTH_TYPE)(m_wMonth - 1);
+			return static_cast<TIMEMONTH_TYPE>(m_wMonth - 1);
 		}
 
 		bool IsValidUnit(TIMEUNIT_TYPE i) const;

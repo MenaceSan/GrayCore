@@ -88,7 +88,7 @@ namespace Gray
 
 	public:
 #if 1
-		virtual HRESULT SeekX(STREAM_OFFSET_t iOffset, SEEK_ORIGIN_TYPE eSeekOrigin = SEEK_Set)
+		virtual HRESULT SeekX(STREAM_OFFSET_t nOffset, SEEK_ORIGIN_TYPE eSeekOrigin = SEEK_Set) noexcept
 		{
 			//! Change position in a stream. Success or failure. NO partial success.
 			//! Maybe try to 'unread' to a previous position in the stream.
@@ -97,16 +97,17 @@ namespace Gray
 			//!  eSeekOrigin = SEEK_ORIGIN_TYPE SEEK_Cur etc.
 			//! @return
 			//!  the New position,  <0=FAILED = INVALID_SET_FILE_POINTER
-			UNREFERENCED_PARAMETER(iOffset);
+			UNREFERENCED_PARAMETER(nOffset);
 			UNREFERENCED_PARAMETER(eSeekOrigin);
 			return E_NOTIMPL;	// It doesn't work on this type of stream!
 		}
 		virtual STREAM_POS_t GetPosition() const
 		{
+			// Must override this.
 			return k_STREAM_POS_ERR;	// It doesn't work on this type of stream!
 		}
 #else
-		virtual HRESULT SeekX(STREAM_OFFSET_t iOffset, SEEK_ORIGIN_TYPE eSeekOrigin = SEEK_Set) = 0;
+		virtual HRESULT SeekX(STREAM_OFFSET_t nOffset, SEEK_ORIGIN_TYPE eSeekOrigin = SEEK_Set) noexcept = 0;
 		virtual STREAM_POS_t GetPosition() const = 0;
 #endif
 
@@ -117,12 +118,15 @@ namespace Gray
 
 		virtual STREAM_POS_t GetLength() const;
 
-		void SeekToBegin()
+		/// <summary>
+		/// Helper function to call SeekX
+		/// ala MFC. SeekX to start of file/stream.
+		/// </summary>
+		void SeekToBegin() noexcept
 		{
-			//! ala MFC. SeekX to start of file/stream.
 			SeekX(0, SEEK_Set);
 		}
-		STREAM_POS_t SeekToEnd()
+		STREAM_POS_t SeekToEnd() 
 		{
 			//! ala MFC. SeekX to end of file/stream.
 			SeekX(0, SEEK_End);
@@ -289,7 +293,7 @@ namespace Gray
 			return 0;	// Previous commit size.
 		}
 
-		virtual HRESULT ReadX(OUT void* pData, size_t nDataSize)
+		virtual HRESULT ReadX(OUT void* pData, size_t nDataSize) noexcept
 		{
 			//! Just read a block from the stream. // must support this.
 			//! Similar to MFC CFile::Read()
@@ -427,7 +431,7 @@ namespace Gray
 
 	public:
 		//! Disambiguate SeekX for cStreamBase to cStreamInput for stupid compiler.
-		HRESULT SeekX(STREAM_OFFSET_t iOffset, SEEK_ORIGIN_TYPE eSeekOrigin = SEEK_Set) override
+		HRESULT SeekX(STREAM_OFFSET_t iOffset, SEEK_ORIGIN_TYPE eSeekOrigin = SEEK_Set) noexcept override
 		{
 			return cStreamInput::SeekX(iOffset, eSeekOrigin);
 		}

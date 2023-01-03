@@ -36,7 +36,7 @@ namespace Gray
 
 	public:
 		CTime(TIMESEC_t nTime = ((TIMESEC_t)0)) noexcept
-		: m_time(nTime)
+			: m_time(nTime)
 		{
 		}
 		CTime(const cTimeFile& fileTime, int nDST = -1) noexcept;
@@ -54,19 +54,19 @@ namespace Gray
 
 		bool operator<=(TIMESEC_t nTime) const noexcept
 		{
-			return m_time <= nTime ;
+			return m_time <= nTime;
 		}
 		bool operator==(TIMESEC_t nTime) const noexcept
 		{
-			return m_time == nTime ;
+			return m_time == nTime;
 		}
 		bool operator!=(TIMESEC_t nTime) const noexcept
 		{
-			return m_time != nTime ;
+			return m_time != nTime;
 		}
 		bool operator>=(CTime ttime) const noexcept
 		{
-			return m_time >= ttime.m_time ;
+			return m_time >= ttime.m_time;
 		}
 
 		operator TIMESEC_t() const noexcept
@@ -90,14 +90,14 @@ namespace Gray
 	public:
 		int m_nDiffSeconds;
 	public:
-		cTimeSpan() : m_nDiffSeconds(0)
+		cTimeSpan() noexcept : m_nDiffSeconds(0)
 		{
 		}
 	};
 #endif
 
 	class GRAYCORE_LINK cTimeInt	//!< similar to the MFC CTime and cTimeSpan, not as accurate or large ranged as COleDateTime
-	: public CTime		//!< no need to dupe MFC function.
+		: public CTime		//!< no need to dupe MFC function.
 	{
 		//! @class Gray::cTimeInt
 		//! the number of seconds elapsed since midnight (00:00:00), January 1, 1970, coordinated universal time (UTC), according to the system clock
@@ -108,18 +108,18 @@ namespace Gray
 		typedef CTime SUPER_t;
 
 	public:
-		static const TIMESEC_t k_nZero = ((TIMESEC_t)0);		//!< January 1, 1970 UTC
-		static const TIMESEC_t k_nY2K = ((TIMESEC_t)0x386d4380);	//!< The static value for Y2K = January 1, 2000 in UTC/GMT from k_nZero in seconds.
+		static const TIMESEC_t k_nZero = static_cast<TIMESEC_t>(0);		//!< January 1, 1970 UTC
+		static const TIMESEC_t k_nY2K = static_cast<TIMESEC_t>(0x386d4380);	//!< The static value for Y2K = January 1, 2000 in UTC/GMT from k_nZero in seconds.
 
 	protected:
 		bool InitTimeUnits(const cTimeUnits& rTu);
 
 	public:
-		cTimeInt()	// init to zero
+		cTimeInt() noexcept	// init to zero
 		{}
-		cTimeInt(TIMESEC_t time) : CTime(time)
+		cTimeInt(TIMESEC_t time) noexcept : CTime(time)
 		{}
-		cTimeInt(const cTimeFile& fileTime) : CTime(fileTime, -1)
+		cTimeInt(const cTimeFile& fileTime) noexcept : CTime(fileTime, -1)
 		{
 			//! @note both are UTC so nDST makes no sense. What is MFC thinking ??
 		}
@@ -129,7 +129,7 @@ namespace Gray
 		}
 		static TIMESEC_t GRAYCALL GetTimeFromDays(double dTimeDays) noexcept;
 
-		cTimeInt(double dTimeDays) : CTime(GetTimeFromDays(dTimeDays))
+		cTimeInt(double dTimeDays) noexcept : CTime(GetTimeFromDays(dTimeDays))
 		{
 		}
 
@@ -143,7 +143,9 @@ namespace Gray
 
 #ifdef _MFC_VER
 		TIMESEC_t GetTime() const	// Assume time in total seconds. (MFC like)
-		{ return (TIMESEC_t) SUPER_t::GetTime(); } // convert 64 bit time to old 32 bit form?
+		{
+			return (TIMESEC_t)SUPER_t::GetTime();
+		} // convert 64 bit time to old 32 bit form?
 #endif
 
 		static cTimeInt GRAYCALL GetTimeNow() noexcept;
@@ -160,7 +162,7 @@ namespace Gray
 		void InitTimeNowPlusSec(TIMESECD_t iOffsetInSeconds) noexcept;
 
 		cTimeFile GetAsFileTime() const noexcept;
-		bool GetTimeUnits(OUT cTimeUnits& rTu, TZ_TYPE nTimeZoneOffset= TZ_UTC) const;
+		bool GetTimeUnits(OUT cTimeUnits& rTu, TZ_TYPE nTimeZoneOffset = TZ_UTC) const;
 
 		// non MFC CTime operations.
 		TIMESECD_t GetSecondsSince(const cTimeInt& time) const noexcept
@@ -168,7 +170,7 @@ namespace Gray
 			//! difference in seconds,
 			//! - = this is in the past. (time in future)
 			//! + = this is in the future. (time in past)
-			return (TIMESECD_t)(GetTime() - time.GetTime()) ;
+			return static_cast<TIMESECD_t>(GetTime() - time.GetTime());
 		}
 		TIMESECD_t get_TimeTilSec() const noexcept
 		{
@@ -177,13 +179,13 @@ namespace Gray
 			//! + = this is in the future.
 			cTimeInt timeNow;
 			timeNow.InitTimeNow();
-			return (TIMESECD_t)(GetTime() - timeNow.GetTime()) ;
+			return static_cast<TIMESECD_t>(GetTime() - timeNow.GetTime());
 		}
 		TIMESECD_t get_AgeSec() const noexcept
 		{
 			//! How old is this? (in seconds)
 			//! current time - this time.
-			return -get_TimeTilSec() ;
+			return -get_TimeTilSec();
 		}
 		bool isTimeFuture() const noexcept
 		{
@@ -192,18 +194,18 @@ namespace Gray
 
 		static constexpr bool IsTimeValid(TIMESEC_t nTime) noexcept
 		{
-			return nTime > k_nZero ;
+			return nTime > k_nZero;
 		}
 		bool isTimeValid() const noexcept
 		{
 			//! MFC does 64 -> 32 bits.
-			return IsTimeValid((TIMESEC_t)GetTime()) ;
+			return IsTimeValid((TIMESEC_t)GetTime());
 		}
 		int get_TotalDays() const noexcept // like in COleDateTimeSpan
 		{
 			//! Needs to be more consistent than accurate. just for compares.
 			//! Should turn over at midnight.
-			return (int)(GetTime() / cTimeUnits::k_nSecondsPerDay) ;
+			return (int)(GetTime() / cTimeUnits::k_nSecondsPerDay);
 		}
 
 		// to/from strings.

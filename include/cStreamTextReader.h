@@ -37,7 +37,7 @@ namespace Gray
 		}
 
 	protected:
-		virtual HRESULT ReadX(void* pData, size_t nDataSize) override
+		virtual HRESULT ReadX(void* pData, size_t nDataSize) noexcept override
 		{
 			// Use ReadStringLine instead. Prevent use of this.
 			ASSERT(0);
@@ -63,7 +63,7 @@ namespace Gray
 		HRESULT ReadStringLine(OUT const char** ppszLine);
 		HRESULT ReadStringLine(OUT char* pszBuffer, StrLen_t iSizeMax) override;
 
-		HRESULT SeekX(STREAM_OFFSET_t iOffset, SEEK_ORIGIN_TYPE eSeekOrigin = SEEK_Set) override;
+		HRESULT SeekX(STREAM_OFFSET_t iOffset, SEEK_ORIGIN_TYPE eSeekOrigin = SEEK_Set) noexcept override;
 	};
 }
 

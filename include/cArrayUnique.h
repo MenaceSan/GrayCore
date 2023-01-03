@@ -14,13 +14,15 @@
 
 namespace Gray
 {
+	/// <summary>
+	/// An array OWNS the elements using cUniquePtr<TYPE>
+	/// It will get deleted when the array is deleted.
+	/// @note try to use cArrayRef<> instead.
+	/// </summary>
+	/// <typeparam name="TYPE"></typeparam>
 	template<class TYPE>
 	class cArrayUnique : public cArrayFacade < cUniquePtr<TYPE>, TYPE* >
 	{
-		//! @class Gray::cArrayUnique
-		//! The point of this type is that the array now OWNS the element. using cUniquePtr<>
-		//! It will get deleted when the array is deleted.
-		//! @note try to use cArrayRef<> instead.
 	};
 }
 #endif

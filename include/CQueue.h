@@ -75,7 +75,7 @@ namespace Gray
 			DEBUG_CHECK(m_iReadLast >= 0 && m_iReadLast <= m_iWriteLast);	// Assume will not will wrap to fill.
 		}
 
-		HRESULT SeekQ(STREAM_OFFSET_t iOffset, SEEK_ORIGIN_TYPE eSeekOrigin = SEEK_Set);	// support parents SeekX
+		HRESULT SeekQ(STREAM_OFFSET_t nOffset, SEEK_ORIGIN_TYPE eSeekOrigin = SEEK_Set) noexcept;	// support parents SeekX
  
 	};
 
@@ -130,7 +130,7 @@ namespace Gray
 			ASSERT(!isEmptyQ());
 			return get_Data()[m_iReadLast++];
 		}
-		HRESULT ReadPeek(TYPE* pData, ITERATE_t iDataMaxQty)
+		HRESULT ReadPeek(TYPE* pData, ITERATE_t iDataMaxQty) noexcept
 		{
 			//! @arg iDataMaxQty = max qty of TYPE units i can fit in pData.
 			//! @arg pData = nullptr = just return how much data i might get.
@@ -146,7 +146,7 @@ namespace Gray
 			return (HRESULT)iDataMaxQty;
 		}
 
-		ITERATE_t ReadQty(TYPE* pData, ITERATE_t iDataMaxQty)
+		ITERATE_t ReadQty(TYPE* pData, ITERATE_t iDataMaxQty) noexcept
 		{
 			//! Just read a block. like ReadX but for TYPE
 			//! @arg iDataMaxQty = max qty of TYPE units i can fit in pData.
@@ -164,7 +164,7 @@ namespace Gray
 			return iDataMaxQty;
 		}
 
-		void ReadCommitNow()
+		void ReadCommitNow() noexcept
 		{
 			//! Prepare to read. move (read) data down to not waste space. allow more space for writing.
 			//! commit the read = can't get the data back. SeekX will fail.
@@ -267,7 +267,7 @@ namespace Gray
 		//***************************************************
 		// Reader functions.
 
-		void ReadCommitCheck()
+		void ReadCommitCheck() noexcept
 		{
 			//! is it time to attempt to reclaim space in the queue. (So we can write more)
 			//! @note beware of the roll back that protocols like to do if they get a bad request/underflow. 
@@ -281,7 +281,7 @@ namespace Gray
 		{
 			return m_iAutoReadCommit;
 		}
-		void put_AutoReadCommit(ITERATE_t iAutoReadCommit = 8 * 1024)
+		void put_AutoReadCommit(ITERATE_t iAutoReadCommit = 8 * 1024) noexcept
 		{
 			//! For SetSeekSizeMin
 			//! @arg iAutoReadCommit = the size at which we 'commit' contents and erase already read data. to make room for more writing.
@@ -303,7 +303,7 @@ namespace Gray
 		}
 
 		// Act as a stream
-		HRESULT SeekQ(STREAM_OFFSET_t iOffset, SEEK_ORIGIN_TYPE eSeekOrigin = SEEK_Set)
+		HRESULT SeekQ(STREAM_OFFSET_t iOffset, SEEK_ORIGIN_TYPE eSeekOrigin = SEEK_Set) noexcept
 		{
 			//! move the current read start location.
 			//! @arg
@@ -316,7 +316,7 @@ namespace Gray
 			return (HRESULT)this->m_iReadLast;
 		}
 
-		ITERATE_t ReadQty(TYPE* pData, ITERATE_t iDataMaxQty)
+		ITERATE_t ReadQty(TYPE* pData, ITERATE_t iDataMaxQty) noexcept
 		{
 			//! Just read a block. like ReadX but for TYPE
 			//! @return iQty i actually read.
@@ -325,7 +325,7 @@ namespace Gray
 			return nReadQty;
 		}
 
-		HRESULT ReadX(void* pData, size_t nDataSize)
+		HRESULT ReadX(void* pData, size_t nDataSize) noexcept
 		{
 			//! read bytes
 			const ITERATE_t nReadQty = ReadQty((TYPE*)pData, (ITERATE_t)(nDataSize / sizeof(TYPE)));

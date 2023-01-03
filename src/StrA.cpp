@@ -1,5 +1,5 @@
 //
-//! @file StrA.CPP
+//! @file StrA.cpp
 //! String global search functions. Const strings
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //

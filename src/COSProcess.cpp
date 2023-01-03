@@ -101,7 +101,7 @@ namespace Gray
 #ifndef UNDER_CE
 			startInfo.dwFlags |= STARTF_USESTDHANDLES;	// what fields are used?
 #endif
-			startInfo.hStdOutput = startInfo.hStdError = pFileOutPipe->m_hFile;
+			startInfo.hStdOutput = startInfo.hStdError = pFileOutPipe->get_Handle();
 		}
 
 		PROCESS_INFORMATION procInf;

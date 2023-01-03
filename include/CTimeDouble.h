@@ -39,26 +39,26 @@ namespace Gray
 		void DecodeDate(cTimeUnits& rTu) const;
 
 	public:
-		cTimeDouble(const cTimeDouble& dt)
+		cTimeDouble(const cTimeDouble& dt) noexcept
 			: m_dateTime(dt.m_dateTime)
 		{
 		}
-		cTimeDouble(const double dTime = k_nZero)
+		cTimeDouble(const double dTime = k_nZero) noexcept
 			: m_dateTime(dTime)
 		{
 		}
 
-		static cTimeDouble GRAYCALL EncodeSeconds(double s);
-		static cTimeDouble GRAYCALL EncodeTime(short h, short m, short s, short ms = 0);
-		static cTimeDouble GRAYCALL EncodeDate(short year = 0, short month = 0, short day = 0);
-		static cTimeDouble GRAYCALL GetTimeFromSec(TIMESEC_t nTimeSec);
+		static cTimeDouble GRAYCALL EncodeSeconds(double s) noexcept;
+		static cTimeDouble GRAYCALL EncodeTime(short h, short m, short s, short ms = 0) noexcept;
+		static cTimeDouble GRAYCALL EncodeDate(short year = 0, short month = 0, short day = 0) noexcept;
+		static cTimeDouble GRAYCALL GetTimeFromSec(TIMESEC_t nTimeSec) noexcept;
 
 		cTimeDouble(const TIMESEC_t nTimeSec)
 			: m_dateTime(GetTimeFromSec(nTimeSec))
 		{
 		}
 
-		static cTimeDouble GRAYCALL GetTimeFromFile(const cTimeFile& ft);
+		static cTimeDouble GRAYCALL GetTimeFromFile(const cTimeFile& ft) noexcept;
 		cTimeDouble(const cTimeFile& ft)
 			: m_dateTime(GetTimeFromFile(ft))
 		{
@@ -78,37 +78,37 @@ namespace Gray
 			InitTimeUnits(rTu);
 		}
 
-		void InitTime(double dTime = k_nZero)
+		void InitTime(double dTime = k_nZero) noexcept
 		{
 			m_dateTime = dTime;	//!< dTime = 0 = clear to invalid time.
 		}
 		void InitTimeNow();
 
-		static inline bool IsTimeValid(double dTime)
+		static constexpr bool IsTimeValid(double dTime)
 		{
 			return(dTime > k_nZero);
 		}
-		bool isTimeValid() const
+		inline bool isTimeValid() const
 		{
 			return IsTimeValid(m_dateTime);
 		}
-		double get_Double() const
+		double get_Double() const noexcept
 		{
 			//! Arbitrary units. same as days.
 			return m_dateTime;
 		}
-		double get_Days() const
+		double get_Days() const noexcept
 		{
 			//! Get total days since epoch.
 			return m_dateTime;
 		}
-		operator double(void) const
+		operator double(void) const noexcept
 		{
 			//! Get total days since epoch.
 			return m_dateTime;
 		}
 
-		void operator = (const cTimeDouble& date)
+		void operator = (const cTimeDouble& date) noexcept
 		{
 			m_dateTime = date.m_dateTime;
 		}
@@ -117,75 +117,75 @@ namespace Gray
 			SetTimeStr(pszDateTime, TZ_UTC);
 		}
 
-		cTimeDouble operator + (int  i)
+		cTimeDouble operator + (int  i) noexcept
 		{
 			//! Add days.
 			return cTimeDouble(m_dateTime + i);
 		}
-		cTimeDouble operator - (int  i)
+		cTimeDouble operator - (int  i) noexcept
 		{
 			//! Subtract days.
 			return cTimeDouble(m_dateTime - i);
 		}
-		cTimeDouble operator + (const cTimeDouble& dt)
+		cTimeDouble operator + (const cTimeDouble& dt) noexcept
 		{
 			return cTimeDouble(m_dateTime + dt.m_dateTime);
 		}
-		cTimeDouble operator - (const cTimeDouble& dt)
+		cTimeDouble operator - (const cTimeDouble& dt) noexcept
 		{
 			return cTimeDouble(m_dateTime - dt.m_dateTime);
 		}
 
-		cTimeDouble& operator += (int idays)	//!< days
+		cTimeDouble& operator += (int idays) noexcept	//!< days
 		{
 			//! Add days.
 			m_dateTime += idays;
 			return *this;
 		}
-		cTimeDouble& operator -= (int idays)	//!< days
+		cTimeDouble& operator -= (int idays) noexcept	//!< days
 		{
 			//! Subtract days.
 			m_dateTime -= idays;
 			return *this;
 		}
-		cTimeDouble& operator += (const cTimeDouble& dt)
+		cTimeDouble& operator += (const cTimeDouble& dt) noexcept
 		{
 			m_dateTime += dt.m_dateTime;
 			return *this;
 		}
-		cTimeDouble& operator -= (const cTimeDouble& dt)
+		cTimeDouble& operator -= (const cTimeDouble& dt) noexcept
 		{
 			m_dateTime -= dt.m_dateTime;
 			return *this;
 		}
 
-		cTimeDouble& operator ++ ()     //!< Prefix increment
+		cTimeDouble& operator ++ () noexcept    //!< Prefix increment
 		{
 			m_dateTime += 1;
 			return *this;
 		}
-		cTimeDouble& operator ++ (int)  //!< Postfix increment
+		cTimeDouble& operator ++ (int) noexcept //!< Postfix increment
 		{
 			m_dateTime += 1; // add a day
 			return *this;
 		}
-		cTimeDouble& operator -- ()     //!< Prefix decrement
+		cTimeDouble& operator -- () noexcept   //!< Prefix decrement
 		{
 			m_dateTime -= 1;
 			return *this;
 		}
-		cTimeDouble& operator -- (int)  //!< Postfix decrement
+		cTimeDouble& operator -- (int) noexcept  //!< Postfix decrement
 		{
 			m_dateTime -= 1;
 			return *this;
 		}
 
-		friend bool operator <  (const cTimeDouble &dt1, const cTimeDouble &dt2);
-		friend bool operator <= (const cTimeDouble &dt1, const cTimeDouble &dt2);
-		friend bool operator >  (const cTimeDouble &dt1, const cTimeDouble &dt2);
-		friend bool operator >= (const cTimeDouble &dt1, const cTimeDouble &dt2);
-		friend bool operator == (const cTimeDouble &dt1, const cTimeDouble &dt2);
-		friend bool operator != (const cTimeDouble &dt1, const cTimeDouble &dt2);
+		friend bool operator <  (const cTimeDouble& dt1, const cTimeDouble& dt2);
+		friend bool operator <= (const cTimeDouble& dt1, const cTimeDouble& dt2);
+		friend bool operator >  (const cTimeDouble& dt1, const cTimeDouble& dt2);
+		friend bool operator >= (const cTimeDouble& dt1, const cTimeDouble& dt2);
+		friend bool operator == (const cTimeDouble& dt1, const cTimeDouble& dt2);
+		friend bool operator != (const cTimeDouble& dt1, const cTimeDouble& dt2);
 
 		static cTimeDouble GRAYCALL GetTimeNow();
 		static cTimeDouble GRAYCALL Date();
@@ -194,12 +194,12 @@ namespace Gray
 		cTimeFile GetAsFileTime() const;
 		bool GetTimeUnits(OUT cTimeUnits& rTu, TZ_TYPE nTimeZoneOffset) const;
 
-		TIMEDOW_TYPE get_DayOfWeek() const;      //!< MFC GetDayOfWeek is +1
+		TIMEDOW_TYPE get_DayOfWeek() const;
 
-		unsigned GetDate() const             //!< Numeric date of date object
+		unsigned GetDate() const noexcept	//!< Numeric date of date object
 		{
 			//! Get Total days as an integer.
-			return unsigned(m_dateTime);
+			return CastN(unsigned, m_dateTime);
 		}
 
 		double get_DaysTil() const
@@ -207,7 +207,7 @@ namespace Gray
 			//! diff in days
 			//! - = this is in the past.
 			//! + = this is in the future.
-			return(get_Double() - GetTimeNow());
+			return get_Double() - GetTimeNow();
 		}
 		double get_DaysAge() const
 		{
@@ -229,27 +229,27 @@ namespace Gray
 		static cString GRAYCALL GetTimeSpanStr(double dDays, TIMEUNIT_TYPE eUnitHigh = TIMEUNIT_Day, int iUnitsDesired = 2, bool bShortText = false);
 	};
 
-	bool inline operator < (const cTimeDouble &dt1, const cTimeDouble &dt2)
+	bool inline operator < (const cTimeDouble& dt1, const cTimeDouble& dt2)
 	{
 		return(dt1.m_dateTime < dt2.m_dateTime);
 	}
-	bool inline operator <= (const cTimeDouble &dt1, const cTimeDouble &dt2)
+	bool inline operator <= (const cTimeDouble& dt1, const cTimeDouble& dt2)
 	{
 		return((dt1.m_dateTime <= dt2.m_dateTime));
 	}
-	bool inline operator > (const cTimeDouble &dt1, const cTimeDouble &dt2)
+	bool inline operator > (const cTimeDouble& dt1, const cTimeDouble& dt2)
 	{
 		return(dt1.m_dateTime > dt2.m_dateTime);
 	}
-	bool inline operator >= (const cTimeDouble &dt1, const cTimeDouble &dt2)
+	bool inline operator >= (const cTimeDouble& dt1, const cTimeDouble& dt2)
 	{
 		return((dt1.m_dateTime >= dt2.m_dateTime));
 	}
-	bool inline operator == (const cTimeDouble &dt1, const cTimeDouble &dt2)
+	bool inline operator == (const cTimeDouble& dt1, const cTimeDouble& dt2)
 	{
 		return(dt1.m_dateTime == dt2.m_dateTime);
 	}
-	bool inline operator != (const cTimeDouble &dt1, const cTimeDouble &dt2)
+	bool inline operator != (const cTimeDouble& dt1, const cTimeDouble& dt2)
 	{
 		return(dt1.m_dateTime != dt2.m_dateTime);
 	}

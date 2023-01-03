@@ -14,10 +14,10 @@ namespace Gray
 {
 	cAtomManager::cAtomManager()
 		: cSingleton<cAtomManager>(this, typeid(cAtomManager))
-		, m_aEmpty(new cAtomDef(""))
+		, m_aEmpty(DATA_t::CreateStringData2(0, &cStrConst::k_EmptyA))
 	{
 		//! created on demand to prevent any race conditions at static create time.
-		m_aName.Add(m_aEmpty.m_p);
+		m_aName.InsertAt(cHashIterator(), COMPARE_Equal, m_aEmpty.m_p);
 		m_aHash.Add(m_aEmpty.m_p);
 		SetAtomStatic(m_aEmpty);
 	}
@@ -29,7 +29,6 @@ namespace Gray
 
 	cAtomRef cAtomManager::FindAtomStr(const ATOMCHAR_t* pszText) const
 	{
-		//! Get the atom that corresponds to a string. do not create it.
 		if (StrT::IsNullOrEmpty(pszText))
 			return m_aEmpty;
 		cThreadGuard lock(m_Lock);
@@ -38,10 +37,9 @@ namespace Gray
 			return m_aEmpty;
 		return cAtomRef(pDef);
 	}
+
 	cAtomRef cAtomManager::FindAtomHashCode(ATOMCODE_t idAtom) const
 	{
-		//! Is this hash id a valid atom hash ?
-		//! this is 32 bit specific?
 		if (idAtom == k_HASHCODE_CLEAR)
 			return m_aEmpty;
 		cThreadGuard lock(m_Lock);
@@ -51,16 +49,15 @@ namespace Gray
 		return cAtomRef(pDef);
 	}
 
-	bool cAtomManager::RemoveAtom(cAtomDef* pDef)
+	bool cAtomManager::RemoveAtom(DATA_t* pDef)
 	{
 		// below kRefsBase
-
 		if (pDef == nullptr)
 			return false;
 		cThreadGuard lock(m_Lock);
-		bool bRetRemove = m_aHash.RemoveArgKey(pDef);
+		bool bRetRemove = m_aHash.DeleteArg(pDef);
 		ASSERT(bRetRemove);
-		bRetRemove = m_aName.RemoveArgKey(pDef);
+		bRetRemove = m_aName.DeleteArg(pDef);
 		ASSERT(bRetRemove);
 #ifdef _DEBUG
 		int iRefCount = pDef->get_RefCount();
@@ -69,38 +66,33 @@ namespace Gray
 		return bRetRemove;
 	}
 
-	cAtomRef cAtomManager::CreateAtom(ITERATE_t index, COMPARE_t iCompareRes, cStringA sVal)
+	cAtomRef cAtomManager::CreateAtom(const cHashIterator& index, COMPARE_t iCompareRes, DATA_t* pData)
 	{
 		//! Insertion sort.
-		ASSERT(sVal.get_RefCount() >= 1);
-		ASSERT(!sVal.IsEmpty());
-		cAtomRef pDef(new cAtomDef(sVal));
-		ASSERT(sVal.get_RefCount() >= 2);
-		m_aName.AddPresorted(index, iCompareRes, pDef);
-		ITERATE_t iHashRet = m_aHash.Add(pDef);
-		ASSERT(iHashRet >= 0);
-		UNREFERENCED_PARAMETER(iHashRet);
-		return pDef;
+		m_aName.InsertAt(index, iCompareRes,pData);
+		// const ITERATE_t nHashSize = m_aHash.GetSize();	// previous size.
+		const ITERATE_t nHashRet = m_aHash.Add(pData);
+		ASSERT(nHashRet >= 0);
+		// ASSERT(m_aHash.GetSize() > nHashSize);	// Hash collision?!
+		UNREFERENCED_PARAMETER(nHashRet);	// release mode.
+		return cAtomRef(pData);
 	}
 
 	cAtomRef cAtomManager::FindorCreateAtomStr(const cStringA& sName) noexcept
 	{
-		//! Find the atom in the atom table if it exists else create a new one.
-		//! Does NOT return nullptr
-
 		if (sName.IsEmpty())
 			return m_aEmpty;
 
 		cThreadGuard lock(m_Lock);
 
 		COMPARE_t iCompareRes;
-		ITERATE_t index = m_aName.FindINearKey(sName, iCompareRes);
+		cHashIterator index = m_aName.FindINearKey(sName, iCompareRes);
 		if (iCompareRes == COMPARE_Equal)
 		{
 			// already here.
-			return cAtomRef(m_aName.GetAt(index));
+			return cAtomRef(m_aName.GetAtHash(index));
 		}
-		return CreateAtom(index, iCompareRes, sName);
+		return CreateAtom(index, iCompareRes, const_cast<cStringA&>(sName).GetData());
 	}
 
 	cAtomRef cAtomManager::FindorCreateAtomStr(const ATOMCHAR_t* pszName) noexcept
@@ -112,18 +104,17 @@ namespace Gray
 		cThreadGuard lock(m_Lock);
 
 		COMPARE_t iCompareRes;
-		ITERATE_t index = m_aName.FindINearKey(pszName, iCompareRes);
+		cHashIterator index = m_aName.FindINearKey(pszName, iCompareRes);
 		if (iCompareRes == COMPARE_Equal)
 		{
 			// already here.
-			return cAtomRef(m_aName.GetAt(index));
+			return cAtomRef(m_aName.GetAtHash(index));
 		}
-		return CreateAtom(index, iCompareRes, pszName);
+		return CreateAtom(index, iCompareRes, DATA_t::CreateStringData2(StrT::Len(pszName), pszName));
 	}
 
-	void cAtomManager::SetAtomStatic(cAtomDef* pDef)
+	void cAtomManager::SetAtomStatic(DATA_t* pDef)
 	{
-		//! Make this atom permanent. never removed from the atom tables. adds an extra ref. 
 		m_aStatic.Add(pDef);
 	}
 
@@ -132,16 +123,16 @@ namespace Gray
 		cThreadGuard lock(m_Lock);
 
 		// Order by name
-		for (ITERATE_t i = 0; i < m_aName.GetSize(); i++)
+		FOR_HASH_TABLE(m_aName, i)
 		{
-			auto pDef = m_aName.GetAt(i);
+			auto pDef = m_aName.GetAtHash(i);
 			o.Printf("%s" FILE_EOL, StrArg<char>(pDef->get_Name()));
 		}
 
 		// Order by hash
-		for (ITERATE_t i = 0; i < m_aHash.GetSize(); i++)
+		FOR_HASH_TABLE(m_aHash, k)
 		{
-			auto pDef = m_aHash.GetAt(i);
+			auto pDef = m_aHash.GetAtHash(k);
 			o.Printf("%x = '%s'" FILE_EOL, pDef->get_HashCode(), StrArg<char>(pDef->get_Name()));
 		}
 		return S_OK;
@@ -150,18 +141,9 @@ namespace Gray
 	bool cAtomManager::DebugTest() const
 	{
 		// Is the atom manager ok ?
-		return m_aName.isArraySorted();
+		return m_aName.isArraySortedND();
 	}
-
-	//*********************************
-
-	cAtomDef::cAtomDef(cStringA s) noexcept
-		: m_s(s)
-		, m_nHashCode(StrT::GetHashCode32<ATOMCHAR_t>(s, s.GetLength(), 0))
-	{
-		// Private construct.
-	}
-
+	 
 	//*********************************
 
 	void cAtomRef::EmptyAtom(bool isLast)
@@ -174,7 +156,7 @@ namespace Gray
 		cAtomManager& rAM = cAtomManager::I();
 
 		// Remove the cAtomRef from the tables if last use.
-		int iRefCount = get_RefCount();
+		const int iRefCount = get_RefCount();
 		if (iRefCount <= cAtomManager::kRefsBase)
 		{
 			// Remove me from the cAtomManager tables.
@@ -194,30 +176,22 @@ namespace Gray
 			return 0;
 		int iRefs = get_RefCount();
 		ASSERT(iRefs >= 2);
-		return get_Ptr()->m_s.GetHeapStats(iAllocCount) / (iRefs - 1);
+		return get_Ptr()->GetHeapStatsThis(iAllocCount) / (iRefs - 1);
 	}
 
 	cAtomRef GRAYCALL cAtomRef::FindAtomStr(const ATOMCHAR_t* pszText) // static
 	{
-		//! Find the atom in the atom table if it exists.
-		//! @note DO NOT CREATE IT!
-		//! @return m_aEmpty atom if not found.
 		CODEPROFILEFUNC();
-		cAtomManager& i = cAtomManager::I();
-		return i.FindAtomStr(pszText);
+		return cAtomManager::I().FindAtomStr(pszText);
 	}
-
 	cAtomRef GRAYCALL cAtomRef::FindAtomHashCode(ATOMCODE_t idAtom) // static
 	{
-		//! Get this hash id if a valid atom hash
-		//! @return m_aEmpty atom if not found.
 		CODEPROFILEFUNC();
 		return cAtomManager::I().FindAtomHashCode(idAtom);
 	}
 
 	void cAtomRef::SetAtomStatic()
 	{
-		//! Make this atom permanent. never removed from the atom table.
 		cAtomManager::I().SetAtomStatic(get_Ptr());
 	}
 
@@ -234,8 +208,6 @@ namespace Gray
 #ifdef _DEBUG
 	HRESULT GRAYCALL cAtomRef::DebugDumpFile(const FILECHAR_t* pszFilePath) // static
 	{
-		//! Dump all the atoms to a file.
-
 		CODEPROFILEFUNC();
 		cFile file;
 		HRESULT hRes = file.OpenX(pszFilePath, OF_CREATE | OF_WRITE);

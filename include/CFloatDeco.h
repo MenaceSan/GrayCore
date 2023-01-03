@@ -78,8 +78,8 @@ namespace Gray
 
 			UINT64 h;
 #if defined(_MSC_VER) && defined(_M_AMD64)
-			UINT64 l = _umul128(m_uMant, rhs.m_uMant, &h);
-			if (l & (UINT64(1) << 63)) // rounding
+			const UINT64 l = _umul128(m_uMant, rhs.m_uMant, &h);
+			if (l & (UINT64{ 1 } << 63)) // rounding
 				h++;
 #elif (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && defined(__x86_64__)
 			unsigned __int128 p = static_cast<unsigned __int128>(m_uMant) * static_cast<unsigned __int128>(rhs.m_uMant);

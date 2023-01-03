@@ -18,13 +18,13 @@ namespace Gray
 {
 	typedef HRESULT(GRAYCALL* AppCommandF_t)(int iArgN, const FILECHAR_t* pszArg); // FARPROC
 
+	/// <summary>
+	/// define a named command line switch that does something. similar to MFC CCmdTarget ?
+	/// Abstract Base class for a command handler (plugin).
+	/// typically static allocated.
+	/// </summary>
 	struct GRAYCORE_LINK cAppCommand
 	{
-		//! @struct Gray::cAppCommand
-		//! a command line switch that does something. similar to MFC CCmdTarget ?
-		//! Abstract Base class for a command handler (plugin).
-		//! typically static allocated.
-
 	public:
 		const FILECHAR_t* m_pszSwitch;		//!< abbreviated -switch or /switch (case sensitive) optional, nullptr allowed
 		const ATOMCHAR_t* m_pszName;		//!< symbolic name for -switch or /switch (case insensitive). MUST be unique.
@@ -47,7 +47,12 @@ namespace Gray
 
 		bool IsMatch(cStringF sArg) const;
 
-		// return # of EXTRA args consumed. or <0 = error.
+		/// <summary>
+		/// Execute a command
+		/// </summary>
+		/// <param name="iArgN"></param>
+		/// <param name="pszArg"></param>
+		/// <returns># of EXTRA args consumed. or lt 0 = error.</returns>
 		virtual HRESULT DoCommand(int iArgN, const FILECHAR_t* pszArg) 	//!< call this if we see the m_pszCmd switch. can consume more arguments (or not).
 		{
 			if (m_pCommand == nullptr)
@@ -56,15 +61,15 @@ namespace Gray
 		}
 	};
 
+	/// <summary>
+	/// Entry point for my implemented application. I am not a _WINDLL.
+	/// like CWinApp for MFC (maybe windowed or console)
+	/// I am NOT a library/DLL. I am an application implementation. NOT the same as (or to be merged with) cAppState.
+	/// Basic framework for my application I implement. Assume a static like cAppImpl theApp is defined some place.
+	/// </summary>
 	class GRAYCORE_LINK cAppImpl
 		: public cSingletonStatic < cAppImpl > // use static theApp
 	{
-		//! @class Gray::cAppImpl
-		//! Entry point for my implemented application. I am not a _WINDLL.
-		//! like (CWinApp for MFC) (maybe windowed or console)
-		//! I am NOT a library/DLL. I am an application implementation. NOT the same as (or to be merged with) cAppState.
-		//! Basic framework for my application I implement. Assume a static like cAppImpl theApp is defined some place.
-
 	public:
 		const FILECHAR_t* m_pszAppName;		//!< Specifies the name of my application. (display friendly)
 		TIMESYSD_t m_nMinTickTime;			//!< Minimum amount of time to spend in the OnTickApp() (mSec). cThreadId::SleepCurrent() if there is extra time.
@@ -91,9 +96,31 @@ namespace Gray
 
 		virtual BOOL InitInstance();
 		virtual bool OnTickApp();
+
+		/// <summary>
+		/// APPSTATE_Run
+		/// Override this to make the application do something. Main loop of main thread.
+		/// Like CWinApp for MFC
+		/// @note In _WIN32, If my parent is a console, the console will return immediately! Not on first message loop like old docs say.
+		/// </summary>
+		/// <returns>APP_EXITCODE_t return app exit code. APP_EXITCODE_OK (NOT THREAD_EXITCODE_t?)</returns>
 		virtual int Run();
+
+		/// <summary>
+		/// APPSTATE_RunExit
+		/// Override this to make the application do something to clean up.
+		/// This should be called if Run() fails. NOT called if InitInstance fails.
+		/// Like CWinApp for MFC
+		/// </summary>
+		/// <returns>APP_EXITCODE_t return app exit code. APP_EXITCODE_OK</returns>
 		virtual int ExitInstance();
 
+		/// <summary>
+		/// The main application entry point and process loop. Like MFC AfxWinMain() 
+		/// Assume cAppStateMain was used.
+		/// </summary>
+		/// <param name="hInstance"></param>
+		/// <returns>APP_EXITCODE_t</returns>
 		APP_EXITCODE_t Main(HMODULE hInstance = HMODULE_NULL);
 	};
 }

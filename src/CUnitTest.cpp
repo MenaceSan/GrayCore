@@ -50,7 +50,7 @@ namespace Gray
 		virtual HRESULT WriteString(const LOGCHAR_t* pszMsg) override
 		{
 			//! Pass messages to M$
-			if (m_File.isFileOpen())
+			if (m_File.isValidHandle())
 			{
 				m_File.WriteString(pszMsg);
 			}
@@ -126,7 +126,7 @@ do ordain and establish this constitution of the United States of America\n\n");
 		STATIC_ASSERT(iSizeBool == 1, iSizeBool);
 		const size_t iSizeEnum = sizeof(enum UNITTEST_LEVEL_TYPE);	// __MSC_VER 32=4, _MSC_VER 64=4
 		STATIC_ASSERT(iSizeEnum == 4, iSizeEnum);
-		const size_t nSizeWChar = sizeof(wchar_t);	// _MSC_VER 64=2, __MSC_VER 32=2
+		const size_t nSizeWChar = sizeof(wchar_t);	// _MSC_VER 64=2, __MSC_VER 32=2, __GNUC__=4
 #ifdef __GNUC__
 		STATIC_ASSERT(nSizeWChar == 4, nSizeWChar); // weird.
 #else
@@ -145,6 +145,7 @@ do ordain and establish this constitution of the United States of America\n\n");
 #endif
 
 #ifdef _WIN32
+		const size_t iSizeBool2 = sizeof(BOOL);	
 		STATIC_ASSERT(true == TRUE, TRUE);	// _WIN32 only
 		const bool bVal1 = true;
 		STATIC_ASSERT(((BYTE)bVal1) == 1, bVal1);

@@ -24,15 +24,15 @@ namespace Gray
 #define USE_PTRTRACE_REF
 #endif
 
+	/// <summary>
+	/// base class for some derived object that is to be reference counted via cRefPtr. Use with a "Smart Pointer"
+	/// cRefPtr is similar to std::shared_ptr<TYPE> except the object must be based on cRefBase
+	/// @note These objects are normally cHeapObject, but NOT ALWAYS ! (allow static versions using StaticConstruct() and k_REFCOUNT_STATIC)
+	/// @note These objects emulate the COM IUnknown. we may use cIUnkPtr<> for this also.
+	/// Use IUNKNOWN_DISAMBIG(cRefBase) with this
+	/// </summary>
 	class GRAYCORE_LINK cRefBase : public IUnknown	// virtual
 	{
-		//! @class Gray::cRefBase
-		//! base class for some derived object that is to be reference counted via cRefPtr. Use with a "Smart Pointer"
-		//! cRefPtr is similar to std::shared_ptr<TYPE> except the object must be based on cRefBase
-		//! @note These objects are normally cHeapObject, but NOT ALWAYS ! (allow static versions using StaticConstruct() and k_REFCOUNT_STATIC)
-		//! @note These objects emulate the COM IUnknown. we may use cIUnkPtr<> for this also.
-		//! Use IUNKNOWN_DISAMBIG(cRefBase) with this
-
 		static const int k_REFCOUNT_DEBUG = 0x20000000;		//!< mark this as debug. (even in release mode)
 		static const int k_REFCOUNT_STATIC = 0x40000000;	//!< for structures that are 'static' or stack based. never use delete
 		static const int k_REFCOUNT_DESTRUCT = 0x80000000;	//!< we are in the process of destruction.
@@ -160,11 +160,11 @@ namespace Gray
 		}
 
 #if 0 // def _DEBUG // for testing.
-		void IncRefCount()
+		void IncRefCount() noexcept // always go through the COM interface!
 		{
 			AddRef();
-		}	// always go through the COM interface!
-		void DecRefCount()
+		}	
+		void DecRefCount() noexcept
 		{
 			Release();
 		}
@@ -173,7 +173,7 @@ namespace Gray
 		{
 			_InternalAddRef();
 		}
-		inline void DecRefCount()
+		inline void DecRefCount() noexcept
 		{
 			_InternalRelease();
 		}
@@ -226,6 +226,13 @@ namespace Gray
 		}
 	};
 
+	/// <summary>
+	/// Template for a type specific Smart (reference counted) pointer based on cRefBase.
+	/// "Smart pointer" to an object. like "com_ptr_t" _com_ptr_t or cComPtr. https://msdn.microsoft.com/en-us/library/hh279674.aspx
+	/// Just a ref to the object of some type. TYPE must be based on cRefBase
+	/// similar to boost::shared_ptr<TYPE> and std::shared_ptr<> but the object MUST be based on cRefBase.
+	/// </summary>
+	/// <typeparam name="TYPE">cRefBase</typeparam>
 	template<class TYPE = cRefBase >
 	class cRefPtr
 		: public cPtrFacade<TYPE>
@@ -233,12 +240,6 @@ namespace Gray
 		, public cPtrTrace
 #endif
 	{
-		//! @class Gray::cRefPtr
-		//! Template for a type specific Smart (reference counted) pointer based on cRefBase.
-		//! "Smart pointer" to an object. like "com_ptr_t" _com_ptr_t or cComPtr. https://msdn.microsoft.com/en-us/library/hh279674.aspx
-		//! Just a ref to the object of some type. TYPE must be based on cRefBase
-		//! similar to boost::shared_ptr<TYPE> and std::shared_ptr<> but the object MUST be based on cRefBase.
-
 		typedef cRefPtr<TYPE> THIS_t;
 		typedef cPtrFacade<TYPE> SUPER_t;
 

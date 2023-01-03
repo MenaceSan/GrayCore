@@ -21,12 +21,13 @@ namespace Gray
 {
 	class cLogProcessor;
 
-	enum STR_BLOCK_TYPE	//!< quotes/brackets and parenthesis must be matched.
+	/// <summary>
+	/// quotes/brackets and parenthesis must be matched.
+	/// string block types. see k_szBlockStart[] and k_szBlockEnd[]
+	/// ignore single quotes (may be unmatched apostrophe), commas ?
+	/// </summary>
+	enum STR_BLOCK_TYPE
 	{
-		//! @enum Gray::STR_BLOCK_TYPE
-		//! string block types. see k_szBlockStart[] and k_szBlockEnd[]
-		//! ignore single quotes (may be unmatched apostrophe), commas ?
-
 		STR_BLOCK_NONE = -1,
 
 		// Symmetric
@@ -43,10 +44,11 @@ namespace Gray
 	};
 	typedef UINT32 STR_BLOCKS_t;	//!< bit mask of STR_BLOCK_TYPE
 
+	/// <summary>
+	/// string token/separator parsing options.
+	/// </summary>
 	enum STRP_TYPE_
 	{
-		//! @enum Gray::STRP_TYPE_
-		//! string token/separator parsing options.
 		STRP_0,
 		STRP_START_WHITE = 0x01,		//!< remove start whitespace from each token
 		STRP_SPACE_SEP = 0x02,		//!< allow space separator only if non space not already used.
@@ -63,13 +65,13 @@ namespace Gray
 
 	//*****************************************************************************
 
+	/// <summary>
+	/// A bunch of common string functions that adapt regardless of UNICODE or UTF8
+	/// @note This works similar to MFC StringTraits, StrTraitMFC<>?
+	/// similar to char_traits<TYPE> for STL
+	/// </summary>
 	struct GRAYCORE_LINK StrT // static //!< namespace for string templates for UTF8 and UNICODE
 	{
-		//! @struct Gray::StrT
-		//! A bunch of common string functions that adapt regardless of UNICODE or UTF8
-		//! @note This works similar to MFC StringTraits, StrTraitMFC<>?
-		//! similar to char_traits<TYPE> for STL
-
 		static const StrLen_t k_LEN_MAX = 15000;		//!< arbitrary max size for Format() etc. NOTE: _MSC_VER says stack frame should be at least 16384
 		static const StrLen_t k_LEN_MAX_KEY = 128;		//!< arbitrary max size of (Symbolic Identifier) keys.
 
@@ -82,21 +84,28 @@ namespace Gray
 		// NON modifying methods first.
 
 		template< typename TYPE >
-		static StrLen_t Len(const TYPE* pszStr) NOEXCEPT;
+		static StrLen_t Len(const TYPE* pszStr) noexcept;
 
+		/// <summary>
+		/// a template based caster is useful for templates. rather than (const TYPE*)
+		/// because it isn't really a cast. (so is safer) Its just a rule for type conversion and will fail if type is not provided.
+		/// Can use with cStrConst
+		/// </summary>
+		/// <typeparam name="TYPE">char or wchar_t</typeparam>
+		/// <param name="pszStr"></param>
+		/// <returns></returns>
 		template< typename TYPE >
 		static inline const TYPE* Cast(const TYPE* pszStr)
 		{
-			//! a template based caster is useful for templates. rather than (const TYPE*)
-			//! because it isn't really a cast. (so is safer) Its just a rule for type conversion and will fail if type is not provided.
-			//! Can use with cStrConst
 			return pszStr;
 		}
 
+		/// <summary>
+		/// Like .NET String.IsNullOrEmpty. Similar to IsWhitespace().
+		/// </summary>
 		template< typename TYPE >
-		static inline bool IsNullOrEmpty(const TYPE* pszStr) NOEXCEPT
+		static inline bool IsNullOrEmpty(const TYPE* pszStr) noexcept
 		{
-			//! Like .NET String.IsNullOrEmpty. Similar to IsWhitespace().
 			if (pszStr == nullptr)
 				return true;
 			if (pszStr[0] == '\0')
@@ -104,10 +113,15 @@ namespace Gray
 			return false;
 		}
 
+		/// <summary>
+		/// If this is an empty string then make it nullptr.
+		/// </summary>
+		/// <typeparam name="TYPE"></typeparam>
+		/// <param name="pszStr"></param>
+		/// <returns></returns>
 		template< typename TYPE >
-		static inline const TYPE* CheckEmpty(const TYPE* pszStr) NOEXCEPT
+		static inline const TYPE* CheckEmpty(const TYPE* pszStr) noexcept
 		{
-			//! If this is an empty string then make it nullptr.
 			if (pszStr == nullptr)
 				return nullptr;
 			if (pszStr[0] == '\0')
@@ -115,11 +129,16 @@ namespace Gray
 			return pszStr;
 		}
 
+		/// <summary>
+		/// Get length (up to iLenMax <= k_LEN_MAX ) avoiding read errors for un-terminated sources. like strlen() but with limit. AKA strnlen().
+		/// </summary>
+		/// <typeparam name="TYPE"></typeparam>
+		/// <param name="pszStr"></param>
+		/// <param name="iLenMax"></param>
+		/// <returns>the length of the string up to (including) iLenMax</returns>
 		template< typename TYPE >
-		static constexpr StrLen_t Len(const TYPE* pszStr, StrLen_t iLenMax) NOEXCEPT
+		static constexpr StrLen_t Len(const TYPE* pszStr, StrLen_t iLenMax) noexcept
 		{
-			//! Get length (up to iLenMax <= k_LEN_MAX ) avoiding read errors for un-terminated sources. like strlen() but with limit. AKA strnlen().
-			//! @return the length of the string up to (including) iLenMax
 			if (pszStr == nullptr)
 				return 0;
 			StrLen_t i = 0;
@@ -129,43 +148,86 @@ namespace Gray
 			return i;
 		}
 
+		/// <summary>
+		/// Difference between 2 pointers in chars (not bytes). Check for 64 bit overflow. Safer.
+		/// </summary>
+		/// <typeparam name="TYPE"></typeparam>
+		/// <param name="pszEnd"></param>
+		/// <param name="pszStart"></param>
+		/// <returns></returns>
 		template< typename TYPE >
 		static StrLen_t inline Diff(const TYPE* pszEnd, const TYPE* pszStart)
 		{
-			//! Difference between 2 pointers in chars (not bytes). Check for 64 bit overflow. Safer.
 			ASSERT(pszEnd != nullptr);
 			ASSERT(pszStart != nullptr);
-			INT_PTR i = pszEnd - pszStart;	// like ptrdiff_t cMem::Diff() but in chars not bytes. 
+			const INT_PTR i = pszEnd - pszStart;	// like ptrdiff_t cMem::Diff() but in chars not bytes. 
 			ASSERT(i > -(INT_PTR)(cHeap::k_ALLOC_MAX / sizeof(TYPE)) && i < (INT_PTR)(cHeap::k_ALLOC_MAX / sizeof(TYPE)));	// k_ALLOC_MAX as TYPE
-			return (StrLen_t)i;
+			return CastN(StrLen_t, i);
 		}
 
+		/// <summary>
+		/// How does pszStr1 compare to pszStr2. replaces _strcmp()
+		/// </summary>
+		/// <typeparam name="TYPE"></typeparam>
+		/// <param name="pszStr1"></param>
+		/// <param name="pszStr2"></param>
+		/// <returns>0 = equivalent values.</returns>
 		template< typename TYPE >
-		GRAYCORE_LINK static COMPARE_t GRAYCALL Cmp(const TYPE* pszStr1, const TYPE* pszStr2) NOEXCEPT;
+		GRAYCORE_LINK static COMPARE_t GRAYCALL Cmp(const TYPE* pszStr1, const TYPE* pszStr2) noexcept;
+		/// <summary>
+		/// How does pszStr1 compare to pszStr2. replace strncmp()
+		/// </summary>
+		/// <typeparam name="TYPE"></typeparam>
+		/// <param name="pszStr1"></param>
+		/// <param name="pszStr2"></param>
+		/// <param name="iLenMaxChars"></param>
+		/// <returns></returns>
 		template< typename TYPE >
-		GRAYCORE_LINK static COMPARE_t GRAYCALL CmpN(const TYPE* pszStr1, const TYPE* pszStr2, StrLen_t iLenMaxChars) NOEXCEPT;
+		GRAYCORE_LINK static COMPARE_t GRAYCALL CmpN(const TYPE* pszStr1, const TYPE* pszStr2, StrLen_t iLenMaxChars) noexcept;
 		template< typename TYPE >
-		GRAYCORE_LINK static COMPARE_t GRAYCALL CmpI(const TYPE* pszStr1, const TYPE* pszStr2) NOEXCEPT;
+		GRAYCORE_LINK static COMPARE_t GRAYCALL CmpI(const TYPE* pszStr1, const TYPE* pszStr2) noexcept;
 		template< typename TYPE >
-		GRAYCORE_LINK static COMPARE_t GRAYCALL CmpIN(const TYPE* pszStr1, const TYPE* pszStr2, StrLen_t iLenMaxChars) NOEXCEPT;
+		GRAYCORE_LINK static COMPARE_t GRAYCALL CmpIN(const TYPE* pszStr1, const TYPE* pszStr2, StrLen_t iLenMaxChars) noexcept;
+
+		/// <summary>
+		/// Does pszTableElem start with the prefix pszFindHead?
+		/// Compare only up to the length of pszTableElem.
+		/// If pszFindHead has more chars but are separated by non alnum() then ignore.
+		/// Follows the rules for symbolic names.
+		/// @note we may want to allow / -in names for HTTP ?s
+		/// similar to StartsWithI() ?
+		/// </summary>
+		/// <typeparam name="TYPE">char or wchar_t</typeparam>
+		/// <param name="pszFindHead"></param>
+		/// <param name="pszTableElem"></param>
+		/// <returns>0 = match.</returns>
+		template< typename TYPE >
+		GRAYCORE_LINK static COMPARE_t GRAYCALL CmpHeadI(const TYPE* pszFindHead, const TYPE* pszTableElem);
+		template< typename TYPE >
+		GRAYCORE_LINK static bool GRAYCALL StartsWithI(const TYPE* pszStr1, const TYPE* pszPrefix);
+		template< typename TYPE >
+		GRAYCORE_LINK static bool GRAYCALL EndsWithI(const TYPE* pszStr1, const TYPE* pszPostfix, StrLen_t nLenStr = k_StrLen_UNK);
+
+		/// <summary>
+		/// Get a HASHCODE32_t for the string. Ignore case.
+		/// based on http://www.azillionmonkeys.com/qed/hash.html super fast hash.
+		/// Need not be truly unique. Just most likely unique. Low chance of collision in random set.
+		/// Even distribution preferred. Simple CRC32 does not produce good distribution?
+		/// Never return 0 except for empty string. k_HASHCODE_CLEAR
+		/// Others: http://sites.google.com/site/murmurhash/, boost string_hash(), Knuth
+		/// @note equivalent UNICODE and char strings should return the same HASHCODE32_t.
+		/// TODO constexpr ?
+		/// </summary>
+		/// <return>HASHCODE32_t</return>
+		template< typename TYPE >
+		GRAYCORE_LINK static HASHCODE32_t GRAYCALL GetHashCode32(const TYPE* pszStr, StrLen_t nLen = k_StrLen_UNK, HASHCODE32_t nHash = k_HASHCODE_CLEAR) noexcept;
 
 		template< typename TYPE >
-		GRAYCORE_LINK static COMPARE_t GRAYCALL CmpHeadI(const TYPE* pszFind, const TYPE* pszTableElem);
+		GRAYCORE_LINK static TYPE* GRAYCALL FindChar(const TYPE* pszStr, TYPE ch, StrLen_t iLen = StrT::k_LEN_MAX) noexcept;
 		template< typename TYPE >
-		GRAYCORE_LINK static bool GRAYCALL StartsWithI(const TYPE* pszStr2, const TYPE* pszPrefix);
+		GRAYCORE_LINK static StrLen_t GRAYCALL FindCharN(const TYPE* pszStr, TYPE ch) noexcept;
 		template< typename TYPE >
-		GRAYCORE_LINK static bool GRAYCALL EndsWithI(const TYPE* pszStr2, const TYPE* pszPostfix, StrLen_t nLenStr = k_StrLen_UNK);
-
-		// TODO constexpr ?
-		template< typename TYPE >
-		GRAYCORE_LINK static HASHCODE32_t GRAYCALL GetHashCode32(const TYPE* pszStr, StrLen_t nLen = k_StrLen_UNK, HASHCODE32_t nHash = k_HASHCODE_CLEAR) NOEXCEPT;
-
-		template< typename TYPE >
-		GRAYCORE_LINK static TYPE* GRAYCALL FindChar(const TYPE* pszStr, TYPE ch, StrLen_t iLen = StrT::k_LEN_MAX) NOEXCEPT;
-		template< typename TYPE >
-		GRAYCORE_LINK static StrLen_t GRAYCALL FindCharN(const TYPE* pszStr, TYPE ch) NOEXCEPT;
-		template< typename TYPE >
-		static bool HasChar(const TYPE* pszStr, TYPE ch) NOEXCEPT
+		static bool HasChar(const TYPE* pszStr, TYPE ch) noexcept
 		{
 			return FindCharN(pszStr, ch) >= 0;
 		}
@@ -181,10 +243,16 @@ namespace Gray
 		template< typename TYPE >
 		GRAYCORE_LINK static StrLen_t GRAYCALL FindWord(const TYPE* pTextSearch, const TYPE* pszKeyWord, StrLen_t iLenMax = StrT::k_LEN_MAX);
 
+		/// <summary>
+		/// Skip tabs and spaces but NOT new lines. NOT '\0' either.
+		/// </summary>
+		/// <typeparam name="TYPE"></typeparam>
+		/// <param name="pStr"></param>
+		/// <param name="iLenMax"></param>
+		/// <returns></returns>
 		template< typename TYPE>
-		static constexpr StrLen_t GetNonWhitespaceI(const TYPE* pStr, StrLen_t iLenMax = StrT::k_LEN_MAX) NOEXCEPT
+		static constexpr StrLen_t GetNonWhitespaceI(const TYPE* pStr, StrLen_t iLenMax = StrT::k_LEN_MAX) noexcept
 		{
-			//! Skip tabs and spaces but NOT new lines. NOT '\0' either.
 			if (pStr == nullptr)
 				return 0;
 			StrLen_t i = 0;
@@ -193,23 +261,23 @@ namespace Gray
 			return i;
 		}
 		template< typename TYPE>
-		static const TYPE* GetNonWhitespace(const TYPE* pStr, StrLen_t iLenMax = StrT::k_LEN_MAX) NOEXCEPT
+		static const TYPE* GetNonWhitespace(const TYPE* pStr, StrLen_t iLenMax = StrT::k_LEN_MAX) noexcept
 		{
 			// never return nullptr unless pStr = nullptr
-			return pStr + GetNonWhitespaceI(pStr, iLenMax) ;
+			return pStr + GetNonWhitespaceI(pStr, iLenMax);
 		}
 		template< typename TYPE>
-		static TYPE* GetNonWhitespace(TYPE* pStr, StrLen_t iLenMax = StrT::k_LEN_MAX) NOEXCEPT
+		static TYPE* GetNonWhitespace(TYPE* pStr, StrLen_t iLenMax = StrT::k_LEN_MAX) noexcept
 		{
-			return pStr + GetNonWhitespaceI(pStr, iLenMax) ;
+			return pStr + GetNonWhitespaceI(pStr, iLenMax);
 		}
 		template< typename TYPE >
 		GRAYCORE_LINK static StrLen_t GRAYCALL GetWhitespaceEnd(const TYPE* pStr, StrLen_t iLenChars = k_StrLen_UNK);
 		template< typename TYPE >
-		GRAYCORE_LINK static bool GRAYCALL IsWhitespace(const TYPE* pStr, StrLen_t iLenChars = StrT::k_LEN_MAX) NOEXCEPT;
+		GRAYCORE_LINK static bool GRAYCALL IsWhitespace(const TYPE* pStr, StrLen_t iLenChars = StrT::k_LEN_MAX) noexcept;
 
 		template< typename TYPE >
-		GRAYCORE_LINK static bool GRAYCALL IsPrintable(const TYPE* pStr, StrLen_t iLenChars = StrT::k_LEN_MAX) NOEXCEPT;
+		GRAYCORE_LINK static bool GRAYCALL IsPrintable(const TYPE* pStr, StrLen_t iLenChars = StrT::k_LEN_MAX) noexcept;
 
 		// String searching. const
 		template< typename TYPE >
@@ -233,14 +301,29 @@ namespace Gray
 		//**********************************************************************
 		// String modifying.
 
+		/// <summary>
+		/// Copy a string. replaces strncpy (sort of)
+		/// @note This will ALWAYS terminate the string (unlike strncpy)
+		/// @note DO NOT assume pSrc is null terminated. tho it might be. just use iLenMaxChars
+		/// </summary>
+		/// <typeparam name="TYPE"></typeparam>
+		/// <param name="pDst"></param>
+		/// <param name="pSrc"></param>
+		/// <param name="iLenMaxChars">_countof(Dst) = includes room for '\0'. (just like memcpy). iLenMaxChars=_countof(Dst) is OK !</param>
+		/// <returns>Length of pDst in chars. (Not including '\0')</returns>
 		template< typename TYPE >
-		GRAYCORE_LINK static StrLen_t GRAYCALL CopyLen(TYPE* pszDst, const TYPE* pSrc, StrLen_t iLenCharsMax) NOEXCEPT; // iLenCharsMax includes room for '\0'
+		GRAYCORE_LINK static StrLen_t GRAYCALL CopyLen(TYPE* pszDst, const TYPE* pSrc, StrLen_t iLenCharsMax) noexcept; // iLenCharsMax includes room for '\0'
 
+		/// <summary>
+		/// replaces _strupr(). No portable __linux__ equiv to _strupr()?
+		/// </summary>
+		/// <typeparam name="TYPE"></typeparam>
+		/// <param name="pszDst"></param>
+		/// <param name="iLenCharsMax"></param>
+		/// <returns></returns>
 		template< typename TYPE >
-		static void MakeUpperCase(TYPE* pszDst, StrLen_t iLenCharsMax) NOEXCEPT
+		static void MakeUpperCase(TYPE* pszDst, StrLen_t iLenCharsMax) noexcept
 		{
-			//! replaces _strupr
-			//! No portable __linux__ equiv to _strupr()?
 			if (pszDst == nullptr)
 				return;
 			StrLen_t i = 0;
@@ -249,8 +332,9 @@ namespace Gray
 				pszDst[i] = (TYPE)StrChar::ToUpperA(pszDst[i]);
 			}
 		}
+
 		template< typename TYPE >
-		static void MakeLowerCase(TYPE* pszDst, StrLen_t iLenCharsMax) NOEXCEPT
+		static void MakeLowerCase(TYPE* pszDst, StrLen_t iLenCharsMax) noexcept
 		{
 			//! replaces strlwr()
 			//! No portable __linux__ equiv to strlwr()?
@@ -267,14 +351,18 @@ namespace Gray
 		template< typename TYPE >
 		GRAYCORE_LINK static StrLen_t GRAYCALL vsprintfN(OUT TYPE* pszOut, StrLen_t iLenOutMax, const TYPE* pszFormat, va_list vlist);
 
+		/// <summary>
+		/// Format a string with variadic arguments. Truncate at iLenOutMax if necessary.
+		/// </summary>
+		/// <typeparam name="TYPE"></typeparam>
+		/// <param name="pszOut"></param>
+		/// <param name="iLenOutMax">max output size in characters. (Not Bytes) Must allow space for '\0'</param>
+		/// <param name="pszFormat"></param>
+		/// <param name=""></param>
+		/// <returns>size in characters. -1 = too small. (NOT CONSISTENT WITH LINUX!)</returns>
 		template< typename TYPE >
 		static StrLen_t _cdecl sprintfN(OUT TYPE* pszOut, StrLen_t iLenOutMax, const TYPE* pszFormat, ...)
 		{
-			//! Format a string with variadic arguments. Truncate at iLenOutMax if necessary.
-			//! @arg
-			//!  iLenOutMax = max output size in characters. (Not Bytes) Must allow space for '\0'
-			//! @return
-			//!  size in characters. -1 = too small. (NOT CONSISTENT WITH LINUX!)
 			va_list vargs;
 			va_start(vargs, pszFormat);
 			const StrLen_t nLenRet = StrT::vsprintfN(pszOut, iLenOutMax, pszFormat, vargs);
@@ -315,18 +403,18 @@ namespace Gray
 
 		// string to numeric. similar to strtoul()
 		template< typename TYPE >
-		GRAYCORE_LINK static UINT64 GRAYCALL toUL(const TYPE* pszStr, const TYPE** ppszStrEnd = /*(const TYPE**)*/nullptr, RADIX_t nBaseRadix = 0) NOEXCEPT;
+		GRAYCORE_LINK static UINT64 GRAYCALL toUL(const TYPE* pszStr, const TYPE** ppszStrEnd = /*(const TYPE**)*/nullptr, RADIX_t nBaseRadix = 0) noexcept;
 		template< typename TYPE >
-		GRAYCORE_LINK static INT64 GRAYCALL toIL(const TYPE* pszStr, const TYPE** ppszStrEnd = /*(const TYPE**)*/nullptr, RADIX_t nBaseRadix = 10) NOEXCEPT;
+		GRAYCORE_LINK static INT64 GRAYCALL toIL(const TYPE* pszStr, const TYPE** ppszStrEnd = /*(const TYPE**)*/nullptr, RADIX_t nBaseRadix = 10) noexcept;
 
 		template< typename TYPE >
-		static UINT toU(const TYPE* pszStr, const TYPE** ppszStrEnd = /*(const TYPE**)*/nullptr, RADIX_t nBaseRadix = 0) NOEXCEPT
+		static UINT toU(const TYPE* pszStr, const TYPE** ppszStrEnd = /*(const TYPE**)*/nullptr, RADIX_t nBaseRadix = 0) noexcept
 		{
 			//! Just cast down from 64.
 			return (UINT)toUL(pszStr, ppszStrEnd, nBaseRadix);
 		}
 		template< typename TYPE >
-		static int toI(const TYPE* pszStr, const TYPE** ppszStrEnd = /*(const TYPE**)*/nullptr, RADIX_t nBaseRadix = 10) NOEXCEPT
+		static int toI(const TYPE* pszStr, const TYPE** ppszStrEnd = /*(const TYPE**)*/nullptr, RADIX_t nBaseRadix = 10) noexcept
 		{
 			//! atoi()
 			//! Just cast down from 64.
@@ -334,13 +422,13 @@ namespace Gray
 		}
 
 		template< typename TYPE >
-		static UINT_PTR toUP(const TYPE* pszStr, const TYPE** ppszStrEnd = /*(const TYPE**)*/nullptr, RADIX_t nBaseRadix = 0) NOEXCEPT
+		static UINT_PTR toUP(const TYPE* pszStr, const TYPE** ppszStrEnd = /*(const TYPE**)*/nullptr, RADIX_t nBaseRadix = 0) noexcept
 		{
 			// UINT_PTR as 64 bit or 32 bit as needed.
 			return (UINT_PTR)toUL(pszStr, ppszStrEnd, nBaseRadix);
 		}
 		template< typename TYPE >
-		static INT_PTR toIP(const TYPE* pszStr, const TYPE** ppszStrEnd = /*(const TYPE**)*/nullptr, RADIX_t nBaseRadix = 10) NOEXCEPT
+		static INT_PTR toIP(const TYPE* pszStr, const TYPE** ppszStrEnd = /*(const TYPE**)*/nullptr, RADIX_t nBaseRadix = 10) noexcept
 		{
 			// INT_PTR as 64 bit or 32 bit as needed.
 			return (INT_PTR)toIL(pszStr, ppszStrEnd, nBaseRadix);
@@ -388,7 +476,7 @@ namespace Gray
 		//! @struct Gray::StrX
 		//! Type cannot be derived from arguments. we must declare char type specifically.
 
-		static const TYPE* GRAYCALL GetBoolStr(bool bVal) NOEXCEPT;
+		static const TYPE* GRAYCALL GetBoolStr(bool bVal) noexcept;
 
 		// String searching. const
 		static inline const TYPE* GetTableElemU(const void* ppszTableInit, ITERATE_t i, size_t nSizeElem)
@@ -407,7 +495,7 @@ namespace Gray
 
 	// Override implementations
 
-	template<> StrLen_t inline StrT::Len<char>(const char* pszStr) NOEXCEPT	// count of chars NOT same as bytes (size_t)
+	template<> StrLen_t inline StrT::Len<char>(const char* pszStr) noexcept	// count of chars NOT same as bytes (size_t)
 	{
 		//! Get length of string not including '\0'. Like strlen()
 		//! Danger. ASSUME sane iLenMax <= k_LEN_MAX ??  Dont use this function. use length limited version.
@@ -422,7 +510,7 @@ namespace Gray
 		return Len(pszStr, k_LEN_MAX);
 #endif
 	}
-	template<> StrLen_t inline StrT::Len<wchar_t>(const wchar_t* pszStr) NOEXCEPT
+	template<> StrLen_t inline StrT::Len<wchar_t>(const wchar_t* pszStr) noexcept
 	{
 		//! Get length of string not including '\0'
 		//! Danger. ASSUME sane iLenMax <= k_LEN_MAX ??  Dont use this function. use length limited version.
@@ -436,12 +524,12 @@ namespace Gray
 #endif
 	}
 
-	template<> inline UINT64 StrT::toUL<char>(const char* pszStr, const char** ppszStrEnd, RADIX_t nBaseRadix) NOEXCEPT
+	template<> inline UINT64 StrT::toUL<char>(const char* pszStr, const char** ppszStrEnd, RADIX_t nBaseRadix) noexcept
 	{
 		// Direct to Latin.
 		return StrNum::toUL(pszStr, ppszStrEnd, nBaseRadix);
 	}
-	template<> inline UINT64 StrT::toUL<wchar_t>(const wchar_t* pszStr, const wchar_t** ppszStrEnd, RADIX_t nBaseRadix) NOEXCEPT
+	template<> inline UINT64 StrT::toUL<wchar_t>(const wchar_t* pszStr, const wchar_t** ppszStrEnd, RADIX_t nBaseRadix) noexcept
 	{
 		// Convert to Latin.
 		char szTmp[StrNum::k_LEN_MAX_DIGITS_INT + 4];
@@ -574,12 +662,12 @@ namespace Gray
 
 	// Override implementations
 
-	template<> inline const char* StrX<char>::GetBoolStr(bool bVal) NOEXCEPT // static
+	template<> inline const char* StrX<char>::GetBoolStr(bool bVal) noexcept // static
 	{
 		// Simpler than using "true" : "false"
 		return bVal ? "1" : "0";
 	}
-	template<> inline const wchar_t* StrX<wchar_t>::GetBoolStr(bool bVal) NOEXCEPT // static
+	template<> inline const wchar_t* StrX<wchar_t>::GetBoolStr(bool bVal) noexcept // static
 	{
 		return bVal ? L"1" : L"0";
 	}

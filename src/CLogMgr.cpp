@@ -236,7 +236,7 @@ namespace Gray
 
 		CODEPROFILEFUNC();
 
-		TIMESECD_t tNowSec = cTimeSys::GetTimeNow() / cTimeSys::k_FREQ;
+		TIMESECD_t tNowSec = static_cast<TIMESECD_t>(cTimeSys::GetTimeNow() / cTimeSys::k_FREQ);
 		if (sm_TimePrevException == tNowSec)	// prevent message floods. 1 per sec.
 			return;
 		sm_TimePrevException = tNowSec;

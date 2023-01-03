@@ -27,13 +27,15 @@ namespace Gray
 		}
 
 		// Read all i have room for.
-		HRESULT hRes = m_pStreamInp->ReadX(pWriteSpace, (size_t)nWriteSpace);
+		HRESULT hRes = m_pStreamInp->ReadX(pWriteSpace, CastN(size_t, nWriteSpace));
 		if (FAILED(hRes) || hRes <= 0)
 		{
+			//if (hRes == 0)
+				// return HRESULT_WIN32_C(ERROR_HANDLE_EOF);
 			return hRes;
 		}
 
-		AdvanceWrite((ITERATE_t)hRes);
+		AdvanceWrite(CastN(ITERATE_t, hRes));
 		return hRes;
 	}
 

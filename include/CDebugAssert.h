@@ -25,11 +25,12 @@ namespace Gray
 #endif
 #endif
 
+	/// <summary>
+	/// a place in the code where something occurred. for debugging.
+	/// like M$ CppUnitTestFramework.__LineInfo
+	/// </summary>
 	struct cDebugSourceLine
 	{
-		//! @class Gray::cDebugSourceLine
-		//! a place in the code where something occurred. for debugging
-		//! like M$ CppUnitTestFramework.__LineInfo
 	public:
 		const char* m_pszFile;	//!< name of the source file. static text. __FILE__
 		const char* m_pszFunction;	// __func__, __FUNCTION__, __FUNCDNAME__, and __FUNCSIG__
@@ -50,19 +51,20 @@ namespace Gray
 
 	typedef bool (CALLBACK AssertCallback_t)(const char* pszExp, const cDebugSourceLine& src);	// for redirect of assert in testing.
 
+	/// <summary>
+	/// Log assert events before handling as normal system assert().
+	/// like M$ test Assert.IsTrue()
+	/// </summary>
 	struct GRAYCORE_LINK cDebugAssert	// static
 	{
-		//! @struct Gray::cDebugAssert
-		//! Log assert events before handling as normal system assert().
-		//! like M$ test Assert.IsTrue()
-
 		static AssertCallback_t* sm_pAssertCallback;		//!< redirect callback on Assert_Fail usually used for unit tests.
 		static bool sm_bAssertTest;		//!<  Just testing. not a real assert.
 
 		static bool CALLBACK AssertCallbackDefault(const char* pszExp, const cDebugSourceLine& src);
 
-		static bool GRAYCALL Assert_Fail(const char* pszExp, const cDebugSourceLine src);
 		static bool GRAYCALL Debug_Fail(const char* pszExp, const cDebugSourceLine src) noexcept;
+		static bool GRAYCALL Assert_Fail(const char* pszExp, const cDebugSourceLine src);
+		static void GRAYCALL ThrowEx_Fail(const char* pszExp, const cDebugSourceLine src);
 	};
 
 #if defined(_DEBUG) || defined(_DEBUG_FAST)
@@ -93,6 +95,10 @@ namespace Gray
 #endif // DEBUG_ASSERT
 
 #endif	// ! _DEBUG
+
+#ifndef THROW_IF_NOT
+#define THROW_IF_NOT(exp)	if (!(exp)) { ::Gray::cDebugAssert::ThrowEx_Fail(#exp, DEBUGSOURCELINE ); } // Show the compiler that we wont proceed.
+#endif
 
 }
 

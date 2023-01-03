@@ -16,24 +16,26 @@ namespace Gray
 {
 #define GRAY_FOREACH_S(a,b,c) GRAY_FOREACH( cRefPtr<a>, b, c )
 
+	/// <summary>
+	/// All items in this array are base on cRefBase. NON sorted.
+	/// The array owns a reference to the object like cRefPtr.
+	/// Element will get deleted when all references are gone.
+	/// </summary>
+	/// <typeparam name="TYPE"></typeparam>
 	template<class TYPE>
 	class cArrayRef : public cArrayFacade < cRefPtr<TYPE>, TYPE* >
 	{
-		//! @class Gray::cArrayRef
-		//! All items in this array are base on cRefBase. NON sorted.
-		//! The array owns a reference to the object like cRefPtr.
-		//! Element will get deleted when all references are gone.
-
 		typedef cArrayFacade< cRefPtr<TYPE>, TYPE* > SUPER_t;
 
 	public:
+		/// <summary>
+		/// Similar to RemoveAll() except it calls DisposeThis() to try to dereference all the entries.
+		/// ASSUME TYPE supports DisposeThis(); like cXObject
+		/// @note often DisposeThis() has the effect of removing itself from the list. Beware of this.
+		/// </summary>
 		void DisposeAll()
 		{
-			//! Similar to RemoveAll() except it calls DisposeThis() to try to dereference all the entries.
-			//! ASSUME TYPE supports DisposeThis(); like cXObject
-			//! @note often DisposeThis() has the effect of removing itself from the list. Beware of this.
-
-			ITERATE_t iSize = this->GetSize();
+			const ITERATE_t iSize = this->GetSize();
 			if (iSize <= 0)
 				return;
 			{	

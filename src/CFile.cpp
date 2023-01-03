@@ -1,5 +1,5 @@
 //
-//! @file CFile.cpp
+//! @file cFile.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
@@ -24,10 +24,39 @@ namespace Gray
 {
 	ITERATE_t cFile::sm_iFilesOpen = 0;	// debug statistical info
 
-#ifndef _MFC_VER
-// CFile::hFileNull
+	HRESULT cFile::OpenSetup(cStringF sFilePath, OF_FLAGS_t nOpenFlags)
+	{
+		//! Internal function to set internal params.
+		//! Similar to SetFilePath() in MFC ?
+		//! @arg nOpenFlags = OF_BINARY | OF_WRITE
+		//! @return
+		//!  S_FALSE = success , already open.
+		//!  S_OK = success
 
-	HRESULT CFile::OpenCreate(cStringF sFilePath, OF_FLAGS_t nOpenFlags, _SECURITY_ATTRIBUTES* pSa)
+		if (sFilePath.IsEmpty() || get_FilePath().IsEqualNoCase(sFilePath))
+		{
+			// Name is already set ? and already open ?
+			if (isValidHandle() && m_nOpenFlags == nOpenFlags)
+			{
+				ASSERT(!get_FilePath().IsEmpty());
+				return S_FALSE;
+			}
+		}
+
+		Close();	// Make sure it's closed first. re-using this structure.
+
+		if (!sFilePath.IsEmpty())
+		{
+			m_strFileName = sFilePath;
+		}
+
+		m_nOpenFlags = nOpenFlags;
+
+		// DEBUG_TRACE(( "Open file '%s' flags=0%x", LOGSTR(m_strFileName), nOpenFlags ));
+		return S_OK;
+	}
+
+	HRESULT cFile::OpenCreate2(cStringF sFilePath, OF_FLAGS_t nOpenFlags, ::_SECURITY_ATTRIBUTES* pSa)
 	{
 		//! Open a file handle.
 		//! Allow convert from UTF8 to UNICODE (_WIN32) or assume native UTF8 allowed.
@@ -105,7 +134,7 @@ namespace Gray
 			dwFlagsAndAttributes |= FILE_FLAG_SEQUENTIAL_SCAN;
 		}
 
-		m_hFile.AttachHandle(::CreateFileW(cFilePath::GetFileNameLongW(sFilePath), dwDesiredAccess,
+		AttachHandle(::CreateFileW(cFilePath::GetFileNameLongW(sFilePath), dwDesiredAccess,
 			dwShareMode, nullptr, dwCreationDisposition,
 			dwFlagsAndAttributes, HANDLE_NULL));
 
@@ -130,7 +159,7 @@ namespace Gray
 #error NOOS
 #endif
 
-		if (!isFileOpen())
+		if (!isValidHandle())
 		{
 			// E_ACCESSDENIED for a hidden file?
 			return HResult::GetLastDef(HRESULT_WIN32_C(ERROR_FILE_NOT_FOUND));
@@ -138,165 +167,7 @@ namespace Gray
 		return S_OK;
 	}
 
-	STREAM_POS_t CFile::GetPosition() const // virtual
-	{
-		//! Get the current read position in the file.
-		//! Seek( 0, SEEK_CUR ) like MFC
-		if (!isFileOpen())
-		{
-			return k_STREAM_POS_ERR;
-		}
-		return m_hFile.SeekRaw(0, SEEK_Cur);
-	}
-
-#if defined(__linux__)
-	HRESULT CFile::GetStatusSys(OUT cFileStatusSys& statusSys)
-	{
-		// https://man7.org/linux/man-pages/man2/stat.2.html
-		int iRet = ::fstat(m_hFile, &statusSys);
-		if (iRet != 0)
-		{
-			return HResult::GetPOSIXLastDef(E_HANDLE);
-		}
-		return S_OK;
-	}
-#endif
-
-	STREAM_POS_t CFile::GetLength() const // virtual
-	{
-		//! Get the size of the open file in bytes. like MFC
-		//! @return <0 = error. (or directory?)
-		if (!isFileOpen())
-		{
-			return k_STREAM_POS_ERR;	// E_HANDLE
-		}
-#ifdef _WIN32
-#ifdef USE_FILE_POS64
-		LARGE_INTEGER FileSize;
-		bool bRet = ::GetFileSizeEx(m_hFile, &FileSize);
-		if (!bRet)
-		{
-			return k_STREAM_POS_ERR;
-		}
-		return (STREAM_POS_t)FileSize.QuadPart;
-#else
-		return ::GetFileSize(m_hFile, nullptr);
-#endif // defined(_MFC_VER) && ( _MFC_VER > 0x0600 )
-
-#elif defined(__linux__)
-		cFileStatusSys statusSys;
-		HRESULT hRes = GetStatusSys(statusSys);
-		if (FAILED(hRes))
-		{
-			return k_STREAM_POS_ERR;
-		}
-		return statusSys.st_size;
-#endif
-	}
-
-	void CFile::SetLength(STREAM_POS_t dwNewLen) // virtual
-	{
-		//! Grow/Shrink the file.
-		//! Stupid MFC has void return. use HResult::GetLast()
-		ASSERT(isFileOpen());
-#ifdef _WIN32
-		m_hFile.SeekRaw(dwNewLen, SEEK_Set);	// SetFilePointer() . maybe beyond end ?
-		if (!::SetEndOfFile(m_hFile))	// truncate to this length 
-		{
-			// ASSUME HResult::GetLast() set.
-			DEBUG_ERR(("cFile::SetLength %d ERR='%s'", dwNewLen, LOGERR(HResult::GetLast())));
-			// CFileException::ThrowOsError( HResult::GetLastDef(), m_strFileName);
-		}
-		else
-		{
-			::SetLastError(NO_ERROR);
-		}
-#elif defined(__linux__)
-		if (::ftruncate(m_hFile, dwNewLen) < 0)
-		{
-			// PosixError
-			DEBUG_ERR(("cFile::SetLength %d ERR='%s'", dwNewLen, LOGERR(HResult::GetLast())));
-		}
-#endif
-	}
-
-	HRESULT CFile::Write(const void* pData, size_t nDataSize)
-	{
-		//! Write a block to the stream. advance the current position. Like WriteX
-		//! @return length written. <0 = FAILED
-		//!   ERROR_INVALID_USER_BUFFER = too many async calls ?? wait
-		//!   ERROR_IO_PENDING = must wait!?
-
-		HRESULT hResLengthWritten = m_hFile.WriteX(pData, nDataSize);
-		if (FAILED(hResLengthWritten))
-		{
-			if (hResLengthWritten == E_HANDLE)	// handle is junk!! No idea why. Clear it.
-			{
-				Close();
-			}
-			DEBUG_ASSERT(hResLengthWritten == (HRESULT)nDataSize, "Write");
-		}
-		return (HRESULT)hResLengthWritten;
-	}
-
-#endif // ! _MFC_VER
-
-	//***************************************************************************
-	// -cFile
-
-	cStringF cFile::get_FileTitleX() const
-	{
-		//! Get file name and ext
-		//! Don't use MFC GetFileTitle() since MFC does not include EXT
-		return cFilePath::GetFileName(get_FilePath());
-	}
-
-	cStringF cFile::get_FileExt() const
-	{
-		//! get the EXTension including the .
-		//! Must replace the stupid MFC version of this.
-		return cFilePath::GetFileNameExt(get_FilePath(), get_FilePath().GetLength());
-	}
-
-	bool cFile::IsFileExt(const FILECHAR_t* pszExt) const noexcept
-	{
-		//! is the pszExt a match? MIME
-		return cFilePath::IsFileNameExt(get_FilePath(), pszExt);
-	}
-
-	HRESULT cFile::OpenSetup(cStringF sFilePath, OF_FLAGS_t nOpenFlags)
-	{
-		//! Internal function to set internal params.
-		//! Similar to SetFilePath() in MFC ?
-		//! @arg nOpenFlags = OF_BINARY | OF_WRITE
-		//! @return
-		//!  S_FALSE = success , already open.
-		//!  S_OK = success
-
-		if (sFilePath.IsEmpty() || !get_FilePath().CompareNoCase(sFilePath))
-		{
-			// Name is already set ? and already open ?
-			if (isFileOpen() && m_nOpenFlags == nOpenFlags)
-			{
-				ASSERT(!get_FilePath().IsEmpty());
-				return S_FALSE;
-			}
-		}
-
-		Close();	// Make sure it's closed first. re-using this structure.
-
-		if (!sFilePath.IsEmpty())
-		{
-			m_strFileName = sFilePath;
-		}
-
-		m_nOpenFlags = nOpenFlags;
-
-		// DEBUG_TRACE(( "Open file '%s' flags=0%x", LOGSTR(m_strFileName), nOpenFlags ));
-		return S_OK;
-	}
-
-	HRESULT cFile::OpenCreate(cStringF sFilePath, OF_FLAGS_t nOpenFlags, _SECURITY_ATTRIBUTES* pSa)
+	HRESULT cFile::OpenCreate(cStringF sFilePath, OF_FLAGS_t nOpenFlags, ::_SECURITY_ATTRIBUTES* pSa)
 	{
 		//! Open a file by name.
 		//! @arg nOpenFlags = OF_READ | OF_WRITE | OF_READWRITE
@@ -311,34 +182,20 @@ namespace Gray
 			{
 				return hRes;
 			}
-			ASSERT(isFileOpen());
+			ASSERT(isValidHandle());
 			SeekToBegin();	// act like a new open()
 			return S_OK;
 		}
 
-		ASSERT(!isFileOpen());
-#ifdef _MFC_VER
-		if (!CFile::Open(m_strFileName, nOpenFlags))	// doesn't use pSa
-		{
-			hRes = HResult::GetLastDef(HRESULT_WIN32_C(ERROR_FILE_NOT_FOUND));
-		}
-#else
-		hRes = CFile::OpenCreate(m_strFileName, nOpenFlags, nullptr);
-#endif
+		ASSERT(!isValidHandle());
+		hRes = OpenCreate2(m_strFileName, nOpenFlags, nullptr);
 		if (hRes == HRESULT_WIN32_C(ERROR_PATH_NOT_FOUND) && (nOpenFlags & OF_CREATE))
 		{
 			// must create the stupid path first.
 			hRes = cFileDir::CreateDirForFileX(m_strFileName);
 			if (SUCCEEDED(hRes))
 			{
-#ifdef _MFC_VER
-				if (!CFile::Open(m_strFileName, nOpenFlags))
-				{
-					hRes = HResult::GetLastDef(HRESULT_WIN32_C(ERROR_FILE_NOT_FOUND));
-				}
-#else
-				hRes = CFile::OpenCreate(m_strFileName, nOpenFlags, nullptr);
-#endif
+				hRes = OpenCreate2(m_strFileName, nOpenFlags, nullptr);
 			}
 		}
 		if (FAILED(hRes))
@@ -400,28 +257,122 @@ namespace Gray
 	void cFile::Close() noexcept  // virtual
 	{
 		//! cStream
-		if (!isFileOpen())
+		if (!isValidHandle())
 			return;
 		sm_iFilesOpen--;
 		DEBUG_CHECK(sm_iFilesOpen >= 0);
-		CFile::Close();	// NOT __super from cStream
+		CloseHandle();	// NOT __super from cStream
 	}
 
-	HANDLE cFile::DetachFileHandle() noexcept
+	HANDLE cFile::DetachHandle() noexcept
 	{
-#ifdef _MFC_VER
-		HANDLE h = m_hFile;
-		if (h == CFile::hFileNull)
-			return INVALID_HANDLE_VALUE;
-		m_hFile = CFile::hFileNull;
-#else
-		if (!m_hFile.isValidHandle())
+		if (!isValidHandle())
 			return INVALID_HANDLE_VALUE; //  CFile::hFileNull;
-		HANDLE h = m_hFile.DetachHandle();	// Dont do anything with this handle. assume caller takes care or it.
-#endif
+		HANDLE h = cOSHandle::DetachHandle();	// Dont do anything with this handle. assume caller takes care or it.
 		sm_iFilesOpen--;
 		DEBUG_CHECK(sm_iFilesOpen >= 0);
 		return h;
+	}
+
+	cStringF cFile::get_FileTitleX() const
+	{
+		//! Get file name and ext
+		//! MFC does not include EXT in title.
+		return cFilePath::GetFileName(get_FilePath());
+	}
+
+	cStringF cFile::get_FileExt() const
+	{
+		//! get the EXTension including the .
+		//! Must replace the stupid MFC version of this.
+		return cFilePath::GetFileNameExt(get_FilePath(), get_FilePath().GetLength());
+	}
+
+	bool cFile::IsFileExt(const FILECHAR_t* pszExt) const noexcept
+	{
+		//! is the pszExt a match? MIME
+		return cFilePath::IsFileNameExt(get_FilePath(), pszExt);
+	}
+
+	STREAM_POS_t cFile::GetPosition() const // virtual
+	{
+		//! Get the current read position in the file.
+		if (!isValidHandle())
+		{
+			return k_STREAM_POS_ERR;
+		}
+		return SeekRaw(0, SEEK_Cur);
+	}
+
+#if defined(__linux__)
+	HRESULT CFile::GetStatusSys(OUT cFileStatusSys& statusSys)
+	{
+		// https://man7.org/linux/man-pages/man2/stat.2.html
+		int iRet = ::fstat(m_hFile, &statusSys);
+		if (iRet != 0)
+		{
+			return HResult::GetPOSIXLastDef(E_HANDLE);
+		}
+		return S_OK;
+	}
+#endif
+
+	STREAM_POS_t cFile::GetLength() const // virtual
+	{
+		//! Get the size of the open file in bytes. like MFC
+		//! @return <0 = error. (or directory?)
+		if (!isValidHandle())
+		{
+			return k_STREAM_POS_ERR;	// E_HANDLE
+		}
+#ifdef _WIN32
+#ifdef USE_FILE_POS64
+		LARGE_INTEGER FileSize;
+		bool bRet = ::GetFileSizeEx(get_Handle(), &FileSize);
+		if (!bRet)
+		{
+			return k_STREAM_POS_ERR;
+		}
+		return (STREAM_POS_t)FileSize.QuadPart;
+#else
+		return ::GetFileSize(m_hFile, nullptr);
+#endif
+
+#elif defined(__linux__)
+		cFileStatusSys statusSys;
+		HRESULT hRes = GetStatusSys(statusSys);
+		if (FAILED(hRes))
+		{
+			return k_STREAM_POS_ERR;
+		}
+		return statusSys.st_size;
+#endif
+	}
+
+	void cFile::SetLength(STREAM_POS_t dwNewLen) // virtual
+	{
+		//! Grow/Shrink the file.
+		//! Since MFC has void return use HResult::GetLast()
+		ASSERT(isValidHandle());
+#ifdef _WIN32
+		SeekRaw(dwNewLen, SEEK_Set);	// SetFilePointer() . maybe beyond end ?
+		if (!::SetEndOfFile(get_Handle()))	// truncate to this length 
+		{
+			// ASSUME HResult::GetLast() set.
+			DEBUG_ERR(("cFile::SetLength %d ERR='%s'", dwNewLen, LOGERR(HResult::GetLast())));
+			// CFileException::ThrowOsError( HResult::GetLastDef(), m_strFileName);
+		}
+		else
+		{
+			::SetLastError(NO_ERROR);
+		}
+#elif defined(__linux__)
+		if (::ftruncate(m_hFile, dwNewLen) < 0)
+		{
+			// PosixError
+			DEBUG_ERR(("cFile::SetLength %d ERR='%s'", dwNewLen, LOGERR(HResult::GetLast())));
+		}
+#endif
 	}
 
 	bool cFile::SetFileTime(const cTimeFile* lpCreationTime, const cTimeFile* lpAccessTime, const cTimeFile* lpLastWriteTime)
@@ -433,12 +384,12 @@ namespace Gray
 		//! Similar to CFile::SetStatus() and __linux__ utime()
 		//! @return true = OK;
 
-		if (!isFileOpen())
+		if (!isValidHandle())
 		{
 			return false;
 		}
 #ifdef _WIN32
-		return ::SetFileTime(m_hFile,
+		return ::SetFileTime(get_Handle(),
 			lpCreationTime,
 			lpAccessTime,
 			lpLastWriteTime);
@@ -498,14 +449,14 @@ namespace Gray
 		//! Similar to CFile::GetStatus()
 		//! Same as cFileDir::ReadFileStatus()
 
-		if (!isFileOpen())
+		if (!isValidHandle())
 		{
 			return HRESULT_WIN32_C(ERROR_INVALID_TARGET_HANDLE);
 		}
 
 #ifdef _WIN32
-		BY_HANDLE_FILE_INFORMATION fi;
-		if (!::GetFileInformationByHandle(m_hFile, &fi))
+		::BY_HANDLE_FILE_INFORMATION fi;
+		if (!::GetFileInformationByHandle(get_Handle(), &fi))
 		{
 			return HResult::GetLastDef(E_HANDLE);
 		}
@@ -534,7 +485,7 @@ namespace Gray
 		return S_OK;
 	}
 
-	HRESULT cFile::ReadX(void* pData, size_t nDataSize) // virtual - disambiguate.
+	HRESULT cFile::ReadX(void* pData, size_t nDataSize) noexcept // virtual - disambiguate.
 	{
 		//! Read a block from the stream. advance the current position.
 		//! @return
@@ -548,28 +499,16 @@ namespace Gray
 		{
 			// just skip it.
 			STREAM_POS_t nPosStart = GetPosition();
-			HRESULT hRes = SeekX(nDataSize, SEEK_Cur);
+			HRESULT hRes = cOSHandle::SeekX(nDataSize, SEEK_Cur);
 			if (FAILED(hRes))
 			{
 				return hRes;
 			}
 			STREAM_POS_t nPosCur = GetPosition();
-			return (HRESULT)(nPosCur - nPosStart);
+			return (HRESULT)(nPosCur - nPosStart);	// <= nDataSize
 		}
 
-#if defined(_MFC_VER)
-		// catch throw ?
-		UINT nLengthRead = __super::Read(pData, (UINT)nDataSize);
-		if (nLengthRead <= 0)
-		{
-			HRESULT hRes = HResult::GetLastDef(HRESULT_WIN32_C(ERROR_READ_FAULT));
-			// GetLastError() = ERROR_HANDLE_EOF = No more data ?
-			return hRes;
-		}
-		return nLengthRead;
-#else
-		return m_hFile.ReadX(pData, nDataSize);
-#endif
+		return cOSHandle::ReadX(pData, nDataSize);
 	}
 
 	HRESULT cFile::WriteX(const void* pData, size_t nDataSize) // virtual - disambiguate.
@@ -580,6 +519,9 @@ namespace Gray
 		//! @return
 		//!  length written.
 		//!  <0 = FAILED
+		//!   ERROR_INVALID_USER_BUFFER = too many async calls ?? wait
+		//!   ERROR_IO_PENDING = must wait!?
+
 		if (nDataSize == 0)	// nothing to do.
 		{
 			return 0;
@@ -589,53 +531,34 @@ namespace Gray
 			ASSERT(pData != nullptr);
 			return E_POINTER;
 		}
-#if defined(_MFC_VER) && ( _MFC_VER > 0x0600 )
-		// NOTE: _MFC_VER >= v7 returns void from Write!!
-		__super::Write(pData, (UINT)nDataSize);
-		return (HRESULT)nDataSize;
-#else
-		return CFile::Write(pData, nDataSize);
-#endif
+
+		HRESULT hResLengthWritten = cOSHandle::WriteX(pData, nDataSize);
+		if (FAILED(hResLengthWritten))
+		{
+			if (hResLengthWritten == E_HANDLE)	// handle is junk!! No idea why. Clear it.
+			{
+				Close();
+			}
+			DEBUG_ASSERT(hResLengthWritten == (HRESULT)nDataSize, "Write");
+		}
+		return (HRESULT)hResLengthWritten;
 	}
 
 	HRESULT cFile::FlushX() // virtual
 	{
 		//! synchronous flush of write data to file.
-		if (!isFileOpen())
+		if (!isValidHandle())
 			return S_OK;
-#ifdef _MFC_VER
-		CFile::Flush();	// catch throw ?
-#else
-		HRESULT hRes = m_hFile.FlushX();
+		HRESULT hRes = cOSHandle::FlushX();
 		if (FAILED(hRes))
 		{
 			DEBUG_WARN(("File Flush failed"));
 			// CFileException::ThrowOsError( HResult::GetLast(), m_strFileName);
 			return hRes;
 		}
-#endif
 		return S_OK;
 	}
-
-	HRESULT cFile::SeekX(STREAM_OFFSET_t lOffset, SEEK_ORIGIN_TYPE eSeekOrigin) // virtual
-	{
-		//! Change or get the current file position pointer.
-		//! Compatible with MFC definition.
-		//! Might be 'const' but MFC wont allow that
-		//! @arg eSeekOrigin = // SEEK_SET ?
-		//! @return the New position, -1=FAILED
-		if (!isFileOpen())
-		{
-			return E_HANDLE;
-		}
-#ifdef _MFC_VER
-		CFile::Seek(lOffset, eSeekOrigin);
-		return S_OK;
-#else
-		return m_hFile.SeekX(lOffset, eSeekOrigin);
-#endif
-	}
-
+ 
 	HRESULT GRAYCALL cFile::DeletePath(const FILECHAR_t* pszFilePath) // static
 	{
 		//! Use 'DeletePath' name because windows uses a "#define" macro to overload DeleteFile()!

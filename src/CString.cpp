@@ -1,5 +1,5 @@
 //
-//! @file cString.CPP
+//! @file cString.cpp
 //! similar to the MFC CString
 //! similar to the STL string and wstring, basic_string<char>
 //! @note if a string is used by 2 threads then the usage count must be thread safe.
@@ -24,14 +24,14 @@ namespace Gray
 	// -cString, cStringT<>, cStringT
 
 	template<>
-	const char CStringT<char>::m_Nil = '\0';		// Use this instead of nullptr. AKA cStrConst::k_Empty ?
+	const char cStringBaseT<char>::m_Nil = '\0';		// Use this instead of nullptr. AKA cStrConst::k_Empty ?
 	template<>
-	const wchar_t CStringT<wchar_t>::m_Nil = '\0';	// Use this instead of nullptr. AKA cStrConst::k_Empty ?
+	const wchar_t cStringBaseT<wchar_t>::m_Nil = '\0';	// Use this instead of nullptr. AKA cStrConst::k_Empty ?
 
 	template< typename _TYPE_CH>
-	void CStringT<_TYPE_CH>::AllocBuffer(StrLen_t iNewLength)
+	void cStringBaseT<_TYPE_CH>::AllocBuffer(StrLen_t iNewLength)
 	{
-		//! Dynamic allocate a buffer to hold the string.
+		//! Dynamic allocate a buffer to hold the string. resize existing or create new.
 		//! @arg iNewLength = chars not including null
 
 		ASSERT(isValidString());
@@ -43,12 +43,12 @@ namespace Gray
 			return;
 		}
 
-		CStringData* pDataNew;
+		DATA_t* pDataNew;
 		const size_t iStringLengthBytes = (iNewLength + 1) * sizeof(_TYPE_CH);
 		if (m_pchData == &m_Nil)
 		{
 			// Make a new string.
-			pDataNew = new(iStringLengthBytes) CStringData;	// allocate extra space and call its constructor
+			pDataNew = DATA_t::CreateStringData(iNewLength);	// allocate extra space and call its constructor
 			ASSERT(pDataNew != nullptr);
 			pDataNew->IncRefCount();
 		}
@@ -62,62 +62,62 @@ namespace Gray
 				// just change the existing ref. or it may be the same size.
 				if (nOldLen == iNewLength)	// no change.
 					return;
-				pDataNew = (CStringData*)cHeap::ReAllocPtr(pDataOld, sizeof(CStringData) + iStringLengthBytes);
+				pDataNew = (DATA_t*)cHeap::ReAllocPtr(pDataOld, sizeof(DATA_t) + iStringLengthBytes);
 				ASSERT_NN(pDataNew);
+				pDataNew->put_CharCount(iNewLength);	// changed.
 			}
 			else
 			{
 				// Make a new string. Copy from old. So we can change size.
 				// NOTE: we maybe duping our self. (to change length)
 				ASSERT(iRefCounts > 1);
-				pDataNew = new(iStringLengthBytes) CStringData;
+				pDataNew = DATA_t::CreateStringData(iNewLength);
 				ASSERT_NN(pDataNew);
 				pDataNew->IncRefCount();
-				StrT::CopyLen(reinterpret_cast<_TYPE_CH*>(pDataNew->GetString()), m_pchData, MIN(iNewLength, nOldLen) + 1); // Copy from old
+				StrT::CopyLen(pDataNew->get_Data(), m_pchData, MIN(iNewLength, nOldLen) + 1); // Copy from old
 				pDataOld->DecRefCount();	// release ref to previous string.
 			}
 		}
 
-		ASSERT(cHeap::GetSize(pDataNew) >= (sizeof(CStringData) + iStringLengthBytes));
-		pDataNew->put_CharCount(iNewLength);
+		ASSERT(cHeap::GetSize(pDataNew) >= (sizeof(DATA_t) + iStringLengthBytes));
 
-		m_pchData = reinterpret_cast<_TYPE_CH*>(pDataNew->GetString());
+		m_pchData = pDataNew->get_Data();
 		m_pchData[iNewLength] = '\0';	// might just be trimming an existing string.
 	}
 
 	template< typename _TYPE_CH>
-	void CStringT<_TYPE_CH>::CopyBeforeWrite()
+	void cStringBaseT<_TYPE_CH>::CopyBeforeWrite()
 	{
 		//! We are about to modify/change this. so make sure we don't interfere with other refs.
 		//! Dupe this string.
-		//! This might not be thread safe ! if we start with 1 ref we may make another before we are done !
+		//! This might not be thread safe ?! if we start with 1 ref we may make another before we are done !
 		if (IsEmpty())
 			return;
-		CStringData* pData = GetData();
+		DATA_t* pData = GetData();
 		if (pData->get_RefCount() > 1)
 		{
-			// dupe if there are other viewers. .
+			// dupe if there are other viewers.
 			AllocBuffer(pData->get_CharCount());
 		}
 		else
 		{
-			// i own this and i can do as a please with it.
+			// i solely own this and i can do as a please with it.
 		}
 		ASSERT(pData->get_RefCount() <= 1);
 	}
 
 	template< typename _TYPE_CH>
-	void CStringT<_TYPE_CH>::ReleaseBuffer(StrLen_t nNewLength)
+	void cStringBaseT<_TYPE_CH>::ReleaseBuffer(StrLen_t nNewLength)
 	{
 		//! Call this after using GetBuffer() or GetBufferSetLength();
 		//! Reset size to actual used size.
-		//! nNewLength = count of chars, not including null char at the end.
+		//! nNewLength = new (trimmed) count of chars, not including '\0' char at the end.
 		if (m_pchData == &m_Nil)
 		{
 			ASSERT(nNewLength == 0);
 			return;
 		}
-		CStringData* pData = GetData();
+		DATA_t* pData = GetData();
 		ASSERT(pData->get_RefCount() == 1);
 		if (nNewLength <= k_StrLen_UNK)	// default to current length
 		{
@@ -127,8 +127,9 @@ namespace Gray
 		{
 			EmptyValid();	// make sure we all use m_Nil for empty. NOT nullptr
 		}
-		else
+		else if (nNewLength != pData->get_CharCount())
 		{
+			// Shrink allocation ? or Leave allocation size the same ??
 			ASSERT(nNewLength <= pData->get_CharCount());
 			pData->put_CharCount(nNewLength);	// just shorten length.
 			m_pchData[nNewLength] = '\0';	// Can we assume this is already true ?
@@ -136,11 +137,16 @@ namespace Gray
 		ASSERT(isValidString());
 	}
 
+	/// <summary>
+	/// Allow direct manipulation of the string buffer. ASSUME ReleaseBuffer() will be called.
+	/// like MFC GetBufferSetLength also
+	/// </summary>
+	/// <typeparam name="_TYPE_CH">char or wchar_t</typeparam>
+	/// <param name="iMinLength">not including null</param>
+	/// <returns></returns>
 	template< typename _TYPE_CH>
-	_TYPE_CH* CStringT<_TYPE_CH>::GetBuffer(StrLen_t iMinLength)
+	_TYPE_CH* cStringBaseT<_TYPE_CH>::GetBuffer(StrLen_t iMinLength)
 	{
-		//! like MFC GetBufferSetLength also
-		//! iMinLength = not including null
 		ASSERT(iMinLength >= 0);
 		if (iMinLength > GetLength())
 		{
@@ -153,7 +159,7 @@ namespace Gray
 #ifdef _DEBUG
 		if (iMinLength > 0)		// m_Nil is special. Cant call GetData()
 		{
-			CStringData* pData = GetData();
+			DATA_t* pData = GetData();
 			ASSERT(pData->get_CharCount() >= iMinLength);
 		}
 #endif
@@ -161,7 +167,7 @@ namespace Gray
 	}
 
 	template< typename _TYPE_CH>
-	void CStringT<_TYPE_CH>::AssignLenT(const _TYPE_CH* pszStr, StrLen_t iLenMax)
+	void cStringBaseT<_TYPE_CH>::AssignLenT(const _TYPE_CH* pszStr, StrLen_t iLenMax)
 	{
 		//! Copy pszStr into this string.
 		//! iLenMax = max chars, not including null ! NOT sizeof() or _countof() like StrT::CopyLen
@@ -204,7 +210,7 @@ namespace Gray
 
 	//*************************************************************
 	template<>
-	void CStringT<char>::AssignLen(const wchar_t* pwStr, StrLen_t iLenMax)
+	void cStringBaseT<char>::AssignLen(const wchar_t* pwStr, StrLen_t iLenMax)
 	{
 		//! Convert UNICODE to UTF8
 		//! iLenMax = _countof(StrT::k_LEN_MAX)-1 default
@@ -215,18 +221,18 @@ namespace Gray
 		AssignLenT(szTmp, iLenNew);
 	}
 	template<>
-	void CStringT<char>::AssignLen(const char* pszStr, StrLen_t iLenMax)
+	void cStringBaseT<char>::AssignLen(const char* pszStr, StrLen_t iLenMax)
 	{
 		AssignLenT(pszStr, iLenMax);
 	}
 	template<>
-	void CStringT<char>::Assign(const wchar_t* pwStr)
+	void cStringBaseT<char>::Assign(const wchar_t* pwStr)
 	{
-		//! Convert unicode to UTF8
+		//! Convert UNICODE to UTF8
 		AssignLen(pwStr, StrT::k_LEN_MAX - 1);
 	}
 	template<>
-	void CStringT<char>::Assign(const char* pszStr)
+	void cStringBaseT<char>::Assign(const char* pszStr)
 	{
 		AssignLenT(pszStr, StrT::k_LEN_MAX - 1);
 	}
@@ -234,9 +240,9 @@ namespace Gray
 	//*************************************************************
 
 	template<>
-	void CStringT<wchar_t>::AssignLen(const char* pszStr, StrLen_t iLenMax)
+	void cStringBaseT<wchar_t>::AssignLen(const char* pszStr, StrLen_t iLenMax)
 	{
-		//! Convert UTF8 to unicode
+		//! Convert UTF8 to UNICODE
 		//! iLenMax = STRMAX = _countof(StrT::k_LEN_MAX)-1 default
 
 		wchar_t wTmp[StrT::k_LEN_MAX];
@@ -244,26 +250,26 @@ namespace Gray
 		AssignLenT(wTmp, iLenNew);
 	}
 	template<>
-	void CStringT<wchar_t>::AssignLen(const wchar_t* pwStr, StrLen_t iLenMax)
+	void cStringBaseT<wchar_t>::AssignLen(const wchar_t* pwStr, StrLen_t iLenMax)
 	{
 		AssignLenT(pwStr, iLenMax);
 	}
 	template<>
-	void CStringT<wchar_t>::Assign(const wchar_t* pwStr)
+	void cStringBaseT<wchar_t>::Assign(const wchar_t* pwStr)
 	{
 		AssignLenT(pwStr, StrT::k_LEN_MAX - 1);
 	}
 	template<>
-	void CStringT<wchar_t>::Assign(const char* pszStr)
+	void cStringBaseT<wchar_t>::Assign(const char* pszStr)
 	{
-		//! Convert UTF8 to unicode
+		//! Convert UTF8 to UNICODE
 		AssignLen(pszStr, StrT::k_LEN_MAX - 1);
 	}
 
 	//*************************************************************
 
 	template< typename _TYPE_CH>
-	void CStringT<_TYPE_CH>::FormatV(const _TYPE_CH* pszFormat, va_list args)
+	void cStringBaseT<_TYPE_CH>::FormatV(const _TYPE_CH* pszFormat, va_list args)
 	{
 		//! _vsntprintf
 		//! use the normal sprintf() style.
@@ -273,7 +279,7 @@ namespace Gray
 	}
 
 	template< typename _TYPE_CH>
-	StrLen_t CStringT<_TYPE_CH>::Insert(StrLen_t i, _TYPE_CH ch)
+	StrLen_t cStringBaseT<_TYPE_CH>::Insert(StrLen_t i, _TYPE_CH ch)
 	{
 		//! @return New length.
 		if (i <= k_StrLen_UNK)
@@ -288,10 +294,8 @@ namespace Gray
 	}
 
 	template< typename _TYPE_CH>
-	StrLen_t CStringT<_TYPE_CH>::Insert(StrLen_t i, const _TYPE_CH* pszStr, StrLen_t iLenCat)
+	StrLen_t cStringBaseT<_TYPE_CH>::Insert(StrLen_t i, const _TYPE_CH* pszStr, StrLen_t iLenCat)
 	{
-		//! insert in the middle.
-		//! @return New length.
 		ASSERT_NN(pszStr);
 		if (iLenCat <= k_StrLen_UNK)
 		{
@@ -317,7 +321,7 @@ namespace Gray
 	}
 
 	template< typename _TYPE_CH>
-	CStringT<_TYPE_CH> CStringT<_TYPE_CH>::Left(StrLen_t nCount) const
+	cStringBaseT<_TYPE_CH> cStringBaseT<_TYPE_CH>::Left(StrLen_t nCount) const
 	{
 		//! Get the left nCount chars. truncate.
 		if (nCount >= GetLength())
@@ -333,7 +337,7 @@ namespace Gray
 	}
 
 	template< typename _TYPE_CH>
-	CStringT<_TYPE_CH> CStringT<_TYPE_CH>::Right(StrLen_t nCount) const
+	cStringBaseT<_TYPE_CH> cStringBaseT<_TYPE_CH>::Right(StrLen_t nCount) const
 	{
 		//! Get the right nCount chars. skip leading chars.
 		//! @return
@@ -352,7 +356,7 @@ namespace Gray
 	}
 
 	template< typename _TYPE_CH>
-	CStringT<_TYPE_CH> CStringT<_TYPE_CH>::Mid(StrLen_t nFirst, StrLen_t nCount) const
+	cStringBaseT<_TYPE_CH> cStringBaseT<_TYPE_CH>::Mid(StrLen_t nFirst, StrLen_t nCount) const
 	{
 		//! Same as STL substr() function.
 		if (nFirst >= GetLength())
@@ -361,7 +365,7 @@ namespace Gray
 	}
 
 	template< typename _TYPE_CH>
-	StrLen_t CStringT<_TYPE_CH>::Find(_TYPE_CH ch, StrLen_t nPosStart) const
+	StrLen_t cStringBaseT<_TYPE_CH>::Find(_TYPE_CH ch, StrLen_t nPosStart) const
 	{
 		StrLen_t iLen = GetLength();
 		if (nPosStart > iLen)	// ch might be '\0' ?
@@ -373,7 +377,7 @@ namespace Gray
 	}
 
 	template< typename _TYPE_CH>
-	void CStringT<_TYPE_CH>::MakeUpper()
+	void cStringBaseT<_TYPE_CH>::MakeUpper()
 	{
 		//! replaces _strupr
 		//! No portable __linux__ equiv to _strupr()?
@@ -384,7 +388,7 @@ namespace Gray
 	}
 
 	template< typename _TYPE_CH>
-	void CStringT<_TYPE_CH>::MakeLower()
+	void cStringBaseT<_TYPE_CH>::MakeLower()
 	{
 		//! replaces strlwr()
 		//! No portable __linux__ equiv to strlwr()?
@@ -395,7 +399,7 @@ namespace Gray
 	}
 
 	template< typename _TYPE_CH>
-	void CStringT<_TYPE_CH>::TrimRight()
+	void cStringBaseT<_TYPE_CH>::TrimRight()
 	{
 		//! Like MFC CString::TrimRight(), Similar to .NET String.TrimEnd()
 		StrLen_t iLenChars = GetLength();
@@ -406,7 +410,7 @@ namespace Gray
 	}
 
 	template< typename _TYPE_CH>
-	void CStringT<_TYPE_CH>::TrimLeft()
+	void cStringBaseT<_TYPE_CH>::TrimLeft()
 	{
 		//! Like MFC CString::TrimLeft(), Similar to .NET String.TrimStart()
 		_TYPE_CH* pszTrim = StrT::GetNonWhitespace(m_pchData);
@@ -438,9 +442,9 @@ namespace Gray
 		{
 			if (FAILED(hRes))
 				return hRes;
-			return HRESULT_WIN32_C(ERROR_READ_FAULT) ;
+			return HRESULT_WIN32_C(ERROR_READ_FAULT);
 		}
-		return iLenMax ;
+		return iLenMax;
 	}
 
 	template< typename _TYPE_CH>
@@ -534,7 +538,7 @@ namespace Gray
 			sTmp += psz1;
 			psz1 = va_arg(vargs, const _TYPE_CH*); // next
 		}
-		va_end(vargs); 
+		va_end(vargs);
 		return sTmp;
 	}
 
@@ -666,8 +670,8 @@ namespace Gray
 
 	// force implementation/instantiate for DLL/SO.
 #ifndef _MFC_VER
-	template class GRAYCORE_LINK CStringT < char >;		// force implementation/instantiate for DLL/SO.
-	template class GRAYCORE_LINK CStringT < wchar_t >;	// force implementation/instantiate for DLL/SO.
+	template class GRAYCORE_LINK cStringBaseT < char >;		// force implementation/instantiate for DLL/SO.
+	template class GRAYCORE_LINK cStringBaseT < wchar_t >;	// force implementation/instantiate for DLL/SO.
 #endif
 	template class GRAYCORE_LINK cStringT < char >;
 	template class GRAYCORE_LINK cStringT < wchar_t >;

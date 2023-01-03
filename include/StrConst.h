@@ -19,11 +19,11 @@ namespace Gray
 #define __TOW(x)	L##x		//!< convert literal "" to UNICODE. like __T(x) macro for UNICODE. or OLESTR()
 
 #if USE_UNICODE
-	typedef wchar_t GChar_t;		//!< My version of TCHAR, _TCHAR
+	typedef wchar_t GChar_t;		//!< My version of TCHAR, _TCHAR for UI operations.
 #define _GT(x)		__TOW(x)	//!< like _T(x) macro for static text.
 #define _GTN(c)		c##W		//!< _WIN32 name has a A or W for UTF8 or UNICODE (like _FNF)
 #else
-	typedef char GChar_t;			//!< My version of TCHAR, _TCHAR
+	typedef char GChar_t;			//!< My version of TCHAR, _TCHAR for UI operations.
 #define _GT(x)		__TOA(x)	//!< like _T(x) macro for static text.
 #define _GTN(c)		c##A		//!< _WIN32 name has a A or W for UTF8 or UNICODE (like _FNF)
 #endif
@@ -31,7 +31,7 @@ namespace Gray
 
 	typedef int StrLen_t;	//!< the length of a string in chars (bytes for UTF8, wchar_t for UNICODE). or offset in characters. NOT always valid for (p1-p2) for 32vs64 bit code.
 #define STRMAX(x) ((::Gray::StrLen_t)(_countof(x)-1))	//!< Get Max size of static string space. minus the '\0' terminator character.
-	const StrLen_t k_StrLen_UNK = -1;		//!< use the default/current length of the string argument.
+	constexpr StrLen_t k_StrLen_UNK = -1;		//!< use the default/current length of the string argument.
 
 #define STRLIT2(s)	(s), STRMAX(s)		//!< Macro to automatically add the size of literal string or fixed size buffer.
 

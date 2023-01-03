@@ -16,25 +16,35 @@
 
 namespace Gray
 {
+	/// <summary>
+	/// An array of some sorted TYPE. duplicates are destroyed.
+	/// default is that it is just sorted by its bytes.
+	/// Similar to .NET HashSet
+	/// </summary>
+	/// <typeparam name="TYPE"></typeparam>
+	/// <typeparam name="TYPE_ARG"></typeparam>
+	/// <typeparam name="TYPE_KEY"></typeparam>
 	template<class TYPE, class TYPE_ARG, typename TYPE_KEY>
 	class cArraySorted : public cArrayTyped < TYPE, TYPE_ARG >
 	{
-		//! @class Gray::cArraySorted
-		//! An array of some sorted TYPE. duplicates are destroyed.
-		//! default is that it is just sorted by its bytes.
-		//! Similar to .NET HashSet
-
 	public:
 		typedef cArrayTyped<TYPE, TYPE_ARG> SUPER_t;
+		typedef TYPE ELEM_t;
 		typedef TYPE_ARG ARG_t;
 		typedef TYPE_KEY KEY_t;		// make a typedef for this type.
 
 	protected:
+
+		/// <summary>
+		/// Compare by a key that may not be part of a data record (yet).
+		/// Default implementation. Overload this for proper implementation.
+		/// @note If we reach here assume the key is &reference to the whole record !
+		/// </summary>
+		/// <param name="key1"></param>
+		/// <param name="Data2"></param>
+		/// <returns></returns>
 		virtual COMPARE_t CompareKey(KEY_t key1, TYPE_ARG Data2) const noexcept
 		{
-			//! Compare by a key that may not be part of a data record (yet).
-			//! Default implementation. Overload this for proper implementation.
-			//! @note If we reach here assume the key is &reference to the whole record !
 			return cMem::Compare(&key1, &Data2, sizeof(TYPE_KEY));
 		}
 
@@ -60,12 +70,16 @@ namespace Gray
 			// Make this virtual to allow derived classes to override this and make destructors work.
 		}
 
-		ITERATE_t FindINear(TYPE_ARG pNew, OUT COMPARE_t& iCompareRes) const noexcept;
 		ITERATE_t FindINearKey(KEY_t key, OUT COMPARE_t& iCompareRes) const noexcept;
+		ITERATE_t FindINear(TYPE_ARG pNew, OUT COMPARE_t& iCompareRes) const noexcept;
+
+		/// <summary>
+		/// Find index for exact key match. Similar to FindIFor()
+		/// </summary>
+		/// <param name="key"></param>
+		/// <returns>index into array. 0 based of course. -1 = failed</returns>
 		ITERATE_t FindIForKey(KEY_t key) const noexcept
 		{
-			//! Find index for exact key match. Similar to FindIFor()
-			//! @return index into array. 0 based of course. -1 = failed
 			COMPARE_t iCompareRes;
 			const ITERATE_t index = FindINearKey(key, OUT iCompareRes);
 			if (iCompareRes != COMPARE_Equal)
@@ -73,10 +87,13 @@ namespace Gray
 			return index;
 		}
 
+		/// <summary>
+		/// Find first the occurrence of this nKey. Since values are allowed to duplicate.
+		/// </summary>
+		/// <param name="nKey"></param>
+		/// <returns>index, -1 = k_ITERATE_BAD = none.</returns>
 		ITERATE_t FindIFirstForKey(TYPE_KEY nKey) const
 		{
-			//! Find first the occurrence of this nKey. Since values are allowed to duplicate.
-			//! @return index, -1 = k_ITERATE_BAD = none.
 			ITERATE_t i = this->FindIForKey(nKey);
 			if (i < 0)
 				return k_ITERATE_BAD;
@@ -108,9 +125,15 @@ namespace Gray
 			return i - 1;	// last
 		}
 
+		/// <summary>
+		/// Add entry into array if i already know its sorted. For use with FindINearKey()
+		/// </summary>
+		/// <param name="index"></param>
+		/// <param name="iCompareRes"></param>
+		/// <param name="pNew"></param>
+		/// <returns>index in the array. (temporary if sorted)</returns>
 		ITERATE_t AddPresorted(ITERATE_t index, COMPARE_t iCompareRes, TYPE_ARG pNew)
 		{
-			//! @return index in the array. (temporary if sorted)
 			if (iCompareRes > 0) // key is greater than existing element at index. so put it after.
 			{
 				index++;
@@ -199,7 +222,7 @@ namespace Gray
 	template<class TYPE, class TYPE_ARG, typename TYPE_KEY>
 	ITERATE_t cArraySorted<TYPE, TYPE_ARG, TYPE_KEY>::FindINearKey(KEY_t key, OUT COMPARE_t& riCompareRes) const noexcept
 	{
-		//! Do a binary search for the key.
+		//! Do a binary search for the key. For use with AddPresorted()
 		//! @return
 		//! @arg index
 		//! @arg iCompareRes =
@@ -368,6 +391,7 @@ namespace Gray
 	public:
 		typedef cArraySorted<TYPE, const TYPE&, _TYPE_HASH> SUPER_t;
 
+		typedef typename SUPER_t::ELEM_t ELEM_t;
 		typedef typename SUPER_t::ARG_t ARG_t; // template weirdness.
 		typedef typename SUPER_t::KEY_t KEY_t;
 
@@ -439,15 +463,6 @@ namespace Gray
 				return false;
 			return this->GetAt(i) != nullptr ;
 		}
-
-#if 0
-		TYPE_PTR GetAt(ITERATE_t index) const noexcept
-		{
-			//! Cast to TYPE_PTR helper.
-			//! @note caller should put the result in TYPE (cRefPtr) derived pointer.
-			return this->GetAt(index);
-		}
-#endif
 
 		TYPE GetAtCheck(ITERATE_t nIndex) const
 		{
@@ -624,14 +639,15 @@ namespace Gray
 		//! @class Gray::cArraySortPtrHash
 	};
 
-
+	/// <summary>
+	/// A get_Name() sorted array of some TYPE* pointers. overload this.
+	/// ASSUME supports get_Name()
+	/// </summary>
+	/// <typeparam name="TYPE"></typeparam>
+	/// <typeparam name="_TYPECH"></typeparam>
 	template<class TYPE, typename _TYPECH = GChar_t>
 	class cArraySortPtrName : public cArraySortFacade < TYPE*, TYPE*, const _TYPECH* >
 	{
-		//! @class Gray::cArraySortPtrName
-		//! A get_Name() sorted array of some TYPE* pointers. overload this
-		//! ASSUME supports get_Name()
-
 	public:
 		typedef cArraySortFacade<TYPE*, TYPE*, const _TYPECH*> SUPER_t;
 

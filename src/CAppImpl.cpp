@@ -25,25 +25,30 @@ namespace Gray
 			if (sArg.Compare(m_pszSwitch) == 0)	// case Sensitive.
 				return true;
 		}
-		return sArg.CompareNoCase(StrArg<FILECHAR_t>(m_pszName)) == 0;
+		return sArg.IsEqualNoCase(StrArg<FILECHAR_t>(m_pszName));
 	}
 
+	/// <summary>
+	/// request help text via the command line
+	/// All apps should support "-help" "-?" requests for assistance.
+	/// Is this arg present on the command line ? like FindCommandArg()
+	/// </summary>
 	class cAppCmdHelp : public cAppCommand
 	{
-		//! requesting help text via the command line
-		//! All apps should support "-help" "-?" requests for assistance.
-		//! Is this arg present on the command line ? like FindCommandArg()
 	public:
 		cAppCmdHelp()
 			: cAppCommand(_FN("?"), "help", nullptr, "Get a general description of this program.")	// CATOM_N()
 		{
 		}
 
+		/// <summary>
+		/// Show my help text via console or dialog .
+		/// </summary>
+		/// <param name="iArgN"></param>
+		/// <param name="pszArg">nullptr or extra arg for specific help.</param>
+		/// <returns></returns>
 		HRESULT DoCommand(int iArgN, const FILECHAR_t* pszArg) override
 		{
-			//! Show my help text via console or dialog .
-			//! pszArg = nullptr or extra arg for specific help.
-
 			UNREFERENCED_PARAMETER(iArgN);
 			UNREFERENCED_PARAMETER(pszArg);
 
@@ -55,16 +60,17 @@ namespace Gray
 
 			// Break into multi lines.
 			log.addEventS(LOG_ATTR_PRINT, LOGLEV_MAJOR, sText, "");
-
 			return 0;	// consume no more arguments.
 		}
 	};
 
 	static cAppCmdHelp k_Help;			//!< basic help command.
 
+	/// <summary>
+	/// I want to debug something in startup code.
+	/// </summary>
 	class cAppCmdWaitForDebug : public cAppCommand
 	{
-		// I want to debug something in startup code.
 	public:
 		cAppCmdWaitForDebug()
 			: cAppCommand(_FN("wfd"), "waitfordebugger", nullptr, "Wait for the debugger to attach.") // CATOM_N()
@@ -76,7 +82,6 @@ namespace Gray
 			// TODO  pop message box or use console ? to wait for user input.
 			UNREFERENCED_PARAMETER(iArgN);
 			UNREFERENCED_PARAMETER(pszArg);
-
 			return E_NOTIMPL;
 		}
 	};
@@ -272,12 +277,6 @@ namespace Gray
 
 	int cAppImpl::Run() // virtual 
 	{
-		//! APPSTATE_Run
-		//! Override this to make the application do something. Main loop of main thread.
-		//! Like CWinApp for MFC
-		//! @return APP_EXITCODE_t return app exit code. APP_EXITCODE_OK (NOT THREAD_EXITCODE_t?)
-		//! @note In _WIN32, If my parent is a console, the console will return immediately! Not on first message loop like old docs say.
-
 		HRESULT hRes = RunCommands();
 		if (FAILED(hRes))
 		{
@@ -320,20 +319,11 @@ namespace Gray
 
 	int cAppImpl::ExitInstance() // virtual 
 	{
-		//! APPSTATE_RunExit
-		//! Override this to make the application do something to clean up.
-		//! This should be called if Run() fails. NOT called if InitInstance fails.
-		//! Like CWinApp for MFC
-		//! @return APP_EXITCODE_t return app exit code. APP_EXITCODE_OK
 		return APP_EXITCODE_OK;
 	}
 
 	APP_EXITCODE_t cAppImpl::Main(HMODULE hInstance)
 	{
-		//! The main application entry point and process loop. Like MFC AfxWinMain() 
-		//! Assume cAppStateMain was used.
-		//! @return APP_EXITCODE_t
-
 #ifdef _DEBUG
 		DEBUG_MSG(("cAppImpl::Main '%s'", LOGSTR(m_pszAppName)));
 		APPSTATE_TYPE_ eAppState = cAppState::I().get_AppState();

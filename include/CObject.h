@@ -105,17 +105,14 @@ namespace Gray
 	};
 #endif // _MFC_VER
 
-
 	class GRAYCORE_LINK cObject : public CObject
 	{
-
 #if ! defined(_MFC_VER)
 		virtual bool isValidCheck() const noexcept	//!< memory allocation and structure definitions are valid.
 		{
 			return true;
 		}
 #endif
-
 	};
 
 #ifndef _MFC_VER

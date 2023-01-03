@@ -21,10 +21,11 @@
 
 namespace Gray
 {
+	/// <summary>
+	/// What state is the app in at the moment?
+	/// </summary>
 	enum APPSTATE_TYPE_ : BYTE
 	{
-		//! @enum Gray::APPSTATE_TYPE_
-		//! What state is the app in at the moment?
 		APPSTATE_Init,		//!< static class init time. constructors called for static stuff. maybe set for single thread loading DLL dynamically. main() not called yet.
 		APPSTATE_RunInit,	//!< not static init but still init. In main() but not main loop yet. InitInstance()
 		APPSTATE_Run,		//!< we are in main() main loop. Run() and OnTickApp()
@@ -36,13 +37,13 @@ namespace Gray
 	typedef const FILECHAR_t* const * APP_ARGS_t;	//!< the args passed to main() nullptr terminated array. const 
 	typedef FILECHAR_t** APP_ARGW_t;	// _WIN32 really defined this as LPWSTR*
 
+	/// <summary>
+	/// Parse and store command line args used to start an app. Handle Windows and POSIX/DOS formats.
+	/// Use FILECHAR_t. see k_ARG_ARRAY_MAX
+	/// Like MFC CCommandLineInfo
+	/// </summary>
 	class GRAYCORE_LINK cAppArgs
 	{
-		//! @class Gray::cAppArgs
-		//! Parse and store command line args used to start an app. Handle Windows and POSIX/DOS formats.
-		//! Use FILECHAR_t. see k_ARG_ARRAY_MAX
-		//! Like MFC CCommandLineInfo
-
 	private:
 		cStringF m_sArguments;					//!< The unparsed command line arguments. NOT including 'appname.exe'. Maybe generated as needed in get_ArgsStr(). if main() style entry.
 	public:
@@ -53,9 +54,13 @@ namespace Gray
 		void InitArgsArray(ITERATE_t argc, APP_ARGS_t ppszArgs);
 
 	public:
+		/// <summary>
+		/// Is FILECHAR_t char 'ch' a command line switch char?
+		/// </summary>
+		/// <param name="ch"></param>
+		/// <returns></returns>
 		static constexpr bool IsArgSwitch(wchar_t ch) noexcept
 		{
-			//! Is FILECHAR_t char 'ch' a command line switch char?
 			return ch == '-' || ch == '/';
 		}
 		static inline bool IsArg(const FILECHAR_t* pszArg) noexcept
@@ -85,16 +90,16 @@ namespace Gray
 		}
 	};
 
+	/// <summary>
+	/// Singleton to track the state of the current running app/process.
+	/// Don't combine this with CWinApp/cAppImpl since we may be a (dll/Shared) library or using this in static init.
+	/// Track when static init is complete and when static destructors are called.
+	/// @todo What desktop/session is this app and user attached to?
+	/// @note Use _WIN32 CSIDL_WINDOWS etc to find special app folders.
+	/// @note see CWinApp/cAppImpl for my app specialization stuff.
+	/// </summary>
 	class GRAYCORE_LINK cAppState : public cSingleton<cAppState>
 	{
-		//! @class Gray::cAppState
-		//! Singleton to track the state of the current running app/process.
-		//! Don't combine this with CWinApp/cAppImpl since we may be a (dll/Shared) library or using this in static init.
-		//! Track when static init is complete and when static destructors are called.
-		//! @todo What desktop/session is this app and user attached to?
-		//! @note Use _WIN32 CSIDL_WINDOWS etc to find special app folders.
-		//! @note see CWinApp/cAppImpl for my app specialization stuff.
-
 		friend class cSingleton < cAppState >;
 		friend class cAppImpl;
 		friend class cAppStateMain;
@@ -126,16 +131,19 @@ namespace Gray
 		static cStringF GRAYCALL get_AppFileTitle();		//!< File name no Ext.
 		static cStringF GRAYCALL get_AppFileDir();
 
+		/// <summary>
+		/// Is this the correct version of cAppState?
+		/// Must be agreed to by all code consumers. sizeof(cAppState) for checking alignments of structures.
+		/// Ensure that some external DLL/SO caller has the same structure packing that we have.
+		/// Make this inline code so it runs in the callers context.
+		/// @note make sure Lib is not shared as both DLL and static. GetEnvironStr(GRAY_NAMES "Core") contains &cAppState
+		/// </summary>
+		/// <param name="nGrayCoreVer">_INC_GrayCore_H  (from the callers perspective)</param>
+		/// <param name="nSizeofThis">sizeof(cAppState) (from the callers perspective) for structure packing check.</param>
+		/// <param name="pAppX"></param>
+		/// <returns></returns>
 		static HRESULT inline CheckValidSignatureX(UINT32 nGrayCoreVer, size_t nSizeofThis, const cAppState* pAppX) noexcept
 		{
-			//! Is this the correct version of cAppState?
-			//! Must be agreed to by all code consumers. sizeof(cAppState) for checking alignments of structures.
-			//! Ensure that some external DLL/SO caller has the same structure packing that we have.
-			//! Make this inline code so it runs in the callers context.
-			//! @arg nGrayCoreVer = _INC_GrayCore_H  (from the callers perspective)
-			//! @arg nSizeofThis = sizeof(cAppState) (from the callers perspective) for structure packing check.
-			//! @note make sure Lib is not shared as both DLL and static. GetEnvironStr(GRAY_NAMES "Core") contains &cAppState
-
 			if (nGrayCoreVer != _INC_GrayCore_H)
 			{
 				// My *Core DLL is not the correct version or packing is incorrect!
@@ -157,31 +165,44 @@ namespace Gray
 			return pApp->CheckValidSignatureI(nGrayCoreVer, nSizeofThis);
 		}
 
+		/// <summary>
+		/// Is this the correct version of cAppState?
+		/// Force inline version.
+		/// </summary>
+		/// <returns></returns>
 		static HRESULT inline CheckValidSignatureX() noexcept
 		{
-			//! Is this the correct version of cAppState?
-			//! Force inline version.
 			return CheckValidSignatureX(_INC_GrayCore_H, sizeof(cAppState), cAppState::get_SingleU());
 		}
 
+		/// <summary>
+		/// use isInCInit() for loading DLL's.
+		/// </summary>
+		/// <returns></returns>
 		APPSTATE_TYPE_ inline get_AppState() const noexcept
 		{
-			//! use isInCInit() for loading DLL's.
 			return m_eAppState;
 		}
 		static APPSTATE_TYPE_ GRAYCALL GetAppState();
 
+		/// <summary>
+		/// Indicate the process/app has changed state.
+		/// use cAppStateModuleLoad for DLL/SO loading.
+		/// </summary>
+		/// <param name="eAppState"></param>
+		/// <returns></returns>
 		void put_AppState(APPSTATE_TYPE_ eAppState) noexcept
 		{
-			//! Indicate the process/app has changed state.
-			//! use cAppStateModuleLoad for DLL/SO loading.
 			m_eAppState = eAppState;
 		}
 		void InitAppState() noexcept;
 
+		/// <summary>
+		/// The thread we started with.
+		/// </summary>
+		/// <returns></returns>
 		THREADID_t inline get_MainThreadId() const noexcept
 		{
-			//! The thread we started with.
 			return m_nMainThreadId;
 		}
 
@@ -198,9 +219,12 @@ namespace Gray
 		static cString GRAYCALL GetCurrentUserName(bool bForce = false);
 		static cStringF GRAYCALL GetCurrentUserDir(const FILECHAR_t* pszSubFolder = nullptr, bool bCreate = true);		//!< Get Root folder the user has write access to.
 
+		/// <summary>
+		/// Get current process id. similar to cOSProcess
+		/// </summary>
+		/// <returns></returns>
 		static PROCESSID_t inline get_CurrentProcessId() noexcept
 		{
-			//! similar to cOSProcess
 #ifdef _WIN32
 			return ::GetCurrentProcessId();
 #elif defined(__linux__)
@@ -247,12 +271,13 @@ namespace Gray
 		CHEAPOBJECT_IMPL;
 	};
 
+	/// <summary>
+	/// Define an instance of this at the top of WinMain(), _tmain() or main() to indicate we are in the main body of the application.
+	/// For use with cAppState and cAppImpl. this is technically a singleton but its instantiated in main()
+	/// e.g. cAppStateMain inmain();
+	/// </summary>
 	class GRAYCORE_LINK cAppStateMain
 	{
-		//! @class Gray::cAppStateMain
-		//! Define an instance of this at the top of WinMain(), _tmain() or main() to indicate we are in the main body of the application.
-		//! For use with cAppState and cAppImpl. this is technically a singleton but its instantiated in main()
-		//! e.g. cAppStateMain inmain();
 	public:
 		cAppState& m_AppState;
 
@@ -267,12 +292,13 @@ namespace Gray
 		}
 	};
 
+	/// <summary>
+	/// Define an instance of this when loading a DLL on a given thread.
+	/// @note a dynamic .DLL/.SO module can load after the app is fully loaded and in any thread.
+	/// isInCInit() will now return the correct value for DLL static init.
+	/// </summary>
 	class cAppStateModuleLoad
 	{
-		//! @class Gray::cAppStateModuleLoad
-		//! Define an instance of this when loading a DLL on a given thread.
-		//! @note a dynamic .DLL/.SO module can load after the app is fully loaded and in any thread.
-		//! isInCInit() will now return the correct value for DLL static init.
 	public:
 		cAppStateModuleLoad()
 		{
@@ -289,11 +315,12 @@ namespace Gray
 	};
 
 #if USE_CRT
+	/// <summary>
+	/// misbehaving libraries can call exit(). This does NOT work with abort() calls.
+	/// Try to catch and block this or at least log it.
+	/// </summary>
 	class GRAYCORE_LINK cAppExitCatcher : public cSingletonStatic < cAppExitCatcher >
 	{
-		//! @class Gray::cAppExitCatcher
-		//! misbehaving libraries can call exit(). This does NOT work with abort() calls.
-		//! Try to catch and block this or at least log it.
 	private:
 		static void __cdecl ExitCatchProc();
 	protected:

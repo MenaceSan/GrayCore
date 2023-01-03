@@ -234,11 +234,7 @@ namespace Gray
 	{
 		//! @note kernel debuggers like SoftIce can fool this.
 #ifdef _WIN32
-#if (_WIN32_WINNT >= 0x0400) && ! defined(UNDER_CE)
 		return ::IsDebuggerPresent() ? true : false;
-#else
-		return false;
-#endif
 #elif defined(__linux__)
 		//! @todo __linux__ is there a debugger attached?
 		return false;

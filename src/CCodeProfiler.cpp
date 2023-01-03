@@ -74,7 +74,7 @@ namespace Gray
 		{
 			cThreadGuard lock(m_Lock);
 			cCodeProfileFunc::sm_bActive = true;
-			if (m_File.isFileOpen())
+			if (m_File.isValidHandle())
 			{
 				return true;
 			}
@@ -99,12 +99,12 @@ namespace Gray
 		{
 			// cThreadLockableRef
 			ASSERT(get_Active());
-			if (!m_File.isFileOpen())
+			if (!m_File.isValidHandle())
 			{
 				return;
 			}
 			cThreadGuard lock(m_Lock);
-			if (!m_File.isFileOpen())
+			if (!m_File.isValidHandle())
 			{
 				return;
 			}

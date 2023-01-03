@@ -33,8 +33,8 @@ namespace Gray
 #define USE_FILE_POS64
 
 #else
-	typedef LONG_PTR	STREAM_OFFSET_t;	//!< Might be 64 or 32 bit relative value (signed). TODO SET USE_FILE_POS64. AKA off_t
-	typedef ULONG_PTR	STREAM_POS_t;		//!< NOT same as FILE_SIZE_t in 32 bit? Why not ?
+	typedef LONG_PTR	STREAM_OFFSET_t;	//!< Might be 64 or 32 bit relative value (signed). TODO SET USE_FILE_POS64. AKA off_t (linux)
+	typedef ULONG_PTR	STREAM_POS_t;		//!< NOT same as FILE_SIZE_t in 32 bit? Why not ? 
 
 #endif	// ! _MFC_VER
 

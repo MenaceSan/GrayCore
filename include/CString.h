@@ -2,7 +2,7 @@
 //! @file cString.h
 //! Create a UTF8/UNICODE interchangeable string.
 //! ref counted string class.
-//! STL C string emulating.
+//! STL C string emulating. NOT MFC.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
 
@@ -12,13 +12,8 @@
 #pragma once
 #endif
 
-#include "cHeapObject.h"
-#include "cRefPtr.h"
+#include "cArrayT.h"
 #include "StrT.h"
- 
-#if defined(_MFC_VER) // Only need minimal sub-set if using MFC. __ATLSTR_H__
-#include <cstringt.h>	// __ATLSIMPSTR_H__
-#endif
 
 namespace Gray
 {
@@ -26,129 +21,159 @@ namespace Gray
 	class GRAYCORE_LINK cStreamOutput;
 	class GRAYCORE_LINK cArchive;
 
-#if defined(_MFC_VER) // Only need minimal sub-set if using MFC. __ATLSTR_H__
-	// NOTE: TCHAR is always wchar_t for MFC
-#define cStringT_DEF(_TYPE_CH) ATL::CStringT< _TYPE_CH, StrTraitMFC_DLL< _TYPE_CH > >
-
-#else
-
-	class GRAYCORE_LINK CStringData : public cRefBase, public cHeapObject	// ref count
+	template< typename _TYPE_CH = char >
+	class GRAYCORE_LINK cStringDataT final : public cArrayDataT<_TYPE_CH>
 	{
-		//! @class Gray::CStringData
-		//! Contain a UTF8 or UNICODE string.
-		//! Equiv to the MFC ATL:CStringData. Variable size allocation for this.
+		typedef cArrayDataT<_TYPE_CH> SUPER_t;
+		typedef cStringDataT<_TYPE_CH> THIS_t;
 		CHEAPOBJECT_IMPL;
 
-	private:
-		//! m_nCharCount in sizeof(BaseType) (character) units. NOT always the same as bytes.
-		StrLen_t m_nCharCount;	//!< count of chars (NOT including '\0' terminator) (not the same as allocation size _msize())
-		// BaseType m_data[ m_nCharCount * sizeof(BaseType) ];
-		// BaseType m_nullchar;	// terminated with '\0' char
-
 	public:
-		void* GetString() const noexcept          // char/wchar_* to managed data
+		/// <summary>
+		/// Allocate space for chars plus '\0'
+		/// </summary>
+		/// <param name="nCharCount"></param>
+		/// <returns></returns>
+		static THIS_t* CreateStringData(StrLen_t nCharCount)
 		{
-			//! Get a pointer to the characters of the string. Stored in the space allocated after this class.
-			return (void*)(this + 1); // const_cast
+			ASSERT(nCharCount >= 0);
+			return reinterpret_cast<THIS_t*>(SUPER_t::CreateData(nCharCount + 1));
+		}
+		static THIS_t* CreateStringData2(StrLen_t nCharCount, const _TYPE_CH* pSrc)
+		{
+			THIS_t* p = CreateStringData(nCharCount);
+			if (pSrc != nullptr)
+			{
+				// init
+				StrT::CopyLen(p->get_Data(), pSrc, nCharCount + 1);
+			}
+			return p;
 		}
 
-		static void* operator new(size_t stAllocateBlock, size_t iStringLengthBytes)
+		inline const _TYPE_CH* get_Name() const noexcept
 		{
-			//! @note Make sure this is compatible with realloc() !!
-			//! must set m_nCharCount after this !
-			//! iStringLengthBytes = length in bytes includes space for '\0'.
-			ASSERT(iStringLengthBytes >= 2);	// X + '\0'
-			ASSERT(stAllocateBlock == sizeof(CStringData));
-			return cHeap::AllocPtr(stAllocateBlock + iStringLengthBytes);
+			//! supported for cArraySort. NON hash sort.
+			return get_Data();
 		}
-		static void operator delete(void* pObj, size_t iStringLengthBytes)
-		{
-			UNREFERENCED_PARAMETER(iStringLengthBytes);
-			cHeap::FreePtr(pObj);
-		}
-		static void operator delete(void* pObj)
-		{
-			cHeap::FreePtr(pObj);
-		}
-
 		inline StrLen_t get_CharCount() const noexcept
 		{
-			//! @return Number of chars. (not necessarily bytes)
-			return m_nCharCount;
+			return get_Count() - 1;	// remove '\0';
 		}
-		void put_CharCount(StrLen_t nCount) noexcept
+		void put_CharCount(StrLen_t len)
 		{
-			//! @return Number of chars. (not necessarily bytes). NOT including '/0'
-			//! DANGER.
-			m_nCharCount = nCount;
+			put_Count(len + 1);
+		}
+		bool isValidString() const noexcept
+		{
+			const StrLen_t iLen = get_CharCount();
+			if (!IsValidInsideN(iLen * sizeof(_TYPE_CH)))
+				return false;		// should never happen!
+			if (get_RefCount() <= 0)
+				return false;		// should never happen!
+			return get_Name()[iLen] == '\0';
+		}
+		HASHCODE32_t get_HashCode() const noexcept
+		{
+			const StrLen_t iLen = get_CharCount();
+			if (iLen <= 0)
+			{
+				return k_HASHCODE_CLEAR;
+			}
+			if (m_HashCode == k_HASHCODE_CLEAR)
+			{
+				const_cast<THIS_t*>(this)->m_HashCode = StrT::GetHashCode32(get_Data(), iLen);
+			}
+			return m_HashCode;
+		}
+
+		COMPARE_t CompareNoCase(const ATOMCHAR_t* pStr) const noexcept
+		{
+			return StrT::CmpI(get_Data(), pStr);
+		}
+		bool IsEqualNoCase(const ATOMCHAR_t* pStr) const noexcept
+		{
+			// TODO: Use HashCode for speed compares.
+			return StrT::CmpI(get_Data(), pStr) == COMPARE_Equal;
 		}
 	};
 
-	template< typename _TYPE_CH = char >
-	class GRAYCORE_LINK CStringT
-	{
-		//! @class Gray::CStringT
-		//! Mimic the MFC ATL::CStringT<> functionality.
+	/// <summary>
+	/// Manage a pointer to cArrayDataT<_TYPE_CH>. Is reference counted to a string array that is dynamically allocated.
+	/// Mimic the MFC ATL::CStringT<> functionality.
+	/// </summary>
+	/// <typeparam name="_TYPE_CH">char or wchar_t</typeparam>
 
-		typedef CStringT<_TYPE_CH> THIS_t;
+	template< typename _TYPE_CH = char >
+	class GRAYCORE_LINK cStringBaseT
+	{
+		typedef cStringBaseT<_TYPE_CH> THIS_t;
 
 	protected:
-		_TYPE_CH* m_pchData;	//!< points into CStringData[1]
-		static const _TYPE_CH m_Nil;		//!< Use this instead of nullptr. ala MFC. also like _afxDataNil. AKA cStrConst::k_Empty ?
+		typedef cStringDataT<_TYPE_CH> DATA_t;
+		_TYPE_CH* m_pchData;	//!< points into DATA_t[1] like cRefPtr<> but is offset.
+		static const _TYPE_CH m_Nil;		//!< '\0' Use this instead of nullptr. ala MFC. also like _afxDataNil. AKA cStrConst::k_Empty ?
 
 	public:
-		CStringT() noexcept
+		cStringBaseT() noexcept
 		{
 			Init();
 		}
-		CStringT(const wchar_t* pwText)
+		cStringBaseT(const wchar_t* pwText)
 		{
-			//!? Init and convert UNICODE is needed.
+			//! Init and convert UNICODE -> UTF8 if needed.
 			Init();
 			Assign(pwText);
 		}
-		CStringT(const wchar_t* pwText, StrLen_t iLenMax)
+		cStringBaseT(const wchar_t* pwText, StrLen_t iLenMax)
 		{
 			//! @arg iLenMax = STRMAX = _countof(StrT::k_LEN_MAX)-1 default
 			//! @arg iLenMax = max chars, not including '\0' ! NOT sizeof() or _countof() like StrT::CopyLen
 			Init();
 			AssignLen(pwText, iLenMax);
 		}
-		CStringT(const char* pszStr)
+		cStringBaseT(const char* pszStr)
 		{
 			//! Init and convert UNICODE is needed.
 			Init();
 			Assign(pszStr);
 		}
-		CStringT(const char* pszStr, StrLen_t iLenMax)
+		cStringBaseT(const char* pszStr, StrLen_t iLenMax)
 		{
 			//! @arg iLenMax = _countof(StrT::k_LEN_MAX)-1 default
 			//! @arg iLenMax = max chars, not including '\0' ! NOT sizeof() or _countof() like StrT::CopyLen
 			Init();
 			AssignLen(pszStr, iLenMax);
 		}
-		CStringT(const THIS_t& ref) noexcept
+		cStringBaseT(const THIS_t& ref) noexcept
 		{
 			AssignFirst(ref);
 		}
-		CStringT(THIS_t&& ref) noexcept
+		cStringBaseT(THIS_t&& ref) noexcept
 		{
 			//! Move constructor
 			m_pchData = ref.m_pchData;
 			ref.Init();
 		}
-		~CStringT()
+		~cStringBaseT()
 		{
 			Empty();
 		}
 
-		CStringData* GetData() const noexcept
+		/// <summary>
+		/// Get my internal storage object pointer. like MFC
+		/// </summary>
+		/// <returns></returns>
+		const DATA_t* GetData() const noexcept
 		{
-			//! Get my internal storage object.
-			//! like MFC
 			DEBUG_CHECK(m_pchData != &m_Nil);
 			DEBUG_CHECK(m_pchData != nullptr);
-			return (reinterpret_cast<CStringData*>(m_pchData)) - 1;	// the block before this pointer.
+			return (reinterpret_cast<const DATA_t*>(m_pchData)) - 1;	// the block before this pointer.
+		}
+		DATA_t* GetData() noexcept
+		{
+			DEBUG_CHECK(m_pchData != &m_Nil);
+			DEBUG_CHECK(m_pchData != nullptr);
+			return (reinterpret_cast<DATA_t*>(m_pchData)) - 1;	// the block before this pointer.
 		}
 		const _TYPE_CH* GetString() const noexcept
 		{
@@ -162,15 +187,10 @@ namespace Gray
 			//! Is the string properly terminated?
 			if (m_pchData == &m_Nil)
 				return true;
-			CStringData* const pData = GetData();
+			const DATA_t* const pData = GetData();
 			if (pData == nullptr)
 				return false;		// should never happen!
-			const StrLen_t iLen = pData->get_CharCount();
-			if (!pData->IsValidInsideN(iLen * sizeof(_TYPE_CH)))
-				return false;		// should never happen!
-			if (pData->get_RefCount() <= 0)
-				return false;		// should never happen!
-			return m_pchData[iLen] == '\0';
+			return pData->isValidString();
 		}
 
 		bool IsEmpty() const noexcept
@@ -180,17 +200,19 @@ namespace Gray
 			return m_pchData == &m_Nil;
 		}
 
+		/// <summary>
+		/// get Number of chars. (not necessarily bytes)
+		/// </summary>
+		/// <returns></returns>
 		StrLen_t GetLength() const noexcept
 		{
-			//! @return Number of chars. (not necessarily bytes)
 			if (m_pchData == &m_Nil)
 				return 0;
-			// DEBUG_CHECK(isValidString());
-			const CStringData* pData = GetData();
+			const DATA_t* pData = GetData();
 			DEBUG_CHECK(pData != nullptr);
 			return pData->get_CharCount();
 		}
-		void Empty()
+		void Empty() noexcept
 		{
 			if (m_pchData == nullptr)	// certain off instances where it could be nullptr. arrays
 				return;
@@ -205,15 +227,24 @@ namespace Gray
 			ASSERT(nIndex <= GetLength());
 			return m_pchData[nIndex];
 		}
+
+		/// <summary>
+		/// Get a character.
+		/// </summary>
+		/// <param name="nIndex"></param>
+		/// <returns></returns>
 		_TYPE_CH GetAt(StrLen_t nIndex) const      // 0 based
 		{
-			// Get a character.
 			ASSERT(nIndex <= GetLength());	// allow to get the '\0' char
 			return m_pchData[nIndex];
 		}
+		/// <summary>
+		/// Set a character.
+		/// </summary>
+		/// <param name="nIndex"></param>
+		/// <param name="ch"></param>
 		void SetAt(StrLen_t nIndex, _TYPE_CH ch)
 		{
-			// Set a character.
 			ASSERT(IS_INDEX_GOOD(nIndex, GetLength()));
 			CopyBeforeWrite();
 			m_pchData[nIndex] = ch;
@@ -258,13 +289,14 @@ namespace Gray
 		void FormatV(const _TYPE_CH* pszFormat, va_list args);
 		void _cdecl Format(const _TYPE_CH* pszFormat, ...)
 		{
-			//! use the normal sprintf() style.
-			//! @note Use StrArg<GChar_t>(s) for safe "%s" args.
+			//! format a string using the sprintf() style.
+			//! @note Use StrArg<_TYPE_CH>(s) for safe "%s" args.
 			va_list vargs;
 			va_start(vargs, pszFormat);
 			FormatV(pszFormat, vargs);
 			va_end(vargs);
 		}
+
 		COMPARE_t Compare(const _TYPE_CH* pszStr) const noexcept
 		{
 			return StrT::Cmp(GetString(), pszStr);
@@ -273,6 +305,12 @@ namespace Gray
 		{
 			return StrT::CmpI(GetString(), pszStr);
 		}
+		bool IsEqualNoCase(const _TYPE_CH* pszStr) const noexcept
+		{
+			// TODO: Use HashCode for speed compares.
+			return StrT::CmpI(GetString(), pszStr) == 0;
+		}
+
 		void MakeUpper();	// MFC like not .NET like.
 		void MakeLower();
 		THIS_t Left(StrLen_t nCount) const;
@@ -291,7 +329,7 @@ namespace Gray
 		{
 			return ReferenceAt(nIndex);
 		}
-		operator const _TYPE_CH* () const       // as a C string
+		operator const _TYPE_CH* () const noexcept       // as a C string
 		{
 			return GetString();
 		}
@@ -314,8 +352,14 @@ namespace Gray
 			return *this;
 		}
 
-		//! insert substring at zero-based index; concatenates
-		//! if index is past end of string
+		/// <summary>
+		/// insert substring at zero-based index; 
+		/// concatenates if index is past end of string
+		/// </summary>
+		/// <param name="nIndex"></param>
+		/// <param name="pszStr"></param>
+		/// <param name="iLenCat"></param>
+		/// <returns>New length.</returns>
 		StrLen_t Insert(StrLen_t nIndex, const _TYPE_CH* pszStr, StrLen_t iLenCat);
 		StrLen_t Insert(StrLen_t nIndex, const _TYPE_CH* pszStr)
 		{
@@ -326,15 +370,6 @@ namespace Gray
 			Insert(GetLength(), psz, k_StrLen_UNK);
 			return *this;
 		}
-
-#if 0
-		THIS_t operator + (const _TYPE_CH* pszStr) const
-		{
-			THIS_t sTmp(*this);
-			sTmp.Insert(GetLength(), pszStr, k_StrLen_UNK);
-			return sTmp;
-		}
-#endif
 
 		void Assign(const THIS_t& str)
 		{
@@ -351,9 +386,9 @@ namespace Gray
 		{
 			m_pchData = const_cast<_TYPE_CH*>(&m_Nil);
 		}
-		void EmptyValid()
+		void EmptyValid() noexcept
 		{
-			// Use m_Nil for empty.
+			// ASSUME NOT m_Nil. Use m_Nil for empty.
 			DEBUG_CHECK(isValidString());
 			GetData()->DecRefCount();
 			Init();
@@ -372,21 +407,19 @@ namespace Gray
 		void CopyBeforeWrite();
 	};
 
-#define cStringT_DEF(t) CStringT<t>
-
-#endif // ! _MFC_VER
-
 	//***********************************************************************************************************
 
+	/// <summary>
+	/// A string with added functions over the MFC CString core set.
+	/// Unlike STL std::string this is shareable via reference count. No dynamic copied each time.
+	/// Use this for best string functionality.
+	/// </summary>
+	/// <typeparam name="_TYPE_CH"></typeparam>
 	template< typename _TYPE_CH = char >
 	class GRAYCORE_LINK cStringT
-		: public cStringT_DEF(_TYPE_CH)
+		: public cStringBaseT<_TYPE_CH>
 	{
-		//! @class Gray::cStringT
-		//! A string with added functions over the MFC CString core set.
-		//! Use this for best string functionality.
-
-		typedef cStringT_DEF(_TYPE_CH) SUPER_t;
+		typedef cStringBaseT<_TYPE_CH> SUPER_t;
 		typedef cStringT<_TYPE_CH> THIS_t;
 
 	public:
@@ -394,14 +427,26 @@ namespace Gray
 
 		cStringT() noexcept
 		{}
-		cStringT(SUPER_t & str) noexcept : SUPER_t(str)	 // copy constructor.
+		cStringT(SUPER_t& str) noexcept : SUPER_t(str)	 // copy constructor.
 		{}
 		cStringT(const char* pszText) : SUPER_t(pszText)
 		{}
+		explicit cStringT(DATA_t* pData)
+		{
+			// Assign internal data object directly. weird usage.
+			DEBUG_CHECK(pData != nullptr);
+			pData->IncRefCount();
+			m_pchData = pData->get_Data();
+			DEBUG_CHECK(isValidString());
+		}
+
+		/// <summary>
+		/// Copy string
+		/// </summary>
+		/// <param name="pszText"></param>
+		/// <param name="iLenMax">max chars, not including '\0' ! NOT sizeof() or _countof() like StrT::CopyLen. _countof(StrT::k_LEN_MAX)-1 default.</param>
 		cStringT(const char* pszText, StrLen_t iLenMax) : SUPER_t(pszText, iLenMax)
 		{
-			//! iLenMax = _countof(StrT::k_LEN_MAX)-1 default. not including '\0'
-			//! iLenMax = max chars, not including '\0' ! NOT sizeof() or _countof() like StrT::CopyLen
 		}
 		cStringT(const wchar_t* pwText) : SUPER_t(pwText)
 		{}
@@ -411,14 +456,6 @@ namespace Gray
 			//! iLenMax = max chars, not including '\0' ! NOT sizeof() or _countof() like StrT::CopyLen
 		}
 
-#if defined(_MFC_VER)
-		CStringData* GetData() const
-		{
-			//! In some versions of MFC GetData() is protected!? This Fixes that.
-			return(((CStringData*)(const _TYPE_CH*)SUPER_t::GetString()) - 1);
-		}
-#endif
-
 		const _TYPE_CH* get_CPtr() const noexcept
 		{
 			return SUPER_t::GetString();
@@ -426,27 +463,13 @@ namespace Gray
 
 		bool isPrintableString() const noexcept
 		{
-#if defined(_MFC_VER)
-			return true;
-#else
 			if (SUPER_t::m_pchData == &SUPER_t::m_Nil)
 				return true;
-			CStringData* pData = this->GetData();
-			StrLen_t iLen = pData->get_CharCount();
+			const DATA_t* pData = this->GetData();
+			const StrLen_t iLen = pData->get_CharCount();
 			ASSERT(pData->IsValidInsideN(iLen * sizeof(_TYPE_CH)));
 			ASSERT(pData->get_RefCount() > 0);
 			return StrT::IsPrintable(SUPER_t::m_pchData, iLen) && (SUPER_t::m_pchData[iLen] == '\0');
-#endif
-		}
-		bool isValidString() const noexcept
-		{
-#ifdef _MFC_VER
-			return true;
-#elif 0 // defined(_DEBUG) && defined(DEBUG_VALIDATE_ALLOC)
-			return IsPrintableString();
-#else
-			return SUPER_t::isValidString();
-#endif
 		}
 		bool isValidCheck() const noexcept
 		{
@@ -458,64 +481,44 @@ namespace Gray
 			return StrT::IsWhitespace(this->get_CPtr(), this->length());
 		}
 
-		HRESULT ReadZ(cStreamInput & File, StrLen_t iLenMax);
-		bool WriteZ(cStreamOutput & File) const;
+		HRESULT ReadZ(cStreamInput& File, StrLen_t iLenMax);
+		bool WriteZ(cStreamOutput& File) const;
 
-		HASHCODE_t get_HashCode() const noexcept
+		HASHCODE32_t get_HashCode() const noexcept
 		{
-			//! Get a hash code good on this machine alone.
-			//! Must use something like StrT::GetHashCode32() for use on multiple machines or processes.
-			return (HASHCODE_t)(UINT_PTR)(void*)get_CPtr() ;	// just use the pointer.
+			if (SUPER_t::IsEmpty())
+				return 0;
+			return this->GetData()->get_HashCode();
 		}
-		size_t GetHeapStats(OUT ITERATE_t & iAllocCount) const
+		size_t GetHeapStats(OUT ITERATE_t& iAllocCount) const
 		{
 			//! Get data allocations for all children. does not include sizeof(*this)
 			if (SUPER_t::IsEmpty())
 				return 0;
-#if defined(_MFC_VER)	// Only need minimal sub-set if using MFC.
-			iAllocCount++;
-			return cHeap::GetSize(GetData());
-#else
 			return this->GetData()->GetHeapStatsThis(iAllocCount);
-#endif
 		}
 		int get_RefCount() const
 		{
-#if defined(_MFC_VER)
-			return this->GetData()->nRefs;
-#else
+			// expose internal ref count. ASSUME NOT _Nil ?
 			return this->GetData()->get_RefCount();
-#endif
 		}
 		void SetStringStatic()
 		{
 			//! Make this string permanent. never removed from memory.
-#if defined(_MFC_VER)
-			this->GetData()->nRefs++;
-#else
 			this->GetData()->IncRefCount();
-#endif
 		}
 
 		StrLen_t SetCodePage(const wchar_t* pwText, CODEPAGE_t uCodePage = CP_UTF8);
 		StrLen_t GetCodePage(OUT wchar_t* pwText, StrLen_t iLenMax, CODEPAGE_t uCodePage = CP_UTF8) const;
 
-#ifdef _MFC_VER
-		void Assign(const SUPER_t & str)
-		{
-			// For use with MFC and cAtomRef
-			*static_cast<SUPER_t*>(this) = str;
-		}
-#endif
-
 		THIS_t GetTrimWhitespace() const;
 
-		HRESULT SerializeInput(cStreamInput & File, StrLen_t iLenMax = StrT::k_LEN_MAX);
-		HRESULT SerializeOutput(cStreamOutput & File) const;
-		HRESULT SerializeOutput(cArchive & a) const;
-		HRESULT Serialize(cArchive & a);
+		HRESULT SerializeInput(cStreamInput& File, StrLen_t iLenMax = StrT::k_LEN_MAX);
+		HRESULT SerializeOutput(cStreamOutput& File) const;
+		HRESULT SerializeOutput(cArchive& a) const;
+		HRESULT Serialize(cArchive& a);
 
-		const THIS_t& operator = (const THIS_t & s)
+		const THIS_t& operator = (const THIS_t& s)
 		{
 			this->Assign(s);
 			return *this;
@@ -531,29 +534,30 @@ namespace Gray
 			return *this;
 		}
 
+		/// <summary>
+		/// Clear this more thoroughly for security reasons. passwords, etc. ZeroSecure ?
+		/// </summary>
 		void SetErase()
 		{
-			//! Clear this more thoroughly for security reasons. passwords, etc
-			//! ZeroSecure ?
 			SUPER_t::Empty();
 		}
 
-		bool Contains(const _TYPE_CH * pSubStr)
+		bool Contains(const _TYPE_CH* pSubStr)
 		{
 			// Like .NET
 			return StrT::FindStr(get_CPtr(), pSubStr) != nullptr;
 		}
-		bool ContainsI(const _TYPE_CH * pSubStr)
+		bool ContainsI(const _TYPE_CH* pSubStr)
 		{
 			// Like .NET
 			return StrT::FindStrI(get_CPtr(), pSubStr) != nullptr;
 		}
-		bool StartsWithI(const _TYPE_CH * pSubStr)
+		bool StartsWithI(const _TYPE_CH* pSubStr)
 		{
 			// Like .NET
 			return StrT::StartsWithI(get_CPtr(), pSubStr);
 		}
-		bool EndsWithI(const _TYPE_CH * pSubStr) const
+		bool EndsWithI(const _TYPE_CH* pSubStr) const
 		{
 			// Like .NET 
 			return StrT::EndsWithI<_TYPE_CH>(get_CPtr(), pSubStr, this->GetLength());
@@ -586,29 +590,23 @@ namespace Gray
 			//! @return npos = -1 = not found.
 			return SUPER_t::Find(ch, 0);
 		}
-		void assign(const _TYPE_CH * pszStr, StrLen_t iLenCat)
+		void assign(const _TYPE_CH* pszStr, StrLen_t iLenCat)
 		{
 			*this = THIS_t(pszStr, iLenCat);
 		}
-		void append(const _TYPE_CH * pszStr, StrLen_t iLenCat)
+		void append(const _TYPE_CH* pszStr, StrLen_t iLenCat)
 		{
-#ifdef _MFC_VER
-			* this += THIS_t(pszStr, iLenCat);
-#else
 			this->Insert(this->GetLength(), pszStr, iLenCat);
-#endif
 		}
 		void push_back(_TYPE_CH ch)
 		{
 			this->Insert(this->GetLength(), ch);
 		}
 
-#ifndef _MFC_VER
 		void resize(StrLen_t iSize)
 		{
 			SUPER_t::AllocBuffer(iSize);
 		}
-#endif
 		void reserve(StrLen_t iSize)
 		{
 			// optimize that this is the end length.
@@ -623,7 +621,7 @@ namespace Gray
 		}
 
 		static THIS_t _cdecl Join(const _TYPE_CH* s1, ...);
-		static THIS_t _cdecl GetFormatf(const _TYPE_CH * pszFormat, ...);
+		static THIS_t _cdecl GetFormatf(const _TYPE_CH* pszFormat, ...);
 
 		// TODO MOVE THESE SOME OTHER PLACE >?
 		static THIS_t GRAYCALL GetErrorStringV(HRESULT nFormatID, void* pSource, va_list vargs);
@@ -654,36 +652,10 @@ namespace Gray
 		return s1;
 	}
 
-#if defined(_MFC_VER) // resolve ambiguity with MFC
-	cStringA inline operator +(cStringA s1, const cStringA& s2) // static global
-	{
-		s1 += s2;
-		return s1;
-	}
-	cStringA inline operator +(cStringA s1, const char* pStr2) // static global
-	{
-		s1 += pStr2;
-		return s1;
-	}
-	cStringW inline operator +(cStringW s1, const cStringW& s2) // static global
-	{
-		s1 += s2;
-		return s1;
-	}
-	cStringW inline operator +(cStringW s1, const wchar_t* pStr2) // static global
-	{
-		s1 += pStr2;
-		return s1;
-	}
-#else 
 	template< typename _TYPE_CH >	// "= char" error C4519: default template arguments are only allowed on a class template
 	void inline operator >> (cArchive& ar, cStringT< _TYPE_CH >& pOb) { pOb.Serialize(ar); }
 	template< typename _TYPE_CH >
 	void inline operator << (cArchive& ar, const cStringT< _TYPE_CH >& pOb) { pOb.SerializeOutput(ar); }
-#endif
-
-#undef cStringT_DEF
-
 }
 
 #endif // _INC_cString_H

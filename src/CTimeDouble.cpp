@@ -18,19 +18,19 @@ namespace Gray
 	const double cTimeDouble::k_nY2K = 36526.0;	//!< The static value for y2k = January 1, 2000 in UTC/GMT
 	const double cTimeDouble::k_nY10 = 3650.0;		//!< The first 10 years are sometimes reserved to act as offsets.
 
-	cTimeDouble GRAYCALL cTimeDouble::EncodeSeconds(double s) // static
+	cTimeDouble GRAYCALL cTimeDouble::EncodeSeconds(double s) noexcept // static
 	{
 		//! Encode GMT Time
 		return cTimeDouble(s / cTimeUnits::k_nSecondsPerDay);
 	}
-	cTimeDouble GRAYCALL cTimeDouble::EncodeTime(short h, short m, short s, short ms) // static
+	cTimeDouble GRAYCALL cTimeDouble::EncodeTime(short h, short m, short s, short ms) noexcept // static
 	{
 		//! Encode GMT Time
 		//! Same as MFC COleDateTime::EncodeTime
 		return cTimeDouble((double)(h + ((m + (s + (ms / 1000.0)) / 60.0) / 60.0)) / 24.0);
 	}
 
-	cTimeDouble GRAYCALL cTimeDouble::EncodeDate(short wYear, short wMonth, short wDay) // static
+	cTimeDouble GRAYCALL cTimeDouble::EncodeDate(short wYear, short wMonth, short wDay) noexcept // static
 	{
 		//! Encode GMT Date as days since (1899/12/30 midnight GMT) or (1900/1/1 0:0:0 GMT)
 		//! same as SystemTimeToVariantTime() but more accurate for mSec
@@ -251,7 +251,7 @@ namespace Gray
 
 	//*******************************************************************
 
-	cTimeDouble GRAYCALL cTimeDouble::GetTimeFromFile(const cTimeFile& ft) // static
+	cTimeDouble GRAYCALL cTimeDouble::GetTimeFromFile(const cTimeFile& ft) noexcept // static
 	{
 		//! cTimeFile = 64-bit 100-nanosec since January 1, 1601 GMT
 		//! double = days since (midnight, 30 December 1899 GMT)
@@ -261,7 +261,7 @@ namespace Gray
 		return dTimeDays;
 	}
 
-	cTimeDouble cTimeDouble::GetTimeFromSec(TIMESEC_t nTimeSec) // static
+	cTimeDouble cTimeDouble::GetTimeFromSec(TIMESEC_t nTimeSec) noexcept // static
 	{
 		//! convert TIMESEC_t (seconds) to double (days)
 		//! Opposite of cTimeInt::GetTimeFromDays()

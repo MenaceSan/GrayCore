@@ -13,7 +13,7 @@
 #include "cHeap.h"
 #include "cObject.h"
 #include "cValArray.h"
-#include "cExceptionAssert.h"		// THROW_IF_NOT
+#include "cDebugAssert.h"		// THROW_IF_NOT
 #ifdef _MFC_VER
 #include <afxtempl.h>	// CArray from _MFC_VER 
 #endif
@@ -26,15 +26,15 @@ namespace Gray
 
 #ifndef _MFC_VER
 
+	/// <summary>
+	/// Minimal array template of elements. like MFC version. use cArrayTyped<> instead !
+	/// @note MFC 8.0 uses INT_PTR for GetSize()
+	/// </summary>
+	/// <typeparam name="TYPE">what is stored.</typeparam>
+	/// <typeparam name="ARG_TYPE">const TYPE& or TYPE depending on what makes sense for SetAt() and Add operations.</typeparam>
 	template <class TYPE, class ARG_TYPE = const TYPE& >
 	class CArray : public CObject
 	{
-		//! @class Gray::CArray
-		//! Minimal array template of elements. like MFC version. use cArrayTyped<> instead !
-		//! @note MFC 8.0 uses INT_PTR for GetSize()
-		//! TYPE = what is stored.
-		//! ARG_TYPE = const TYPE& or TYPE depending on what makes sense for SetAt() and Add operations.
-
 		typedef CArray<TYPE, ARG_TYPE> THIS_t;
 
 	protected:
@@ -114,7 +114,7 @@ namespace Gray
 			m_pData[nIndex] = newElement;	// may call a copy constructor.
 		}
 
-		// Direct Access to the element data (may return nullptr)
+		// Direct Access to the element array data (may return nullptr)
 		inline const TYPE* GetData() const
 		{
 			// DANGER.
@@ -227,7 +227,7 @@ namespace Gray
 		ASSERT(nNewSize >= 0);
 		if (nNewSize <= get_CountMalloc())
 		{
-			// it fits. don't shrink the allocated array. we may expand again some day.
+			// it fits. don't shrink the allocated array. just destroy unused entries. we may expand again some day.
 			cValArray::Resize<TYPE>(m_pData, nNewSize, m_nSize);
 		}
 		else
@@ -491,20 +491,7 @@ namespace Gray
 			AssertValidIndex(nIndex);
 			return this->m_pData[nIndex];
 		}
-
-#if 0
-		TYPE& Head() // throw
-		{
-			// aka front()
-			return this->ElementAt(0);
-		}
-		TYPE& Tail()
-		{
-			// AKA back()
-			return this->ElementAt(this->GetSize() - 1);
-		}
-#endif
-
+ 
 		const TYPE& GetAtHead() const
 		{
 			// aka front()

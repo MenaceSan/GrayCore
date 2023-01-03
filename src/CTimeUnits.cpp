@@ -284,7 +284,7 @@ namespace Gray
 
 	bool cTimeUnits::isInDST() const
 	{
-		//! Is this Date DST? Assuming local time zone honors DST.
+		//! Is this date in US DST range? Assuming local time zone honors US DST.
 		//! http://www.worldtimezone.com/daylight.html
 		//! like the C internal function _isindst(const struct tm *tb)
 		//! @note
@@ -901,7 +901,7 @@ namespace Gray
 	{
 		//! parse the pszTimeString to look for things that look like a date time.
 		//! parse 3 types of things: Separators, numbers and unit names (e.g. Sunday).
-		//! @return: m_iUnitsParsed
+		//! @return m_iUnitsParsed
 		//! @todo parse odd time zone storage .  (-03:00)
 
 		if (pszTimeString == nullptr)

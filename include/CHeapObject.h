@@ -18,15 +18,14 @@
 
 namespace Gray
 {
+	/// <summary>
+	/// This is a base interface supported by objects/classes that are ALWAYS assumed allocated on the heap.
+	/// Use this because multiple inheritance can hide my top heap (free-able) pointer.
+	/// Top should implement some version of cHeapObject. e.g. "x = new cXObject"
+	/// </summary>
 	DECLARE_INTERFACE(IHeapObject)
 	{
-		//! @interface Gray::IHeapObject
-		//! This is a base interface supported by objects/classes that are ALWAYS assumed allocated on the heap.
-		//! Use this because multiple inheritance can hide my top heap (free-able) pointer.
-		//! Top should implement some version of cHeapObject. e.g. "x = new cXObject"
-
 		IGNORE_WARN_INTERFACE(IHeapObject);
-
 		virtual const void* get_HeapPtr() const noexcept = 0;	//!< Get the top level (outermost, free-able) class pointer. I can delete get_HeapPtr().
 
 		// Add this to each IHeapObject rooted object to get the base heap allocation pointer. Avoids problems with multiple inheritance and heap allocated objects.
@@ -35,15 +34,15 @@ namespace Gray
 
 	//*************************************************
 
+	/// <summary>
+	/// The base of some class/struct object that is ALWAYS heap allocated.
+	/// This item MUST always be dynamically allocated with new/delete!
+	/// Never stack (auto) or data segment (static) based.
+	/// get_HeapPtr() must be declared by the highest level ! since derived classes wrap their base classes.
+	/// multiple inheritance can disguise the base allocated pointer
+	/// </summary>
 	class GRAYCORE_LINK cHeapObject : public IHeapObject
 	{
-		//! @class Gray::cHeapObject
-		//! The base of some class/struct object that is ALWAYS heap allocated.
-		//! This item MUST always be dynamically allocated with new/delete!
-		//! Never stack (auto) or data segment (static) based.
-		//! get_HeapPtr() must be declared by the highest level ! since derived classes wrap their base classes.
-		//! multiple inheritance can disguise the base allocated pointer
-
 	protected:
 		// Get the top level malloc() pointer in the case of multiple inheritance.
 		CHEAPOBJECT_IMPL;

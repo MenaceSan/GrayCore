@@ -13,13 +13,17 @@
 #include "GrayCore.h"
 #include <time.h> // timespec
 
+#ifdef _WIN32
+#include <sysinfoapi.h>		// GetTickCount64() (_WIN32_WINNT >= 0x0600)
+#endif
+
 namespace Gray
 {
 	typedef int TIMESECD_t;			//!< signed delta seconds. like TIMESEC_t. redefined in TimeUnits.h.
 	typedef float TIMESECF_t;		//!< delta float seconds.
 
 	//! TIMESYS_t = The normal system tick timer. milli-seconds since start of system/app ?
-#if 0 // def USE_64BIT
+#ifdef USE_64BIT
 	typedef UINT64	TIMESYS_t;		//!< The absolute system milli-Second tick. (NOT the same as a time range!)
 	typedef INT64	TIMESYSD_t;		//!< Time delta. signed milli-Seconds Span. cTimeSys::k_INF = MAILSLOT_WAIT_FOREVER
 #else
@@ -28,14 +32,14 @@ namespace Gray
 #endif
 
 #if defined(__linux__)
+	/// <summary>
+	/// POSIX CLOCK_MONOTONIC time. (Realtime is from 1970-01-01 UTC)
+	/// similar to struct timeval/cTimeVal used for select() but use nanoseconds not microseconds.
+	/// No need to USE clock_getres( clockid_t __clock_id, struct timespec *__res) ?
+	/// @note link with 'rt' for this.
+	/// </summary>
 	class cTimeSpec : public /* struct*/ timespec
 	{
-		//! @class Gray::cTimeSpec
-		//! POSIX CLOCK_MONOTONIC time. (Realtime is from 1970-01-01 UTC)
-		//! similar to struct timeval/cTimeVal used for select() but use nanoseconds not microseconds.
-		//! No need to USE clock_getres( clockid_t __clock_id, struct timespec *__res) ?
-		//! @note link with 'rt' for this.
-
 	public:
 		static const UINT k_FREQ = 1000000000;	// billionths of a sec.
 
@@ -79,7 +83,7 @@ namespace Gray
 		}
 		void InitTimeNow1() noexcept
 		{
-			//! Realtime from 1970-01-01 UTC
+			//! Real time from 1970-01-01 UTC
 			//! Might be affected by changes to the system time.
 			::clock_gettime(CLOCK_REALTIME, this);
 		}
@@ -88,15 +92,16 @@ namespace Gray
 
 	//****************************************************************************
 
+	/// <summary>
+	/// Time in milliseconds from arbitrary/unknown start time.
+	/// Unsigned 32 bits will roll every 49.7 days.
+	/// _WIN32 = start time = when system was last rebooted.
+	/// </summary>
 	class GRAYCORE_LINK cTimeSys
 	{
-		//! @class Gray::cTimeSys
-		//! Time in milliseconds from arbitrary/unknown start time.
-		//! Unsigned 32 bits will roll every 49.7 days.
-		//! _WIN32 = start time = when system was last rebooted.
 	public:
 		static const TIMESYS_t k_CLEAR = 0;
-		static const TIMESYS_t k_FREQ = 1000;		//!< milliSec per Sec
+		static const TIMESYS_t k_FREQ = 1000;		//!< milliSec per Sec. TIMESYSD_t
 		static const TIMESYS_t k_INF = UINT_MAX;	//!< INFINITE in _WIN32. MAILSLOT_WAIT_FOREVER
 		static const TIMESYSD_t k_DMAX = INT_MAX;	//!< Max diff in time.
 
@@ -119,8 +124,8 @@ namespace Gray
 			//! _WIN32 is limited to the resolution of the system timer, which is typically in the range of 10 milliseconds to 16 milliseconds.
 #ifdef _WIN32
 			// https://msdn.microsoft.com/en-us/library/windows/desktop/ms724408(v=vs.85).aspx
-#if 0 // def USE_64BIT
-			return ::GetTickCount64();		// why not use 64 bits ???
+#ifdef USE_64BIT
+			return (TIMESYS_t) ::GetTickCount64();		// why not always use 64 bits ? what header is this in ? fails for DotNetX ??
 #else
 			return ::GetTickCount();
 #endif
@@ -202,7 +207,7 @@ namespace Gray
 		{
 			//! How old is this? (in seconds)
 			//! current time - this time.
-			return get_AgeSys() / k_FREQ;
+			return static_cast<TIMESECD_t>(get_AgeSys() / k_FREQ);
 		} 
 	};
 
@@ -214,12 +219,12 @@ namespace Gray
 	typedef UINT64 TIMEPERF_t;		//!< The system very high precision performance timer. cTimeSpec
 #endif
 
+	/// <summary>
+	/// Very high rate timer. 64 bit. like the X86 'rdtsc' instruction.
+	/// TIMEPERF_t = The system very high precision performance timer. Maybe nSec ?
+	/// </summary>
 	class GRAYCORE_LINK cTimePerf
 	{
-		//! @class Gray::cTimePerf
-		//! Very high rate timer. 64 bit. like the X86 'rdtsc' instruction.
-		//! TIMEPERF_t = The system very high precision performance timer. Maybe nSec ?
-
 	public:
 		TIMEPERF_t m_nTime;				//!< Arbitrary start time in k_nFreq units. 64 byte unsigned type.
 #ifdef _WIN32

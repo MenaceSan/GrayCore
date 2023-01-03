@@ -12,27 +12,26 @@
 
 #include "cRefPtr.h"
 #include "cHeapObject.h"
-#include "cExceptionAssert.h"		// THROW_IF_NOT
+#include "cDebugAssert.h"		// THROW_IF_NOT
 
 namespace Gray
 {
-	template <class TYPE>
-	class cArrayDataT : public cRefBase, public cHeapObject	// ref count
+	/// <summary>
+	/// a variable size allocated, reference counted array of some data.
+	/// used with cString. Variable size allocation for this. Equiv to the MFC ATL:CStringData. Variable size allocation for this.
+	/// (ALWAYS) dynamically allocated
+	/// </summary>
+	/// <typeparam name="_TYPE"></typeparam>
+	template <class _TYPE>
+	class cArrayDataT : public cRefBase, public cHeapObject	// ref count and dynamic allocate
 	{
-		//! @class Gray::cArrayDataT
-		//! similar to CStringData. Variable size allocation for this.
 		CHEAPOBJECT_IMPL;
+		typedef cArrayDataT<_TYPE> THIS_t;
 
-	private:
-		ITERATE_t m_nCount;		//!< Number of elements (upperBound - 1). m_pData MUST hold at least this many
-		// TYPE m_data[ m_nCount * sizeof(TYPE) ];
-
-	public:
-		inline TYPE* get_Data() const noexcept          // get array of data
-		{
-			//! Get a pointer to the data. Stored in the space allocated after this class.
-			return (TYPE*)(this + 1); // const_cast
-		}
+	protected:
+		ITERATE_t m_nCount = 0;		//!< Number of elements (upperBound - 1). m_pData MUST hold at least this many
+		mutable HASHCODE32_t m_HashCode;	//!< Some hash code of the data to follow. 0 = not yet calculated or empty.
+		// TYPE m_a[ m_nCount * sizeof(_TYPE) ];
 
 		static void* operator new(size_t stAllocateBlock, size_t sizePayload)
 		{
@@ -42,8 +41,14 @@ namespace Gray
 			ASSERT(stAllocateBlock == sizeof(cArrayDataT));
 			return cHeap::AllocPtr(stAllocateBlock + sizePayload);
 		}
+		cArrayDataT(ITERATE_t nCount) noexcept
+			: m_nCount(nCount)
+			, m_HashCode(k_HASHCODE_CLEAR)
+		{
+		}
 
-		static void operator delete(void* pObj, StrLen_t sizePayload)
+	public:
+		static void operator delete(void* pObj, size_t sizePayload)
 		{
 			UNREFERENCED_PARAMETER(sizePayload);
 			cHeap::FreePtr(pObj);
@@ -53,53 +58,110 @@ namespace Gray
 			cHeap::FreePtr(pObj);
 		}
 
+		/// <summary>
+		/// allocate space and call its constructor. RefCount = 0.
+		/// </summary>
+		/// <param name="nCount"></param>
+		/// <returns></returns>
+		static THIS_t* CreateData(ITERATE_t nCount)
+		{
+			if (nCount == 0)
+				return nullptr;
+			THIS_t* p = new(nCount * sizeof(_TYPE)) THIS_t(nCount);	// allocate space 
+			ASSERT(p != nullptr);
+			return p;
+		}
+		/// <summary>
+		/// call child constructors for array elements.
+		/// </summary>
+		/// <param name="nCount"></param>
+		/// <returns></returns>
+		static THIS_t* CreateData2(ITERATE_t nCount)
+		{
+			THIS_t* p = CreateData(nCount);	// allocate space 
+			if (nCount > 0)
+			{
+				cValArray::ConstructElementsX(p->get_Data(), nCount);
+			}
+			return p;
+		}
+
+		/// <summary>
+		/// Get a pointer to the payload array of TYPE. Stored in the space allocated after this class.
+		/// </summary>
+		/// <returns></returns>
+		const _TYPE* get_Data() const noexcept
+		{
+			return reinterpret_cast<const _TYPE*>(this + 1);
+		}
+		_TYPE* get_Data() noexcept
+		{
+			return reinterpret_cast<_TYPE*>(this + 1);
+		}
+
+		/// <summary>
+		/// get Number of array elements of _TYPE in payload. 
+		/// </summary>
+		/// <returns></returns>
 		inline ITERATE_t get_Count() const noexcept
 		{
-			//! @return Number of  
 			return m_nCount;
 		}
 		inline void put_Count(ITERATE_t nCount) noexcept
 		{
-			//! DANGER
-			//! @return Number 
+			//! DANGER set array size . assume allocation is valid.
 			m_nCount = nCount;
+			m_HashCode = k_HASHCODE_CLEAR; // invalidate hash.
+		}
+
+		inline size_t get_BytesSize() const noexcept
+		{
+			return m_nCount * sizeof(_TYPE);
+		}
+
+		/// <summary>
+		/// Get quantity of objects truly allocated. (may not be same as m_nSize or even properly aligned with TYPE)
+		/// like STL capacity()
+		/// </summary>
+		/// <returns></returns>
+		inline size_t get_BytesMalloc() const noexcept
+		{
+			return cHeap::GetSize(this) - sizeof(cArrayDataT);
 		}
 		inline ITERATE_t get_CountMalloc() const noexcept
 		{
-			//! Get quantity of objects truly allocated. (may not be same as m_nSize or even properly aligned with TYPE)
-			//! like STL capacity()
-			return (ITERATE_t)((cHeap::GetSize(this) - sizeof(cArrayDataT)) / sizeof(TYPE));
+			return (ITERATE_t)(get_BytesMalloc() / sizeof(_TYPE));
+		}
+
+		inline bool IsHashCodeSet() const noexcept
+		{
+			return m_HashCode != k_HASHCODE_CLEAR && m_nCount > 0;
+		}
+		inline HASHCODE32_t get_HashCode() const
+		{
+			// hides get_HashCode() implemented by cRefBase
+			return m_HashCode;
 		}
 	};
 
+	/// <summary>
+	/// An array that is contained in a single pointer like cString.
+	/// NO MFC compatibility.
+	/// </summary>
+	/// <typeparam name="TYPE"></typeparam>
 	template <class TYPE >
 	class cArrayT : public cRefPtr< cArrayDataT<TYPE> >
 	{
-		//! @class Gray::cArrayT
-		//! An array that is contained in a single pointer like cString.
-		//! NO MFC compatibility.
-
 		typedef cRefPtr< cArrayDataT<TYPE> > SUPER_t;
 		typedef cArrayT<TYPE> THIS_t;
+		typedef cArrayDataT<TYPE> DATA_t;
 
-		static cArrayDataT<TYPE>* CreateData(ITERATE_t nCount)
-		{
-			// allocate space and call its constructor. assume will call put_Ptr()
-			if (nCount == 0)
-				return nullptr;
-			cArrayDataT<TYPE>* pNew = new(nCount * sizeof(TYPE)) cArrayDataT<TYPE>;	// allocate space 
-			ASSERT(pNew != nullptr);
-			pNew->put_Count(nCount);
-			cValArray::ConstructElementsX(pNew->get_Data(), nCount);
-			return pNew;
-		}
-
-		void SetCopyFrom(const cArrayDataT<TYPE>* pOld, ITERATE_t nCountNew, ITERATE_t nCountOld)
+		void SetCopyFrom(const DATA_t* pOld, ITERATE_t nCountNew, ITERATE_t nCountOld)
 		{
 			//! deep copy (and resize) the array. private reference.
 			//! like CopyBeforeWrite()
 
-			cArrayDataT<TYPE>* pNew = CreateData(nCountNew);
+			DATA_t* pNew = DATA_t::CreateData2(nCountNew);
 			ASSERT(pNew != nullptr || nCountNew == 0);
 
 			if (pNew != nullptr)
@@ -114,22 +176,26 @@ namespace Gray
 		cArrayT() noexcept
 		{
 		}
-		explicit cArrayT(ITERATE_t nCount) : cRefPtr(CreateData(nCount))
+		explicit cArrayT(ITERATE_t nCount) : cRefPtr(DATA_t::CreateData2(nCount))
 		{
 		}
 
+		/// <summary>
+		/// get sizeof() all children alloc(s). not size of *this
+		/// </summary>
+		/// <param name="iAllocCount"></param>
+		/// <returns></returns>
 		size_t GetHeapStats(OUT ITERATE_t& iAllocCount) const noexcept
 		{
-			//! @return sizeof all children alloc(s). not size of *this
-			if (this->get_Ptr() == nullptr)
+			DATA_t* pData = this->get_Ptr();
+			if (pData == nullptr)
 				return 0;
-			iAllocCount++; // just the alloc for the array
-			return cHeap::GetSize(this->get_Ptr());
+			return pData->GetHeapStatsThis(iAllocCount); // just the alloc for the array
 		}
 
 		inline ITERATE_t get_Count() const noexcept
 		{
-			cArrayDataT<TYPE>* pData = this->get_Ptr();
+			DATA_t* pData = this->get_Ptr();
 			if (pData == nullptr)
 				return 0;
 			return pData->get_Count();
@@ -226,13 +292,13 @@ namespace Gray
 
 			ASSERT(IS_INDEX_GOOD(nCountNew, cHeap::k_ALLOC_MAX)); // reasonable arbitrary limit.
 
-			cArrayDataT<TYPE>* pOld = this->get_Ptr();
+			DATA_t* pOld = this->get_Ptr();
 			if (pOld == nullptr)
 			{
 				// Make a new array.
 				if (nCountNew == 0)
 					return;
-				this->put_Ptr(CreateData(nCountNew));
+				this->put_Ptr(DATA_t::CreateData2(nCountNew));
 				return;
 			}
 
@@ -253,7 +319,7 @@ namespace Gray
 			// I have an exclusive copy that no other is using.
 			// just change/resize the existing heap alloc instance. 
 
-			cArrayDataT<TYPE>* pNew = nullptr;
+			DATA_t* pNew = nullptr;
 			if (nCountNew <= get_CountMalloc())
 			{
 				// it fits. don't shrink the allocated array. we may expand again some day.
@@ -272,7 +338,7 @@ namespace Gray
 					allocateCount = GetCountMalloc(allocateCount);
 				}
 
-				pNew = (cArrayDataT<TYPE>*)cHeap::ReAllocPtr(pOld, sizeof(cArrayDataT<TYPE>) + allocateCount * sizeof(TYPE));
+				pNew = (DATA_t*)cHeap::ReAllocPtr(pOld, sizeof(DATA_t) + allocateCount * sizeof(TYPE));
 				ASSERT_NN(pNew);
 
 				// construct new elements
@@ -320,7 +386,7 @@ namespace Gray
 			}
 
 			// insert new value in the gap
-			SetAt(nIndex, newElement);	
+			SetAt(nIndex, newElement);
 		}
 
 		void InsertArray(ITERATE_t i, const TYPE* pCopy, ITERATE_t countCopy)
@@ -330,12 +396,12 @@ namespace Gray
 			if (countCopy <= 0)
 				return;
 
-			cArrayDataT<TYPE>* pNew = nullptr;
-			cArrayDataT<TYPE>* pOld = this->get_Ptr();
+			DATA_t* pNew = nullptr;
+			DATA_t* pOld = this->get_Ptr();
 			if (pOld == nullptr)
 			{
 				// i = 0;
-				this->put_Ptr(pNew = CreateData(countCopy));
+				this->put_Ptr(pNew = DATA_t::CreateData2(countCopy));
 			}
 			else
 			{
@@ -354,7 +420,7 @@ namespace Gray
 				ITERATE_t nCountNew = nCountOld + countCopy;		// new size.
 				ITERATE_t allocateCount = GetCountMalloc(nCountNew);
 
-				pNew = (cArrayDataT<TYPE>*)cHeap::ReAllocPtr(pOld, sizeof(cArrayDataT<TYPE>) + allocateCount * sizeof(TYPE));
+				pNew = (DATA_t*)cHeap::ReAllocPtr(pOld, sizeof(DATA_t) + allocateCount * sizeof(TYPE));
 				ASSERT_NN(pNew);
 				pNew->put_Count(nCountNew);
 				this->AttachPtr(pNew);		// replace realloced pointer. (if it changed at all) No ref count change.

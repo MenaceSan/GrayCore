@@ -75,63 +75,10 @@ namespace Gray
 	typedef UINT32 OF_FLAGS_t;	//!< Mask of file open flags OF_FLAGS_TYPE_
 
 	class GRAYCORE_LINK cFileStatus;
-	
-#ifndef _MFC_VER
-	typedef cExceptionHResult CFileException;
-	class GRAYCORE_LINK CFile : public CObject	// replace the MFC version
-	{
-		//! @class Gray::CFile
-		//! try to be compatible with MFC CFile class.
-		//! @note Don't use this directly. Use cFile.
-
-	public:
-		cOSHandle m_hFile;		//!< OSHandle for the open file.
-	protected:
-		cStringF m_strFileName;		//!< store a copy of the full file path. MFC defined name. 
-
-	protected:
-		// virtual BOOL Open( const TCHAR* lpszFileName, UINT nOpenFlags, CFileException* pError = nullptr ) = 0; // MFC def.
-		HRESULT OpenCreate(cStringF sFilePath = _FN(""), OF_FLAGS_t nOpenFlags = OF_CREATE | OF_WRITE, _SECURITY_ATTRIBUTES* pSa = nullptr);
-
-	public:
-		virtual ~CFile()
-		{
-			Close();
-		}
-
-		bool isFileOpen() const noexcept
-		{
-			return m_hFile.isValidHandle();
-		}
-
-		// virtual CString GetFilePath() const	// DO NOT USE this. It conflicts with the messed up version of MFC. 
-
-#if defined(__linux__)
-		HRESULT GetStatusSys(OUT cFileStatusSys& statusSys);
-#endif
-
-		// File Access
-		virtual STREAM_POS_t GetPosition() const;
-		virtual STREAM_POS_t GetLength() const;
-
-		virtual void SetLength(STREAM_POS_t dwNewLen);
-		virtual void Close()
-		{
-			m_hFile.CloseHandle();
-		}
-
-		HRESULT Write(const void* pData, size_t nDataSize);
-		HRESULT Read(void* pData, size_t nDataSize)
-		{
-			// don't call this directly use ReadX
-			// ERROR_HANDLE_EOF
-			return m_hFile.ReadX(pData, nDataSize);
-		}
-	};
-#endif	// _MFC_VER
-
+ 
 	class GRAYCORE_LINK cFile
-		: public CFile
+		: public CObject
+		, public cOSHandle	 //!< OSHandle for the open file.
 		, public cStream
 	{
 		//! @class Gray::cFile
@@ -139,14 +86,14 @@ namespace Gray
 		//! @note Any file can be a cStreamOutput of text as well.
 		//! Dupe the MFC functionality we need from CFile. Similar to IStream and CAtlFile
 
-		typedef CFile SUPER_t;
-
 	protected:
 		static ITERATE_t sm_iFilesOpen;	//!< global count of all open files for this process.
 		OF_FLAGS_t m_nOpenFlags;		//!< MMSYSTEM uses high bits of 32 bit flags. OF_FLAGS_TYPE_ OF_READ etc
+		cStringF m_strFileName;		//!< store a copy of the full file path. MFC defined name. 
 
 	protected:
 		HRESULT OpenSetup(cStringF sFilePath, OF_FLAGS_t uModeFlags);
+		HRESULT OpenCreate2(cStringF sFilePath = _FN(""), OF_FLAGS_t nOpenFlags = OF_CREATE | OF_WRITE, ::_SECURITY_ATTRIBUTES* pSa = nullptr);
 
 	public:
 		cFile() noexcept
@@ -162,53 +109,15 @@ namespace Gray
 			Close();
 		}
 
-		virtual bool isValidCheck() const noexcept	//!< memory allocation and structure definitions are valid.
+ 
+		bool isValidCheck() const noexcept override	//!< memory allocation and structure definitions are valid.
 		{
-#ifndef _MFC_VER
 			if (!CObject::isValidCheck())
 				return false;
-#endif
-			if (!IS_TYPE_OF(CFile, this))	// structure definitions are valid..
+			if (!IS_TYPE_OF(cFile, this))	// structure definitions are valid..
 				return false;
 			return true;
 		}
-
-		virtual STREAM_POS_t GetPosition() const override
-		{
-			//! disambiguate. cStream
-			//! should be same as FILE_SIZE_t?
-			return CFile::GetPosition();
-		}
-		virtual STREAM_POS_t GetLength() const override
-		{
-			//! disambiguate. cStream 
-			//! should be same as FILE_SIZE_t?
-			return CFile::GetLength();
-		}
-
-#ifdef _MFC_VER
-		void SeekToBegin()
-		{
-			//! disambiguate. cStream
-			CFile::SeekToBegin();
-		}
-		STREAM_POS_t SeekToEnd()
-		{
-			//! disambiguate. cStream
-			return CFile::SeekToEnd();
-		}
-#else
-		int Read(void* pData, size_t nDataSize)
-		{
-			// Emulate MFC. Try not to call this directly. use ReadX.
-			return ReadX(pData, nDataSize);
-		}
-		void Write(const void* pData, size_t nDataSize)
-		{
-			// Emulate MFC
-			WriteX(pData, nDataSize);
-		}
-#endif
 
 		cStringF get_FilePath() const noexcept
 		{
@@ -216,7 +125,7 @@ namespace Gray
 			//! @note Don't use GetFilePath() as it has some weird side effects in MFC.
 			//! like WIN32 GetFinalPathNameByHandle()
 			//! __linux__ readlink on /proc/self/fd/NNN where NNN is the file descriptor
-			return cStringF(m_strFileName);
+			return m_strFileName;
 		}
 		cStringF get_FileTitleX() const;	// MFC is CString return
 		cStringF get_FileExt() const;
@@ -247,37 +156,40 @@ namespace Gray
 		}
 
 		// File Open/Close
-#ifdef _MFC_VER
-		bool isFileOpen() const noexcept
-		{
-			return m_hFile != CFile::hFileNull;
-		}
+#if defined(__linux__)
+		HRESULT GetStatusSys(OUT cFileStatusSys& statusSys);
 #endif
 
 		// MFC Open is BOOL return type.
+		HRESULT OpenCreate(cStringF sFilePath = _FN(""), OF_FLAGS_t nOpenFlags = OF_CREATE | OF_WRITE, ::_SECURITY_ATTRIBUTES* pSa = nullptr);
 		virtual HRESULT OpenX(cStringF sFilePath = _FN(""), OF_FLAGS_t nOpenFlags = OF_READ | OF_SHARE_DENY_NONE);
-		void Close() noexcept override;
+		virtual void Close() noexcept;
 
-		HANDLE DetachFileHandle() noexcept;
+		HANDLE DetachHandle() noexcept;
 
 		HRESULT OpenWait(cStringF sFilePath = _FN(""), OF_FLAGS_t nOpenFlags = OF_READ | OF_SHARE_DENY_NONE, TIMESYSD_t nWaitTime = 100);
-		HRESULT OpenCreate(cStringF sFilePath = _FN(""), OF_FLAGS_t nOpenFlags = OF_CREATE | OF_WRITE, _SECURITY_ATTRIBUTES* pSa = nullptr);
+		virtual void SetLength(STREAM_POS_t dwNewLen);
 
 		// File Access
 		bool SetFileTime(const cTimeFile* lpCreationTime, const cTimeFile* lpAccessTime, const cTimeFile* lpLastWriteTime);
 		bool SetFileTime(cTimeInt timeCreation, cTimeInt timeLastWrite);
 		HRESULT GetFileStatus(OUT cFileStatus& attr) const;
 
-		// cStream
-		virtual HRESULT ReadX(void* pData, size_t nDataSize) override;
-		virtual HRESULT WriteX(const void* pData, size_t nDataSize) override; // disambiguate.
-		virtual HRESULT FlushX() override;
-		virtual HRESULT SeekX(STREAM_OFFSET_t lOffset = 0, SEEK_ORIGIN_TYPE eSeekOrigin = SEEK_Set);
+		// cStream override
+		HRESULT ReadX(void* pData, size_t nDataSize) noexcept override;
+		HRESULT WriteX(const void* pData, size_t nDataSize) override; // disambiguate.
+		HRESULT FlushX() override;
+		STREAM_POS_t GetPosition() const override;
+		STREAM_POS_t GetLength() const override;
+
+		HRESULT SeekX(STREAM_OFFSET_t nOffset, SEEK_ORIGIN_TYPE eSeekOrigin = SEEK_Set) noexcept override  // disambig
+		{
+			return cOSHandle::SeekX(nOffset, eSeekOrigin);
+		}
 
 		static HRESULT GRAYCALL DeletePath(const FILECHAR_t* pszFileName);	// NOTE: MFC Remove() returns void
 		static HRESULT GRAYCALL DeletePathX(const FILECHAR_t* pszFilePath, DWORD nFileFlags = 0);
-		static HRESULT GRAYCALL LoadFile(const FILECHAR_t* pszFilePath, OUT cHeapBlock& block, size_t nSizeExtra = 0);
- 
+		static HRESULT GRAYCALL LoadFile(const FILECHAR_t* pszFilePath, OUT cHeapBlock& block, size_t nSizeExtra = 0); 
 	};	
 } 
 

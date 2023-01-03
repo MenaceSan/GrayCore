@@ -14,12 +14,13 @@
 
 namespace Gray
 {
+	/// <summary>
+	/// Alpha Sorted array of strings. Case Ignored. duplicates are lost.
+	/// </summary>
+	/// <typeparam name="_TYPE_CH"></typeparam>
 	template< typename _TYPE_CH = TCHAR >
 	class GRAYCORE_LINK cArraySortString : public cArraySorted < cStringT<_TYPE_CH>, cStringT<_TYPE_CH>, const _TYPE_CH* >
 	{
-		//! @class Gray::cArraySortString
-		//! Alpha Sorted array of strings. Case Ignored. duplicates are lost.
-
 	public:
 		typedef cArraySorted< cStringT<_TYPE_CH>, cStringT<_TYPE_CH>, const _TYPE_CH*> SUPER_t;
 		typedef cStringT<_TYPE_CH> STR_t;	// alias for container

@@ -46,8 +46,8 @@ namespace Gray
 		}
 		void put_mSec(TIMESYS_t nMilliSeconds) noexcept
 		{
-			this->tv_sec = nMilliSeconds / cTimeSys::k_FREQ;
-			this->tv_usec = (nMilliSeconds % cTimeSys::k_FREQ) * 1000;
+			this->tv_sec = static_cast<long>(nMilliSeconds / cTimeSys::k_FREQ);
+			this->tv_usec = static_cast<long>(nMilliSeconds % cTimeSys::k_FREQ) * 1000;
 		}
 		void put_Sec(int nSeconds) noexcept
 		{

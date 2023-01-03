@@ -25,39 +25,43 @@
 
 namespace Gray
 {
+	/// <summary>
+	/// Wrap the 'c' setjmp(), longjmp() to make something like an exception. 
+	/// https://en.wikipedia.org/wiki/Setjmp.h
+	/// @note DANGER: NO unwind. this does not unwind local variables nicely like exceptions do.
+	/// </summary>
 	class cExceptionJmp
 	{
-		//! @class Gray::cExceptionJump
-		//! Wrap the 'c' setjmp(), longjmp() to make something like an exception. 
-		//! @note DANGER: NO unwind. this does not unwind local variables nicely like exceptions do.
-		//! https://en.wikipedia.org/wiki/Setjmp.h
 	protected:
 		::jmp_buf _buf;		//! hold results of setjmp()
 
 	public:
+		/// <summary>
+		/// Set the return point for longjmp(). 
+		/// This might not work if C++ exceptions are turned on.
+		/// warning C4611: interaction between '_setjmp' and C++ object destruction is non-portable
+		/// </summary>
+		/// <returns>0 = default value. do nothing. assume immediate  return = not longjmp. >= 1 = this is a longjmp() return.</returns>
 		inline int Init() noexcept
 		{
-			//! Set the return point for longjmp. 
-			//! This might not work if C++ exceptions are turned on.
-			//! warning C4611: interaction between '_setjmp' and C++ object destruction is non-portable
-			//! @return 0 = default value. do nothing. assume immediate  return = not longjmp. >= 1 = this is a longjmp() return.
-
 #pragma warning(disable:4611)	// warning C4611: interaction between '_setjmp' and C++ object destruction is non-portable
-
 			return ::setjmp(OUT _buf);
 		}
 
+		/// <summary>
+		/// Exception thrown at 0x00007FFB7AFF2346 (ntdll.dll) in testhost.exe: 0xC0000028: An invalid or unaligned stack was encountered during an unwind operation.
+		/// https://stackoverflow.com/questions/26605063/an-invalid-or-unaligned-stack-was-encountered-during-an-unwind-operation
+		/// </summary>
+		/// <param name="ret">value to Init()/setjmp. 0 = call again?, > 0 = some error return.</param>
+		/// <returns></returns>
 		CATTR_NORETURN inline void Jump(int ret) noexcept
 		{
-			//! @arg ret = return value to Init()/setjmp. 0 = call again?, > 0 = some error return.
-			//! Exception thrown at 0x00007FFB7AFF2346 (ntdll.dll) in testhost.exe: 0xC0000028: An invalid or unaligned stack was encountered during an unwind operation.
-			//! https://stackoverflow.com/questions/26605063/an-invalid-or-unaligned-stack-was-encountered-during-an-unwind-operation
 			::longjmp(_buf, ret);
 			// no return.
 		}
 	};
 
-#if ! defined(_CPPUNWIND)	// like STL _HAS_EXCEPTIONS ?
+#if ! defined(_CPPUNWIND)	// no exception? like STL _HAS_EXCEPTIONS ?
 	class cExceptionBase	// stub this out if no throws allowed.
 	{
 		//! @class Gray::cExceptionBase

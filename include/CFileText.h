@@ -86,7 +86,7 @@ namespace Gray
 			return E_NOTIMPL;
 		}
 
-		HRESULT ReadX(void* pBuffer, size_t nSizeMax) override; // dont call this directly.
+		HRESULT ReadX(void* pBuffer, size_t nSizeMax) noexcept override; // dont call this directly.
 		HRESULT WriteX(const void* pData, size_t nDataSize) override;  // dont call this directly.	
 
 	public:
@@ -106,7 +106,7 @@ namespace Gray
 		// NOT OF_TEXT since \n processing is weird.
 		HRESULT OpenX(cStringF sFilePath = _FN(""), OF_FLAGS_t nOpenFlags = OF_READ | OF_SHARE_DENY_NONE) override;
 		void Close() noexcept override;
-		HRESULT SeekX(STREAM_OFFSET_t offset = 0, SEEK_ORIGIN_TYPE eSeekOrigin = SEEK_Set) override;
+		HRESULT SeekX(STREAM_OFFSET_t nOffset = 0, SEEK_ORIGIN_TYPE eSeekOrigin = SEEK_Set) noexcept override;
 
 		::FILE* get_FileStream() const noexcept
 		{
@@ -133,15 +133,6 @@ namespace Gray
 
 		HRESULT ReadStringLineA(OUT cStringA& r);
 		// HRESULT ReadStringLineW(OUT cStringW &r);
-
-#ifndef _MFC_VER
-		BOOL ReadString(OUT CString& rString)
-		{
-			// Emulate MFC
-			HRESULT hRes = ReadStringLineA(rString);
-			return SUCCEEDED(hRes);
-		}
-#endif
 
 		bool put_TextPos(const cTextPos& rPos);
 		cTextPos get_TextPos() const

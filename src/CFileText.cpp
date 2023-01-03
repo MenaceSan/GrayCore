@@ -105,12 +105,7 @@ namespace Gray
 			return HResult::GetPOSIXLastDef(E_FAIL);
 		}
 		sm_iFilesOpen++;
-#if defined(_MFC_VER)
-		m_hFile = h;
-#else
-		m_hFile.AttachHandle(h);
-#endif
-
+		AttachHandle(h);
 #else
 
 #endif
@@ -170,14 +165,10 @@ namespace Gray
 		FILEDESC_t iFileNo = fileno(m_pStream);	// macro
 #endif
 
-#if defined(_MFC_VER) && (_MFC_VER <= 0x0600)
-		m_hFile = (HFILE) ::_get_osfhandle(iFileNo);
-#elif defined(_MFC_VER)
-		m_hFile = (HANDLE) ::_get_osfhandle(iFileNo);
-#elif defined(__linux__) || defined(UNDER_CE)
-		m_hFile.AttachHandle(iFileNo);
+#if defined(__linux__) || defined(UNDER_CE)
+		AttachHandle(iFileNo);
 #else
-		m_hFile.AttachHandle((HANDLE) ::_get_osfhandle(iFileNo)); // _fileno is macro. _MFC_VER
+		AttachHandle((HANDLE) ::_get_osfhandle(iFileNo)); // _fileno is macro. 
 #endif
 		return S_OK;
 #else
@@ -188,7 +179,7 @@ namespace Gray
 	void cFileText::Close() noexcept	// virtual
 	{
 		// virtuals don't work in destruct.
-		if (!isFileOpen())
+		if (!isValidHandle())
 			return;
 
 #if USE_CRT
@@ -204,10 +195,10 @@ namespace Gray
 
 #endif
 
-		DetachFileHandle();
+		DetachHandle();
 	}
 
-	HRESULT cFileText::SeekX(STREAM_OFFSET_t offset, SEEK_ORIGIN_TYPE eSeekOrigin) // virtual
+	HRESULT cFileText::SeekX(STREAM_OFFSET_t offset, SEEK_ORIGIN_TYPE eSeekOrigin) noexcept // virtual
 	{
 		//! eSeekOrigin = SEEK_SET, SEEK_END
 		//! @note end of line translation might be broken? ftell() and fseek() don't work correctly when you use it.
@@ -215,7 +206,7 @@ namespace Gray
 		//! @return
 		//!  <0 = FAILED
 		//!  new file pointer position % int32.
-		if (!isFileOpen())
+		if (!isValidHandle())
 			return E_HANDLE;
 
 #if USE_CRT
@@ -243,7 +234,7 @@ namespace Gray
 	FILE* cFileText::DetachFileStream() noexcept
 	{
 		FILE* pStream = m_pStream;
-		DetachFileHandle();
+		DetachHandle();
 		m_pStream = nullptr;
 		return pStream;
 	}
@@ -253,14 +244,14 @@ namespace Gray
 		//! override cStream
 		//! @note end of line translation might be broken? ftell and fseek don't work correctly when you use it.
 		//! @return -1 = error.
-		if (!isFileOpen())
+		if (!isValidHandle())
 			return k_STREAM_POS_ERR;
 		return ::ftell(m_pStream);
 	}
 
 	HRESULT cFileText::FlushX() // virtual
 	{
-		if (!isFileOpen())
+		if (!isValidHandle())
 			return S_OK;
 		ASSERT(m_pStream != nullptr);
 		int iRet = ::fflush(m_pStream);
@@ -274,7 +265,7 @@ namespace Gray
 
 	bool cFileText::isEOF() const
 	{
-		if (!isFileOpen())
+		if (!isValidHandle())
 			return true;
 #if USE_CRT
 		return ::feof(m_pStream) ? true : false;
@@ -286,7 +277,7 @@ namespace Gray
 	HRESULT cFileText::GetStreamError() const
 	{
 		// errno in M$
-		if (!isFileOpen())
+		if (!isValidHandle())
 			return HRESULT_WIN32_C(ERROR_INVALID_TARGET_HANDLE);
 #if USE_CRT
 		return HResult::FromPOSIX(::ferror(m_pStream));
@@ -295,7 +286,7 @@ namespace Gray
 #endif
 	}
 
-	HRESULT cFileText::ReadX(void* pBuffer, size_t nSizeMax) // virtual
+	HRESULT cFileText::ReadX(void* pBuffer, size_t nSizeMax) noexcept // virtual
 	{
 		//! cStream
 		//! Read a block of binary data or as much as we can until end of file.
@@ -304,7 +295,7 @@ namespace Gray
 		//!  <0 = failed. HRESULT_WIN32_C(ERROR_READ_FAULT) HRESULT_WIN32_C(ERROR_HANDLE_EOF)
 		if (pBuffer == nullptr)
 			return E_INVALIDARG;
-		if (!isFileOpen())
+		if (!isValidHandle())
 			return HRESULT_WIN32_C(ERROR_INVALID_TARGET_HANDLE);
 
 #if USE_CRT
@@ -335,7 +326,7 @@ namespace Gray
 			return E_INVALIDARG;
 
 #if USE_CRT
-		if (!isFileOpen())
+		if (!isValidHandle())
 			return HRESULT_WIN32_C(ERROR_INVALID_TARGET_HANDLE);
 		size_t uRet = ::fwrite(pData, nDataSize, 1, m_pStream);
 		if (uRet != 1)
@@ -362,7 +353,7 @@ namespace Gray
 
 		if (pszStr == nullptr)
 			return E_INVALIDARG;
-		if (!isFileOpen())
+		if (!isValidHandle())
 			return HRESULT_WIN32_C(ERROR_INVALID_TARGET_HANDLE);
 
 #if USE_CRT
@@ -403,7 +394,7 @@ namespace Gray
 			return E_INVALIDARG;
 
 #if USE_CRT
-		if (!isFileOpen())
+		if (!isValidHandle())
 			return HRESULT_WIN32_C(ERROR_INVALID_TARGET_HANDLE);
 		if (isEOF())
 		{

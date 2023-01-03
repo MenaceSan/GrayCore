@@ -110,7 +110,7 @@ namespace Gray
 			//! Is this thread valid? the system thread is considered valid.
 			return id != cThreadId::k_NULL;
 		}
-		static inline bool IsEqualId(THREADID_t a, THREADID_t b) noexcept
+		static constexpr bool IsEqualId(THREADID_t a, THREADID_t b) noexcept
 		{
 			//! Are these id's the same thread? In Linux this might be similar to _WIN32 HANDLE.
 #ifdef _WIN32
@@ -125,7 +125,7 @@ namespace Gray
 			//! Sleep current thread for n Milliseconds. cTimeSys::k_FREQ
 			//! Let the OS schedule something else during this time.
 #ifdef _WIN32
-			::Sleep(uMs);
+			::Sleep(static_cast<DWORD>(uMs));
 #else
 			::usleep((uMs) * 1000);	// Sleep current thread.
 #endif
@@ -481,7 +481,6 @@ namespace Gray
 			::LeaveCriticalSection(&m_CritSection);
 		}
 
-#if defined(_WIN32_WINNT) && (_WIN32_WINNT >= 0x0400)
 		bool LockTry()
 		{
 			//! don't wait.
@@ -490,7 +489,6 @@ namespace Gray
 			LockInternal();
 			return true;
 		}
-#endif
 	};
 #else
 	typedef cThreadLockMutex cThreadLockCrit;	// just substitute it if not _WIN32.

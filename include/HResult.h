@@ -118,6 +118,7 @@ namespace Gray
 		//! HRESULT = (high bit=SEVERITY_ERROR, 4bit=reserve, 11bit=facility, 16bits=code)
 		//! AKA SCODE in old _WIN32 MFC.
 		//! https://msdn.microsoft.com/en-us/library/cc231198.aspx
+		//! similar to std::error_code https://en.cppreference.com/w/cpp/error/error_code
 
 	public:
 		typedef cPair<FACILITY_TYPE, const GChar_t*> Facility_t;	//!< name each FACILITY_TYPE.

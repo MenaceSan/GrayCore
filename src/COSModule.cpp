@@ -198,7 +198,7 @@ namespace Gray
 		FreeThisModule();
 
 #ifdef _WIN32
-#if ( _WIN32_WINNT > 0x0500 ) && ! defined(UNDER_CE)
+#if ! defined(UNDER_CE)
 		if (!_FNF(::GetModuleHandleEx)(
 			(uFlags & k_Load_NoRefCount) ? GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT : 0,
 			pszModuleName, &m_hModule))

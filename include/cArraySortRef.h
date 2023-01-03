@@ -11,28 +11,31 @@
 
 #include "cArraySort.h"
 #include "cArrayRef.h"
- 
+
 namespace Gray
 {
+	/// <summary>
+	/// A sorted array of cRefPtr<TYPE> objects. TYPE_KEY = get_SortVal()
+	/// the array has a reference to the element. similar to cArrayRef but sorted
+	/// It will get deleted when the reference count is 0.
+	/// default sort by cMem::Compare() pointers.
+	/// </summary>
+	/// <typeparam name="TYPE">must be cRefBase based</typeparam>
+	/// <typeparam name="TYPE_KEY"></typeparam>
 	template<class TYPE, typename TYPE_KEY>
 	class cArraySortRef : public cArraySortFacade < cRefPtr<TYPE>, TYPE*, TYPE_KEY >
 	{
-		//! @class Gray::cArraySortRef
-		//! A sorted array of cRefPtr<TYPE> objects. TYPE_KEY = get_SortVal()
-		//! the array has a reference to the element. similar to cArrayRef but sorted
-		//! It will get deleted when the reference count is 0.
-		//! default sort by cMem::Compare() pointers.
-
 		typedef cArraySortFacade< cRefPtr<TYPE>, TYPE*, TYPE_KEY > SUPER_t;
 
 	public:
 
+		/// <summary>
+		/// Similar to RemoveAll() except it calls DisposeThis() to try to dereference all the entries.
+		/// @note often DisposeThis() has the effect of removing itself from the list. We protect against this.
+		/// ASSUME TYPE supports DisposeThis(); like cXObject
+		/// </summary>
 		void DisposeAll()
 		{
-			//! Similar to RemoveAll() except it calls DisposeThis() to try to dereference all the entries.
-			//! @note often DisposeThis() has the effect of removing itself from the list. We protect against this.
-			//! ASSUME TYPE supports DisposeThis(); like cXObject
-
 			const ITERATE_t iSize = this->GetSize();
 			if (iSize > 0)
 			{
@@ -58,17 +61,19 @@ namespace Gray
 
 	//*************************************************
 
+	/// <summary>
+	/// A _TYPE_HASH get_HashCode() sorted array of cRefPtr<TYPE>
+	/// does NOT allow dupe hash codes !
+	/// </summary>
+	/// <typeparam name="TYPE">typically based on IScriptableObj</typeparam>
+	/// <typeparam name="_TYPE_HASH">get_HashCode()</typeparam>
 	template <class TYPE, typename _TYPE_HASH = HASHCODE_t>
 	class cArraySortHash : public cArraySortRef < TYPE, _TYPE_HASH >
 	{
-		//! @class Gray::cArraySortHash
-		//! A _TYPE_HASH get_HashCode() sorted array of cRefPtr<TYPE>
-		//! TYPE based on IScriptableObj typically
-		//! does NOT allow dupe hash codes !
-
 	public:
 		typedef cArraySortRef<TYPE, _TYPE_HASH> SUPER_t;
 
+		typedef typename SUPER_t::ELEM_t ELEM_t;
 		typedef typename SUPER_t::ARG_t ARG_t; // template weirdness.
 		typedef typename SUPER_t::KEY_t KEY_t;
 
@@ -112,16 +117,16 @@ namespace Gray
 
 	//*************************************************
 
+	/// <summary>
+	/// A TYPE_KEY get_SortValue() sorted array of cRefPtr<TYPE>. sort low to high
+	/// @note allow duplicate get_SortValue() but NOT duplicate objects!
+	/// Similar to HashCode but different in the it can be any type. (float,etc)
+	/// </summary>
+	/// <typeparam name="TYPE">based on IScriptableObj and cRefBase typically</typeparam>
+	/// <typeparam name="TYPE_KEY">get_SortValue()</typeparam>
 	template <class TYPE, typename TYPE_KEY = int>
 	class cArraySortValue : public cArraySortRef < TYPE, TYPE_KEY >
 	{
-		//! @class Gray::cArraySortValue
-		//! A TYPE_KEY get_SortValue() sorted array of cRefPtr<TYPE>. sort low to high
-		//! TYPE based on cRefBase
-		//! TYPE based on IScriptableObj typically
-		//! @note allow duplicate get_SortValue() but NOT duplicate objects!
-		//! Similar to HashCode but different in the it can be any type. (float,etc)
-
 	public:
 		typedef cArraySortRef<TYPE, TYPE_KEY> SUPER_t;
 
@@ -199,17 +204,19 @@ namespace Gray
 
 	//*************************************************
 
+	/// <summary>
+	/// get_Name() sorted array of cRefPtr<TYPE>.
+	/// does NOT allow dupe names !
+	/// </summary>
+	/// <typeparam name="TYPE">must support get_Name() and be cRefBase</typeparam>
+	/// <typeparam name="_TYPECH"></typeparam>
 	template <class TYPE, typename _TYPECH = GChar_t>
 	class cArraySortName : public cArraySortRef < TYPE, const _TYPECH* >
 	{
-		//! @class Gray::cArraySortName
-		//! get_Name() sorted array of cRefPtr<TYPE>.
-		//! TYPE must support get_Name() and be cRefBase
-		//! does  NOT allow dupe names !
-
 	public:
 		typedef cArraySortRef<TYPE, const _TYPECH*> SUPER_t;
 
+		typedef typename SUPER_t::ELEM_t ELEM_t;
 		typedef typename SUPER_t::ARG_t ARG_t; // template weirdness.
 		typedef typename SUPER_t::KEY_t KEY_t;
 
@@ -217,8 +224,8 @@ namespace Gray
 		virtual COMPARE_t CompareData(ARG_t pData1, ARG_t pData2) const noexcept override
 		{
 			//! Compare a data record to another data record.
-			ASSERT_NN(pData1 );
-			ASSERT_NN(pData2 );
+			ASSERT_NN(pData1);
+			ASSERT_NN(pData2);
 			return StrT::CmpI<_TYPECH>(pData1->get_Name(), pData2->get_Name());
 		}
 		virtual COMPARE_t CompareKey(KEY_t key1, ARG_t pObj) const noexcept override

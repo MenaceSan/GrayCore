@@ -14,23 +14,24 @@
 #include "StrArg.h"
 
 #if ! defined(UNDER_CE) 
-
 namespace Gray
 {
+	/// <summary>
+	/// Standard streams/handles. True for both __linux__ and _WIN32. (though __linux__ implementation is hidden)
+	/// </summary>
 	enum AppStd_TYPE
 	{
-		//! @enum Gray::AppStd_TYPE
-		//! Standard streams/handles. True for both __linux__ and _WIN32. (though __linux__ implementation is hidden)
 		AppStd_stdin = 0,	//!< stdin  (&__iob_func()[0]) -> GetStdHandle(STD_INPUT_HANDLE) = STDIN_FILENO
 		AppStd_stdout = 1,	//!< stdout (&__iob_func()[1]) -> GetStdHandle(STD_OUTPUT_HANDLE) = STDOUT_FILENO
 		AppStd_stderr = 2,	//!< stderr (&__iob_func()[2]) -> GetStdHandle(STD_ERROR_HANDLE) = STDERR_FILENO
 		AppStd_QTY,
 	};
+
+	/// <summary>
+	/// What type of console is connected?
+	/// </summary>
 	enum AppCon_TYPE
 	{
-		//! @enum Gray::AppCon_TYPE
-		//! What type of console is connected?
-
 		AppCon_UNKNOWN = -1,
 		AppCon_NONE = 0,
 		AppCon_Proc = 1,	//!< Process was build as _CONSOLE mode. stdin,stdout already setup.
@@ -38,14 +39,14 @@ namespace Gray
 		AppCon_Create = 3,	//!< Created my own console. must call FreeConsole()
 	};
 
+	/// <summary>
+	/// Singleton to Manage console output/input for this app. use of printf() etc
+	/// This allows apps not compiled in _CONSOLE mode to attach to a console if they are started in one (or create one if not).
+	/// </summary>
 	class GRAYCORE_LINK cAppConsole
 		: public cSingleton < cAppConsole >
 		, public cStreamOutput
 	{
-		//! @class Gray::cAppConsole
-		//! Singleton to Manage console output/input for this app. use of printf() etc
-		//! This allows apps not compiled in _CONSOLE mode to attach to a console if they are started in one (or create one if not).
-
 		friend class cSingleton < cAppConsole >;
 
 	public:
@@ -75,9 +76,12 @@ namespace Gray
 	public:
 		virtual ~cAppConsole();
 
+		/// <summary>
+		/// started from command line ? Call AllocConsole to start using console.
+		/// </summary>
+		/// <returns></returns>
 		bool HasConsoleParent() noexcept
 		{
-			//! started from command line ? Call AllocConsole to start using console.
 			CheckConsoleMode();
 			return m_bConsoleParent;
 		}
@@ -86,14 +90,23 @@ namespace Gray
 			CheckConsoleMode();
 			return m_eConsoleType;
 		}
+
+		/// <summary>
+		/// Is the app already running in console mode? can i use printf() ?
+		/// 1. I am _CONSOLE app, 2. I attached to my parent. 3. I created a console.
+		/// </summary>
+		/// <returns>bool</returns>
 		bool isConsoleMode() noexcept
 		{
-			//! Is the app already running in console mode? can i use printf() ?
-			//! 1. I am _CONSOLE app, 2. I attached to my parent. 3. I created a console.
 			return get_ConsoleMode() != AppCon_NONE;
 		}
 
-		//! make printf() go to the console. create console if needed.
+
+		/// <summary>
+		/// make printf() go to the console. create console if needed.
+		/// </summary>
+		/// <param name="bAttachElseAlloc"></param>
+		/// <returns></returns>
 		bool AttachOrAllocConsole(bool bAttachElseAlloc = true);
 		void ReleaseConsole();
 
@@ -105,19 +118,28 @@ namespace Gray
 		int ReadKeyWait();		//!< Get a single char. -1 = block/wait for char failed.
 		int ReadKey();			//!< Get a single char. -1 = none avail. non blocking,.
 
+		/// <summary>
+		/// support cStreamOutput.
+		/// Do not assume line termination with \n
+		/// </summary>
+		/// <param name="pszStr"></param>
+		/// <returns></returns>
 		HRESULT WriteString(const char* pszStr) override
 		{
-			//! support cStreamOutput
-			//! Do not assume line termination with \n
 			const HRESULT hRes = WriteStrOut(pszStr);
 			if (FAILED(hRes))
 				return hRes;
 			return 1;
 		}
+
+		/// <summary>
+		/// support cStreamOutput.
+		/// Do not assume line termination with \n
+		/// </summary>
+		/// <param name="pszStr"></param>
+		/// <returns></returns>
 		HRESULT WriteString(const wchar_t* pszStr) override
 		{
-			//! support cStreamOutput
-			//! Do not assume line termination with \n
 			const HRESULT hRes = WriteStrOut(StrArg<char>(pszStr));
 			if (FAILED(hRes))
 				return HRESULT_WIN32_C(ERROR_WRITE_FAULT);
