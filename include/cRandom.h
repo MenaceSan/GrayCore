@@ -10,156 +10,126 @@
 #pragma once
 #endif
 
-#include "cSingleton.h"
 #include "IUnknown.h"
+#include "cBlob.h"
+#include "cSingleton.h"
 
-namespace Gray
-{
-	DECLARE_INTERFACE(IRandomNoise)
-	{
-		//! @interface Gray::IRandomNoise
-		//! Basic interface for getting noise (random data) from some entropy source.
-		IGNORE_WARN_INTERFACE(IRandomNoise);
-		virtual HRESULT GetNoise(void* pData, size_t iSize) = 0;	//!< fill array with random bytes. return # bytes filled.
-	};
+namespace Gray {
+/// <summary>
+/// Basic interface for getting noise (random data) from some entropy source.
+/// </summary>
+DECLARE_INTERFACE(IRandomNoise) {
+    typedef UINT RAND_t;  /// default value/seed size might be 32 or 64 bit .
+    IGNORE_WARN_INTERFACE(IRandomNoise);
+    virtual HRESULT GetNoise(void* pData, size_t iSize) = 0;  /// fill array with random bytes. return # bytes filled.
+};
 
-	class GRAYCORE_LINK cRandomBase : public IRandomNoise
-	{
-		//! @class Gray::cRandomBase
-		//! Generic abstract base class for a integer/binary (pseudo) random number generator.
-		//! Derived Providers will natively give up N bits of randomness per call/tick.
-		//! Similar to .NET System.Random
-		//! @note derived class MUST implement get_RandUns or GetRandUX to generate at least 32 bits or 31 bits of random data.
+/// <summary>
+/// Generic abstract base class for a integer/binary (pseudo) random number generator.
+/// Derived Providers will natively give up N bits of randomness per call/tick.
+/// Similar to .NET System.Random
+/// @note derived class MUST implement get_RandUns or GetRandUX to generate at least 32 bits or 31 bits of random data.
+/// </summary>
+struct GRAYCORE_LINK cRandomBase : public IRandomNoise {
+    cRandomBase() noexcept {}
+    virtual ~cRandomBase() {}
 
-	public:
-		typedef UINT SEED_t;		//!< default seed size might be 32 or 64 bit depending on k_RAND_MAX.
+    virtual void InitSeed(const cMemSpan& seed) = 0;  // all implementations must support this.
+    void InitSeed(IRandomNoise* pSrc, size_t iSize);
+    void InitSeedOS(size_t iSize = sizeof(RAND_t));
+    void InitSeedUns(RAND_t uSeed);
 
-		cRandomBase() noexcept
-		{
-		}
-		virtual ~cRandomBase()
-		{
-		}
+    HRESULT GetNoise(void* pData, size_t iSize) override;  /// fill array with random. return # filled.
 
-		virtual void InitSeed(const void* pData, size_t iSize) = 0;	// all implementations must support this.
-		void InitSeed(IRandomNoise* pSrc, size_t iSize);
-		void InitSeedOS(size_t iSize = sizeof(int));
-		void InitSeedUns(UINT iSeed);	// SEED_t
+    // Type helpers.
+    virtual RAND_t get_RandUns();  // UINT_MAX // RAND_t
+    /// <summary>
+    /// flip a coin.
+    /// </summary>
+    bool GetRandBool() {
+        return GetRandUX(2) == 1;
+    }
 
-		virtual HRESULT GetNoise(void* pData, size_t iSize) override;	//!< fill array with random. return # filled.
+    //! Get random number in scale. 0 to scale.
+    //! unsigned integer is NON inclusive range. from 0 to nScale-1
+    virtual RAND_t GetRandUX(RAND_t nScale);                // get integer random number in desired interval. (Non inclusive)
+    RAND_t GetRandRange(RAND_t nRangeLo, RAND_t nRangeHi);  // output random int
+};
 
-		// Type helpers.
-		virtual UINT get_RandUns();		// UINT_MAX // SEED_t
-		bool GetRandBool()
-		{
-			//! flip a coin.
-			return GetRandUX(2) == 1 ;
-		}
+/// <summary>
+/// Get randomness from perf data. prefer cRandomOS but use this as fallback
+/// </summary>
+struct GRAYCORE_LINK cRandomPerf : public IRandomNoise, public cSingleton<cRandomPerf> {
+    cRandomPerf();
+    static void GRAYCALL GetNoisePerf(void* pData, size_t iSize);
+    HRESULT GetNoise(void* pData, size_t iSize) override {  // fill array with random. return # filled.
+        GetNoisePerf(pData, iSize);
+        return CastN(HRESULT, iSize);
+    }
+};
 
-		//! Get random number in scale. 0 to scale.
-		//! unsigned integer is NON inclusive range. from 0 to nScale-1
-		virtual UINT GetRandUX(UINT nScale); // get integer random number in desired interval. (Non inclusive)
-		int GetRandIRange(int iRangeLo, int iRangeHi);    // output random int
-	};
+/// <summary>
+/// Get Low level Hardware based noise supplied by the OS. NO SEED. NOT Deterministic (in theory)
+/// __linux__ use "/dev/urandom" as a get_RandomSeed().
+/// </summary>
+class GRAYCORE_LINK cRandomOS : public cRandomBase, public cSingleton<cRandomOS> {
+    void InitSeed(const cMemSpan& seed) override {
+        // No way to seed this.
+        UNREFERENCED_PARAMETER(seed);
+    }
 
-	class GRAYCORE_LINK cRandomPerf : public IRandomNoise, public cSingleton < cRandomPerf >
-	{
-		//! @class GraySSL::cRandomPerf
-		//! prefer cRandomOS but use this as fallback
+ public:
+    cRandomOS();
+ 
+    static HRESULT GRAYCALL GetNoiseOS(void* pData, size_t iSize);
 
-	public:
-		cRandomPerf();
-		static void GRAYCALL GetNoisePerf(void* pData, size_t iSize);
-		virtual HRESULT GetNoise(void* pData, size_t iSize) override	// fill array with random. return # filled.
-		{
-			GetNoisePerf(pData, iSize);
-			return (HRESULT)iSize;
-		}
-	};
+    HRESULT GetNoise(void* pData, size_t iSize) override;  // fill array with random. return # filled.
+    RAND_t get_RandUns() override;                         // UINT_MAX
 
-	class GRAYCORE_LINK cRandomOS : public cRandomBase, public cSingleton < cRandomOS >
-	{
-		//! @class Gray::cRandomOS
-		//! Get Low level Hardware based noise supplied by the OS. NO SEED. NOT Deterministic (in theory)
-		//! __linux__ use "/dev/urandom" as a get_RandomSeed().
-	private:
-		virtual void InitSeed(const void* pData, size_t iSize)
-		{
-			// No way to seed this.
-			UNREFERENCED_PARAMETER(pData);
-			UNREFERENCED_PARAMETER(iSize);
-		}
+    CHEAPOBJECT_IMPL;
+};
 
-	public:
-		cRandomOS();
-		virtual ~cRandomOS();
+/// <summary>
+/// Hold a blob of random data. Acts as a one time cipher.
+/// Supply test 'random' data. (e.g. maybe not random at all). acts as a one time cipher pad.
+/// </summary>
+class GRAYCORE_LINK cRandomBlock : public IRandomNoise {
+    size_t m_nReadLast;  /// How far have we read in m_Data? recycle when at end ? like cQueueIndex
+    cBlob m_Data;   /// a block of 'random' test data.  
 
-		static HRESULT GRAYCALL GetNoiseOS(void* pData, size_t iSize);
+ public:
+    cRandomBlock(const void* pData, size_t nSize) noexcept : m_Data(pData, nSize, false), m_nReadLast(0) {}
 
-		virtual HRESULT GetNoise(void* pData, size_t iSize) override;	// fill array with random. return # filled.
-		virtual UINT get_RandUns();		// UINT_MAX
+    /// <summary>
+    /// Get sample random data bytes
+    /// </summary>
+    HRESULT GetNoise(void* pData, size_t len) override {  // IRandomNoise
+        if (m_Data.isValidPtr()) {
+            m_nReadLast = cMem::CopyRepeat(pData, len, m_Data, m_Data.get_DataSize(), m_nReadLast);
+        } else {
+            cMem::Fill(pData, len, 0x2a);  // No m_Src supplied so fill with fixed data.
+        }
+        return CastN(HRESULT, len);
+    }
+};
 
-		CHEAPOBJECT_IMPL;
-	};
+/// <summary>
+/// Like the default 'C' library seeded pseudo-random number generator ::srand() and ::rand()
+/// Control a series of pseudo random numbers via a seed.
+/// not thread safe. Use cThreadLocal to make thread safe version.
+/// </summary>
+class GRAYCORE_LINK cRandomDef : public cRandomBase {
+    RAND_t m_nSeed;  /// Control the pattern of random numbers via the seed. may be globally/thread shared.
 
-	class GRAYCORE_LINK cRandomBlock : public IRandomNoise
-	{
-		//! @class Gray::cRandomBlock
-		//! Hold a blob of random data. Acts as a one time cipher.
-		//! Supply test 'random' data. (e.g. maybe not random at all)
+ public:
+    cRandomDef(RAND_t nSeed = 1);
+    void InitSeed(const cMemSpan& seed) override;  /// Start a repeatable seeded series
+    /// <summary>
+    /// Get next pseudo random number like ::rand();
+    /// </summary>
+    RAND_t get_RandUns() override;
+ };
 
-	public:
-		cMemBlock m_Src;		// a block of 'random' test data. 
-		size_t m_nOffset;		// How far have we read in m_Src? recycle when at end ?
-
-	public:
-		cRandomBlock(const void* pData, size_t nSize) noexcept
-			: m_Src(pData, nSize)
-			, m_nOffset(0)
-		{
-		}
-		virtual HRESULT GetNoise(void* pData, size_t len) override	// IRandomNoise
-		{
-			//! Get sample random data bytes
-			if (m_Src.isValidPtr())
-			{
-				// todo repeat like cMem::CopyRepeat() ?
-				cMem::Copy(pData, m_Src.GetSpan(m_nOffset, len), len);
-			}
-			else
-			{
-				// No m_Src supplied so fill with fixed data.
-				cMem::Fill(pData, len, 0x2a);		
-			}
-			m_nOffset += len;
-			return (HRESULT)len;
-		}
-	};
-
-	class GRAYCORE_LINK cRandomDef : public cRandomBase
-	{
-		//! @class Gray::cRandomDef
-		//! Like the default 'C' library seeded pseudo-random number generator ::srand() and ::rand()
-		//! Control a series of pseudo random numbers via a seed. 
-		//! not thread safe. Use cThreadLocal to make thread safe.
-		//! RESOLUTION = k_RAND_MAX
-
-	public:
-		static const SEED_t k_RAND_MAX = 0x7fff;	//!< 0x7fff = RAND_MAX, 31 bits of random.
-
-	private:
-		SEED_t m_nSeed;	//!< Control the pattern of random numbers via the seed. may be globally/thread shared.
-
-	public:
-		cRandomDef(SEED_t nSeed = 1);
-		virtual ~cRandomDef();
-
-		SEED_t GetRandNext();
-
-		virtual void InitSeed(const void* pData, size_t iSize) override;	// Start a repeatable seeded series
-		virtual UINT GetRandUX(UINT nScale) override; // k_RAND_MAX is not always the same as UINT.
-	};
-
-	extern GRAYCORE_LINK cRandomDef g_Rand;	//!< the global random number generator. NOT thread safe. but does that matter?
-} 
+extern GRAYCORE_LINK cRandomDef g_Rand;  /// the global random number generator. NOT thread safe. but does that matter?
+}  // namespace Gray
 #endif

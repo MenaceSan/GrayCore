@@ -3,10 +3,10 @@
 //! System include files should be stable and not give any warnings. (but this is not true of course)
 //! Pull in System definitions from system header files. Stuff that can and should be put into a precompiled header for most all programs.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//! Can be included from an .RC file. RC_INVOKED
+//! DO NOT include from an .RC file. RC_INVOKED. Use "SysRes.h" instead.
 //! Add #defines and typedefs to arbitrate platform differences.
 //! @note DO NOT add new functionality here !
- 
+
 #ifndef _INC_SysTypes_H
 #define _INC_SysTypes_H
 #ifndef NO_PRAGMA_ONCE
@@ -21,7 +21,7 @@
 //! 3. Windows MFC DLL with Gray* Static Library= _WIN32, _AFXDLL, _MFC_VER > 0x0600
 //! 4. WindowsCE / PocketPC= UNDER_CE, _WIN32
 //! 5. LINUX 32/64 bit static lib = __linux__ (NOT _BSD?) ( USE_64BIT = __ia64__, __s390x__, __x86_64__, __powerpc64__ )
-//! 6. LINUX 32/64 bit SO module = __linux__ 
+//! 6. LINUX 32/64 bit SO module = __linux__
 //! 7. __APPLE__ ??
 
 // M$ compiler versions:
@@ -63,28 +63,30 @@
 // _M_IX86, _M_X64, _M_AMD64 = what processor type assumed? _M_IX86 only for use of _asm
 // _MT = multi-threaded vs. single-threaded ? ASSUME __linux__ IS ALWAYS _MT. non _MT may be deprecated?
 // __GNUC__ = using the GCC GNU C compiler (uses __asm__) May work for _WIN32 or __linux__
-//
+// _WIN16 = DROPPED SUPPORT. DOS/Win98 support not required.
 // other compilers:
 // __MINGW32__, __BORLANDC__, __WATCOMC__
 
 #if defined(_MSC_VER) && (_MSC_VER >= 1000)
-// Remove globally annoying/pointless warnings.
-#pragma warning(disable:4800)	// "forcing value to bool 'true' or 'false' (performance warning)" (convert BOOL/int to bool)
-#pragma warning(disable:4251)	// 'CC' needs to have DLL - interface to be used by clients of class 'Gray::HResult' (FOR DLLs ONLY and inline type children)
+// Remove globally annoying/pointless warnings. global suppression.
+#pragma warning(disable : 4800)  // "forcing value to bool 'true' or 'false' (performance warning)" (convert BOOL/int to bool)
+#pragma warning(disable : 4251)  // 'CC' needs to have DLL - interface to be used by clients of class 'Gray::HResult' (FOR DLLs ONLY and inline type children)
 
-#pragma warning(disable:26812)	// C26812. https://docs.microsoft.com/en-us/cpp/code-quality/c26812?view=msvc-160 The enum type type-name is unscoped. Prefer 'enum class' over 'enum' (Enum.3)
-#pragma warning(disable:26485)	// C26485. Expression '' No array to pointer decay. (bounds.3)
-#pragma warning(disable:26481)	// C26481 Dont use pointer arithmetic. use span instead
+#pragma warning(disable : 26812)  // C26812. https://docs.microsoft.com/en-us/cpp/code-quality/c26812?view=msvc-160 The enum type type-name is unscoped. Prefer 'enum class' over 'enum' (Enum.3)
+#pragma warning(disable : 26485)  // C26485. Expression '' No array to pointer decay. (bounds.3)
+#pragma warning(disable : 26481)  // C26481 Dont use pointer arithmetic. use span instead
 
 // Useless MSVC2010 warnings: at /W4 level
-#pragma warning(disable:4510)	// default constructor could not be generated
-#pragma warning(disable:4512)	// assignment operator could not be generated
-#pragma warning(disable:4610)	// class 'Gray::cTypeInfo' can never be instantiated - user defined constructor required
+#pragma warning(disable : 4510)  // default constructor could not be generated
+#pragma warning(disable : 4512)  // assignment operator could not be generated
+#pragma warning(disable : 4610)  // class 'Gray::cTypeInfo' can never be instantiated - user defined constructor required
 
-#endif // _MSC_VER >= 1000
- 
-#ifndef USE_CRT		// NO CRT would be paired with GRAY_STATICLIB
-#define USE_CRT 1	// 1 = use all normal CRT functions. 0 = attempt to use minimal/no CRT. msvcp140.dll and vcruntime140.dll
+#pragma warning(disable : 6011)  // no check for null before use. C6011
+
+#endif  // _MSC_VER >= 1000
+
+#ifndef USE_CRT    // NO CRT would be paired with GRAY_STATICLIB
+#define USE_CRT 1  // 1 = use all normal CRT functions. 0 = attempt to use minimal/no CRT. msvcp140.dll and vcruntime140.dll
 #endif
 
 // Define your compiler here.
@@ -100,36 +102,36 @@
 #undef __STRICT_ANSI__
 
 #elif defined(__WATCOMC__) || defined(__BORLANDC__) || defined(__MINGW32__)
-#define GRAY_COMPILER_NAME "cc"	// other ?
+#define GRAY_COMPILER_NAME "cc"  // other ?
 #define GRAY_COMPILER_VER 0
 #error UNSUPPORTED COMPILER
 
 #else
-#error UNKNOWN COMPILER	// RC_INVOKED will fail here. dont include for RC. use SysRes.h
+#error UNKNOWN COMPILER	// RC_INVOKED will fail here. dont include for RC. use "SysRes.h" instead
 #endif
 
 // http://en.wikipedia.org/wiki/Pragma_once
 #if defined(_MSC_VER) && (_MSC_VER < 1000)
-#define NO_PRAGMA_ONCE		// This MUST be put on the command line.
+#define NO_PRAGMA_ONCE  // This MUST be put on the command line.
 #endif
-#if defined(__GNUC__) && (GRAY_COMPILER_VER >= 30400)	// >= 3.4
+#if defined(__GNUC__) && (GRAY_COMPILER_VER >= 30400)  // >= 3.4
 // #define NO_PRAGMA_ONCE
-#define _NATIVE_WCHAR_T_DEFINED		// This seems to be true in newer versions. wchar_t
+#define _NATIVE_WCHAR_T_DEFINED  // This seems to be true in newer versions. wchar_t
 #endif
 
 #ifdef _WIN32
 
 #ifdef UNDER_CE
 
-#define WINCE	// Some code depends on this ?
+#define WINCE  // Some code depends on this ?
 #pragma comment(linker, "/nodefaultlib:libc.lib")
 #pragma comment(linker, "/nodefaultlib:libcd.lib")
 // NOTE - this value is not strongly correlated to the Windows CE OS version being targeted
 #define _WIN32_WCE 0x0500
 #define WINVER _WIN32_WCE
-#include <ceconfig.h>	// __CECONFIG_H__
+#include <ceconfig.h>  // __CECONFIG_H__
 
-#else // UNDER_CE
+#else  // UNDER_CE
 
 #if 0
 // Including SDKDDKVer.h defines the highest available Windows platform.
@@ -140,103 +142,100 @@
 
 // Modify the following defines if you have to target a platform prior to the ones specified below.
 // Refer to MSDN for the latest info on corresponding values for different platforms.
-#ifndef WINVER				// Allow use of features specific to Windows XP or later.
-#define WINVER 0x0600		// Change this to the appropriate value to target other versions of Windows. (0x0600 = Vista or higher)
+#ifndef WINVER         // Allow use of features specific to Windows XP or later.
+#define WINVER 0x0600  // Change this to the appropriate value to target other versions of Windows. (0x0600 = Vista or higher)
 #endif
-#ifndef _WIN32_WINNT		// Allow use of features specific to Windows XP or later.
-#define _WIN32_WINNT 0x0600	// Change this to the appropriate value to target other versions of Windows. (minimum version = 0x600)
+#ifndef _WIN32_WINNT         // Allow use of features specific to Windows XP or later.
+#define _WIN32_WINNT 0x0600  // Change this to the appropriate value to target other versions of Windows. (minimum version = 0x600)
 #endif
-#ifndef _WIN32_WINDOWS		// Allow use of features specific to Windows XP or later.
-#define _WIN32_WINDOWS 0x0600 // Change this to the appropriate value to target Windows Me or later.
+#ifndef _WIN32_WINDOWS         // Allow use of features specific to Windows XP or later.
+#define _WIN32_WINDOWS 0x0600  // Change this to the appropriate value to target Windows Me or later.
 #endif
-#ifndef _WIN32_IE			// Allow use of features specific to Windows IE version.
-#define _WIN32_IE 0x0700	// Change this to the appropriate value to target IE 7 or later. (default for Vista)
+#ifndef _WIN32_IE         // Allow use of features specific to Windows IE version.
+#define _WIN32_IE 0x0700  // Change this to the appropriate value to target IE 7 or later. (default for Vista)
 #endif
 
-#endif	// SDKDDKVer.h
+#endif  // SDKDDKVer.h
 
-#endif // ! UNDER_CE
+#endif  // ! UNDER_CE
 
-#define _WINSOCKAPI_		// prevent _WINSOCKAPI_ from loading because i want _WINSOCK2API_
+#define _WINSOCKAPI_  // prevent _WINSOCKAPI_ from loading because i want _WINSOCK2API_
 // #define WINBASE_DECLARE_GET_MODULE_HANDLE_EX	// allow GetModuleHandleEx
 #ifndef STRICT
-#define STRICT	1	// Make sure DECLARE_HANDLE has type info.
+#define STRICT 1  // Make sure DECLARE_HANDLE has type info.
 #endif
 
 #ifdef _DEBUG
-#define DEBUG_VALIDATE_ALLOC	// slows us down but checks memory often
+#define DEBUG_VALIDATE_ALLOC  // slows us down but checks memory often
 #endif
 
-#ifdef _AFXDLL	// will define _MFC_VER
-#define _ATL_CSTRING_EXPLICIT_CONSTRUCTORS	// some CString constructors will be explicit
+#ifdef _AFXDLL                              // will define _MFC_VER
+#define _ATL_CSTRING_EXPLICIT_CONSTRUCTORS  // some CString constructors will be explicit
 
 // Windows with MFC (NON GUI)
-#ifndef __AFX_H__	// not already included
-#include <afx.h>         // MFC core and standard components.  MFC Strings. CString. defines _MFC_VER
+#ifndef __AFX_H__  // not already included
+#include <afx.h>   // MFC core and standard components.  MFC Strings. CString. defines _MFC_VER
 #endif
-#ifndef _MFC_VER // should be defined in <afxver_.h> in <afx.h>
+#ifndef _MFC_VER  // should be defined in <afxver_.h> in <afx.h>
 #error NO _MFC_VER?
 #endif
-#include <afxtempl.h>		// MFC Templates. CArray.
-#include <Winsock2.h>	// must get loaded before <afxwin.h> to prevent problems with _WINSOCKAPI_ vs _WINSOCK2API_ in VC2013 with _AFXDLL, _MFC_VER
+#include <Winsock2.h>  // must get loaded before <afxwin.h> to prevent problems with _WINSOCKAPI_ vs _WINSOCK2API_ in VC2013 with _AFXDLL, _MFC_VER
 
 #else
+#include <objbase.h>  // CINTERFACE DECLARE_INTERFACE
 #include <windows.h>
-#include <objbase.h>	// CINTERFACE DECLARE_INTERFACE
-#endif	// ! _AFXDLL
+#endif  // ! _AFXDLL
 
-// TODO : Include SysRes.h from here !?????
-
-#if defined(_WIN32) && ! defined(_WINDOWS_)
-#ifdef _WINDOWS_H			// __GNUC__ version of "windows.h"
+#if defined(_WIN32) && !defined(_WINDOWS_)
+#ifdef _WINDOWS_H  // __GNUC__ version of "windows.h"
 #define _WINDOWS_
-#elif defined(__WINDOWS__)	// UNDER_CE version
+#elif defined(__WINDOWS__)  // UNDER_CE version
 #define _WINDOWS_
-#elif ! defined(_WINDOWS_) // should be defined in <afx.h> !
+#elif !defined(_WINDOWS_)  // should be defined in <afx.h> !
 #error NO _WINDOWS_ defined?
 #endif
 #endif
 
-#endif // _WIN32
+#endif  // _WIN32
 
 //*******************************************
 // ASSUME these ANSI C standard types are universal. rely on CRT.
 
-#include <stdarg.h>	// va_list ...
-#include <limits.h> // INT_MAX, (PATH_MAX in Linux)  is std::numeric_limits<T>::max() in <limits> better ?
+#include <limits.h>  // INT_MAX, (PATH_MAX in Linux)  is std::numeric_limits<T>::max() in <limits> better ?
+#include <stdarg.h>  // va_list ... k_va_list_empty
 
 #if USE_CRT
-#include <stddef.h> // offsetof(), size_t
-#include <stdlib.h> // _MAX_PATH, __max(), __min() if !defined(__OpenBSD__) ?
-#include <string.h>	// memcpy()
-#include <stdio.h>	// define FILE _vsnprintf_s printf() function
+#include <stddef.h>  // offsetof(), size_t
+#include <stdio.h>   // define FILE _vsnprintf_s printf() function
+#include <stdlib.h>  // _MAX_PATH, __max(), __min() if !defined(__OpenBSD__) ?
+#include <string.h>  // memcpy()
 #endif
 
 #ifdef UNDER_CE
 #include <new>
 #else
-#include <assert.h>	// assert() (no idea why UNDER_CE doesn't like this)
+#include <assert.h>  // assert() (no idea why UNDER_CE doesn't like this)
 #endif
 
 #ifdef __GNUC__
-#include <stdint.h> // int64_t in C99 standard.
-#define _CPPUNWIND	// exceptions are supported
-#define _CPPRTTI	// RTTI is supported
-#define _MT			// __linux__ and __GNUC__ is always considered to be multi-threaded.
-#endif	// __GNUC__
+#include <stdint.h>  // int64_t in C99 standard.
+#define _CPPUNWIND   // exceptions are supported
+#define _CPPRTTI     // RTTI is supported
+#define _MT          // __linux__ and __GNUC__ is always considered to be multi-threaded.
+#endif               // __GNUC__
 
-#ifdef __linux__	// emulate windows type stuff for Linux.
+#ifdef __linux__  // emulate windows type stuff for Linux.
 // __linux__, Linux or _BSD
-#include <signal.h>
-#include <sched.h>
-#include <fcntl.h>	// open()
-#include <unistd.h> // gethostname()
+#include <fcntl.h>  // open()
 #include <linux/unistd.h>
+#include <sched.h>
+#include <signal.h>
+#include <unistd.h>  // gethostname()
 #endif
 
-#if defined(_WIN32) && !defined(UNDER_CE) && ! defined(__GNUC__) && USE_CRT
+#if defined(_WIN32) && !defined(UNDER_CE) && !defined(__GNUC__) && USE_CRT
 #include <crtdbg.h>
-#include <direct.h>	// _chdir
+#include <direct.h>  // _chdir
 #endif
 
 #ifndef RC_INVOKED
@@ -244,46 +243,41 @@
 // see cMemT::NtoH() and cMemT::HtoN() for auto conversion to big endian (network)
 // e.g. on little endian (Intel). 0x123456 = 56 34 12 00
 #if defined(_M_IX86) || defined(_M_X64) || defined(_M_AMD64) || defined(_M_IA64) || defined(_AMD64_) || defined(__ia64__) || defined(__x86_64__)
-#define USE_INTEL 1				//!< X86 type instructions and _asm.
-#define USE_LITTLE_ENDIAN 1		//!< Intel = little endian = high values in high memory. increasing numeric significance with increasing memory addresses
+#define USE_INTEL 1          /// X86 type instructions and _asm.
+#define USE_LITTLE_ENDIAN 1  /// Intel = little endian = high values in high memory. increasing numeric significance with increasing memory addresses
 #endif
 
-//!< use 64 bit native code/pointers. __linux__ or _WIN32&_WIN64.
-//!< NOT _M_IX86
+/// use 64 bit native code/pointers. __linux__ or _WIN32&_WIN64. sizeof(size_t) == 8
+/// NOT _M_IX86
 #if defined(_WIN64)
 #define USE_64BIT
-#elif defined(_MSC_VER) && ( defined(_M_AMD64) || defined(_M_X64) || defined(_M_IA64))
+#elif defined(_MSC_VER) && (defined(_M_AMD64) || defined(_M_X64) || defined(_M_IA64))
 #define USE_64BIT
-#elif defined(__GNUC__) && (                          \
-	defined(__amd64__) || defined(__x86_64__)    || \
-	defined(__ppc64__) || defined(__powerpc64__) || \
-	defined(__ia64__)  || defined(__alpha__)     || \
-	(defined(__sparc__) && defined(__arch64__))  || \
-	defined(__s390x__) || defined(__mips64) )
+#elif defined(__GNUC__) && (defined(__amd64__) || defined(__x86_64__) || defined(__ppc64__) || defined(__powerpc64__) || defined(__ia64__) || defined(__alpha__) || (defined(__sparc__) && defined(__arch64__)) || defined(__s390x__) || defined(__mips64))
 #define USE_64BIT
 #endif
 
-#define USE_FLOAT	// Assume we can do float and double types. Some embedded systems don't support float types. probably ieee .
+#define USE_FLOAT  // Assume we can do float and double types. Some embedded systems don't support float types. probably ieee .
 
 // Assume we do native int64 types though we may not be true 64 bit code.
 // What cases don't we do native 64 bit int types ?
-#define USE_INT64	//!< has INT64(__int64 (_MSC_VER) or int64_t (C99/__GNUC__ standard)) as a base/native type. may not be true 64 bit code. USE_64BIT
+#define USE_INT64  /// has INT64(__int64 (_MSC_VER) or int64_t (C99/__GNUC__ standard)) as a base/native type. may not be true 64 bit code. USE_64BIT
 
 #if defined(__GNUC__) && defined(USE_64BIT)
-#define USE_LONG_AS_INT64	//!< avoid ambiguous/duplicated types. __GNUC__ defines __int64_t as 'signed long int' but usually (_MSC_VER) long is just 32 bits
+#define USE_LONG_AS_INT64  /// avoid ambiguous/duplicated types. __GNUC__ defines __int64_t as 'signed long int' but usually (_MSC_VER) long is just 32 bits
 #endif
 
 //********************************
 
-#if defined(_WIN32) && ! defined(WIN32)
-#define WIN32	// Some external stuff needs this alternate define. like JS (JavaScript)
+#if defined(_WIN32) && !defined(WIN32)
+#define WIN32  // Some external stuff needs this alternate define. like JS (JavaScript)
 #endif
 
 #if defined(_MSC_VER) || defined(__BORLANDC__)
-#define __DECL_EXPORT  __declspec(dllexport)		// exported from in a DLL
-#define __DECL_IMPORT  __declspec(dllimport)		// in a DLL
-#define __DECL_ALIGN(x) __declspec(align(x))
-#elif defined (__GNUC__)
+#define __DECL_EXPORT __declspec(dllexport)   // exported from in a DLL
+#define __DECL_IMPORT __declspec(dllimport)   // in a DLL
+#define __DECL_ALIGN(x) __declspec(align(x))  // similar to pragma pack()
+#elif defined(__GNUC__)
 // #define __declspec(x)
 #define __DECL_EXPORT  //__declspec(dllexport)
 #define __DECL_IMPORT  //__declspec(dllimport)
@@ -297,39 +291,41 @@
 #error UNKNOWN COMPILER
 #endif
 
-#ifndef UNREFERENCED_PARAMETER	//!< _MSC_VER thing. get rid of stupid warning.
-#define UNREFERENCED_PARAMETER(P)       ((void)(P))
+#ifndef UNREFERENCED_PARAMETER  /// _MSC_VER thing. get rid of stupid warning.
+#define UNREFERENCED_PARAMETER(P) ((void)(P))
 #endif
 
 // This should NEVER execute. Suppress warning if i put code here because the compiler knows its not reachable!? Or if i don't.
 #if defined(_MSC_VER)
-#define UNREACHABLE_CODE(x)			__assume(0)		// M$ emulate the GCC __builtin_unreachable. 
+#define UNREACHABLE_CODE(x) __assume(0)  // M$ emulate the GCC __builtin_unreachable.
 #elif defined(__GNUC__) && (GRAY_COMPILER_VER >= 40500)
-#define UNREACHABLE_CODE(x)			__builtin_unreachable()		// __GNUC__ Defines __builtin_unreachable() natively. use it.
+#define UNREACHABLE_CODE(x) __builtin_unreachable()  // __GNUC__ Defines __builtin_unreachable() natively. use it.
 #else
 // no_return
-#define UNREACHABLE_CODE(x)			ASSERT(0); x	// has nothing like this. But 
+#define UNREACHABLE_CODE(x) \
+    ASSERT(0);              \
+    x  // has nothing like this. But
 #endif
 
 #ifdef __GNUC__
 #define ES_AWAYMODE_REQUIRED ((DWORD)0x00000040)
-#define UNREFERENCED_REFERENCE(x)	((void)(x)) // references don't work with the normal UNREFERENCED_PARAMETER() macro !??
-#elif ( _MSC_VER > 1600 )
-#define UNREFERENCED_REFERENCE UNREFERENCED_PARAMETER // This doesn't work for VS2010 if type is not fully defined! ( _MSC_VER > 1600 )
+#define UNREFERENCED_REFERENCE(x) ((void)(x))  // references don't work with the normal UNREFERENCED_PARAMETER() macro !??
+#elif (_MSC_VER > 1600)
+#define UNREFERENCED_REFERENCE UNREFERENCED_PARAMETER  // This doesn't work for VS2010 if type is not fully defined! ( _MSC_VER > 1600 )
 #else
-#define UNREFERENCED_REFERENCE(x)  ((void)(&x)) // x doesn't work for VS2010 if type is not fully defined! ( _MSC_VER > 1600 )
+#define UNREFERENCED_REFERENCE(x) ((void)(&x))  // x doesn't work for VS2010 if type is not fully defined! ( _MSC_VER > 1600 )
 #endif
 
-#ifndef DECLSPEC_NOVTABLE	// __GNUC__ has no such concept. Maybe use pragma ? AFX_NOVTABLE
-#define DECLSPEC_NOVTABLE		//__declspec(novtable)	// This is a abstract class or an interface the may not be instantiated directly.
+#ifndef DECLSPEC_NOVTABLE  // __GNUC__ has no such concept. Maybe use pragma ? AFX_NOVTABLE
+#define DECLSPEC_NOVTABLE  //__declspec(novtable)	// This is a abstract class or an interface the may not be instantiated directly.
 #endif
 // #define DECLSPEC_NOVTABLE interface struct 		// a plain interface that may not support IUnknown. For use with DirectX defs.
 
-#if defined(_MSC_VER) && ( _MSC_VER < 1100 )	// MSC Version 5.0 defines these from the ANSI spec. MSC 4.1 does not.
-#define bool	int
-#define false	0
-#define true	1
-#endif	// _MSC_VER
+#if defined(_MSC_VER) && (_MSC_VER < 1100)  // MSC Version 5.0 defines these from the ANSI spec. MSC 4.1 does not.
+#define bool int
+#define false 0
+#define true 1
+#endif  // _MSC_VER
 
 #if defined(_MSC_VER) && (_MSC_VER < 1300)
 typedef LONG LONG_PTR;
@@ -338,83 +334,83 @@ typedef LONG LONG_PTR;
 // fixed size on all platforms.
 // http://msdn2.microsoft.com/en-us/library/aa384264.aspx
 
-#ifdef __linux__	// emulate windows type names
+#ifdef __linux__  // emulate windows type names
 
 // dummy out __GNUC__ non keywords.
 #define _cdecl
 #define __cdecl
 #define _stdcall
 #define __stdcall
-#define IN		// document direction/usage of params. (const) AKA _In_
-#define OUT		// aka _Out_
-#define FAR		// Not used in modern architectures anymore but M$ headers use this. ignore it.
+#define IN   // document direction/usage of params. (const) AKA _In_
+#define OUT  // aka _Out_
+#define FAR  // Not used in modern architectures anymore but M$ headers use this. ignore it.
 
 // Missing Windows header file stuff.
-typedef int BOOL;	// match with sqltypes.h and _WIN32
+typedef int BOOL;  // match with sqltypes.h and _WIN32
 
-typedef unsigned char	BYTE;			// always 8 bits
-typedef unsigned short	WORD;			// always 16 bits
+typedef unsigned char BYTE;   // always 8 bits
+typedef unsigned short WORD;  // always 16 bits
 #ifdef USE_64BIT
-typedef unsigned int	DWORD;	// not sure if 32 or 64 bits ? always 32 bits in _WIN32 but defined in Linux sqltypes.h as (long unsigned int)
+typedef unsigned int DWORD;  // not sure if 32 or 64 bits ? always 32 bits in _WIN32 but defined in Linux sqltypes.h as (long unsigned int)
 #else
-typedef unsigned long	DWORD;	// In 32 bit code this is 32 bits. Match sqltypes.h.
+typedef unsigned long DWORD;  // In 32 bit code this is 32 bits. Match sqltypes.h.
 #endif
 
-typedef signed short	INT16;
-typedef unsigned short	UINT16;
+typedef signed short INT16;
+typedef unsigned short UINT16;
 
-typedef __int32_t		INT32;			// always 32 bits.
-typedef __uint32_t		UINT32;			// always 32 bits.
+typedef __int32_t INT32;    // always 32 bits.
+typedef __uint32_t UINT32;  // always 32 bits.
 
 #ifdef USE_INT64
-typedef __int64_t		INT64;			// always 64 bits if USE_INT64. AKA "long long int"
-typedef __uint64_t		UINT64;			// always 64 bits. AKA "unsigned long long int"
+typedef __int64_t INT64;    // always 64 bits if USE_INT64. AKA "long long int"
+typedef __uint64_t UINT64;  // always 64 bits. AKA "unsigned long long int"
 #endif
 
 typedef char TCHAR;
 
 // Basic common types. variable/vaguely sized. (e.g. 64 or 32 bits)
-typedef unsigned int	UINT;		// probably 32 bits.
-typedef long			LONG;
-typedef unsigned long 	ULONG;		// ULONG may be equiv to UINT32 or UINT64. check USE_LONG_AS_INT64
+typedef unsigned int UINT;  // probably 32 bits.
+typedef long LONG;
+typedef unsigned long ULONG;  // ULONG may be equiv to UINT32 or UINT64. check USE_LONG_AS_INT64
 
 // portable types that are safe if 32 or 64 bits. large enough to hold a pointer.
-typedef size_t			UINT_PTR;	// USE_64BIT ?
-typedef ptrdiff_t		INT_PTR;	// USE_64BIT ?
-typedef long			LONG_PTR;	// USE_64BIT ?
-typedef unsigned long	ULONG_PTR;	// Same as DWORD_PTR
-typedef unsigned long	DWORD_PTR;	// Same as ULONG_PTR
+typedef size_t UINT_PTR;          // USE_64BIT ?
+typedef ptrdiff_t INT_PTR;        // USE_64BIT ?
+typedef long LONG_PTR;            // USE_64BIT ?
+typedef unsigned long ULONG_PTR;  // Same as DWORD_PTR
+typedef unsigned long DWORD_PTR;  // Same as ULONG_PTR
 
 // normally in <windef.h>
-#define MAKEWORD(l,h)		((WORD)(((BYTE)(l)) | ((WORD)((BYTE)(h))) << 8))
+#define MAKEWORD(l, h) ((WORD)(((BYTE)(l)) | ((WORD)((BYTE)(h))) << 8))
 #define MAKELONG(low, high) ((LONG)(((WORD)(low)) | (((LONG)((WORD)(high))) << 16)))
 
-#define LOWORD(l)           ((WORD)(l))
-#define HIWORD(l)           ((WORD)(((UINT32)(l) >> 16) & 0xFFFF))
-#define LOBYTE(w)			((BYTE)(((WORD)(w))&0xFF))
-#define HIBYTE(w)			((BYTE)(((WORD)(w))>>8))
+#define LOWORD(l) ((WORD)(l))
+#define HIWORD(l) ((WORD)(((UINT32)(l) >> 16) & 0xFFFF))
+#define LOBYTE(w) ((BYTE)(((WORD)(w)) & 0xFF))
+#define HIBYTE(w) ((BYTE)(((WORD)(w)) >> 8))
 
-#define CALLBACK			GRAYCALL // just make this the same as GRAYCALL
-#define STDMETHODCALLTYPE	GRAYCALL // just make this the same as GRAYCALL
+#define CALLBACK GRAYCALL           // just make this the same as GRAYCALL
+#define STDMETHODCALLTYPE GRAYCALL  // just make this the same as GRAYCALL
 
-#define _MAX_PATH 			PATH_MAX	// #include <limits.h> or MAX_PATH in windef.h. (Put this in Filepath.h ?) FILENAME_MAX ?
+#define _MAX_PATH PATH_MAX  // #include <limits.h> or MAX_PATH in windef.h. (Put this in Filepath.h ?) FILENAME_MAX ?
 
 #endif
 
 #if defined(__GNUC__) || defined(UNDER_CE)
-#define _Inout_			// just stub this out.
-#define _countof(a)		((size_t)(sizeof(a)/sizeof((a)[0])))	//!< count of elements of an array (MSC_VER in stdlib.h) AKA ARRAYSIZE() or dimensionof() ?
+#define _Inout_                                             // just stub this out.
+#define _countof(a) ((size_t)(sizeof(a) / sizeof((a)[0])))  /// count of elements of an array (MSC_VER in stdlib.h) AKA ARRAYSIZE() or dimensionof() ?
 #endif
 
 #ifdef __GNUC__
-#define nullptr		__null		// This is a void* not an int value.
-#elif defined(_MSC_VER) && ( _MSC_VER < 1700 ) && ! defined(__cplusplus_cli)
-//!< Don't define if M$ '/clr' switch is used. __cplusplus_cli
-#define nullptr		NULL		//  
+#define nullptr __null  // This is a void* not an int value.
+#elif defined(_MSC_VER) && (_MSC_VER < 1700) && !defined(__cplusplus_cli)
+/// Don't define if M$ '/clr' switch is used. __cplusplus_cli
+#define nullptr NULL  //
 #endif
 
 #ifndef _MAX_PATH
-#define _MAX_PATH 260	// __GNUC__ can leave this out if __STRICT_ANSI__
+#define _MAX_PATH 260  // __GNUC__ can leave this out if __STRICT_ANSI__
 #endif
 
 #ifdef UNDER_CE
@@ -423,41 +419,28 @@ typedef unsigned long	DWORD_PTR;	// Same as ULONG_PTR
 #define VOLATILE volatile
 #endif
 
-// Largest integral sized type. NOT always the fastest. use USE_64BIT
+// Largest integral sized type supported. NOT always the fastest. use USE_64BIT
 #ifdef USE_INT64
-typedef INT64	INTMAX_t;			// 64 bits if USE_INT64 not just USE_64BIT
-typedef UINT64	UINTMAX_t;			// 64 bits
-#elif defined(_WIN16)
-typedef INT16	INTMAX_t;			// 16 bits 
-typedef UINT16	UINTMAX_t;			// 16 bits
-#else	// else assume we can do 32 bits.
-typedef INT32	INTMAX_t;			// 32 bits if NOT USE_INT64
-typedef UINT32	UINTMAX_t;			// 32 bits
+typedef INT64 INTMAX_t;    // 64 bits if USE_INT64 not just USE_64BIT
+typedef UINT64 UINTMAX_t;  // 64 bits
+#else                      // else assume we can ONLY do 32 bits intrinsically.
+typedef INT32 INTMAX_t;    // 32 bits if NOT USE_INT64
+typedef UINT32 UINTMAX_t;  // 32 bits
 #endif
 
 #ifndef _UINTPTR_T_DEFINED
 #define _UINTPTR_T_DEFINED
 #ifdef USE_64BIT
-typedef UINT64	uintptr_t;			// 64 bits. like size_t or intptr_t. maybe needs to be aligned to be truly fast? _SIZEOF_PTR should be the same as sizeof(size_t)
+typedef UINT64 uintptr_t;  // 64 bits. like size_t or intptr_t. maybe needs to be aligned to be truly fast? _SIZEOF_PTR should be the same as sizeof(size_t)
 #else
-typedef UINT32	uintptr_t;			// 32 bits. like size_t or intptr_t. _SIZEOF_PTR should be the same as sizeof(size_t).
+typedef UINT32 uintptr_t;     // 32 bits. like size_t or intptr_t. _SIZEOF_PTR should be the same as sizeof(size_t).
 #endif
 #endif
-
-// These must be made to work for both longs and ints. implement as macro not code.
-// use "#include <xutility>" or "#include <minmax.h>" ?
-#ifndef MAX
-#define MAX(a, b)	(((a) > (b)) ? (a) : (b))
-#define MIN(a, b)	(((a) < (b)) ? (a) : (b))
-#endif
-#ifndef ABS
-#define ABS(n)		(((n) < 0) ? (-(n)) : (n))	// no conflict with <math.h> abs()
-#endif	// sign
 
 #ifndef _HRESULT_DEFINED
 #define _HRESULT_DEFINED
-typedef INT32 HRESULT;		//!< _WIN32 style error codes. INT32
-#endif	// _HRESULT_DEFINED
+typedef long HRESULT;  /// _WIN32 style error codes. INT32
+#endif                  // _HRESULT_DEFINED
 
-#endif	// RC_INVOKED
-#endif	// _INC_SysTypes_H
+#endif  // RC_INVOKED
+#endif  // _INC_SysTypes_H

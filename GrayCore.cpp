@@ -6,41 +6,40 @@
 #include "pch.h"
 #include "GrayCore.h"
 #include "GrayVersion.h"
-#include "cLogMgr.h"
-#include "cUnitTest.h"
-#include "cOSModImpl.h"
 #include "SysRes.h"
+#include "cLogMgr.h"
+#include "cOSModImpl.h"
+#include "cUnitTest.h"
 
-#if ! USE_CRT
+#if !USE_CRT
 #include "NoCRT.inl"
 #endif
 
-namespace Gray
-{
-	cOSModImpl g_Module(GRAY_NAMES "Core");
+namespace Gray {
+cOSModImpl g_Module(GRAY_NAMES "Core");
+const va_list GRAYCORE_LINK k_va_list_empty = 0;  // For faking out the va_list. __GNUC__ doesn't allow a pointer to va_list. So use this to simulate nullptr.
 
-#ifndef GRAY_STATICLIB // force implementation/instantiate for DLL/SO.
-	template class GRAYCORE_LINK cInterlockedVal<int>;		// Force implementation/instantiate for DLL/SO.
+#ifndef GRAY_STATICLIB                              // force implementation/instantiate for DLL/SO.
+template class GRAYCORE_LINK cInterlockedVal<int>;  // Force implementation/instantiate for DLL/SO.
 #ifdef USE_INT64
-	template class GRAYCORE_LINK cInterlockedVal<INT64>;	// Force implementation/instantiate for DLL/SO.
+template class GRAYCORE_LINK cInterlockedVal<INT64>;  // Force implementation/instantiate for DLL/SO.
 #endif
 #endif
-}
+}  // namespace Gray
 
 #if defined(_CONSOLE)
 
-int _cdecl main(int argc, APP_ARGS_t argv)
-{
-	// @return APP_EXITCODE_t
-	Gray::cAppStateMain inmain(argc, argv);
+int _cdecl main(int argc, APP_ARGS_t argv) {
+    // @return APP_EXITCODE_t
+    Gray::cAppStateMain inmain(argc, argv);
 
-	cUnitTests& uts = Gray::cUnitTests::I();
-	uts.RunUnitTests(UNITTEST_LEVEL_Common);
+    cUnitTests& uts = Gray::cUnitTests::I();
+    uts.RunUnitTests(UNITTEST_LEVEL_t::_Common);
 
-	return APP_EXITCODE_OK;
+    return APP_EXITCODE_OK;
 }
 
-#elif ! defined(GRAY_STATICLIB)	// DLL/SO
+#elif !defined(GRAY_STATICLIB)  // DLL/SO
 
 COSMODULE_IMPL(Gray);
 

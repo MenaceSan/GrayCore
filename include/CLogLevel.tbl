@@ -5,8 +5,8 @@
 
 LOGLEVELDEF(ANY,	0,	"",				"Anything. All. Very minor detail.")
 LOGLEVELDEF(TRACE,	1,	"Trace:",		"Low level debug trace. common event. Verbose.")
-LOGLEVELDEF(INFO,	2,	"Info:",		"Miscellaneous normal events.")
-LOGLEVELDEF(MAJOR,	3,	"Major:",		"Miscellaneous major events.")
+LOGLEVELDEF(INFO,	2,	"Info:",		"Normal events.")
+LOGLEVELDEF(MAJOR,	3,	"Major:",		"Major events.")
 LOGLEVELDEF(WARN,	4,	"WARNING:",		"Strange events.")
 LOGLEVELDEF(ERROR,	5,	"ERROR:",		"Non-fatal errors. can continue.")
 LOGLEVELDEF(CRIT,	6,	"CRITICAL:",	"Critical. might not continue.")		// user really should see this.

@@ -10,6 +10,7 @@
 #ifdef _MSC_VER
 // M$ will use CRT hidden/embedded in output code.
 // https://stackoverflow.com/questions/36627278/compile-c-without-crt/48426180
+#define GRAY_CRT_LINK // GRAYCORE_LINK
 
 // in order to remove use of M$ CRT code. https://www.codeproject.com/articles/15156/tiny-c-runtime-library
 // you must:
@@ -49,7 +50,7 @@ void operator delete[](void* p, size_t n) throw()
 
 type_info::~type_info()
 {
-	//  
+	// destruct typeid() info. 
 }
 
 #ifdef _M_CEE_PURE
@@ -63,11 +64,11 @@ typedef void(__cdecl* _PVFV)(void);
 
 extern "C"
 {
-	GRAYCORE_LINK int _Init_global_epoch = 0;	// epoch_start
+	GRAY_CRT_LINK int _Init_global_epoch = 0;	// epoch_start
 	__declspec(thread) int _Init_thread_epoch = 0;	// epoch_start
 
-	GRAYCORE_LINK int _fltused = 0x9875;
-	GRAYCORE_LINK ULONG _tls_index = 0;		// Thread Local Storage.
+	GRAY_CRT_LINK int _fltused = 0x9875;
+	GRAY_CRT_LINK ULONG _tls_index = 0;		// Thread Local Storage.
 
 	// "intrinsic function, cannot be defined"  but are also not provided.
 

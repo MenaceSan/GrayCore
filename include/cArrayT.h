@@ -10,460 +10,447 @@
 #pragma once
 #endif
 
-#include "cRefPtr.h"
+#include "cDebugAssert.h"  // THROW_IF()
+#include "cHeap.h"
 #include "cHeapObject.h"
-#include "cDebugAssert.h"		// THROW_IF_NOT
+#include "cSpan.h"
+#include "cRefPtr.h"
 
-namespace Gray
-{
-	/// <summary>
-	/// a variable size allocated, reference counted array of some data.
-	/// used with cString. Variable size allocation for this. Equiv to the MFC ATL:CStringData. Variable size allocation for this.
-	/// (ALWAYS) dynamically allocated
-	/// </summary>
-	/// <typeparam name="_TYPE"></typeparam>
-	template <class _TYPE>
-	class cArrayDataT : public cRefBase, public cHeapObject	// ref count and dynamic allocate
-	{
-		CHEAPOBJECT_IMPL;
-		typedef cArrayDataT<_TYPE> THIS_t;
+namespace Gray {
+/// <summary>
+/// a variable size allocated, reference counted array of some data _TYPE.
+/// used with cStringT and cArrayT. similar to the MFC ATL:CStringData.
+/// (ALWAYS) dynamically allocated cHeapObject
+/// </summary>
+/// <typeparam name="_TYPE"></typeparam>
+template <class _TYPE>
+class cArrayHeadT : public cRefBase, public cHeapObject {
+    CHEAPOBJECT_IMPL;  /// Get the top level "new" pointer in the case of multiple inheritance.
+    typedef cArrayHeadT<_TYPE> THIS_t;
 
-	protected:
-		ITERATE_t m_nCount = 0;		//!< Number of elements (upperBound - 1). m_pData MUST hold at least this many
-		mutable HASHCODE32_t m_HashCode;	//!< Some hash code of the data to follow. 0 = not yet calculated or empty.
-		// TYPE m_a[ m_nCount * sizeof(_TYPE) ];
+ protected:
+    ITERATE_t m_nCount = 0;  /// Number of _TYPE elements (upperBound - 1). m_pData MUST hold at least this many
+    /// <summary>
+    /// Some hash code of the data to follow. 0 = not yet calculated or empty. same as ATOMCODE_t.
+    /// </summary>
+    mutable HASHCODE32_t m_HashCode;
+    // TYPE m_a[ m_nCount * sizeof(_TYPE) ];	/// dynamic heap allocated.
 
-		static void* operator new(size_t stAllocateBlock, size_t sizePayload)
-		{
-			//! @note Make sure this is compatible with realloc() !!
-			//! must set m_nCount after this !
-			//! sizePayload = length in bytes 
-			ASSERT(stAllocateBlock == sizeof(cArrayDataT));
-			return cHeap::AllocPtr(stAllocateBlock + sizePayload);
-		}
-		cArrayDataT(ITERATE_t nCount) noexcept
-			: m_nCount(nCount)
-			, m_HashCode(k_HASHCODE_CLEAR)
-		{
-		}
+ public:
+    inline static ITERATE_t GetCountMalloc(ITERATE_t i) {
+        //! over allocate to allow room to grow.
+        return i + (i / 16);
+    }
+    inline static size_t GetMallocSize(ITERATE_t i) {
+        return sizeof(THIS_t) + (i * sizeof(_TYPE));
+    }
 
-	public:
-		static void operator delete(void* pObj, size_t sizePayload)
-		{
-			UNREFERENCED_PARAMETER(sizePayload);
-			cHeap::FreePtr(pObj);
-		}
-		static void operator delete(void* pObj)
-		{
-			cHeap::FreePtr(pObj);
-		}
+ private:
+    /// <summary>
+    /// called by CreateHead. Will call private construct below.
+    /// </summary>
+    /// <param name="stAllocateBlock"></param>
+    /// <param name="sizePayload">length in bytes</param>
+    /// <returns></returns>
+    static void* operator new(size_t stAllocateBlock, size_t sizePayload) {
+        ASSERT(stAllocateBlock == sizeof(cArrayHeadT));
+        return cHeap::AllocPtr(stAllocateBlock + sizePayload);
+    }
+    cArrayHeadT(ITERATE_t nCount) noexcept : m_nCount(nCount), m_HashCode(k_HASHCODE_CLEAR) {}
 
-		/// <summary>
-		/// allocate space and call its constructor. RefCount = 0.
-		/// </summary>
-		/// <param name="nCount"></param>
-		/// <returns></returns>
-		static THIS_t* CreateData(ITERATE_t nCount)
-		{
-			if (nCount == 0)
-				return nullptr;
-			THIS_t* p = new(nCount * sizeof(_TYPE)) THIS_t(nCount);	// allocate space 
-			ASSERT(p != nullptr);
-			return p;
-		}
-		/// <summary>
-		/// call child constructors for array elements.
-		/// </summary>
-		/// <param name="nCount"></param>
-		/// <returns></returns>
-		static THIS_t* CreateData2(ITERATE_t nCount)
-		{
-			THIS_t* p = CreateData(nCount);	// allocate space 
-			if (nCount > 0)
-			{
-				cValArray::ConstructElementsX(p->get_Data(), nCount);
-			}
-			return p;
-		}
+ public:
+    static void operator delete(void* pObj, size_t sizePayload) {
+        // called by cRefBase onZeroRefCount
+        UNREFERENCED_PARAMETER(sizePayload);
+        cHeap::FreePtr(pObj);
+    }
+    static void operator delete(void* pObj) {
+        // called by cRefBase onZeroRefCount
+        cHeap::FreePtr(pObj);
+    }
 
-		/// <summary>
-		/// Get a pointer to the payload array of TYPE. Stored in the space allocated after this class.
-		/// </summary>
-		/// <returns></returns>
-		const _TYPE* get_Data() const noexcept
-		{
-			return reinterpret_cast<const _TYPE*>(this + 1);
-		}
-		_TYPE* get_Data() noexcept
-		{
-			return reinterpret_cast<_TYPE*>(this + 1);
-		}
+    /// <summary>
+    /// Get a pointer to the payload array of TYPE. Stored in the space allocated after this class.
+    /// </summary>
+    /// <returns></returns>
+    const _TYPE* get_DataConst() const noexcept {
+        return reinterpret_cast<const _TYPE*>(this + 1);
+    }
+    _TYPE* get_DataWork() noexcept {
+        return reinterpret_cast<_TYPE*>(this + 1);
+    }
+    const _TYPE* get_DataEnd() const noexcept {
+        return get_DataConst() + get_Count();
+    }
+    _TYPE* get_DataEnd() noexcept { // NEVER write past end ! for support end()
+        return get_DataWork() + get_Count();
+    }
 
-		/// <summary>
-		/// get Number of array elements of _TYPE in payload. 
-		/// </summary>
-		/// <returns></returns>
-		inline ITERATE_t get_Count() const noexcept
-		{
-			return m_nCount;
-		}
-		inline void put_Count(ITERATE_t nCount) noexcept
-		{
-			//! DANGER set array size . assume allocation is valid.
-			m_nCount = nCount;
-			m_HashCode = k_HASHCODE_CLEAR; // invalidate hash.
-		}
+    /// <summary>
+    /// get Number of array elements of _TYPE in payload.
+    /// </summary>
+    /// <returns></returns>
+    inline ITERATE_t get_Count() const noexcept {
+        return m_nCount;
+    }
+    inline size_t get_BytesSize() const noexcept {
+        return m_nCount * sizeof(_TYPE);
+    }
 
-		inline size_t get_BytesSize() const noexcept
-		{
-			return m_nCount * sizeof(_TYPE);
-		}
+    /// Get the whole array as a span of memory.
+    cSpan<_TYPE> get_Span() const noexcept {
+        return cSpan<_TYPE>(get_DataConst(), get_Count());
+    }
 
-		/// <summary>
-		/// Get quantity of objects truly allocated. (may not be same as m_nSize or even properly aligned with TYPE)
-		/// like STL capacity()
-		/// </summary>
-		/// <returns></returns>
-		inline size_t get_BytesMalloc() const noexcept
-		{
-			return cHeap::GetSize(this) - sizeof(cArrayDataT);
-		}
-		inline ITERATE_t get_CountMalloc() const noexcept
-		{
-			return (ITERATE_t)(get_BytesMalloc() / sizeof(_TYPE));
-		}
+    /// <summary>
+    /// Get size of quantity of objects truly allocated. (may not be same as m_nSize or even properly aligned with TYPE)
+    /// like STL capacity()
+    /// </summary>
+    /// <returns></returns>
+    inline size_t get_BytesMalloc() const noexcept {
+        return cHeap::GetSize(this) - sizeof(cArrayHeadT);
+    }
+    inline ITERATE_t get_CountMalloc() const noexcept {
+        return CastN(ITERATE_t, get_BytesMalloc() / sizeof(_TYPE));
+    }
 
-		inline bool IsHashCodeSet() const noexcept
-		{
-			return m_HashCode != k_HASHCODE_CLEAR && m_nCount > 0;
-		}
-		inline HASHCODE32_t get_HashCode() const
-		{
-			// hides get_HashCode() implemented by cRefBase
-			return m_HashCode;
-		}
-	};
+    inline bool IsHashCodeSet() const noexcept {
+        return m_HashCode != k_HASHCODE_CLEAR && m_nCount > 0;
+    }
+    inline HASHCODE32_t get_HashCode() const {
+        // hides get_HashCode() implemented by cRefBase
+        return m_HashCode;
+    }
 
-	/// <summary>
-	/// An array that is contained in a single pointer like cString.
-	/// NO MFC compatibility.
-	/// </summary>
-	/// <typeparam name="TYPE"></typeparam>
-	template <class TYPE >
-	class cArrayT : public cRefPtr< cArrayDataT<TYPE> >
-	{
-		typedef cRefPtr< cArrayDataT<TYPE> > SUPER_t;
-		typedef cArrayT<TYPE> THIS_t;
-		typedef cArrayDataT<TYPE> DATA_t;
+    /// <summary>
+    /// allocate space and call _TYPE constructors. RefCount = 0.
+    /// </summary>
+    /// <param name="nCount"></param>
+    /// <returns></returns>
+    static THIS_t* CreateHead(ITERATE_t nCount, bool construct) {
+        if (nCount == 0) return nullptr;
+        THIS_t* pHead = new (nCount * sizeof(_TYPE)) THIS_t(nCount);  // allocate space and construct head only. HeapAlign ?? align_of ?
+        ASSERT_NN(pHead);
+        if (construct) {
+            _TYPE* pData = pHead->get_DataWork();
+            cValArray::ConstructElementsX(pData, nCount);
+        }
+        return pHead;
+    }
 
-		void SetCopyFrom(const DATA_t* pOld, ITERATE_t nCountNew, ITERATE_t nCountOld)
-		{
-			//! deep copy (and resize) the array. private reference.
-			//! like CopyBeforeWrite()
+    void ShrinkHead(ITERATE_t nCountNew, bool destruct) noexcept {
+        // shrinking. it fits. don't shrink the allocated array. we may expand again some day.
+        ASSERT(nCountNew < m_nCount);  // assume change.
+        if (destruct) {
+            // destruct the deleted elements.
+            _TYPE* pData = get_DataWork();
+            cValArray::DestructElementsX<_TYPE>(&pData[nCountNew], m_nCount - nCountNew);
+        }
+        m_nCount = nCountNew;
+        m_HashCode = k_HASHCODE_CLEAR;  // invalidate hash.
+    }
 
-			DATA_t* pNew = DATA_t::CreateData2(nCountNew);
-			ASSERT(pNew != nullptr || nCountNew == 0);
+    /// <summary>
+    /// Grow the array.
+    /// DANGER set array size . assume allocation is valid. Single reference.
+    /// MFC will heuristically determine growth when nGrowBy == 0 (this avoids heap fragmentation in many situations)
+    /// </summary>
+    THIS_t* GrowHead(ITERATE_t nCountNew, bool construct) noexcept {
+        ASSERT(nCountNew > m_nCount);  // assume change.
 
-			if (pNew != nullptr)
-			{
-				cValArray::CopyQty(pNew->get_Data(), pOld->get_Data(), MIN(nCountNew, nCountOld)); // Copy from old
-			}
+        // allocate greater size if not the first time we have done this.
+        const ITERATE_t allocateCount = (m_nCount != 0) ? GetCountMalloc(nCountNew) : nCountNew;
+        const ITERATE_t nCountOld = m_nCount;
+        m_nCount = nCountNew;
+        m_HashCode = k_HASHCODE_CLEAR;  // invalidate hash.
 
-			this->put_Ptr(pNew);
-		}
+        THIS_t* pHeadNew = PtrCast<THIS_t>(cHeap::ReAllocPtr(this, GetMallocSize(allocateCount)));
+        ASSERT_NN(pHeadNew);
 
-	public:
-		cArrayT() noexcept
-		{
-		}
-		explicit cArrayT(ITERATE_t nCount) : cRefPtr(DATA_t::CreateData2(nCount))
-		{
-		}
+        if (construct) {
+            // construct new elements
+            cValArray::ConstructElementsX<_TYPE>(pHeadNew->get_DataWork() + nCountOld, nCountNew - nCountOld);
+        }
+        return pHeadNew;
+    }
 
-		/// <summary>
-		/// get sizeof() all children alloc(s). not size of *this
-		/// </summary>
-		/// <param name="iAllocCount"></param>
-		/// <returns></returns>
-		size_t GetHeapStats(OUT ITERATE_t& iAllocCount) const noexcept
-		{
-			DATA_t* pData = this->get_Ptr();
-			if (pData == nullptr)
-				return 0;
-			return pData->GetHeapStatsThis(iAllocCount); // just the alloc for the array
-		}
+    THIS_t* ResizeHead(ITERATE_t nCountNew, bool construct) noexcept {
+        if (nCountNew > m_nCount) {
+            return GrowHead(nCountNew, construct);
+        } else {
+            ShrinkHead(nCountNew, construct);
+            return this;
+        }
+    }
+};
 
-		inline ITERATE_t get_Count() const noexcept
-		{
-			DATA_t* pData = this->get_Ptr();
-			if (pData == nullptr)
-				return 0;
-			return pData->get_Count();
-		}
-		inline ITERATE_t GetSize() const noexcept
-		{
-			// ALIAS for MFC compat.
-			return get_Count();
-		}
-		inline bool IsValidIndex(ITERATE_t i) const noexcept
-		{
-			return IS_INDEX_GOOD(i, this->get_Count());
-		}
-		inline bool isEmpty() const noexcept
-		{
-			return get_Count() == 0;
-		}
+/// <summary>
+/// An array that is contained in a single pointer similar to cString. Small empty size.
+/// NO MFC compatibility.
+/// NOTE: Danger! Since this is a reference, change to one is a change to all. CloneBeforeWrite if more than one ref.
+/// </summary>
+/// <typeparam name="TYPE"></typeparam>
+template <class TYPE>
+class cArrayT : public cRefPtr<cArrayHeadT<TYPE> > {
+    typedef cRefPtr<cArrayHeadT<TYPE> > SUPER_t;
+    typedef cArrayT<TYPE> THIS_t;
+    typedef cArrayHeadT<TYPE> HEAD_t;
 
-		inline TYPE* get_DataWork() const noexcept
-		{
-			// Get a pointer to the array.
-			auto p = this->get_Ptr();
-			if (p == nullptr)
-				return nullptr;
-			return p->get_Data();
-		}
-		inline TYPE* GetData() const noexcept
-		{
-			// ALIAS for MFC compat.
-			return get_DataWork();
-		}
+    /// <summary>
+    /// deep copy (and resize) the array. private reference. like CloneBeforeWrite()
+    /// </summary>
+    /// <param name="pOld"></param>
+    /// <param name="nCountNew"></param>
+    /// <param name="nCountOld"></param>
+    void SetCopyFrom(const HEAD_t* pOld, ITERATE_t nCountNew, ITERATE_t nCountOld) {
+        HEAD_t* pNew = HEAD_t::CreateHead(nCountNew, true);
+        ASSERT(pNew != nullptr || nCountNew == 0);
+        if (pNew != nullptr && pOld != nullptr) {
+            cValArray::CopyQty(pNew->get_DataWork(), pOld->get_DataConst(), cValT::Min(nCountNew, nCountOld));  // Copy from pOld
+        }
+        this->put_Ptr(pNew);
+    }
 
-		inline const TYPE& GetAt(ITERATE_t nIndex) const noexcept
-		{
-			// I can make a const pointer from this and know what its life span is. NOT just a copy.
-			DEBUG_CHECK(IsValidIndex(nIndex));
-			return this->get_Ptr()->get_Data()[nIndex];
-		}
-		inline TYPE& ElementAt(ITERATE_t nIndex) noexcept
-		{
-			DEBUG_CHECK(IsValidIndex(nIndex));
-			return this->get_Ptr()->get_Data()[nIndex];
-		}
-		inline void SetAt(ITERATE_t nIndex, const TYPE& newElement) noexcept
-		{
-			// If multiple refs to this then we should copy/split it ?
-			// @note DANGER - this is a reference counted object. Any changes to it will make changes to all references !! Make a deep copy if required.
-			DEBUG_CHECK(IsValidIndex(nIndex));
-			this->get_Ptr()->get_Data()[nIndex] = newElement;
-		}
+ public:
+    cArrayT() noexcept {}
+    explicit cArrayT(ITERATE_t nCount) : SUPER_t(HEAD_t::CreateHead(nCount, true)) {}
 
-		void AssertValidIndex(ITERATE_t nIndex) const // throw
-		{
-			THROW_IF_NOT(IsValidIndex(nIndex));
-		}
-		inline TYPE& operator[](ITERATE_t nIndex) // throw
-		{
-			//! throw an exception if we are out of range.
-			AssertValidIndex(nIndex);
-			return this->get_Ptr()->get_Data()[nIndex];
-		}
-		inline const TYPE& operator[](ITERATE_t nIndex) const // throw
-		{
-			//! throw an exception if we are out of range.
-			AssertValidIndex(nIndex);
-			return this->get_Ptr()->get_Data()[nIndex];
-		}
+    /// <summary>
+    /// get sizeof() all children alloc(s). not size of *this
+    /// </summary>
+    /// <param name="iAllocCount"></param>
+    /// <returns></returns>
+    size_t CountHeapStats(OUT ITERATE_t& iAllocCount) const noexcept {
+        HEAD_t* pHead = this->get_Ptr();
+        if (pHead == nullptr) return 0;
+        return pHead->GetHeapStatsThis(iAllocCount);  // just the alloc for the array
+    }
 
-		ITERATE_t get_CountMalloc() const noexcept
-		{
-			//! Get quantity of objects truly allocated. (may not be same as m_nSize or even properly aligned with TYPE)
-			//! like STL capacity()
-			if (!this->isValidPtr())
-				return 0;
-			return this->get_Ptr()->get_CountMalloc();
-		}
+    inline ITERATE_t get_Count() const noexcept {
+        HEAD_t* pHead = this->get_Ptr();
+        if (pHead == nullptr) return 0;  // shortcut to 0.
+        return pHead->get_Count();
+    }
+    inline ITERATE_t GetSize() const noexcept {
+        // ALIAS for MFC compat. AKA count
+        return get_Count();
+    }
+    inline bool IsValidIndex(ITERATE_t i) const noexcept {
+        return IS_INDEX_GOOD(i, this->get_Count());
+    }
+    inline bool isEmpty() const noexcept {
+        return get_Count() == 0;
+    }
 
-		void SetCopy(const cArrayT<TYPE>& a)
-		{
-			// deep copy the array. private reference.
-			const ITERATE_t nCount = get_Count();
-			SetCopyFrom(a.get_Ptr(), nCount, nCount);
-		}
+    /// Get a pointer to the array.
+    inline TYPE* get_DataWork() const noexcept {
+        HEAD_t* pHead = this->get_Ptr();
+        if (pHead == nullptr) return nullptr;
+        return pHead->get_DataWork();
+    }
+    inline const TYPE* get_DataConst() const noexcept {
+        HEAD_t* pHead = this->get_Ptr();
+        if (pHead == nullptr) return nullptr;
+        return pHead->get_DataConst();
+    }
 
-		inline static ITERATE_t GetCountMalloc(ITERATE_t i)
-		{
-			//! over allocate to allow room to grow.
-			return i + (i / 16);
-		}
+    cSpan<TYPE> get_Span() const noexcept {
+        HEAD_t* pHead = this->get_Ptr();
+        if (pHead == nullptr) return {};
+        return pHead->get_Span();
+    }
 
-		void put_Count(ITERATE_t nCountNew)
-		{
-			// realloc my size for array. all reference counts will see this change!
+    inline const TYPE& GetAt(ITERATE_t nIndex) const noexcept {
+        // I can make a const pointer from this and know what its life span is. NOT just a copy.
+        DEBUG_CHECK(IsValidIndex(nIndex));
+        return this->get_Ptr()->get_DataConst()[nIndex];
+    }
+    inline TYPE& ElementAt(ITERATE_t nIndex) noexcept {
+        DEBUG_CHECK(IsValidIndex(nIndex));
+        return this->get_Ptr()->get_DataWork()[nIndex];
+    }
+    inline void SetAt(ITERATE_t nIndex, const TYPE& newElement) noexcept {
+        // If multiple refs to this then we should copy/split it ?
+        // @note DANGER - this is a reference counted object. Any changes to it will make changes to all references !! Make a deep copy if required.
+        DEBUG_CHECK(IsValidIndex(nIndex));
+        this->get_Ptr()->get_DataWork()[nIndex] = newElement;
+    }
 
-			ASSERT(IS_INDEX_GOOD(nCountNew, cHeap::k_ALLOC_MAX)); // reasonable arbitrary limit.
+    void ThrowIfInvalidIndex(ITERATE_t nIndex) const {  // throw
+        THROW_IF(!IsValidIndex(nIndex));                // may be part of test throw?
+    }
+    inline TYPE& operator[](ITERATE_t nIndex) {  // throw
+        //! throw an exception if we are out of range.
+        ThrowIfInvalidIndex(nIndex);
+        return this->get_Ptr()->get_DataWork()[nIndex];
+    }
+    inline const TYPE& operator[](ITERATE_t nIndex) const {  // throw
+        //! throw an exception if we are out of range.
+        ThrowIfInvalidIndex(nIndex);
+        return this->get_Ptr()->get_DataConst()[nIndex];
+    }
 
-			DATA_t* pOld = this->get_Ptr();
-			if (pOld == nullptr)
-			{
-				// Make a new array.
-				if (nCountNew == 0)
-					return;
-				this->put_Ptr(DATA_t::CreateData2(nCountNew));
-				return;
-			}
+    ITERATE_t get_CountMalloc() const noexcept {
+        //! Get quantity of objects truly allocated. (may not be same as m_nSize or even properly aligned with TYPE)
+        //! like STL capacity()
+        if (!this->isValidPtr()) return 0;
+        return this->get_Ptr()->get_CountMalloc();
+    }
 
-			const ITERATE_t nCountOld = pOld->get_Count();
-			if (nCountNew == nCountOld)		// no change.
-				return;
+    void SetCopy(const cArrayT<TYPE>& a) {
+        // deep copy the array. private reference.
+        const ITERATE_t nCount = get_Count();
+        SetCopyFrom(a.get_Ptr(), nCount, nCount);
+    }
 
-			const int iRefCounts = pOld->get_RefCount();
-			if (iRefCounts != 1)	// other refs exist. so i must make a private copy.
-			{
-				// Make a new array. Copy from old. So we can change size.
-				// NOTE: we may be duping our self. (to change length)
-				ASSERT(iRefCounts > 1);
-				SetCopyFrom(pOld, nCountNew, nCountOld);
-				return;
-			}
+    void SetEmpty() {
+        put_Ptr(nullptr);  // just release ref.
+    }
 
-			// I have an exclusive copy that no other is using.
-			// just change/resize the existing heap alloc instance. 
+    /// <summary>
+    /// change size of array. realloc. Other refs will NOT see this change.
+    /// </summary>
+    void put_Count(ITERATE_t nCountNew) {
+        ASSERT(IS_INDEX_GOOD(nCountNew, cHeap::k_ALLOC_MAX));  // reasonable arbitrary limit.
 
-			DATA_t* pNew = nullptr;
-			if (nCountNew <= get_CountMalloc())
-			{
-				// it fits. don't shrink the allocated array. we may expand again some day.
-				cValArray::Resize<TYPE>(pOld->get_Data(), nCountNew, nCountOld);
-				pNew = pOld;
-			}
-			else
-			{
-				// otherwise, grow array
-				// MFC will heuristically determine growth when nGrowBy == 0 (this avoids heap fragmentation in many situations)
-				ASSERT(nCountNew > nCountOld);
+        HEAD_t* pOld = this->get_Ptr();
+        if (pOld == nullptr) {
+            // Make a new array.
+            if (nCountNew == 0) return;
+            this->put_Ptr(HEAD_t::CreateHead(nCountNew, true));
+            return;
+        }
 
-				ITERATE_t allocateCount = nCountNew;
-				if (nCountOld != 0)	// not the first time we have done this.
-				{
-					allocateCount = GetCountMalloc(allocateCount);
-				}
+        const ITERATE_t nCountOld = pOld->get_Count();
+        if (nCountNew == nCountOld)  // no change.
+            return;
+        if (nCountNew == 0) {
+            SetEmpty();
+            return;
+        }
 
-				pNew = (DATA_t*)cHeap::ReAllocPtr(pOld, sizeof(DATA_t) + allocateCount * sizeof(TYPE));
-				ASSERT_NN(pNew);
+        const int iRefCounts = pOld->get_RefCount();
+        if (iRefCounts != 1) {  // other refs exist. so i must make a private copy.
+            // Make a new array. Copy from old. So we can change size.
+            // NOTE: we may be duping our self. (to change length)
+            ASSERT(iRefCounts > 1);
+            SetCopyFrom(pOld, nCountNew, nCountOld);
+            return;
+        }
 
-				// construct new elements
-				cValArray::ConstructElementsX<TYPE>(pNew->get_Data() + nCountOld, nCountNew - nCountOld);
-			}
+        // I have an exclusive copy that no other is using.
+        // just change/resize the existing heap alloc instance.
+        this->AttachPtr(pOld->ResizeHead(nCountNew, true));  // replace reallocated pointer. (if it changed at all) No ref count change.
+    }
 
-			pNew->put_Count(nCountNew);
-			this->AttachPtr(pNew);		// replace realloced pointer. (if it changed at all) No ref count change.
-		}
+    void SetAtGrow(ITERATE_t nIndex, const TYPE& newElement) {
+        const ITERATE_t nCountOld = get_Count();
+        if (nIndex >= nCountOld) {  // must grow.
+            put_Count(nIndex + 1);
+        }
+        SetAt(nIndex, newElement);
+    }
 
-		void SetAtGrow(ITERATE_t nIndex, const TYPE& newElement)
-		{
-			const ITERATE_t nCountOld = get_Count();
-			if (nIndex >= nCountOld)
-			{
-				// must grow.
-				put_Count(nIndex + 1);
-			}
-			SetAt(nIndex, newElement);
-		}
+    ITERATE_t Add(const TYPE& newElement) {
+        //! Add to the end. AKA push_back()
+        const ITERATE_t nCountOld = get_Count();
+        put_Count(nCountOld + 1);  // Grow.
+        SetAt(nCountOld, newElement);
+        return nCountOld;
+    }
 
-		ITERATE_t Add(const TYPE& newElement)
-		{
-			//! Add to the end. AKA push_back()
-			const ITERATE_t nCountOld = get_Count();
-			put_Count(nCountOld + 1);	// Grow.
-			SetAt(nCountOld, newElement);
-			return nCountOld;
-		}
+    void InsertAt(ITERATE_t nIndex, const TYPE& newElement) {
+        // newElement as interior pointer is ok.
+        ASSERT(nIndex >= 0);  // will expand to meet need
+        const ITERATE_t nCountOld = get_Count();
+        if (nIndex >= nCountOld) {  // add at end.
+            put_Count(nIndex + 1);  // grow it to new size
+        } else {
+            put_Count(nCountOld + 1);  // grow it to new size
+            TYPE* pData = this->get_Ptr()->get_DataWork();
+            cValArray::MoveElement1(pData + nCountOld, pData + nIndex);  // make space.
+        }
 
-		void InsertAt(ITERATE_t nIndex, const TYPE& newElement)
-		{
-			// newElement as interior pointer is ok.
-			ASSERT(nIndex >= 0);    // will expand to meet need
-			const ITERATE_t nCountOld = get_Count();
-			if (nIndex >= nCountOld)
-			{
-				put_Count(nIndex + 1);  // grow it to new size
-			}
-			else
-			{
-				put_Count(nCountOld + 1);  // grow it to new size
-				TYPE* pData = this->get_Ptr()->get_Data();
-				cValArray::MoveElement1(pData + nCountOld, pData + nIndex);	// make space.
-			}
+        // insert new value in the gap
+        SetAt(nIndex, newElement);
+    }
 
-			// insert new value in the gap
-			SetAt(nIndex, newElement);
-		}
+    /// <summary>
+    /// Add array to the end. Like MFC CArray::Append() ?
+    /// </summary>
+    void InsertArray(ITERATE_t i, const TYPE* pCopy, ITERATE_t countInsert) {
+        if (countInsert <= 0) return;
 
-		void InsertArray(ITERATE_t i, const TYPE* pCopy, ITERATE_t countCopy)
-		{
-			//! Add array to the end. 
-			//! Like MFC CArray::Append() ?
-			if (countCopy <= 0)
-				return;
+        HEAD_t* pNew = nullptr;
+        HEAD_t* pOld = this->get_Ptr();
+        if (pOld == nullptr) {
+            // i = 0;
+            this->put_Ptr(pNew = HEAD_t::CreateHead(countInsert, true));
+        } else {
+            const ITERATE_t nCountOld = pOld->get_Count();
+            if (i < 0 || i > nCountOld) i = nCountOld;
 
-			DATA_t* pNew = nullptr;
-			DATA_t* pOld = this->get_Ptr();
-			if (pOld == nullptr)
-			{
-				// i = 0;
-				this->put_Ptr(pNew = DATA_t::CreateData2(countCopy));
-			}
-			else
-			{
-				const ITERATE_t nCountOld = pOld->get_Count();
-				if (i < 0 || i > nCountOld)
-					i = nCountOld;
+            ASSERT(!cMem::IsInsideBlock(pCopy, pOld->get_DataConst() + i, nCountOld - i));  // append to self not supported.
 
-				ASSERT(!cMem::IsInsideBlock(pCopy, pOld->get_Data() + i, nCountOld - i));   // append to self not supported.
+            const int iRefCounts = pOld->get_RefCount();
+            if (iRefCounts != 1) {
+                // TODO MUST MAKE PRIVATE COPY !!!
+                ASSERT(0);
+            }
 
-				const int iRefCounts = pOld->get_RefCount();
-				if (iRefCounts != 1)
-				{
-					// TODO MUST MAKE PRIVATE COPY !!!
-				}
+            ITERATE_t nCountNew = nCountOld + countInsert;  // new size.
+            pNew = pOld->GrowHead(nCountNew, false);
+            this->AttachPtr(pNew);  // replace realloced pointer. (if it changed at all) No ref count change.
 
-				ITERATE_t nCountNew = nCountOld + countCopy;		// new size.
-				ITERATE_t allocateCount = GetCountMalloc(nCountNew);
+            TYPE* pData = pNew->get_DataWork();
+            // Move existing elements.
+            cMem::CopyOverlap(pData + i + countInsert, pData + i, (nCountOld - i) * sizeof(TYPE));
+            // construct new elements at insert point.
+            cValArray::ConstructElementsX<TYPE>(pData + i, countInsert);
+        }
 
-				pNew = (DATA_t*)cHeap::ReAllocPtr(pOld, sizeof(DATA_t) + allocateCount * sizeof(TYPE));
-				ASSERT_NN(pNew);
-				pNew->put_Count(nCountNew);
-				this->AttachPtr(pNew);		// replace realloced pointer. (if it changed at all) No ref count change.
+        if (pCopy != nullptr) {
+            // Copy new.
+            cValArray::CopyQty(pNew->get_DataWork() + i, pCopy, countInsert);
+        }
+    }
+    void InsertArray(ITERATE_t i, const THIS_t& src) {
+        InsertArray(i, src.get_DataWork(), src.GetSize());
+    }
 
-				TYPE* pData = pNew->get_Data();
-				// Move existing elements.
-				cMem::CopyOverlap(pData + i + countCopy, pData + i, (nCountOld - i) * sizeof(TYPE));
-				// construct new elements
-				cValArray::ConstructElementsX<TYPE>(pData + i, countCopy);
-			}
+    void RemoveAt(ITERATE_t nIndex) {
+        //! NOTE: Any destructor effecting the array MAY be reentrant ?!
+        if (nIndex < 0) return;
+        HEAD_t* pHead = this->get_Ptr();
+        if (pHead == nullptr) return;
+        const ITERATE_t nCount = pHead->get_Count();
+        ITERATE_t nMoveCount = nCount - (nIndex + 1);
+        if (nMoveCount < 0)  // nIndex is out of range!
+            return;
+        TYPE* pData = pHead->get_DataWork();
+        cValArray::DestructElementsX<TYPE>(pData + nIndex, 1);
+        if (nMoveCount > 0) { // not last.
+            cMem::CopyOverlap(pData + nIndex, pData + nIndex + 1, nMoveCount * sizeof(TYPE));
+        }
+        pHead->ShrinkHead(nCount - 1, false);
+    }
 
-			if (pCopy != nullptr)
-			{
-				// Copy new.
-				cValArray::CopyQty(pNew->get_Data() + i, pCopy, countCopy);
-			}
-		}
-		void InsertArray(ITERATE_t i, const THIS_t& src)
-		{
-			InsertArray(i, src.get_DataWork(), src.GetSize());
-		}
-
-		void RemoveAt(ITERATE_t nIndex)
-		{
-			//! NOTE: Any destructor effecting the array MAY be reentrant ?!
-			if (nIndex < 0)
-				return;
-			auto p = this->get_Ptr();
-			if (p == nullptr)
-				return;
-			const ITERATE_t nCount = p->get_Count();
-			ITERATE_t nMoveCount = nCount - (nIndex + 1);
-			if (nMoveCount < 0)
-				return;
-			auto pData = p->get_Data();
-			cValArray::DestructElementsX<TYPE>(pData + nIndex, 1);
-			p->put_Count(nCount - 1);
-			if (nMoveCount > 0) // not last.
-			{
-				cMem::CopyOverlap(pData + nIndex, pData + nIndex + 1, nMoveCount * sizeof(TYPE));
-			}
-		}
-	};
-}
-
+    typedef cIterator<TYPE> iterator;              // like STL
+    typedef cIterator<const TYPE> const_iterator;  // like STL
+    iterator begin() noexcept {
+        return iterator(get_DataWork());
+    }
+    iterator end() noexcept {
+        HEAD_t* pHead = this->get_Ptr();
+        return iterator((pHead == nullptr) ? nullptr : pHead->get_DataEnd());
+    }
+    const_iterator begin() const noexcept {
+        return const_iterator(get_DataWork());
+    }
+    const_iterator end() const noexcept {
+        const HEAD_t* pHead = this->get_Ptr();
+        return const_iterator((pHead == nullptr) ? nullptr : pHead->get_DataEnd());
+    }
+};
+}  // namespace Gray
 #endif

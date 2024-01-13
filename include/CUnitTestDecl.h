@@ -11,9 +11,9 @@
 
 #include "GrayCore.h"
 
-#define UNITTEST_N(n)			n##Tests			//!< Pick a unique name for the unit test class. Assume in same namespace as what it is testing (n). 
+#define UNITTEST_N(n) n##Tests  /// Pick a unique name for the unit test class. Assume in same namespace as what it is testing (n).
 
 //! Define this in the class body to be unit tested. Allow the unit test to access private/protected stuff.
-#define UNITTEST_FRIEND(n)		friend class UNITTEST_N(n);		// assume test code is in same namespace and may get internal access to things.
+#define UNITTEST_FRIEND(n) friend struct UNITTEST_N(n);  // assume test code is in same namespace and may get internal access to things.
 
-#endif	// _INC_cUnitTestDecl_H
+#endif  // _INC_cUnitTestDecl_H

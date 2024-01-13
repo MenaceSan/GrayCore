@@ -11,19 +11,16 @@
 
 #include "StrChar.h"
 
-namespace Gray
-{
-	enum ASCII_TYPE
-	{
-		//! @enum Gray::ASCII_TYPE
-		//! Make names for all the ASCII values. control chars.
-
-		ASCII_NONE = -1,	// No char was produced.
-
-#define StrCharASCII(a,b,c)		ASCII_##b = a,
+namespace Gray {
+/// <summary>
+/// enumeration of names for all the ASCII values. control chars.
+/// </summary>
+enum class ASCII_t {
+    _NONE = -1,  // No char was produced.
+#define StrCharASCII(a, b, c) _##b = a,
 #include "StrCharAscii.tbl"
 #undef StrCharASCII
-	};
-}
+};
+}  // namespace Gray
 
 #endif

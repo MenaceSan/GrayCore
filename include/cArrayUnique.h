@@ -12,17 +12,14 @@
 #include "cArray.h"
 #include "cUniquePtr.h"
 
-namespace Gray
-{
-	/// <summary>
-	/// An array OWNS the elements using cUniquePtr<TYPE>
-	/// It will get deleted when the array is deleted.
-	/// @note try to use cArrayRef<> instead.
-	/// </summary>
-	/// <typeparam name="TYPE"></typeparam>
-	template<class TYPE>
-	class cArrayUnique : public cArrayFacade < cUniquePtr<TYPE>, TYPE* >
-	{
-	};
-}
+namespace Gray {
+/// <summary>
+/// An array OWNS the elements using cUniquePtr<TYPE>
+/// It will get deleted when the array is deleted.
+/// @note try to use cArrayRef<> instead.
+/// </summary>
+/// <typeparam name="TYPE"></typeparam>
+template <class TYPE>
+class cArrayUnique : public cArrayFacade<cUniquePtr<TYPE>, TYPE*> {};
+}  // namespace Gray
 #endif

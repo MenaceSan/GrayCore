@@ -9,120 +9,140 @@
 #pragma once
 #endif
 
+#include "IUnknown.h"  // DECLARE_INTERFACE
+#include "StrBuilder.h"
 #include "StrChar.h"
 #include "StrConst.h"
-#include "StrBuilder.h"
 #include "cDebugAssert.h"
-#include "IUnknown.h"		// DECLARE_INTERFACE
 
-namespace Gray
-{
-	DECLARE_INTERFACE(IIniBaseGetter);		// cIniBase.h
-	typedef char IniChar_t;		//!< char format even on UNICODE system! Screw M$, INI files should ALWAYS have UTF8 contents
+namespace Gray {
+DECLARE_INTERFACE(IIniBaseGetter);  // cIniBase.h
+typedef char IniChar_t;             /// char format even on UNICODE system! Screw M$, INI files should ALWAYS have UTF8 contents
 
-	struct GRAYCORE_LINK StrFormatBase
-	{
-		//! @class Gray::StrFormatBase
-		//! Stuff common for char and wchar_t StrFormat for use with printf() type functions.
-		//! "%[flags][width][.precision][length]specifier"
-		//! http://en.cppreference.com/w/cpp/io/c/fprintf
+/// <summary>
+/// Hold params for a single entry in a format string.
+/// common for char and wchar_t StrFormat for use with printf() type functions.
+/// e.g. "%[flags][width][.precision][length]specifier"
+/// http://en.cppreference.com/w/cpp/io/c/fprintf
+/// </summary>
+struct GRAYCORE_LINK StrFormatParams {
+    static const char k_Specs[16];  /// possible specs. "EFGXcdefgiosux"  // Omit "S" "apnA"
 
-	public:
-		static const char k_Specs[16]; // "EFGXcdefgiosux"  // Omit "S" "apnA"
+    char m_nSpec;  /// % type. 0 = invalid. from k_Specs.
 
-		char m_nSpec;		//!< % type. 0 = invalid. from k_Specs.
+    BYTE m_nWidthMin;    /// specifies minimum field width. Total width of what we place in pszOut
+    short m_nPrecision;  /// how many chars from pszParam do we take? (not including '\0') -1 = default.
 
-		BYTE m_nWidthMin;	//!< specifies minimum field width. Total width of what we place in pszOut
-		short m_nPrecision;	//!< how many chars from pszParam do we take? (not including '\0') -1 = default.
+    // Flags.
+    BYTE m_nLong;       /// 0=int, 1=long (32 bit usually), or 2=long long (64 bit usually). 'l' or 'll'. (char or wchar_t?)
+    bool m_bAlignLeft;  /// - sign indicates left align.
+    bool m_bPlusSign;   /// + indicates to Show sign.
+    bool m_bWidthArg;   /// Get an argument that will supply the m_nWidth.
 
-		// Flags.
-		BYTE m_nLong;		//!< 0=int, 1=long (32 bit usually), or 2=long long (64 bit usually). 'l' or 'll'. (char or wchar_t?)
-		bool m_bAlignLeft;	//!< - sign indicates left align.
-		bool m_bPlusSign;	//!< + indicates to Show sign.
-		bool m_bLeadZero;	//!< StrNum::k_LEN_MAX_DIGITS_INT
-		bool m_bWidthArg;	//!< Get an argument that will supply the m_nWidth.
-		bool m_bAddPrefix;	//!< Add a prefix 0x for hex or 0 for octal.
+    bool m_bAddPrefix;  /// Add a prefix 0x for hex or 0 for octal.
+    bool m_bLeadZero;   /// StrNum::k_LEN_MAX_DIGITS_INT
 
-	public:
-		static inline char FindSpec(char ch) noexcept
-		{
-			//! Find a valid spec char.
-			for (size_t i = 0; i < _countof(k_Specs) - 1; i++)
-			{
-				const char chCur = k_Specs[i];
-				if (ch > chCur)	// keep looking.
-					continue;
-				if (ch < chCur)	// they are sorted.
-					return '\0';
-				return ch;
-			}
-			return '\0';	// nothing.
-		}
-	};
+    static inline char FindSpec(char ch) noexcept {
+        //! Find a valid spec char.
+        for (size_t i = 0; i < _countof(k_Specs) - 1; i++) {
+            const char chCur = k_Specs[i];
+            if (ch > chCur)  // keep looking.
+                continue;
+            if (ch < chCur)  // they are sorted.
+                return '\0';
+            return ch; // got it.
+        }
+        return '\0';  // nothing.
+    }
+    void ClearParams() noexcept {
+        m_nSpec = '\0';
+        m_nWidthMin = 0;  // default = all. No padding.
+        m_nPrecision = -1;
+        m_nLong = 0;  // Account for "ll"
+        m_bAlignLeft = false;
+        m_bPlusSign = false;
+        m_bLeadZero = false;
+        m_bWidthArg = false;
+        m_bAddPrefix = false;
+    }
+};
 
-	template< typename TYPE = char >
-	class GRAYCORE_LINK StrFormat : public StrFormatBase
-	{
-		//! @class Gray::StrFormat
-		//! A formatter for a string. Like printf().
-		//! Hold state values for a single printf type format parameter/specifier and render it.
+/// <summary>
+/// A formatter for a string. Like sprintf().
+/// Hold state values for a single printf type format parameter/specifier and render it.
+/// </summary>
+/// <typeparam name="TYPE"></typeparam>
+template <typename TYPE = char>
+struct GRAYCORE_LINK StrFormat : public StrFormatParams {
+    typedef StrLen_t(_cdecl* STRFORMAT_t)(TYPE* pszOut, StrLen_t nLenMax, const TYPE* pszFormat, ...);  // signature for testing. like sprintfN
 
-	public:
-		typedef StrLen_t(_cdecl* STRFORMAT_t)(TYPE* pszOut, StrLen_t iLenOutMax, const TYPE* pszFormat, ...);	// signature for testing.
+    /// <summary>
+    /// Parse the mode for 1 single argument/param from a sprintf() format string.
+    /// e.g. %d,%s,%u,%g,%f, etc.
+    /// http://www.cplusplus.com/reference/cstdio/printf/
+    /// </summary>
+    /// <param name="pszFormat">"%[flags][width][.precision][length]specifier"</param>
+    /// <returns>0 = not a valid mode format. just flush the format.</returns>
+    StrLen_t ParseParam(const TYPE* pszFormat);
 
-	public:
-		StrLen_t ParseParam(const TYPE* pszFormat);
+    /// <summary>
+    /// copy a string. Does not terminate.
+    /// </summary>
+    /// <param name="out"></param>
+    /// <param name="pszParam">a properly terminated string.</param>
+    /// <param name="nParamLen"></param>
+    /// <param name="nPrecision">how many chars from pszParam do we take? (not including '\0')</param>
+    void RenderString(StrBuilder<TYPE>& out, const TYPE* pszParam, StrLen_t nParamLen, short nPrecision) const;
+    void RenderUInt(StrBuilder<TYPE>& out, const TYPE* pszPrefix, RADIX_t nRadix, char chRadixA, UINT64 uVal) const;
+    void RenderFloat(StrBuilder<TYPE>& out, char chE, double dVal) const;
 
-		void RenderString(StrBuilder<TYPE>& out, const TYPE* pszParam, StrLen_t nParamLen, short nPrecision) const;
-		void RenderUInt(StrBuilder<TYPE>& out, const TYPE* pszPrefix, RADIX_t nRadix, char chRadixA, UINT64 uVal) const;
-		void RenderFloat(StrBuilder<TYPE>& out, char chE, double dVal) const;
+    /// <summary>
+    /// Render the current single parameter/spec.
+    /// </summary>
+    void RenderParam(StrBuilder<TYPE>& out, va_list* pvlist) const;
 
-		void RenderParam(StrBuilder<TYPE>& out, va_list* pvlist) const;
+    static void GRAYCALL V(StrBuilder<TYPE>& out, const TYPE* pszFormat, va_list vlist);
+    static inline StrLen_t GRAYCALL V(TYPE* pszOut, StrLen_t nLenOutMax, const TYPE* pszFormat, va_list vlist);
 
-		static void GRAYCALL V(StrBuilder<TYPE>& out, const TYPE* pszFormat, va_list vlist);
-		static inline StrLen_t GRAYCALL V(TYPE* pszOut, StrLen_t nLenOutMax, const TYPE* pszFormat, va_list vlist);
+    // variadic. sprintfN
+    static inline void _cdecl F(StrBuilder<TYPE>& out, const TYPE* pszFormat, ...);
+    static inline StrLen_t _cdecl F(TYPE* pszOut, StrLen_t nLenOutMax, const TYPE* pszFormat, ...);
+};
 
-		// variadic.
-		static inline void _cdecl F(StrBuilder<TYPE>& out, const TYPE* pszFormat, ...);
-		static inline StrLen_t _cdecl F(TYPE* pszOut, StrLen_t nLenOutMax, const TYPE* pszFormat, ...);
-	};
+/// <summary>
+/// strings may contain template blocks to be replaced. e.g. "&lt;?something?&gt;".
+/// similar to expressions.
+/// </summary>
+struct GRAYCORE_LINK StrTemplate {
+    /// <summary>
+    /// Does the string include "&lt;?something?&gt;" ?
+    /// </summary>
+    static bool GRAYCALL HasTemplateBlock(const IniChar_t* pszInp);
+    static StrLen_t GRAYCALL ReplaceTemplateBlock(StrBuilder<IniChar_t>& out, const IniChar_t* pszInp, const IIniBaseGetter* pBlockReq, bool bRecursing = false);
+};
 
-	class GRAYCORE_LINK StrTemplate
-	{
-		//! @class Gray::StrTemplate
-		//! strings may contain template blocks to be replaced. <?block?>
-		//! similar to expressions.
-	public:
-		static bool GRAYCALL HasTemplateBlock(const IniChar_t* pszInp);
-		static StrLen_t GRAYCALL ReplaceTemplateBlock(StrBuilder<IniChar_t>& out, const IniChar_t* pszInp, const IIniBaseGetter* pBlockReq, bool bRecursing = false);
-	};
-
-	template< typename TYPE>
-	inline StrLen_t GRAYCALL StrFormat<TYPE>::V(TYPE* pszOut, StrLen_t nLenOutMax, const TYPE* pszFormat, va_list vlist)	// static
-	{
-		StrBuilder<TYPE> out(pszOut, nLenOutMax);
-		V(OUT out, pszFormat, vlist);
-		return out.get_Length();
-	}
-
-	template< typename TYPE>
-	inline void _cdecl StrFormat<TYPE>::F(StrBuilder<TYPE>& out, const TYPE* pszFormat, ...)	// static
-	{
-		va_list vargs;
-		va_start(vargs, pszFormat);
-		V(out, pszFormat, vargs);
-		va_end(vargs);
-	}
-
-	template< typename TYPE>
-	inline StrLen_t _cdecl StrFormat<TYPE>::F(TYPE* pszOut, StrLen_t nLenOutMax, const TYPE* pszFormat, ...)	// static
-	{
-		va_list vargs;
-		va_start(vargs, pszFormat);
-		const StrLen_t nLenOut = V(pszOut, nLenOutMax, pszFormat, vargs);
-		va_end(vargs);
-		return nLenOut;
-	}
+template <typename TYPE>
+inline void _cdecl StrFormat<TYPE>::F(StrBuilder<TYPE>& out, const TYPE* pszFormat, ...) {  // static
+    va_list vargs;
+    va_start(vargs, pszFormat);
+    V(out, pszFormat, vargs);
+    va_end(vargs);
 }
 
+template <typename TYPE>
+inline StrLen_t GRAYCALL StrFormat<TYPE>::V(TYPE* pszOut, StrLen_t nLenOutMax, const TYPE* pszFormat, va_list vlist) {  // static
+    StrBuilder<TYPE> out(pszOut, nLenOutMax);
+    V(OUT out, pszFormat, vlist);
+    return out.get_Length();
+}
+template <typename TYPE>
+inline StrLen_t _cdecl StrFormat<TYPE>::F(TYPE* pszOut, StrLen_t nLenOutMax, const TYPE* pszFormat, ...) {  // static
+    va_list vargs;
+    va_start(vargs, pszFormat);
+    const StrLen_t nLenOut = V(pszOut, nLenOutMax, pszFormat, vargs);
+    va_end(vargs);
+    return nLenOut;
+}
+
+}  // namespace Gray
 #endif

@@ -9,53 +9,50 @@
 #pragma once
 #endif
 
-#include "cTimeUnits.h"
 #include "StrConst.h"
+#include "cTimeUnits.h"
 
-namespace Gray
-{
-	enum TZ_DSTRULE_TYPE
-	{
-		//! @enum Gray::TZ_DSTRULE_TYPE
-		//! Enumerate the DST rules that might exist in the world.
-		//! Try to be historically accurate. May or may not use DST.
-		//! http://www.worldtimezone.com/daylight.html
-		TZ_DSTRULE_NONE = 0,		//!< don't use DST at all. UTC.
-		TZ_DSTRULE_AMERICAN,		//!< use the American rules for DST.
-	};
+namespace Gray {
+/// <summary>
+/// Enumerate the DST rules that might exist in the world.
+/// Try to be historically accurate. May or may not use DST.
+/// http://www.worldtimezone.com/daylight.html
+/// </summary>
+enum class TZ_DSTRULE_t {
+    _NONE = 0,  /// don't use DST at all. UTC. 
+    _AMERICAN,  /// use the American rules for DST. As they existed at the time.
+};
 
-	struct cTimeZone
-	{
-		//! @struct Gray::cTimeZone
-		//! TimeZone/DST offset rules for a political region by name.
-		//! Similar to _WIN32 GetTimeZoneInformation(TIME_ZONE_INFORMATION)
+/// <summary>
+/// TimeZone/DST offset rules for a political region by name.
+/// For display of time as a string.
+/// Similar to _WIN32 GetTimeZoneInformation(TIME_ZONE_INFORMATION)
+/// </summary>
+struct cTimeZone {
+    const GChar_t* m_pszTimeZoneName;  /// Short Name. EST, PST, etc.
+    const GChar_t* m_pszTimeZoneDesc;  /// Long name and description.
 
-		const GChar_t* m_pszTimeZoneName;	//!< Short Name. EST, PST, etc.
-		const GChar_t* m_pszTimeZoneDesc;	//!< Long name and description.
+    TIMEVALU_t m_nTimeZoneOffset;  /// offset from UTC/GMT in minutes. Pure geography, NOT DST.
+    TZ_DSTRULE_t m_eDSTRule;       /// does it have/use a DST calculation? needs cTimeUnits.
+};
 
-		TZ_TYPE m_nTimeZoneOffset;		//!< offset from UTC/GMT in minutes. Pure geography, NOT DST.
-		TZ_DSTRULE_TYPE m_eDSTRule;		//!< does it have/use a DST calculation? needs cTimeUnits.
-	};
+/// <summary>
+/// Manage the collection of time zones. We need to make this configurable since it may change over time.
+/// @todo Manage dynamic list of TZ from file or db.
+/// </summary>
+class GRAYCORE_LINK cTimeZoneMgr { // : public cSingleton<cTimeZoneMgr>
+ private:
+    static bool sm_bInitTimeZoneSet;  /// Have i called tzset() ? So I know this computers local time zone.
+ public:
+    static const cTimeZone k_TimeZones[];  /// Fixed/Default array of world time zones. terminated by name = nullptr;
+ public:
+    /// Get minutes west.
+    static TIMEVALU_t GRAYCALL GetLocalMinutesWest();
+    static TIMEVALU_t GRAYCALL GetOffsetMinutes(TZ_TYPE nTimeZone);
 
-	class GRAYCORE_LINK cTimeZoneMgr // : public cSingleton<cTimeZoneMgr>
-	{
-		//! @class Gray::cTimeZoneMgr
-		//! Manage the collection of time zones. We need to make this configurable since it may change over time.
-		//! @todo Manage dynamic list of TZ from file or db.
-
-	private:
-		static bool sm_bInitTimeZoneSet;			//!< Have i called tzset() ? So I know this computers local time zone.
-
-	public:
-		static const cTimeZone k_TimeZones[];	//!< Fixed/Default array of world time zones. terminated by name = nullptr;
-
-	public:
-		static TZ_TYPE GRAYCALL GetLocalTimeZoneOffset();
-
-		static const cTimeZone* GRAYCALL FindTimeZone(TZ_TYPE nTimeZoneOffset);
-		static const cTimeZone* GRAYCALL FindTimeZone(const GChar_t* pszName);
-		static const cTimeZone* GRAYCALL FindTimeZoneHead(const GChar_t* pszName);
-	};
-}
-
+    static const cTimeZone* GRAYCALL FindTimeZone(TZ_TYPE nTimeZone);
+    static const cTimeZone* GRAYCALL FindTimeZone(const GChar_t* pszName);
+    static const cTimeZone* GRAYCALL FindTimeZoneHead(const GChar_t* pszName);
+};
+}  // namespace Gray
 #endif

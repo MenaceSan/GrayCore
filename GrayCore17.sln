@@ -1,8 +1,8 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.26228.4
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30523.141
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GrayCore", "GrayCore15.vcxproj", "{792DB699-0265-43B2-9438-4D0B202272E3}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GrayCore", "GrayCore17.vcxproj", "{792DB699-0265-43B2-9438-4D0B202272E3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -25,6 +25,6 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {BBEF043A-3AB6-47A1-A76A-EBA0B94CCFCC}
+		SolutionGuid = {C192896A-6EF6-45D5-B62D-BD1DBB5AF238}
 	EndGlobalSection
 EndGlobal

@@ -9,21 +9,18 @@
 #pragma once
 #endif
 
-#include "cThreadLock.h"
 #include "cArrayString.h"
+#include "cThreadLock.h"
 
-namespace Gray
-{
-	template<class TYPE>
-	class cThreadArraySortString
-	: protected cArraySortString < TYPE >
-	{
-		//! @class Gray::cThreadArraySortString
-		//! Thread safe array of strings
-		//! Create an alpha sorted string lookup table. CASE IGNORED !
-	public:
-		mutable cThreadLockCount m_Lock;
-	};
+namespace Gray {
+/// <summary>
+/// Thread safe array of strings. Create an alpha sorted string lookup table. CASE IGNORED !
+/// </summary>
+/// <typeparam name="TYPE"></typeparam>
+template <class TYPE>
+class cThreadArraySortString : protected cArraySortString<TYPE> {
+ public:
+    mutable cThreadLockCount m_Lock;
 };
-
+}  // namespace Gray
 #endif

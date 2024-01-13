@@ -9,33 +9,32 @@
 #pragma once
 #endif
 
-#include "cSystemInfo.h"
 #include "cFilePath.h"
+#include "cSystemInfo.h"
 
-namespace Gray
-{
-	class GRAYCORE_LINK cSystemHelper : public cSingleton < cSystemHelper >
-	{
-		//! @class Gray::cSystemHelper
-		//! The system as a whole. (as far as we can detect) not just the current running app/process or user login.
-		//! The detected system params may be effected by system virtualization.
+namespace Gray {
+/// <summary>
+/// The system as a whole. (as far as we can detect) not just the current running app/process or user login.
+/// The detected system params may be effected by system virtualization.
+/// Higher level than cSystemInfo
+/// </summary>
+class GRAYCORE_LINK cSystemHelper : public cSingleton<cSystemHelper> {
+    friend class cSingleton<cSystemHelper>;
 
-		friend class cSingleton < cSystemHelper >;
+ protected:
+    cStringF m_sSystemName;  /// Cached (or overridden for debug purposes) system name.
 
-	protected:
-		cStringF m_sSystemName;		//!< Cached (or overridden for debug purposes) system name.
+ public:
+    cSystemInfo& m_Info;
 
-	public:
-		cSystemInfo& m_Info;	 
+ public:
+    cSystemHelper();
 
-	public:
-		cSystemHelper();
+    cString get_OSInfoStr() const;
+    cStringF get_SystemName();  /// The node name of the machine.
 
-		cString get_OSInfoStr() const;
-		cStringF get_SystemName();		//!< The node name of the machine.
-
-		static cStringF GRAYCALL get_SystemDir();
-	};
-}
+    static cFilePath GRAYCALL get_SystemDir();
+};
+}  // namespace Gray
 
 #endif

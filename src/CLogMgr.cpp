@@ -4,325 +4,204 @@
 //
 
 #include "pch.h"
-#include "cLogMgr.h"
-#include "cLogEvent.h"
-#include "cString.h"
-#include "cCodeProfiler.h"
 #include "cAppState.h"
+#include "cCodeProfiler.h"
+#include "cLogEvent.h"
+#include "cLogMgr.h"
 #include "cStream.h"
+#include "cString.h"
 
-namespace Gray
-{
-	TIMESECD_t cLogMgr::sm_TimePrevException; //!< doesn't actually matter what this value is at init time.
+namespace Gray {
+TIMESECD_t cLogMgr::sm_TimePrevException;  /// doesn't actually matter what this value is at init time.
 
-	//************************************************************************
+//************************************************************************
 
-	cLogNexus::cLogNexus(LOG_ATTR_MASK_t uAttrMask, LOGLEV_TYPE eLogLevel)
-		: m_LogFilter(uAttrMask, eLogLevel)
-	{
-	}
+cLogNexus::cLogNexus(LOG_ATTR_MASK_t uAttrMask, LOGLVL_t eLogLevel) : m_LogFilter(uAttrMask, eLogLevel) {}
 
-	cLogNexus::~cLogNexus() noexcept
-	{
-	}
+HRESULT cLogNexus::addEvent(cLogEvent& rEvent) noexcept {  // virtual
+    CODEPROFILEFUNC();
+    if (!cLogMgr::isSingleCreated()) {
+        DEBUG_CHECK(cLogMgr::isSingleCreated());
+        return HRESULT_WIN32_C(ERROR_EMPTY);
+    }
+    if (!IsLogged(rEvent.get_LogAttrMask(), rEvent.get_LogLevel())) {  // I don't care about these ?
+        return HRESULT_WIN32_C(ERROR_EMPTY);                           // no sinks care about this.
+    }
+    if (rEvent.m_sMsg.IsEmpty()) return E_INVALIDARG;
 
-	HRESULT cLogNexus::addEvent(cLogEvent* pEvent) noexcept // virtual
-	{
-		//! add a new log event and send/route it to all applicable Appenders.
-		//! @return <0 = failed, 0=not processed by anyone, # = number of processors.
+    m_LogThrottle.m_nQtyLogLast++;
 
-		CODEPROFILEFUNC();
-		if (pEvent == nullptr)
-			return E_POINTER;
-		if (!cLogMgr::isSingleCreated())
-		{
-			DEBUG_CHECK(cLogMgr::isSingleCreated());
-			return HRESULT_WIN32_C(ERROR_EMPTY);
-		}
-		if (!IsLogged(pEvent->get_LogAttrMask(), pEvent->get_LogLevel()))	// I don't care about these ?
-		{
-			return HRESULT_WIN32_C(ERROR_EMPTY); // no appenders care about this.
-		}
-		if (pEvent->m_sMsg.IsEmpty())
-		{
-			return E_INVALIDARG;
-		}
+    int iUsed = 0;
+    cLogEventPtr pEventHolder(&rEvent);  // one more reference on this.
+    HRESULT hResAdd = S_OK;
 
-		//! LOG_ATTR_FILTERED
-		m_LogThrottle.m_nQtyLogLast++;
-
-		int iUsed = 0;
-		cStringL sTextFormatted; // produce a default final formatted string.
-		cLogEventPtr pEventHolder(pEvent);	// one more reference on this.
-		HRESULT hResAdd = S_OK;
-
-		for (int i = 0;; i++)
-		{
-			cLogAppender* pAppender;
-			{
-				cThreadGuard lock(m_LockLog); // sync multiple threads.
-				pAppender = m_aAppenders.GetAtCheck(i);
-				if (pAppender == nullptr)
-					break;
-			}
-			ASSERT(pAppender != nullptr);
-			hResAdd = pAppender->addEvent(pEvent);
-			if (hResAdd > 0)
-			{
-				iUsed++;	// handled.
-				continue;
-			}
-			if (hResAdd < 0)
-			{
-				continue;	// another form of filtering. don't process this appender.
-			}
-			if (sTextFormatted.IsEmpty())
-			{
-				// build default formatted string only if needed. add FILE_EOL if desired.
-				sTextFormatted = pEvent->get_FormattedDefault();
-				if (sTextFormatted.IsEmpty())
-				{
-					return E_INVALIDARG;
-				}
-			}
-			hResAdd = pAppender->WriteString(sTextFormatted);
-			if (SUCCEEDED(hResAdd))
-			{
-				iUsed++;
-			}
-		}
+    for (int i = 0;; i++) {
+        cLogSink* pSink;
+        {
+            cThreadGuard lock(m_LockLog);  // sync multiple threads.
+            pSink = m_aSinks.GetAtCheck(i);
+            if (pSink == nullptr) break;
+        }
+        hResAdd = pSink->addEvent(rEvent);
+        if (hResAdd > 0) {
+            iUsed++;  // handled.
+            continue;
+        }
+        if (hResAdd < 0) continue;  // another form of filtering. don't process this sink.
+        // FAILED ? or filtered write.
+    }
 
 #ifdef _DEBUG
-		if (cAppState::isDebuggerPresent())
-		{
-			FlushLogs();
-		}
+    if (cAppState::isDebuggerPresent()) FlushLogs();
 #endif
+    return iUsed > 0 ? iUsed : hResAdd;  // did we do any work?
+}
 
-		return (iUsed > 0) ? iUsed : hResAdd;	// we do any work?
-	}
+HRESULT cLogNexus::FlushLogs() {  // virtual
+    cThreadGuard lock(m_LockLog);
+    for (ITERATE_t i = 0;; i++) {
+        cLogSink* pSink = EnumSinks(i);
+        if (pSink == nullptr) break;
+        pSink->FlushLogs();
+    }
+    return S_OK;
+}
 
-	HRESULT cLogNexus::FlushLogs() // virtual
-	{
-		cThreadGuard lock(m_LockLog);
-		for (ITERATE_t i = 0;; i++)
-		{
-			cLogAppender* pAppender = EnumAppender(i);
-			if (pAppender == nullptr)
-				break;
-			pAppender->FlushLogs();
-		}
-		return S_OK;
-	}
+bool cLogNexus::HasSink(cLogSink* pSinkFind, bool bDescend) const {
+    if (pSinkFind == nullptr) return false;
+    cThreadGuard lock(m_LockLog);
+    for (ITERATE_t i = 0;; i++) {
+        const cLogSink* pSink = EnumSinks(i);
+        if (pSink == nullptr) return false;  // end marker ?
+        if (pSinkFind == pSink) return true;
+        if (bDescend) {
+            const cLogNexus* pLogNexus = pSink->get_ThisLogNexus();
+            if (pLogNexus != nullptr && pLogNexus->HasSink(pSinkFind, true)) return true;
+        }
+    }
+}
 
-	bool cLogNexus::HasAppender(cLogAppender* pAppenderFind, bool bDescend) const
-	{
-		//! Does this cLogNexus contain this cLogAppender ?
-		//! will descend into child cLogNexus as well.
-		//! @arg pAppenderFind = what are we trying to find?
+HRESULT cLogNexus::AddSink(cLogSink* pSinkAdd) {
+    if (pSinkAdd == nullptr) return E_POINTER;
+    if (HasSink(pSinkAdd, true)) return S_FALSE;  // no dupes.
+    cThreadGuard lock(m_LockLog);
+    m_aSinks.AddHead(pSinkAdd);
+    return S_OK;
+}
 
-		if (pAppenderFind == nullptr)
-			return false;
-		cThreadGuard lock(m_LockLog);
-		for (ITERATE_t i = 0;; i++)
-		{
-			const cLogAppender* pAppender = EnumAppender(i);
-			if (pAppender == nullptr)
-				return false;
-			if (pAppenderFind == pAppender)
-				return true;
-			if (bDescend)
-			{
-				const cLogNexus* pLogNexus = pAppender->get_ThisLogNexus();
-				if (pLogNexus != nullptr && pLogNexus->HasAppender(pAppenderFind, true))
-					return true;
-			}
-		}
-	}
+bool cLogNexus::RemoveSink(cLogSink* pSinkRemove, bool bDescend) {
+    if (pSinkRemove == nullptr) return false;
+    bool bRemoved = false;
+    cThreadGuard lock(m_LockLog);
+    for (ITERATE_t i = 0;; i++) {
+        cLogSink* pSink = EnumSinks(i);
+        if (pSink == nullptr) return bRemoved;
+        if (pSinkRemove == pSink) {
+            m_aSinks.RemoveAt(i);
+            i--;
+            bRemoved = true;
+        } else if (bDescend) {
+            const cLogNexus* pLogNexus = pSink->get_ThisLogNexus();
+            if (pLogNexus != nullptr) {
+                bRemoved |= const_cast<cLogNexus*>(pLogNexus)->RemoveSink(pSinkRemove, true);
+            }
+        }
+    }
+}
 
-	HRESULT cLogNexus::AddAppender(cLogAppender* pAppenderAdd)
-	{
-		//! Newest first.
-		if (pAppenderAdd == nullptr)
-			return E_POINTER;
-		if (HasAppender(pAppenderAdd, true))	// no dupes.
-			return S_FALSE;
-		cThreadGuard lock(m_LockLog);
-		m_aAppenders.AddHead(pAppenderAdd);
-		return S_OK;
-	}
+cLogSink* cLogNexus::FindSinkType(const TYPEINFO_t& rType, bool bDescend) const {
+    cThreadGuard lock(m_LockLog);
+    for (ITERATE_t i = 0;; i++) {
+        const cLogSink* pSink = EnumSinks(i);
+        if (pSink == nullptr) break;
+        if (typeid(*pSink) == rType)  // already here.
+            return const_cast<cLogSink*>(pSink);
+        if (bDescend) {
+            const cLogNexus* pLogNexus = pSink->get_ThisLogNexus();
+            if (pLogNexus != nullptr) {
+                pSink = pLogNexus->FindSinkType(rType, true);
+                if (pSink != nullptr) return const_cast<cLogSink*>(pSink);
+            }
+        }
+    }
+    return nullptr;
+}
 
-	bool cLogNexus::RemoveAppender(cLogAppender* pAppenderRemove, bool bDescend)
-	{
-		//! will descend into child cLogNexus as well.
-		if (pAppenderRemove == nullptr)
-			return false;
-		bool bRemoved = false;
-		cThreadGuard lock(m_LockLog);
-		for (ITERATE_t i = 0;; i++)
-		{
-			cLogAppender* pAppender = EnumAppender(i);
-			if (pAppender == nullptr)
-				return bRemoved;
-			if (pAppenderRemove == pAppender)
-			{
-				m_aAppenders.RemoveAt(i);
-				i--;
-				bRemoved = true;
-			}
-			else if (bDescend)
-			{
-				const cLogNexus* pLogNexus = pAppender->get_ThisLogNexus();
-				if (pLogNexus != nullptr)
-				{
-					bRemoved |= const_cast<cLogNexus*>(pLogNexus)->RemoveAppender(pAppenderRemove, true);
-				}
-			}
-		}
-	}
+//************************************************************************
 
-	cLogAppender* cLogNexus::FindAppenderType(const TYPEINFO_t& rType, bool bDescend) const
-	{
-		//! is there an appender of this type already installed?
-		cThreadGuard lock(m_LockLog);
-		for (ITERATE_t i = 0;; i++)
-		{
-			const cLogAppender* pAppender = EnumAppender(i);
-			if (pAppender == nullptr)
-				break;
-			if (typeid(*pAppender) == rType)	// already here.
-				return const_cast<cLogAppender*>(pAppender);
-			if (bDescend)
-			{
-				const cLogNexus* pLogNexus = pAppender->get_ThisLogNexus();
-				if (pLogNexus != nullptr)
-				{
-					pAppender = pLogNexus->FindAppenderType(rType, true);
-					if (pAppender != nullptr)
-						return const_cast<cLogAppender*>(pAppender);
-				}
-			}
-		}
-		return nullptr;
-	}
-
-	//************************************************************************
-
-	cLogMgr::cLogMgr()
-		: cSingleton<cLogMgr>(this, typeid(cLogMgr))
+cLogMgr::cLogMgr()
+    : cSingleton<cLogMgr>(this, typeid(cLogMgr)),
 #ifdef _DEBUG
-		, cLogNexus((LOG_ATTR_MASK_t)LOG_ATTR_ALL_MASK, LOGLEV_INFO)
+      cLogNexus((LOG_ATTR_MASK_t)LOG_ATTR_ALL_MASK, LOGLVL_t::_TRACE)
 #else
-		, cLogNexus((LOG_ATTR_MASK_t)LOG_ATTR_ALL_MASK, LOGLEV_INFO)
+      cLogNexus((LOG_ATTR_MASK_t)LOG_ATTR_ALL_MASK, LOGLVL_t::_INFO)
 #endif
-	{
-		//! ideally this is in the very first static initialize.
+{
+    //! ideally this is in the very first static initialize.
 #ifdef _DEBUG
-		if (cAppState::isDebuggerPresent())
-		{
-			cLogAppendDebug::AddAppenderCheck(this);	// send logs to the debugger.
-		}
+    if (cAppState::isDebuggerPresent()) {
+        cLogSinkDebug::AddSinkCheck(this);  // send logs to the debugger.
+    }
 #endif
-	}
-	cLogMgr::~cLogMgr()
-	{
-	}
+}
 
 #ifdef _CPPUNWIND
-	void cLogMgr::LogExceptionV(cExceptionHolder* pEx, const LOGCHAR_t* pszCatchContext, va_list vargs) noexcept
-	{
-		//! An exception occurred. record it.
-		//! if ( this == nullptr ) may be OK?
+void cLogMgr::LogExceptionV(cExceptionHolder* pEx, const LOGCHAR_t* pszCatchContext, va_list vargs) noexcept {
+    //! if ( this == nullptr ) may be OK?
+    CODEPROFILEFUNC();
 
-		CODEPROFILEFUNC();
+    TIMESECD_t tNowSec = static_cast<TIMESECD_t>(cTimeSys::GetTimeNow() / cTimeSys::k_FREQ);
+    if (sm_TimePrevException == tNowSec)  // prevent message floods. 1 per sec.
+        return;
+    sm_TimePrevException = tNowSec;
 
-		TIMESECD_t tNowSec = static_cast<TIMESECD_t>(cTimeSys::GetTimeNow() / cTimeSys::k_FREQ);
-		if (sm_TimePrevException == tNowSec)	// prevent message floods. 1 per sec.
-			return;
-		sm_TimePrevException = tNowSec;
+    if (!cMem::IsValidApp(this)) {
+        // Nothing we can do about this?!
+        ASSERT(0);
+        return;
+    }
 
-		if (!cMem::IsValidApp(this))
-		{
-			// Nothing we can do about this?!
-			ASSERT(0);
-			return;
-		}
+    // Keep a record of what we catch.
+    try {
+        LOGCHAR_t szMsg[cExceptionHolder::k_MSG_MAX_SIZE];
+        StrBuilder<LOGCHAR_t> sb(szMsg, STRMAX(szMsg));
+        if (pEx == nullptr) {
+            sb.AddStr("Unknown exception");
+        } else {
+            pEx->GetErrorMessage(sb);
+        }
 
-		// Keep a record of what we catch.
-		try
-		{
-			LOGCHAR_t szMsg[cExceptionHolder::k_MSG_MAX_SIZE];
-			StrLen_t iLen;
-			if (pEx == nullptr)
-			{
-				iLen = StrT::CopyLen(szMsg, "Unknown exception", STRMAX(szMsg));
-			}
-			else
-			{
-				pEx->GetErrorMessage(szMsg, STRMAX(szMsg));
-				iLen = StrT::Len(szMsg);
-			}
+        sb.AddStr(", in ");
+        if (vargs == nullptr || vargs == k_va_list_empty) {
+            sb.AddStr(pszCatchContext);
+        } else {
+            sb.AddFormatV(pszCatchContext, vargs);
+        }
 
-			iLen += StrT::CopyLen(szMsg + iLen, ", in ", STRMAX(szMsg) - iLen);
-			if (vargs == nullptr)
-			{
-				iLen += StrT::CopyLen(szMsg + iLen, pszCatchContext, STRMAX(szMsg) - iLen);
-			}
-			else
-			{
-				iLen += StrT::vsprintfN(szMsg + iLen, STRMAX(szMsg) - iLen, pszCatchContext, vargs);
-			}
+        LOGLVL_t eSeverity = (pEx == nullptr) ? LOGLVL_t::_CRIT : (pEx->get_Severity());
+        addEventS(LOG_ATTR_DEBUG, eSeverity, szMsg);
+    } catch (...) {
+        // Not much we can do about this.
+    }
+}
 
-			LOGLEV_TYPE eSeverity = (pEx == nullptr) ? LOGLEV_CRIT : (pEx->get_Severity());
-			addEventS(LOG_ATTR_DEBUG, eSeverity, szMsg, "");
-		}
-		catch (...)
-		{
-			// Not much we can do about this.
-		}
-	}
-
-	void _cdecl cLogMgr::LogExceptionF(cExceptionHolder* pEx, const LOGCHAR_t* pszCatchContext, ...) noexcept
-	{
-		va_list vargs;
-		va_start(vargs, pszCatchContext);
-		LogExceptionV(pEx, pszCatchContext, vargs);
-		va_end(vargs);
-	}
+void _cdecl cLogMgr::LogExceptionF(cExceptionHolder* pEx, const LOGCHAR_t* pszCatchContext, ...) noexcept {
+    va_list vargs;
+    va_start(vargs, pszCatchContext);
+    LogExceptionV(pEx, pszCatchContext, vargs);
+    va_end(vargs);
+}
 #endif
 
-	HRESULT cLogMgr::WriteString(const LOGCHAR_t* pszStr)	// virtual
-	{
-		this->addEventS(LOG_ATTR_PRINT, LOGLEV_INFO, pszStr, "");
-		return S_OK;
-	}
-	HRESULT cLogMgr::WriteString(const wchar_t* pszStr) // virtual
-	{
-		this->addEventS(LOG_ATTR_PRINT, LOGLEV_INFO, pszStr, "");
-		return S_OK;
-	}
+//************************************************************************
 
+cLogSubject::cLogSubject(const char* pszSubject) : m_pszSubject(pszSubject) {}
 
-	//************************************************************************
-
-	cLogSubject::cLogSubject(const char* pszSubject)
-		: m_pszSubject(pszSubject)
-	{
-	}
-
-	cLogSubject::~cLogSubject()
-	{
-	}
-
-	HRESULT cLogSubject::addEvent(cLogEvent* pEvent) noexcept // virtual
-	{
-		//! Prefix the event with the subject.
-		//! @return <0 = failed, 0=not processed by anyone, # = number of processors.
-		if (pEvent == nullptr)
-			return E_POINTER;
-		pEvent->m_pszSubject = m_pszSubject;	// categorize with this subject.
-		return cLogMgr::I().addEvent(pEvent);
-	}
-
+bool cLogSubject::IsLogged(LOG_ATTR_MASK_t uAttrMask, LOGLVL_t eLogLevel) const noexcept {
+    return cLogMgr::I().IsLogged(uAttrMask, eLogLevel);
 }
- 
+HRESULT cLogSubject::addEvent(cLogEvent& rEvent) noexcept {  // override
+    rEvent.m_pszSubject = m_pszSubject;    // categorize with this subject.
+    return cLogMgr::I().addEvent(rEvent);
+}
+}  // namespace Gray

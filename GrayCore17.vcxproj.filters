@@ -14,78 +14,6 @@
     <ClInclude Include="include\cArchive.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="include\cArray.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cArrayIUnk.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cArrayUnique.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cArrayRef.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cArraySort.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cArraySortRef.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cArraySortString.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cArrayString.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cAtom.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cAtomManager.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cBits.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cCodeProfiler.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cDebugAssert.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cException.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cExceptionAssert.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cExceptionBase.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cExceptionSystem.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cFile.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cFileCopier.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cFileDir.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cFilePath.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cFileStatus.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cFileText.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cStreamTextReader.h">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="include\cFloat.h">
       <Filter>include</Filter>
     </ClInclude>
@@ -101,58 +29,10 @@
     <ClInclude Include="include\cHeap.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="include\cHeapObject.h">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="include\cHookJump.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="include\cIniBase.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cIniFile.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cIniMap.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cIniObject.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cIniSection.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cInterlockedVal.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cIUnkAgg.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cIUnkPtr.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cList.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cListNodeRef.h">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="include\cLocker.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cLogAppendConsole.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cLogAppender.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cLogEvent.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cLogLevel.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cLogMgr.h">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="include\cMem.h">
@@ -164,16 +44,7 @@
     <ClInclude Include="include\cMime.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="include\cUniquePtr.h">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="include\cNonCopyable.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cObject.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cObjectFactory.h">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="include\cOSHandle.h">
@@ -203,49 +74,16 @@
     <ClInclude Include="include\cPtrFacade.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="include\cPtrTrace.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cPtrTraceMgr.h">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="include\cQueue.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="include\cRandom.h">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="include\cRefPtr.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cResourceBase.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cSecurityAttributes.h">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="include\cSingleton.h">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="include\cSingletonPtr.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cStream.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cStreamProgress.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cStreamQueue.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cStreamStack.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cString.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cSystemHelper.h">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="include\cSystemInfo.h">
@@ -314,9 +152,6 @@
     <ClInclude Include="include\cUnitTestDecl.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="include\cValArray.h">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="include\cWinHeap.h">
       <Filter>include</Filter>
     </ClInclude>
@@ -339,9 +174,6 @@
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="include\IUnkObject.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\PtrCast.h">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="include\resource.h">
@@ -383,37 +215,217 @@
     <ClInclude Include="include\SysTypes.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="include\cRegKey.h">
+    <ClInclude Include="include\cAtom.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cBits.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cCodeProfiler.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cDebugAssert.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cFileCopier.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cFilePath.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cFile.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cFileStatus.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cFileDir.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cFileText.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cStreamProgress.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cStreamQueue.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cHeapObject.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cIUnkAgg.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cIniBase.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cIniFile.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cIniMap.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cIniObject.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cIniSection.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cInterlockedVal.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cIUnkPtr.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cSecurityAttributes.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cLogEvent.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cLogLevel.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cLogMgr.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cArraySort.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cArraySortString.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cArrayString.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cArrayIUnk.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cExceptionAssert.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cExceptionBase.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cExceptionSystem.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cStreamStack.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cArraySortRef.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cArrayRef.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cException.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cArray.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cList.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cObject.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cString.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cStream.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cObjectFactory.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cSystemHelper.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cPtrTrace.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cPtrTraceMgr.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cRandom.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cAtomManager.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cListNodeRef.h">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="include\Index.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="include\cArrayT.h">
+    <ClInclude Include="include\PtrCast.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cRegKey.h">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="include\cObjectService.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="include\cQueueChunked.h">
+    <ClInclude Include="include\cResourceDir.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="include\cResourceDir.h">
+    <ClInclude Include="include\cValArray.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cArrayT.h">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="include\cStack.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="include\cQueueChunked.h">
+      <Filter>include</Filter>
+    </ClInclude>
     <ClInclude Include="include\cStreamTextReader.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cUniquePtr.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cArrayUnique.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cValT.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cRange.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cAppArgs.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cAppCommand.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cSpan.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cBlob.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cLogSink.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cLogSinkConsole.h">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.md" />
-    <None Include="LICENSE.txt" />
-    <None Include="include\cLogLevel.tbl">
+    <None Include="include\StrT.inl">
       <Filter>include</Filter>
     </None>
+    <None Include="LICENSE.txt" />
     <None Include="include\cMimeExts.tbl">
       <Filter>include</Filter>
     </None>
@@ -421,9 +433,6 @@
       <Filter>include</Filter>
     </None>
     <None Include="include\cTypes.tbl">
-      <Filter>include</Filter>
-    </None>
-    <None Include="include\cWinHeap.inl">
       <Filter>include</Filter>
     </None>
     <None Include="include\HResults.tbl">
@@ -435,13 +444,15 @@
     <None Include="include\StrCharAscii.tbl">
       <Filter>include</Filter>
     </None>
-    <None Include="include\StrT.inl">
-      <Filter>include</Filter>
-    </None>
     <None Include="include\StrT.tbl">
       <Filter>include</Filter>
     </None>
-    <None Include="test\cIniFileUnitTest.ini" />
+    <None Include="include\cWinHeap.inl">
+      <Filter>include</Filter>
+    </None>
+    <None Include="include\cLogLevel.tbl">
+      <Filter>include</Filter>
+    </None>
     <None Include="build\BuildNuGetImage.bat">
       <Filter>build</Filter>
     </None>
@@ -454,10 +465,10 @@
     <None Include="build\graycore-v142.nuspec">
       <Filter>build</Filter>
     </None>
-    <None Include="build\Directory.Build.props">
+    <None Include="build\GrayCore.nuget.targets">
       <Filter>build</Filter>
     </None>
-    <None Include="build\GrayCore.nuget.targets">
+    <None Include="build\Directory.Build.props">
       <Filter>build</Filter>
     </None>
     <None Include="build\BuildNuGetImage-v141.bat">
@@ -475,7 +486,7 @@
       <UniqueIdentifier>{17d5e6aa-3bd2-4aff-85ac-b1d8b35bb64f}</UniqueIdentifier>
     </Filter>
     <Filter Include="build">
-      <UniqueIdentifier>{f0f185ec-474f-4392-b4b8-d13f7d162760}</UniqueIdentifier>
+      <UniqueIdentifier>{7a7384f9-75f5-4e54-a16d-a9c50af94453}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -493,43 +504,7 @@
     <ClCompile Include="src\cArchive.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\cArray.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\cAtom.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\cCodeProfiler.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\cDebugAssert.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\cException.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\cExceptionAssert.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\cExceptionSystem.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\cFile.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\cFileCopier.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\cFileDir.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\cFilePath.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\cFileStatus.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\cFileText.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\cFloatDeco.cpp">
@@ -539,33 +514,6 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\cHookJump.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\cIniFile.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\cIniMap.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\cIniObject.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\cIniSection.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\cList.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\cLogAppendConsole.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\cLogAppender.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\cLogLevel.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\cLogMgr.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\cMem.cpp">
@@ -601,22 +549,7 @@
     <ClCompile Include="src\cQueue.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\cRandom.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\cSecurityAttributes.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\cSingleton.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\cStream.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\cStreamStack.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\cString.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\cSystemInfo.cpp">
@@ -688,6 +621,78 @@
     <ClCompile Include="src\StrU.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\cCodeProfiler.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cAtom.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cFileCopier.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cFilePath.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cFile.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cFileStatus.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cFileDir.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cFileText.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cSecurityAttributes.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cLogLevel.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cLogMgr.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cIniFile.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cIniMap.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cIniObject.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cIniSection.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cExceptionAssert.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cExceptionSystem.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cStreamStack.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cException.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cStream.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cString.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cList.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cRandom.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cArray.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
     <ClCompile Include="src\cObjectService.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -697,15 +702,20 @@
     <ClCompile Include="src\cStreamTextReader.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="NoCRT.inl" />
+    <ClCompile Include="src\cBlob.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cLogSinkConsole.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cLogSink.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="src\GrayCore.rc">
       <Filter>src</Filter>
     </ResourceCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="build\GrayWorldLogoSm.jpg">
-      <Filter>build</Filter>
-    </Image>
   </ItemGroup>
 </Project>

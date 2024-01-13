@@ -9,327 +9,270 @@
 #pragma once
 #endif
 
-#include "cSingleton.h"
-#include "cString.h"
-#include "cObject.h"
-#include "cArrayString.h"
-#include "cFilePath.h"
-#include "cThreadLocalSys.h"
-#include "cThreadLock.h"
+#include "cAppArgs.h"
 #include "cBits.h"
 #include "cOSProcess.h"
+#include "cSingleton.h"
+#include "cThreadLocalSys.h"
+#include "cThreadLock.h"
 
-namespace Gray
-{
-	/// <summary>
-	/// What state is the app in at the moment?
-	/// </summary>
-	enum APPSTATE_TYPE_ : BYTE
-	{
-		APPSTATE_Init,		//!< static class init time. constructors called for static stuff. maybe set for single thread loading DLL dynamically. main() not called yet.
-		APPSTATE_RunInit,	//!< not static init but still init. In main() but not main loop yet. InitInstance()
-		APPSTATE_Run,		//!< we are in main() main loop. Run() and OnTickApp()
-		APPSTATE_RunExit,	//!< classes are being cleaned up. destructors called. Trying to exit. ExitInstance().
-		APPSTATE_Exit,		//!< static classes are being cleaned up. destructors called.
-		APPSTATE_QTY,
-	};
+namespace Gray {
+class cOSModule;
 
-	typedef const FILECHAR_t* const * APP_ARGS_t;	//!< the args passed to main() nullptr terminated array. const 
-	typedef FILECHAR_t** APP_ARGW_t;	// _WIN32 really defined this as LPWSTR*
+/// <summary>
+/// What state is the app in at the moment? I may be a DLL/SO.
+/// </summary>
+enum class APPSTATE_t : BYTE {
+    _Init,     /// static class init time. constructors called for static stuff. maybe set for single thread loading DLL dynamically. main() not called yet.
+    _RunInit,  /// not static init but still init. In main() but not main loop yet. InitInstance()
+    _Run,      /// we are in main() main loop. Run() and OnTickApp(). called by cAppStateMain or via InitInstance()
+    _RunExit,  /// classes are being cleaned up. destructor called. Trying to exit. ExitInstance().
+    _Exit,     /// static classes are being cleaned up. destructor called.
+};
 
-	/// <summary>
-	/// Parse and store command line args used to start an app. Handle Windows and POSIX/DOS formats.
-	/// Use FILECHAR_t. see k_ARG_ARRAY_MAX
-	/// Like MFC CCommandLineInfo
-	/// </summary>
-	class GRAYCORE_LINK cAppArgs
-	{
-	private:
-		cStringF m_sArguments;					//!< The unparsed command line arguments. NOT including 'appname.exe'. Maybe generated as needed in get_ArgsStr(). if main() style entry.
-	public:
-		cArrayString<FILECHAR_t> m_asArgs;		//!< Array of parsed m_sArguments. [0]=appname.exe, [1]=first arg. NOT nullptr terminated like APP_ARGS_t. Honors quoted text.
+typedef FILECHAR_t** APP_ARGW_t;  /// _WIN32 really defined this as LPWSTR*
 
-	private:
-		void InitArgsLine(ITERATE_t argc, APP_ARGS_t ppszArgs);
-		void InitArgsArray(ITERATE_t argc, APP_ARGS_t ppszArgs);
+/// <summary>
+/// Singleton to track the state of the current running app/process.
+/// Don't combine this with cWinApp/cAppImpl since we may be a (dll/Shared) library or using this in static init.
+/// Track when static init is complete and when static destructor are called.
+/// @todo What desktop/session is this app and user attached to?
+/// @note Use _WIN32 CSIDL_WINDOWS etc to find special app folders.
+/// @note see cWinApp/cAppImpl for my app specialization stuff.
+/// </summary>
+class GRAYCORE_LINK cAppState : public cSingleton<cAppState> {
+    friend class cSingleton<cAppState>;
+    friend class cAppImpl;
+    friend class cAppStateMain;
+    friend class cUnitTestAppState;
 
-	public:
-		/// <summary>
-		/// Is FILECHAR_t char 'ch' a command line switch char?
-		/// </summary>
-		/// <param name="ch"></param>
-		/// <returns></returns>
-		static constexpr bool IsArgSwitch(wchar_t ch) noexcept
-		{
-			return ch == '-' || ch == '/';
-		}
-		static inline bool IsArg(const FILECHAR_t* pszArg) noexcept
-		{
-			if (StrT::IsWhitespace<FILECHAR_t>(pszArg))
-				return false;
-			if (IsArgSwitch(pszArg[0]))
-				return false;
-			return true;
-		}
+ public:
+    const cObjectSignature<> m_Sig;                     /// Used to check for compatible build/compile config and alignments. (_INC_GrayCore_H, sizeof(cAppState))
+    cThreadLocalSysT<cOSModule> m_ModuleLoading;        /// any thread is currently loading a DLL/SO? isInCInit(). use cAppStateModuleLoad
+    cAppArgs m_Args;                                    /// Application Command line arguments. [0] = app name.
+    cBitmask<> m_ArgsValid;                             /// Track which command line args are valid/used/executed in m_Args. assume any left over are not.
+    static HMODULE sm_hInstance;                        /// the current applications HINSTANCE handle/base address. _IMAGE_DOS_HEADER, HMODULE=HINSTANCE
 
-		cStringF get_ArgsStr() const noexcept;
-		ITERATE_t get_ArgsQty() const noexcept;
-		cStringF GetArgEnum(ITERATE_t i) const;	//!< command line arg.
+ protected:
+    APPSTATE_t m_eAppState;  /// The main state of the application. use isInCInit() for loading DLL's.
 
-		void InitArgsF(const FILECHAR_t* pszCommandArgs, const FILECHAR_t* pszSep = nullptr);
-		void InitArgs2(int argc, APP_ARGS_t argv);
+    cString m_sUserName;      /// Applications assigned login/user name. Cache/Read this just once.
+    cFilePath m_sTempDir;     /// Cache my temporary files directory path.
+    bool m_bTempDirWritable;  /// I have test written to the temp directory. its good.
 
-		ITERATE_t FindCommandArg(const FILECHAR_t* pszCommandArg, bool bRegex = true, bool bIgnoreCase = true) const;
-		ITERATE_t _cdecl FindCommandArgs(bool bIgnoreCase, const FILECHAR_t* pszCommandArgFind, ...) const;
+ protected:
+    cAppState();
+    ~cAppState() override;
 
-		bool HasCommandArg(const FILECHAR_t* pszCommandArg, bool bRegex = true, bool bIgnoreCase = true) const
-		{
-			//! Do we have a particular argument? pszCommandArg
-			const ITERATE_t iRet = FindCommandArg(pszCommandArg, bRegex, bIgnoreCase);
-			return iRet >= 0;
-		}
-	};
+    HRESULT CheckValidSignatureI(UINT32 nGrayCoreVer, size_t nSizeofThis) const noexcept;
 
-	/// <summary>
-	/// Singleton to track the state of the current running app/process.
-	/// Don't combine this with CWinApp/cAppImpl since we may be a (dll/Shared) library or using this in static init.
-	/// Track when static init is complete and when static destructors are called.
-	/// @todo What desktop/session is this app and user attached to?
-	/// @note Use _WIN32 CSIDL_WINDOWS etc to find special app folders.
-	/// @note see CWinApp/cAppImpl for my app specialization stuff.
-	/// </summary>
-	class GRAYCORE_LINK cAppState : public cSingleton<cAppState>
-	{
-		friend class cSingleton < cAppState >;
-		friend class cAppImpl;
-		friend class cAppStateMain;
-		friend class cUnitTestAppState;
+ public:
+    static cFilePath GRAYCALL get_AppFilePath();   /// The full path+name of the current EXE/PE.
+    static cFilePath GRAYCALL get_AppFileTitle();  /// File name no Ext.
+    static cFilePath GRAYCALL get_AppFileDir();    /// Current dir the app is installed.
 
-	public:
-		const cObjectSignature<> m_Sig;		//!< Used to check for compatible build/compile config and alignments. (_INC_GrayCore_H, sizeof(cAppState))
-		cThreadLocalSysT<bool> m_ThreadModuleLoading;	//!< any thread is currently loading a DLL/SO? isInCInit(). use cAppStateModuleLoad
-		cAppArgs m_Args;		//!< Application Command line arguments. [0] = app name.
-		cBitmask<> m_ArgsValid;			//!< Track which command line args are valid/used in m_Args. assume any left over are not.
-		static HMODULE sm_hInstance;	//!< the current applications HINSTANCE handle/base address. _IMAGE_DOS_HEADER, HMODULE=HINSTANCE
+    /// <summary>
+    /// Is this the correct version of cAppState?
+    /// Must be agreed to by all code consumers. sizeof(cAppState) for checking alignments of structures.
+    /// Ensure that some external DLL/SO caller has the same structure packing that we have.
+    /// Make this inline code so it runs in the callers context.
+    /// @note make sure Lib is not shared as both DLL and static. GetEnvironStr(GRAY_NAMES "Core") contains cAppState
+    /// </summary>
+    /// <param name="nGrayCoreVer">_INC_GrayCore_H  (from the callers perspective)</param>
+    /// <param name="nSizeofThis">sizeof(cAppState) (from the callers perspective) for structure packing check.</param>
+    /// <param name="pAppX"></param>
+    /// <returns></returns>
+    static HRESULT inline CheckValidSignatureX(UINT32 nGrayCoreVer, size_t nSizeofThis, const cAppState* pAppX) noexcept {
+        if (nGrayCoreVer != _INC_GrayCore_H) {
+            // My *Core DLL is not the correct version or packing is incorrect!
+            return HRESULT_WIN32_C(ERROR_PRODUCT_VERSION);
+        }
 
-	protected:
-		THREADID_t m_nMainThreadId;		//!< The thread we started with. main().
-		APPSTATE_TYPE_ m_eAppState;		//!< The main state of the application. use isInCInit() for loading DLL's.
+        const cAppState* const pApp = get_SingleU();  // allow nullptr.
+        if (!cMem::IsValidApp(pApp)) {
+            // Something is wrong. No idea.
+            return HRESULT_WIN32_C(ERROR_INTERNAL_ERROR);
+        }
+        if (pAppX != nullptr && pAppX != pApp) {
+            // Mix of GRAY_STATICLIB and DLL linkage is not allowed.
+            return HRESULT_WIN32_C(ERROR_INTERNAL_ERROR);
+        }
 
-		cString m_sUserName;			//!< Applications assigned login/user name. Cache/Read this just once.
-		cStringF m_sTempDir;			//!< Cache my temporary files directory path.
-		bool m_bTempDirWritable;		//!< I have test written to the temp directory. its good.
+        return pApp->CheckValidSignatureI(nGrayCoreVer, nSizeofThis);
+    }
 
-	protected:
-		cAppState();
-		virtual ~cAppState() noexcept;
+    /// <summary>
+    /// Is this the correct version of cAppState?
+    /// Force inline version.
+    /// </summary>
+    static HRESULT inline CheckValidSignatureX() noexcept {
+        return CheckValidSignatureX(_INC_GrayCore_H, sizeof(cAppState), cAppState::get_SingleU());
+    }
 
-		HRESULT CheckValidSignatureI(UINT32 nGrayCoreVer, size_t nSizeofThis) const noexcept;
+    /// <summary>
+    /// What is the apps state? use isInCInit() for loading DLL's.
+    /// </summary>
+    APPSTATE_t inline get_AppState() const noexcept {
+        return m_eAppState;
+    }
+    static APPSTATE_t GRAYCALL GetAppState() noexcept;
 
-	public:
-		static cStringF GRAYCALL get_AppFilePath();			//!< The full path+name of the current EXE/PE.
-		static cStringF GRAYCALL get_AppFileTitle();		//!< File name no Ext.
-		static cStringF GRAYCALL get_AppFileDir();
+    /// <summary>
+    /// Indicate the process/app has changed state.
+    /// use cAppStateModuleLoad for DLL/SO loading.
+    /// </summary>
+    /// <param name="eAppState"></param>
+    void put_AppState(APPSTATE_t eAppState) noexcept {
+        m_eAppState = eAppState;
+    }
 
-		/// <summary>
-		/// Is this the correct version of cAppState?
-		/// Must be agreed to by all code consumers. sizeof(cAppState) for checking alignments of structures.
-		/// Ensure that some external DLL/SO caller has the same structure packing that we have.
-		/// Make this inline code so it runs in the callers context.
-		/// @note make sure Lib is not shared as both DLL and static. GetEnvironStr(GRAY_NAMES "Core") contains &cAppState
-		/// </summary>
-		/// <param name="nGrayCoreVer">_INC_GrayCore_H  (from the callers perspective)</param>
-		/// <param name="nSizeofThis">sizeof(cAppState) (from the callers perspective) for structure packing check.</param>
-		/// <param name="pAppX"></param>
-		/// <returns></returns>
-		static HRESULT inline CheckValidSignatureX(UINT32 nGrayCoreVer, size_t nSizeofThis, const cAppState* pAppX) noexcept
-		{
-			if (nGrayCoreVer != _INC_GrayCore_H)
-			{
-				// My *Core DLL is not the correct version or packing is incorrect!
-				return HRESULT_WIN32_C(ERROR_PRODUCT_VERSION);
-			}
+    static bool GRAYCALL isInCInit() noexcept;
 
-			const cAppState* const pApp = get_SingleU();	// allow nullptr.
-			if (!cMem::IsValidApp(pApp))
-			{
-				// Something is wrong. No idea.
-				return HRESULT_WIN32_C(ERROR_INTERNAL_ERROR);
-			}
-			if (pAppX != nullptr && pAppX != pApp)
-			{
-				// Mix of GRAY_STATICLIB and DLL linkage is not allowed.
-				return HRESULT_WIN32_C(ERROR_INTERNAL_ERROR);
-			}
+    /// <summary>
+    /// Not in static init or destruct.
+    /// Indicate the process/app is DONE initializing static variables.
+    /// Thought it may be setting up or tearing down. Almost exit.
+    /// Use cAppStateMain inmain; or cAppImpl
+    /// </summary>
+    static bool GRAYCALL isAppRunning() noexcept;
 
-			return pApp->CheckValidSignatureI(nGrayCoreVer, nSizeofThis);
-		}
+    static bool GRAYCALL isAppStateRun() noexcept;
+    static bool GRAYCALL isInCExit() noexcept;
 
-		/// <summary>
-		/// Is this the correct version of cAppState?
-		/// Force inline version.
-		/// </summary>
-		/// <returns></returns>
-		static HRESULT inline CheckValidSignatureX() noexcept
-		{
-			return CheckValidSignatureX(_INC_GrayCore_H, sizeof(cAppState), cAppState::get_SingleU());
-		}
+    /// <summary>
+    /// @note kernel debuggers like SoftIce can fool this.
+    /// </summary>
+    static bool GRAYCALL isDebuggerPresent() noexcept;
 
-		/// <summary>
-		/// use isInCInit() for loading DLL's.
-		/// </summary>
-		/// <returns></returns>
-		APPSTATE_TYPE_ inline get_AppState() const noexcept
-		{
-			return m_eAppState;
-		}
-		static APPSTATE_TYPE_ GRAYCALL GetAppState();
+    static bool GRAYCALL isRemoteSession() noexcept;
+    static void GRAYCALL SetExecutionState(bool bActiveCPU, bool bActiveGUI);
 
-		/// <summary>
-		/// Indicate the process/app has changed state.
-		/// use cAppStateModuleLoad for DLL/SO loading.
-		/// </summary>
-		/// <param name="eAppState"></param>
-		/// <returns></returns>
-		void put_AppState(APPSTATE_TYPE_ eAppState) noexcept
-		{
-			m_eAppState = eAppState;
-		}
-		void InitAppState() noexcept;
+#if defined(_WIN32)
+    static StrLen_t GRAYCALL GetFolderPath(int csidl, FILECHAR_t* pszPath);
+#endif
 
-		/// <summary>
-		/// The thread we started with.
-		/// </summary>
-		/// <returns></returns>
-		THREADID_t inline get_MainThreadId() const noexcept
-		{
-			return m_nMainThreadId;
-		}
+    static bool GRAYCALL isCurrentUserAdmin();
+    static cString GRAYCALL GetCurrentUserName(bool bForce = false);
+    static cFilePath GRAYCALL GetCurrentUserDir(const FILECHAR_t* pszSubFolder = nullptr, bool bCreate = true);  /// Get Root folder the user has write access to.
 
-		static bool GRAYCALL isInCInit();
-		static bool GRAYCALL isAppRunning();
-		static bool GRAYCALL isAppStateRun();
-		static bool GRAYCALL isInCExit();
-
-		static bool GRAYCALL isDebuggerPresent();
-		static bool GRAYCALL isRemoteSession();
-		static void GRAYCALL SetExecutionState(bool bActiveCPU, bool bActiveGUI);
-
-		static bool GRAYCALL isCurrentUserAdmin();
-		static cString GRAYCALL GetCurrentUserName(bool bForce = false);
-		static cStringF GRAYCALL GetCurrentUserDir(const FILECHAR_t* pszSubFolder = nullptr, bool bCreate = true);		//!< Get Root folder the user has write access to.
-
-		/// <summary>
-		/// Get current process id. similar to cOSProcess
-		/// </summary>
-		/// <returns></returns>
-		static PROCESSID_t inline get_CurrentProcessId() noexcept
-		{
+    /// <summary>
+    /// Get current process id. similar to cOSProcess
+    /// </summary>
+    /// <returns></returns>
+    static PROCESSID_t inline get_CurrentProcessId() noexcept {
 #ifdef _WIN32
-			return ::GetCurrentProcessId();
+        return ::GetCurrentProcessId();
 #elif defined(__linux__)
-			return ::getpid();
+        return ::getpid();
 #else
 #error NOOS
-			return PROCESSID_BAD;
+        return PROCESSID_BAD;
 #endif
-		}
+    }
 
-		static HMODULE GRAYCALL get_HModule();
+    static HMODULE GRAYCALL get_HModule() noexcept;
 
-		static UINT GRAYCALL get_LibVersion();			//!< _INC_GrayCore_H
+    static UINT GRAYCALL get_LibVersion() noexcept;  /// _INC_GrayCore_H
 
-		static StrLen_t GRAYCALL GetEnvironStr(const FILECHAR_t* pszVarName, FILECHAR_t* pszValue, StrLen_t iLenMax) noexcept;
-		static cStringF GRAYCALL GetEnvironStr(const FILECHAR_t* pszVarName) noexcept;	//!< environment variable. from (system,user,app)
-		static ITERATE_t GRAYCALL GetEnvironArray(cArrayString<FILECHAR_t>& a);
-		static bool GRAYCALL SetEnvironStr(const FILECHAR_t* pszVarName, const FILECHAR_t* pszVal) noexcept;
+    static StrLen_t GRAYCALL GetEnvironStr(const FILECHAR_t* pszVarName, FILECHAR_t* pszValue, StrLen_t iLenMax) noexcept;
+    static cStringF GRAYCALL GetEnvironStr(const FILECHAR_t* pszVarName) noexcept;  /// environment variable. from (system,user,app)
+    static ITERATE_t GRAYCALL GetEnvironArray(cArrayString<FILECHAR_t>& a);
+    static bool GRAYCALL SetEnvironStr(const FILECHAR_t* pszVarName, const FILECHAR_t* pszVal) noexcept;
 
-		//! Current default directory for the app. @note UNDER_CE has no such thing. just use the root.
-		static StrLen_t GRAYCALL GetCurrentDir(FILECHAR_t* pszDir, StrLen_t iSizeMax);
-		static cStringF GRAYCALL get_CurrentDir();	//!< For the process. Not applicable to WINCE
-		static bool GRAYCALL SetCurrentDir(const FILECHAR_t* pszDir);
+    /// Current default directory for the app. @note UNDER_CE has no such thing. just use the root.
+    static StrLen_t GRAYCALL GetCurrentDir(FILECHAR_t* pszDir, StrLen_t iSizeMax);
+    /// For the process. Not applicable to WINCE
+    static cFilePath GRAYCALL get_CurrentDir();
+    static bool GRAYCALL SetCurrentDir(const FILECHAR_t* pszDir);
 
-		// cStringF GetUserHomeDir();
-		// cStringF GetUserHomeAppDir();
+    // cFilePath GetUserHomeDir();
+    // cFilePath GetUserHomeAppDir();
 
-		cStringF get_TempDir();
-		cStringF GetTempFile(const FILECHAR_t* pszFileTitle = nullptr);
-		cStringF GetTempDir(const FILECHAR_t* pszFileDir, bool bCreate = true);
+    cFilePath get_TempDir();
+    cFilePath GetTempFile(const FILECHAR_t* pszFileTitle = nullptr);
+    cFilePath GetTempDir(const FILECHAR_t* pszFileDir, bool bCreate = true);
 
-		inline cStringF GetArgEnum(ITERATE_t i) const
-		{
-			return m_Args.GetArgEnum(i);
-		}
-		void SetArgValid(ITERATE_t i);
-		cStringF get_InvalidArgs() const;
+    inline cStringF GetArgEnum(ITERATE_t i) const {
+        return m_Args.GetArgEnum(i);
+    }
+    void SetArgValid(ITERATE_t i);
+    cStringF get_InvalidArgs() const;
 
-		void InitArgsF(const FILECHAR_t* pszCommandArgs);
-		void InitArgs2(int argc, APP_ARGS_t argv);
+    /// <summary>
+    /// Init via Windows/WinMain() style (unparsed) arguments. 
+    /// Command line arguments honor "quoted strings" as a single argument.
+    /// can get similar results from the win32 GetCommandLine(); (which includes the app path as arg 0)
+    /// similar to _WIN32 shell32 CommandLineToArgvW( pszCommandArgs, &(dwArgc));
+    /// </summary>
+    /// <param name="pszCommandArgs"></param>
+    void InitArgsWin(const FILECHAR_t* pszCommandArgs);
 
-		static void GRAYCALL AbortApp(APP_EXITCODE_t uExitCode = APP_EXITCODE_ABORT);
+    void InitArgsPosix(int argc, APP_ARGS_t argv);
 
-		CHEAPOBJECT_IMPL;
-	};
+    static void GRAYCALL AbortApp(APP_EXITCODE_t uExitCode = APP_EXITCODE_ABORT);
+    static HRESULT GRAYCALL ShowMessageBox(cString sMsg, UINT uFlags = 1);  // 1= MB_OKCANCEL
 
-	/// <summary>
-	/// Define an instance of this at the top of WinMain(), _tmain() or main() to indicate we are in the main body of the application.
-	/// For use with cAppState and cAppImpl. this is technically a singleton but its instantiated in main()
-	/// e.g. cAppStateMain inmain();
-	/// </summary>
-	class GRAYCORE_LINK cAppStateMain
-	{
-	public:
-		cAppState& m_AppState;
+    CHEAPOBJECT_IMPL;
+};
 
-	public:
+/// <summary>
+/// Define an instance of this at the top of WinMain(), _tmain() or main() to indicate we are in the main body of the application.
+/// For use with cAppImpl and by extension cAppState. This is technically a singleton but its instantiated in main()
+/// e.g. cAppStateMain inmain();
+/// </summary>
+class GRAYCORE_LINK cAppStateMain {
+ public:
+    cAppState& m_AppState;
+
+ public:
 #if defined(_WIN32)
-		cAppStateMain(HINSTANCE hInstance, const FILECHAR_t* pszCommandArgs);
+    cAppStateMain(HINSTANCE hInstance, const FILECHAR_t* pszCommandArgs);
 #endif
-		cAppStateMain(int argc, APP_ARGS_t argv);
-		~cAppStateMain() noexcept
-		{
-			m_AppState.put_AppState(APPSTATE_Exit);	// destructors should be called next.
-		}
-	};
+    /// <summary>
+    /// in main() or _tmain()
+    /// Current state should be APPSTATE_t::_Init
+    /// </summary>
+    cAppStateMain(int argc, APP_ARGS_t argv);
+    ~cAppStateMain() {
+        m_AppState.put_AppState(APPSTATE_t::_Exit);  // destructor should be called next.
+    }
+};
 
-	/// <summary>
-	/// Define an instance of this when loading a DLL on a given thread.
-	/// @note a dynamic .DLL/.SO module can load after the app is fully loaded and in any thread.
-	/// isInCInit() will now return the correct value for DLL static init.
-	/// </summary>
-	class cAppStateModuleLoad
-	{
-	public:
-		cAppStateModuleLoad()
-		{
-			cAppState& I = cAppState::I();
-			ASSERT(!I.m_ThreadModuleLoading.GetData());
-			I.m_ThreadModuleLoading.PutData(true);
-		}
-		~cAppStateModuleLoad()
-		{
-			cAppState& I = cAppState::I();
-			ASSERT(I.m_ThreadModuleLoading.GetData());
-			I.m_ThreadModuleLoading.PutData(false);
-		}
-	};
+/// <summary>
+/// Define an instance of this when loading a DLL on a given thread.
+/// @note a dynamic .DLL/.SO module can load after the app is fully loaded and in any thread.
+/// isInCInit() will now return the correct value for DLL static init.
+/// </summary>
+struct cAppStateModuleLoad {
+    cAppStateModuleLoad(cOSModule& mod) {
+        cAppState& I = cAppState::I();
+        ASSERT(!I.m_ModuleLoading.GetData());
+        I.m_ModuleLoading.PutData(&mod);
+    }
+    ~cAppStateModuleLoad() {
+        cAppState& I = cAppState::I();
+        ASSERT(I.m_ModuleLoading.GetData());
+        I.m_ModuleLoading.PutData(nullptr);
+    }
+};
 
 #if USE_CRT
-	/// <summary>
-	/// misbehaving libraries can call exit(). This does NOT work with abort() calls.
-	/// Try to catch and block this or at least log it.
-	/// </summary>
-	class GRAYCORE_LINK cAppExitCatcher : public cSingletonStatic < cAppExitCatcher >
-	{
-	private:
-		static void __cdecl ExitCatchProc();
-	protected:
-		virtual void ExitCatch();
-	public:
-		cAppExitCatcher();
-		~cAppExitCatcher();
-	};
+/// <summary>
+/// misbehaving libraries can call exit(). This does NOT work with abort() calls.
+/// Try to catch and block this or at least log it.
+/// </summary>
+class GRAYCORE_LINK cAppExitCatcher : public cSingletonStatic<cAppExitCatcher> {
+ private:
+    static void __cdecl ExitCatchProc();
+
+ protected:
+    virtual void ExitCatch();
+
+ public:
+    cAppExitCatcher();
+    ~cAppExitCatcher();
+};
 #endif
 
-}
-#endif // _INC_cAppState_H
+}  // namespace Gray
+#endif  // _INC_cAppState_H

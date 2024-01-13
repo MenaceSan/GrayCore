@@ -12,17 +12,14 @@
 #include "cArray.h"
 #include "cIUnkPtr.h"
 
-namespace Gray
-{
-	/// <summary>
-	/// All items in this array are base on IUnknown and maybe on cRefBase
-	/// The array owns a ref to the object like cIUnkPtr.
-	/// It will get deleted when all refs are gone.
-	/// </summary>
-	/// <typeparam name="TYPE"></typeparam>
-	template<class TYPE>
-	class cArrayIUnk : public cArrayFacade < cIUnkPtr<TYPE>, TYPE* >
-	{
-	};
-}
-#endif // _INC_cArrayIUnk_H
+namespace Gray {
+/// <summary>
+/// All items in this array are base on IUnknown and maybe on cRefBase
+/// The array owns a ref to the object like cIUnkPtr.
+/// It will get deleted when all refs are gone.
+/// </summary>
+/// <typeparam name="TYPE"></typeparam>
+template <class TYPE>
+class cArrayIUnk : public cArrayFacade<cIUnkPtr<TYPE>, TYPE*> {};
+}  // namespace Gray
+#endif  // _INC_cArrayIUnk_H

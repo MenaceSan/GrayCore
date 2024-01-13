@@ -9,45 +9,39 @@
 #pragma once
 #endif
 
-#include "cHeap.h"
- 
-namespace Gray
-{
+#include "Index.h"
+#include "cSpan.h"
 
-	template<class TYPE = BYTE, ITERATE_t _QTY = 1024>
-	class cStackStatic
-	{
-		//! @class Gray::cStackStatic
-		//! Create a generic thread/multi process safe (static sized) stack.
+namespace Gray {
+/// <summary>
+/// Create a generic thread/multi process safe (static sized) stack.
+/// </summary>
+/// <typeparam name="TYPE"></typeparam>
+/// <typeparam name="_QTY"></typeparam>
+template <ITERATE_t _QTY, class TYPE = BYTE>
+class cStackStatic : public cSpanStatic<_QTY, TYPE> {
+ public:
+    ITERATE_t m_nSizeUsed;  /// last . cQueueIndex
 
-		TYPE m_Data[_QTY];		//!< Not heap allocation. static/inline allocated
-		ITERATE_t m_iWriteNext;	//!< last .
-
-	public:
-		inline cStackStatic() noexcept
-			: m_iWriteNext(0)
-		{
-			STATIC_ASSERT(_QTY > 0, cStackStatic);
-		}
-		inline bool isEmpty() const noexcept
-		{
-			return m_iWriteNext == 0;
-		}
-		inline bool isFull() const noexcept
-		{
-			return m_iWriteNext >= _QTY;
-		}
-		inline TYPE Pop()
-		{
-			ASSERT(m_iWriteNext >= 1);
-			return m_Data[--m_iWriteNext];
-		}
-		inline void Push(TYPE v)
-		{
-			ASSERT(m_iWriteNext < _QTY);
-			m_Data[m_iWriteNext++] = v;
-		}
-	};
-}
+ public:
+    inline cStackStatic() noexcept : m_nSizeUsed(0) {
+        STATIC_ASSERT(_QTY > 0, cStackStatic);
+    }
+    inline bool isEmpty() const noexcept {
+        return m_nSizeUsed == 0;
+    }
+    inline bool isFull() const noexcept {
+        return m_nSizeUsed >= _QTY;
+    }
+    inline TYPE Pop() {
+        ASSERT(m_nSizeUsed >= 1);
+        return m_Data[--m_nSizeUsed];
+    }
+    inline void Push(TYPE v) {
+        ASSERT(m_nSizeUsed < _QTY);
+        m_Data[m_nSizeUsed++] = v;
+    }
+};
+}  // namespace Gray
 
 #endif

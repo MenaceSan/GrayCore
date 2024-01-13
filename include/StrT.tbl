@@ -50,5 +50,5 @@ StrTTbl(ITERATE_t,ParseArray,(TYPE* pszCmdLine, StrLen_t nCmdLenMax, TYPE** ppCm
 StrTTbl(ITERATE_t,ParseArrayTmp,(TYPE* pszTmp, StrLen_t iTmpSizeMax, const TYPE* pszCmdLine, TYPE** ppCmd, ITERATE_t iCmdQtyMax, const TYPE* pszSep, STRP_MASK_t uFlags))
 StrTTbl(StrLen_t,MatchRegEx,(const TYPE* pText, const TYPE* pPattern, bool bIgnoreCase, StrLen_t nTextMax))
 
-StrTTbl(TYPE*,FindBlockEnd,(STR_BLOCK_TYPE eBlockType, const TYPE* pszLine, StrLen_t iLenMaxChars))
+StrTTbl(TYPE*,FindBlockEnd,(STR_BLOCK_t eBlockType, const TYPE* pszLine, StrLen_t iLenMaxChars))
 StrTTbl(TYPE*,StripBlock,(TYPE* pszText))

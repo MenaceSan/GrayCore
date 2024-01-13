@@ -9,40 +9,33 @@
 #pragma once
 #endif
 
-#include "cLogAppender.h"
+#include "StrBuilder.h"
+#include "cLogSink.h"
 #include "cTimeInt.h"
 
-namespace Gray
-{
-	class GRAYCORE_LINK cLogEvent : public cLogEventParams, public cRefBase
-	{
-		//! @class Gray::cLogEvent
-		//! Store a single log event instance for asynchronous processing.
+namespace Gray {
+#if 0
+enum class LOG_FIELD_t {
+	LOG_FIELD_LEVEL,	/// The critical level message prefix. LOGLVL_t
+	LOG_FIELD_TIME,		/// The time stamp part of a message.
+	LOG_FIELD_MSG,		/// The actual message text part of the log event.
+};
+#endif
 
-	public:
-		const char* m_pszSubject;		//!< general subject matter tag. can be filled in by cLogSubject
-		cStringL m_sContext;			//!< extra context info. format ? e.g. What script/class/etc name is this event from? 
-		cStringL m_sMsg;				//!< message text
-		TIMESEC_t m_time;				//!< cTimeInt. when did this happen? maybe not set until needed. ! isTimeValid()
+/// <summary>
+/// Store a single log event (ref counted) instance for asynchronous processing.
+/// </summary>
+struct GRAYCORE_LINK cLogEvent : public cLogEventParams, public cRefBase {
+    TIMESEC_t m_time = 0;                /// cTimeInt. when did this happen? maybe not set until needed. ! isTimeValid()
+    const char* m_pszSubject = nullptr;  /// static allocated general subject matter tag. can be filled in by cLogSubject. Script source ?
+    cStringL m_sMsg;                     /// free form message text.
 
-	public:
-		cLogEvent(LOG_ATTR_MASK_t uAttrMask = LOG_ATTR_0, LOGLEV_TYPE eLogLevel = LOGLEV_ANY, cStringL sMsg = "", cStringL sContext = "") noexcept
-		: cLogEventParams(uAttrMask, eLogLevel)
-		, m_pszSubject(nullptr)
-		, m_sContext(sContext)
-		, m_sMsg(sMsg)
-		, m_time(0)
-		{
-		}
-		~cLogEvent() noexcept
-		{
-		}
+    cLogEvent(LOG_ATTR_MASK_t uAttrMask, LOGLVL_t eLogLevel, cStringL sMsg) noexcept : cLogEventParams(uAttrMask, eLogLevel), m_time(0), m_pszSubject(nullptr), m_sMsg(sMsg) {}
 
-		//! take all my attributes and make a single string.
-		cStringL get_FormattedDefault() const;
-	};
-
-	typedef cRefPtr<cLogEvent> cLogEventPtr;
-}
-
+    /// take all my attributes and make a single string in normal/default format. adds FILE_EOL.
+    void GetFormattedDefault(StrBuilder<LOGCHAR_t>& s) const;
+    cStringL get_FormattedDefault() const;
+};
+typedef cRefPtr<cLogEvent> cLogEventPtr;
+}  // namespace Gray
 #endif

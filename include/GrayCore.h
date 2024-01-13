@@ -4,7 +4,7 @@
 //! Can be included from an .RC file. RC_INVOKED
 
 #ifndef _INC_GrayCore_H
-#define _INC_GrayCore_H	0x003	//!< 0.0.3 Version stamp the API. Especially important to the Variant and Archive types.
+#define _INC_GrayCore_H 0x004  /// 0.0.4 Version stamp the API. Especially important to the Variant and Archive types.
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
@@ -14,88 +14,91 @@
 
 // override the system #define UNICODE and _UNICODE. I use my own USE_UNICODE system as default char type. We don't have to use UNICODE just because the system does.
 #ifndef USE_UNICODE
-#if defined(UNICODE) // || defined(_UNICODE)
-#define USE_UNICODE 1				//!< This allows the including of core headers that use conflicting #define UNICODE to still work.
+#if defined(UNICODE)   // || defined(_UNICODE)
+#define USE_UNICODE 1  /// This allows the including of core headers that use conflicting #define UNICODE to still work.
 #else
-#define USE_UNICODE 0				// same as _MBCS
+#define USE_UNICODE 0  // same as _MBCS
 #endif
 #endif
 
 #ifndef USE_UNICODE_FN
-#if defined(_MFC_VER)
+#if defined(_MFC_VER)  // may also use _AFXDLL
 #define USE_UNICODE_FN USE_UNICODE
-#else 
-#define USE_UNICODE_FN 0			//!< make file names UTF-8 by default. (no UNICODE like _WIN32 might want) (__linux__ files should always be UTF-8)
+#else
+#define USE_UNICODE_FN 0  /// make file names UTF-8 by default. (no UNICODE like _WIN32 might want) (__linux__ files should always be UTF-8)
 #endif
 #endif
 
-namespace Gray		//!< The main namespace for all Core functions.
+/// <summary>
+/// The main namespace for all Core functions.
+/// The main/default namespace for Gray library
+/// </summary>
+namespace Gray  /// The main namespace for all Core functions.
 {
-	//! @namespace Gray
-	//! The main namespace for all Core functions.
-	//! The main/default namespace for Gray library
 #ifndef GRAY_NAME
-#define GRAY_NAME	Gray		//!< Root name.
-#define GRAY_NAMES	"Gray"		//!< Use GRAYNAME for string.
+#define GRAY_NAME Gray     /// Root name.
+#define GRAY_NAMES "Gray"  /// Use GRAYNAME for string.
 #endif
-#define GRAYCALL	__stdcall	//!< declare calling convention for static functions so everyone knows the arg passing scheme. don't assume compiler default. _cdecl.
+#define GRAYCALL __stdcall  /// declare calling convention for static functions so everyone knows the arg passing scheme. don't assume compiler default. _cdecl.
 
-	// use _LIB && _WINDLL && _MFC_VER to identify the type of LIB build. or it may just be who is including us.
+// use _LIB && _WINDLL && _MFC_VER to identify the type of LIB build. or it may just be who is including us.
 #ifndef GRAYCORE_LINK
-#if defined(_MFC_VER) || defined(GRAY_STATICLIB)	// GRAY_STATICLIB or _MFC_VER can be defined to make Gray* all static lib
+#if defined(_MFC_VER) || defined(GRAY_STATICLIB)  // GRAY_STATICLIB or _MFC_VER can be defined to make Gray* all static lib
 #define GRAYCORE_LINK
 #else
-	// We are building Gray DLL/SO instead of static lib. use __DECL_IMPORT or __DECL_EXPORT. opposite of GRAY_STATICLIB
-#define GRAYCORE_LINK __DECL_IMPORT	// default is to include from a DLL/SO 
+// We are building Gray DLL/SO instead of static lib. use __DECL_IMPORT or __DECL_EXPORT. opposite of GRAY_STATICLIB
+#define GRAYCORE_LINK __DECL_IMPORT  // default is to include from a DLL/SO
 #endif
 #endif
 
-#if defined(_DEBUG) || ! defined(_MSC_VER)
-#define _LOCCALL        // static (local) calls might have better calling conventions? But turn off during _DEBUG
+#if defined(_DEBUG) || !defined(_MSC_VER)
+#define _LOCCALL  // static (local) calls might have better calling conventions? But turn off during _DEBUG
 #else
-#define _LOCCALL        __fastcall // Local procedure name modifier. will not stack dump properly!
+#define _LOCCALL __fastcall  // Local procedure name modifier. will not stack dump properly!
 #endif
 
-#if defined(__GNUC__) || (! defined(_MSC_VER)) || (_MSC_VER < 1600)
-#define __noop		((void)0)		// A macro that does nothing. Compiles out some code. do { } while( 0 )
+#if defined(__GNUC__) || (!defined(_MSC_VER)) || (_MSC_VER < 1600)
+#define __noop ((void)0)  // A macro that does nothing. Compiles out some code. do { } while( 0 )
 #endif
 
-#if defined(_MSC_VER) && _MSC_VER <= 1600 // No C++11 features.
-	// Get rid of C++11 features. e.g. "= delete" and override
+#if defined(_MSC_VER) && _MSC_VER <= 1600  // No C++11 features.
+                                           // Get rid of C++11 features. e.g. "= delete" and override
 #define noexcept
-#define override	// tell the compiler this is an intentional override
+#define override  // tell the compiler this is an intentional override. C++11 and above.
 #else
 #endif
 
-#if defined(_MSC_VER) && _MSC_VER <= 1916 // VS2017 has internal errors when noexcept is used.
-#define NOEXCEPT  
+#if defined(_MSC_VER) && _MSC_VER <= 1916  // VS2017 has internal errors when noexcept is used.
+#define NOEXCEPT
 #else
-#define NOEXCEPT noexcept 
+#define NOEXCEPT noexcept
 #endif
 
 #ifdef __GNUC__
-#define IGNORE_WARN_INTERFACE(c)		virtual ~c() {}		// quiet this warning for interfaces. should we do this ?
+#define IGNORE_WARN_INTERFACE(c) \
+    virtual ~c() {}  // quiet this warning for interfaces. should we do this ?
 #else
-#define IGNORE_WARN_INTERFACE(c)	 
-#endif	// __GNUC__
-#define IGNORE_WARN_ABSTRACT(c)			virtual ~c() {}		// quiet this warning for abstract base classes
+#define IGNORE_WARN_INTERFACE(c)
+#endif  // __GNUC__
+#define IGNORE_WARN_ABSTRACT(c) \
+    virtual ~c() {}  // quiet this warning for abstract base classes
 
-	// a structure should be byte packed and not aligned ? use #pragma pack(push,1) as well
-#if defined(__MINGW32__) 
-#define CATTR_PACKED __attribute__((packed))	// MING compiler uses this to indicate structure packing required.
+// a structure should be byte packed and not aligned ? use #pragma pack(push,1) as well
+#if defined(__MINGW32__)
+#define CATTR_PACKED __attribute__((packed))  // MING compiler uses this to indicate structure packing required.
 #else
-#define CATTR_PACKED	// _MSC_VER and __GNUC__ use #pragma pack(1) to indicate packing required.
+#define CATTR_PACKED  // _MSC_VER and __GNUC__ use #pragma pack(1) to indicate packing required.
 #endif
 
 #ifdef _MSC_VER
 #define CATTR_NORETURN __declspec(noreturn)
-#else // __GNUC__
+#else  // __GNUC__
 #define CATTR_NORETURN __attribute__((noreturn))
 #endif
 
 #ifdef __GNUC__
-#define CATTR_CONSTRUCTOR	__attribute__((constructor)) 
-#define CATTR_DESTRUCTOR	__attribute__((destructor)) 
+#define CATTR_CONSTRUCTOR __attribute__((constructor))
+#define CATTR_DESTRUCTOR __attribute__((destructor))
 #else
 #define CATTR_CONSTRUCTOR
 #define CATTR_DESTRUCTOR
@@ -103,21 +106,18 @@ namespace Gray		//!< The main namespace for all Core functions.
 
 // Allow some method to be deprecated. warn the user to change to some new version.
 #ifdef __GNUC__
-#define CATTR_DEPRECATEDAT(versionNumber, alternative)	__attribute__((deprecated))
-#define CATTR_DEPRECATED								__attribute__((deprecated))
+#define CATTR_DEPRECATEDAT(versionNumber, alternative) __attribute__((deprecated))
+#define CATTR_DEPRECATED __attribute__((deprecated))
 #elif _MSC_VER >= 1400
 #define CATTR_DEPRECATEDAT(versionNumber, alternative) __declspec(deprecated("[" #versionNumber "] This function is now deprecated. Please use '" #alternative "' instead."))
 #define CATTR_DEPRECATED
 #else
 #define CATTR_DEPRECATEDAT(versionNumber, alternative)
 #define CATTR_DEPRECATED
-#endif // _WIN32 && MSVS2005
+#endif  // _WIN32 && MSVS2005
 
-	typedef UINT_PTR	HASHCODE_t;				//!< could hold a pointer converted to a number? maybe 64 or 32 bit ? same as size_t.
-	typedef UINT32		HASHCODE32_t;			//!< always 32 bits. consistent value.
-	constexpr HASHCODE_t k_HASHCODE_CLEAR = 0;		//!< not a valid index.
+extern GRAYCORE_LINK const va_list k_va_list_empty;  // For faking out the va_list. __GNUC__ doesn't allow a pointer to va_list. So use this to simulate nullptr.
 
-#define CastN(T,N)	static_cast<T>(N)	// no clear rule on type cast for arithmetic values. T{ 1 } or T(1) or static_cast<T>(1)
-}
+}  // namespace Gray
 
-#endif	// _INC_GRAYCORE
+#endif  // _INC_GRAYCORE

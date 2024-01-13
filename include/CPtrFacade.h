@@ -10,168 +10,155 @@
 #endif
 
 #include "PtrCast.h"
-#include "cDebugAssert.h"
 
-namespace Gray
-{
-	template<class TYPE>
-	class cPtrFacade
-	{
-		//! @class Gray::cPtrFacade
-		//! a class that acts like (wraps) a pointer to TYPE. Not specific to TYPE=cRefBase.
-		//! Base for: cExceptionHolder, cLockerT, cUniquePtr, cRefPtr, cIUnkPtr, etc.
-		//! sizeof(void*)
-		//! TODO cPtrNotNull<> // a pointer that can never be nullptr. like gsl::not_null<T>
+namespace Gray {
+/// <summary>
+/// a class that acts like (wraps) a pointer to TYPE. Not specific to TYPE=cRefBase.
+/// Base for: cExceptionHolder, cLockerT, cUniquePtr, cRefPtr, cIUnkPtr, etc.
+/// sizeof(void*)
+/// TODO cPtrNotNull // a pointer that can never be nullptr. like gsl::not_null T
+/// </summary>
+/// <typeparam name="TYPE"></typeparam>
+template <class TYPE>
+class cPtrFacade {
+    typedef cPtrFacade<TYPE> THIS_t;
 
-		typedef cPtrFacade<TYPE> THIS_t;
+ protected:
+    TYPE* m_ptr;  /// Pointer to some object of TYPE.
 
-	protected:
-		TYPE* m_p;	//!< Pointer to some object of TYPE.
+ protected:
+    cPtrFacade(TYPE* p = nullptr) noexcept : m_ptr(p) {}
+    cPtrFacade(const THIS_t& ref) : m_ptr(ref.m_ptr) {}
+    /// <summary>
+    /// move constructor.
+    /// </summary>
+    cPtrFacade(THIS_t&& rref) : m_ptr(rref.m_ptr) {
+        rref.m_ptr = nullptr;
+    }
 
-	public:
-		cPtrFacade(TYPE* p = nullptr) noexcept
-			: m_p(p)
-		{
-			// copy
-		}
-		cPtrFacade(THIS_t&& ref) noexcept
-		{
-			//! move constructor.
-			this->m_p = ref.m_p; ref.m_p = nullptr;
-		}
+ public:
+    inline bool isValidPtr() const noexcept {
+        //! Not nullptr?
+        return m_ptr != nullptr;
+    }
+    inline TYPE* get_Ptr() const noexcept {
+        //! nullptr is allowed.
+        return m_ptr;
+    }
 
-		inline bool isValidPtr() const noexcept
-		{
-			//! Not nullptr?
-			return m_p != nullptr;
-		}
+    /// Accessory ops.
+    inline operator TYPE*() const noexcept {
+        return m_ptr;
+    }
+    TYPE* operator->() const noexcept {
+        // nullptr is NOT allowed.
+        DEBUG_CHECK(isValidPtr());
+        return m_ptr;
+    }
 
-		TYPE** get_PPtr()
-		{
-			//! assume this will be used to set the m_p value.
-			ASSERT(m_p == nullptr);		// MUST not have current value.
-			return &m_p;
-		}
-		inline TYPE* get_Ptr() const noexcept
-		{
-			//! nullptr is allowed.
-			return m_p;
-		}
+    /// Comparison ops
+    inline bool operator!() const noexcept {
+        return m_ptr == nullptr;
+    }
+    inline bool operator!=(/* const*/ TYPE* p2) const noexcept {
+        return p2 != m_ptr;
+    }
+    inline bool IsEqual(const TYPE* p2) const noexcept {
+        return p2 == m_ptr;
+    }
+    inline bool operator==(/* const*/ TYPE* p2) const noexcept {
+        return p2 == m_ptr;
+    }
 
-		void put_Ptr(TYPE* p) noexcept
-		{
-			//! override this to increment a ref count.
-			//! similar to AttachPtr() but can add a ref.
-			//! override this to increment a ref count 
-			DEBUG_ASSERT(m_p == nullptr || m_p == p, "put_Ptr");
-			m_p = p;
-		}
-		void ReleasePtr() noexcept
-		{
-			//! just set this to nullptr.
-			//! override this to decrement a ref count or free memory.
-			m_p = nullptr;
-		}
+    /// <summary>
+    /// Cast this pointer to another type.
+    /// This is probably a safe compile time up-cast but check it anyhow.
+    /// This shouldn't return nullptr if not starting as nullptr.
+    /// </summary>
+    /// <typeparam name="_DST_TYPE"></typeparam>
+    /// <returns></returns>
+    template <class _DST_TYPE>
+    _DST_TYPE* get_PtrT() const {
+        if (m_ptr == nullptr)  // this is ok.
+            return nullptr;
+        return PtrCastCheck<_DST_TYPE>(m_ptr);  // dynamic for DEBUG only. Should NEVER return nullptr here !
+    }
 
-		void AttachPtr(TYPE* p) noexcept
-		{
-			//! @note DANGER DONT call this unless you have a good reason. And you know what you are doing !
-			//! like put_Ptr() BUT sets the pointer WITHOUT adding a ref (if overload applicable). like get_PPtr(). 
-			//! used with Com interfaces where QueryInterface already increments the ref count.
-			m_p = p;
-		}
-		TYPE* DetachPtr() noexcept
-		{
-			//! Do not decrement the reference count when this is destroyed.
-			//! Pass the reference counted pointer outside the smart pointer system. for use with COM interfaces.
-			//! same as _WIN32 ATL cComPtr Detach()
-			//! @note DANGER DONT call this unless you have a good reason.
-			TYPE* p = m_p;
-			m_p = nullptr;	// NOT ReleasePtr();
-			return p;
-		}
+    /// <summary>
+    /// Cast pointer to another type using dynamic_cast
+    /// run time dynamic_cast to a (possible) peer type. can return nullptr.
+    /// Similar to COM QueryInterface() this checks (dynamically) to see if the class is supported.
+    /// </summary>
+    /// <typeparam name="_DST_TYPE"></typeparam>
+    /// <returns></returns>
+    template <class _DST_TYPE>
+    _DST_TYPE* get_PtrDyn() const {
+        return DYNPTR_CAST(_DST_TYPE, m_ptr);
+    }
 
-		THIS_t& operator = (TYPE* p) noexcept
-		{
-			//! assignment operator
-			m_p = p;
-			return *this;
-		}
-		THIS_t& operator = (THIS_t&& ref) noexcept
-		{
-			//! move assignment operator
-			this->m_p = ref.m_p; ref.m_p = nullptr;
-			return *this;
-		}
+    /// <summary>
+    /// @note DANGER DONT call this unless you have a good reason. And you know what you are doing !
+    /// Do not decrement the reference count when this is destroyed.
+    /// Pass the reference counted pointer outside the smart pointer system. for use with COM interfaces.
+    /// same as _WIN32 ATL cComPtr Detach()
+    /// </summary>
+    TYPE* DetachPtr() noexcept {
+        TYPE* p = m_ptr;
+        m_ptr = nullptr;  // NOT ReleasePtr();
+        return p;
+    }
 
-		//! Accessor ops.
-		//! @note These are dangerous ! They don't increment the reference count for use !!!
-		inline operator TYPE* () const noexcept
-		{
-			return m_p;
-		}
+ protected:
+    inline TYPE** get_PPtr() noexcept {
+        // DANGER
+        // DEBUG_CHECK(!isValidPtr());
+        return &m_ptr;
+    }
 
-		inline TYPE& get_Ref() const noexcept
-		{
-			DEBUG_CHECK(m_p != nullptr);
-			return *m_p;
-		}
+    /// <summary>
+    /// @note DANGER DONT call this unless you have a good reason. And you know what you are doing !
+    /// like put_Ptr() BUT sets the pointer WITHOUT adding a ref (if overload applicable). like get_PPtr().
+    /// used with Com interfaces where QueryInterface already increments the ref count.
+    /// </summary>
+    /// <param name="p"></param>
+    void AttachPtr(TYPE* p) noexcept {
+        m_ptr = p;
+    }
+    /// <summary>
+    /// just set this to nullptr.
+    /// override this to decrement a ref count or free memory.
+    /// </summary>
+    void ClearPtr() noexcept {
+        m_ptr = nullptr;
+    }
+};
 
-		TYPE& operator * () const
-		{
-			ASSERT(m_p != nullptr);
-			return *m_p;;
-		}
+/// Simple array iterator. STL like for use with begin(), end(), for(:)
+/// also like BOOST_FOREACH
+template <class T>
+struct cIterator : cPtrFacade<T> {
+    typedef cPtrFacade<T> SUPER_t;
+    cIterator(T* p) : SUPER_t(p) {}
 
-		TYPE* operator -> () const
-		{
-			// nullptr is NOT allowed.
-			ASSERT(m_p != nullptr);
-			return m_p;
-		}
+    // Prefix increment
+    cIterator& operator++() {
+        m_ptr++;
+        return *this;
+    }
 
-		//! Comparison ops
-		inline bool operator!() const noexcept
-		{
-			return m_p == nullptr;
-		}
-		inline bool operator != ( /* const*/ TYPE* p2) const noexcept
-		{
-			return p2 != m_p;
-		}
-		inline bool IsEqual(const TYPE* p2)  const noexcept
-		{
-			return p2 == m_p;
-		}
-		inline bool operator == ( /* const*/ TYPE* p2) const noexcept
-		{
-			return p2 == m_p;
-		}
+    // Postfix increment
+    cIterator operator++(int) {
+        cIterator tmp = *this;
+        ++(*this);
+        return tmp;
+    }
 
-		template <class _DST_TYPE>
-		_DST_TYPE* get_PtrT() const
-		{
-			//! Cast pointer to another type.
-			//! This is probably a safe compile time up-cast but check it anyhow.
-			//! This shouldn't return nullptr if not starting as nullptr.
-			if (m_p == nullptr)	// this is ok.
-				return nullptr;
-			return CHECKPTR_CAST(_DST_TYPE, m_p);	// dynamic for DEBUG only. Should NEVER return nullptr here !
-		}
-		template <class _DST_TYPE>
-		_DST_TYPE* get_PtrDyn() const
-		{
-			//! Cast pointer to another type. dynamic_cast
-			//! run time dynamic_cast to a (possible) peer type. can return nullptr.
-			//! Similar to COM QueryInterface() this checks (dynamically) to see if the class is supported.
-			return DYNPTR_CAST(_DST_TYPE, m_p);
-		}
-	};
-
-	// TODO DELETE  
-	// Similar to COM QueryInterface() this checks to see if the class is supported.
-#define FACADE_DY_CAST(_DST_TYPE,p) DYNPTR_CAST(_DST_TYPE,(p).get_Ptr())
-
-}
-
-#endif // _INC_cPtrFacade_H
+    friend bool operator==(const cIterator& a, const cIterator& b) {
+        return a.m_ptr == b.m_ptr;
+    }
+    friend bool operator!=(const cIterator& a, const cIterator& b) {
+        return a.m_ptr != b.m_ptr;
+    }
+};
+}  // namespace Gray
+#endif  // _INC_cPtrFacade_H

@@ -11,21 +11,20 @@
 
 #include "cException.h"
 
-namespace Gray
-{
-	class GRAYCORE_LINK cExceptionAssert : public cException
-	{
-		//! @class Gray::cExceptionAssert
-		//! Asserts can be seen as exceptions. details from coded ASSERT stuff.
-	protected:
-		const LOGCHAR_t* const m_pExp;
-		const cDebugSourceLine m_Src;	// DEBUGSOURCELINE __FILE__ __LINE__
-	public:
-		cExceptionAssert(const LOGCHAR_t* pExp, LOGLEV_TYPE eSeverity, const cDebugSourceLine& src);
-		virtual ~cExceptionAssert() THROW_DEF;
-		virtual BOOL GetErrorMessage(GChar_t* lpszError, UINT nMaxError, UINT* pnHelpContext) override;
-		static void GRAYCALL Throw(const LOGCHAR_t* pExp, const cDebugSourceLine& src);
-	};
-}
+namespace Gray {
+/// <summary>
+/// Asserts can be seen as exceptions. details from coded ASSERT stuff.
+/// </summary>
+class GRAYCORE_LINK cExceptionAssert : public cException {
+ protected:
+    const LOGCHAR_t* const m_pExp;
+    const cDebugSourceLine m_Src;  // DEBUGSOURCELINE __FILE__ __LINE__
+ public:
+    cExceptionAssert(const LOGCHAR_t* pExp, LOGLVL_t eSeverity, const cDebugSourceLine& src);
+    ~cExceptionAssert() THROW_DEF override;
+    BOOL GetErrorMessage(StrBuilder<GChar_t>& sb, UINT* pnHelpContext) override;
+    static void GRAYCALL Throw(const LOGCHAR_t* pExp, const cDebugSourceLine& src);
+};
+}  // namespace Gray
 
 #endif

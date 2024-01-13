@@ -9,57 +9,40 @@
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
- 
-#include "cPtrFacade.h"
+
 #include "PtrCast.h"
 #include "cDebugAssert.h"
+#include "cNonCopyable.h"
+#include "cPtrFacade.h"
 #include "cTypeInfo.h"
 
-namespace Gray
-{
-	class GRAYCORE_LINK cPtrTrace
-	{
-		//! @class Gray::cPtrTrace
-		//! Trace each use of the a pointer in cPtrFacade/cIUnkPtr/cRefPtr for _DEBUG purposes.
-		//! If the lock count fails to go to 0 we know who the leaker was. or if the object is deleted but still has refs we can detect that as well.
-		//! Add myself to the cPtrTraceMgr table if the m_p pointer is set.
+namespace Gray {
+/// <summary>
+/// Trace each use/reference of the a pointer in cPtrFacade/cIUnkPtr/cRefPtr for _DEBUG purposes.
+/// If the lock count fails to go to 0 we know who the leaker was. or if the object is deleted but still has refs we can detect that as well.
+/// Add myself to the cPtrTraceMgr table if the m_p pointer is set.
+/// </summary>
+struct GRAYCORE_LINK cPtrTrace {
+    static bool sm_bActive;  /// Turn on/off global tracing via cPtrTraceMgr. be fast.
+    UINT_PTR _TraceId = 0;   /// Unique id for this trace reference. 0 = no reference
 
-	public:
-		const TYPEINFO_t& m_TypeInfo;		//!< for __typeof(TYPEINFO_t).name()
-		IUnknown* m_pIUnk;		//!< Different implementations have different ways to resolve this. so store it. Pointer to my shared object
-		cDebugSourceLine m_Src;		//!< where (in code) was m_p set?
+    static UINT_PTR GRAYCALL TraceAttachX(const TYPEINFO_t& typeInfo, IUnknown* pIUnk, const cDebugSourceLine* src = nullptr);
+    static void GRAYCALL TraceUpdateX(UINT_PTR id, const cDebugSourceLine& src) noexcept;
+    static void GRAYCALL TraceReleaseX(UINT_PTR id);
 
-		static bool sm_bActive;		//!< Turn on/off global tracing via cPtrTraceMgr. be fast.
-
-	public:
-		cPtrTrace(const TYPEINFO_t& typeInfo) noexcept
-			: m_TypeInfo(typeInfo)
-			, m_pIUnk(nullptr)
-		{
-			// ASSUME m_Src will be populated.
-		}
-		cPtrTrace(const TYPEINFO_t& typeInfo, IUnknown* pIUnk, const cDebugSourceLine& src) noexcept
-			: m_TypeInfo(typeInfo)
-			, m_pIUnk(pIUnk)
-			, m_Src(src)
-		{
-		}
-		cPtrTrace(const cPtrTrace& ref) noexcept
-			: m_TypeInfo(ref.m_TypeInfo), m_pIUnk(ref.m_pIUnk), m_Src(ref.m_Src)
-		{
-			// copy constructor.
-		}
-
-		void Attach(IUnknown* pIUnk, const cDebugSourceLine& src)
-		{
-			ASSERT(pIUnk != nullptr);	// get_Ptr()
-			m_Src = src; //  DEBUGSOURCELINE; 
-			TraceAttach(pIUnk);	// attach trace.
-		}
-
-		void TraceAttach(IUnknown* pIUnk);
-		void TraceRelease(IUnknown* pIUnk);
-	};
-}
-
+    inline void TraceAttach(const TYPEINFO_t& typeInfo, IUnknown* pIUnk, const cDebugSourceLine* src = nullptr) {
+        ASSERT(_TraceId == 0);
+        _TraceId = TraceAttachX(typeInfo, pIUnk, src);
+    }
+    inline void TraceUpdate(const cDebugSourceLine& src) noexcept {
+        if (_TraceId) TraceUpdateX(_TraceId, src);
+    }
+    inline void TraceRelease() {
+        if (_TraceId) {
+            TraceReleaseX(_TraceId);
+            _TraceId = 0;
+        }
+    }
+};
+}  // namespace Gray
 #endif

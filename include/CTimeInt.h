@@ -18,209 +18,172 @@
 #include "cString.h"
 #include "cTimeFile.h"
 
-namespace Gray
-{
-#ifndef _MFC_VER
-	class GRAYCORE_LINK CTime
-	{
-		//! @class Gray::CTime
-		//! TIMESEC_t or time_t stored as a UINT32 32 bits or 64 bits ?
-		//! seconds since January 1, 1970 GMT
-		//! Emulate the MFC CTime functionality
-		//! @note 32 bit version of this has a clock rollover in 2038.
-		//! This is actually number of seconds since January 1, 1970 GMT
-		//! <= 0 is considered invalid.
+namespace Gray {
+/// <summary>
+/// Emulate the MFC CTime span functionality
+/// </summary>
+class GRAYCORE_LINK cTimeSpan {
+ public:
+    TIMESECD_t m_nDiffSeconds;
 
-	protected:
-		TIMESEC_t m_time;	//!< Seconds. Essentially the UNIX long time format. (not usable after 2018 unless 64 bit?)
+ public:
+    cTimeSpan() noexcept : m_nDiffSeconds(0) {}
+};
 
-	public:
-		CTime(TIMESEC_t nTime = ((TIMESEC_t)0)) noexcept
-			: m_time(nTime)
-		{
-		}
-		CTime(const cTimeFile& fileTime, int nDST = -1) noexcept;
+/// <summary>
+/// the number of seconds elapsed since midnight (00:00:00), January 1, 1970, coordinated universal time (UTC), according to the system clock
+/// ASSUME __time64_t is signed! MFC uses __time64_t
+/// Emulate the MFC CTime functionality
+/// @note 32 bit version of this has a clock rollover in 2038.
+/// Same as UNIX_TIMESTAMP() for MySQL
+/// TIMESEC_t or time_t stored as a UINT32 32 bits or 64 bits ?
+/// -lte- 0 is considered invalid.
+/// </summary>
+class GRAYCORE_LINK cTimeInt {  /// similar to the MFC CTime and cTimeSpan, not as accurate or large ranged as COleDateTime
+ public:
+    static const TIMESEC_t k_nZero = static_cast<TIMESEC_t>(0);          /// January 1, 1970 UTC
+    static const TIMESEC_t k_nY2K = static_cast<TIMESEC_t>(0x386d4380);  /// The static value for Y2K = January 1, 2000 in UTC/GMT from k_nZero in seconds.
+ protected:
+    TIMESEC_t m_time;  /// Seconds. Essentially the UNIX long time format. (32 bit version is not usable after 2018 unless 64 bit?)
+ protected:
+    bool InitTimeUnits(const cTimeUnits& rTu);
 
-		const CTime& operator=(const CTime& timeSrc) noexcept
-		{
-			m_time = timeSrc.m_time;
-			return *this;
-		}
-		const CTime& operator=(TIMESEC_t nTime) noexcept
-		{
-			m_time = nTime;
-			return *this;
-		}
+ public:
+    cTimeInt(TIMESEC_t nTime = CastN(TIMESEC_t, 0)) noexcept : m_time(nTime) {}
+    cTimeInt(const cTimeUnits& rTu) {
+        InitTimeUnits(rTu);
+    }
+    cTimeInt(double dTimeDays) noexcept : m_time(GetTimeFromDays(dTimeDays)) {}
+    cTimeInt(const cTimeFile& fileTime) noexcept;
 
-		bool operator<=(TIMESEC_t nTime) const noexcept
-		{
-			return m_time <= nTime;
-		}
-		bool operator==(TIMESEC_t nTime) const noexcept
-		{
-			return m_time == nTime;
-		}
-		bool operator!=(TIMESEC_t nTime) const noexcept
-		{
-			return m_time != nTime;
-		}
-		bool operator>=(CTime ttime) const noexcept
-		{
-			return m_time >= ttime.m_time;
-		}
+    const cTimeInt& operator=(const cTimeInt& timeSrc) noexcept {
+        m_time = timeSrc.m_time;
+        return *this;
+    }
+    const cTimeInt& operator=(TIMESEC_t nTime) noexcept {
+        m_time = nTime;
+        return *this;
+    }
 
-		operator TIMESEC_t() const noexcept
-		{
-			return m_time;
-		}
-		TIMESEC_t GetTime() const noexcept	// Assume time in seconds. (MFC like)
-		{
-			return m_time;
-		}
-		TIMESEC_t GetTotalSeconds() const noexcept
-		{
-			return m_time;
-		}
-	};
+    bool operator==(TIMESEC_t nTime) const noexcept {
+        return m_time == nTime;
+    }
+    bool operator!=(TIMESEC_t nTime) const noexcept {
+        return m_time != nTime;
+    }
+    bool operator<=(TIMESEC_t nTime) const noexcept {
+        return m_time <= nTime;
+    }
+    bool operator>=(cTimeInt ttime) const noexcept {
+        return m_time >= ttime.m_time;
+    }
 
-	class GRAYCORE_LINK cTimeSpan
-	{
-		//! @class Gray::cTimeSpan
-		//! Emulate the MFC CTime functionality
-	public:
-		int m_nDiffSeconds;
-	public:
-		cTimeSpan() noexcept : m_nDiffSeconds(0)
-		{
-		}
-	};
-#endif
+    operator TIMESEC_t() const noexcept {
+        return m_time;
+    }
+    TIMESEC_t GetTime() const noexcept {  // Assume time in seconds. (MFC like)
+        return m_time;
+    }
+    TIMESEC_t GetTotalSeconds() const noexcept {
+        return m_time;
+    }
 
-	class GRAYCORE_LINK cTimeInt	//!< similar to the MFC CTime and cTimeSpan, not as accurate or large ranged as COleDateTime
-		: public CTime		//!< no need to dupe MFC function.
-	{
-		//! @class Gray::cTimeInt
-		//! the number of seconds elapsed since midnight (00:00:00), January 1, 1970, coordinated universal time (UTC), according to the system clock
-		//! ASSUME __time64_t is signed! MFC uses __time64_t
-		//! Same as UNIX_TIMESTAMP() for MySQL
-		//! @note 32 bit version of this has a clock rollover in 2038.
+    static TIMESEC_t GRAYCALL GetTimeFromDays(double dTimeDays) noexcept;
 
-		typedef CTime SUPER_t;
+    static cTimeInt GRAYCALL GetTimeFromStr(const GChar_t* pszDateTime, TZ_TYPE nTimeZone) {
+        // Ignore HRESULT.
+        cTimeInt t;
+        t.SetTimeStr(pszDateTime, nTimeZone);
+        return t;
+    }
 
-	public:
-		static const TIMESEC_t k_nZero = static_cast<TIMESEC_t>(0);		//!< January 1, 1970 UTC
-		static const TIMESEC_t k_nY2K = static_cast<TIMESEC_t>(0x386d4380);	//!< The static value for Y2K = January 1, 2000 in UTC/GMT from k_nZero in seconds.
+    void InitTime(TIMESEC_t nTime = k_nZero) noexcept;
 
-	protected:
-		bool InitTimeUnits(const cTimeUnits& rTu);
+    cTimeFile GetAsFileTime() const noexcept;
+    bool GetTimeUnits(OUT cTimeUnits& rTu, TZ_TYPE nTimeZone = TZ_UTC) const;
 
-	public:
-		cTimeInt() noexcept	// init to zero
-		{}
-		cTimeInt(TIMESEC_t time) noexcept : CTime(time)
-		{}
-		cTimeInt(const cTimeFile& fileTime) noexcept : CTime(fileTime, -1)
-		{
-			//! @note both are UTC so nDST makes no sense. What is MFC thinking ??
-		}
-		cTimeInt(const cTimeUnits& rTu)
-		{
-			InitTimeUnits(rTu);
-		}
-		static TIMESEC_t GRAYCALL GetTimeFromDays(double dTimeDays) noexcept;
+    // non MFC CTime operations.
+    TIMESECD_t GetSecondsSince(const cTimeInt& time) const noexcept {
+        //! difference in seconds,
+        //! - = this is in the past. (time in future)
+        //! + = this is in the future. (time in past)
+        return CastN(TIMESECD_t, m_time - time.m_time);
+    }
 
-		cTimeInt(double dTimeDays) noexcept : CTime(GetTimeFromDays(dTimeDays))
-		{
-		}
+    static constexpr bool IsTimeValid(TIMESEC_t nTime) noexcept {
+        return nTime > k_nZero;
+    }
+    bool isTimeValid() const noexcept {
+        //! MFC does 64 -> 32 bits.
+        return IsTimeValid(CastN(TIMESEC_t, m_time));
+    }
+    int get_TotalDays() const noexcept  // like in COleDateTimeSpan
+    {
+        //! Needs to be more consistent than accurate. just for compares.
+        //! Should turn over at midnight.
+        return CastN(int, m_time / cTimeUnits::k_nSecondsPerDay);
+    }
 
-		static cTimeInt GRAYCALL GetTimeFromStr(const GChar_t* pszDateTime, TZ_TYPE nTimeZoneOffset)
-		{
-			// Ignore HRESULT.
-			cTimeInt t;
-			t.SetTimeStr(pszDateTime, nTimeZoneOffset);
-			return t;
-		}
+    // to/from strings.
+    HRESULT SetTimeStr(const GChar_t* pszTimeDate, TZ_TYPE nTimeZone = TZ_LOCAL);
+    StrLen_t GetTimeFormStr(GChar_t* pszOut, StrLen_t iOutSizeMax, const GChar_t* pszFormat, TZ_TYPE nTimeZone = TZ_LOCAL) const;
+    cString GetTimeFormStr(const GChar_t* pszFormat = nullptr, TZ_TYPE nTimeZone = TZ_LOCAL) const;
+    cString GetTimeFormStr(TIMEFORMAT_t eFormat, TZ_TYPE nTimeZone = TZ_LOCAL) const {
+        return GetTimeFormStr(CastNumToPtr<const GChar_t>(static_cast<int>(eFormat)), nTimeZone);
+    }
 
-#ifdef _MFC_VER
-		TIMESEC_t GetTime() const	// Assume time in total seconds. (MFC like)
-		{
-			return (TIMESEC_t)SUPER_t::GetTime();
-		} // convert 64 bit time to old 32 bit form?
-#endif
+    /// <summary>
+    /// Describe a range of time in text. Get a text description of amount of time (delta)
+    /// </summary>
+    /// <param name="nSeconds"></param>
+    /// <param name="eUnitHigh">the highest unit, TIMEUNIT_t::_Day, TIMEUNIT_t::_Minute</param>
+    /// <param name="iUnitsDesired">the number of units up the cTimeUnits::k_Units ladder to go. default=2</param>
+    /// <param name="bShortText"></param>
+    /// <returns></returns>
+    static cString GRAYCALL GetTimeSpanStr(TIMESECD_t dwSeconds, TIMEUNIT_t eUnitHigh = TIMEUNIT_t::_Day, int iUnitsDesired = 2, bool bShortText = false);
 
-		static cTimeInt GRAYCALL GetTimeNow() noexcept;
+    /// <summary>
+    /// Describe a range of time in text. Get a short text description of amount of time (delta).
+    /// </summary>
+    /// <param name="dwSeconds"></param>
+    /// <returns>e.g. "2h 2m 2s"</returns>
+    static cString GRAYCALL GetTimeDeltaBriefStr(TIMESECD_t dwSeconds);
 
-		static cTimeInt GRAYCALL GetCurrentTime() noexcept
-		{
-			//! Alternate name for MFC.
-			//! @note GetCurrentTime() is "#define" by _WIN32 to GetTickCount() so i cant use that name!
-			return GetTimeNow();
-		}
+    /// <summary>
+    /// Get the Full time description. (up to hours) NOT days. 
+    /// </summary>
+    /// <param name="dwSeconds"></param>
+    /// <returns>e.g. "x hours and y minutes and z seconds"</returns>
+    static cString GRAYCALL GetTimeDeltaSecondsStr(TIMESECD_t dwSeconds);
 
-		void InitTime(TIMESEC_t nTime = k_nZero) noexcept;
-		void InitTimeNow() noexcept;
-		void InitTimeNowPlusSec(TIMESECD_t iOffsetInSeconds) noexcept;
+    // ********************************************************
+    // compare to GetTimeNow().
 
-		cTimeFile GetAsFileTime() const noexcept;
-		bool GetTimeUnits(OUT cTimeUnits& rTu, TZ_TYPE nTimeZoneOffset = TZ_UTC) const;
-
-		// non MFC CTime operations.
-		TIMESECD_t GetSecondsSince(const cTimeInt& time) const noexcept
-		{
-			//! difference in seconds,
-			//! - = this is in the past. (time in future)
-			//! + = this is in the future. (time in past)
-			return static_cast<TIMESECD_t>(GetTime() - time.GetTime());
-		}
-		TIMESECD_t get_TimeTilSec() const noexcept
-		{
-			//! difference in seconds
-			//! - = this is in the past.
-			//! + = this is in the future.
-			cTimeInt timeNow;
-			timeNow.InitTimeNow();
-			return static_cast<TIMESECD_t>(GetTime() - timeNow.GetTime());
-		}
-		TIMESECD_t get_AgeSec() const noexcept
-		{
-			//! How old is this? (in seconds)
-			//! current time - this time.
-			return -get_TimeTilSec();
-		}
-		bool isTimeFuture() const noexcept
-		{
-			return((unsigned)GetTime() > (unsigned)GetTimeNow().GetTime());
-		}
-
-		static constexpr bool IsTimeValid(TIMESEC_t nTime) noexcept
-		{
-			return nTime > k_nZero;
-		}
-		bool isTimeValid() const noexcept
-		{
-			//! MFC does 64 -> 32 bits.
-			return IsTimeValid((TIMESEC_t)GetTime());
-		}
-		int get_TotalDays() const noexcept // like in COleDateTimeSpan
-		{
-			//! Needs to be more consistent than accurate. just for compares.
-			//! Should turn over at midnight.
-			return (int)(GetTime() / cTimeUnits::k_nSecondsPerDay);
-		}
-
-		// to/from strings.
-		HRESULT SetTimeStr(const GChar_t* pszTimeDate, TZ_TYPE nTimeZoneOffset = TZ_LOCAL);
-		StrLen_t GetTimeFormStr(GChar_t* pszOut, StrLen_t iOutSizeMax, const GChar_t* pszFormat, TZ_TYPE nTimeZoneOffset = TZ_LOCAL) const;
-		cString GetTimeFormStr(const GChar_t* pszFormat = nullptr, TZ_TYPE nTimeZoneOffset = TZ_LOCAL) const;
-		cString GetTimeFormStr(TIME_FORMAT_TYPE eFormat, TZ_TYPE nTimeZoneOffset = TZ_LOCAL) const
-		{
-			return GetTimeFormStr((const GChar_t*)eFormat, nTimeZoneOffset);
-		}
-
-		static cString GRAYCALL GetTimeSpanStr(TIMESECD_t dwSeconds, TIMEUNIT_TYPE eUnitHigh = TIMEUNIT_Day, int iUnitsDesired = 2, bool bShortText = false);
-		static cString GRAYCALL GetTimeDeltaBriefStr(TIMESECD_t dwSeconds);
-		static cString GRAYCALL GetTimeDeltaSecondsStr(TIMESECD_t dwSeconds);
-	};
-}
-
-#endif // _INC_cTimeInt_H
+    static cTimeInt GRAYCALL GetTimeNow() noexcept;
+    void InitTimeNow() noexcept;
+    void InitTimeNowPlusSec(TIMESECD_t iOffsetInSeconds) noexcept;
+    bool isTimeFuture() const noexcept {
+        return CastN(unsigned, m_time) > CastN(unsigned, GetTimeNow().m_time);
+    }
+    /// <summary>
+    /// difference in seconds.
+    /// - = this is in the past.
+    /// + = this is in the future.
+    /// </summary>
+    /// <returns>seconds</returns>
+    TIMESECD_t get_TimeTilSec() const noexcept {
+        cTimeInt timeNow;
+        timeNow.InitTimeNow();
+        return CastN(TIMESECD_t, m_time - timeNow.m_time);
+    }
+    /// <summary>
+    /// How old is this? (in seconds)
+    /// current time - this time.
+    /// </summary>
+    /// <returns>seconds</returns>
+    TIMESECD_t get_AgeSec() const noexcept {
+        return -get_TimeTilSec();
+    }
+};
+}  // namespace Gray
+#endif  // _INC_cTimeInt_H

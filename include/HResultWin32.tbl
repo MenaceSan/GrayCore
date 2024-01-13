@@ -30,7 +30,7 @@ HRESULT_WIN32_DEF( ERROR_INTERNET_NAME_NOT_RESOLVED,	12007L,	"The server name co
 HRESULT_WIN32_DEF( ERROR_WINHTTP_INCORRECT_HANDLE_TYPE,	12018L, "The type of handle supplied is incorrect for this operation." )
 HRESULT_WIN32_DEF( ERROR_INTERNET_CANNOT_CONNECT,		12029L, "A connection with the Server could Not Be Established (check local firewall)" )
 HRESULT_WIN32_DEF( ERROR_WINHTTP_SECURE_INVALID_CA,		12045L,	"a certificate chain was processed, but terminated in a root certificate that is not trusted by the trust provider" )
-HRESULT_WIN32_DEF( ERROR_INTERNET_SEC_CERT_ERRORS,       12055L, "The SSL certificate contains errors." )
+HRESULT_WIN32_DEF( ERROR_INTERNET_SEC_CERT_ERRORS,       12055L, "The TLS/SSL certificate contains errors." )
 HRESULT_WIN32_DEF( ERROR_WINHTTP_SECURE_CERT_REV_FAILED, 12057L, "Secure certificate revocation cannot be checked because the revocation server was offline" )
 HRESULT_WIN32_DEF( ERROR_WINHTTP_INVALID_SERVER_RESPONSE, 12152L, "The server returned an invalid response. (check local firewall)" )
 HRESULT_WIN32_DEF( ERROR_WINHTTP_SECURE_CHANNEL_ERROR,	12157L,	"Could not establish secure connection. (check IE connection)" )

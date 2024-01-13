@@ -12,49 +12,37 @@
 #include "cArray.h"
 #include "cRefPtr.h"
 
-namespace Gray
-{
-#define GRAY_FOREACH_S(a,b,c) GRAY_FOREACH( cRefPtr<a>, b, c )
+namespace Gray {
+/// <summary>
+/// All items in this array are base on cRefBase. NON sorted.
+/// The array owns a reference to the object like cRefPtr.
+/// Element will get deleted when all references are gone.
+/// </summary>
+/// <typeparam name="TYPE"></typeparam>
+template <class TYPE>
+class cArrayRef : public cArrayFacade<cRefPtr<TYPE>, TYPE*> {
+    typedef cArrayFacade<cRefPtr<TYPE>, TYPE*> SUPER_t;
 
-	/// <summary>
-	/// All items in this array are base on cRefBase. NON sorted.
-	/// The array owns a reference to the object like cRefPtr.
-	/// Element will get deleted when all references are gone.
-	/// </summary>
-	/// <typeparam name="TYPE"></typeparam>
-	template<class TYPE>
-	class cArrayRef : public cArrayFacade < cRefPtr<TYPE>, TYPE* >
-	{
-		typedef cArrayFacade< cRefPtr<TYPE>, TYPE* > SUPER_t;
-
-	public:
-		/// <summary>
-		/// Similar to RemoveAll() except it calls DisposeThis() to try to dereference all the entries.
-		/// ASSUME TYPE supports DisposeThis(); like cXObject
-		/// @note often DisposeThis() has the effect of removing itself from the list. Beware of this.
-		/// </summary>
-		void DisposeAll()
-		{
-			const ITERATE_t iSize = this->GetSize();
-			if (iSize <= 0)
-				return;
-			{	
-				// save original list, call DisposeThis on everything from original list. In case Dispose removes itself from the list.
-				SUPER_t orig;
-				orig.SetCopy(*this);
-
-				ASSERT(orig.GetSize() == iSize);
-				for (ITERATE_t i = iSize - 1; i >= 0; i--)	// reverse order they got added?
-				{
-					TYPE* pObj = orig.GetAt(i);
-					if (pObj != nullptr)
-					{
-						pObj->DisposeThis();
-					}
-				}
-			}
-			this->RemoveAll();
-		}
-	};
-}
+ public:
+    /// <summary>
+    /// Similar to RemoveAll() except it calls DisposeThis() to try to dereference all the entries.
+    /// ASSUME TYPE supports DisposeThis(); like cXObject
+    /// @note often DisposeThis() has the effect of removing itself from the list. Beware of this.
+    /// </summary>
+    void DisposeAll() {
+        ITERATE_t iSize = this->GetSize();
+        for (ITERATE_t i = iSize - 1; i >= 0; i--) { // reverse order they got added. might be faster?
+            cRefPtr<TYPE> pObj = this->GetAt(i);
+            if (pObj != nullptr) pObj->DisposeThis();
+            // DisposeThis removes itself from the list?
+            const ITERATE_t iSize2 = this->GetSize();
+            if (iSize2 != iSize) {
+                iSize = iSize2;
+                if (i != iSize) i = iSize;  // start over.
+            }
+        }
+        this->RemoveAll();
+    }
+};
+}  // namespace Gray
 #endif

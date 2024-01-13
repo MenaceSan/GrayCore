@@ -2,7 +2,7 @@
 //! @file cMimeExts.tbl
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
-// MIME_TYPE
+// MIME_t
 // NOTE: Some Known MIME types can have multiple .EXT possible. (allow 2)
 // http://www.iana.org/assignments/media-types/index.html
 // http://www.w3schools.com/media/media_mimeref.asp
