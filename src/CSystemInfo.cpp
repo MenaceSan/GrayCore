@@ -1,9 +1,9 @@
 //
 //! @file cSystemInfo.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
-
+// clang-format off
 #include "pch.h"
+// clang-format on
 #include "StrArg.h"
 #include "StrConst.h"
 #include "StrT.h"
@@ -464,7 +464,7 @@ cStringF cSystemHelper::get_SystemName() {
     return m_sSystemName;
 }
 
-cFilePath GRAYCALL cSystemHelper::get_SystemDir() { // static
+cFilePath GRAYCALL cSystemHelper::get_SystemDir() {  // static
     //! Where does the OS keep its files. CSIDL_SYSTEM
     //! GetSystemDirectory() == "C:\Windows\System32" or "C:\Windows\SysWOW64" for 32 bit app on 64 bit OS.
     FILECHAR_t szTmp[_MAX_PATH];

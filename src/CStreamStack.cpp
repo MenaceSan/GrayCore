@@ -1,9 +1,9 @@
 //
 //! @file cStreamStack.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
-
+// clang-format off
 #include "pch.h"
+// clang-format on
 #include "cStreamStack.h"
 
 namespace Gray {
@@ -14,14 +14,9 @@ HRESULT cStreamStackInp::ReadFill() {
 
     void* pWriteSpace = GetWritePrepared(this->get_GrowSizeChunk());
     const ITERATE_t nWriteSpace = get_WriteSpaceQty();
-    if (pWriteSpace == nullptr || nWriteSpace <= 0) {
-        return 0;  // no room.
-    }
-
-    if (m_pInp == nullptr) { // must supply input stream
-        return E_HANDLE;
-    }
-
+    if (pWriteSpace == nullptr || nWriteSpace <= 0) return 0;  // no room.
+    if (m_pInp == nullptr) return E_HANDLE;  // must supply input stream
+ 
     // Read all i have room for.
     HRESULT hRes = m_pInp->ReadX(pWriteSpace, CastN(size_t, nWriteSpace));
     if (FAILED(hRes) || hRes <= 0) {
@@ -54,7 +49,7 @@ HRESULT cStreamStackInp::ReadFillAligned(size_t nSizeBlockAlign) {
         return 0;
     nWriteQty -= nWriteQty % nSizeBlockAlign;  // Remove remainder.
 
-    if (m_pInp == nullptr) { // must supply input stream
+    if (m_pInp == nullptr) {  // must supply input stream
         return E_HANDLE;
     }
 
@@ -67,7 +62,7 @@ HRESULT cStreamStackInp::ReadFillAligned(size_t nSizeBlockAlign) {
 
     // NOTE Make sure the actual amount read is nSizeBlockAlign aligned. UN-read anything that is not aligned.
     ITERATE_t iWriteActual = (ITERATE_t)hRes;
-    if (iWriteActual == 0) { // Got no data.
+    if (iWriteActual == 0) {  // Got no data.
         trans.SetTransactionComplete();
         return S_OK;
     }
@@ -75,7 +70,7 @@ HRESULT cStreamStackInp::ReadFillAligned(size_t nSizeBlockAlign) {
     // Only get data on block alignments.
     ITERATE_t nSizeOver = iWriteActual % nSizeBlockAlign;
     if (nSizeOver > 0) {  // must back out the unaligned part.
-        hRes = m_pInp->SeekX(-nSizeOver, SEEK_Cur);
+        hRes = m_pInp->SeekX(-nSizeOver, SEEK_t::_Cur);
         if (FAILED(hRes)) {
             trans.SetTransactionFailed();  // roll back.
             return hRes;
@@ -110,7 +105,7 @@ HRESULT cStreamStackOut::WriteFlush()  // virtual
     return hRes;
 }
 
-HRESULT cStreamStackPackets::WriteX(const void* pData, size_t nDataSize) { // virtual
+HRESULT cStreamStackPackets::WriteX(const void* pData, size_t nDataSize) {  // virtual
     //! Take all pData written to me and store in m_buffer.
     //! @arg pData = nullptr = just test if it has enough room.
 
@@ -128,6 +123,6 @@ HRESULT cStreamStackPackets::WriteX(const void* pData, size_t nDataSize) { // vi
             break;
     }
 
-    return CastN(HRESULT,nWriteQty);
+    return CastN(HRESULT, nWriteQty);
 }
 }  // namespace Gray

@@ -1,8 +1,9 @@
 //
 //! @file cOSHandleSet.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
+// clang-format off
 #include "pch.h"
+// clang-format on
 #include "HResult.h"
 #include "cOSHandleSet.h"
 #include "cTimeVal.h"  // must include this for _WIN32 DLL instantiate.

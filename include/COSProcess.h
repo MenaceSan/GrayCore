@@ -36,30 +36,29 @@ enum SHOWWINDOW_t {
 #endif
 
 #ifdef _WIN32
-typedef DWORD PROCESSID_t;     /// EnumProcesses uses DWORD even in 64 bit code.
-typedef DWORD APP_EXITCODE_t;  /// main() return value. @note its DWORD in GetExitCodeProcess() but its 'int' from main(), _tmain() and WinMain()
+typedef DWORD PROCESSID_t;      /// EnumProcesses uses DWORD even in 64 bit code.
 #elif defined(__linux__)
-typedef pid_t PROCESSID_t;              /// pid_t getpid() for __linux__
-typedef int APP_EXITCODE_t;             /// main() return value.
+typedef pid_t PROCESSID_t;    /// pid_t getpid() for __linux__
 #endif
-constexpr PROCESSID_t PROCESSID_BAD = 0;  /// Invalid process id.
+constexpr PROCESSID_t kPROCESSID_BAD = 0;  /// Invalid process id. 
 
 /// <summary>
 /// http://en.wikipedia.org/wiki/Exit_status = 'errorlevel' return from POSIX process.
+/// int main() _tmain() and WinMain() return value. BUT its DWORD in GetExitCodeProcess() and UINT for ExitProcess.
 /// </summary>
-enum APP_EXITCODE_TYPE {
-    APP_EXITCODE_ERRNO = -1,           /// See Posix 'errno' for why this process never started.
-    APP_EXITCODE_OK = EXIT_SUCCESS,    /// 0=EXIT_SUCCESS (stdlib.h).  App closed.
-    APP_EXITCODE_FAIL = EXIT_FAILURE,  /// 1=EXIT_FAILURE = generic error. App closed.
-    APP_EXITCODE_ABORT = 3,            /// 3=Default error returned if "abort()" used (arbitrary?)  App closed.
+enum class APP_EXITCODE_t : int {
+    _ERRNO = -1,           /// See Posix 'errno' for why this process never started.
+    _OK = EXIT_SUCCESS,    /// 0=EXIT_SUCCESS (stdlib.h).  App closed.
+    _FAIL = EXIT_FAILURE,  /// 1=EXIT_FAILURE = generic error. App closed.
+    _ABORT = 3,            /// 3=Default error returned if "abort()" used (arbitrary?)  App closed.
 
 // .. some other condition.
 #ifdef _WIN32
-    APP_EXITCODE_STILL_ACTIVE = STILL_ACTIVE,  /// _WIN32 Process has not exited yet. STATUS_PENDING
+    _STILL_ACTIVE = STILL_ACTIVE,  /// _WIN32 Process has not exited yet. STATUS_PENDING
 #elif defined(__linux__)
-    APP_EXITCODE_STILL_ACTIVE = 0x103,  /// 259 = Process has not exited yet.
+    _STILL_ACTIVE = 0x103,    /// 259 = Process has not exited yet.
 #endif
-    APP_EXITCODE_UNK = SHRT_MAX,  /// handle not valid ?
+    _UNK = SHRT_MAX,  /// handle not valid ?
 };
 
 /// <summary>
@@ -69,7 +68,7 @@ enum APP_EXITCODE_TYPE {
 /// </summary>
 class GRAYCORE_LINK cOSProcess {
  protected:
-    PROCESSID_t m_nPid;  /// Process ID, 0 = PROCESSID_BAD = un-init.
+    PROCESSID_t m_nPid;  /// Process ID, 0 = kPROCESSID_BAD = un-init.
 
 #ifdef _WIN32
     cOSHandle m_hProcess;  /// open handle to the process. cOSModule
@@ -99,7 +98,7 @@ class GRAYCORE_LINK cOSProcess {
     HRESULT CreateProcessX(const FILECHAR_t* pszExeName, const FILECHAR_t* pszArgs = nullptr, SHOWWINDOW_t nShowCmd = SW_SHOWNORMAL, const FILECHAR_t* pszCurrentDir = nullptr, cFile* pFileOutPipe = nullptr);
 
     static inline bool GRAYCALL IsSystemPID(PROCESSID_t nProcessID) noexcept {
-        if (nProcessID == 0)  // PROCESSID_BAD
+        if (nProcessID == 0)  // kPROCESSID_BAD
             return true;
 #ifdef _WIN32
         if (nProcessID == 4) return true;
@@ -150,7 +149,7 @@ class GRAYCORE_LINK cOSProcess {
 
         if (!isValidProcess()) return S_FALSE;
 #ifdef _WIN32
-        if (!::TerminateProcess(get_ProcessHandle(), uExitCode))
+        if (!::TerminateProcess(get_ProcessHandle(), (UINT)uExitCode))
 #elif defined(__linux__)
         if (::kill(get_ProcessId(), SIGTERM) != 0)  // send a signal(SIGTERM) to the process.
 #endif
@@ -222,17 +221,20 @@ class GRAYCORE_LINK cOSProcess {
         return CastN(HRESULT, nSizeRead);
     }
 
-    bool GetExitCodeProcess(OUT APP_EXITCODE_t* pnExitCode) const noexcept {
+    bool GetExitCodeProcess(OUT APP_EXITCODE_t& nExitCode) const noexcept {
         //! The exit value specified in the ExitProcess or TerminateProcess function.
-        //! @arg pnExitCode = APP_EXITCODE_STILL_ACTIVE = process is running.
+        //! @arg pnExitCode = APP_EXITCODE_t::_STILL_ACTIVE = process is running.
         //! @return false = process handle is bad ?
-        return ::GetExitCodeProcess(get_ProcessHandle(), pnExitCode) ? true : false;
+        DWORD dwExitCode = 0;
+        if (!::GetExitCodeProcess(get_ProcessHandle(), &dwExitCode)) return false;
+        nExitCode = (APP_EXITCODE_t)dwExitCode;
+        return true;
     }
 
     static inline PROCESSID_t FindProcessIdForWindow(HWND hWnd) noexcept {
         //! Find process Id for the hWnd.
-        //! @return 0 = can't find it. PROCESSID_BAD
-        PROCESSID_t dwProcessIDRet = PROCESSID_BAD;
+        //! @return 0 = can't find it. kPROCESSID_BAD
+        PROCESSID_t dwProcessIDRet = kPROCESSID_BAD;
         const THREADID_t dwThreadID = ::GetWindowThreadProcessId(hWnd, &dwProcessIDRet);
         UNREFERENCED_PARAMETER(dwThreadID);
         return dwProcessIDRet;

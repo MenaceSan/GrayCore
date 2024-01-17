@@ -1,9 +1,9 @@
 //
 //! @file cTimeFile.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
-
+// clang-format off
 #include "pch.h"
+// clang-format on
 #include "cTimeDouble.h"
 #include "cTimeFile.h"  // class implemented
 #include "cTimeUnits.h"
@@ -22,7 +22,7 @@ void cTimeFile::InitTimeNow() noexcept {
 #endif
 }
 
-cTimeFile GRAYCALL cTimeFile::GetTimeNow() noexcept { // static
+cTimeFile GRAYCALL cTimeFile::GetTimeNow() noexcept {  // static
     //! Get the current time with highest possible accuracy.
     //!  FILETIME_t = 64-bit 100-nanosecond since January 1, 1601 GMT
     //! @note GetCurrentTime() is "#define" by _WIN32 to GetTickCount() so i cant use that name!
@@ -58,13 +58,11 @@ cString cTimeFile::GetTimeFormStr(const GChar_t* pszFormat, TZ_TYPE nTimeZone) c
     //! Get the time as a string formatted using "C" strftime()
     //! MFC just calls this "Format"
     cTimeUnits Tu;
-    if (!GetTimeUnits(Tu, nTimeZone)) 
-        return "";
+    if (!GetTimeUnits(Tu, nTimeZone)) return "";
 
     GChar_t szBuffer[256];
     StrLen_t iLenChars = Tu.GetFormStr(szBuffer, STRMAX(szBuffer), pszFormat);
-    if (iLenChars <= 0) 
-        return "";
+    if (iLenChars <= 0) return "";
 
     return cString(szBuffer, iLenChars);
 }

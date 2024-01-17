@@ -1,8 +1,9 @@
 //
 //! @file cIniFile.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
+// clang-format off
 #include "pch.h"
+// clang-format on
 #include "cAppState.h"
 #include "cCodeProfiler.h"
 #include "cFileText.h"  // cFileText or cFileTextReader
@@ -66,14 +67,12 @@ HRESULT cIniFile::ReadIniFile(const FILECHAR_t* pszFilePath, bool bStripComments
     //! @note we need to read a file before writing it. (gets all the comments etc)
 
     CODEPROFILEFUNC();
-    if (pszFilePath == nullptr) 
-        return E_POINTER;
- 
+    if (pszFilePath == nullptr) return E_POINTER;
+
     cFileTextReader fileReader;
     HRESULT hRes = fileReader.OpenX(pszFilePath, OF_READ | OF_TEXT | OF_CACHE_SEQ);
-    if (FAILED(hRes)) 
-        return hRes;
- 
+    if (FAILED(hRes)) return hRes;
+
     return ReadIniStream(fileReader, bStripComments);
 }
 
@@ -86,8 +85,7 @@ HRESULT cIniFile::WriteIniFile(const FILECHAR_t* pszFilePath) const {
 
     cFile file;
     HRESULT hRes = file.OpenX(pszFilePath, OF_CREATE | OF_WRITE);  // OF_WRITE|OF_TEXT
-    if (FAILED(hRes)) 
-        return hRes;
+    if (FAILED(hRes)) return hRes;
     for (auto section : m_aSections) {
         ASSERT(section.isValidPtr());
         hRes = section->WriteSection(file);
@@ -97,7 +95,7 @@ HRESULT cIniFile::WriteIniFile(const FILECHAR_t* pszFilePath) const {
     return S_OK;
 }
 
-HRESULT cIniFile::PropGetEnum(PROPIDX_t ePropIdx, OUT cStringI& rsValue, OUT cStringI* psPropTag) const { // virtual
+HRESULT cIniFile::PropGetEnum(PROPIDX_t ePropIdx, OUT cStringI& rsValue, OUT cStringI* psPropTag) const {  // virtual
     //! IIniBaseEnumerator
     //! Enumerate the sections.
     //! @arg psPropTag = return the section type as [SECTION Value] if it applies.
@@ -114,7 +112,7 @@ cIniSectionEntryPtr cIniFile::FindSection(const IniChar_t* pszSectionTitle, bool
         pszSectionTitle = k_SectionDefault;  // global scope. Not in a section.
     }
     const StrLen_t iLen = StrT::Len(pszSectionTitle);
-    if (iLen >= k_LEN_MAX_CSYM) { // not a valid name !
+    if (iLen >= k_LEN_MAX_CSYM) {  // not a valid name !
         // iLen = k_LEN_MAX_CSYM; // truncate?
         return nullptr;
     }
@@ -124,8 +122,9 @@ cIniSectionEntryPtr cIniFile::FindSection(const IniChar_t* pszSectionTitle, bool
             continue;
         if (bPrefixOnly) return pSection;  // good enough match.
         // only a full match is OK.
-        if (!StrChar::IsCSym(pszLine[iLen])) return pSection;  // good enough match.
-                                                               // not a full match.
+        if (!StrChar::IsCSym(pszLine[iLen]))
+            return pSection;  // good enough match.
+                              // not a full match.
     }
     return nullptr;
 }

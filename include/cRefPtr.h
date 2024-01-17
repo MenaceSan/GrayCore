@@ -21,6 +21,7 @@ namespace Gray {
 #if defined(_DEBUG) && !defined(UNDER_CE)
 #define USE_PTRTRACE_REF
 #endif
+typedef UINT32 REFCOUNT_t;
 
 /// <summary>
 /// base class for some derived object that is to be reference counted via cRefPtr.
@@ -30,24 +31,24 @@ namespace Gray {
 /// @note These objects emulate the COM IUnknown. we may use cIUnkPtr for this also. QueryInterface support is optional.
 /// Use IUNKNOWN_DISAMBIG(cRefBase) with this
 /// </summary>
-class GRAYCORE_LINK cRefBase : public IUnknown {  // virtual
-    static const int k_REFCOUNT_DEBUG = 0x20000000;     /// mark this as debug. (even in release mode)
-    static const int k_REFCOUNT_STATIC = 0x40000000;    /// for structures that are 'static' or stack based. never use delete
-    static const int k_REFCOUNT_DESTRUCT = 0x80000000;  /// we are in the process of destruction.
-    static const int k_REFCOUNT_MASK = 0xE0000000;      /// hide extra information in the m_nRefCount
+class GRAYCORE_LINK cRefBase : public IUnknown {               // virtual
+    static const REFCOUNT_t k_REFCOUNT_STATIC = 0x20000000;    /// for structures that are 'static' or stack based. never use delete
+    static const REFCOUNT_t k_REFCOUNT_DEBUG = 0x40000000;     /// mark this as debug. (even in release mode)
+    static const REFCOUNT_t k_REFCOUNT_DESTRUCT = 0x80000000;  /// we are in the process of destruction.
+    static const REFCOUNT_t k_REFCOUNT_MASK = 0xC0000000;      /// hide extra information in the m_nRefCount
 
-    mutable cInterlockedInt m_nRefCount;  /// count the number of refs. Multi-Thread safe. check _MT here ??
+    mutable cInterlockedUInt32 m_nRefCount;  /// count the number of refs. Multi-Thread safe. check _MT here ?? Negative NEVER allowed!
 
  private:
     void _InternalAddRef() noexcept {
 #ifdef _DEBUG
         DEBUG_CHECK(isValidObj());
         DEBUG_CHECK(!isDestructing());
-        const int iRefCount = get_RefCount();
-        DEBUG_CHECK(iRefCount < (~k_REFCOUNT_MASK));
+        const REFCOUNT_t nRefCount = get_RefCount();
+        DEBUG_CHECK(nRefCount < k_REFCOUNT_DEBUG);
 #ifdef USE_PTRTRACE_REF
         if (isSmartDebug()) {
-            DEBUG_CHECK(iRefCount != 123123);  // dummy for breakpoint.
+            DEBUG_CHECK(nRefCount != 123123);  // dummy for breakpoint.
         }
 #endif
 #endif
@@ -57,18 +58,18 @@ class GRAYCORE_LINK cRefBase : public IUnknown {  // virtual
 #ifdef _DEBUG
         DEBUG_CHECK(isValidObj());
         DEBUG_CHECK(!isDestructing());
-        const int iRefCount2 = get_RefCount();
-#ifdef USE_PTRTRACE_REF
+#if 0  // def USE_PTRTRACE_REF
+        const REFCOUNT_t nRefCount2 = get_RefCount();
         if (isSmartDebug()) {
-            DEBUG_CHECK(iRefCount2 != 123123);  // dummy for breakpoint.
+            DEBUG_CHECK(nRefCount2 != 123123);  // dummy for breakpoint.
         }
 #endif
 #endif
-        const int iRefCount = m_nRefCount.Dec();
-        if (iRefCount == 0) {
+        const REFCOUNT_t nRefCount = m_nRefCount.Dec();
+        if (nRefCount == 0) {
             onZeroRefCount();  // free my memory. delete this.
         } else {
-            DEBUG_CHECK(iRefCount > 0);
+            DEBUG_CHECK(nRefCount > 0 && nRefCount < k_REFCOUNT_DEBUG);
         }
     }
 
@@ -83,9 +84,9 @@ class GRAYCORE_LINK cRefBase : public IUnknown {  // virtual
     }
 
  public:
-    explicit cRefBase(int iRefCount = 0) noexcept : m_nRefCount(iRefCount) {}
+    explicit cRefBase(REFCOUNT_t nRefCount = 0) noexcept : m_nRefCount(nRefCount) {}
 
-    int get_RefCount() const noexcept {
+    REFCOUNT_t get_RefCount() const noexcept {
         return m_nRefCount.get_Value() & ~k_REFCOUNT_MASK;
     }
 
@@ -147,9 +148,9 @@ class GRAYCORE_LINK cRefBase : public IUnknown {  // virtual
     /// </summary>
     /// <returns>count after this decrement.</returns>
     STDMETHOD_(ULONG, Release)() override {
-        const int iRefCount = get_RefCount();
+        const REFCOUNT_t nRefCount = get_RefCount();
         _InternalRelease();  // this could get deleted here!
-        return CastN(ULONG, iRefCount - 1);
+        return CastN(ULONG, nRefCount - 1);
     }
 
     STDMETHOD(QueryInterface)(const IID& riid, /* [iid_is][out] */ void __RPC_FAR* __RPC_FAR* ppvObject) override {
@@ -162,20 +163,17 @@ class GRAYCORE_LINK cRefBase : public IUnknown {  // virtual
         *ppvObject = nullptr;
         return E_NOINTERFACE;  // E_NOTIMPL
     }
-    virtual IUnknown* get_IUnknown() noexcept  // disambiguate IUnknown base. in the case of confusing multiple inheritance. This really should not be necessary !?
-    {
+    virtual IUnknown* get_IUnknown() noexcept {  // disambiguate IUnknown base. in the case of confusing multiple inheritance. This really should not be necessary !?
         return this;
     }
 
 #if 0  // def _DEBUG // for testing.
-		void IncRefCount() noexcept // always go through the COM interface!
-		{
-			AddRef();
-		}
-		void DecRefCount() noexcept
-		{
-			Release();
-		}
+	void IncRefCount() noexcept { // always go through the COM interface!
+		AddRef();
+	}
+	void DecRefCount() noexcept {
+		Release();
+	}
 #else
     inline void IncRefCount() noexcept {
         _InternalAddRef();
@@ -320,9 +318,8 @@ class cRefPtr : public cPtrFacade<TYPE>
     /// </summary>
     /// <returns>true = nullptr or valid typed pointer.</returns>
     bool isCorruptPtr() const noexcept {
-        if (!SUPER_t::isValidPtr()) return false;  // nullptr is not corrupt.
-        if (!cMem::IsValidApp(this->get_Ptr()))    // isCorruptPtr
-            return true;
+        if (!SUPER_t::isValidPtr()) return false;             // nullptr is not corrupt.
+        if (!cMem::IsValidApp(this->get_Ptr())) return true;  // isCorruptPtr
         cRefBase* p = this->get_PtrDyn<cRefBase>();
         if (p == nullptr) return true;
         if (p->get_RefCount() <= 0) return true;
@@ -338,8 +335,7 @@ class cRefPtr : public cPtrFacade<TYPE>
     /// <summary>
     /// dec my ref count and set this to nullptr.
     /// </summary>
-    void ReleasePtr()  // override
-    {
+    void ReleasePtr() {              // override
         TYPE* p2 = this->get_Ptr();  // make local copy.
         if (p2 == nullptr) return;
 #ifdef _DEBUG
@@ -347,9 +343,7 @@ class cRefPtr : public cPtrFacade<TYPE>
 #endif
         this->ClearPtr();  // make sure possible destructor called in DecRefCount don't reuse this.
 #ifdef USE_PTRTRACE_REF
-        if (p2->isSmartDebug()) {
-            TraceRelease();
-        }
+        if (p2->isSmartDebug()) TraceRelease();
 #endif
         p2->DecRefCount();  // this might delete this ?
     }
@@ -367,7 +361,7 @@ class cRefPtr : public cPtrFacade<TYPE>
         return false;
     }
 
-    int get_RefCount() const noexcept {
+    REFCOUNT_t get_RefCount() const noexcept {
         //! @return cRefBase::get_RefCount
         if (!isValidPtr()) return 0;
         return this->get_Ptr()->get_RefCount();

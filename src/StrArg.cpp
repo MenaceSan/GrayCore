@@ -1,9 +1,9 @@
 //
 //! @file StrArg.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
-
+// clang-format off
 #include "pch.h"
+// clang-format on
 #include "StrArg.h"
 #include "StrT.h"
 #include "StrU.h"
@@ -12,7 +12,7 @@
 
 namespace Gray {
 template <>
-GRAYCORE_LINK const wchar_t* GRAYCALL StrArg<wchar_t>(const char* pszStrInp) { // static
+GRAYCORE_LINK const wchar_t* GRAYCALL StrArg<wchar_t>(const char* pszStrInp) {  // static
     //! Get a temporary string that only lives long enough to satisfy a sprintf() argument.
     //! @note the UNICODE size is variable and <= Len(pszStr)
     if (pszStrInp == nullptr) return __TOW("NULL");
@@ -22,7 +22,7 @@ GRAYCORE_LINK const wchar_t* GRAYCALL StrArg<wchar_t>(const char* pszStrInp) { /
     return pszTmp;
 }
 template <>
-GRAYCORE_LINK const char* GRAYCALL StrArg<char>(const wchar_t* pwStrInp) { // static
+GRAYCORE_LINK const char* GRAYCALL StrArg<char>(const wchar_t* pwStrInp) {  // static
     //! Get a temporary string that only lives long enough to satisfy a sprintf() argument.
     //! @note the UTF8 size is variable and >= Len(pwStr)
     if (pwStrInp == nullptr) return __TOA("NULL");
@@ -33,7 +33,7 @@ GRAYCORE_LINK const char* GRAYCALL StrArg<char>(const wchar_t* pwStrInp) { // st
 }
 
 template <typename TYPE>
-GRAYCORE_LINK const TYPE* GRAYCALL StrArg(TYPE ch, StrLen_t nRepeat) { // static
+GRAYCORE_LINK const TYPE* GRAYCALL StrArg(TYPE ch, StrLen_t nRepeat) {  // static
     //! Get a temporary string that is nRepeat chars repeating
     TYPE* pszTmp = cTempPool::GetTempST<TYPE>(nRepeat);
     cValArray::FillQty<TYPE>(pszTmp, nRepeat, (TYPE)ch);

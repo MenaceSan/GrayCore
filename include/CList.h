@@ -73,10 +73,12 @@ class GRAYCORE_LINK cListNodeBase : public cHeapObject {
     //! @note Must define body of this function after cListParentBase has been defined.
     void RemoveFromParent();
 
-    virtual HRESULT DisposeThis()  // delete myself from the system.
-    {
-        //! Pre-destructor cleanup things can be done since virtuals don't work in destructors.
-        //! @note this does not free the memory. override to do this.
+    /// <summary>
+    /// delete myself from the system. 
+    /// Pre-destructor cleanup things can be done since virtual(s) don't work in destructor(s).
+    /// @note this does not free the memory. override to do this.
+    /// </summary>
+    virtual HRESULT DisposeThis() {
         RemoveFromParent();  // called before destruct so virtual RemoveListNode() is called correctly.
         return S_OK;
     }
@@ -90,8 +92,7 @@ class GRAYCORE_LINK cListNodeBase : public cHeapObject {
 /// Objects should remove themselves from the list when deleted.
 /// Similar to the MFC CList, or std::list(T), std::deque
 /// </summary>
-class GRAYCORE_LINK cListParentBase  // generic list of objects based on cListNodeBase.
-{
+class GRAYCORE_LINK cListParentBase { // generic list of objects based on cListNodeBase.
     friend class cListNodeBase;  // so it can call RemoveListNode() to remove self.
 
  protected:
@@ -131,7 +132,7 @@ class GRAYCORE_LINK cListParentBase  // generic list of objects based on cListNo
     }
 
     void DisposeAll();
-    void Empty();
+    void SetEmpty();
 
     cListNodeBase* get_Head() const noexcept {
         return m_pHead;
@@ -146,7 +147,7 @@ class GRAYCORE_LINK cListParentBase  // generic list of objects based on cListNo
         return get_Count() == 0;
     }
 
-    //! iterate the linked list.
+    /// iterate the linked list.
     cListNodeBase* GetAt(ITERATE_t index) const;
 
     bool IsMyChild(const cListNodeBase* pNode) const noexcept {
@@ -169,7 +170,7 @@ inline void cListNodeBase::RemoveFromParent() {
 // template type casting for lists.
 
 /// <summary>
-/// Assume this is a node (in a linked list) of type _TYPE_REC. e.g. _TYPE_REC is based on cListNodeT<> which is based on cListNodeBase.
+/// Assume this is a node (in a linked list) of type _TYPE_REC. e.g. _TYPE_REC is based on cListNodeT which is based on cListNodeBase.
 /// </summary>
 /// <typeparam name="_TYPE_REC"></typeparam>
 template <class _TYPE_REC = cListNodeBase>

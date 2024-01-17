@@ -1,9 +1,9 @@
 //
 //! @file cHeap.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
-
+// clang-format off
 #include "pch.h"
+// clang-format on
 #include "StrT.h"
 #include "cCodeProfiler.h"
 #include "cHeap.h"
@@ -84,7 +84,7 @@ UINT64 GRAYCALL cHeapCommon::get_PhysAvail() {  // static
 #endif
 }
 
-void GRAYCALL cHeapCommon::Init(int nFlags) { // static
+void GRAYCALL cHeapCommon::Init(int nFlags) {  // static
     //! Initialize the heap to debug if desired.
     //! @arg nFlags = _CRTDBG_ALLOC_MEM_DF | _CRTDBG_DELAY_FREE_MEM_DF
     //!  _CRTDBG_CHECK_ALWAYS_DF = auto call _CrtCheckMemory on every alloc or free.
@@ -96,7 +96,7 @@ void GRAYCALL cHeapCommon::Init(int nFlags) { // static
 #endif
 }
 
-bool GRAYCALL cHeapCommon::Check() { // static
+bool GRAYCALL cHeapCommon::Check() {  // static
     //! Explicitly check the heap for consistency, validity.
     //! Assert if the memory check fails.
     //! called automatically every so often if (_CRTDBG_CHECK_ALWAYS_DF,_CRTDBG_CHECK_EVERY_16_DF,_CRTDBG_CHECK_EVERY_128_DF,etc)
@@ -111,7 +111,7 @@ bool GRAYCALL cHeapCommon::Check() { // static
     return bRet;
 }
 
-bool GRAYCALL cHeap::IsValidInside(const void* pData, ptrdiff_t iOffset) noexcept { // static
+bool GRAYCALL cHeap::IsValidInside(const void* pData, ptrdiff_t iOffset) noexcept {  // static
     //! Is this offset inside the valid heap block (pData).
     //! @note this should only ever be used in debug code. and only in an ASSERT.
     CODEPROFILEFUNC();
@@ -123,7 +123,7 @@ bool GRAYCALL cHeap::IsValidInside(const void* pData, ptrdiff_t iOffset) noexcep
     return true;
 }
 
-void GRAYCALL cHeap::FreePtr(void* pData) noexcept { // static
+void GRAYCALL cHeap::FreePtr(void* pData) noexcept {  // static
     if (pData == nullptr) return;
     CODEPROFILEFUNC();
 #if defined(_DEBUG)
@@ -173,7 +173,7 @@ void* GRAYCALL cHeap::AllocPtr(size_t iSize) {  // static // throw(std::bad_allo
     return pData;
 }
 
-void* GRAYCALL cHeap::ReAllocPtr(void* pData, size_t iSize) { // static
+void* GRAYCALL cHeap::ReAllocPtr(void* pData, size_t iSize) {  // static
     //! allocate a different sized block but preserve existing content.
     //! Same footprint as C realloc()
     //! Should it throw if pData is invalid ? nullptr is ok.
@@ -215,7 +215,7 @@ void* GRAYCALL cHeap::ReAllocPtr(void* pData, size_t iSize) { // static
     return pData2;
 }
 
-size_t GRAYCALL cHeap::GetSize(const void* pData) noexcept { // static
+size_t GRAYCALL cHeap::GetSize(const void* pData) noexcept {  // static
     //! get the actual allocated size of a memory block in bytes.
     //! @note __linux__ = Not always the size of the allocation request. maybe greater.
     //! _WIN32 = always exact same size as requested malloc(),
@@ -232,7 +232,7 @@ size_t GRAYCALL cHeap::GetSize(const void* pData) noexcept { // static
 #endif
 }
 
-bool GRAYCALL cHeap::IsValidHeap(const void* pData) noexcept { // static
+bool GRAYCALL cHeap::IsValidHeap(const void* pData) noexcept {  // static
     //! is this a valid malloc() heap pointer? ::GlobalAlloc does not validate ???
     //! @note this should only ever be used in debug code. and only in an ASSERT.
     if (!cMem::IsValidApp(pData)) return false;
@@ -289,13 +289,13 @@ const cHeapAlignHeader* GRAYCALL cHeapAlign::GetHeader(const void* pData) noexce
     return pHdr;
 }
 
-bool GRAYCALL cHeapAlign::IsHeapAlign(const void* pData) noexcept { // static
+bool GRAYCALL cHeapAlign::IsHeapAlign(const void* pData) noexcept {  // static
     //! Was pData created using cHeapAlign::Alloc() ?
     //! @note _DEBUG heap is VERY different from release heap structure.
     return GetHeader(pData) != nullptr;
 }
 
-bool GRAYCALL cHeapAlign::IsValidInside(const void* pData, INT_PTR iOffset) noexcept { // static
+bool GRAYCALL cHeapAlign::IsValidInside(const void* pData, INT_PTR iOffset) noexcept {  // static
     CODEPROFILEFUNC();
     const cHeapAlignHeader* pHdr = GetHeader(pData);
     if (pHdr == nullptr) {
@@ -308,7 +308,7 @@ bool GRAYCALL cHeapAlign::IsValidInside(const void* pData, INT_PTR iOffset) noex
     return CastN(size_t, iOffset) < nSize;
 }
 
-bool GRAYCALL cHeapAlign::IsValidHeap(const void* pData) noexcept { // static
+bool GRAYCALL cHeapAlign::IsValidHeap(const void* pData) noexcept {  // static
     //! is this a valid malloc() or _aligned_malloc() pointer?
     //! May or may not be aligned.
     CODEPROFILEFUNC();
@@ -323,7 +323,7 @@ bool GRAYCALL cHeapAlign::IsValidHeap(const void* pData) noexcept { // static
     return cHeap::IsValidHeap(pHdr->m_pMallocHead);
 }
 
-size_t GRAYCALL cHeapAlign::GetSize(const void* pData) noexcept { // static
+size_t GRAYCALL cHeapAlign::GetSize(const void* pData) noexcept {  // static
     CODEPROFILEFUNC();
     const cHeapAlignHeader* pHdr = GetHeader(pData);
     if (pHdr == nullptr) {
@@ -335,7 +335,7 @@ size_t GRAYCALL cHeapAlign::GetSize(const void* pData) noexcept { // static
     return cHeap::GetSize(pHdr->m_pMallocHead);
 }
 
-void GRAYCALL cHeapAlign::FreePtr(void* pData) { // static
+void GRAYCALL cHeapAlign::FreePtr(void* pData) {  // static
     //! NOTE: Will work if ! IsHeapAlign
     CODEPROFILEFUNC();
     if (pData == nullptr) return;
@@ -355,7 +355,7 @@ void GRAYCALL cHeapAlign::FreePtr(void* pData) { // static
 #endif
 }
 
-void* GRAYCALL cHeapAlign::AllocPtr(size_t iSize, size_t iAlignment) { // static
+void* GRAYCALL cHeapAlign::AllocPtr(size_t iSize, size_t iAlignment) {  // static
     //! @note _aligned_malloc is based on malloc(); see malloc for more information on using _aligned_malloc
     //! @arg
     //!  iAlignment = The alignment value, which must be an integer power of 2.

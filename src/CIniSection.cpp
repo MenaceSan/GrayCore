@@ -1,8 +1,9 @@
 //
 //! @file cIniSection.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
+// clang-format off
 #include "pch.h"
+// clang-format on
 #include "StrChar.h"
 #include "cCodeProfiler.h"
 #include "cIniSection.h"
@@ -207,7 +208,7 @@ StrLen_t GRAYCALL cIniReader::FindScriptLineEnd(const IniChar_t* pszLine)  // st
     for (; iLenChars < StrT::k_LEN_MAX; iLenChars++) {
         ch = pszLine[iLenChars];
         if (ch == '\0') break;
-        if (ch == '"') { // STR_BLOCK_t::_QUOTE 
+        if (ch == '"') {  // STR_BLOCK_t::_QUOTE
             bInQuote = !bInQuote;
             continue;
         }
@@ -233,7 +234,7 @@ StrLen_t GRAYCALL cIniReader::FindScriptLineEnd(const IniChar_t* pszLine)  // st
     return StrT::GetWhitespaceEnd(pszLine, iLenChars);
 }
 
-cStringI GRAYCALL cIniReader::GetLineParse2(const IniChar_t* pszLine, IniChar_t** ppszArgs) { // static
+cStringI GRAYCALL cIniReader::GetLineParse2(const IniChar_t* pszLine, IniChar_t** ppszArgs) {  // static
     //! Parse the pszLine into 2 parts. "TAG=Args" or "Tag Args"
     //! @note Does NOT clip // comment from end of line.
     //! @return Tag/Property/Key text.
@@ -286,7 +287,7 @@ void cIniSectionData::DisposeThis() {
     m_iLinesUsed = 0;  // ClearLineQty()
 }
 
-StrLen_t GRAYCALL cIniSectionData::IsLineTrigger(const IniChar_t* pszLine) { // static
+StrLen_t GRAYCALL cIniSectionData::IsLineTrigger(const IniChar_t* pszLine) {  // static
     //! Is this line a script trigger/label in "@NAME" type format?
     //! Similar to other languages use of labels:
     //!  ":DOSLabel" for .bat files.
@@ -294,8 +295,8 @@ StrLen_t GRAYCALL cIniSectionData::IsLineTrigger(const IniChar_t* pszLine) { // 
     //! @return prefix length
     ASSERT_NN(pszLine);
     if (pszLine[0] != '@') return 0;
-    if (StrChar::IsSpaceX(pszLine[1])) return 0;  // got it.        
-    return 1;  // Not a trigger/label.
+    if (StrChar::IsSpaceX(pszLine[1])) return 0;  // got it.
+    return 1;                                     // Not a trigger/label.
 }
 
 ITERATE_t cIniSectionData::FindTriggerName(const IniChar_t* pszTrigName) const {
@@ -316,7 +317,7 @@ ITERATE_t cIniSectionData::FindTriggerName(const IniChar_t* pszTrigName) const {
     return (-1);  // cant find it.
 }
 
-HRESULT cIniSectionData::PropGetEnum(PROPIDX_t ePropIdx, OUT cStringI& rsValue, OUT cStringI* psKey) const { // virtual
+HRESULT cIniSectionData::PropGetEnum(PROPIDX_t ePropIdx, OUT cStringI& rsValue, OUT cStringI* psKey) const {  // virtual
     //! IIniBaseEnumerator
     //! @arg = optionally return psKey. nullptr = don't care.
     const IniChar_t* pszLine = GetLineEnum(ePropIdx);
@@ -455,8 +456,9 @@ ITERATE_t cIniSectionData::FindKeyLine(const IniChar_t* pszKeyName, bool bPrefix
             continue;
         if (bPrefixOnly) return i;  // good enough match.
         // only a full match is OK.
-        if (!StrChar::IsCSym(pszLine[iLen])) return i;  // good enough match.
-                                                        // not a full match.
+        if (!StrChar::IsCSym(pszLine[iLen]))
+            return i;  // good enough match.
+                       // not a full match.
     }
     return k_ITERATE_BAD;
 }
@@ -491,8 +493,7 @@ int cIniSectionData::FindIntForKey(const IniChar_t* pszKey, int iDefault) const 
     return StrT::toI(pszVal);
 }
 
-HRESULT cIniSectionData::PropGet(const IniChar_t* pszPropTag, OUT cStringI& rsValue) const  // virtual
-{
+HRESULT cIniSectionData::PropGet(const IniChar_t* pszPropTag, OUT cStringI& rsValue) const {  // virtual
     //! IIniBaseGetter
     const IniChar_t* pszVal = FindArgForKey(pszPropTag, nullptr);
     if (pszVal == nullptr) {
@@ -669,7 +670,7 @@ StrLen_t cIniSectionData::SetLinesParse(const IniChar_t* pszData, StrLen_t iLen,
     ASSERT(m_apLines.GetSize() >= 1);  // ASSUME m_apLines.GetSize() has been set big enough.
     m_iLinesUsed = StrT::ParseArray(pDataNew, iLen + 1, m_apLines.get_DataWork(), m_apLines.GetSize(), pszSep, uFlags);
 
-    if (uFlags & STRP_EMPTY_STOP) { // did we really use it all ? How much did we use ?
+    if (uFlags & STRP_EMPTY_STOP) {  // did we really use it all ? How much did we use ?
         if (m_iLinesUsed > 0) {
             IniChar_t* pszLineLast = m_apLines[m_iLinesUsed - 1];
             iLen = StrT::Diff(pszLineLast, pDataNew) + StrT::Len(pszLineLast);
@@ -803,7 +804,7 @@ cIniSection::cIniSection(const cIniSection& rSectionCopy) : cIniSectionData(rSec
     SetLinesCopy(rSectionCopy);
 }
 
-bool GRAYCALL cIniSection::IsSectionTypeMatch(const IniChar_t* pszSection1, const IniChar_t* pszSection2) noexcept { // static
+bool GRAYCALL cIniSection::IsSectionTypeMatch(const IniChar_t* pszSection1, const IniChar_t* pszSection2) noexcept {  // static
     bool bRoot1 = IsSectionTypeRoot(pszSection1);
     bool bRoot2 = IsSectionTypeRoot(pszSection2);
     if (bRoot1) {

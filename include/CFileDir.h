@@ -135,7 +135,7 @@ class GRAYCORE_LINK cFileFind {
  public:
     bool m_bReadStats;  /// e.g. "/proc" directory has no extra stats. don't read them.
  private:
-    DIR* m_hContext;  /// Handle for my search/enum.
+    ::DIR* m_hContext;  /// Handle for my search/enum.
 #else
 #error NOOS
 #endif

@@ -1,8 +1,9 @@
 //
 //! @file cTimeUnits.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
+// clang-format off
 #include "pch.h"
+// clang-format on
 #include "StrChar.h"
 #include "StrT.h"
 #include "cBits.h"
@@ -36,7 +37,7 @@ const GChar_t* cTimeUnits::k_StrFormats[static_cast<int>(TIMEFORMAT_t::_QTY) + 1
     nullptr,
 };
 
-const cTimeUnit cTimeUnits::k_Units[static_cast<int>(TIMEUNIT_t::_QTY)] = {
+const cTimeUnit cTimeUnits::k_Units[static_cast<int>(TIMEUNIT_t::_Ignore)] = {
     {_GT("year"), _GT("Y"), 1, 3000, 12, 365 * 24 * 60 * 60, 365.25},  // approximate, depends on leap year.
     {_GT("month"), _GT("M"), 1, 12, 30, 30 * 24 * 60 * 60, 30.43},     // approximate, depends on month
     {_GT("day"), _GT("d"), 1, 31, 24, 24 * 60 * 60, 1.0},
@@ -46,6 +47,7 @@ const cTimeUnit cTimeUnits::k_Units[static_cast<int>(TIMEUNIT_t::_QTY)] = {
     {_GT("millisec"), _GT("ms"), 0, 999, 1000, 0, 1.0 / (24.0 * 60.0 * 60.0 * 1000.0)},
     {_GT("microsec"), _GT("us"), 0, 999, 0, 0, 1.0 / (24.0 * 60.0 * 60.0 * 1000.0 * 1000.0)},
     {_GT("TZ"), _GT("TZ"), -24 * 60, 24 * 60, 0, 0, 1.0},  // TIMEUNIT_t::_TZ
+    {_GT("DOW"), _GT("DOW"), 0, 7, 0},                     // TIMEDOW_t::_QTY
 };
 
 const BYTE cTimeUnits::k_MonthDays[2][static_cast<int>(TIMEMONTH_t::_QTY)] = {
@@ -81,7 +83,7 @@ bool cTimeUnits::sm_time24Mode = false;
 #ifdef _WIN32
 cTimeUnits::cTimeUnits(const SYSTEMTIME& sysTime)
     : m_wYear(sysTime.wYear),
-      m_wMonth(sysTime.wMonth), // 1 based.
+      m_wMonth(sysTime.wMonth),  // 1 based.
       m_wDay(sysTime.wDay),
       m_wHour(sysTime.wHour),
       m_wMinute(sysTime.wMinute),
@@ -117,7 +119,7 @@ void cTimeUnits::SetSys(const SYSTEMTIME& sysTime) {
 #endif
 
 void cTimeUnits::SetZeros() {
-    cMem::Zero(&m_wYear, static_cast<int>(TIMEUNIT_t::_QTY) * sizeof(m_wYear));
+    cMem::Zero(&m_wYear, static_cast<int>(TIMEUNIT_t::_DOW) * sizeof(m_wYear));
     m_wYear = 1;  // m_uMin
     m_wMonth = 1;
     m_wDay = 1;
@@ -159,13 +161,13 @@ bool cTimeUnits::IsValidUnit(TIMEUNIT_t i) const {
 }
 
 bool cTimeUnits::isValidTimeUnits() const {
-    //! Are the values in valid range ?
+    //! Are the values in valid range ? like GetUnitDef(i).IsInRange().
     //! @note If we are just using this for time math values may go out of range ?
     if (!isValidMonth()) return false;
     if (m_wDay < 1 || m_wDay > get_DaysInMonth()) return false;
-    if (((UINT)m_wHour) > 23) return false;
-    if (((UINT)m_wMinute) > 59) return false;
-    if (((UINT)m_wSecond) > 59) return false;
+    if (m_wHour > 23) return false;
+    if (m_wMinute > 59) return false;
+    if (m_wSecond > 59) return false;
     return true;
 }
 
@@ -280,7 +282,7 @@ bool cTimeUnits::isInDST1() const {
     } else if (m_wYear < 2007) {
         iSunday = (bLow) ? 1 : 3;  // first or last.
         wHour = (bLow) ? 2 : 1;
-    } else { // >= 2007
+    } else {                       // >= 2007
         iSunday = (bLow) ? 2 : 1;  // second or first.
         wHour = 2;
     }
@@ -366,7 +368,7 @@ void cTimeUnits::AddDays(int iDays) {
             m_wYear++;
             m_wMonth = 1;
             m_wDay = 1;
-        } else if (iDays2 < 0) { // previous year.
+        } else if (iDays2 < 0) {  // previous year.
             ASSERT(iDays < 0);
             iDays += iDaysInYear;
             m_wYear--;
@@ -380,7 +382,7 @@ void cTimeUnits::AddDays(int iDays) {
         int iDayOfMonth = (m_wDay - 1);
         int iDaysInMonth = get_DaysInMonth();
         int iDays2 = iDayOfMonth + iDays;
-        if (iDays2 >= iDaysInMonth) { // next month.
+        if (iDays2 >= iDaysInMonth) {  // next month.
             ASSERT(iDays > 0);
             iDays -= iDaysInMonth - iDayOfMonth;
             m_wMonth++;
@@ -507,14 +509,6 @@ StrLen_t cTimeUnits::GetTimeSpanStr(GChar_t* pszOut, StrLen_t iOutSizeMax, TIMEU
 }
 
 StrLen_t cTimeUnits::GetFormStr(GChar_t* pszOut, StrLen_t iOutSizeMax, const GChar_t* pszFormat) const {
-    //! Get the time as a formatted string using "C" strftime()
-    //!  build formatted string from cTimeUnits.
-    //!  similar to C stdlib strftime() http://linux.die.net/man/3/strftime
-    //!  add TZ as postfix if desired??
-    //!  used by cTimeDouble::GetTimeFormStr and cTimeInt::GetTimeFormStr
-    //! @return
-    //!  length of string in chars. <= 0 = failed.
-
     if (PtrCastToNum(pszFormat) < static_cast<int>(TIMEFORMAT_t::_QTY)) {  // IS_INTRESOURCE()
         pszFormat = k_StrFormats[PtrCastToNum(pszFormat)];
     }
@@ -532,8 +526,7 @@ StrLen_t cTimeUnits::GetFormStr(GChar_t* pszOut, StrLen_t iOutSizeMax, const GCh
 
         ch = pszFormat[++i];
         if (ch == '\0') break;
-        if (ch == '#')  // As in the printf function, the # flag may prefix/modify any formatting code
-        {
+        if (ch == '#') {  // As in the printf function, the # flag may prefix/modify any formatting code
             ch = pszFormat[++i];
             if (ch == '\0') break;
         }
@@ -690,20 +683,20 @@ HRESULT cTimeUnits::SetTimeStr(const GChar_t* pszDateTime, TZ_TYPE nTimeZone) {
     cTimeParser parser;
     HRESULT hRes = parser.ParseString(pszDateTime, nullptr);
     if (FAILED(hRes)) return hRes;
-    if (!parser.TestMatches())  // try all formats i know.
-        return MK_E_SYNTAX;
+    hRes = parser.TestMatches();  // try all formats i know.
+    if (FAILED(hRes)) return hRes;
+
     m_nTZ = (TIMEVALU_t)nTimeZone;  // allowed to be overridden by cTimeParser.GetTimeUnits
     hRes = parser.GetTimeUnits(*this);
-    if (m_nTZ == TZ_LOCAL) {
-        m_nTZ = cTimeZoneMgr::GetLocalMinutesWest();
-    }
+    if (m_nTZ == TZ_LOCAL) m_nTZ = cTimeZoneMgr::GetLocalMinutesWest();
+
     return hRes;
 }
 
 //******************************************************************************************
 
 StrLen_t cTimeParser::ParseNamedUnit(const GChar_t* pszName) {
-    // Get values for named units. TIMEUNIT_t::_Month, TIMEUNIT_t::_TZ or TIMEUNIT_t::_QTY (for DOW)
+    // Get values for named units. TIMEUNIT_t::_Year to TIMEUNIT_t::_TZ
     ITERATE_t iStart = STR_TABLEFIND_NH(pszName, cTimeUnits::k_MonthName);
     if (iStart >= 0) {
         m_Unit[m_iUnitsParsed].m_Type = TIMEUNIT_t::_Month;
@@ -768,38 +761,34 @@ HRESULT cTimeParser::ParseString(const GChar_t* pszTimeString, const GChar_t* ps
 
     if (pszSeparators == nullptr) pszSeparators = cTimeUnits::k_SepsAll;
 
-    int i = 0;
+    StrLen_t i = 0;
     for (;;) {
-        int iStart = i;
+        StrLen_t iStart = i;
         i += StrT::GetNonWhitespaceI(pszTimeString + i);
         GChar_t ch = pszTimeString[i];
-
-        if ((pszSepFind = StrT::FindChar(pszSeparators, ch)) != nullptr)  // its a legal separator char?
-        {
+        pszSepFind = StrT::FindChar(pszSeparators, ch);
+        if (pszSepFind != nullptr) {  // its a legal separator char?
         do_sep:
             m_Unit[m_iUnitsParsed].m_iOffsetSep = i;
             m_Unit[m_iUnitsParsed].m_Separator = ch;
-            if (!bNeedSep) {
-                // Was just empty!? NOT ALLOWED.
-                break;
-            }
+            if (!bNeedSep) break;  // Was just empty!? NOT ALLOWED.
+
             bNeedSep = false;
             m_iUnitsParsed++;
             if (m_iUnitsParsed >= (int)_countof(m_Unit)) break;
             if (ch == '\0') break;  // done.
-                
+
             i++;
             continue;
         }
 
-        if (bNeedSep) { // must complete the previous first.
-            if (iStart == i) {  // needed a space separator but didn't get one.
-                if (ch == 'T' && StrChar::IsDigitA(pszTimeString[i + 1])) { // ISO can use this as a separator.
+        if (bNeedSep) {                                                      // must complete the previous first.
+            if (iStart == i) {                                               // needed a space separator but didn't get one.
+                if (ch == 'T' && StrChar::IsDigitA(pszTimeString[i + 1])) {  // ISO can use this as a separator.
                     goto do_sep;
                 }
 
                 //! @todo parse odd time zone storage .  (-03:00)
-
                 // Check for terminating TZ with no separator.
                 const cTimeZone* pTZ = cTimeZoneMgr::FindTimeZoneHead(pszTimeString + i);
                 if (pTZ != nullptr) {
@@ -874,8 +863,8 @@ HRESULT cTimeParser::ParseString(const GChar_t* pszTimeString, const GChar_t* ps
                 }
             }
         }
-        if (iHourFound >= 0 && m_Unit[i].m_Type == TIMEUNIT_t::_Hour) { // PM ?
-            m_Unit[i].m_Type = TIMEUNIT_t::_Ignore;  // Ignore this from now on.
+        if (iHourFound >= 0 && m_Unit[i].m_Type == TIMEUNIT_t::_Hour) {  // PM ?
+            m_Unit[i].m_Type = TIMEUNIT_t::_Ignore;                      // Ignore this from now on.
             if (m_Unit[iHourFound].m_nValue < 12) {
                 m_Unit[iHourFound].m_nValue += m_Unit[i].m_nValue;  // Add 'PM'
             }
@@ -886,7 +875,7 @@ HRESULT cTimeParser::ParseString(const GChar_t* pszTimeString, const GChar_t* ps
     // Find day if month is found ?
 
     // We are not reading a valid time/date anymore. done. stop.
-    m_Unit[m_iUnitsParsed].m_Type = TIMEUNIT_t::_UNUSED;  // end
+    m_Unit[m_iUnitsParsed].m_Type = TIMEUNIT_t::_QTY2;  // end
     return m_iUnitsParsed;
 }
 
@@ -924,7 +913,7 @@ TIMEUNIT_t GRAYCALL cTimeParser::GetTypeFromFormatCode(GChar_t ch) {  // static
             return TIMEUNIT_t::_Ignore;  // No equiv. ignore.
     }
     ASSERT(0);
-    return TIMEUNIT_t::_UNUSED;  // bad
+    return TIMEUNIT_t::_QTY2;  // bad
 }
 
 int cTimeParser::FindType(TIMEUNIT_t t) const {
@@ -943,7 +932,7 @@ void cTimeParser::SetUnitFormats(const GChar_t* pszFormat) {
         GChar_t ch = pszFormat[i];
         if (ch == '\0') break;
         if (ch != '%') break;
-        TIMEUNIT_t eType = GetTypeFromFormatCode(pszFormat[i + 1]);
+        const TIMEUNIT_t eType = GetTypeFromFormatCode(pszFormat[i + 1]);
         m_Unit[m_iUnitsParsed].m_Type = eType;
         if (IS_INDEX_BAD(eType, TIMEUNIT_t::_Numeric))  // this should not happen ?! bad format string!
             break;
@@ -960,7 +949,7 @@ void cTimeParser::SetUnitFormats(const GChar_t* pszFormat) {
 
 bool GRAYCALL cTimeParser::TestMatchUnit(const cTimeParserUnit& u, TIMEUNIT_t t) {  // static
     ASSERT(IS_INDEX_GOOD(u.m_Type, TIMEUNIT_t::_QTY2));
-    ASSERT(IS_INDEX_GOOD(t, TIMEUNIT_t::_Numeric)); 
+    ASSERT(IS_INDEX_GOOD(t, TIMEUNIT_t::_Numeric));
     if (!cTimeUnits::GetUnitDef(t).IsInRange(u.m_nValue)) return false;
     if (t == u.m_Type) return true;  // exact type match is good.
     // TIMEUNIT_t::_Numeric is parsed wildcard (i don't know yet) type.
@@ -978,8 +967,8 @@ bool cTimeParser::TestMatchFormat(const cTimeParser& parserFormat, bool bTrimJun
     if (m_iUnitsParsed <= 1) return false;
 
     int iUnitsMatched = 0;
-    for (; iUnitsMatched < m_iUnitsParsed && iUnitsMatched < parserFormat.m_iUnitsParsed; iUnitsMatched++) { // TIMEUNIT_t::_QTY2
-        if (!TestMatchUnit(m_Unit[iUnitsMatched], parserFormat.m_Unit[iUnitsMatched].m_Type))  // not all parserFormat matched.
+    for (; iUnitsMatched < m_iUnitsParsed && iUnitsMatched < parserFormat.m_iUnitsParsed; iUnitsMatched++) {  // TIMEUNIT_t::_QTY2
+        if (!TestMatchUnit(m_Unit[iUnitsMatched], parserFormat.m_Unit[iUnitsMatched].m_Type))                 // not all parserFormat matched.
             return false;
     }
 
@@ -990,7 +979,7 @@ bool cTimeParser::TestMatchFormat(const cTimeParser& parserFormat, bool bTrimJun
         // As long as the extra units are assigned and not duplicated we are good.
         for (; iUnitsMatched < m_iUnitsParsed; iUnitsMatched++) {
             TIMEUNIT_t t = m_Unit[iUnitsMatched].m_Type;
-            if (t == TIMEUNIT_t::_Numeric) { // cant determine type.
+            if (t == TIMEUNIT_t::_Numeric) {  // cant determine type.
                 if (bTrimJunk) break;
                 return false;
             }
@@ -1025,27 +1014,24 @@ bool cTimeParser::TestMatch(const GChar_t* pszFormat) {
     return TestMatchFormat(t1);
 }
 
-bool cTimeParser::TestMatches(const GChar_t** ppStrFormats) {
+HRESULT cTimeParser::TestMatches(const GChar_t** ppStrFormats) {
     //! Try standard k_StrFormats to match.
     if (m_iUnitsParsed <= 1) return false;
-    if (ppStrFormats == nullptr) {
-        ppStrFormats = cTimeUnits::k_StrFormats;
-    }
+    if (ppStrFormats == nullptr) ppStrFormats = cTimeUnits::k_StrFormats;
+
     for (int i = 0; ppStrFormats[i] != nullptr; i++) {
-        if (TestMatch(ppStrFormats[i])) return true;
+        if (TestMatch(ppStrFormats[i])) return i;  // does it match this format ?
     }
 
-    // If all units have assignments then no match is needed ??
-    return false;
+    // If all units have assignments then no match is needed ?? NO _QTY, _UNK ?
+    return MK_E_SYNTAX;
 }
 
 HRESULT cTimeParser::GetTimeUnits(OUT cTimeUnits& tu) const {
     //! Make a valid cTimeUnits class from what we already parsed. If i can.
     if (!isMatched()) return MK_E_SYNTAX;
-    for (int i = 0; i < m_iUnitsMatched; i++) {  // <TIMEUNIT_t::_QTY2
-        if (m_Unit[i].m_Type >= TIMEUNIT_t::_QTY) {
-            continue;  // TIMEUNIT_t::_DOW, TIMEUNIT_t::_Ignore ignored.
-        }
+    for (int i = 0; i < m_iUnitsMatched; i++) {              // <TIMEUNIT_t::_QTY2
+        if (m_Unit[i].m_Type >= TIMEUNIT_t::_DOW) continue;  // TIMEUNIT_t::_DOW, TIMEUNIT_t::_Ignore ignored.
         tu.SetUnit(m_Unit[i].m_Type, m_Unit[i].m_nValue);
     }
     return GetMatchedLength();

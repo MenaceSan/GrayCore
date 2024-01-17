@@ -4,9 +4,9 @@
 //! @note Yes i know that the C run time will sort of do this for me using the { static construction } technique.
 //! But i want more visibility and control of the destructors and guaranteed dynamic construction and memory allocation.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
-
+// clang-format off
 #include "pch.h"
+// clang-format on
 #include "cArray.h"
 #include "cLogMgr.h"
 #include "cOSModImpl.h"
@@ -126,7 +126,7 @@ cSingletonRegister::~cSingletonRegister() noexcept {
     }
 }
 
-void GRAYCALL cSingletonRegister::ReleaseModule(HMODULE hMod) { // static
+void GRAYCALL cSingletonRegister::ReleaseModule(HMODULE hMod) {  // static
     cSingletonManager::I().ReleaseModule(hMod);
 }
 }  // namespace Gray

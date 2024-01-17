@@ -21,7 +21,7 @@ typedef char LOGCHAR_t;                                                  /// alw
 /// log level = criticalness/importance level of a logged event. higher = more severe/important.
 /// Similar to _WIN32 TRACE_LEVEL_VERBOSE "EvnTrace.h", DPFLTR_ERROR_LEVEL, DEBUGLVL_ERROR or .NET System.Diagnostics.EventLogEntryType
 /// </summary>
-enum class LOGLVL_t {
+enum class LOGLVL_t : BYTE {
 #define LOGLEVELDEF(a, b, c, d) _##a,
 #include "cLogLevel.tbl"
 #undef LOGLEVELDEF

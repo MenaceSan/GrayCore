@@ -1,8 +1,8 @@
-//
 //! @file cAppConsole.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
+// clang-format off
 #include "pch.h"
+// clang-format on
 #include "HResult.h"
 #include "cAppConsole.h"
 #include "cAppState.h"
@@ -93,16 +93,14 @@ bool cAppConsole::AttachConsoleSync() {
             // Now attach it to the appropriate std FILE*,
             cFileText fileStd;
             HRESULT hRes = fileStd.OpenFileHandle(m_hStd[i], nFileFlags);
-            if (FAILED(hRes)) {
-                return false;
-            }
+            if (FAILED(hRes)) return false;
             *pFileDest = *fileStd.DetachFileStream();  // copy FILE struct contents! NOT Just pointer.
         }
     }
 
     if (m_eConsoleType != AppCon_t::_Proc) {
         // set the screen buffer to be big enough to let us scroll text
-        CONSOLE_SCREEN_BUFFER_INFO coninfo;
+        ::CONSOLE_SCREEN_BUFFER_INFO coninfo;
         if (!::GetConsoleScreenBufferInfo(GetStd(AppStd_t::_stdout), &coninfo)) {
             return false;
         }
@@ -128,8 +126,7 @@ bool cAppConsole::AttachOrAllocConsole(bool bAttachElseAlloc) {
     //! http://stackoverflow.com/questions/493536/can-one-executable-be-both-a-console-and-gui-application/494000#494000
     //! https://www.tillett.info/2013/05/13/how-to-create-a-windows-program-that-works-as-both-as-a-gui-and-console-application/
 
-    if (isConsoleMode())  // I'm already in a console.
-    {
+    if (isConsoleMode()) {       // I'm already in a console.
         m_iAllocConsoleCount++;  // Must have same number of closes with ReleaseConsole().
         return true;
     }
@@ -144,13 +141,11 @@ bool cAppConsole::AttachOrAllocConsole(bool bAttachElseAlloc) {
     // so the AllocConsole function fails if the calling process already has a console
 
     // HasConsoleParent()
-    if (::AttachConsole(ATTACH_PARENT_PROCESS))  // try to use my parents console.
-    {
+    if (::AttachConsole(ATTACH_PARENT_PROCESS)) {  // try to use my parents console.
         m_eConsoleType = AppCon_t::_Attach;
     } else {
         if (!bAttachElseAlloc) return false;
-        if (!::AllocConsole())  // Make my own private console.
-        {
+        if (!::AllocConsole()) {  // Make my own private console.
             // Failed to get or create a console. i probably already have one?
             return false;
         }
@@ -198,15 +193,15 @@ HRESULT cAppConsole::WriteStrErr(const char* pszText) {
     //! Does not support UNICODE ?
     //! @return EOF = (-1) error
     //! >=0 = success
-    if (!isConsoleMode())  return true;
-     
+    if (!isConsoleMode()) return true;
+
     cThreadGuard guard(m_Lock);
 
 #if defined(_WIN32)
     // @note we must do this to get the dual windows/console stuff to work.
     DWORD dwLengthWritten;
     DWORD dwDataSize = StrT::Len(pszText);
-    bool bRet = ::WriteFile(GetStd(AppStd_t::_stderr), pszText, dwDataSize, &dwLengthWritten, nullptr); 
+    bool bRet = ::WriteFile(GetStd(AppStd_t::_stderr), pszText, dwDataSize, &dwLengthWritten, nullptr);
     if (!bRet) {
         // GetLastError code ERROR_IO_PENDING is not a failure. Async complete.
         HRESULT hRes = HResult::GetLastDef(HRESULT_WIN32_C(ERROR_WRITE_FAULT));
@@ -230,18 +225,18 @@ HRESULT cAppConsole::WriteStrOut(const char* pszText) {
     //! >=0 = success
     //! @note _WIN32 could probably use the m_h directly.
 
-    if (!isConsoleMode())  return S_OK;
+    if (!isConsoleMode()) return S_OK;
     cThreadGuard guard(m_Lock);
 #if defined(_WIN32)
     // @note we must do this to get the dual windows/console stuff to work.
     DWORD dwLengthWritten = 0;
     DWORD dwDataSize = StrT::Len(pszText);
-    bool bRet = ::WriteFile(GetStd(AppStd_t::_stdout), pszText, dwDataSize, &dwLengthWritten, nullptr);  
-    if (!bRet) return HResult::GetLastDef(HRESULT_WIN32_C(ERROR_WRITE_FAULT)); 
+    bool bRet = ::WriteFile(GetStd(AppStd_t::_stdout), pszText, dwDataSize, &dwLengthWritten, nullptr);
+    if (!bRet) return HResult::GetLastDef(HRESULT_WIN32_C(ERROR_WRITE_FAULT));
 #else  // POSIX
     FILE* pFile = stdout;
     int iRet = ::fputs(pszText, pFile);
-    if (iRet == EOF) return HResult::GetPOSIXLastDef(HRESULT_WIN32_C(ERROR_WRITE_FAULT));    // failed. EBADF=9
+    if (iRet == EOF) return HResult::GetPOSIXLastDef(HRESULT_WIN32_C(ERROR_WRITE_FAULT));  // failed. EBADF=9
 #endif
     return S_OK;  // we are good.
 }
@@ -274,7 +269,7 @@ HRESULT cAppConsole::SetKeyModes(bool bEchoMode, bool bEnterMode) {
     iRet = fdin.IOCtl(TCGETS, &stty);
     if (iRet < 0) return HResult::GetLastDef();
 
-    if (bEchoMode) { // CLOCAL ??
+    if (bEchoMode) {             // CLOCAL ??
         stty.c_lflag |= (ECHO);  // echo
     } else {
         stty.c_lflag &= ~(ECHO);  // suppress echo
@@ -286,9 +281,8 @@ HRESULT cAppConsole::SetKeyModes(bool bEchoMode, bool bEnterMode) {
     }
 
     iRet = fdin.IOCtl(TCSETS, &stty);
-    if (iRet < 0) {
-        return HResult::GetLastDef();
-    }
+    if (iRet < 0) return HResult::GetLastDef();
+
 #endif
     m_bKeyEchoMode = bEchoMode;
     m_bKeyEnterMode = bEnterMode;
@@ -314,7 +308,7 @@ int cAppConsole::ReadKeyWait() {
     if (!isConsoleMode()) return -1;
 
 #ifdef _WIN32
-    // NOTE: _WIN32 fgetc(stdin) will block until the ENTER key is pressed ! then feed chars until it runs out.
+        // NOTE: _WIN32 fgetc(stdin) will block until the ENTER key is pressed ! then feed chars until it runs out.
 #if USE_CRT
     if (!m_bKeyEnterMode) {
         if (m_bKeyEchoMode) return ::_getche();
@@ -331,7 +325,7 @@ int cAppConsole::ReadKeyWait() {
 }
 
 int cAppConsole::ReadKey() {
-    if (get_KeyReadQty() <= 0) return -1;   // none ready.
+    if (get_KeyReadQty() <= 0) return -1;  // none ready.
     return ReadKeyWait();
 }
 }  // namespace Gray

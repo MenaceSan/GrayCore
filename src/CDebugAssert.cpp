@@ -1,8 +1,9 @@
 //
 //! @file cDebugAssert.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
+// clang-format off
 #include "pch.h"
+// clang-format on
 #include "cDebugAssert.h"
 #include "cExceptionAssert.h"
 #include "cLogMgr.h"

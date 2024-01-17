@@ -1,8 +1,9 @@
 //
 //! @file cTimeSys.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
+// clang-format off
 #include "pch.h"
+// clang-format on
 #include "cTimeSys.h"
 #include "cTimeUnits.h"
 #include "cTypes.h"
@@ -13,7 +14,7 @@ namespace Gray {
 TIMEPERF_t cTimePerf::sm_nFreq = 0;  /// MUST call static InitFreq()  GRAYCORE_LINK
 #endif
 
-bool GRAYCALL cTimePerf::InitFreq() noexcept { // static
+bool GRAYCALL cTimePerf::InitFreq() noexcept {  // static
     //! need to call this once in _WIN32 to capture the k_nFreq
     if (sm_nFreq != 0) return true;
 #if 0  // UNDER_CE
@@ -28,7 +29,7 @@ bool GRAYCALL cTimePerf::InitFreq() noexcept { // static
     return true;
 }
 
-double GRAYCALL cTimePerf::ToDays(TIMEPERF_t t) noexcept { // static
+double GRAYCALL cTimePerf::ToDays(TIMEPERF_t t) noexcept {  // static
     //! Convert cTimePerf to double days (from arbitrary start time).
     //! @return time in days since some unknown/arbitrary starting point
 
@@ -54,7 +55,7 @@ void cTimePerf::InitTimeNow() noexcept {
 }
 
 //*************************************************************************
-TIMESYS_t GRAYCALL cTimeSys::GetTimeNow() noexcept { // static
+TIMESYS_t GRAYCALL cTimeSys::GetTimeNow() noexcept {  // static
     //! @note ASSUME this is FAST !
     //! _WIN32 is limited to the resolution of the system timer, which is typically in the range of 10 milliseconds to 16 milliseconds.
 #ifdef _WIN32
@@ -73,7 +74,7 @@ TIMESYS_t GRAYCALL cTimeSys::GetTimeNow() noexcept { // static
 #endif
 }
 
-unsigned long GRAYCALL cTimeSys::WaitSpin(TIMESYSD_t nmSecs) { // static
+unsigned long GRAYCALL cTimeSys::WaitSpin(TIMESYSD_t nmSecs) {  // static
     //! Wait a certain amount of time. Spin instead of sleeping.
     //! Do NOT yield time to other threads. (NOT Sleep)
 

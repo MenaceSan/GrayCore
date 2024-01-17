@@ -15,6 +15,7 @@
 #include "cTimeFile.h"
 #include "cTimeInt.h"
 #include "cValArray.h"
+#include "cBits.h"
 
 #ifdef _WIN32
 typedef WIN32_FIND_DATAW cFileStatusSys;  // or BY_HANDLE_FILE_INFORMATION ?
@@ -31,26 +32,26 @@ typedef UINT64 FILE_SIZE_t;          /// similar to STREAM_POS_t size_t
 #endif
 
 /// <summary>
-/// FAT, FAT32 and NTFS file attribute flags. translated to approximate __linux__ NFS
+/// cBitmask FAT, FAT32 and NTFS file attribute flags. translated to approximate __linux__ NFS
 /// </summary>
-typedef UINT32 FILEATTR_MASK_t;
-enum FILEATTR_ENUM_t : FILEATTR_MASK_t {
-    FILEATTR_None,
-    FILEATTR_ReadOnly = 0x0001,  /// FILE_ATTRIBUTE_READONLY. __linux__ permissions for user ?
-    FILEATTR_Hidden = 0x0002,    /// FILE_ATTRIBUTE_HIDDEN. __linux__ starts with .
-    FILEATTR_System = 0x0004,    /// FILE_ATTRIBUTE_SYSTEM
+enum class FILEATTR_t : UINT32 {
+    _None,
+    _ReadOnly = 0x0001,  /// FILE_ATTRIBUTE_READONLY. __linux__ permissions for user ?
+    _Hidden = 0x0002,    /// FILE_ATTRIBUTE_HIDDEN. __linux__ starts with .
+    _System = 0x0004,    /// FILE_ATTRIBUTE_SYSTEM
+    _SystemMask = 0x0106, // Hidden, System, Temporary 
 
-    FILEATTR_NormalMask = 0x000F,  /// (FILEATTR_ReadOnly|FILEATTR_Hidden|FILEATTR_System)
+    _Directory = 0x0010,  /// FILE_ATTRIBUTE_DIRECTORY
+    _Archive = 0x0020,    /// FILE_ATTRIBUTE_ARCHIVE = this has been changed. (needs to be archived) not yet backed up.
+    _Volume = 0x0040,     /// FILE_ATTRIBUTE_DEVICE = some sort of device. not a file or dir. e.g. COM1
 
-    FILEATTR_Directory = 0x0010,  /// FILE_ATTRIBUTE_DIRECTORY
-    FILEATTR_Archive = 0x0020,    /// FILE_ATTRIBUTE_ARCHIVE = this has been changed. (needs to be archived) not yet backed up.
-    FILEATTR_Volume = 0x0040,     /// FILE_ATTRIBUTE_DEVICE = some sort of device. not a file or dir. e.g. COM1
-    FILEATTR_Normal = 0x0080,     /// FILE_ATTRIBUTE_NORMAL = just a file.
+    _Normal = 0x0080,     /// FILE_ATTRIBUTE_NORMAL = just a file.
+    _NormalMask = 0x0087,  /// (FILEATTR_t::_ReadOnly|FILEATTR_t::_FILEATTR_Hidden|FILEATTR_t::_FILEATTR_System)
 
     // NTFS only flags. (maybe Linux)
-    FILEATTR_Temporary = 0x0100,  /// FILE_ATTRIBUTE_TEMPORARY
-    FILEATTR_Link = 0x0400,       /// FILE_ATTRIBUTE_REPARSE_POINT = a link. This file doesn't really exist locally but is listed in the directory anyhow.
-    FILEATTR_Compress = 0x0800,   /// FILE_ATTRIBUTE_COMPRESSED. this is a file that will act like a ATTR_directory. (sort of)
+    _Temporary = 0x0100,  /// FILE_ATTRIBUTE_TEMPORARY
+    _Link = 0x0400,       /// FILE_ATTRIBUTE_REPARSE_POINT = a link. This file doesn't really exist locally but is listed in the directory anyhow.
+    _Compress = 0x0800,   /// FILE_ATTRIBUTE_COMPRESSED. this is a file that will act like a ATTR_directory. (sort of)
 };
  
 /// <summary>
@@ -66,7 +67,7 @@ struct GRAYCORE_LINK cFileStatus {
     cTimeFile m_timeChange;        /// m_mtime = real world time/date of last modification. (FAT32 only accurate to 2 seconds) // All OS support this.
     cTimeFile m_timeLastAccess;    /// m_atime = time of last access/Open. (For Caching). (may not be supported by file system)
     FILE_SIZE_t m_Size;            /// file size in bytes. size_t. not always accurate for directories. (-1)
-    FILEATTR_MASK_t m_Attributes;  /// cBitmask of file attribute bits. FILEATTR_None
+    cBitmask<FILEATTR_t,UINT32> m_Attributes;  /// cBitmask of file attribute bits. FILEATTR_None
 
     cFileStatus() noexcept;
     cFileStatus(const FILECHAR_t* pszFilePath);
@@ -86,16 +87,18 @@ struct GRAYCORE_LINK cFileStatus {
     bool UpdateLinuxHidden(const FILECHAR_t* pszName) noexcept {
         //! Is this a __linux__ (NFS) hidden file name ? starts with dot.
         if (IsLinuxHidden(pszName)) {
-            m_Attributes |= FILEATTR_Hidden;
+            m_Attributes.SetMask(FILEATTR_t::_Hidden);
             return true;
         }
         return false;
     }
 
+    /// <summary>
+    /// did i get file data? is this a file vs a device?
+    /// @note asking for a 'devicename' is BAD! i.e. http://myserver/com5.txt (this will trap that!)
+    /// </summary>
+    /// <returns>false = bad (or not a) file like 'com1:' 'lpt:' etc.</returns>
     bool isFileValid() const noexcept {
-        //! did i get file data ? is this a file vs a device ?
-        //! @return false = bad (or not a) file like 'com1:' 'lpt:' etc.
-        //! @note asking for a 'devicename' is BAD! i.e. http://myserver/com5.txt (this will trap that!)
         return m_timeChange.isValid();
     }
 
@@ -132,24 +135,28 @@ struct GRAYCORE_LINK cFileStatus {
         if (pFileStatus == nullptr) return false;
         return IsFileEqualTo(*pFileStatus);
     }
-    bool IsAttrMask(FILEATTR_MASK_t dwAttrMask = FILEATTR_ReadOnly) const noexcept {
-        //! have this attribute? e.g. FILEATTR_ReadOnly
-        return (m_Attributes & dwAttrMask) ? true : false;
+    /// <summary>
+    /// have this attribute? e.g. FILEATTR_t::_ReadOnly
+    /// </summary>
+    bool IsAttrMask(FILEATTR_t dwAttrMask = FILEATTR_t::_ReadOnly) const noexcept {
+        return m_Attributes.HasMask(dwAttrMask);
     }
     bool isAttrDir() const noexcept {
-        return IsAttrMask(FILEATTR_Directory);
+        return IsAttrMask(FILEATTR_t::_Directory);
     }
     bool isAttrHidden() const noexcept {
         // for __linux__ starts with .
-        return IsAttrMask(FILEATTR_Hidden);
+        return IsAttrMask(FILEATTR_t::_Hidden);
     }
+    /// <summary>
+    /// get the 64 bit length of the file.
+    /// </summary>
+    /// <returns>-1 = size not available for directories.</returns>
     FILE_SIZE_t GetFileLength() const noexcept {
-        //! get the 64 bit length of the file.
-        //! -1 = size not available for directories.
         return m_Size;
     }
 
-    static HRESULT GRAYCALL WriteFileAttributes(const FILECHAR_t* pszFilePath, FILEATTR_MASK_t dwAttributes);
+    static HRESULT GRAYCALL WriteFileAttributes(const FILECHAR_t* pszFilePath, FILEATTR_t dwAttributes);
     static HRESULT GRAYCALL WriteFileTimes(const FILECHAR_t* pszFilePath, const cTimeFile* pTimeCreate, const cTimeFile* pTimeChange = nullptr);
     static HRESULT GRAYCALL WriteFileTimes(const FILECHAR_t* pszFilePath, const cFileStatus& rFileStatus);
     static HRESULT GRAYCALL ReadFileStatus2(const FILECHAR_t* pszFilePath, cFileStatus* pFileStatus = nullptr, bool bFollowLink = false);

@@ -1,9 +1,9 @@
 ﻿//
 //! @file StrU.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
-
+// clang-format off
 #include "pch.h"
+// clang-format on
 #include "StrT.h"
 #include "StrU.h"
 #include "cBits.h"
@@ -87,28 +87,26 @@ StrLen_t GRAYCALL StrU::UTF8Size1(unsigned char firstByte, OUT int& riStartBits)
     return k_StrLen_UNK;  // invalid format !? stop
 }
 
-StrLen_t GRAYCALL StrU::UTF8Size(const char* pInp, StrLen_t iSizeInpBytes, OUT int& riStartBits) { // static
-    if (iSizeInpBytes < 1 || pInp == nullptr) 
-        return 0;  // No data here !!
+StrLen_t GRAYCALL StrU::UTF8Size(const char* pInp, StrLen_t iSizeInpBytes, OUT int& riStartBits) {  // static
+    if (iSizeInpBytes < 1 || pInp == nullptr) return 0;                                             // No data here !!
     return StrU::UTF8Size1(CastN(unsigned char, *pInp), riStartBits);
 }
 
-StrLen_t GRAYCALL StrU::UTF8toUNICODE(OUT wchar_t& wChar, const char* pInp, StrLen_t iSizeInpBytes) { // static
+StrLen_t GRAYCALL StrU::UTF8toUNICODE(OUT wchar_t& wChar, const char* pInp, StrLen_t iSizeInpBytes) {  // static
     int iStartBits;
     const StrLen_t iBytes = StrU::UTF8Size(pInp, iSizeInpBytes, iStartBits);
-    if (iBytes <= 0) 
-        return iBytes;  // FAILED
-    
+    if (iBytes <= 0) return iBytes;  // FAILED
+
     if (iBytes == 1) {  // needs NO special UTF8 decoding.
         wChar = CastN(wchar_t, *pInp);
         return 1;
     }
-    if (iBytes > iSizeInpBytes) { // not big enough bytes to provide it. (broken char)
-        return 0;  // FAILED
+    if (iBytes > iSizeInpBytes) {  // not big enough bytes to provide it. (broken char)
+        return 0;                  // FAILED
     }
 
     unsigned char ch = CastN(unsigned char, *pInp);
-    wchar_t wCharTmp = ch & cBits::MaskN<unsigned char>(iStartBits);
+    wchar_t wCharTmp = ch & cBits::MaskLT<unsigned char>(iStartBits);
     StrLen_t iInp = 1;
     for (; iInp < iBytes; iInp++) {
         ch = CastN(unsigned char, pInp[iInp]);
@@ -122,13 +120,12 @@ StrLen_t GRAYCALL StrU::UTF8toUNICODE(OUT wchar_t& wChar, const char* pInp, StrL
     return iBytes;
 }
 
-StrLen_t GRAYCALL StrU::UNICODEtoUTF8(char* pOut, StrLen_t iSizeOutMaxBytes, wchar_t wChar) { // static
+StrLen_t GRAYCALL StrU::UNICODEtoUTF8(char* pOut, StrLen_t iSizeOutMaxBytes, wchar_t wChar) {  // static
     int iStartBits = 0;
     const StrLen_t iBytes = StrU::UTF8Size(wChar, iStartBits);
-    if (iBytes <= 0) 
-        return 0;  // FAILED
-    if (iBytes > iSizeOutMaxBytes) { // not big enough to hold it!
-        return 0;  // FAILED
+    if (iBytes <= 0) return 0;        // FAILED
+    if (iBytes > iSizeOutMaxBytes) {  // not big enough to hold it!
+        return 0;                     // FAILED
     }
     if (iBytes == 1) {  // needs NO special UTF8 encoding.
         *pOut = CastN(char, wChar);
@@ -137,7 +134,7 @@ StrLen_t GRAYCALL StrU::UNICODEtoUTF8(char* pOut, StrLen_t iSizeOutMaxBytes, wch
 
     StrLen_t iOut = iBytes - 1;
     for (; iOut > 0; iOut--) {
-        pOut[iOut] = CastN(char, 0x80 | (wChar & cBits::MaskN<wchar_t>(6)));
+        pOut[iOut] = CastN(char, 0x80 | (wChar & cBits::MaskLT<wchar_t>(6)));
         wChar >>= 6;
     }
 
@@ -149,7 +146,7 @@ StrLen_t GRAYCALL StrU::UNICODEtoUTF8(char* pOut, StrLen_t iSizeOutMaxBytes, wch
 
 //*********************************************
 
-StrLen_t GRAYCALL StrU::UTF8toUNICODELen(const char* pInp, StrLen_t iSizeInpBytes) { // static
+StrLen_t GRAYCALL StrU::UTF8toUNICODELen(const char* pInp, StrLen_t iSizeInpBytes) {  // static
     if (pInp == nullptr) return 0;
     if (iSizeInpBytes <= k_StrLen_UNK) {
         iSizeInpBytes = StrT::k_LEN_MAX;
@@ -171,7 +168,7 @@ StrLen_t GRAYCALL StrU::UTF8toUNICODELen(const char* pInp, StrLen_t iSizeInpByte
     return iOut;
 }
 
-StrLen_t GRAYCALL StrU::UNICODEtoUTF8Size(const wchar_t* pwInp, StrLen_t iSizeInpChars) { // static
+StrLen_t GRAYCALL StrU::UNICODEtoUTF8Size(const wchar_t* pwInp, StrLen_t iSizeInpChars) {  // static
     if (pwInp == nullptr) return 0;
     if (iSizeInpChars <= k_StrLen_UNK) {
         iSizeInpChars = StrT::k_LEN_MAX;
@@ -191,7 +188,7 @@ StrLen_t GRAYCALL StrU::UNICODEtoUTF8Size(const wchar_t* pwInp, StrLen_t iSizeIn
     return iOut;
 }
 
-StrLen_t GRAYCALL StrU::UTF8toUNICODE(OUT wchar_t* pwOut, StrLen_t iSizeOutMaxChars, const char* pInp, StrLen_t iSizeInpBytes) { // static
+StrLen_t GRAYCALL StrU::UTF8toUNICODE(OUT wchar_t* pwOut, StrLen_t iSizeOutMaxChars, const char* pInp, StrLen_t iSizeInpBytes) {  // static
     ASSERT_NN(pwOut);
     ASSERT_NN(pInp);
     if (iSizeOutMaxChars <= 0) {
@@ -241,7 +238,7 @@ StrLen_t GRAYCALL StrU::UTF8toUNICODE(OUT wchar_t* pwOut, StrLen_t iSizeOutMaxCh
     return (iOut);
 }
 
-StrLen_t GRAYCALL StrU::UNICODEtoUTF8(OUT char* pOut, StrLen_t iSizeOutMaxBytes, const wchar_t* pwInp, StrLen_t iSizeInpChars) { // static
+StrLen_t GRAYCALL StrU::UNICODEtoUTF8(OUT char* pOut, StrLen_t iSizeOutMaxBytes, const wchar_t* pwInp, StrLen_t iSizeInpChars) {  // static
     if (iSizeInpChars <= k_StrLen_UNK) {
         // just go to '\0'.
         iSizeInpChars = iSizeOutMaxBytes;  // max possible size.
@@ -261,7 +258,7 @@ StrLen_t GRAYCALL StrU::UNICODEtoUTF8(OUT char* pOut, StrLen_t iSizeOutMaxBytes,
         const wchar_t wChar = pwInp[iInp];
         if (wChar == '\0') break;
         if (iOut >= iSizeOutMaxBytes) break;
-        if (wChar >= 0x80)  { // needs special UTF8 encoding.
+        if (wChar >= 0x80) {  // needs special UTF8 encoding.
             const StrLen_t iOutTmp = StrU::UNICODEtoUTF8(pOut + iOut, iSizeOutMaxBytes - iOut, wChar);
             if (iOutTmp <= 0) {
                 DEBUG_CHECK(iOutTmp == 0);  // just skip it!

@@ -422,15 +422,13 @@ class GRAYCORE_LINK cInterlockedVal {
         ASSERT((PtrCastToNum(&m_nValue) % sizeof(TYPE)) == 0);  // must be aligned!!
     }
 
-    TYPE Inc() noexcept  //! @return post increment. e.g. NEVER 0
-    {
+    TYPE Inc() noexcept { //! @return post increment. e.g. NEVER 0
         return InterlockedN::Increment(&m_nValue);
     }
     void IncV() noexcept {
         InterlockedN::Increment(&m_nValue);
     }
-    TYPE Dec() noexcept  //! @return post decrement.
-    {
+    TYPE Dec() noexcept { //! @return post decrement.
         return InterlockedN::Decrement(&m_nValue);
     }
     void DecV() noexcept {

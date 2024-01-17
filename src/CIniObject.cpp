@@ -1,8 +1,9 @@
 //
 //! @file cIniObject.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
+// clang-format off
 #include "pch.h"
+// clang-format on
 #include "cCodeProfiler.h"
 #include "cIniObject.h"
 #include "cIniSection.h"
@@ -10,7 +11,7 @@
 #include "cString.h"
 
 namespace Gray {
-HRESULT cIniObject::PropGet(const IniChar_t* pszPropTag, OUT cStringI& rsValue) const { // override
+HRESULT cIniObject::PropGet(const IniChar_t* pszPropTag, OUT cStringI& rsValue) const {  // override
     //! IIniBaseGetter
     //! Read a prop by its string name.
     //! default implementation.

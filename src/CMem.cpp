@@ -1,12 +1,13 @@
 //
 //! @file cMem.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
+// clang-format off
 #include "pch.h"
+// clang-format on
 #include "HResult.h"
+#include "cBlob.h"
 #include "cDebugAssert.h"
 #include "cExceptionSystem.h"
-#include "cBlob.h"
 #include "cValArray.h"
 
 namespace Gray {
@@ -18,7 +19,7 @@ namespace Gray {
 static cExceptionJmp s_CMem_IsValidFailJmpBuf;
 typedef void(__cdecl* SIGNAL_t)(int);
 
-void __cdecl cMem::IsValidFailHandler(int nSig) {  // SIGNAL_t static 
+void __cdecl cMem::IsValidFailHandler(int nSig) {  // SIGNAL_t static
     //! @todo make s_CMem_IsValidFailJmpBuf thread safe.
     UNREFERENCED_PARAMETER(nSig);
     s_CMem_IsValidFailJmpBuf.Jump(1);

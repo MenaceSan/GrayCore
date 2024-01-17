@@ -2,8 +2,9 @@
 //! @file cOSProcess.cpp
 //! @note Launching processes is a common basic feature for __linux__
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
+// clang-format off
 #include "pch.h"
+// clang-format on
 #include "cFile.h"
 #include "cOSModule.h"
 #include "cOSProcess.h"
@@ -41,7 +42,7 @@ struct CATTR_PACKED _PROCESS_BASIC_INFORMATION {
 #endif
 
 namespace Gray {
-cOSProcess::cOSProcess() noexcept : m_nPid(PROCESSID_BAD) {
+cOSProcess::cOSProcess() noexcept : m_nPid(kPROCESSID_BAD) {
     // _WIN32 = ::GetCurrentProcess() = 0xFFFFFFFF as a shortcut.
 }
 
@@ -155,7 +156,7 @@ HRESULT cOSProcess::CreateProcessX(const FILECHAR_t* pszExeName, const FILECHAR_
     return S_OK;
 }
 
-cFilePath cOSProcess::get_ProcessPath() const { // virtual
+cFilePath cOSProcess::get_ProcessPath() const {  // virtual
     //! Get the full file path for this process EXE. MUST be loaded by this process for _WIN32.
     //! e.g. "c:\Windows\System32\smss.exe" or "\Device\HarddiskVolume2\Windows\System32\smss.exe"
     //! @note _WIN32 must have the PROCESS_QUERY_INFORMATION and PROCESS_VM_READ access rights.
@@ -201,29 +202,23 @@ HRESULT cOSProcess::OpenProcessId(PROCESSID_t nProcessId, DWORD dwDesiredAccess,
     //! get a handle to a process by its PROCESSID_t.
     //! @arg dwDesiredAccess = PROCESS_TERMINATE | PROCESS_VM_READ
 
-    if (nProcessId == PROCESSID_BAD) 
-        return E_INVALIDARG;
-
-    if (isValidProcess() && nProcessId == get_ProcessId()) 
-        return S_OK;
+    if (nProcessId == kPROCESSID_BAD) return E_INVALIDARG;
+    if (isValidProcess() && nProcessId == get_ProcessId()) return S_OK;
 
     m_nPid = nProcessId;
 
 #ifdef _WIN32
     m_hProcess.AttachHandle(::OpenProcess(dwDesiredAccess, bInheritHandle, nProcessId));
-    if (!isValidProcess()) 
-        return HResult::GetLastDef(E_HANDLE);   // E_ACCESSDENIED
+    if (!isValidProcess()) return HResult::GetLastDef(E_HANDLE);  // E_ACCESSDENIED
 
     // Validate PID.
     PROCESSID_t nProcessId2 = ::GetProcessId(m_hProcess);
-    if (nProcessId2 != nProcessId) 
-        return HResult::GetLastDef(E_HANDLE);   // this should not happen!!
+    if (nProcessId2 != nProcessId) return HResult::GetLastDef(E_HANDLE);  // this should not happen!!
 
 #else
     // Just make sure the PID is valid ?
     m_sPath = get_ProcessPath();
-    if (m_sPath.IsEmpty())
-        return E_FAIL;
+    if (m_sPath.IsEmpty()) return E_FAIL;
 #endif
 
     return S_OK;
@@ -236,8 +231,8 @@ HRESULT cOSProcess::CloseProcess() {
     //! send ::PostThreadMessage(WM_CLOSE) and wait for a bit, to allow programs to save.
     //! https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-postthreadmessagea
 
-    if (!m_ThreadId.isValidId())  // Didnt get an id.
-        return E_HANDLE;
+    if (!m_ThreadId.isValidId()) return E_HANDLE;  // Didnt get an id.
+
     if (!_GTN(::PostThreadMessage)(m_ThreadId.GetThreadId(), WM_CLOSE, 0, 0)) {
         return HResult::GetLastDef(E_HANDLE);
     }
@@ -301,16 +296,13 @@ cStringF cOSProcess::get_CommandLine() const {
     wchar_t szCmdLine[_MAX_PATH * 2];
     size_t dwSize = sizeof(szCmdLine);
     HRESULT hRes = GetProcessCommandLine(szCmdLine, &dwSize);
-    if (FAILED(hRes)) {
-        // Failed to get command line for some reason.
-        return "";
-    }
+    if (FAILED(hRes)) return "";  // Failed to get command line for some reason.
+
 #elif defined(__linux__)
     cStringF sFileName = cStringF::GetFormatf(_FN("/proc/%d/cmdline"), get_ProcessId());
     cFile file;
     HRESULT hRes = file.OpenX(sFileName);
-    if (FAILED(hRes))
-        return "";
+    if (FAILED(hRes)) return "";
 
     // Read it.
     char szCmdLine[_MAX_PATH * 2];
@@ -327,21 +319,18 @@ HRESULT cOSProcess::WaitForProcessExit(TIMESYSD_t nTimeWait, APP_EXITCODE_t* pnE
     //! It is generally assumed this is a child process of the current PROCESSID_t (Linux)
     //! @note this does not CAUSE the process to exit.
 
-    if (nTimeWait == 0) 
-        return S_FALSE;
+    if (nTimeWait == 0) return S_FALSE;
 
 #ifdef _WIN32
     // Wait for the app to complete?
     HRESULT hRes = m_hProcess.WaitForSingleObject(nTimeWait);  // wait until its done!
-    if (FAILED(hRes))
-        return hRes;    // i waited too long? handles are still open tho?
+    if (FAILED(hRes)) return hRes;                             // i waited too long? handles are still open tho?
 
     // app has exited.
     // Get the exit code from the app
     if (pnExitCode != nullptr) {
-        *pnExitCode = SHRT_MAX;
-        if (!GetExitCodeProcess(pnExitCode)) {
-            *pnExitCode = APP_EXITCODE_UNK;  // no code ? process still running ?
+        if (!GetExitCodeProcess(*pnExitCode)) {
+            *pnExitCode = APP_EXITCODE_t::_UNK;  // no code ? process still running ?
             return E_FAIL;
         }
     }
@@ -352,10 +341,8 @@ HRESULT cOSProcess::WaitForProcessExit(TIMESYSD_t nTimeWait, APP_EXITCODE_t* pnE
 
     int iStatus = 0;
     PROCESSID_t nPidRet = ::waitpid(this->get_ProcessId(), &iStatus, 0);
-    if (nPidRet < 0) 
-        return E_FAIL;  // Failed to wait!
-    if (!WIFEXITED(iStatus)) 
-        return E_FAIL;
+    if (nPidRet < 0) return E_FAIL;  // Failed to wait!
+    if (!WIFEXITED(iStatus)) return E_FAIL;
 
     if (pnExitCode != nullptr) {
         *pnExitCode = WEXITSTATUS(iStatus);
@@ -365,15 +352,15 @@ HRESULT cOSProcess::WaitForProcessExit(TIMESYSD_t nTimeWait, APP_EXITCODE_t* pnE
 }
 
 #ifdef _WIN32
-HWND cOSProcess::FindWindowForProcessID(PROCESSID_t nProcessId, DWORD dwStyleFlags, const GChar_t* pszClassName) { // static
+HWND cOSProcess::FindWindowForProcessID(PROCESSID_t nProcessId, DWORD dwStyleFlags, const GChar_t* pszClassName) {  // static
     //! look through all the top level windows for the window that has this PROCESSID_t.
     //! @note there may be more than 1. just take the first/best one.
     //! @arg
-    //!  nProcessId = PROCESSID_BAD = 0 = don't care what process.
+    //!  nProcessId = kPROCESSID_BAD = 0 = don't care what process.
     //!  dwStyleFlags = WS_VISIBLE = only accept visible windows.
     //!  pszClassName = must be this window class name.
 
-    if (nProcessId == PROCESSID_BAD) { // don't care about pid, just use pszClassName
+    if (nProcessId == kPROCESSID_BAD) {  // don't care about pid, just use pszClassName
         return _GTN(::FindWindow)(pszClassName, nullptr);
     }
 
@@ -387,7 +374,7 @@ HWND cOSProcess::FindWindowForProcessID(PROCESSID_t nProcessId, DWORD dwStyleFla
     // Loop until we find the target or we run out of windows.
     for (; hWnd != WINHANDLE_NULL; hWnd = ::GetWindow(hWnd, GW_HWNDNEXT)) {
         // does it have the PID?
-        PROCESSID_t nProcessIdTest = PROCESSID_BAD;
+        PROCESSID_t nProcessIdTest = kPROCESSID_BAD;
         THREADID_t dwThreadID = ::GetWindowThreadProcessId(hWnd, &nProcessIdTest);
         UNREFERENCED_PARAMETER(dwThreadID);
         if (nProcessIdTest != nProcessId) continue;
@@ -397,7 +384,7 @@ HWND cOSProcess::FindWindowForProcessID(PROCESSID_t nProcessId, DWORD dwStyleFla
             DWORD dwStyle = (DWORD)_GTN(::GetWindowLong)(hWnd, GWL_STYLE);
             if (!(dwStyle & dwStyleFlags)) continue;
         }
-        if (pszClassName != nullptr) { // must be class name.
+        if (pszClassName != nullptr) {  // must be class name.
             GChar_t szClassNameTmp[_MAX_PATH];
             const int iLen = _GTN(::GetClassName)(hWnd, szClassNameTmp, _countof(szClassNameTmp));
             if (iLen <= 0) continue;
@@ -430,8 +417,8 @@ HWND cOSProcess::FindWindowForProcessID(PROCESSID_t nProcessId, DWORD dwStyleFla
 PROCESSID_t cOSProcess::GetProcessIDFromHandle() {
 	//! Get the PROCESSID_t from a process handle.
 	//! The handle must have the PROCESS_QUERY_INFORMATION access right
-	//! 0 = invalid PROCESSID_BAD
-	if (m_nPid == PROCESSID_BAD && m_hProcess.isValidHandle()) {
+	//! 0 = invalid kPROCESSID_BAD
+	if (m_nPid == kPROCESSID_BAD && m_hProcess.isValidHandle()) {
 		m_nPid = ::GetProcessId(m_hProcess.get_Handle());	// XP SP1 Function.
 	}
 }

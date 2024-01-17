@@ -2,22 +2,22 @@
 //! @file StrA.cpp
 //! String global search functions. Const strings
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
-
+// clang-format off
 #include "pch.h"
+// clang-format on
 #include "StrA.h"
 #include "StrChar.h"
 #include "cBits.h"
 #include "cLogMgr.h"
 
 namespace Gray {
-bool GRAYCALL StrA::IsBoolTrue(const char* pszStr, bool bHead) { // static
+bool GRAYCALL StrA::IsBoolTrue(const char* pszStr, bool bHead) {  // static
     //! convert string to boolean value.
-    static const char* const k_pszBoolTrue[] = { // static
-            "1",    "On",  "T",
-            "true",  // JSON = "true", C#,.NET = "True"
-            "Y",    "Yes", nullptr,
-        };
+    static const char* const k_pszBoolTrue[] = {
+        "1",    "On",  "T",
+        "true",  // JSON = "true", C#,.NET = "True"
+        "Y",    "Yes", nullptr,
+    };
 
     if (pszStr == nullptr) return false;
     ITERATE_t i;
@@ -31,9 +31,10 @@ bool GRAYCALL StrA::IsBoolTrue(const char* pszStr, bool bHead) { // static
 
 bool GRAYCALL StrA::IsBoolFalse(const char* pszStr, bool bHead) {
     //! convert string to boolean value.
-    static const char* const k_pszBoolFalse[] = { // static
-            "0", "F", "false", "N", "No", "Off", nullptr,
-        };
+    static const char* const k_pszBoolFalse[] = {
+        // static
+        "0", "F", "false", "N", "No", "Off", nullptr,
+    };
     if (pszStr == nullptr) return false;
     ITERATE_t i;
     if (bHead) {
@@ -52,10 +53,11 @@ bool GRAYCALL StrA::IsPlural(const char* pszWord) {
 
     ASSERT(pszWord != nullptr);
 
-    static const char* const k_Plurals[] = {  // These are already plural so don't need another s.
-            "boots", "cards", "eyes", "feet", "fish", "gloves", "hair", "leggings", "pants", "shoes", "sleeves", nullptr,
-            // sheep,  barracks, teeth, children, people, women, men, mice, geese
-        };
+    static const char* const k_Plurals[] = {
+        // These are already plural so don't need another s.
+        "boots", "cards", "eyes", "feet", "fish", "gloves", "hair", "leggings", "pants", "shoes", "sleeves", nullptr,
+        // sheep,  barracks, teeth, children, people, women, men, mice, geese
+    };
 
     ITERATE_t iRet = STR_TABLEFIND_SH(pszWord, k_Plurals);
     if (iRet >= 0) return true;
@@ -75,14 +77,12 @@ const char* GRAYCALL StrA::GetArticleAndSpace(const char* pszWord) {
     //! @note This is wrong many times.
     //!  i.e. some words need no article (plurals) : boots.
     ASSERT(pszWord != nullptr);
-    if (StrA::IsPlural(pszWord)) 
-        return "";
-    if (StrChar::IsVowel(pszWord[0])) 
-        return "an ";
+    if (StrA::IsPlural(pszWord)) return "";
+    if (StrChar::IsVowel(pszWord[0])) return "an ";
     return "a ";
 }
 
-INT_PTR GRAYCALL StrA::GetFixedIntRef(const char*& rpszExp, int nPlaces) { // static
+INT_PTR GRAYCALL StrA::GetFixedIntRef(const char*& rpszExp, int nPlaces) {  // static
     if (rpszExp == nullptr) return 0;
 
     INT_PTR lVal = StrT::toIP(rpszExp, &rpszExp);
@@ -99,7 +99,7 @@ INT_PTR GRAYCALL StrA::GetFixedIntRef(const char*& rpszExp, int nPlaces) { // st
 
         lVal *= 10;  // move up for the decimal place.
 
-        if (!StrChar::IsDigitA(ch)) { // end found.
+        if (!StrChar::IsDigitA(ch)) {  // end found.
             iDecimalFound = 2;
             if (!nPlaces) break;  // May have no places.
         } else if (iDecimalFound < 2) {
@@ -124,7 +124,7 @@ StrLen_t GRAYCALL StrA::MakeNamedBitmask(char* pszOut, StrLen_t iLenOutMax, UINT
 
     COUNT_t iCount = 0;
     StrLen_t iLen = 0;
-    for (BIT_ENUM_t i = 0; dwFlags != 0 && iLen < iLenOutMax; i++, dwFlags >>= 1) { // walk the bits.
+    for (BIT_ENUM_t i = 0; dwFlags != 0 && iLen < iLenOutMax; i++, dwFlags >>= 1) {  // walk the bits.
         if (!(dwFlags & 1)) continue;
         if (iCount > 0) {
             pszOut[iLen++] = chSep;

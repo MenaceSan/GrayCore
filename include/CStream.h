@@ -13,7 +13,7 @@
 #include "StrT.h"
 #include "cHeap.h"
 #include "cBlob.h"
-#include "cStreamProgress.h"  // STREAM_OFFSET_t , STREAM_POS_t, SEEK_ORIGIN_TYPE
+#include "cStreamProgress.h"  // STREAM_OFFSET_t , STREAM_POS_t, SEEK_t
 #include "cTimeSys.h"         // cTimeSys
 #include "cSingleton.h"
 
@@ -78,15 +78,15 @@ struct GRAYCORE_LINK cStreamBase {
     /// This may not be possible if the data has been lost!
     /// </summary>
     /// <param name="nOffset"></param>
-    /// <param name="eSeekOrigin">SEEK_ORIGIN_TYPE SEEK_Cur etc.</param>
+    /// <param name="eSeekOrigin">SEEK_t SEEK_t::_Cur etc.</param>
     /// <returns>the New position,  -lt- 0=FAILED = INVALID_SET_FILE_POINTER</returns>
-    virtual HRESULT SeekX(STREAM_OFFSET_t nOffset, SEEK_ORIGIN_TYPE eSeekOrigin = SEEK_Set) noexcept {
+    virtual HRESULT SeekX(STREAM_OFFSET_t nOffset, SEEK_t eSeekOrigin = SEEK_t::_Set) noexcept {
         UNREFERENCED_PARAMETER(nOffset);
         UNREFERENCED_PARAMETER(eSeekOrigin);
         return E_NOTIMPL;  // It doesn't work on this type of stream!
     }
     /// <summary>
-    /// Must override this. like: SeekX(SEEK_Cur,0)
+    /// Must override this. like: SeekX(SEEK_t::_Cur,0)
     /// </summary>
     /// <returns></returns>
     virtual STREAM_POS_t GetPosition() const {
@@ -105,11 +105,11 @@ struct GRAYCORE_LINK cStreamBase {
     /// ala MFC. SeekX to start of file/stream.
     /// </summary>
     void SeekToBegin() noexcept {
-        SeekX(0, SEEK_Set);
+        SeekX(0, SEEK_t::_Set);
     }
     STREAM_POS_t SeekToEnd() {
         //! ala MFC. SeekX to end of file/stream.
-        SeekX(0, SEEK_End);
+        SeekX(0, SEEK_t::_End);
         return GetPosition();
     }
 };
@@ -434,7 +434,7 @@ struct GRAYCORE_LINK cStreamInput : public cStreamBase {
 /// </summary>
 struct GRAYCORE_LINK cStream : public cStreamInput, public cStreamOutput {
     //! Disambiguate SeekX for cStreamBase to cStreamInput for stupid compiler.
-    HRESULT SeekX(STREAM_OFFSET_t iOffset, SEEK_ORIGIN_TYPE eSeekOrigin = SEEK_Set) noexcept override {
+    HRESULT SeekX(STREAM_OFFSET_t iOffset, SEEK_t eSeekOrigin = SEEK_t::_Set) noexcept override {
         return cStreamInput::SeekX(iOffset, eSeekOrigin);
     }
     STREAM_POS_t GetPosition() const override {
@@ -470,7 +470,7 @@ class GRAYCORE_LINK cStreamTransaction : public cStreamReader {
     HRESULT TransactionRollback() {
         // Roll back to m_lPosStart
         ASSERT(isTransactionActive());
-        return m_pInp->SeekX(CastN(STREAM_OFFSET_t, m_lPosStart), SEEK_Set);
+        return m_pInp->SeekX(CastN(STREAM_OFFSET_t, m_lPosStart), SEEK_t::_Set);
     }
 
  public:

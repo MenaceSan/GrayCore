@@ -1,9 +1,9 @@
 //
 //! @file HResult.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
-
+// clang-format off
 #include "pch.h"
+// clang-format on
 #include "HResult.h"
 #include "StrBuilder.h"
 #include "cLogMgr.h"
@@ -139,8 +139,8 @@ void GRAYCALL HResult::SetLast(HRESULT h) {  // static
 void GRAYCALL HResult::AddCodes(const HResultCode* pCodes) {  // static
     //! Add a block of custom HResult codes, usually for a particular FACILITY_TYPE
     //! enable HResult::GetTextV()
-    if (s_HResult_CodeSets.HasArg(pCodes)) { // ignore pointer dupes.
-        return;  // already loaded
+    if (s_HResult_CodeSets.HasArg(pCodes)) {  // ignore pointer dupes.
+        return;                               // already loaded
     }
 
     // TODO
@@ -282,7 +282,7 @@ void GRAYCALL HResult::GetTextV(HRESULT hRes, StrBuilder<GChar_t>& sb, const voi
     // Not a known system error code. Do we at least know the k_Facility code?
     FACILITY_TYPE eFacility = GetFacility(hRes);
     DWORD dwErrorCode = GetCode(hRes);  // LSTATUS/error_status_t
- 
+
     const GChar_t* pszErrorFacility;
     if (k_Facility->FindARetB(eFacility, &pszErrorFacility)) {
         // show the (known) facility name and sub code (in facility).

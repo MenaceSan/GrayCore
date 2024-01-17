@@ -1,8 +1,9 @@
 //
 //! @file cAppState.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
+// clang-format off
 #include "pch.h"
+// clang-format on
 #include "StrT.h"
 #include "cAppConsole.h"
 #include "cAppState.h"
@@ -22,24 +23,20 @@
 #endif
 
 namespace Gray {
-
+#ifdef _WIN32
 inline void CloseHandleType_Sid(::PSID h) noexcept {
     ::FreeSid(h);
 }
+#endif
 
 HMODULE cAppState::sm_hInstance = HMODULE_NULL;  /// the current applications HINSTANCE handle/base address. _IMAGE_DOS_HEADER
 
 cStringF cAppArgs::get_ArgsStr() const noexcept {
-    //! Unparsed Command line args as a single line/string. might be used for cOSProcess.
-    //! Does not contain App.exe name.
     return m_sArguments;
 }
-
 ITERATE_t cAppArgs::get_ArgsQty() const noexcept {
-    //! @return 1 = just app path. 2 = app has 1 argument value. etc.
     return m_aArgs.GetSize();
 }
-
 cStringF cAppArgs::GetArgEnum(ITERATE_t i) const {  // command line arg.
     return m_aArgs.GetAtCheck(i);
 }
@@ -64,28 +61,18 @@ void cAppArgs::InitArgsArray(ITERATE_t argc, APP_ARGS_t ppszArgs, bool sepEquals
 }
 
 void cAppArgs::InitArgsPosix(int argc, APP_ARGS_t ppszArgs) {
-    //! Posix, _CONSOLE or DOS style arguments. main() style init.
-    //! set pre-parsed arguments from console style start. ppszArgs[0] = app path
-    //! @note M$ unit tests will block arguments!
-
-    // build m_sArguments from ppszArgs
+    // build raw m_sArguments from APP_ARGS_t ppszArgs
     ASSERT_NN(ppszArgs);
-
-    // build raw m_sArguments from APP_ARGS_t
     m_sArguments.Empty();
     for (int i = 1; i < argc; i++) {
         if (i > 1) m_sArguments += _FN(" ");
         m_sArguments += ppszArgs[i];
     }
+
     InitArgsArray(argc, ppszArgs, true);
 }
 
 void cAppArgs::InitArgsWin(const FILECHAR_t* pszCommandArgs, const FILECHAR_t* pszSep) {
-    //! set (unparsed) m_sArguments and parse pszCommandArgs to cArrayString. Windows WinMain() style init.
-    //! @arg pszCommandArgs = assumed to NOT contain the app path name.
-    //! Similar to _WIN32  CommandLineToArgvW()
-    //! Honor quotes.
-
     if (pszCommandArgs == nullptr) return;
 
     m_sArguments = pszCommandArgs;  // Raw unparsed.
@@ -580,13 +567,13 @@ void GRAYCALL cAppState::AbortApp(APP_EXITCODE_t uExitCode) {  // static
     //! Abort the application from some place other than the main() or WinMain() fall through.
     //! Call this instead of abort() or exit() to preclude naughty libraries from exiting badly.
     //! @arg uExitCode = APP_EXITCODE_t like return from "int main()"
-    //!		APP_EXITCODE_ABORT = 3 = like abort()
+    //!		APP_EXITCODE_t::_ABORT = 3 = like abort()
     if (isSingleCreated()) {
         // cAppExitCatcher should not block this now.
         I().put_AppState(APPSTATE_t::_Exit);
     }
 #ifdef _WIN32
-    ::ExitProcess(uExitCode);
+    ::ExitProcess((UINT)uExitCode);
 #elif defined(__linux__)
     ::exit(uExitCode);
 #endif

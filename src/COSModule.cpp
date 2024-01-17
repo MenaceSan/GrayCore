@@ -4,8 +4,9 @@
 //!  HINSTANCE and HMODULE are usually/sometimes interchangeable.
 //! __linux__ link with 'dl' library
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-
+// clang-format off
 #include "pch.h"
+// clang-format on
 #include "cAppState.h"
 #include "cFilePath.h"
 #include "cLogMgr.h"
@@ -114,11 +115,11 @@ MIME_t GRAYCALL cOSModule::CheckModuleTypeFile(const FILECHAR_t* pszPathName) { 
         nullptr,
     };
     const FILECHAR_t* pszExt = cFilePath::GetFileNameExt(pszPathName);
-    if (pszExt == nullptr)    // not true for __linux__. use MIME type.
+    if (pszExt == nullptr)        // not true for __linux__. use MIME type.
         return MIME_t::_UNKNOWN;  // no
     ITERATE_t i = StrT::TableFind(pszExt, k_Exts);
     if (i < 0) return MIME_t::_UNKNOWN;  // no = MIME_t::_UNKNOWN
-    
+
     return (i == 1) ? MIME_t::_EXE : MIME_t::_Dll;
 }
 

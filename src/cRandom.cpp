@@ -1,8 +1,9 @@
 //
 //! @file cRandom.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
+// clang-format off
 #include "pch.h"
+// clang-format on
 #include "cBlob.h"
 #include "cRandom.h"
 
@@ -143,7 +144,7 @@ HRESULT cRandomOS::GetNoise(void* pData, size_t iSize) {  // override. fill arra
     //! Make a random seed from the most random source we can find.
     if (iSize <= 0) return (HRESULT)iSize;
     HRESULT hRes = GetNoiseOS(pData, iSize);
-    if (hRes >= (HRESULT)iSize) return hRes;    // all good.
+    if (hRes >= (HRESULT)iSize) return hRes;  // all good.
     // else fallback to try the high perf timer.
     cRandomPerf::GetNoisePerf(pData, iSize);
     return CastN(HRESULT, iSize);

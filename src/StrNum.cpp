@@ -1,9 +1,9 @@
 //
 //! @file StrNum.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
-
+// clang-format off
 #include "pch.h"
+// clang-format on
 #include "StrNum.h"
 #include "StrT.h"
 #include "cFloat.h"
@@ -29,7 +29,7 @@ StrLen_t GRAYCALL StrNum::GetNumberString(OUT char* pszOut, const wchar_t* pszIn
         // Is this a possible number?
         wchar_t ch = pszInp[nLen];
         if (ch <= ' ' || ch >= 127) break;  // not a number! or letter for hex.
-            
+
         // if (ch == ':' || ch == ';' || ch == '(' || ch == ')')	// not a number!
         // 	break;
         // allow and characters that might be part of a number. Digit, '.', 'e','E','+', '-', 'A' - 'Z', 'a' - 'z' for hex values,
@@ -43,8 +43,8 @@ StrLen_t GRAYCALL StrNum::GetNumberString(OUT char* pszOut, const wchar_t* pszIn
 
 //*************************************************************************************
 
-UINT64 GRAYCALL StrNum::toUL(const char* pszInp, const char** ppszInpEnd, RADIX_t nBaseRadix) noexcept { // static
-    bool bFlexible = false;  // allow hex ?
+UINT64 GRAYCALL StrNum::toUL(const char* pszInp, const char** ppszInpEnd, RADIX_t nBaseRadix) noexcept {  // static
+    bool bFlexible = false;                                                                               // allow hex ?
     if (nBaseRadix < StrChar::k_uRadixMin) {
         bFlexible = true;
         nBaseRadix = 10;  // default.
@@ -60,7 +60,7 @@ UINT64 GRAYCALL StrNum::toUL(const char* pszInp, const char** ppszInpEnd, RADIX_
             // its really just hex!
             nBaseRadix = 16;
             pszInp += 2;
-        } else if (bFlexible) { // Is this octal or hex ?
+        } else if (bFlexible) {  // Is this octal or hex ?
             nBaseRadix = 16;
             pszInp++;
         }
@@ -98,9 +98,9 @@ INT64 GRAYCALL StrNum::toIL(const char* pszInp, const char** ppszInpEnd, RADIX_t
     if (pszInp == nullptr) return 0;
     pszInp = StrT::GetNonWhitespace(pszInp);
     if (pszInp[0] == '-') {
-        return -CastN(INT64,StrNum::toUL(pszInp + 1, ppszInpEnd, nBaseRadix));
+        return -CastN(INT64, StrNum::toUL(pszInp + 1, ppszInpEnd, nBaseRadix));
     }
-    return CastN(INT64,StrNum::toUL(pszInp, ppszInpEnd, nBaseRadix));
+    return CastN(INT64, StrNum::toUL(pszInp, ppszInpEnd, nBaseRadix));
 }
 
 //*************************************************************************************
@@ -130,7 +130,7 @@ StrLen_t GRAYCALL StrNum::ULtoAK(UINT64 uVal, OUT char* pszOut, StrLen_t iStrMax
         // limit to 2 decimal places ?
         iLenUse = DtoAG(dVal, pszOut, iStrMax, 2, '\0');  // NOT 'inf' or NaN has no units.
         if (iLenUse > 0 && iLenUse <= iStrMax - 3 && !StrChar::IsAlpha(pszOut[0])) {
-            if (bSpaceBeforeUnit) { // insert a space or not?
+            if (bSpaceBeforeUnit) {  // insert a space or not?
                 pszOut[iLenUse++] = ' ';
             }
             pszOut[iLenUse++] = k_chKUnits[i];
@@ -146,7 +146,7 @@ StrLen_t GRAYCALL StrNum::GetSizeA(UINT64 uVal, char chRadixA) {
 }
 #endif
 
-    char* GRAYCALL StrNum::ULtoARev(UINT64 uVal, OUT char* pszOut, StrLen_t iStrMax, RADIX_t nBaseRadix, char chRadixA) {
+char* GRAYCALL StrNum::ULtoARev(UINT64 uVal, OUT char* pszOut, StrLen_t iStrMax, RADIX_t nBaseRadix, char chRadixA) {
     ASSERT_NN(pszOut);
     ASSERT(iStrMax > 0);
     ASSERT(nBaseRadix <= StrChar::k_uRadixMax);
@@ -160,9 +160,9 @@ StrLen_t GRAYCALL StrNum::GetSizeA(UINT64 uVal, char chRadixA) {
 
     while (pDigits > pszOut) {
         const UINT64 d = uVal % nBaseRadix;
-        *(--pDigits) = CastN(char,d + (d < 10 ? '0' : (chRadixA - 10)));  // StrChar::U2Radix
+        *(--pDigits) = CastN(char, d + (d < 10 ? '0' : (chRadixA - 10)));  // StrChar::U2Radix
         uVal /= nBaseRadix;
-        if (!uVal) break;   // done.
+        if (!uVal) break;  // done.
     }
     return pDigits;
 }
@@ -207,7 +207,7 @@ StrLen_t GRAYCALL StrNum::ILtoA(INT64 nVal, OUT char* pszOut, StrLen_t iStrMax, 
 
 //*************************************************************************************
 
-StrLen_t GRAYCALL StrNum::DtoAG2(double dVal, OUT char* pszOut, int iDecPlacesWanted, char chE) { // static
+StrLen_t GRAYCALL StrNum::DtoAG2(double dVal, OUT char* pszOut, int iDecPlacesWanted, char chE) {  // static
     // Not handling NaN and Infinite
     ASSERT(cFloat::IsFinite(dVal));
     // @todo implement gcvt(), fcvt(), _fcvt_s locally ? no UNICODE version of fcvt().
@@ -234,7 +234,7 @@ StrLen_t GRAYCALL StrNum::DtoAG2(double dVal, OUT char* pszOut, int iDecPlacesWa
         // Decide what format to use for the number. like gcvt() selects F or E format.
         // 26 digits. mid point = 8; +/- 13
         const StrLen_t nDecPlaceO = nMantLength + nExp10;  // 10^(nDecPlaceO-1) <= v < 10^nDecPlaceO
-        if (nDecPlaceO >= -5 && nDecPlaceO <= 21) {         // 26 digits. mid point = 8; +/- 13
+        if (nDecPlaceO >= -5 && nDecPlaceO <= 21) {        // 26 digits. mid point = 8; +/- 13
             // Prefer F format
             if (nExp10 >= 0)  // Whole numbers only. No decimal places.
                 iDecPlacesWanted = 0;
@@ -265,7 +265,7 @@ StrLen_t GRAYCALL StrNum::DtoAG2(double dVal, OUT char* pszOut, int iDecPlacesWa
     return nOutLen;
 }
 
-StrLen_t GRAYCALL StrNum::DtoAG(double dVal, OUT char* pszOut, StrLen_t iStrMax, int iDecPlacesWanted, char chE) { // static
+StrLen_t GRAYCALL StrNum::DtoAG(double dVal, OUT char* pszOut, StrLen_t iStrMax, int iDecPlacesWanted, char chE) {  // static
     //! @arg iStrMax = k_LEN_MAX_DIGITS
 
     if (iStrMax >= k_LEN_MAX_DIGITS) {  // buffer is big enough.
@@ -276,7 +276,7 @@ StrLen_t GRAYCALL StrNum::DtoAG(double dVal, OUT char* pszOut, StrLen_t iStrMax,
     return StrT::CopyLen(pszOut, szTmp, iStrMax);  // Copy to smaller buffer.
 }
 
-double GRAYCALL StrNum::toDouble(const char* pszInp, const char** ppszInpEnd) { // static
+double GRAYCALL StrNum::toDouble(const char* pszInp, const char** ppszInpEnd) {  // static
     //! Convert a string to a double precision decimal value. k_LEN_MAX_DIGITS
     //! MUST emulate/match the C compiler. The C++ compiler will generate a double value from a string in code.
     //! MUST be reversible using DtoA().

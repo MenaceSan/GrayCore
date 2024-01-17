@@ -80,8 +80,7 @@ class GRAYCORE_LINK cLogEventParams {
     }
 
     LOGLVL_t get_LogLevel() const noexcept {
-        //! Min level to show.
-        return m_eLogLevel;
+        return m_eLogLevel; // Min level to show.
     }
     void put_LogLevel(LOGLVL_t eLogLevel) noexcept {
         //! What level of importance do we want to filter for.

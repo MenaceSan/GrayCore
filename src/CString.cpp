@@ -4,8 +4,9 @@
 //! similar to the STL string and wstring, basic_string<char>
 //! @note if a string is used by 2 threads then the usage count must be thread safe.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-
+// clang-format off
 #include "pch.h"
+// clang-format on
 #include "HResult.h"
 #include "StrArg.h"
 #include "StrBuilder.h"
@@ -62,7 +63,7 @@ void cStringT<_TYPE_CH>::AllocBuffer(StrLen_t iNewLength) {
             ASSERT_NN(pHeadNew);
             pHeadNew->IncRefCount();
             StrT::CopyLen(pHeadNew->get_DataWork(), m_pchData, cValT::Min(iNewLength, nOldLen) + 1);  // Copy from old
-            pHeadOld->DecRefCount();                                                              // release ref to previous string.
+            pHeadOld->DecRefCount();                                                                  // release ref to previous string.
         }
     }
 
@@ -99,11 +100,11 @@ void cStringT<_TYPE_CH>::ReleaseBuffer(StrLen_t nNewLength) {
     }
     HEAD_t* pHead = get_Head();
     ASSERT(pHead->get_RefCount() == 1);
-    if (nNewLength <= k_StrLen_UNK) { // default to current length
+    if (nNewLength <= k_StrLen_UNK) {  // default to current length
         nNewLength = StrT::Len(m_pchData);
     }
     if (nNewLength <= 0) {
-        EmptyValid();  // make sure we all use m_Nil for empty. NOT nullptr
+        SetEmptyValid();  // make sure we all use m_Nil for empty. NOT nullptr
         return;
     }
     if (nNewLength != pHead->get_CharCount()) {
@@ -151,8 +152,8 @@ void cStringT<_TYPE_CH>::AssignLenT(const _TYPE_CH* pszStr, StrLen_t iLenMax) {
         Empty();
         return;
     }
-    StrLen_t iLenCur = GetLength();  // current stated length of the string.
-    if (pszStr == m_pchData) {        // Same string.
+    StrLen_t iLenCur = GetLength();      // current stated length of the string.
+    if (pszStr == m_pchData) {           // Same string.
         if (iLenMax >= iLenCur) return;  // do nothing!
         Assign(Left(iLenMax));
         return;
@@ -262,7 +263,7 @@ template <typename _TYPE_CH>
 StrLen_t cStringT<_TYPE_CH>::Insert(StrLen_t i, const _TYPE_CH* pszStr, StrLen_t iLenCat) {
     ASSERT_NN(pszStr);
     if (iLenCat <= k_StrLen_UNK) iLenCat = StrT::Len(pszStr);
-     
+
     if (iLenCat > 0) {
         if (i < 0) i = 0;
         const StrLen_t lenOld = GetLength();
@@ -451,7 +452,7 @@ cStringT<_TYPE_CH> GRAYCALL cStringT<_TYPE_CH>::GetErrorStr(HRESULT hResError, c
         return THIS_t(szTmp, sb.get_Length());
     }
     if (hResError == S_OK) return CSTRCONST("OK").Get<_TYPE_CH>();
-    return StrArg<_TYPE_CH>((UINT32)hResError, (RADIX_t)0x10);  // its not an error just a number/code.
+    return StrArg<_TYPE_CH>((UINT32)hResError, (RADIX_t)0x10);  // its not an error just a hex number/code.
 }
 
 template <typename _TYPE_CH>
@@ -518,7 +519,7 @@ HRESULT cStringT<_TYPE_CH>::Serialize(cArchive& a) {
         return SerializeInput(a.ref_Inp());
 }
 
-template class GRAYCORE_LINK cStringT<char>;    // force implementation/instantiate for DLL/SO. AND GRAY_STATICLIB
-template class GRAYCORE_LINK cStringT<wchar_t>; // force implementation/instantiate for DLL/SO. AND GRAY_STATICLIB
+template class GRAYCORE_LINK cStringT<char>;     // force implementation/instantiate for DLL/SO. AND GRAY_STATICLIB
+template class GRAYCORE_LINK cStringT<wchar_t>;  // force implementation/instantiate for DLL/SO. AND GRAY_STATICLIB
 
 }  // namespace Gray

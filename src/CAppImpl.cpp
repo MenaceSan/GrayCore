@@ -1,9 +1,9 @@
 //
 //! @file cAppImpl.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
-
+// clang-format off
 #include "pch.h"
+// clang-format on
 #include "cAppImpl.h"
 #include "cLogMgr.h"
 #include "cLogSinkConsole.h"
@@ -184,7 +184,7 @@ HRESULT cAppImpl::RunCommand(ITERATE_t i) {
 
     m_State.m_ArgsValid.SetBit(i);  // found it anyhow.
 
-    HRESULT hRes = pCmd->DoCommand(m_State.m_Args, i+1);
+    HRESULT hRes = pCmd->DoCommand(m_State.m_Args, i + 1);
     if (FAILED(hRes)) {
         // Stop processing. report error.
         LOGF((LOG_ATTR_INIT, LOGLVL_t::_CRIT, "Command line '%s' failed '%s'", LOGSTR(pszCmd), LOGERR(hRes)));
@@ -214,11 +214,11 @@ HRESULT cAppImpl::RunCommands() {
     return i;
 }
 
-int cAppImpl::Run() { // virtual
+APP_EXITCODE_t cAppImpl::Run() {  // virtual
     HRESULT hRes = RunCommands();
     if (FAILED(hRes)) {
         m_bCloseSignal = true;
-        return APP_EXITCODE_FAIL;
+        return APP_EXITCODE_t::_FAIL;
     }
 
     // Log a message if there were command line arguments that did nothing. unknown.
@@ -226,7 +226,7 @@ int cAppImpl::Run() { // virtual
     if (!sInvalidArgs.IsEmpty()) {
         // Check m_ArgsValid. Show Error for any junk/unused arguments.
         cLogMgr::I().addEventF(LOG_ATTR_INIT, LOGLVL_t::_CRIT, "Unknown command line args. '%s'", LOGSTR(sInvalidArgs));
-        // return APP_EXITCODE_FAIL;
+        // return APP_EXITCODE_t::_FAIL;
     }
 
     for (;;) {
@@ -246,11 +246,11 @@ int cAppImpl::Run() { // virtual
     }
 
     m_bCloseSignal = true;
-    return APP_EXITCODE_OK;
+    return APP_EXITCODE_t::_OK;
 }
 
-int cAppImpl::ExitInstance() {  // virtual
-    return APP_EXITCODE_OK;
+APP_EXITCODE_t cAppImpl::ExitInstance() {  // virtual
+    return APP_EXITCODE_t::_OK;
 }
 
 APP_EXITCODE_t cAppImpl::Main(HMODULE hInstance) {
@@ -273,14 +273,14 @@ APP_EXITCODE_t cAppImpl::Main(HMODULE hInstance) {
     // Probably calls AfxWinInit() and assume will call InitInstance()
     return (APP_EXITCODE_t)::AfxWinMain(hInstance, HMODULE_NULL, LPTSTR lpCmdLine, nCmdShow);
 #else
-    APP_EXITCODE_t iRet = APP_EXITCODE_FAIL;
+    APP_EXITCODE_t iRet = APP_EXITCODE_t::_FAIL;
     if (InitInstance()) {
         // Run loop until told to stop.
         m_State.put_AppState(APPSTATE_t::_Run);
         iRet = (APP_EXITCODE_t)Run();
         m_State.put_AppState(APPSTATE_t::_RunExit);
-        APP_EXITCODE_t iRetExit = (APP_EXITCODE_t)ExitInstance();
-        if (iRet == APP_EXITCODE_OK)  // allow exit to make this fail.
+        APP_EXITCODE_t iRetExit = ExitInstance();
+        if (iRet == APP_EXITCODE_t::_OK)  // allow exit to make this fail.
             iRet = iRetExit;
     }
 

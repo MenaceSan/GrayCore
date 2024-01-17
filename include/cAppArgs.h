@@ -2,13 +2,11 @@
 //! @file cAppArgs.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
-
 #ifndef _INC_cAppArgs_H
 #define _INC_cAppArgs_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
-
 #include "cArrayString.h"
 #include "cFilePath.h"
 
@@ -51,7 +49,16 @@ class GRAYCORE_LINK cAppArgs {
         return true;
     }
 
+    /// <summary>
+    /// Get Unparsed command line args as a single line/string. might be used for cOSProcess.
+    /// Does not contain App.exe name.
+    /// </summary>
     cStringF get_ArgsStr() const noexcept;
+
+    /// <summary>
+    /// Get Qty of args including app name.
+    /// </summary>
+    /// <returns>1 = just app path. 2 = app has 1 argument value. etc.</returns>
     ITERATE_t get_ArgsQty() const noexcept;
 
     /// <summary>
@@ -63,7 +70,21 @@ class GRAYCORE_LINK cAppArgs {
     /// <returns>"" = at or past end or array of args.</returns>
     cStringF GetArgEnum(ITERATE_t i) const;  /// command line arg.
 
+    /// <summary>
+    /// set (unparsed) m_sArguments and parse pszCommandArgs to m_aArgs. Windows WinMain() style init.
+    /// Similar to _WIN32  CommandLineToArgvW()
+    /// Honor quotes.
+    /// </summary>
+    /// <param name="pszCommandArgs">assumed to NOT contain the app path name.</param>
+    /// <param name="pszSep"></param>
     void InitArgsWin(const FILECHAR_t* pszCommandArgs, const FILECHAR_t* pszSep = nullptr);
+
+    /// <summary>
+    /// Set pre-parsed arguments from console style like: Posix, _CONSOLE or DOS style arguments.
+    /// main() style init.
+    /// @note M$ unit tests will block arguments!
+    /// ppszArgs[0] = app path
+    /// </summary>
     void InitArgsPosix(int argc, APP_ARGS_t argv);
 
     ITERATE_t FindCommandArg(const FILECHAR_t* pszCommandArg, bool bRegex = true, bool bIgnoreCase = true) const;

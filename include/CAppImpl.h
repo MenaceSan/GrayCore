@@ -71,8 +71,8 @@ class GRAYCORE_LINK cAppImpl : public cSingletonStatic<cAppImpl>, public IAppCom
     /// Like CWinApp for MFC
     /// @note In _WIN32, If my parent is a console, the console will return immediately! Not on first message loop like old docs say.
     /// </summary>
-    /// <returns>APP_EXITCODE_t return app exit code. APP_EXITCODE_OK (NOT THREAD_EXITCODE_t?)</returns>
-    virtual int Run();
+    /// <returns>APP_EXITCODE_t return app exit code. APP_EXITCODE_t::_OK (NOT THREAD_EXITCODE_t?)</returns>
+    virtual APP_EXITCODE_t Run();
 
     /// <summary>
     /// APPSTATE_t::_RunExit
@@ -80,8 +80,8 @@ class GRAYCORE_LINK cAppImpl : public cSingletonStatic<cAppImpl>, public IAppCom
     /// This should be called if Run() fails. NOT called if InitInstance fails.
     /// Like CWinApp for MFC
     /// </summary>
-    /// <returns>APP_EXITCODE_t return app exit code. APP_EXITCODE_OK</returns>
-    virtual int ExitInstance();
+    /// <returns>APP_EXITCODE_t return app exit code. APP_EXITCODE_t::_OK</returns>
+    virtual APP_EXITCODE_t ExitInstance();
 
     /// <summary>
     /// The main application entry point and process loop. Like MFC AfxWinMain()

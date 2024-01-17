@@ -2,9 +2,9 @@
 //! @file cFileText.cpp
 //! see http://www.codeproject.com/file/handles.asp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
-
+// clang-format off
 #include "pch.h"
+// clang-format on
 #include "cFileText.h"
 #include "cLogMgr.h"
 
@@ -30,7 +30,7 @@ HRESULT cFileTextBase::ReadStringLineA(OUT cStringA& r) {
 #if defined(UNDER_CE) || defined(__linux__)
 typedef HANDLE FILEDESC_t;  /// Posix file descriptor id. return value for _fileno() is same as HANDLE in __linux__ and UNDER_CE
 #else
-typedef int FILEDESC_t;     /// Posix file descriptor id for std C. used for separate _fileno in FILE*. return value for fileno()
+typedef int FILEDESC_t;                                              /// Posix file descriptor id for std C. used for separate _fileno in FILE*. return value for fileno()
 #endif
 
 cFileText::cFileText() {}
@@ -161,18 +161,17 @@ void cFileText::Close() noexcept {  // virtual
     DetachHandle();
 }
 
-HRESULT cFileText::SeekX(STREAM_OFFSET_t offset, SEEK_ORIGIN_TYPE eSeekOrigin) noexcept {  // virtual
+HRESULT cFileText::SeekX(STREAM_OFFSET_t offset, SEEK_t eSeekOrigin) noexcept {  // virtual
     //! eSeekOrigin = SEEK_SET, SEEK_END
     //! @note end of line translation might be broken? ftell() and fseek() don't work correctly when you use it.
-    //! @note offset < 0 for SEEK_Cur is legal.
+    //! @note offset < 0 for SEEK_t::_Cur is legal.
     //! @return
     //!  <0 = FAILED
     //!  new file pointer position % int32.
     if (!isValidHandle()) return E_HANDLE;
-    if (::fseek(m_pStream, (long)offset, eSeekOrigin) != 0) return HResult::GetLastDef();
+    if (::fseek(m_pStream, (long)offset, (int)eSeekOrigin) != 0) return HResult::GetLastDef();
 
-    if (eSeekOrigin == SEEK_Set)  // SEEK_SET = FILE_BEGIN
-    {
+    if (eSeekOrigin == SEEK_t::_Set) {  // SEEK_SET = FILE_BEGIN
         if (offset == 0) {
             m_iCurLineNum = 0;  // i actually know the line number for this position.
         }
@@ -235,7 +234,7 @@ HRESULT cFileText::ReadX(void* pBuffer, size_t nSizeMax) noexcept {  // virtual
         return HResult::GetDef(GetStreamError(), HRESULT_WIN32_C(ERROR_READ_FAULT));
     }
     // m_iCurLineNum++; // no idea.
-    return CastN(HRESULT,uRet);  // size we got. 0 = end of file?
+    return CastN(HRESULT, uRet);  // size we got. 0 = end of file?
 }
 
 HRESULT cFileText::WriteX(const void* pData, size_t nDataSize) {  // virtual
@@ -315,7 +314,7 @@ HRESULT cFileText::ReadStringLine(char* pszBuffer, StrLen_t iSizeMax) {  // virt
 bool cFileText::put_TextPos(const cTextPos& rPos) {
     // FILE_BEGIN == SEEK_SET
     if (!rPos.isValidPos()) return false;
-    HRESULT hRes = SeekX(rPos.get_Offset(), SEEK_Set);
+    HRESULT hRes = SeekX(rPos.get_Offset(), SEEK_t::_Set);
     if (FAILED(hRes)) return false;
     m_iCurLineNum = rPos.get_LineNum();
     return true;

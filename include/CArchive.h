@@ -13,7 +13,7 @@
 
 namespace Gray {
 /// <summary>
-/// Form a bidirectional (typeless) binary stream of serialized data. Use with cObject.
+/// a bidirectional (typeless) binary stream of serialized data. Use with cObject.
 /// @note this is inherently dangerous to use since it contains no default/automatic typing/versioning information.
 /// @note put cVariant into the archive if you desire typing information. (and some version change resistance)
 /// This is extensible to any type.

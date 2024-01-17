@@ -1,9 +1,9 @@
 //
 //! @file cLogMgr.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
-
+// clang-format off
 #include "pch.h"
+// clang-format on
 #include "cAppState.h"
 #include "cCodeProfiler.h"
 #include "cLogEvent.h"
@@ -201,7 +201,7 @@ bool cLogSubject::IsLogged(LOG_ATTR_MASK_t uAttrMask, LOGLVL_t eLogLevel) const 
     return cLogMgr::I().IsLogged(uAttrMask, eLogLevel);
 }
 HRESULT cLogSubject::addEvent(cLogEvent& rEvent) noexcept {  // override
-    rEvent.m_pszSubject = m_pszSubject;    // categorize with this subject.
+    rEvent.m_pszSubject = m_pszSubject;                      // categorize with this subject.
     return cLogMgr::I().addEvent(rEvent);
 }
 }  // namespace Gray

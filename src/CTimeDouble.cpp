@@ -3,9 +3,9 @@
 //! Time in double days. Accurate Measure whole milli seconds
 //! 0 = (midnight, 30 December 1899 GMT).
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
-
+// clang-format off
 #include "pch.h"
+// clang-format on
 #include "cLogMgr.h"
 #include "cString.h"
 #include "cTimeDouble.h"
@@ -17,17 +17,17 @@ namespace Gray {
 const double cTimeDouble::k_nY2K = 36526.0;  /// The static value for y2k = January 1, 2000 in UTC/GMT
 const double cTimeDouble::k_nY10 = 3650.0;   /// The first 10 years are sometimes reserved to act as offsets.
 
-cTimeDouble GRAYCALL cTimeDouble::EncodeSeconds(double s) noexcept { // static
+cTimeDouble GRAYCALL cTimeDouble::EncodeSeconds(double s) noexcept {  // static
     //! Encode GMT Time
     return cTimeDouble(s / cTimeUnits::k_nSecondsPerDay);
 }
-cTimeDouble GRAYCALL cTimeDouble::EncodeTime(short h, short m, short s, short ms) noexcept { // static
+cTimeDouble GRAYCALL cTimeDouble::EncodeTime(short h, short m, short s, short ms) noexcept {  // static
     //! Encode GMT Time
     //! Same as MFC COleDateTime::EncodeTime
     return cTimeDouble((double)(h + ((m + (s + (ms / 1000.0)) / 60.0) / 60.0)) / 24.0);
 }
 
-cTimeDouble GRAYCALL cTimeDouble::EncodeDate(short wYear, short wMonth, short wDay) noexcept { // static
+cTimeDouble GRAYCALL cTimeDouble::EncodeDate(short wYear, short wMonth, short wDay) noexcept {  // static
     //! Encode GMT Date as days since (1899/12/30 midnight GMT) or (1900/1/1 0:0:0 GMT)
     //! same as SystemTimeToVariantTime() but more accurate for mSec
     if (wYear <= 0 || wYear > 9999) {
@@ -53,7 +53,7 @@ cTimeDouble GRAYCALL cTimeDouble::EncodeDate(short wYear, short wMonth, short wD
     return cTimeDouble((double)iDays);
 }
 
-void cTimeDouble::DecodeDate(OUT cTimeUnits& rTu, double dblDate) { // static
+void cTimeDouble::DecodeDate(OUT cTimeUnits& rTu, double dblDate) {  // static
     // Decode just the date portion. NOT time.
     // Round to the second
     const double k_HALF_SECOND = (1.0 / (cTimeUnits::k_nSecondsPerDay * 2));  // Half a second, expressed in days.
@@ -169,8 +169,7 @@ bool cTimeDouble::GetTimeUnits(OUT cTimeUnits& rTu, TZ_TYPE nTimeZone) const {
 }
 
 bool cTimeDouble::InitTimeUnits(const cTimeUnits& rTu) {
-    if (!rTu.isValidTimeUnits()) 
-        return false;
+    if (!rTu.isValidTimeUnits()) return false;
 
     m_dateTime = EncodeDate(rTu.m_wYear, rTu.m_wMonth, rTu.m_wDay);
     if (isTimeValid()) {
@@ -201,18 +200,18 @@ cTimeFile cTimeDouble::GetAsFileTime() const noexcept {
     return cTimeFile((FILETIME_t)nTmp);
 }
 
-cTimeDouble GRAYCALL cTimeDouble::GetTimeNow() noexcept { // static
+cTimeDouble GRAYCALL cTimeDouble::GetTimeNow() noexcept {  // static
     //!  cTimeFile = 64-bit 100-nanosec since January 1, 1601 GMT/UTC
     return GetTimeFromFile(cTimeFile::GetTimeNow());
 }
 
-cTimeDouble cTimeDouble::Date() noexcept { // static
+cTimeDouble cTimeDouble::Date() noexcept {  // static
     //! Get just whole days portion for now.
     double dDays = GetTimeNow();
     return double(int(dDays));
 }
 
-cTimeDouble cTimeDouble::Time() noexcept { // static
+cTimeDouble cTimeDouble::Time() noexcept {  // static
     //! Time of day now = 0 to 1
     double dDays = GetTimeNow();
     return dDays - int(dDays);
@@ -220,7 +219,7 @@ cTimeDouble cTimeDouble::Time() noexcept { // static
 
 //*******************************************************************
 
-cTimeDouble GRAYCALL cTimeDouble::GetTimeFromFile(const cTimeFile& ft) noexcept { // static
+cTimeDouble GRAYCALL cTimeDouble::GetTimeFromFile(const cTimeFile& ft) noexcept {  // static
     //! cTimeFile = 64-bit 100-nanosec since January 1, 1601 GMT
     //! double = days since (midnight, 30 December 1899 GMT)
     FILETIME_t tmp = ft.get_Val();
@@ -229,7 +228,7 @@ cTimeDouble GRAYCALL cTimeDouble::GetTimeFromFile(const cTimeFile& ft) noexcept 
     return dTimeDays;
 }
 
-cTimeDouble cTimeDouble::GetTimeFromSec(TIMESEC_t nTimeSec) noexcept { // static
+cTimeDouble cTimeDouble::GetTimeFromSec(TIMESEC_t nTimeSec) noexcept {  // static
     //! convert TIMESEC_t (seconds) to double (days)
     //! Opposite of cTimeInt::GetTimeFromDays()
     double dTimeDays = (double)nTimeSec;
@@ -286,20 +285,18 @@ cString cTimeDouble::GetTimeFormStr(const GChar_t* pszFormat, TZ_TYPE nTimeZone)
     //! Get the time as a string formatted using "C" strftime()
     //! MFC just calls this "Format"
     cTimeUnits Tu;
-    if (!GetTimeUnits(Tu, nTimeZone)) 
-        return "";
+    if (!GetTimeUnits(Tu, nTimeZone)) return "";
 
     GChar_t szBuffer[256];
     StrLen_t iLenChars = Tu.GetFormStr(szBuffer, STRMAX(szBuffer), pszFormat);
-    if (iLenChars <= 0) 
-        return "";
+    if (iLenChars <= 0) return "";
 
     return cString(szBuffer, iLenChars);
 }
 
 //*************************************************
 
-cString GRAYCALL cTimeDouble::GetTimeSpanStr(double dDays, TIMEUNIT_t eUnitHigh, int iUnitsDesired, bool bShortText) { // static
+cString GRAYCALL cTimeDouble::GetTimeSpanStr(double dDays, TIMEUNIT_t eUnitHigh, int iUnitsDesired, bool bShortText) {  // static
     //! Describe a delta/span of time from days to milliseconds.
     //! iUnitHigh = 0 = days.
     //! @todo MERGE THIS WITH cTimeUnits::GetTimeSpanStr version?!

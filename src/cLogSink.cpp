@@ -1,15 +1,15 @@
 //
 //! @file cLogSink.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
-
+// clang-format off
 #include "pch.h"
+// clang-format on
 #include "StrBuilder.h"
 #include "cBits.h"
 #include "cCodeProfiler.h"
-#include "cLogSink.h"
 #include "cLogEvent.h"
 #include "cLogMgr.h"
+#include "cLogSink.h"
 
 #ifdef UNDER_CE
 #include <dbgapi.h>  // OutputDebugStringA
@@ -51,13 +51,12 @@ cStringL cLogEvent::get_FormattedDefault() const {
 //**************************************************************
 
 cLogThrottle::cLogThrottle() noexcept : m_fLogThrottle(2000.0f), m_TimeLogLast(cTimeSys::k_CLEAR), m_nQtyLogLast(0) {}
- 
+
 //************************************************************************
 
 HRESULT cLogProcessor::addEventS(LOG_ATTR_MASK_t uAttrMask, LOGLVL_t eLogLevel, cStringL sMsg) noexcept {
     // Pre-Check if anyone cares before creating cLogEvent
-    if (!IsLogged(uAttrMask, eLogLevel)) 
-        return HRESULT_WIN32_C(ERROR_EMPTY);  // no log Sinks care about this. toss it.
+    if (!IsLogged(uAttrMask, eLogLevel)) return HRESULT_WIN32_C(ERROR_EMPTY);  // no log Sinks care about this. toss it.
     cLogEventPtr pEvent(new cLogEvent(uAttrMask, eLogLevel, sMsg));
     return addEvent(*pEvent);
 }
@@ -72,7 +71,7 @@ HRESULT cLogProcessor::addEventV(LOG_ATTR_MASK_t uAttrMask, LOGLVL_t eLogLevel, 
     LOGCHAR_t szTemp[StrT::k_LEN_Default];  // assume this magic number is big enough.
     StrLen_t iLen = StrT::vsprintfN(szTemp, STRMAX(szTemp), pszFormat, vargs);
     if (iLen <= 0) return E_INVALIDARG;
-    return addEventS(uAttrMask, eLogLevel, szTemp );
+    return addEventS(uAttrMask, eLogLevel, szTemp);
 }
 
 //************************************************************************

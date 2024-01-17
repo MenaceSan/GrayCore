@@ -1,8 +1,9 @@
 //
 //! @file cHookJump.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
+// clang-format off
 #include "pch.h"
+// clang-format on
 #include "cHookJump.h"
 #include "cLogMgr.h"
 
@@ -59,8 +60,7 @@ FARPROC cHookJump::GetChainFuncInt() const {
 FARPROC cHookJump::GetChainFunc() const {
     // Get a callable function from this.
     FARPROC p = GetChainFuncInt();
-    if (p == nullptr)
-        return m_pFuncOrig;  // assume it is swapped back in.
+    if (p == nullptr) return m_pFuncOrig;  // assume it is swapped back in.
     return p;
 }
 

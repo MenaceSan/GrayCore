@@ -1,8 +1,9 @@
 //
 //! @file cObjectService.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
+// clang-format off
 #include "pch.h"
+// clang-format on
 #include "cAppState.h"
 #include "cArchive.h"
 #include "cObjectService.h"
@@ -10,7 +11,7 @@
 
 namespace Gray {
 #ifndef _MFC_VER
-void CObject::Serialize(cArchive& a) { // virtual
+void CObject::Serialize(cArchive& a) {  // virtual
     // Emulate MFC method. cArchive = CArchive
     UNREFERENCED_REFERENCE(a);
 }
@@ -34,9 +35,7 @@ cObjectFactory::~cObjectFactory() {
 bool cObjectService::RegisterFactory(cObjectFactory& factory) noexcept {
     // add this to a cObjectService registration list.
     auto i = _Factories.FindIForKey(factory.get_Name());
-    if (i != k_ITERATE_BAD) {
-        return false;  // already here.
-    }
+    if (i != k_ITERATE_BAD) return false;  // already here.
     _Factories.Add(&factory);
     return true;
 }
@@ -44,7 +43,7 @@ bool cObjectService::RemoveFactory(cObjectFactory& factory) noexcept {
     return _Factories.RemoveArg(&factory);
 }
 
-cObject* GRAYCALL cObjectService::CreateObject(const ATOMCHAR_t* pszTypeName) { // static
+cObject* GRAYCALL cObjectService::CreateObject(const ATOMCHAR_t* pszTypeName) {  // static
     // Unknown allocation / free of this object !
     UNREFERENCED_PARAMETER(pszTypeName);
     cObjectService& service = cObjectService::I();
@@ -54,7 +53,7 @@ cObject* GRAYCALL cObjectService::CreateObject(const ATOMCHAR_t* pszTypeName) { 
     // TODO
     return nullptr;
 }
-cObject* GRAYCALL cObjectService::CreateObject(const TYPEINFO_t& type) { // static
+cObject* GRAYCALL cObjectService::CreateObject(const TYPEINFO_t& type) {  // static
     // Unknown allocation / free of this object !
     UNREFERENCED_REFERENCE(type);
     cObjectService& service = cObjectService::I();

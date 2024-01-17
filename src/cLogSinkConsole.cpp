@@ -1,14 +1,14 @@
 //
 //! @file cLogSinkConsole.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
-
+// clang-format off
 #include "pch.h"
+// clang-format on
 #include "cAppConsole.h"
 #include "cAppState.h"
-#include "cLogSinkConsole.h"
 #include "cLogEvent.h"
 #include "cLogMgr.h"
+#include "cLogSinkConsole.h"
 #include "cOSProcess.h"
 
 #if !defined(UNDER_CE)

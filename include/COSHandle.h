@@ -13,7 +13,7 @@
 #include "HResult.h"
 #include "cDebugAssert.h"  // ASSERT
 #include "cNonCopyable.h"
-#include "cStreamProgress.h"  // STREAM_OFFSET_t , STREAM_POS_t, SEEK_ORIGIN_TYPE
+#include "cStreamProgress.h"  // STREAM_OFFSET_t , STREAM_POS_t, SEEK_t
 #include "cTimeSys.h"         // TIMESYSD_t
 
 namespace Gray {
@@ -71,11 +71,15 @@ class GRAYCORE_LINK cOSHandle : protected cNonCopyable {
         return m_h;
     }
 
+    /// <summary>
+    /// Is handle valid?
+    /// @note: 0 is a valid OS handle for __linux__ but NOT _WIN32
+    /// </summary>
+    /// <param name="h"></param>
+    /// <returns></returns>
     static bool inline IsValidHandle(HANDLE h) noexcept {
-        //! 0 is a valid OS handle for __linux__ but NOT _WIN32
 #ifdef _WIN32
-        if (h == HANDLE_NULL)  /// 0 is never a valid handle value for _WIN32. (0=stdin for __linux__)
-            return false;
+        if (h == HANDLE_NULL) return false;  /// 0 is never a valid handle value for _WIN32. (0=stdin for __linux__)
 #endif
         return h != INVALID_HANDLE_VALUE;  //  -1
     }
@@ -83,10 +87,13 @@ class GRAYCORE_LINK cOSHandle : protected cNonCopyable {
         return IsValidHandle(m_h);
     }
 
+    /// <summary>
+    /// default implementation for closing OS HANDLE.
+    /// ASSUME IsValidHandle(h)
+    /// </summary>
+    /// <param name="h"></param>
+    /// <returns>true = ok</returns>
     static inline bool CloseHandle(HANDLE h) noexcept {
-        //! default implementation for closing OS HANDLE.
-        //! ASSUME IsValidHandle(h)
-        //! @return true = ok;
         DEBUG_CHECK(IsValidHandle(h));
 #ifdef _WIN32
         const BOOL bRet = ::CloseHandle(h);  // ignored bool return.
@@ -104,10 +111,14 @@ class GRAYCORE_LINK cOSHandle : protected cNonCopyable {
     }
 
 #ifdef __linux__
+    /// <summary>
+    /// Similar to _WIN32 AttachHandle( _FNF(::CreateFile)).
+    /// @note call isValidHandle() to decide if it worked. HResult::GetLastDef(E_HANDLE)
+    /// </summary>
+    /// <param name="pszPath"></param>
+    /// <param name="uFlags">O_RDWR | O_NOCTTY | O_NDELAY</param>
+    /// <param name="uMode"></param>
     void OpenHandle(const char* pszPath, UINT uFlags, UINT uMode = 0) {
-        //! Similar to _WIN32 AttachHandle( _FNF(::CreateFile))
-        //! @arg uFlags = O_RDWR | O_NOCTTY | O_NDELAY
-        //! @note call isValidHandle() to decide if it worked. HResult::GetLastDef(E_HANDLE)
         CloseHandleLast();
         m_h = ::open(pszPath, uFlags, uMode);
     }
@@ -125,13 +136,16 @@ class GRAYCORE_LINK cOSHandle : protected cNonCopyable {
         return h;
     }
 
+    /// <summary>
+    ///
+    /// </summary>
+    /// <param name="pData"></param>
+    /// <param name="nDataSize"></param>
+    /// <returns># of bytes written. -lt- 0 = error.
+    /// ERROR_INVALID_USER_BUFFER = too many async calls ?? wait.
+    /// ERROR_IO_PENDING = must wait!?</returns>
     HRESULT WriteX(const void* pData, size_t nDataSize) const {
-        //! @return # of bytes written. <0 = error.
-        //!   ERROR_INVALID_USER_BUFFER = too many async calls ?? wait
-        //!   ERROR_IO_PENDING = must wait!?
-
-        if (nDataSize <= 0)  // Do nothing.
-            return S_OK;
+        if (nDataSize <= 0) return S_OK;  // Do nothing.
 #if defined(_WIN32)
         DWORD nLengthWritten = 0;
         const bool bRet = ::WriteFile(m_h, pData, (DWORD)nDataSize, &nLengthWritten, nullptr);
@@ -170,8 +184,10 @@ class GRAYCORE_LINK cOSHandle : protected cNonCopyable {
         return CastN(HRESULT, nLengthRead);
     }
 
+    /// <summary>
+    /// synchronous flush of write data to file.
+    /// </summary>
     HRESULT FlushX() const noexcept {
-        //! synchronous flush of write data to file.
 #ifdef _WIN32
         if (!::FlushFileBuffers(m_h))
 #elif defined(__linux__)
@@ -184,44 +200,44 @@ class GRAYCORE_LINK cOSHandle : protected cNonCopyable {
         return S_OK;
     }
 
-    STREAM_POS_t SeekRaw(STREAM_OFFSET_t nOffset, SEEK_ORIGIN_TYPE eSeekOrigin) const noexcept {
-        //! Change or get the current file position pointer.
-        //! eSeekOrigin = SEEK_ORIGIN_TYPE SEEK_Cur
-        //! @note it is legal to seek beyond the end of the file to grow it !
+    /// <summary>
+    /// Change or get the current file position pointer.
+    /// @note it is legal to seek beyond the end of the file to grow it !
+    /// </summary>
+    /// <param name="nOffset"></param>
+    /// <param name="eSeekOrigin">SEEK_t::_Cur</param>
+    /// <returns></returns>
+    STREAM_POS_t SeekRaw(STREAM_OFFSET_t nOffset, SEEK_t eSeekOrigin) const noexcept {
 #ifdef _WIN32
 #ifdef USE_FILE_POS64
         ::LARGE_INTEGER NewFilePointer;
         NewFilePointer.QuadPart = nOffset;
-        if (!::SetFilePointerEx(m_h, NewFilePointer, &NewFilePointer, eSeekOrigin)) {
+        if (!::SetFilePointerEx(m_h, NewFilePointer, &NewFilePointer, CastN(DWORD, eSeekOrigin))) {
             return k_STREAM_POS_ERR;  // HResult::GetLast()
         }
         return NewFilePointer.QuadPart;
 #else
-        DWORD dwRet = ::SetFilePointer(m_h, (LONG)nOffset, nullptr, eSeekOrigin);
+        DWORD dwRet = ::SetFilePointer(m_h, CastN(LONG, nOffset), nullptr, eSeekOrigin);
         if (dwRet == INVALID_SET_FILE_POINTER) return k_STREAM_POS_ERR;  // HResult::GetLast()
         return dwRet;
 #endif  // USE_FILE_POS64
 #else
         //! Use return _tell( m_hFile ) for __linux__ ? off_t
-        return (STREAM_POS_t)::lseek(m_h, nOffset, eSeekOrigin);
+        return CastN(STREAM_POS_t, ::lseek(m_h, nOffset, eSeekOrigin));
 #endif
     }
 
-    HRESULT SeekX(STREAM_OFFSET_t nOffset, SEEK_ORIGIN_TYPE eSeekOrigin) const noexcept {
-        //! Change or get the current file position pointer.
-        //! @arg eSeekOrigin = // SEEK_SET ?
-        //! @return the New position % int, <0=FAILED
-        //! @note it is legal to seek beyond the end of the file to grow it !
-
-        if (!isValidHandle()) {
-            return E_HANDLE;
-        }
-
+    /// <summary>
+    /// Change or get the current file position pointer.
+    /// @note it is legal to seek beyond the end of the file to grow it !
+    /// </summary>
+    /// <param name="nOffset"></param>
+    /// <param name="eSeekOrigin">SEEK_SET ?</param>
+    /// <returns>the New position % int, -lt- 0=FAILED</returns>
+    HRESULT SeekX(STREAM_OFFSET_t nOffset, SEEK_t eSeekOrigin) const noexcept {
+        if (!isValidHandle()) return E_HANDLE;
         const STREAM_POS_t nPos = SeekRaw(nOffset, eSeekOrigin);
-        if (nPos == k_STREAM_POS_ERR) {
-            return HResult::GetLastDef();
-        }
-
+        if (nPos == k_STREAM_POS_ERR) return HResult::GetLastDef();
         return CastN(HRESULT, (INT32)nPos);  // truncated ?
     }
 
@@ -250,9 +266,15 @@ class GRAYCORE_LINK cOSHandle : protected cNonCopyable {
 #endif
 
 #ifdef _WIN32
+    /// <summary>
+    /// Create a Dupe of this handle with special properties.
+    /// </summary>
+    /// <param name="hTargetProcess"></param>
+    /// <param name="dwDesiredAccess"></param>
+    /// <param name="bInheritHandle"></param>
+    /// <param name="dwOptions">DUPLICATE_CLOSE_SOURCE | DUPLICATE_SAME_ACCESS (ignore dwDesiredAccess)</param>
+    /// <returns></returns>
     HANDLE Duplicate(HANDLE hTargetProcess = INVALID_HANDLE_VALUE, DWORD dwDesiredAccess = DUPLICATE_SAME_ACCESS, bool bInheritHandle = false, DWORD dwOptions = DUPLICATE_SAME_ACCESS) const {
-        //! Create a Dupe of this handle with special properties.
-        //! dwOptions = DUPLICATE_CLOSE_SOURCE | DUPLICATE_SAME_ACCESS (ignore dwDesiredAccess)
         ASSERT(isValidHandle());
         HANDLE hNewHandle = INVALID_HANDLE_VALUE;
         HANDLE hCurrentProcess = ::GetCurrentProcess();

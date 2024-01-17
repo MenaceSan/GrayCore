@@ -1,8 +1,9 @@
 //
 //! @file cStreamTextReader.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
+// clang-format off
 #include "pch.h"
+// clang-format on
 #include "cStreamTextReader.h"
 
 namespace Gray {
@@ -20,9 +21,7 @@ HRESULT cStreamTextReader::ReadStringLine(OUT const char** ppszLine) {
             if (FAILED(hRes)) return hRes;
 
             pData = (const char*)this->get_ReadPtr();
-
-            if (hRes <= 0)  // We have no more data (EOF) or no more room to read data (line is too long)
-            {
+            if (hRes <= 0) {  // We have no more data (EOF) or no more room to read data (line is too long)
                 break;
             }
             ASSERT(iReadAvail < this->get_ReadQty());
@@ -62,7 +61,7 @@ HRESULT cStreamTextReader::ReadStringLine(OUT char* pszBuffer, StrLen_t iSizeMax
     return (HRESULT)nSizeCopy;
 }
 
-HRESULT cStreamTextReader::SeekX(STREAM_OFFSET_t iOffset, SEEK_ORIGIN_TYPE eSeekOrigin) noexcept { // override;
+HRESULT cStreamTextReader::SeekX(STREAM_OFFSET_t iOffset, SEEK_t eSeekOrigin) noexcept { // override;
     //! Seek to a particular position in the file.
     //! This will corrupt m_iCurLineNum. The caller must manage that themselves.
     //! @arg eSeekOrigin = // SEEK_SET ?
@@ -72,7 +71,7 @@ HRESULT cStreamTextReader::SeekX(STREAM_OFFSET_t iOffset, SEEK_ORIGIN_TYPE eSeek
     ITERATE_t iReadQty = this->get_ReadQty();      // what i have buffered.
 
     switch (eSeekOrigin) {
-        case SEEK_Cur:  // relative
+        case SEEK_t::_Cur:  // relative
             if (iOffset >= -get_ReadIndex() && iOffset <= iReadQty) {
                 // Move inside buffer.
                 AdvanceRead((ITERATE_t)iOffset);
@@ -80,15 +79,15 @@ HRESULT cStreamTextReader::SeekX(STREAM_OFFSET_t iOffset, SEEK_ORIGIN_TYPE eSeek
             }
             // outside current buffer.
             this->SetEmptyQ();
-            return m_rInp.SeekX(nPosFile + iOffset - iReadQty, SEEK_Set);
+            return m_rInp.SeekX(nPosFile + iOffset - iReadQty, SEEK_t::_Set);
 
-        case SEEK_End:  // relative to end.
+        case SEEK_t::_End:  // relative to end.
             if (iOffset > 0) break;
             iOffset += m_rInp.GetLength();
 
             // Fall through.
 
-        case SEEK_Set:  // from beginning.
+        case SEEK_t::_Set:  // from beginning.
             // Are we inside the current buffer? then just reposition.
             if (iOffset == 0) {
                 m_iCurLineNum = 0;
@@ -102,7 +101,7 @@ HRESULT cStreamTextReader::SeekX(STREAM_OFFSET_t iOffset, SEEK_ORIGIN_TYPE eSeek
             }
             // outside current buffer.
             this->SetEmptyQ();
-            return m_rInp.SeekX(iOffset, SEEK_Set);
+            return m_rInp.SeekX(iOffset, SEEK_t::_Set);
 
         default:
             break;

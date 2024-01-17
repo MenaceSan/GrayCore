@@ -3,9 +3,9 @@
 //! Replace the MFC CTime function. Must be usable with file system.
 //! Accurate Measure whole seconds
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
-
+// clang-format off
 #include "pch.h"
+// clang-format on
 #include "cLogMgr.h"
 #include "cString.h"
 #include "cTimeDouble.h"
@@ -33,13 +33,13 @@ cTimeInt::cTimeInt(const cTimeFile& fileTime) noexcept {
     m_time = (TIMESEC_t)nTmp;
 }
 
-TIMESEC_t GRAYCALL cTimeInt::GetTimeFromDays(double dTimeDays) noexcept { // static
+TIMESEC_t GRAYCALL cTimeInt::GetTimeFromDays(double dTimeDays) noexcept {  // static
     //! Set to time in seconds from time in days.
     //! Opposite of cTimeDouble::GetTimeFromSec()
     return (TIMESEC_t)((dTimeDays - cTimeDouble::k_nDaysDiffTimeInt) * cTimeUnits::k_nSecondsPerDay);
 }
 
-cTimeInt GRAYCALL cTimeInt::GetTimeNow() noexcept { // static
+cTimeInt GRAYCALL cTimeInt::GetTimeNow() noexcept {  // static
     //! @return The current time in seconds since Jan 1 1970 GMT (NOT LOCALIZED)
     //! @note GetCurrentTime() is "#define" by _WIN32 to GetTickCount() so i cant use that name!
     //! NOT adjusted for local time zone or DST.
@@ -130,8 +130,8 @@ bool cTimeInt::InitTimeUnits(const cTimeUnits& rTu) {
             nTimeZone = cTimeZoneMgr::GetLocalMinutesWest();
         }
         nUnits += nTimeZone * 60;  // seconds
-        if (rTu.isInDST1()) {        // TODO Does the TZ respect DST ?
-            nUnits -= 60 * 60;  // remove added hour.
+        if (rTu.isInDST1()) {      // TODO Does the TZ respect DST ?
+            nUnits -= 60 * 60;     // remove added hour.
         }
     }
 
@@ -254,9 +254,7 @@ HRESULT cTimeInt::SetTimeStr(const GChar_t* pszDateTime, TZ_TYPE nTimeZone) {
 
     cTimeUnits Tu;
     HRESULT hRes = Tu.SetTimeStr(pszDateTime, nTimeZone);
-    if (hRes <= 0) {
-        return 0;
-    }
+    if (hRes <= 0) return 0;
 
     InitTimeUnits(Tu);
     return hRes;
@@ -264,7 +262,7 @@ HRESULT cTimeInt::SetTimeStr(const GChar_t* pszDateTime, TZ_TYPE nTimeZone) {
 
 //******************************************************************************
 
-cString GRAYCALL cTimeInt::GetTimeSpanStr(TIMESECD_t nSeconds, TIMEUNIT_t eUnitHigh, int iUnitsDesired, bool bShortText) { // static
+cString GRAYCALL cTimeInt::GetTimeSpanStr(TIMESECD_t nSeconds, TIMEUNIT_t eUnitHigh, int iUnitsDesired, bool bShortText) {  // static
     if (nSeconds <= 0) return bShortText ? _GT("0s") : _GT("0 seconds");
     cTimeUnits tu;  // 0
     tu.AddSeconds(nSeconds);
@@ -272,10 +270,10 @@ cString GRAYCALL cTimeInt::GetTimeSpanStr(TIMESECD_t nSeconds, TIMEUNIT_t eUnitH
     tu.GetTimeSpanStr(szMsg, STRMAX(szMsg), eUnitHigh, iUnitsDesired, bShortText);
     return szMsg;
 }
-cString GRAYCALL cTimeInt::GetTimeDeltaBriefStr(TIMESECD_t dwSeconds) { // static
+cString GRAYCALL cTimeInt::GetTimeDeltaBriefStr(TIMESECD_t dwSeconds) {  // static
     return GetTimeSpanStr(dwSeconds, TIMEUNIT_t::_Day, 4, true);
 }
-cString GRAYCALL cTimeInt::GetTimeDeltaSecondsStr(TIMESECD_t dwSeconds) { // static
+cString GRAYCALL cTimeInt::GetTimeDeltaSecondsStr(TIMESECD_t dwSeconds) {  // static
     return GetTimeSpanStr(dwSeconds, TIMEUNIT_t::_Hour, 3, false);
 }
 }  // namespace Gray

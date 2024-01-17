@@ -1,14 +1,14 @@
 //
 //! @file cList.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
-
+// clang-format off
 #include "pch.h"
+// clang-format on
 #include "cDebugAssert.h"
 #include "cList.h"
 
 namespace Gray {
-void cListParentBase::Empty() {
+void cListParentBase::SetEmpty() {
     //! empty the list. but don't necessarily DisposeThis() the objects.
     cListNodeBase* pNodeLast = nullptr;
     for (;;)  // iterate the list.
@@ -44,7 +44,7 @@ void cListParentBase::DisposeAll(void) {
     m_pTail = nullptr;
 }
 
-void cListParentBase::RemoveListNode(cListNodeBase* pNodeRemove) { // virtual Override this = called when removed from list.
+void cListParentBase::RemoveListNode(cListNodeBase* pNodeRemove) {  // virtual Override this = called when removed from list.
     //! Some child object is being removed from my list.
     //! Override this to get called when an item is removed from this list.
     //! just remove from list. It may or may not be deleting itself.
@@ -84,10 +84,8 @@ void cListParentBase::InsertListNode(cListNodeBase* pNodeNew, cListNodeBase* pNo
 
     if (pNodeNew == nullptr) return;
     DEBUG_CHECK(pNodePrev != pNodeNew);
-    if (pNodeNew->hasParent())  // currently in a list.
-    {
-        if (IsMyChild(pNodeNew))  // already here.
-        {
+    if (pNodeNew->hasParent()) {    // currently in a list.
+        if (IsMyChild(pNodeNew)) {  // already here.
             // allow a change in order??
             return;
         }
@@ -96,8 +94,7 @@ void cListParentBase::InsertListNode(cListNodeBase* pNodeNew, cListNodeBase* pNo
     }
 
     cListNodeBase* pNodeNext;
-    if (pNodePrev != nullptr)  // put after some other node?
-    {
+    if (pNodePrev != nullptr) {  // put after some other node?
         DEBUG_CHECK(IsMyChild(pNodePrev));
         pNodeNext = pNodePrev->get_Next();
         pNodePrev->m_pNext = pNodeNew;
@@ -152,12 +149,11 @@ cListNodeBase* cListParentBase::GetAt(ITERATE_t index) const {
 }
 
 #if 0
-	cListNodeBase* cListParentBase::GetNext(cListNodeBase* pNode) const	{
-		//! iterate the linked list.
-		if (pNode == nullptr)
-			return get_Head();
-		ASSERT(pNode->get_Parent() == this);
-		return pNode->get_Next();
-	}
+cListNodeBase* cListParentBase::GetNext(cListNodeBase* pNode) const	{
+	//! iterate the linked list.
+	if (pNode == nullptr) return get_Head();
+	ASSERT(pNode->get_Parent() == this);
+	return pNode->get_Next();
+}
 #endif
 }  // namespace Gray

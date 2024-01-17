@@ -110,7 +110,7 @@ class GRAYCORE_LINK cFileText : public cFileTextBase { // Try to be compatible w
     HRESULT OpenX(cStringF sFilePath = _FN(""), OF_FLAGS_t nOpenFlags = OF_READ | OF_SHARE_DENY_NONE) override;
 
     void Close() noexcept override;
-    HRESULT SeekX(STREAM_OFFSET_t nOffset = 0, SEEK_ORIGIN_TYPE eSeekOrigin = SEEK_Set) noexcept override;
+    HRESULT SeekX(STREAM_OFFSET_t nOffset = 0, SEEK_t eSeekOrigin = SEEK_t::_Set) noexcept override;
 
     ::FILE* get_FileStream() const noexcept {
         // operator FILE* () const { return m_pStream; }	// Dangerous.

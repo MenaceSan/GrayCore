@@ -1,18 +1,19 @@
 //
 //! @file cThreadLock.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
+// clang-format off
 #include "pch.h"
+// clang-format on
 #include "cThreadLock.h"
 
 namespace Gray {
-bool cThreadState::WaitForThreadExit(TIMESYSD_t iTimeMSec) noexcept { // virtual
+bool cThreadState::WaitForThreadExit(TIMESYSD_t iTimeMSec) noexcept {  // virtual
     // similar to ::pthread_join() but with a timer. NOT optimal.
     const cTimeSys tStart(cTimeSys::GetTimeNow());
     for (;;) {
         if (!isThreadRunning()) return true;
         UINT tDiff = (UINT)tStart.get_AgeSys();
-        if (tDiff > (UINT)iTimeMSec) break;  // -1 = INFINITE            
+        if (tDiff > (UINT)iTimeMSec) break;                 // -1 = INFINITE
         cThreadId::SleepCurrent((tDiff > 400) ? 200 : 10);  // milliseconds
     }
     return false;  // didn't stop in time! may have to hard terminate

@@ -1,9 +1,9 @@
 //
 //! @file cSecurityAttributes.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
-
+// clang-format off
 #include "pch.h"
+// clang-format on
 #include "cLogMgr.h"
 #include "cSecurityAttributes.h"
 
@@ -78,12 +78,10 @@ bool cSecurityId::SetSID(SID* pSID) {
         this->Free();
         return true;
     }
-    if (pSID == get_SID()) 
-        return true;  // same.
-    
+    if (pSID == get_SID()) return true;  // same.
+
     size_t nLengthSid = ::GetLengthSid(pSID);
-    if (nLengthSid <= 0) 
-        return false;
+    if (nLengthSid <= 0) return false;
 
     this->AllocPtr3(pSID, nLengthSid);
     return true;

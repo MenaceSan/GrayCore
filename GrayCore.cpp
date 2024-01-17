@@ -1,9 +1,9 @@
 //
 //! @file GrayCore.cpp
 //! @copyright (c) 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
-
+// clang-format off
 #include "pch.h"
+// clang-format on
 #include "GrayCore.h"
 #include "GrayVersion.h"
 #include "SysRes.h"
@@ -36,7 +36,7 @@ int _cdecl main(int argc, APP_ARGS_t argv) {
     cUnitTests& uts = Gray::cUnitTests::I();
     uts.RunUnitTests(UNITTEST_LEVEL_t::_Common);
 
-    return APP_EXITCODE_OK;
+    return APP_EXITCODE_t::_OK;
 }
 
 #elif !defined(GRAY_STATICLIB)  // DLL/SO

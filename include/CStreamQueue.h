@@ -53,7 +53,7 @@ class GRAYCORE_LINK cStreamQueue : public cStream, public cQueueBytes {
         this->put_AutoReadCommit(CastN(ITERATE_t, nSizeMin));
         return CastN(size_t, iAutoReadCommit);
     }
-    HRESULT SeekX(STREAM_OFFSET_t offset, SEEK_ORIGIN_TYPE eSeekOrigin = SEEK_Set) noexcept override {
+    HRESULT SeekX(STREAM_OFFSET_t offset, SEEK_t eSeekOrigin = SEEK_t::_Set) noexcept override {
         return SUPER_t::SeekQ(offset, eSeekOrigin);
     }
     STREAM_POS_t GetPosition() const override {
@@ -95,7 +95,7 @@ struct GRAYCORE_LINK cStreamStatic : public cStream, public cQueueRW<BYTE> {
     }
     ~cStreamStatic() {}
  
-    HRESULT SeekX(STREAM_OFFSET_t offset, SEEK_ORIGIN_TYPE eSeekOrigin = SEEK_Set) noexcept override {
+    HRESULT SeekX(STREAM_OFFSET_t offset, SEEK_t eSeekOrigin = SEEK_t::_Set) noexcept override {
         return this->SeekQ(offset, eSeekOrigin);
     }
     STREAM_POS_t GetPosition() const override {

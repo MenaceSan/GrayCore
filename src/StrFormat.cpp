@@ -4,8 +4,9 @@
 // https://github.com/jpbonn/coremark_lm32/blob/master/ee_printf.c
 // https://github.com/cjlano/tinyprintf/blob/master/tinyprintf.c
 // http://stackoverflow.com/questions/16647278/minimal-fast-implementation-of-sprintf-for-embedded
-
+// clang-format off
 #include "pch.h"
+// clang-format on
 #include "StrArg.h"
 #include "StrBuilder.h"
 #include "StrFormat.h"
@@ -340,9 +341,8 @@ void GRAYCALL StrFormat<TYPE>::V(StrBuilder<TYPE>& out, const TYPE* pszFormat, v
     //!  Newer Windows versions have a _TRUNCATE option to just truncate the string and return used size.
     //!  _vscwprintf can be used to estimate the size needed in advance using a 2 pass method.
 
-    if (pszFormat == nullptr)  
-        return;  // Error? or just do nothing?
- 
+    if (pszFormat == nullptr) return;  // Error? or just do nothing?
+
     ASSERT(out.get_Str() != pszFormat);
     bool bHasFormatting = false;
 
@@ -436,8 +436,7 @@ StrLen_t GRAYCALL StrTemplate::ReplaceTemplateBlock(StrBuilder<IniChar_t>& out, 
         ASSERT(i > 1);
 
         if (ch == '<' && pszInp[i + 1] == '?') {  // found recursive start block.
-
-            out.AdvanceWrite(-1);  // back up.
+            out.AdvanceWrite(-1);                 // back up.
             StrLen_t iLen = ReplaceTemplateBlock(out, pszInp + i, pBlockReq, true);
             i += iLen;  // skip.
             continue;

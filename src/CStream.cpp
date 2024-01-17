@@ -1,8 +1,9 @@
 //
 //! @file cStream.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
+// clang-format off
 #include "pch.h"
+// clang-format on
 #include "StrT.h"
 #include "cStack.h"  // include this some palce just to compile.
 #include "cStream.h"
@@ -11,11 +12,11 @@
 namespace Gray {
 STREAM_POS_t cStreamBase::GetLength() const {  // virtual // default impl
     cStreamBase* pThis = const_cast<cStreamBase*>(this);
-    STREAM_POS_t nCurrent = GetPosition();     // save current position.
-    HRESULT hRes = pThis->SeekX(0, SEEK_End);  // seek to the end to find the length.
+    STREAM_POS_t nCurrent = GetPosition();         // save current position.
+    HRESULT hRes = pThis->SeekX(0, SEEK_t::_End);  // seek to the end to find the length.
     if (FAILED(hRes)) return k_STREAM_POS_ERR;
     STREAM_POS_t nLength = GetPosition();
-    hRes = pThis->SeekX((STREAM_OFFSET_t)nCurrent, SEEK_Set);  // restore the position pointer back.
+    hRes = pThis->SeekX((STREAM_OFFSET_t)nCurrent, SEEK_t::_Set);  // restore the position pointer back.
     if (FAILED(hRes)) return k_STREAM_POS_ERR;
     return nLength;
 }
@@ -94,7 +95,7 @@ HRESULT cStreamOutput::WriteStream(cStreamInput& stmIn, STREAM_POS_t nSizeMax, I
         }
     }
 
-    return CastN(HRESULT,dwAmount);  // done.
+    return CastN(HRESULT, dwAmount);  // done.
 }
 
 HRESULT cStreamOutput::WriteSize(size_t nSize) {
@@ -136,7 +137,7 @@ HRESULT cStreamInput::ReadSize(OUT size_t& nSize) {
         nBits += 7;
         ASSERT(nBits <= 80);
     }
-    return CastN(HRESULT,nBits);
+    return CastN(HRESULT, nBits);
 }
 
 HRESULT cStreamInput::ReadAll(OUT cBlob& blob, size_t nSizeExtra) {
@@ -214,8 +215,8 @@ HRESULT cStreamInput::ReadPeek(void* pData, size_t nDataSize) {  // virtual
     HRESULT hResRead = ReadX(pData, nDataSize);
     if (FAILED(hResRead) || hResRead == 0) return hResRead;
 
-    HRESULT hResSeek = SeekX(-hResRead, SEEK_Cur);  // back up.
-    if (FAILED(hResSeek)) return hResSeek;          // ERROR.
+    HRESULT hResSeek = SeekX(-hResRead, SEEK_t::_Cur);  // back up.
+    if (FAILED(hResSeek)) return hResSeek;              // ERROR.
     return hResRead;
 }
 }  // namespace Gray

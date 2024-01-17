@@ -89,7 +89,7 @@ class GRAYCORE_LINK cQueueIndex {
     /// <param name="iOffset"></param>
     /// <param name="eSeekOrigin">SEEK_CUR, etc</param>
     /// <returns>the New stream/file position, -lte- 0=FAILED = INVALID_SET_FILE_POINTER</returns>
-    HRESULT SeekQ(STREAM_OFFSET_t nOffset, SEEK_ORIGIN_TYPE eSeekOrigin = SEEK_Set) noexcept;  // support parents SeekX
+    HRESULT SeekQ(STREAM_OFFSET_t nOffset, SEEK_t eSeekOrigin = SEEK_t::_Set) noexcept;  // support parents SeekX
 };
 
 //*********************************************************************
@@ -298,7 +298,7 @@ class GRAYCORE_LINK cQueueRW : public cQueueRead<TYPE> {
     /// <param name="iOffset">quantity of TYPE</param>
     /// <param name="eSeekOrigin">SEEK_CUR, etc</param>
     /// <returns>the New position,  -lt- 0=FAILED = INVALID_SET_FILE_POINTER </returns>
-    HRESULT SeekQ(STREAM_OFFSET_t iOffset, SEEK_ORIGIN_TYPE eSeekOrigin = SEEK_Set) noexcept {
+    HRESULT SeekQ(STREAM_OFFSET_t iOffset, SEEK_t eSeekOrigin = SEEK_t::_Set) noexcept {
         SUPER_t::SeekQ(iOffset, eSeekOrigin);
         ReadCommitCheck();
         return (HRESULT)this->m_nReadLast;

@@ -111,7 +111,7 @@ class GRAYCORE_LINK cStringT {
     void Init() noexcept {
         m_pchData = const_cast<_TYPE_CH*>(&m_Nil);
     }
-    void EmptyValid() noexcept {
+    void SetEmptyValid() noexcept {
         // ASSUME NOT m_Nil. Use m_Nil for empty.
         DEBUG_CHECK(isValidString());
         get_Head()->DecRefCount();
@@ -230,11 +230,14 @@ class GRAYCORE_LINK cStringT {
         }
         return pHead->get_CharCount();
     }
+    /// <summary>
+    /// AKA SetEmpty
+    /// </summary>
     void Empty() noexcept {
         if (m_pchData == nullptr)  // certain off instances where it could be nullptr. arrays
             return;
         if (IsEmpty()) return;
-        EmptyValid();
+        SetEmptyValid();
     }
     /// <summary>
     /// Clear this more thoroughly for security reasons. passwords, etc. ZeroSecure ?

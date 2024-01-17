@@ -1,8 +1,9 @@
 //
 //! @file cOSHandle.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
+// clang-format off
 #include "pch.h"
+// clang-format on
 #include "cOSHandle.h"
 #include "cOSHandleSet.h"
 #include "cTimeVal.h"

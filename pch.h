@@ -12,8 +12,8 @@
 #endif
 
 #ifndef GRAYCORE_LINK
-#if defined(_MFC_VER) || defined(GRAY_STATICLIB)	// GRAY_STATICLIB or _MFC_VER can be defined to make Gray* all static lib
-#define GRAYCORE_LINK  // not in a DLL
+#if defined(_MFC_VER) || defined(GRAY_STATICLIB)  // GRAY_STATICLIB or _MFC_VER can be defined to make Gray* all static lib
+#define GRAYCORE_LINK                             // not in a DLL
 #else
 #define GRAYCORE_LINK __DECL_EXPORT
 #endif
@@ -21,4 +21,4 @@
 
 #include "GrayCore.h"
 
-#endif // !defined(_INC_pch_H)
+#endif  // !defined(_INC_pch_H)

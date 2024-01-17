@@ -63,9 +63,12 @@ struct GRAYCORE_LINK cBits {    // static
     static constexpr TYPE Mask1(BIT_ENUM_t nBit) noexcept {
         return CastN(TYPE, 1) << nBit;
     }
+    /// <summary>
+    /// Create a mask of all bits less than this.
+    /// </summary>
     template <typename TYPE>
-    static constexpr TYPE MaskN(BIT_ENUM_t nBit) noexcept {
-        return Mask1<TYPE>(nBit) - 1;
+    static constexpr TYPE MaskLT(BIT_ENUM_t nBitHigh) noexcept {
+        return Mask1<TYPE>(nBitHigh) - 1;
     }
 
     /// <summary>
@@ -77,7 +80,7 @@ struct GRAYCORE_LINK cBits {    // static
     }
 
     /// <summary>
-    /// Any nMask bits set in nVal?
+    /// Any nMask bits set in nVal? NOT require all bits!
     /// </summary>
     template <typename TYPE = UINT32>
     static constexpr bool HasMask(TYPE nVal, TYPE nMask) noexcept {
@@ -97,10 +100,8 @@ struct GRAYCORE_LINK cBits {    // static
     }
     template <typename TYPE>
     static constexpr bool IsClear(TYPE nVal, BIT_ENUM_t nBit) noexcept {
-        //! Test if a bit is NOT set.
-        return !HasMask(nVal, Mask1<TYPE>(nBit));
+        return !IsSet(nVal, nBit);  // Test if a bit is NOT set.
     }
-
     template <typename TYPE>
     static constexpr TYPE SetBit(TYPE nVal, BIT_ENUM_t nBit) noexcept {
         return CastN(TYPE, nVal | Mask1<TYPE>(nBit));
@@ -108,6 +109,44 @@ struct GRAYCORE_LINK cBits {    // static
     template <typename TYPE>
     static constexpr TYPE ClearBit(TYPE nVal, BIT_ENUM_t nBit) noexcept {
         return CastN(TYPE, nVal & ~Mask1<TYPE>(nBit));
+    }
+
+    /// <summary>
+    /// Cast from enum TYPE to UNDER_t
+    /// </summary>
+    template <typename UNDER_t = UINT, typename TYPE>
+    static constexpr bool HasMaskT(TYPE nVal, TYPE nMask) noexcept {
+        return HasMask<UNDER_t>(static_cast<UNDER_t>(nVal), static_cast<UNDER_t>(nMask));
+    }
+#if 0
+    template <typename TYPE, typename UNDER_t>
+    static constexpr bool IsSet(TYPE nVal, BIT_ENUM_t nBit) noexcept {
+        return IsSet(static_cast<UNDER_t>(nVal), nBit);
+    }
+    template <typename TYPE, typename UNDER_t>
+    static constexpr bool IsClear(TYPE nVal, BIT_ENUM_t nBit) noexcept {
+        return !IsSet(static_cast<UNDER_t>(nVal), nBit);  // Test if a bit is NOT set.
+    }
+    template <typename TYPE, typename UNDER_t>
+    static constexpr TYPE SetBit(TYPE nVal, BIT_ENUM_t nBit) noexcept {
+        return CastN(TYPE, static_cast<UNDER_t>(nVal) | Mask1<UNDER_t>(nBit));
+    }
+    template <typename TYPE, typename UNDER_t>
+    static constexpr TYPE ClearBit(TYPE nVal, BIT_ENUM_t nBit) noexcept {
+        return CastN(TYPE, static_cast<UNDER_t>(nVal) & ~Mask1<UNDER_t>(nBit));
+    }
+    #endif
+
+    /// <summary>
+    /// Or/Set mask of bits.
+    /// If we are performing some operator on enums that are bitmasks. Cast back to enum
+    /// </summary>
+    /// <typeparam name="TYPE"></typeparam>
+    /// <param name="nValMask"></param>
+    /// <returns></returns>
+    template <typename UNDER_t = UINT, typename TYPE>
+    static inline TYPE SetMask(TYPE nVal, TYPE nOrMask) {
+        return CastN(TYPE, static_cast<UNDER_t>(nVal) | static_cast<UNDER_t>(nOrMask));
     }
 
     /// <summary>
@@ -196,17 +235,6 @@ struct GRAYCORE_LINK cBits {    // static
     }
 
 #if 0
-    /// <summary>
-    /// If we are performing some operator on enums that are bitmasks. Cast back to enum
-    /// </summary>
-    /// <typeparam name="TYPE"></typeparam>
-    /// <param name="nValMask"></param>
-    /// <returns></returns>
-    template <typename TYPE>
-    static inline TYPE Or(TYPE val, UINT nOrMask) {
-        return PtrCast<TYPE>(val | nOrMask);
-    }
-
     template <typename TYPE>
 	static inline TYPE Op(TYPE nVal, BITOP_t eBitOp, TYPE nValMask = 1) {
 		// TODO or,and,xor/not // 
@@ -355,12 +383,12 @@ inline ULONG cBits::Reverse<ULONG>(ULONG nVal) noexcept {  // static
 /// <typeparam name="MASK_t"></typeparam>
 template <typename MASK_t = UINT32, typename UNDER_t = MASK_t, typename BIT1_t = BIT_ENUM_t>
 class cBitmask {
-    UNDER_t _nMask;  /// mask of bits. "underlying" type. 
+    UNDER_t _nMask;  /// mask of bits. "underlying" type.
 
  public:
     static constexpr MASK_t k_MASK_ALL = CastN(MASK_t, cTypeLimit<UNDER_t>::Max());  /// all bits set.
 
-    cBitmask(MASK_t nMask = {}) noexcept : _nMask(nMask) {}
+    cBitmask(MASK_t nMask = {}) noexcept : _nMask(static_cast<UNDER_t>(nMask)) {}
     MASK_t get_Mask() const noexcept {
         return CastN(MASK_t, _nMask);
     }
@@ -389,11 +417,11 @@ class cBitmask {
     /// <summary>
     /// Equiv of x |= y.
     /// </summary>
-    void AddMask(MASK_t nBits) noexcept {
-        _nMask = _nMask | nBits;
+    void SetMask(MASK_t nBits) noexcept {
+        _nMask = _nMask | static_cast<UNDER_t>(nBits);
     }
     void ClearMask(MASK_t nBits) noexcept {
-        _nMask = _nMask & ~nBits;
+        _nMask = _nMask & ~static_cast<UNDER_t>(nBits);
     }
     void ClearMask() noexcept {
         _nMask = 0;

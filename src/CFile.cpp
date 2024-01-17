@@ -1,8 +1,9 @@
 //
 //! @file cFile.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
+// clang-format off
 #include "pch.h"
+// clang-format on
 #include "PtrCast.h"
 #include "cFile.h"
 #include "cFileDir.h"
@@ -198,7 +199,7 @@ HRESULT cFile::OpenWait(cStringF sFilePath, OF_FLAGS_t nOpenFlags, TIMESYSD_t nT
 #ifdef _WIN32
         // try to make the file writable if marked as read only ?
         if (iTries == 0 && (nOpenFlags & OF_WRITE)) {
-            hRes = cFileStatus::WriteFileAttributes(sFilePath, FILEATTR_Normal);
+            hRes = cFileStatus::WriteFileAttributes(sFilePath, FILEATTR_t::_Normal);
             if (FAILED(hRes)) return hRes;
             continue;  // just try again without waiting.
         }
@@ -248,7 +249,7 @@ bool cFile::IsFileNameExt(const FILECHAR_t* pszExt) const noexcept {
 STREAM_POS_t cFile::GetPosition() const {  // virtual
     //! Get the current read position in the file.
     if (!isValidHandle()) return k_STREAM_POS_ERR;
-    return SeekRaw(0, SEEK_Cur);
+    return SeekRaw(0, SEEK_t::_Cur);
 }
 
 #if defined(__linux__)
@@ -263,7 +264,7 @@ HRESULT CFile::GetStatusSys(OUT cFileStatusSys& statusSys) {
 STREAM_POS_t cFile::GetLength() const {  // virtual
     //! Get the size of the open file in bytes. like MFC
     //! @return <0 = error. (or directory?)
-    if (!isValidHandle())  return k_STREAM_POS_ERR;  // E_HANDLE
+    if (!isValidHandle()) return k_STREAM_POS_ERR;  // E_HANDLE
 #ifdef _WIN32
 #ifdef USE_FILE_POS64
     LARGE_INTEGER FileSize;
@@ -287,7 +288,7 @@ void cFile::SetLength(STREAM_POS_t dwNewLen) {  // virtual
     //! Since MFC has void return use HResult::GetLast()
     ASSERT(isValidHandle());
 #ifdef _WIN32
-    SeekRaw(dwNewLen, SEEK_Set);          // SetFilePointer() . maybe beyond end ?
+    SeekRaw(dwNewLen, SEEK_t::_Set);      // SetFilePointer() . maybe beyond end ?
     if (!::SetEndOfFile(get_Handle())) {  // truncate to this length
         // ASSUME HResult::GetLast() set.
         DEBUG_ERR(("cFile::SetLength %d ERR='%s'", dwNewLen, LOGERR(HResult::GetLast())));
@@ -370,7 +371,7 @@ HRESULT cFile::GetFileStatus(OUT cFileStatus& attr) const {
     attr.m_timeChange = fi.ftLastWriteTime;                                        // m_mtime = real world time/date of last modification. (accurate to 2 seconds)
     attr.m_timeLastAccess = fi.ftLastAccessTime;                                   // m_atime = time of last access/Open. (For Caching). (may not be supported)
     attr.m_Size = fi.nFileSizeLow | (CastN(FILE_SIZE_t, fi.nFileSizeHigh) << 32);  // file size in bytes.
-    attr.m_Attributes = fi.dwFileAttributes;                                       // Mask of ATTR_ attribute bits. ATTR_Normal
+    attr.m_Attributes = static_cast<FILEATTR_t>(fi.dwFileAttributes);              // Mask of ATTR_ attribute bits. ATTR_Normal
 
 #elif defined(__linux__)
 
@@ -393,7 +394,7 @@ HRESULT cFile::ReadX(void* pData, size_t nDataSize) noexcept {  // virtual - dis
     if (pData == nullptr) {
         // just skip it.
         STREAM_POS_t nPosStart = GetPosition();
-        HRESULT hRes = cOSHandle::SeekX(nDataSize, SEEK_Cur);
+        HRESULT hRes = cOSHandle::SeekX(nDataSize, SEEK_t::_Cur);
         if (FAILED(hRes)) return hRes;
 
         STREAM_POS_t nPosCur = GetPosition();
@@ -473,7 +474,7 @@ HRESULT GRAYCALL cFile::DeletePathX(const FILECHAR_t* pszPath, FILEOPF_t nFileFl
     if (hRes == E_ACCESSDENIED && (nFileFlags & FOF_RENAMEONCOLLISION)) {
         // remove read only flag. retry delete.
         // Try to change the attributes. then try delete again.
-        hRes = cFileStatus::WriteFileAttributes(pszPath, FILEATTR_Normal);
+        hRes = cFileStatus::WriteFileAttributes(pszPath, FILEATTR_t::_Normal);
         if (SUCCEEDED(hRes)) {
             hRes = cFile::DeletePath(pszPath);
         }

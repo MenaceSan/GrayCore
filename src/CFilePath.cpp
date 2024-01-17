@@ -1,9 +1,9 @@
 //
 //! @file cFilePath.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
-
+// clang-format off
 #include "pch.h"
+// clang-format on
 #include "StrChar.h"
 #include "StrConst.h"
 #include "cAppState.h"
@@ -88,7 +88,7 @@ FILECHR_MASK_t GRAYCALL cFilePath::GetFileCharType(wchar_t ch, FILESYS_t eSys) N
     return FILECHR_Name3;  // some other sort of char like foreign char. but allowed.
 }
 
-bool GRAYCALL cFilePath::IsFileNameValid(const FILECHAR_t* pszName, FILECHR_MASK_t uCharMask, FILESYS_t eSys) { // static
+bool GRAYCALL cFilePath::IsFileNameValid(const FILECHAR_t* pszName, FILECHR_MASK_t uCharMask, FILESYS_t eSys) {  // static
     //! Is this a valid file name? Maybe UTF8.
     //! Do not end a file or directory name with a space or a period.
     //! @arg eSys = FILESYS_t::_FAT = enforce the DOS 8.3 rules.
@@ -109,7 +109,7 @@ bool GRAYCALL cFilePath::IsFileNameValid(const FILECHAR_t* pszName, FILECHR_MASK
     return true;
 }
 
-bool GRAYCALL cFilePath::IsFilePathTitle(const FILECHAR_t* pszName) { // static
+bool GRAYCALL cFilePath::IsFilePathTitle(const FILECHAR_t* pszName) {  // static
     //! Does this NOT have path/dir indicators?
     if (pszName == nullptr) return false;
     for (StrLen_t i = 0;; i++, pszName++) {
@@ -125,7 +125,7 @@ bool GRAYCALL cFilePath::IsFilePathTitle(const FILECHAR_t* pszName) { // static
     ;
 }
 
-bool GRAYCALL cFilePath::HasFilePathRelatives(const FILECHAR_t* pszName, bool bOrDevices) { // static
+bool GRAYCALL cFilePath::HasFilePathRelatives(const FILECHAR_t* pszName, bool bOrDevices) {  // static
     //! Does the file have any relative components. like ..
     //! Get rid of them with MakeProperPath()
 
@@ -146,7 +146,7 @@ bool GRAYCALL cFilePath::HasFilePathRelatives(const FILECHAR_t* pszName, bool bO
     return true;
 }
 
-StrLen_t GRAYCALL cFilePath::GetFilePathDeviceLen(const FILECHAR_t* pszName) { // static
+StrLen_t GRAYCALL cFilePath::GetFilePathDeviceLen(const FILECHAR_t* pszName) {  // static
     //! Skip the device info at the start of the path.
     //! have a device name in it ? e.g. "COM1:" or "C:"
     //! "file://", "http://"
@@ -173,7 +173,7 @@ StrLen_t GRAYCALL cFilePath::GetFilePathDeviceLen(const FILECHAR_t* pszName) { /
     return 0;
 }
 
-bool GRAYCALL cFilePath::IsFileDeviceRemote(const FILECHAR_t* pszPath) { // static
+bool GRAYCALL cFilePath::IsFileDeviceRemote(const FILECHAR_t* pszPath) {  // static
     //! Is the file based on some remote device/service? e.g. HTTP, HTTPS, FTP, RTP, RTMP etc.
     //! GetFilePathDeviceLen
     //! like NETSERVICE_TYPE
@@ -186,7 +186,7 @@ bool GRAYCALL cFilePath::IsFileDeviceRemote(const FILECHAR_t* pszPath) { // stat
     return true;  // must be a remote protocol.
 }
 
-bool GRAYCALL cFilePath::IsFilePathRooted(const FILECHAR_t* pszName) { // static
+bool GRAYCALL cFilePath::IsFilePathRooted(const FILECHAR_t* pszName) {  // static
     //! Is the file path absolute ? (not relative path to current directory for process)
     //! Based on drive, device or root ? not have .. in it.
     //! If relative path then use MakeFullPathX() to get full rooted path.
@@ -201,7 +201,7 @@ bool GRAYCALL cFilePath::IsFilePathRooted(const FILECHAR_t* pszName) { // static
     return false;
 }
 
-bool GRAYCALL cFilePath::IsFilePathRoot(const FILECHAR_t* pszName) { // static
+bool GRAYCALL cFilePath::IsFilePathRoot(const FILECHAR_t* pszName) {  // static
     //! is this the root of a device?
     //! @note Includes the DOT !
     //! e.g. "C:\" is true
@@ -213,7 +213,7 @@ bool GRAYCALL cFilePath::IsFilePathRoot(const FILECHAR_t* pszName) { // static
     return false;
 }
 
-FILECHAR_t* GRAYCALL cFilePath::GetFileNameExt(const FILECHAR_t* pszName, StrLen_t iLen, bool bMultiDot) { // static
+FILECHAR_t* GRAYCALL cFilePath::GetFileNameExt(const FILECHAR_t* pszName, StrLen_t iLen, bool bMultiDot) {  // static
     //! Get a pointer to the extension of the file.
     //! @note Includes the DOT !
     //! @arg
@@ -244,7 +244,7 @@ FILECHAR_t* GRAYCALL cFilePath::GetFileNameExt(const FILECHAR_t* pszName, StrLen
     return pszExt;
 }
 
-StrLen_t GRAYCALL cFilePath::StripFileExt(FILECHAR_t* pszFile, StrLen_t iLen, bool bMultiDot) { // static
+StrLen_t GRAYCALL cFilePath::StripFileExt(FILECHAR_t* pszFile, StrLen_t iLen, bool bMultiDot) {  // static
     //! strip the ext off the file name (or path).
     //! @arg
     //!	iLen = the known string length of the file name.
@@ -887,7 +887,7 @@ const wchar_t* GRAYCALL cFilePath::GetFileNameLongW(cStringF sFilePath) {  // st
 }
 
 const wchar_t* GRAYCALL cFilePath::GetFileNameLongW(const FILECHAR_t* pszFilePath) {  // static
-    if (StrT::Len(pszFilePath) <= _MAX_PATH)  // short names don't need this.
+    if (StrT::Len(pszFilePath) <= _MAX_PATH)                                          // short names don't need this.
         return StrArg<wchar_t>(pszFilePath);
     return MakeFileNameLongW(pszFilePath);
 }

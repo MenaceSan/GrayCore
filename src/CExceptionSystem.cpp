@@ -1,9 +1,9 @@
 //
 //! @file cExceptionSystem.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
-
+// clang-format off
 #include "pch.h"
+// clang-format on
 #include "StrBuilder.h"
 #include "cAppState.h"
 #include "cExceptionSystem.h"

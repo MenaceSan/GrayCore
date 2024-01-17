@@ -27,7 +27,7 @@ struct _SECURITY_ATTRIBUTES;  // stub this out
 namespace Gray {
 typedef UINT32 OF_FLAGS_t;
 /// <summary>
-/// enumeration of file open mode/control flags.
+/// enumeration of file open mode/control flags. cBitmask
 /// </summary>
 enum OF_FLAGS_ENUM_t : OF_FLAGS_t {
 #if defined(__linux__)
@@ -82,7 +82,7 @@ struct GRAYCORE_LINK cFileStatus;
 class GRAYCORE_LINK cFile : public cObject, public cOSHandle, public cStream {
  protected:
     static ITERATE_t sm_iFilesOpen;                  /// global count of all open files for this process.
-    OF_FLAGS_t m_nOpenFlags = CastN(OF_FLAGS_t, 0);  /// MMSYSTEM uses high bits of 32 bit flags. OF_FLAGS_t OF_READ etc
+    OF_FLAGS_t m_nOpenFlags = CastN(OF_FLAGS_t, 0);  /// cBitmask MMSYSTEM uses high bits of 32 bit flags. OF_FLAGS_t OF_READ etc
     cFilePath m_strFileName;                         /// store a copy of the full file path. MFC defined name.
 
  protected:
@@ -171,7 +171,7 @@ class GRAYCORE_LINK cFile : public cObject, public cOSHandle, public cStream {
     STREAM_POS_t GetPosition() const override;
     STREAM_POS_t GetLength() const override;
 
-    HRESULT SeekX(STREAM_OFFSET_t nOffset, SEEK_ORIGIN_TYPE eSeekOrigin = SEEK_Set) noexcept override {  // disambig
+    HRESULT SeekX(STREAM_OFFSET_t nOffset, SEEK_t eSeekOrigin = SEEK_t::_Set) noexcept override {  // disambig
         return cOSHandle::SeekX(nOffset, eSeekOrigin);
     }
 

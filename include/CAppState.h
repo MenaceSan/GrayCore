@@ -43,7 +43,7 @@ typedef FILECHAR_t** APP_ARGW_t;  /// _WIN32 really defined this as LPWSTR*
 class GRAYCORE_LINK cAppState : public cSingleton<cAppState> {
     friend class cSingleton<cAppState>;
     friend class cAppImpl;
-    friend class cAppStateMain;
+    friend struct cAppStateMain;
     friend class cUnitTestAppState;
 
  public:
@@ -166,7 +166,7 @@ class GRAYCORE_LINK cAppState : public cSingleton<cAppState> {
         return ::getpid();
 #else
 #error NOOS
-        return PROCESSID_BAD;
+        return kPROCESSID_BAD;
 #endif
     }
 
@@ -209,7 +209,7 @@ class GRAYCORE_LINK cAppState : public cSingleton<cAppState> {
 
     void InitArgsPosix(int argc, APP_ARGS_t argv);
 
-    static void GRAYCALL AbortApp(APP_EXITCODE_t uExitCode = APP_EXITCODE_ABORT);
+    static void GRAYCALL AbortApp(APP_EXITCODE_t uExitCode = APP_EXITCODE_t::_ABORT);
     static HRESULT GRAYCALL ShowMessageBox(cString sMsg, UINT uFlags = 1);  // 1= MB_OKCANCEL
 
     CHEAPOBJECT_IMPL;
@@ -220,11 +220,9 @@ class GRAYCORE_LINK cAppState : public cSingleton<cAppState> {
 /// For use with cAppImpl and by extension cAppState. This is technically a singleton but its instantiated in main()
 /// e.g. cAppStateMain inmain();
 /// </summary>
-class GRAYCORE_LINK cAppStateMain {
- public:
+struct GRAYCORE_LINK cAppStateMain {
     cAppState& m_AppState;
 
- public:
 #if defined(_WIN32)
     cAppStateMain(HINSTANCE hInstance, const FILECHAR_t* pszCommandArgs);
 #endif
@@ -262,7 +260,6 @@ struct cAppStateModuleLoad {
 /// Try to catch and block this or at least log it.
 /// </summary>
 class GRAYCORE_LINK cAppExitCatcher : public cSingletonStatic<cAppExitCatcher> {
- private:
     static void __cdecl ExitCatchProc();
 
  protected:
@@ -273,6 +270,5 @@ class GRAYCORE_LINK cAppExitCatcher : public cSingletonStatic<cAppExitCatcher> {
     ~cAppExitCatcher();
 };
 #endif
-
 }  // namespace Gray
 #endif  // _INC_cAppState_H

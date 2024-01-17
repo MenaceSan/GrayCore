@@ -171,14 +171,14 @@ class cArray : public cObject, public cSpan2<TYPE, ARG_TYPE> {
         // pop from top of stack.
         // AKA Pop()
         ASSERT(!this->isEmpty());
-        ITERATE_t i = this->GetSize() - 1;
+        const ITERATE_t i = this->GetSize() - 1;
         TYPE tmp = this->GetAt(i);  // copy it.
         this->RemoveAt(i);
         return tmp;
     }
     bool RemoveArg(ARG_TYPE arg) {
         //! @return true = removed. false = was not here.
-        ITERATE_t nIndex = FindIFor(arg);
+        const ITERATE_t nIndex = FindIFor(arg);
         if (nIndex < 0) return false;
         this->RemoveAt(nIndex);
         return true;
@@ -214,7 +214,7 @@ void cArray<TYPE, ARG_TYPE>::InsertArray(ITERATE_t i, const TYPE* pCopy, ITERATE
 
 template <class TYPE, class ARG_TYPE>
 void cArray<TYPE, ARG_TYPE>::RemoveAll() {
-    //! AKA SetEmpty, Empty
+    //! AKA RemoveAll, Empty
     //! @note SetSize(0) is slightly more efficient than RemoveAll() if u plan to re-use the array.
 #ifdef _DEBUG
     // AssertSize();
@@ -384,7 +384,7 @@ struct cArrayFacade : public cArray<TYPE, ARG_TYPE> {
 };
 
 /// <summary>
-/// An array of some sort of dumb pointer. Pointer memory ownership is unknown. Do not free it automatically.
+/// An array of some sort of dumb pointer. Pointer memory ownership is unknown. Does not free it automatically.
 /// </summary>
 /// <typeparam name="TYPE">is allowed to be const X</typeparam>
 template <class TYPE>

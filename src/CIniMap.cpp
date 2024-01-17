@@ -1,8 +1,9 @@
 //
 //! @file cIniMap.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
+// clang-format off
 #include "pch.h"
+// clang-format on
 #include "cIniMap.h"
 
 namespace Gray {
@@ -49,7 +50,7 @@ HRESULT cIniMap::SetVal(const IniChar_t* pszPropTag, cStringI sValue) {
     return (HRESULT)i;
 }
 
-HRESULT cIniMap::PropGet(const IniChar_t* pszPropTag, OUT cStringI& rsValue) const { // override
+HRESULT cIniMap::PropGet(const IniChar_t* pszPropTag, OUT cStringI& rsValue) const {  // override
     //! IIniBaseGetter
     ITERATE_t i = Find(pszPropTag);
     if (i < 0) return HRESULT_WIN32_C(ERROR_UNKNOWN_PROPERTY);
@@ -57,14 +58,14 @@ HRESULT cIniMap::PropGet(const IniChar_t* pszPropTag, OUT cStringI& rsValue) con
     return (HRESULT)i;
 }
 
-HRESULT cIniMap::PropSet(const IniChar_t* pszPropTag, const IniChar_t* pszValue) { // override
+HRESULT cIniMap::PropSet(const IniChar_t* pszPropTag, const IniChar_t* pszValue) {  // override
     //! IIniBaseSetter
     //! will replace if existing key.
     //! @return E_INVALIDARG,  HRESULT_WIN32_C(ERROR_UNKNOWN_PROPERTY)
     return SetVal(pszPropTag, pszValue);
 }
 
-HRESULT cIniMap::PropGetEnum(PROPIDX_t ePropIdx, OUT cStringI& rsValue, OUT cStringI* psKey) const { // override
+HRESULT cIniMap::PropGetEnum(PROPIDX_t ePropIdx, OUT cStringI& rsValue, OUT cStringI* psKey) const {  // override
     //! IIniBaseEnumerator
     //! Enum the values and keys of the map.
     //! @arg = optionally return psKey. nullptr = don't care.

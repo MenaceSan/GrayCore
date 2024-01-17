@@ -22,7 +22,7 @@ struct GRAYCORE_LINK StrFormat;  // Forward declare.
 /// Fill a buffer with string stuff. Track how much space is left. Used with StrFormat.
 /// Like cQueue or cStreamOutput ??
 /// </summary>
-/// <typeparam name="_TYPE_CH"></typeparam>
+/// <typeparam name="_TYPE_CH">char or wchar_t</typeparam>
 template <typename _TYPE_CH = char>
 class GRAYCORE_LINK StrBuilder : protected cBlob {
     typedef cBlob SUPER_t;
@@ -38,7 +38,6 @@ class GRAYCORE_LINK StrBuilder : protected cBlob {
         return SUPER_t::get_DataW<_TYPE_CH>();
     }
 
- protected:
     inline StrLen_t get_AllocQty() const noexcept {
         return CastN(StrLen_t, SUPER_t::get_DataSize() / sizeof(_TYPE_CH));
     }
@@ -59,6 +58,9 @@ class GRAYCORE_LINK StrBuilder : protected cBlob {
     inline StrLen_t get_WriteSpaceQty() const noexcept {
         return (get_AllocQty() - this->m_nWriteLast) - 1;  // leave space for '\0'
     }
+    inline StrLen_t get_WriteSpaceMax() const noexcept {
+        return ((isHeap() ? StrT::k_LEN_MAX : get_AllocQty()) - this->m_nWriteLast) - 1;
+    }
 
     /// <summary>
     /// Do i have enough room to write iNeedCount of TYPE?
@@ -68,30 +70,34 @@ class GRAYCORE_LINK StrBuilder : protected cBlob {
     /// <returns></returns>
     _TYPE_CH* GetWritePrepared(StrLen_t iNeedCount) {
         if (isNull()) return nullptr;  // just estimating?
-        if (isHeap()) {
-            // Get more space ?
-            const StrLen_t nLenSpace = this->get_WriteSpaceQty();
-            if (iNeedCount > nLenSpace) {
-                // grow = ReAlloc for more space.
-                const StrLen_t nOldAlloc = this->get_AllocQty();
-                if (nOldAlloc < StrT::k_LEN_MAX) {  // can we grow?
-                    StrLen_t nNewAlloc = nOldAlloc + (iNeedCount - nLenSpace);  // Min size for new alloc.
-                    StrLen_t iRem = nNewAlloc % k_nGrowSizeChunk;
-                    if (iRem <= 0) iRem = k_nGrowSizeChunk;  // grow a full block.
-
-                    nNewAlloc += iRem;
-                    if (nNewAlloc > StrT::k_LEN_MAX)  // we hit the end! do what we can. then truncate.
-                        nNewAlloc = StrT::k_LEN_MAX;
-
-                    nNewAlloc++;  // room for '\0'
-                    if (!this->ReAllocSize(nNewAlloc * sizeof(_TYPE_CH))) return nullptr;
+        const StrLen_t nLenSpace = this->get_WriteSpaceQty();
+        if (iNeedCount > nLenSpace) {  // Get more space ?
+            if (!isHeap()) {
+                return nullptr;  // else if not enough space = FAIL! ??
+            }
+            // grow = ReAlloc for more space.
+            const StrLen_t nOldAlloc = this->get_AllocQty();
+            if (nOldAlloc < StrT::k_LEN_MAX) {                              // can we grow?
+                StrLen_t nNewAlloc = nOldAlloc + (iNeedCount - nLenSpace);  // Min size for new alloc.
+                StrLen_t iRem = nNewAlloc % k_nGrowSizeChunk;
+                if (iRem <= 0) iRem = k_nGrowSizeChunk;  // grow a full block.
+                nNewAlloc += iRem;
+                if (nNewAlloc > StrT::k_LEN_MAX) {  // we hit the end! do what we can. truncate or FAIL?
+                    nNewAlloc = StrT::k_LEN_MAX;
+                    // return nullptr;
                 }
+                nNewAlloc++;  // room for '\0'
+                if (!this->ReAllocSize(nNewAlloc * sizeof(_TYPE_CH))) return nullptr;
             }
         }
-        // else not enough space = FAIL! ??
         return get_DataWork() + this->m_nWriteLast;
     }
 
+    /// <summary>
+    /// advanced the used space.
+    /// The estimated size in GetWritePrepared() might have been larger.
+    /// </summary>
+    /// <param name="nLen"></param>
     inline void AdvanceWrite(StrLen_t nLen) noexcept {
         DEBUG_CHECK(nLen <= get_WriteSpaceQty());
         this->m_nWriteLast += nLen;
@@ -99,7 +105,6 @@ class GRAYCORE_LINK StrBuilder : protected cBlob {
         SetTerminated();
     }
 
- public:
     /// Build with a growing heap buffer.
     StrBuilder(StrLen_t nSizeChunk = k_nGrowSizeChunk) noexcept : SUPER_t(nSizeChunk), m_nWriteLast(0) {
         SetTerminated();
@@ -129,6 +134,10 @@ class GRAYCORE_LINK StrBuilder : protected cBlob {
     inline const _TYPE_CH* get_Str() const noexcept {
         return SUPER_t::get_DataC<_TYPE_CH>();
     }
+    cSpan<_TYPE_CH> get_SpanStr() const {
+        return cSpan<_TYPE_CH>(get_Str(), get_Length());
+    }
+
     /// <summary>
     /// Assume truncation occurred? DISP_E_BUFFERTOOSMALL
     /// </summary>
@@ -140,11 +149,8 @@ class GRAYCORE_LINK StrBuilder : protected cBlob {
         // m_nLenLeft includes space for terminator '\0'
         _TYPE_CH* pszWrite = GetWritePrepared(1);
         const StrLen_t nLenRet = get_WriteSpaceQty();
-        if (nLenRet < 1)  // no space.
-            return false;
-        if (pszWrite != nullptr) {
-            *pszWrite = ch;
-        }
+        if (nLenRet < 1) return false;  // no space.
+        if (pszWrite != nullptr) *pszWrite = ch;
         AdvanceWrite(1);
         return true;
     }

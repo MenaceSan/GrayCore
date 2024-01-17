@@ -22,7 +22,7 @@
 #endif
 
 namespace Gray {
-typedef WORD RADIX_t;  /// Base for convert of numbers to strings. e.g. 10 base vs 16 base hex numbers.
+typedef BYTE RADIX_t;  /// Base for convert of numbers to strings. e.g. 10 base vs 16 base hex numbers.
 
 #ifdef _WIN32
 typedef UINT CODEPAGE_t;  /// text code page = a limited set of characters (not UNICODE). CP_ACP=default ANSI, CP_OEMCP, CP_UTF8

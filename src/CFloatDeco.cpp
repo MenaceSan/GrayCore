@@ -1,8 +1,9 @@
 //
 //! @file cFloatDeco.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
+// clang-format off
 #include "pch.h"
+// clang-format on
 #include "StrNum.h"
 #include "cDebugAssert.h"  // ASSERT
 #include "cFloatDeco.h"
@@ -61,7 +62,7 @@ cFloatDeco cFloatDeco::GetCachedPower(int nExp2, OUT int* pnExp10) {  // static
     return k_CachedPowers[index];
 }
 
-double GRAYCALL cFloatDeco::toDouble(UINT32 fracHi, UINT32 fracLo, int nExp10) { // static
+double GRAYCALL cFloatDeco::toDouble(UINT32 fracHi, UINT32 fracLo, int nExp10) {  // static
     // Make a double from a base 10 exponent.
     double fraction = (1.0e9 * fracHi) + fracLo;  // Mantissa = Combine the ints.
 
@@ -102,7 +103,7 @@ double GRAYCALL cFloatDeco::toDouble(UINT32 fracHi, UINT32 fracLo, int nExp10) {
     return fraction;
 }
 
-void cFloatDeco::GrisuRound(char* pszOut, StrLen_t len, UINT64 delta, UINT64 rest, UINT64 ten_kappa, UINT64 wp_w) { // static
+void cFloatDeco::GrisuRound(char* pszOut, StrLen_t len, UINT64 delta, UINT64 rest, UINT64 ten_kappa, UINT64 wp_w) {  // static
     //! Round last digit down?
     while (rest < wp_w && delta - rest >= ten_kappa &&
            (rest + ten_kappa < wp_w ||  // closer
@@ -112,8 +113,8 @@ void cFloatDeco::GrisuRound(char* pszOut, StrLen_t len, UINT64 delta, UINT64 res
     }
 }
 
-StrLen_t cFloatDeco::Grisu2(double dVal, char* pszOut, OUT int* pnExp10) { // static
-    if (dVal == 0) {  // special case
+StrLen_t cFloatDeco::Grisu2(double dVal, char* pszOut, OUT int* pnExp10) {  // static
+    if (dVal == 0) {                                                        // special case
         *pszOut = '0';
         *pnExp10 = 0;
         return 1;
@@ -177,11 +178,11 @@ StrLen_t cFloatDeco::Grisu2(double dVal, char* pszOut, OUT int* pnExp10) { // st
     }
 }
 
-StrLen_t cFloatDeco::MantRound(char* pszOut, StrLen_t nMantLength) { // static
+StrLen_t cFloatDeco::MantRound(char* pszOut, StrLen_t nMantLength) {  // static
     // Truncate Mantissa.
     // Round the last digit.
     if (nMantLength > 0 && pszOut[nMantLength] > '5') {
-        for (int i = nMantLength - 1;; i--) { // round up then cascade this up if necessary.
+        for (int i = nMantLength - 1;; i--) {  // round up then cascade this up if necessary.
             char ch = pszOut[i];
             if (ch != '.') {
                 ch++;
@@ -203,7 +204,7 @@ StrLen_t cFloatDeco::MantRound(char* pszOut, StrLen_t nMantLength) { // static
     return nMantLength;  // new length.
 }
 
-StrLen_t cFloatDeco::MantAdjust(char* pszOut, StrLen_t nMantLength, StrLen_t nMantLengthNew) { // static
+StrLen_t cFloatDeco::MantAdjust(char* pszOut, StrLen_t nMantLength, StrLen_t nMantLengthNew) {  // static
     //! Change mantissa size up or down.
     //! @return size change.
     StrLen_t iDelta = nMantLengthNew - nMantLength;
@@ -221,7 +222,7 @@ StrLen_t cFloatDeco::MantAdjust(char* pszOut, StrLen_t nMantLength, StrLen_t nMa
     return iDelta;
 }
 
-StrLen_t cFloatDeco::FormatE(char* pszOut, StrLen_t nMantLength, int nExp10, char chE) { // static
+StrLen_t cFloatDeco::FormatE(char* pszOut, StrLen_t nMantLength, int nExp10, char chE) {  // static
     //! like ecvt() using e exponent.
     //! @arg pszOut = string to contains digits.
     //! @arg chE = 'e' or 'E'
@@ -268,7 +269,7 @@ StrLen_t cFloatDeco::FormatE(char* pszOut, StrLen_t nMantLength, int nExp10, cha
     return i;
 }
 
-StrLen_t cFloatDeco::FormatF(char* pszOut, StrLen_t nMantLength, int nExp10, int iDecPlacesWanted) { // static
+StrLen_t cFloatDeco::FormatF(char* pszOut, StrLen_t nMantLength, int nExp10, int iDecPlacesWanted) {  // static
     //! like fcvt(). Might be k_LEN_MAX_DIGITS digits long.
     //! @arg pszOut contains digits.
 
@@ -302,7 +303,7 @@ StrLen_t cFloatDeco::FormatF(char* pszOut, StrLen_t nMantLength, int nExp10, int
         nDecPlaceO = 1;
     }
 
-    if (iDecPlacesWanted == 0) { // odd but allowed.
+    if (iDecPlacesWanted == 0) {  // odd but allowed.
         pszOut[nDecPlaceO] = '\0';
         return nDecPlaceO;
     }

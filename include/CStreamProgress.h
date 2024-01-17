@@ -19,11 +19,10 @@ namespace Gray {
 /// SEEK_SET defined for both __linux__ and _WIN32
 /// same as enum tagSTREAM_SEEK
 /// </summary>
-enum SEEK_ORIGIN_TYPE {
-    SEEK_Set = 0,        /// SEEK_SET = FILE_BEGIN = STREAM_SEEK_SET = 0 = relative to the start of the file.
-    SEEK_Cur = 1,        /// SEEK_CUR = FILE_CURRENT = STREAM_SEEK_CUR = 1 = relative to the current position.
-    SEEK_End = 2,        /// SEEK_END = FILE_END = STREAM_SEEK_END = 2 = relative to the end of the file.
-    SEEK_MASK = 0x0007,  /// | _BITMASK(SEEK_Set) allow extra bits above SEEK_ORIGIN_TYPE ?
+enum class SEEK_t {
+    _Set = 0,        /// SEEK_SET = FILE_BEGIN = STREAM_SEEK_SET = 0 = relative to the start of the file.
+    _Cur = 1,        /// SEEK_CUR = FILE_CURRENT = STREAM_SEEK_CUR = 1 = relative to the current position.
+    _End = 2,        /// SEEK_END = FILE_END = STREAM_SEEK_END = 2 = relative to the end of the file.
 };
 
 #if defined(_MFC_VER) && (_MFC_VER > 0x0600)
@@ -44,12 +43,10 @@ constexpr STREAM_POS_t k_STREAM_POS_ERR = CastN(STREAM_POS_t, -1);  // like INVA
 /// </summary>
 /// <typeparam name="TYPE"></typeparam>
 template <typename TYPE = STREAM_POS_t>
-class cStreamProgressT {
- public:
+struct cStreamProgressT {
     TYPE m_nAmount;  /// How far the stream has progressed toward m_nTotal.
     TYPE m_nTotal;   /// Total size of the stream. 0 = i have no idea how big the total is.
 
- public:
     cStreamProgressT(TYPE nAmount = 0, TYPE nTotal = 0) noexcept : m_nAmount(nAmount), m_nTotal(nTotal) {}
     bool isComplete() const noexcept {
         if (m_nTotal == 0)  // no idea.
@@ -80,7 +77,6 @@ class cStreamProgressT {
         m_nTotal = 0;  // 0 = i have no idea how big the total is.
     }
 };
-
 typedef cStreamProgressT<STREAM_POS_t> cStreamProgress;
 
 /// <summary>
@@ -90,10 +86,9 @@ typedef cStreamProgressT<STREAM_POS_t> cStreamProgress;
 /// m_nTotal = Estimated Value of the directory we are processing. (1.0=total of all files)
 /// m_nAmount = Current progress 0 to 1.0 (m_nTotal)
 /// </summary>
-class GRAYCORE_LINK cStreamProgressF : cStreamProgressT<float> {
+struct GRAYCORE_LINK cStreamProgressF : cStreamProgressT<float> {
     friend class cStreamProgressChunk;
 
- public:
     cStreamProgressF() noexcept {
         InitPercent();
     }
@@ -119,7 +114,6 @@ class GRAYCORE_LINK cStreamProgressF : cStreamProgressT<float> {
 /// Track nested work load. Processing a tree.
 /// </summary>
 class GRAYCORE_LINK cStreamProgressChunk {
- private:
     cStreamProgressF& m_Prog;
     cStreamProgressF m_ProgPrev;  /// m_Prog at start.
     int m_iChunk;                 /// What chunk are we on ?
@@ -176,5 +170,4 @@ struct GRAYCORE_LINK DECLSPEC_NOVTABLE IStreamProgressCallback {
     }
 };
 }  // namespace Gray
-
 #endif

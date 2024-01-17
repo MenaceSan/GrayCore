@@ -1,8 +1,9 @@
 //
 //! @file cTimeZone.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
+// clang-format off
 #include "pch.h"
+// clang-format on
 #include "StrT.h"
 #include "cTimeZone.h"
 
@@ -75,14 +76,14 @@ TIMEVALU_t GRAYCALL cTimeZoneMgr::GetLocalMinutesWest() {  // static
 #endif
 }
 
-TIMEVALU_t GRAYCALL cTimeZoneMgr::GetOffsetMinutes(TZ_TYPE nTimeZone) { // static
+TIMEVALU_t GRAYCALL cTimeZoneMgr::GetOffsetMinutes(TZ_TYPE nTimeZone) {  // static
     if (nTimeZone == TZ_LOCAL) {
         return GetLocalMinutesWest();
     }
     return CastN(TIMEVALU_t, nTimeZone);
 }
 
-const cTimeZone* GRAYCALL cTimeZoneMgr::FindTimeZone(TZ_TYPE nTimeZone) { // static
+const cTimeZone* GRAYCALL cTimeZoneMgr::FindTimeZone(TZ_TYPE nTimeZone) {  // static
     //! Get a block describing the time zone. (by offset)
     //! geographic timezone does not include offset for DST.
     for (UINT i = 0; i < _countof(k_TimeZones) - 1; i++) {
@@ -90,14 +91,14 @@ const cTimeZone* GRAYCALL cTimeZoneMgr::FindTimeZone(TZ_TYPE nTimeZone) { // sta
     }
     return nullptr;
 }
-const cTimeZone* GRAYCALL cTimeZoneMgr::FindTimeZone(const GChar_t* pszName) { // static
+const cTimeZone* GRAYCALL cTimeZoneMgr::FindTimeZone(const GChar_t* pszName) {  // static
     //! Get a block describing the time zone. (by name)
     for (UINT i = 0; i < _countof(k_TimeZones) - 1; i++) {
         if (!StrT::CmpI(pszName, k_TimeZones[i].m_pszTimeZoneName)) return &k_TimeZones[i];
     }
     return nullptr;
 }
-const cTimeZone* GRAYCALL cTimeZoneMgr::FindTimeZoneHead(const GChar_t* pszName) { // static
+const cTimeZone* GRAYCALL cTimeZoneMgr::FindTimeZoneHead(const GChar_t* pszName) {  // static
     // like FindTimeZone() but doesn't have to be a full string.
     for (UINT i = 0; i < _countof(k_TimeZones); i++) {
         if (!StrT::CmpHeadI(pszName, k_TimeZones[i].m_pszTimeZoneName)) return &k_TimeZones[i];

@@ -1,8 +1,9 @@
 //
 //! @file cUInt64.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
+// clang-format off
 #include "pch.h"
+// clang-format on
 #include "cLogMgr.h"
 #include "cRandom.h"
 #include "cUInt64.h"
@@ -217,7 +218,7 @@ void GRAYCALL cUInt64::Divide(const cUInt64& dividend, const cUInt64& divisor, O
     ASSERT((quotient * divisor + remainder) == dividend);  // test reverse operation.
 }
 
-void GRAYCALL cUInt64::EuclideanAlgorithm(const cUInt64& x, const cUInt64& y, OUT cUInt64& a, OUT cUInt64& b, OUT cUInt64& g) { // static
+void GRAYCALL cUInt64::EuclideanAlgorithm(const cUInt64& x, const cUInt64& y, OUT cUInt64& a, OUT cUInt64& b, OUT cUInt64& g) {  // static
     //! This function uses the Euclidean algorithm to find the greatest common divisor
     //! g of the positive integers x and y and also two integers a and b such that
     //! ax - by = g, 1 <= a <= y and 0 <= b < x.

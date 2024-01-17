@@ -1,8 +1,9 @@
 //
 //! @file cFileDir.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
+// clang-format off
 #include "pch.h"
+// clang-format on
 #include "HResult.h"
 #include "StrArg.h"
 #include "cAppState.h"
@@ -296,7 +297,7 @@ HRESULT cFileFind::FindFileNext(bool bFirst) {
 
 #ifdef _DEBUG
     // NOTE: m_Size for FILE_ATTRIBUTE_DIRECTORY is NOT accurate!
-    if (m_FileEntry.m_Attributes & FILEATTR_Directory) {
+    if (m_FileEntry.isAttrDir()) {
         ASSERT(m_FindInfo.nFileSizeLow == 0);
     }
 #endif

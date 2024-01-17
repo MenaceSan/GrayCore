@@ -109,6 +109,7 @@ struct cTimeUnit {
     const GChar_t* m_pszUnitNameS;  /// short abbreviated unit name
     TIMEVALU_t m_uMin;
     TIMEVALU_t m_uMax;
+
     WORD m_uSubRatio;           /// How many sub units in this unit. (for absolute units. e.g. not months or years)
     TIMESECD_t m_nUnitSeconds;  /// Total seconds for a unit. (for absolute units)
     double m_dUnitDays;         /// Total days or fractions of a day for the unit. (for absolute units)
@@ -122,7 +123,6 @@ struct cTimeUnit {
 /// Enumerate TIMEVALU_t (16 bit max) elements of cTimeUnits and cTimeParser
 /// </summary>
 enum class TIMEUNIT_t {
-    _UNUSED = -1,  /// Marks end.
     _Year = 0,     /// e.g. 2008. (1<=x<=3000)
     _Month,        /// base 1, NOT Base 0 like = TIMEMONTH_t::_Jan. (1<=x<=12)
     _Day,          /// day of month. base 1. (1<=x<=31)
@@ -132,9 +132,8 @@ enum class TIMEUNIT_t {
     _Millisecond,  /// 1/1000 = thousandth of a second. (0<=x<=999)
     _Microsecond,  /// millionth of a second. (0<=x<=999)
     _TZ,           /// TZ + DST
-    _QTY,          /// END of cTimeUnits
     // used for parsing only.
-    _DOW,      /// Ignore this for units storage. its redundant.
+    _DOW,       /// Ignore this for units storage. its redundant.
     _Ignore,   /// Just ignore this duplicate. We have already dealt with it.
     _Numeric,  /// A numeric value of unknown type (parsing).
     _QTY2,     /// END of cTimeParser
@@ -165,7 +164,7 @@ struct GRAYCORE_LINK cTimeUnits {
     static const int k_nMinutesPerDay = (24 * 60);              /// minutes in a day
     static const int k_nMicroSeconds = 1000000;                 /// millionth of a second.
 
-    static const cTimeUnit k_Units[static_cast<int>(TIMEUNIT_t::_QTY)];  /// Metadata for time units.
+    static const cTimeUnit k_Units[static_cast<int>(TIMEUNIT_t::_Ignore)];  /// Metadata for time units.
 
     static const StrLen_t k_FormStrMax = 256;                 // max reasonable size for time.
     static const GChar_t* k_StrFormats[static_cast<int>(TIMEFORMAT_t::_QTY) + 1];  /// standard strftime() type formats.
@@ -233,7 +232,7 @@ struct GRAYCORE_LINK cTimeUnits {
 
     TIMEVALU_t GetUnitVal(TIMEUNIT_t i) const {
         //! enumerate the time units.
-        ASSERT(IS_INDEX_GOOD(i, static_cast<int>(TIMEUNIT_t::_QTY)));
+        ASSERT(IS_INDEX_GOOD(i, static_cast<int>(TIMEUNIT_t::_DOW)));
         return (&m_wYear)[static_cast<int>(i)];
     }
     TIMEVALU_t GetUnit0(TIMEUNIT_t i) const {
@@ -241,7 +240,7 @@ struct GRAYCORE_LINK cTimeUnits {
         return GetUnitVal(i) - GetUnitDef(i).m_uMin;
     }
     void SetUnit(TIMEUNIT_t i, TIMEVALU_t wVal) {
-        ASSERT(IS_INDEX_GOOD(i, static_cast<int>(TIMEUNIT_t::_QTY)));
+        ASSERT(IS_INDEX_GOOD(i, static_cast<int>(TIMEUNIT_t::_DOW)));
         (&m_wYear)[static_cast<int>(i)] = wVal;
     }
 
@@ -260,6 +259,15 @@ struct GRAYCORE_LINK cTimeUnits {
 
     bool isInDST1() const;
 
+    /// <summary>
+    /// Get the time as a formatted string using "C" strftime()
+    /// build formatted string from cTimeUnits.
+    ///  similar to C stdlib strftime() http://linux.die.net/man/3/strftime
+    ///  add TZ as postfix if desired??
+    ///  used by cTimeDouble::GetTimeFormStr and cTimeInt::GetTimeFormStr
+    /// </summary>
+    /// <param name="wYear"></param>
+    /// <returns>length of string in chars. -lte- 0 = failed.</returns>
     StrLen_t GetFormStr(GChar_t* pszOut, StrLen_t iOutSizeMax, const GChar_t* pszFormat) const;
     StrLen_t GetFormStr(GChar_t* pszOut, StrLen_t iOutSizeMax, TIMEFORMAT_t eFormat = TIMEFORMAT_t::_DEFAULT) const {
         return GetFormStr(pszOut, iOutSizeMax, CastNumToPtr<GChar_t>(static_cast<int>(eFormat)));
@@ -316,7 +324,7 @@ struct cTimeParserUnit {
     GChar_t m_Separator;    /// What sort of separator follows ? ":T /.,-"
 
     void Init() {
-        m_Type = TIMEUNIT_t::_UNUSED;
+        m_Type = TIMEUNIT_t::_QTY2;
         m_nValue = -1;  // not set yet.
         m_iOffsetSep = -1;
         m_Separator = -1;  // not set yet.
@@ -364,7 +372,7 @@ class GRAYCORE_LINK cTimeParser {
 
     bool TestMatchFormat(const cTimeParser& parserFormat, bool bTrimJunk = false);
     bool TestMatch(const GChar_t* pszFormat);
-    bool TestMatches(const GChar_t** ppStrFormats = nullptr);
+    HRESULT TestMatches(const GChar_t** ppStrFormats = nullptr);
 
     HRESULT GetTimeUnits(OUT cTimeUnits& tu) const;
 
