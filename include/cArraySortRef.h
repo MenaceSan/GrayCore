@@ -1,14 +1,11 @@
 //! @file cArraySortRef.h
 //! c++ sorted collections.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
-
 #ifndef _INC_cArraySortRef_H
 #define _INC_cArraySortRef_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
-
 #include "cArrayRef.h"
 #include "cArraySort.h"
 

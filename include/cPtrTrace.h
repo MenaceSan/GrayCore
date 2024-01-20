@@ -17,6 +17,8 @@
 #include "cTypeInfo.h"
 
 namespace Gray {
+typedef UINT32 REFCOUNT_t;
+
 /// <summary>
 /// Trace each use/reference of the a pointer in cPtrFacade/cIUnkPtr/cRefPtr for _DEBUG purposes.
 /// If the lock count fails to go to 0 we know who the leaker was. or if the object is deleted but still has refs we can detect that as well.

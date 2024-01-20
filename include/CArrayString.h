@@ -1,14 +1,10 @@
-//
 //! @file cArrayString.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
-
 #ifndef _INC_cArrayString_H
 #define _INC_cArrayString_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
-
 #include "cArrayRef.h"
 #include "cString.h"
 

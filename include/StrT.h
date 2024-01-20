@@ -68,7 +68,6 @@ enum STRP_TYPE_ : STRP_MASK_t {
 /// similar to char_traits &lt;TYPE&gt; for STL
 /// </summary>
 struct GRAYCORE_LINK StrT {  // static /// namespace for string templates for UTF8 and UNICODE
-
     static const StrLen_t k_LEN_MAX = 15000;     /// arbitrary max size for Format() etc. NOTE: _MSC_VER says stack frame should be at least 16384
     static const StrLen_t k_LEN_Default = 8096;  /// default size for allocation of buffers.
 
@@ -87,11 +86,11 @@ struct GRAYCORE_LINK StrT {  // static /// namespace for string templates for UT
         ASSERT(IS_INDEX_GOOD_ARRAY(b, k_szBlockEnd));
         return k_szBlockEnd[static_cast<int>(b)];
     }
-
+ 
     /// <summary>
     /// Get length of string not including '\0'. Like strlen()
     /// Danger. ASSUME sane iLenMax <= k_LEN_MAX ??  Dont use this function. use length limited version!
-    /// nullptr is NOT allowed by ::strlen(). ASSERT?
+    /// nullptr is NOT allowed by ::strlen() or wcslen. ASSERT?
     /// </summary>
     /// <param name="pszStr"></param>
     /// <returns>Count of Chars (not bytes)</returns>
@@ -543,9 +542,6 @@ StrLen_t inline StrT::Len<char>(const char* pszStr) noexcept {  // count of char
 }
 template <>
 StrLen_t inline StrT::Len<wchar_t>(const wchar_t* pszStr) noexcept {
-    //! Get length of string not including '\0'
-    //! Danger. ASSUME sane iLenMax <= k_LEN_MAX ??  Dont use this function. use length limited version.
-    //! nullptr is NOT allowed by wcslen. ASSERT?
 #if USE_CRT
     if (pszStr == nullptr) return 0;
     return CastN(StrLen_t, ::wcslen(pszStr));

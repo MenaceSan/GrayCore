@@ -157,7 +157,7 @@ class GRAYCORE_LINK cFile : public cObject, public cOSHandle, public cStream {
     HANDLE DetachHandle() noexcept;
 
     HRESULT OpenWait(cStringF sFilePath = _FN(""), OF_FLAGS_t nOpenFlags = OF_READ | OF_SHARE_DENY_NONE, TIMESYSD_t nWaitTime = 100);
-    virtual void SetLength(STREAM_POS_t dwNewLen);
+    virtual HRESULT SetLength(STREAM_POS_t dwNewLen);
 
     // File Access
     bool SetFileTime(const cTimeFile* lpCreationTime, const cTimeFile* lpAccessTime, const cTimeFile* lpLastWriteTime);

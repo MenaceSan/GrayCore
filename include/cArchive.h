@@ -1,14 +1,10 @@
-//
 //! @file cArchive.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
-
 #ifndef _INC_cArchive_H
 #define _INC_cArchive_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
-
 #include "cStream.h"
 
 namespace Gray {

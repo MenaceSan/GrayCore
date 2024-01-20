@@ -1,9 +1,6 @@
-//
 //! @file cArray.h
 //! c++ Collections. MFC compatible.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
-
 #ifndef _INC_cArray_H
 #define _INC_cArray_H
 #ifndef NO_PRAGMA_ONCE

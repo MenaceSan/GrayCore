@@ -21,7 +21,6 @@ namespace Gray {
 #if defined(_DEBUG) && !defined(UNDER_CE)
 #define USE_PTRTRACE_REF
 #endif
-typedef UINT32 REFCOUNT_t;
 
 /// <summary>
 /// base class for some derived object that is to be reference counted via cRefPtr.

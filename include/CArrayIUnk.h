@@ -1,14 +1,10 @@
-//
 //! @file cArrayIUnk.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
-
 #ifndef _INC_cArrayIUnk_H
 #define _INC_cArrayIUnk_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
-
 #include "cArray.h"
 #include "cIUnkPtr.h"
 

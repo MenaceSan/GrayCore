@@ -18,7 +18,7 @@ namespace Gray {
 /// </summary>
 template <typename T = void>
 static constexpr T* CastNumToPtr(UINT_PTR n) noexcept {
-    return (T*)(void*)n;
+    return PtrCast<T>((void*)n);
 }
 
 /// <summary>

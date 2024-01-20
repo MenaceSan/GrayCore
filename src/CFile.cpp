@@ -283,25 +283,29 @@ STREAM_POS_t cFile::GetLength() const {  // virtual
 #endif
 }
 
-void cFile::SetLength(STREAM_POS_t dwNewLen) {  // virtual
+HRESULT cFile::SetLength(STREAM_POS_t dwNewLen) {  // virtual
     //! Grow/Shrink the file.
     //! Since MFC has void return use HResult::GetLast()
     ASSERT(isValidHandle());
+    HRESULT hRes = S_OK;   
 #ifdef _WIN32
     SeekRaw(dwNewLen, SEEK_t::_Set);      // SetFilePointer() . maybe beyond end ?
     if (!::SetEndOfFile(get_Handle())) {  // truncate to this length
         // ASSUME HResult::GetLast() set.
-        DEBUG_ERR(("cFile::SetLength %d ERR='%s'", dwNewLen, LOGERR(HResult::GetLast())));
-        // CFileException::ThrowOsError( HResult::GetLastDef(), m_strFileName);
+        hRes = HResult::GetLast();
+        DEBUG_ERR(("cFile::SetLength %d ERR='%s'", dwNewLen, LOGERR(hRes)));
+        // CFileException::ThrowOsError( hRes, m_strFileName);
     } else {
-        ::SetLastError(NO_ERROR);
+        ::SetLastError(NO_ERROR);   // Why is this my job ? 
     }
 #elif defined(__linux__)
     if (::ftruncate(m_hFile, dwNewLen) < 0) {
         // PosixError
-        DEBUG_ERR(("cFile::SetLength %d ERR='%s'", dwNewLen, LOGERR(HResult::GetLast())));
+        hRes = HResult::GetLast();
+        DEBUG_ERR(("cFile::SetLength %d ERR='%s'", dwNewLen, LOGERR(hRes)));
     }
 #endif
+    return hRes;
 }
 
 bool cFile::SetFileTime(const cTimeFile* lpCreationTime, const cTimeFile* lpAccessTime, const cTimeFile* lpLastWriteTime) {

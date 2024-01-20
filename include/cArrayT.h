@@ -1,15 +1,11 @@
-//
 //! @file cArrayT.h
 //! c++ Collections.  Simple.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
-
 #ifndef _INC_cArrayT_H
 #define _INC_cArrayT_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
-
 #include "cDebugAssert.h"  // THROW_IF()
 #include "cHeap.h"
 #include "cHeapObject.h"
@@ -329,7 +325,7 @@ class cArrayT : public cRefPtr<cArrayHeadT<TYPE> > {
             return;
         }
 
-        const int iRefCounts = pOld->get_RefCount();
+        const REFCOUNT_t iRefCounts = pOld->get_RefCount();
         if (iRefCounts != 1) {  // other refs exist. so i must make a private copy.
             // Make a new array. Copy from old. So we can change size.
             // NOTE: we may be duping our self. (to change length)
@@ -392,7 +388,7 @@ class cArrayT : public cRefPtr<cArrayHeadT<TYPE> > {
 
             ASSERT(!cMem::IsInsideBlock(pCopy, pOld->get_DataConst() + i, nCountOld - i));  // append to self not supported.
 
-            const int iRefCounts = pOld->get_RefCount();
+            const REFCOUNT_t iRefCounts = pOld->get_RefCount();
             if (iRefCounts != 1) {
                 // TODO MUST MAKE PRIVATE COPY !!!
                 ASSERT(0);

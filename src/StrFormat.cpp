@@ -117,9 +117,7 @@ void StrFormat<TYPE>::RenderString(StrBuilder<TYPE>& out, const TYPE* pszParam, 
 
     // a truncated or shifted string.
     short nWidth = m_nWidthMin;  // Total width of what we place in pszOut
-    if (nWidth == 0) {
-        nWidth = (short)nPrecision;  // all
-    }
+    if (nWidth == 0) nWidth = (short)nPrecision;  // all
 
     StrLen_t i = 0;
     if (!m_bAlignLeft && nWidth > nPrecision) {  // pad left
@@ -214,8 +212,7 @@ void StrFormat<TYPE>::RenderParam(StrBuilder<TYPE>& out, va_list* pvlist) const 
         // case 'S':	// Opposite type? char/wchar_t
         case 's': {
             const TYPE* pszParam = va_arg(*pvlist, const TYPE*);
-            if (pszParam == nullptr)  // null/bad pointer?
-            {
+            if (pszParam == nullptr) {  // null/bad pointer?
                 pszParam = CSTRCONST("(null)");
             } else if (cMem::IsCorruptApp(pszParam, 16, false)) {
                 pszParam = CSTRCONST("(ERR)");
@@ -350,7 +347,7 @@ void GRAYCALL StrFormat<TYPE>::V(StrBuilder<TYPE>& out, const TYPE* pszFormat, v
         if (out.isOverflow())  // no room for anything more.
             break;
 
-        TYPE ch = pszFormat[iLenForm++];
+        const TYPE ch = pszFormat[iLenForm++];
         if (ch == '\0') {  // At end.
             // ASSERT(bHasFormatting); Don't use this as a string copy! its dangerous and wasteful.
             break;

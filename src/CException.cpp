@@ -26,11 +26,11 @@ BOOL cExceptionHolder::GetErrorMessage(StrBuilder<LOGCHAR_t>& sb) const {
 #ifdef _MFC_VER  // using _MFC_VER.
 #if USE_UNICODE
     GChar_t szTmp[cExceptionHolder::k_MSG_MAX_SIZE];
-    m_p->GetErrorMessage(szTmp, (UINT)cExceptionHolder::k_MSG_MAX_SIZE, nullptr);
-    StrU::UNICODEtoUTF8(lpszError, nLenMaxError, szTmp, cExceptionHolder::k_MSG_MAX_SIZE);
+    get_Ptr()->GetErrorMessage(szTmp, (UINT)_countof(szTmp), nullptr);
+    StrU::UNICODEtoUTF8(lpszError, nLenMaxError, szTmp, _countof(szTmp));
     return true;
 #else
-    return m_p->GetErrorMessage(lpszError, (UINT)nLenMaxError, nullptr);
+    return get_Ptr()->GetErrorMessage(lpszError, (UINT)nLenMaxError, nullptr);
 #endif
 #else
     cException* pEx = get_Ex();
@@ -81,8 +81,8 @@ BOOL cException::GetErrorMessage(StrBuilder<GChar_t>& sb, UINT* pnHelpContext) {
 
 GRAYCORE_LINK cStringL cException::get_ErrorStr() {  // similar to STL what()
     // Get error in UTF8.
-    LOGCHAR_t szTmp[cExceptionHolder::k_MSG_MAX_SIZE];
-    StrBuilder<LOGCHAR_t> sb(szTmp, STRMAX(szTmp));
+    GChar_t szTmp[cExceptionHolder::k_MSG_MAX_SIZE];
+    StrBuilder<GChar_t> sb(szTmp, STRMAX(szTmp));
     GetErrorMessage(sb, nullptr);
     return szTmp;
 }

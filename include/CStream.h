@@ -403,7 +403,7 @@ struct GRAYCORE_LINK cStreamInput : public cStreamBase {
     /// <returns>The size of the string (in chars) + including '\0'. HRESULT_WIN32_C(ERROR_IO_INCOMPLETE) = need more data.</returns>
     template <typename _CH>
     HRESULT ReadBlobStr(OUT _CH* pszStr, StrLen_t iSizeMax) {
-        const HRESULT hResRead = ReadBlob((BYTE*)pszStr, (size_t)(iSizeMax - 1) * sizeof(_CH));
+        const HRESULT hResRead = ReadBlob(PtrCast<BYTE>(pszStr), (size_t)(iSizeMax - 1) * sizeof(_CH));
         if (FAILED(hResRead)) return hResRead;
         const StrLen_t nSizeRead = hResRead / sizeof(_CH);
         ASSERT(nSizeRead < iSizeMax);

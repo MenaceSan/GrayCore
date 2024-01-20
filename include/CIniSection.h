@@ -119,7 +119,7 @@ class GRAYCORE_LINK cIniSectionData : public IIniBaseEnumerator, public IIniBase
         return m_iBufferUsed;
     }
     /// <summary>
-    /// get total buffer size allocated.
+    /// get total buffer size allocated. size_t.
     /// </summary>
     StrLen_t get_BufferSize() const noexcept {
         if (m_iLinesUsed <= 0) return 0;

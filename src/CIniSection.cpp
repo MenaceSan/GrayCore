@@ -421,7 +421,7 @@ void cIniSectionData::SetLinesCopy(const cIniSectionData& section) {
     m_iBufferUsed = section.get_BufferUsed();
 
     cMem::Copy(m_apLines.get_DataWork(), section.m_apLines.get_DataConst(), m_iLinesUsed * sizeof(IniChar_t*));
-    cMem::Copy(m_Buffer.get_DataW(), section.m_Buffer.get_DataC(), m_Buffer.get_DataSize());
+    m_Buffer.SetCopyAll(section.m_Buffer);
 
     MoveLineOffsets(0, StrT::Diff(m_Buffer.get_DataC<IniChar_t>(), section.m_Buffer.get_DataC<IniChar_t>()));
 }

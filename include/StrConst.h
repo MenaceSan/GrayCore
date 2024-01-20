@@ -100,6 +100,6 @@ inline const wchar_t* cStrConst::Get<wchar_t>() const noexcept {
     return m_W;
 }
 
-#define CSTRCONST(t) ::Gray::cStrConst(t, __TOW(t))  /// define a const for both Unicode and UTF8 in templates. used at run-time not just compile time.
+#define CSTRCONST(t) ::Gray::cStrConst(__TOA(t), __TOW(t))  /// define a const for both Unicode and UTF8 in templates. used at run-time not just compile time.
 }  // namespace Gray
 #endif

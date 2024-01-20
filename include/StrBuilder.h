@@ -2,13 +2,11 @@
 //! @file StrBuilder.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
-
 #ifndef _INC_StrBuilder_H
 #define _INC_StrBuilder_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
-
 #include "StrConst.h"
 #include "StrT.h"
 #include "cBlob.h"
@@ -70,24 +68,23 @@ class GRAYCORE_LINK StrBuilder : protected cBlob {
     /// <returns></returns>
     _TYPE_CH* GetWritePrepared(StrLen_t iNeedCount) {
         if (isNull()) return nullptr;  // just estimating?
-        const StrLen_t nLenSpace = this->get_WriteSpaceQty();
-        if (iNeedCount > nLenSpace) {  // Get more space ?
-            if (!isHeap()) {
-                return nullptr;  // else if not enough space = FAIL! ??
-            }
-            // grow = ReAlloc for more space.
-            const StrLen_t nOldAlloc = this->get_AllocQty();
-            if (nOldAlloc < StrT::k_LEN_MAX) {                              // can we grow?
-                StrLen_t nNewAlloc = nOldAlloc + (iNeedCount - nLenSpace);  // Min size for new alloc.
-                StrLen_t iRem = nNewAlloc % k_nGrowSizeChunk;
-                if (iRem <= 0) iRem = k_nGrowSizeChunk;  // grow a full block.
-                nNewAlloc += iRem;
-                if (nNewAlloc > StrT::k_LEN_MAX) {  // we hit the end! do what we can. truncate or FAIL?
-                    nNewAlloc = StrT::k_LEN_MAX;
-                    // return nullptr;
+        if (isHeap()) {
+            const StrLen_t nLenSpace = this->get_WriteSpaceQty();
+            if (iNeedCount > nLenSpace) {  // Get more space ? or truncate?
+                // grow = ReAlloc for more space.
+                const StrLen_t nOldAlloc = this->get_AllocQty();
+                if (nOldAlloc < StrT::k_LEN_MAX) {                              // can we grow?
+                    StrLen_t nNewAlloc = nOldAlloc + (iNeedCount - nLenSpace);  // Min size for new alloc.
+                    StrLen_t iRem = nNewAlloc % k_nGrowSizeChunk;
+                    if (iRem <= 0) iRem = k_nGrowSizeChunk;  // grow a full block.
+                    nNewAlloc += iRem;
+                    if (nNewAlloc > StrT::k_LEN_MAX) {  // we hit the end! do what we can. truncate!
+                        nNewAlloc = StrT::k_LEN_MAX;
+                        // return nullptr;
+                    }
+                    nNewAlloc++;  // room for '\0'
+                    if (!this->ReAllocSize(nNewAlloc * sizeof(_TYPE_CH))) return nullptr;
                 }
-                nNewAlloc++;  // room for '\0'
-                if (!this->ReAllocSize(nNewAlloc * sizeof(_TYPE_CH))) return nullptr;
             }
         }
         return get_DataWork() + this->m_nWriteLast;
@@ -101,7 +98,7 @@ class GRAYCORE_LINK StrBuilder : protected cBlob {
     inline void AdvanceWrite(StrLen_t nLen) noexcept {
         DEBUG_CHECK(nLen <= get_WriteSpaceQty());
         this->m_nWriteLast += nLen;
-        DEBUG_CHECK(this->m_nWriteLast >= 0);
+        DEBUG_CHECK(this->m_nWriteLast >= nLen);
         SetTerminated();
     }
 
@@ -177,8 +174,7 @@ class GRAYCORE_LINK StrBuilder : protected cBlob {
 
     StrLen_t AddStrLen(const _TYPE_CH* pszStr, StrLen_t nLen) {
         // nLen = not including space for '\0'
-        if (nLen <= 0)  // just add nothing.
-            return 0;
+        if (nLen <= 0) return 0;  // just add nothing.
         _TYPE_CH* pszWrite = GetWritePrepared(nLen);
         const StrLen_t nLenSpace = get_WriteSpaceQty();
         StrLen_t nLenRet = cValT::Min(nLenSpace, nLen);

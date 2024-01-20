@@ -80,7 +80,7 @@ bool cBlob::ReAllocSize(size_t nSize) {
         SUPER_t::SetSpan(cHeap::ReAllocPtr(get_DataW(), nSize), nSize);
         if (!isValidPtr()) {
             ASSERT(0);
-            return false;  // FAILED HRESULT_WIN32_C(ERROR_NOT_ENOUGH_MEMORY)
+            return false;  // FAILED E_OUTOFMEMORY
         }
     }
     ASSERT(isValid());

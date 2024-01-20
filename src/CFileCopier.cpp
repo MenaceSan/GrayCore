@@ -1,4 +1,3 @@
-//
 //! @file cFileCopier.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 // clang-format off
@@ -14,15 +13,12 @@ HRESULT GRAYCALL cFileCopier::CopyFileStream(cStreamInput& stmIn, const FILECHAR
     //! Similar effect to cFile::CopyFileX()
 
     // ASSUME SeekToBegin(); if appropriate.
-
     HRESULT hRes;
     cFile fileDst;
     if (bFailIfExists) {
         // Check if it exists first.
         hRes = fileDst.OpenX(pszDstFileName, OF_READ | OF_BINARY | OF_EXIST);
-        if (FAILED(hRes)) {
-            return hRes;  // can't overwrite!
-        }
+        if (FAILED(hRes)) return hRes;  // can't overwrite!
         fileDst.Close();
     }
 
@@ -82,7 +78,6 @@ HRESULT GRAYCALL cFileCopier::CopyFileX(const FILECHAR_t* pszExistingName, const
         return hRes;
     }
     return S_OK;
-
 #else
     // copyfile() ?? in C++17
     // sendfile()  will send up to 2G
@@ -92,7 +87,6 @@ HRESULT GRAYCALL cFileCopier::CopyFileX(const FILECHAR_t* pszExistingName, const
     HRESULT hRes = filesrc.OpenX(pszExistingName, OF_READ | OF_BINARY);
     if (FAILED(hRes)) return hRes;
     return filesrc.CopyFileStream(pszNewName, bFailIfExists, pProgress);
-
 #endif
 }
 

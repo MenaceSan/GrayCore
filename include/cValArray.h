@@ -195,8 +195,7 @@ struct GRAYCORE_LINK cValArray {  // static. array of Value of some TYPE.
     /// dangerous for types that have internal pointers !
     /// </summary>
     template <class TYPE>
-    static void GRAYCALL MoveElement1(TYPE* pFrom, TYPE* pTo)  // throw
-    {
+    static void GRAYCALL MoveElement1(TYPE* pFrom, TYPE* pTo) {  // throw
         ptrdiff_t iQty = pTo - pFrom;
         if (iQty == 0) return;
 #if 1
@@ -213,15 +212,13 @@ struct GRAYCORE_LINK cValArray {  // static. array of Value of some TYPE.
 #else
         // too slow in debug ?
         TYPE tmp(std::move(*pFrom));
-        if (iQty > 0)  // Reverse/back move
-        {
+        if (iQty > 0) {  // Reverse/back move
             while (iQty) {
                 *pFrom = std::move(pFrom[1]);  // move assignment &&
                 pFrom++;
                 iQty--;
             }
-        } else  // Forward move
-        {
+        } else {  // Forward move
             while (iQty) {
                 *pFrom = std::move(pFrom[-1]);  // move assignment &&
                 pFrom--;

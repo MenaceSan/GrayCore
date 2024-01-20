@@ -24,7 +24,7 @@ namespace Gray {
 template <class TYPE>
 class cSingletonRefBase : public cSingleton<TYPE>, public cRefBase {
  protected:
-    cSingletonRefBase(TYPE* pObject, const TYPEINFO_t& rAddrCode, int iRefCountStart = 0) : cSingleton<TYPE>(pObject, rAddrCode), cRefBase(iRefCountStart) {
+    cSingletonRefBase(TYPE* pObject, const TYPEINFO_t& rAddrCode, REFCOUNT_t iRefCountStart = 0) : cSingleton<TYPE>(pObject, rAddrCode), cRefBase(iRefCountStart) {
         //! typically this == pObject
     }
     CHEAPOBJECT_IMPL;

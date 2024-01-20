@@ -1,14 +1,10 @@
-//
 //! @file cAtomManager.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
-
 #ifndef _INC_cAtomManager_H
 #define _INC_cAtomManager_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
-
 #include "cAtom.h"
 #include "cHashTable.h"
 #include "cLogMgr.h"

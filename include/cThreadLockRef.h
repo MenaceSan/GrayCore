@@ -20,7 +20,7 @@ namespace Gray {
 /// </summary>
 class GRAYCORE_LINK cThreadLockableRef : public cRefBase, public cThreadLockCount {
  public:
-    cThreadLockableRef(int iStaticRefCount = 0) noexcept : cRefBase(iStaticRefCount) {}
+    cThreadLockableRef(REFCOUNT_t iStaticRefCount = 0) noexcept : cRefBase(iStaticRefCount) {}
     ~cThreadLockableRef() override {}
     virtual void onThreadLockFail(TIMESYSD_t dwWaitMS) {
         //! a DEBUG trap for locks failing.

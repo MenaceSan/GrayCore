@@ -1,9 +1,6 @@
-//
 //! @file cArraySort.h
 //! c++ sorted collections.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
-
 #ifndef _INC_cArraySort_H
 #define _INC_cArraySort_H
 #ifndef NO_PRAGMA_ONCE

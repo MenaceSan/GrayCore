@@ -1,13 +1,10 @@
 //! @file cAppImpl.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
-
 #ifndef _INC_cAppImpl_H
 #define _INC_cAppImpl_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
-
 #include "cAppCommand.h"
 #include "cAppState.h"
 #include "cOSModule.h"

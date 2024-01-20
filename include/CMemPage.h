@@ -25,7 +25,7 @@ class cMemPage : public cRefBase {
     UINT_PTR m_nPageStart;         /// Always aligned to dwPageSize.
     size_t m_nPageSize;            /// SystemInfo::dwPageSize
     DWORD m_dwOldProtectionFlags;  /// original flags used/returned by _WIN32 VirtualProtect()
-    int m_nRefCount2;              /// ProtectPages count.
+    REFCOUNT_t m_nRefCount2;       /// ProtectPages count.
 
  public:
     cMemPage(UINT_PTR nPageStart, size_t nPageSize) : m_nPageStart(nPageStart), m_nPageSize(nPageSize), m_dwOldProtectionFlags(0), m_nRefCount2(1) {

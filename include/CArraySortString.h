@@ -1,14 +1,10 @@
-//
 //! @file cArraySortString.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
-
 #ifndef _INC_cArraySortString_H
 #define _INC_cArraySortString_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
-
 #include "cArraySortRef.h"
 #include "cArrayString.h"
 

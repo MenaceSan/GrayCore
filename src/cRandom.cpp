@@ -22,7 +22,7 @@ GRAYCORE_LINK cRandomDef g_Rand;  //! the default random number generator. NOT T
 
 void cRandomBase::InitSeed(IRandomNoise* pSrc, size_t iSize) {
     cBlob blob(iSize);
-    HRESULT iSizeRet = pSrc->GetNoise(blob.get_DataW(), iSize);
+    const HRESULT iSizeRet = pSrc->GetNoise(blob.get_DataW(), iSize);
     InitSeed(cMemSpan(blob.get_DataC(), (size_t)iSizeRet));  // pure virtual
 }
 
@@ -136,7 +136,11 @@ HRESULT GRAYCALL cRandomOS::GetNoiseOS(void* pData, size_t iSize) {  // static. 
         if (bRet) return (HRESULT)iSize;
     }
 #endif
-    return E_NOTIMPL;  // OS noise not available. Try some other pseudo random source.
+
+    // OS noise not available. Try some other pseudo random source.
+    // Just use the time??
+
+    return E_NOTIMPL;  
 }
 
 HRESULT cRandomOS::GetNoise(void* pData, size_t iSize) {  // override. fill array with random. return # filled.

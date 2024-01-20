@@ -180,7 +180,7 @@ class cMemSpan {
     }
 
     /// <summary>
-    /// get pointer that is good/valid for just one byte.
+    /// get pointer that is good/valid for just one byte in the span.
     /// </summary>
     /// <param name="nOffset"></param>
     const BYTE* GetSpan1(size_t nOffset) const noexcept {
@@ -245,6 +245,9 @@ class cMemSpan {
 
     void SetZeros() noexcept {
         cMem::ZeroSecure(m_pData, m_nSize);
+    }
+    void SetCopyAll(const void* pData) {
+        cMem::Copy(m_pData, pData, m_nSize);
     }
 };
 #define TOSPAN(s) cMemSpan(s, sizeof(s))

@@ -76,13 +76,11 @@ struct GRAYCORE_LINK cAtomRef : public cRefPtr<cStringHeadT<ATOMCHAR_t>> {
         return STR_t(get_Ptr());
     }
 
-    const ATOMCHAR_t* get_CPtr() const noexcept  /// as a C string
-    {
+    const ATOMCHAR_t* get_CPtr() const noexcept { /// as a C string
         DEBUG_CHECK(isValidPtr());
         return get_Ptr()->get_Name();
     }
-    operator const ATOMCHAR_t*() const noexcept  /// as a C string
-    {
+    operator const ATOMCHAR_t*() const noexcept { /// as a C string
         DEBUG_CHECK(isValidPtr());
         return get_Ptr()->get_Name();
     }
@@ -96,14 +94,6 @@ struct GRAYCORE_LINK cAtomRef : public cRefPtr<cStringHeadT<ATOMCHAR_t>> {
     StrLen_t GetLength() const noexcept {
         return get_Ptr()->get_CharCount();
     }
-
-#if 0
-		COMPARE_t CompareNoCase(const ATOMCHAR_t* pStr) const noexcept
-		{
-			DEBUG_CHECK(isValidPtr());
-			return get_Ptr()->CompareNoCase(pStr);
-		}
-#endif
 
     bool IsEqualNoCase(const ATOMCHAR_t* pStr) const noexcept {
         DEBUG_CHECK(isValidPtr());

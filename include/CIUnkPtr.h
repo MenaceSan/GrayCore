@@ -41,8 +41,8 @@ class cIUnkPtr : public cPtrFacade<TYPE>
  public:
     static void AssertIUnk(TYPE* p2) {
         if (p2 == nullptr) return;
-        ASSERT(static_cast<TYPE*>(p2) != nullptr);      // must be based on TYPE
-        ASSERT(static_cast<IUnknown*>(p2) != nullptr);  // must be based on IUnknown
+        ASSERT_NN(static_cast<TYPE*>(p2));      // must be based on TYPE
+        ASSERT_NN(static_cast<IUnknown*>(p2));  // must be based on IUnknown
     }
 #endif
 
@@ -61,7 +61,7 @@ class cIUnkPtr : public cPtrFacade<TYPE>
         if (SUPER_t::isValidPtr()) {
             auto p2 = this->get_Ptr();
 #ifdef _DEBUG
-            const auto iRefCount = p2->AddRef();
+            const REFCOUNT_t iRefCount = p2->AddRef();
             ASSERT(iRefCount >= 1);
             AssertIUnk(p2);
 #else
@@ -102,11 +102,11 @@ class cIUnkPtr : public cPtrFacade<TYPE>
         ReleasePtr();
     }
 
-    int get_RefCount() const {
+    REFCOUNT_t get_RefCount() const {
         //! @return the current reference count. Add and remove a ref to get the count.
         if (!SUPER_t::isValidPtr()) return 0;
         auto p2 = this->get_Ptr();
-        const int iRefCount = (int)p2->AddRef();  // ULONG
+        const REFCOUNT_t iRefCount = CastN(REFCOUNT_t, p2->AddRef());  // ULONG
         p2->Release();
         return iRefCount - 1;
     }
@@ -125,15 +125,11 @@ class cIUnkPtr : public cPtrFacade<TYPE>
     /// <returns></returns>
     HRESULT SetQI(IUnknown* p2, const IID& riid) {
         ReleasePtr();  // leave it empty.
-        if (p2 == nullptr) {
-            return E_NOINTERFACE;
-        }
+        if (p2 == nullptr) return E_NOINTERFACE;
         // Query for TYPE interface. acts like IUNK_GETPPTRV(pInterface, riid)
         TYPE* pInterface = nullptr;
         const HRESULT hRes = p2->QueryInterface(riid, OUT reinterpret_cast<void**>(&pInterface));  // get_PPtr()
-        if (FAILED(hRes)) {
-            return hRes;
-        }
+        if (FAILED(hRes)) return hRes;
 #ifdef _DEBUG
         ASSERT(pInterface != nullptr);
         AssertIUnk(pInterface);
@@ -159,7 +155,7 @@ class cIUnkPtr : public cPtrFacade<TYPE>
     }
 #endif  // _MSC_VER
 
-    int ReleasePtr() {
+    REFCOUNT_t ReleasePtr() {
         //! Compliment SetFirstIUnk()
         //! @return the new reference count
         if (!SUPER_t::isValidPtr()) return 0;
@@ -171,8 +167,8 @@ class cIUnkPtr : public cPtrFacade<TYPE>
 #ifdef USE_PTRTRACE_IUNK
         TraceRelease();
 #endif
-        this->ClearPtr();                          // make sure possible destructors called in DecRefCount don't reuse this.
-        const int iRefCount = (int)p2->Release();  // this might delete this ?
+        this->ClearPtr(); // make sure possible destructors called in DecRefCount don't reuse this.
+        const REFCOUNT_t iRefCount = CastN(REFCOUNT_t, p2->Release());  // this might delete this ?
         return iRefCount;
     }
 

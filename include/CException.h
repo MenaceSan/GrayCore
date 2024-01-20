@@ -41,8 +41,7 @@ class GRAYCORE_LINK cExceptionHolder : public cPtrFacade<cExceptionBase> {
     }
     /// basically an auto_ptr
     ~cExceptionHolder() noexcept {
-        if (m_bDeleteEx && this->isValidPtr())  // make sure DetachException() wasn't called.
-        {
+        if (m_bDeleteEx && this->isValidPtr()) { // make sure DetachException() wasn't called.
 #ifdef _MFC_VER  // using _MFC_VER Exceptions.
             get_Ptr()->Delete();
 #else
@@ -80,10 +79,8 @@ struct GRAYCORE_LINK cException : public cExceptionBase {
     cException(const LOGCHAR_t* pszDescription, LOGLVL_t eLogLevel = LOGLVL_t::_ERROR) noexcept
         : m_eSeverity(eLogLevel),
 #if !defined(_MFC_VER) && defined(_MSC_VER) && defined(_CPPUNWIND)  // not using _MFC_VER.
-           
           cExceptionBase(pszDescription),
 #endif
-          
           m_pszDescription((pszDescription == nullptr) ? k_szDescriptionDefault : pszDescription) {
     }
 

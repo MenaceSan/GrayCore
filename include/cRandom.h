@@ -77,11 +77,10 @@ class GRAYCORE_LINK cRandomOS : public cRandomBase, public cSingleton<cRandomOS>
         // No way to seed this.
         UNREFERENCED_PARAMETER(seed);
     }
+    static HRESULT GRAYCALL GetNoiseOS(void* pData, size_t iSize);
 
  public:
     cRandomOS();
- 
-    static HRESULT GRAYCALL GetNoiseOS(void* pData, size_t iSize);
 
     HRESULT GetNoise(void* pData, size_t iSize) override;  // fill array with random. return # filled.
     RAND_t get_RandUns() override;                         // UINT_MAX

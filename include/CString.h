@@ -431,7 +431,7 @@ class GRAYCORE_LINK cStringT {
         if (this->IsEmpty()) return 0;
         return this->get_Head()->GetHeapStatsThis(iAllocCount);
     }
-    int get_RefCount() const {
+    REFCOUNT_t get_RefCount() const {
         // expose internal ref count. ASSUME NOT _Nil ?
         return this->get_Head()->get_RefCount();
     }

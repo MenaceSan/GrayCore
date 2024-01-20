@@ -1,14 +1,10 @@
-//
 //! @file cAppState.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
-
 #ifndef _INC_cAppState_H
 #define _INC_cAppState_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
-
 #include "cAppArgs.h"
 #include "cBits.h"
 #include "cOSProcess.h"

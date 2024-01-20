@@ -47,7 +47,7 @@ bool cAtomManager::RemoveAtom(DATA_t* pDef) {
     bRetRemove = m_aName.DeleteArg(pDef);
     ASSERT(bRetRemove);
 #ifdef _DEBUG
-    int iRefCount = pDef->get_RefCount();
+    const REFCOUNT_t iRefCount = pDef->get_RefCount();
     ASSERT(iRefCount == 1);
 #endif
     return bRetRemove;
@@ -130,7 +130,7 @@ void cAtomRef::EmptyAtom(bool isLast) {
     cAtomManager& rAM = cAtomManager::I();
 
     // Remove the cAtomRef from the tables if last use.
-    const int iRefCount = get_RefCount();
+    const REFCOUNT_t iRefCount = get_RefCount();
     if (iRefCount <= cAtomManager::kRefsBase) {
         // Remove me from the cAtomManager tables.
         rAM.RemoveAtom(get_Ptr());
@@ -146,7 +146,7 @@ size_t cAtomRef::CountHeapStats(OUT ITERATE_t& iAllocCount) const {
     CODEPROFILEFUNC();
     if (IsEmpty())  // already empty
         return 0;
-    const int iRefCount = get_RefCount();
+    const REFCOUNT_t iRefCount = get_RefCount();
     ASSERT(iRefCount >= 2);
     return get_Ptr()->GetHeapStatsThis(iAllocCount) / (iRefCount - 1);
 }

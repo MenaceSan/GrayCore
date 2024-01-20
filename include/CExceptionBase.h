@@ -74,7 +74,7 @@ typedef ::CException cExceptionBase;  /// assume ALL exceptions are of this base
 typedef std::exception cExceptionBase;  /// assume ALL exceptions are of this base. STL std::exception
 #endif
 
-struct GRAYCORE_LINK cException;  // Base for my custom exceptions. Also based on cExceptionBase
+struct GRAYCORE_LINK cException;  // Base for my custom exceptions. based on cExceptionBase
 
 // Abstract the several different types of exception handling as macros.
 #if !defined(_CPPUNWIND)  // No exception allowed. use STL _HAS_EXCEPTIONS ?

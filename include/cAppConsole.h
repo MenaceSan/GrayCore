@@ -1,14 +1,10 @@
-//
 //! @file cAppConsole.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
-
 #ifndef _INC_cAppConsole_H
 #define _INC_cAppConsole_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
-
 #include "StrArg.h"
 #include "cSingleton.h"
 #include "cStream.h"

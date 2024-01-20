@@ -43,12 +43,12 @@ void cStringT<_TYPE_CH>::AllocBuffer(StrLen_t iNewLength) {
     if (m_pchData == &m_Nil) {
         // Make a new string.
         pHeadNew = HEAD_t::CreateStringData(iNewLength);  // allocate extra space and call its constructor
-        ASSERT(pHeadNew != nullptr);
+        ASSERT_NN(pHeadNew);
         pHeadNew->IncRefCount();
     } else {
         auto pHeadOld = get_Head();
         StrLen_t nOldLen = pHeadOld->get_CharCount();
-        const int iRefCount = pHeadOld->get_RefCount();
+        const REFCOUNT_t iRefCount = pHeadOld->get_RefCount();
         if (iRefCount == 1) {
             // just change the existing ref. or it may be the same size.
             if (nOldLen == iNewLength)  // no change.
