@@ -1,4 +1,3 @@
-//
 //! @file cTypeInfo.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 // clang-format off
@@ -19,11 +18,9 @@ const char* GRAYCALL cTypeInfo::GetSymName(const char* name) noexcept {  // stat
 
 #ifdef _CPPRTTI
 
-const void** GRAYCALL cTypeInfo::Get_vtable(void* p) {  // static
-    // Get the vtable of the object.
-    // Assume this is a 'new' returned pointer.
-    UNREFERENCED_PARAMETER(p);
-    return nullptr;
+const void* const* GRAYCALL cTypeInfo::GetVTable(const void* pObject) {  // static
+    // https://reverseengineering.stackexchange.com/questions/5956/how-to-find-the-location-of-the-vtable/5957#5957?newreg=6de86b812bac40688c7f68fbafce262c
+    return *PtrCast<const void* const*>(pObject);  // like typeid(void*); similar to dyanmic_cast<>
 }
 
 const char* GRAYCALL cTypeInfo::GetMemberName_TODO(const void** vtable, PROPIDX_t i) {  // static

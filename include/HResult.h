@@ -1,4 +1,3 @@
-//
 //! @file HResult.h
 //! Define HRESULT error codes and what they mean. HResult::FromPOSIX()
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)

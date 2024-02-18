@@ -9,7 +9,6 @@
 
 #include "StrT.h"
 #include "cArray.h"
-#include "cValArray.h"
 
 namespace Gray {
 /// <summary>
@@ -55,11 +54,6 @@ class cArraySorted : public cArray<TYPE, TYPE_ARG> {
     }
 
  public:
-    /// <summary>
-    /// virtual to allow derived classes to override this and make destructor work.
-    /// </summary>
-    ~cArraySorted() override {}
-
     ITERATE_t FindINearKey(KEY_t key, OUT COMPARE_t& iCompareRes) const noexcept;
 
     /// <summary>
@@ -241,9 +235,7 @@ struct cArraySortVal : public cArraySorted<TYPE, TYPE, TYPE> {
         return cValT::Compare(Data1, Data2);
     }
 
- public:
-    ~cArraySortVal() override {}
-
+ public: 
     bool RemoveArgKey(TYPE Data1) {
         return SUPER_t::RemoveArgKey(Data1, Data1);
     }
@@ -270,8 +262,6 @@ struct cArraySortStructName : public cArraySorted<TYPE, const TYPE&, const _TYPE
     }
 
  public:
-    ~cArraySortStructName() override {}
-
     const TYPE* FindArgForKey(KEY_t key1) const noexcept {
         //! put the result in TYPE derived pointer.
         const ITERATE_t index = FindIForKey(key1);
@@ -309,8 +299,6 @@ struct cArraySortStructValue : public cArraySorted<TYPE, const TYPE&, TYPE_KEY> 
     }
 
  public:
-    ~cArraySortStructValue() override {}
-
     const TYPE* FindArgForKey(KEY_t key1) const {
         //! put the result in TYPE derived pointer.
         ITERATE_t index = FindIForKey(key1);
@@ -347,8 +335,6 @@ struct cArraySortStructHash : public cArraySorted<TYPE, const TYPE&, _TYPE_HASH>
     }
 
  public:
-    ~cArraySortStructHash() override {}
-
     const TYPE* FindArgForKey(KEY_t key1) const {
         //! put the result in TYPE derived pointer.
         const ITERATE_t index = FindIForKey(key1);
@@ -381,11 +367,6 @@ struct cArraySortFacade : public cArraySorted<TYPE, TYPE_PTR, TYPE_KEY> {
     }
 
  public:
-    ~cArraySortFacade() override {
-        // Make sure virtuals are called correctly if storing a facade.
-        this->RemoveAll();
-    }
-
     bool IsValidIndex(ITERATE_t i) const noexcept {
         //! @todo RENAME THIS. Don't overload IsValidIndex. Make IsValidAt() ?
         if (!SUPER_t::IsValidIndex(i)) return false;
@@ -393,7 +374,6 @@ struct cArraySortFacade : public cArraySorted<TYPE, TYPE_PTR, TYPE_KEY> {
     }
 
     TYPE GetAtCheck(ITERATE_t nIndex) const {
-        //! Cast to TYPE_PTR ?
         //! @note we should put the result in TYPE derived pointer.
         if (!this->IsValidIndex(nIndex)) return nullptr;
         return this->GetAt(nIndex);
@@ -444,8 +424,8 @@ class cArraySortFacadeValue : public cArraySortFacade<TYPE, TYPE_PTR, TYPE_KEY> 
  protected:
     COMPARE_t CompareData(ARG_t pData1, ARG_t pData2) const noexcept override {
         //! Compare a data record to another data record.
-        ASSERT(pData1 != nullptr);
-        ASSERT(pData2 != nullptr);
+        ASSERT_NN(pData1);
+        ASSERT_NN(pData2);
         const KEY_t key1 = pData1->get_SortValue();
         const KEY_t key2 = pData2->get_SortValue();
         const COMPARE_t iDiff = cValT::Compare(key1, key2);
@@ -460,8 +440,6 @@ class cArraySortFacadeValue : public cArraySortFacade<TYPE, TYPE_PTR, TYPE_KEY> 
     }
 
  public:
-    ~cArraySortFacadeValue() override {}
-
     ITERATE_t FindIForAK(const TYPE_PTR pBase) const {
         //! Equivalent of FindIFor() but uses the key for faster access. must check dupes.
         //! @return index, -1 = k_ITERATE_BAD = none.
@@ -470,8 +448,7 @@ class cArraySortFacadeValue : public cArraySortFacade<TYPE, TYPE_PTR, TYPE_KEY> 
         ITERATE_t i = this->FindIFirstForKey(nKey);
         if (i < 0) return k_ITERATE_BAD;
         for (;;) {
-            if (this->GetAt(i) == pBase)  // since sorted values are allowed to duplicate.
-                return i;
+            if (this->GetAt(i) == pBase) return i;  // since sorted values are allowed to duplicate.
             if (++i >= this->GetSize()) break;
         }
         // This probably shouldn't happen? pBase is not in the array!
@@ -505,8 +482,6 @@ class cArraySortFacadeHash : public cArraySortFacade<TYPE, TYPE_PTR, _TYPE_HASH>
     typedef typename SUPER_t::KEY_t KEY_t;
 
  public:
-    ~cArraySortFacadeHash() override {}
-
     COMPARE_t CompareData(ARG_t pData1, TYPE_PTR pData2) const noexcept override {
         //! Compare a data record to another data record.
         const _TYPE_HASH key1 = pData1->get_HashCode();
@@ -540,19 +515,17 @@ class cArraySortPtrName : public cArraySortFacade<TYPE*, TYPE*, const _TYPECH*> 
  protected:
     COMPARE_t CompareData(ARG_t pData1, ARG_t pData2) const noexcept override {
         //! Compare a data record to another data record.
-        ASSERT(pData1 != nullptr);
-        ASSERT(pData2 != nullptr);
+        ASSERT_NN(pData1);
+        ASSERT_NN(pData2);
         return StrT::CmpI<_TYPECH>(pData1->get_Name(), pData2->get_Name());
     }
     COMPARE_t CompareKey(KEY_t key1, ARG_t pObj) const noexcept override {
-        ASSERT(key1 != nullptr);
-        ASSERT(pObj != nullptr);
+        ASSERT_NN(key1);
+        ASSERT_NN(pObj);
         return StrT::CmpI<_TYPECH>(key1, pObj->get_Name());
     }
 
  public:
-    ~cArraySortPtrName() override {}
-
     ITERATE_t FindIForAK(ARG_t pBase) const {
         if (pBase == nullptr) return k_ITERATE_BAD;
         return SUPER_t::FindIForKey(pBase->get_Name());

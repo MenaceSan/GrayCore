@@ -1,7 +1,5 @@
-//
 //! @file cHookJump.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cHookJump_H
 #define _INC_cHookJump_H
@@ -40,7 +38,7 @@ class GRAYCORE_LINK cHookJump {
     FARPROC m_pFuncOrig;              /// Pointer to the original/old function. The one i will replace. Inject code here.
     BYTE m_OldCode[k_LEN_A];          /// What was at m_pFuncOrig previously. Take more than i actually need to account for isChainable() tests.
     BYTE m_Jump[k_LEN_J + k_LEN_JO];  /// What do i want to replace m_pFuncOrig with. k_I_JUMP to pFuncNew
-    mutable cThreadLockFast m_Lock;   /// prevent multiple threads from using this at the same time.
+    mutable cThreadLockCount m_Lock;  /// prevent multiple threads from using this at the same time.
 
  protected:
     bool SwapOld() noexcept {
@@ -102,21 +100,20 @@ struct cHookJumpT : public cHookJump {
 /// <summary>
 /// Stack based temporary lock for cHookJump. swap original call back so it may be used inside hook.
 /// </summary>
-class GRAYCORE_LINK cHookLock : public cThreadGuardFast {
- public:
+class GRAYCORE_LINK cHookLock : public cLockerT<cThreadLockCount> {
+    typedef cLockerT<cThreadLockCount> SUPER_t;
+
     cHookJump& m_rJump;  /// The code we are locking for use.
     bool m_bSwapOld;     /// has Old swapped back in. Must be locked. NOT isChainable
 
  public:
     cHookLock(cHookJump& rJump, bool swap = true)
-        : cThreadGuardFast(rJump.m_Lock)  // MUST lock while we do this. single thread.
-          ,
+        : SUPER_t(rJump.m_Lock.Lock()),  // MUST lock while we do this. single thread.
           m_rJump(rJump) {
         m_bSwapOld = swap ? m_rJump.SwapOld() : false;
     }
     ~cHookLock() noexcept {
-        if (m_bSwapOld)  // did i use the swap?
-        {
+        if (m_bSwapOld) {  // did i use the swap?
             m_rJump.SwapReset();
         }
     }

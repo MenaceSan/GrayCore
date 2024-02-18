@@ -1,8 +1,6 @@
-//
 //! @file cFloatDeco.h
 //! convert numbers to/from string.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 #ifndef _INC_cFloatDeco_H
 #define _INC_cFloatDeco_H
 #ifndef NO_PRAGMA_ONCE
@@ -108,12 +106,11 @@ class GRAYCORE_LINK cFloatDeco {
     }
 
 #if 0
-		double get_Double() const
-		{
-			//! re-compose double. Convert back to a double. for testing.
-			cFloat64 f(sdfsdf);
-			return f.m_v.u_d;
-		}
+	double get_Double() const {
+		//! re-compose double. Convert back to a double. for testing.
+		cFloat64 f(sdfsdf);
+		return f.m_v.u_d;
+	}
 #endif
 
     static inline unsigned GetCountDecimalDigit32(UINT32 n) noexcept {
@@ -132,11 +129,11 @@ class GRAYCORE_LINK cFloatDeco {
         return 10;
     }
 
-    static cFloatDeco GRAYCALL GetCachedPower(int nExp2, OUT int* pnExp10);
+    static cFloatDeco GRAYCALL GetCachedPower(int nExp2, OUT int& rnExp10);
     static double GRAYCALL toDouble(UINT32 frac1, UINT32 frac2, int nExp10);
 
     static void GRAYCALL GrisuRound(char* pszOut, StrLen_t len, UINT64 delta, UINT64 rest, UINT64 ten_kappa, UINT64 wp_w);
-    static StrLen_t GRAYCALL Grisu2(double dVal, char* pszOut, OUT int* pnExp10);
+    static StrLen_t GRAYCALL Grisu2(double dVal, char* pszOut, OUT int& rnExp10);
 
     static StrLen_t GRAYCALL MantRound(char* pszOut, StrLen_t nMantLength);
     static StrLen_t GRAYCALL MantAdjust(char* pszOut, StrLen_t nMantLength, StrLen_t nMantLengthNew);

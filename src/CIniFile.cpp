@@ -1,4 +1,3 @@
-//
 //! @file cIniFile.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 // clang-format off
@@ -23,12 +22,12 @@ HRESULT cIniFile::ReadIniStream(cStreamInput& s, bool bStripComments) {
     //! @arg bStripComments = strip comments and whitespace. else preserve them.
     //! @todo USE cIniSectionData::ReadSectionData() ??
 
-    cIniSectionEntryPtr pSection;
+    cRefPtr<cIniSectionEntry> pSection;
     int iLine = 0;
     for (;;) {
         IniChar_t szBuffer[cIniSection::k_LINE_LEN_MAX];
         // read string strips new lines.
-        HRESULT hRes = s.ReadStringLine(szBuffer, STRMAX(szBuffer));
+        HRESULT hRes = s.ReadStringLine(TOSPAN(szBuffer));
         if (FAILED(hRes) || hRes == 0) {
             return hRes;  // 0 = normal end.
         }
@@ -105,7 +104,7 @@ HRESULT cIniFile::PropGetEnum(PROPIDX_t ePropIdx, OUT cStringI& rsValue, OUT cSt
     return (HRESULT)ePropIdx;
 }
 
-cIniSectionEntryPtr cIniFile::FindSection(const IniChar_t* pszSectionTitle, bool bPrefixOnly) const {
+cRefPtr<cIniSectionEntry> cIniFile::FindSection(const IniChar_t* pszSectionTitle, bool bPrefixOnly) const {
     //! Assume file has been read into memory already.
     CODEPROFILEFUNC();
     if (pszSectionTitle == nullptr) {
@@ -129,7 +128,7 @@ cIniSectionEntryPtr cIniFile::FindSection(const IniChar_t* pszSectionTitle, bool
     return nullptr;
 }
 
-cIniSectionEntryPtr cIniFile::AddSection(const IniChar_t* pszSectionTitle, bool bStripComments, int iLine) {  // virtual
+cRefPtr<cIniSectionEntry> cIniFile::AddSection(const IniChar_t* pszSectionTitle, bool bStripComments, int iLine) {  // virtual
     //! Create a new section in the file.
     //! don't care if the key exists or not. dupes are OK.
     //! @arg pszSectionTitle = "SECTIONTYPE SECTIONNAME" (ASSUME already stripped [])
@@ -137,7 +136,7 @@ cIniSectionEntryPtr cIniFile::AddSection(const IniChar_t* pszSectionTitle, bool 
     if (pszSectionTitle == nullptr) {
         pszSectionTitle = k_SectionDefault;
     }
-    cIniSectionEntryPtr pSection = new cIniSectionEntry(pszSectionTitle, bStripComments, iLine);
+    cRefPtr<cIniSectionEntry> pSection = new cIniSectionEntry(pszSectionTitle, bStripComments, iLine);
     m_aSections.Add(pSection);
     return pSection;
 }
@@ -145,7 +144,7 @@ cIniSectionEntryPtr cIniFile::AddSection(const IniChar_t* pszSectionTitle, bool 
 const IniChar_t* cIniFile::FindKeyLinePtr(const IniChar_t* pszSectionTitle, const IniChar_t* pszKey) const {
     //! Find a line in the [pszSectionTitle] with a key looking like pszKey=
 
-    cIniSectionEntryPtr pSection = FindSection(pszSectionTitle, false);
+    cRefPtr<cIniSectionEntry> pSection = FindSection(pszSectionTitle, false);
     if (pSection == nullptr) {
         return nullptr;
     }
@@ -156,7 +155,7 @@ HRESULT cIniFile::SetKeyLine(const IniChar_t* pszSectionTitle, const IniChar_t* 
     //! @arg pszSectionTitle = OK for nullptr
     //! @arg pszLine = nullptr = delete;
     ITERATE_t iLine;
-    cIniSectionEntryPtr pSection = FindSection(pszSectionTitle);
+    cRefPtr<cIniSectionEntry> pSection = FindSection(pszSectionTitle);
     if (pSection == nullptr) {
         // add a new section if it doesn't exist.
         pSection = AddSection(pszSectionTitle);
@@ -180,7 +179,7 @@ HRESULT cIniFile::SetKeyArg(const IniChar_t* pszSectionTitle, const IniChar_t* p
     //! OK for pszSectionTitle == nullptr
     if (pszKey == nullptr || pszArg == nullptr) return 0;
     IniChar_t szTmp[_MAX_PATH + _MAX_PATH];
-    cIniSectionData::MakeLine(szTmp, STRMAX(szTmp), pszKey, pszArg);
+    cIniSectionData::MakeLine(TOSPAN(szTmp), pszKey, pszArg);
     return SetKeyLine(pszSectionTitle, pszKey, szTmp);
 }
 }  // namespace Gray

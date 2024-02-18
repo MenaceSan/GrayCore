@@ -1,4 +1,3 @@
-//
 //! @file cFloatDeco.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 // clang-format off
@@ -7,20 +6,20 @@
 #include "StrNum.h"
 #include "cDebugAssert.h"  // ASSERT
 #include "cFloatDeco.h"
-#include "cValArray.h"
+#include "cValSpan.h"
 
 namespace Gray {
-const double cFloatDeco::k_PowersOf10[9] =  // opposite of GetCachedPower
-    {10.0,                                  // is 10^2^i.  Used to convert decimal
-     100.0,                                 // exponents into floating-point numbers.
-     1.0e4,                                 // 10000
-     1.0e8, 1.0e16, 1.0e32, 1.0e64, 1.0e128, 1.0e256};
+const double cFloatDeco::k_PowersOf10[9] = {  // opposite of GetCachedPower
+    10.0,                                     // is 10^2^i.  Used to convert decimal
+    100.0,                                    // exponents into floating-point numbers.
+    1.0e4,                                    // 10000
+    1.0e8, 1.0e16, 1.0e32, 1.0e64, 1.0e128, 1.0e256};
 
 const UINT32 cFloatDeco::k_Exp10[10] = {
     // 32 bit exponent digits. [9] = 1 billion = 1.0e9 = 1000000000
     1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000};
 
-cFloatDeco cFloatDeco::GetCachedPower(int nExp2, OUT int* pnExp10) {  // static
+cFloatDeco cFloatDeco::GetCachedPower(int nExp2, OUT int& rnExp10) {  // static
     //! opposite of k_PowersOf10
     //! 10^-348, 10^-340, ..., 10^340, stepped by 8.
 
@@ -53,12 +52,12 @@ cFloatDeco cFloatDeco::GetCachedPower(int nExp2, OUT int* pnExp10) {  // static
     unsigned index = static_cast<unsigned>((nExp10 >> 3) + 1);
     if (IS_INDEX_BAD_ARRAY(index, k_CachedPowers)) {
         // exp out of range.
-        *pnExp10 = 0;
+        rnExp10 = 0;
         if (index < 0) return k_CachedPowers[0];
         return k_CachedPowers[_countof(k_CachedPowers) - 1];
     }
 
-    *pnExp10 = -(-348 + static_cast<int>(index << 3));  // decimal exponent doesn't need lookup table
+    rnExp10 = -(-348 + static_cast<int>(index << 3));  // decimal exponent doesn't need lookup table
     return k_CachedPowers[index];
 }
 
@@ -113,10 +112,10 @@ void cFloatDeco::GrisuRound(char* pszOut, StrLen_t len, UINT64 delta, UINT64 res
     }
 }
 
-StrLen_t cFloatDeco::Grisu2(double dVal, char* pszOut, OUT int* pnExp10) {  // static
+StrLen_t cFloatDeco::Grisu2(double dVal, char* pszOut, OUT int& rnExp10) {  // static
     if (dVal == 0) {                                                        // special case
         *pszOut = '0';
-        *pnExp10 = 0;
+        rnExp10 = 0;
         return 1;
     }
 
@@ -125,7 +124,7 @@ StrLen_t cFloatDeco::Grisu2(double dVal, char* pszOut, OUT int* pnExp10) {  // s
     const cFloatDeco v(dVal);
     v.NormalizedBoundaries(&w_m, &w_p);
 
-    const cFloatDeco c_mk = GetCachedPower(w_p.m_iExp2, pnExp10);
+    const cFloatDeco c_mk = GetCachedPower(w_p.m_iExp2, rnExp10);
     const cFloatDeco W = v.Normalize() * c_mk;
     cFloatDeco Wp = w_p * c_mk;
     cFloatDeco Wm = w_m * c_mk;
@@ -156,7 +155,7 @@ StrLen_t cFloatDeco::Grisu2(double dVal, char* pszOut, OUT int* pnExp10) {  // s
         kappa--;
         UINT64 tmp = (static_cast<UINT64>(p1) << -one.m_iExp2) + p2;
         if (tmp <= delta) {
-            *pnExp10 += kappa;
+            rnExp10 += kappa;
             GrisuRound(pszOut, nLength, delta, tmp, static_cast<UINT64>(k_Exp10[kappa]) << -one.m_iExp2, wp_w.m_uMant);
             return nLength;
         }
@@ -171,7 +170,7 @@ StrLen_t cFloatDeco::Grisu2(double dVal, char* pszOut, OUT int* pnExp10) {  // s
         p2 &= one.m_uMant - 1;
         kappa--;
         if (p2 < delta) {
-            *pnExp10 += kappa;
+            rnExp10 += kappa;
             GrisuRound(pszOut, nLength, delta, p2, one.m_uMant, wp_w.m_uMant * k_Exp10[-kappa]);
             return nLength;
         }
@@ -214,10 +213,9 @@ StrLen_t cFloatDeco::MantAdjust(char* pszOut, StrLen_t nMantLength, StrLen_t nMa
         MantRound(pszOut, nMantLengthNew);
     } else {
         // Post Pad out with 0.
-        if (nMantLengthNew > StrNum::k_LEN_MAX_DIGITS) {
-            nMantLengthNew = StrNum::k_LEN_MAX_DIGITS;
-        }
-        cValArray::FillQty<char>(pszOut + nMantLength, iDelta, '0');
+        if (nMantLengthNew > StrNum::k_LEN_MAX_DIGITS) nMantLengthNew = StrNum::k_LEN_MAX_DIGITS;
+        
+        cValSpan::FillQty<char>(pszOut + nMantLength, iDelta, '0');
     }
     return iDelta;
 }
@@ -281,8 +279,7 @@ StrLen_t cFloatDeco::FormatF(char* pszOut, StrLen_t nMantLength, int nExp10, int
         // 1234e7 -> 12340000000.0
         // Beware k_LEN_MAX_DIGITS
         ASSERT(nDecPlaceO + iDecPlacesWanted + 1 < StrNum::k_LEN_MAX_DIGITS);
-
-        cValArray::FillQty<char>(pszOut + nMantLength, nExp10, '0');  // post pad end.
+        cValSpan::FillQty<char>(pszOut + nMantLength, nExp10, '0');  // post pad end.
         nMantLength += nExp10;
     } else if (nDecPlaceO > 0) {
         // Some decimal places and some whole numbers.
@@ -297,7 +294,7 @@ StrLen_t cFloatDeco::FormatF(char* pszOut, StrLen_t nMantLength, int nExp10, int
 
         cMem::CopyOverlap(&pszOut[nDecPlaceO + 2], &pszOut[0], nMantLength);
         pszOut[0] = '0';
-        cValArray::FillQty<char>(pszOut + 2, nDecPlaceO, '0');  // pre-pad with 0.
+        cValSpan::FillQty<char>(pszOut + 2, nDecPlaceO, '0');  // pre-pad with 0.
 
         nMantLength += nDecPlaceO + 1;
         nDecPlaceO = 1;
@@ -316,7 +313,7 @@ StrLen_t cFloatDeco::FormatF(char* pszOut, StrLen_t nMantLength, int nExp10, int
         if (iDecDiff > 0) {
             // Beware k_LEN_MAX_DIGITS
             ASSERT(nMantLength + iDecDiff < StrNum::k_LEN_MAX_DIGITS);
-            cValArray::FillQty<char>(pszOut + nMantLength, iDecDiff, '0');  // post pad with 0.
+            cValSpan::FillQty<char>(pszOut + nMantLength, iDecDiff, '0');  // post pad with 0.
             nMantLength += iDecDiff;
         } else if (iDecDiff < 0) {
             nMantLength = MantRound(pszOut, nMantLength + iDecDiff);

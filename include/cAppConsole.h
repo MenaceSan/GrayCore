@@ -36,8 +36,8 @@ enum class AppCon_t {
 /// Singleton to Manage console output/input for this app. use of printf() etc
 /// This allows apps not compiled in _CONSOLE mode to attach to a console if they are started in one (or create one if not).
 /// </summary>
-class GRAYCORE_LINK cAppConsole : public cSingleton<cAppConsole>, public cStreamOutput {
-    friend class cSingleton<cAppConsole>;
+class GRAYCORE_LINK cAppConsole final : public cSingleton<cAppConsole>, public ITextWriter {
+    SINGLETON_IMPL(cAppConsole);
 
 #if defined(_WIN32)
     HANDLE m_hStd[static_cast<int>(AppStd_t::_QTY)];  /// stdin,stdout,stderr as cOSHandle. But i don't need to close these ? ::GetStdHandle()
@@ -163,8 +163,6 @@ class GRAYCORE_LINK cAppConsole : public cSingleton<cAppConsole>, public cStream
         if (FAILED(hRes)) return HRESULT_WIN32_C(ERROR_WRITE_FAULT);
         return 1;
     }
-
-    CHEAPOBJECT_IMPL;
 };
 }  // namespace Gray
 #endif  // UNDER_CE

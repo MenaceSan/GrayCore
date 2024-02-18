@@ -1,44 +1,55 @@
-//
 //! @file cSingletonPtr.h
 //!	A reference counted singleton
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cSingletonPtr_H
 #define _INC_cSingletonPtr_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
-
 #include "cRefPtr.h"
 #include "cSingleton.h"
 
 namespace Gray {
 /// <summary>
-/// Base class for a cSingleton that is reference counted and lazy created/loaded.
+/// Base class for a cSingletonStatic that is reference counted and lazy created/loaded.
 /// This will be destroyed when the last reference is released. recreated again on demand.
 /// e.g. a public service (shared by all) that is loaded on demand and released when no one needs it.
-/// @note These objects are normally cHeapObject, but NOT ALWAYS ! (allow static versions using StaticConstruct() and k_REFCOUNT_STATIC)
 /// </summary>
 /// <typeparam name="TYPE"></typeparam>
 template <class TYPE>
-class cSingletonRefBase : public cSingleton<TYPE>, public cRefBase {
+class cSingletonRefBase : public cSingletonStatic<TYPE>, public cRefBase, public cHeapObject {
+    typedef cSingletonStatic<TYPE> SUPER_t;
+    // CHEAPOBJECT_IMPL;
+
  protected:
-    cSingletonRefBase(TYPE* pObject, const TYPEINFO_t& rAddrCode, REFCOUNT_t iRefCountStart = 0) : cSingleton<TYPE>(pObject, rAddrCode), cRefBase(iRefCountStart) {
+    cSingletonRefBase(TYPE* pObject, const TYPEINFO_t& rAddrCode, REFCOUNT_t iRefCountStart = 0) : SUPER_t(pObject), cRefBase(iRefCountStart) {
         //! typically this == pObject
     }
-    CHEAPOBJECT_IMPL;
 };
 
 /// <summary>
-/// A reference to a cSingletonRefBase<> based TYPE or a type that has both cSingleton and cRefBase.
-/// A Lazy loaded singleton.
+/// A lazy loaded / released cSingletonStatic. ASSUME TYPE is cSingletonStatic, cRefBase, cHeapObject based. equiv to cSingletonRefBase
 /// </summary>
 /// <typeparam name="TYPE"></typeparam>
 template <class TYPE>
-class cSingletonPtr : protected cRefPtr<TYPE>  // cRefPtr protected for read only.
-{
+class cSingletonPtr : protected cRefPtr<TYPE> {  // cRefPtr protects from release.
     typedef cRefPtr<TYPE> SUPER_t;
+
+    /// <summary>
+    /// The singleton is ONLY created on reference.
+    /// </summary>
+    /// <returns></returns>
+    static TYPE* GRAYCALL get_SingleCreate() {
+        if (!TYPE::isSingleCreated()) {
+            const auto guard(cSingletonRegister::sm_LockSingle.Lock());  // thread sync critical section.
+            if (!TYPE::isSingleCreated()) {
+                auto p = new TYPE();
+                DEBUG_CHECK(TYPE::isSingleCreated());
+            }
+        }
+        return PtrCastCheck<TYPE>(TYPE::get_SingleU());
+    }
 
  public:
     /// <summary>
@@ -47,39 +58,21 @@ class cSingletonPtr : protected cRefPtr<TYPE>  // cRefPtr protected for read onl
     /// Attach to cSingletonRefBase
     /// false = defer Allocate until later
     /// </summary>
-    cSingletonPtr(bool bInitNow = true) : SUPER_t(bInitNow ? TYPE::get_Single() : nullptr) {}
+    cSingletonPtr(bool bInitNow = true) : SUPER_t(bInitNow ? get_SingleCreate() : nullptr) {}
 
     /// <summary>
-    /// If i created an empty cSingletonPtr(false) (as part of some class) this is how I populate it on that classes constructor later.
-    /// Attach to cSingletonRefBase
+    /// Late Attach/Create the Object that is base on cSingletonRefBase (or equiv). Call this as often as we want. Maybe cSingletonPtr changed/upgraded ?
+    /// If i created an empty cSingletonPtr(false) (as part of some class) this is how I populate it on that classes constructor later/lazy.
     /// </summary>
     void InitPtr() {
-        this->put_Ptr(TYPE::get_Single());
+        this->put_Ptr(get_SingleCreate());
     }
 
     // cRefPtr is protected so expose the parts i allow. cPtrFacade
-    void ReleasePtr() {
-        SUPER_t::ReleasePtr();
-    }
-    inline bool isValidPtr() const noexcept {
-        return SUPER_t::isValidPtr();
-    }
-    inline TYPE* get_Ptr() const noexcept {
-        return SUPER_t::get_Ptr();
-    }
-
-    /// <summary>
-    /// Cast pointer to another type.
-    /// This is probably a compile time up-cast but check it anyhow.
-    /// This shouldn't return nullptr if not starting as nullptr.
-    /// </summary>
-    /// <typeparam name="_DST_TYPE"></typeparam>
-    /// <returns></returns>
-    template <class _DST_TYPE>
-    _DST_TYPE* get_PtrT() const {
-        if (this == nullptr) return nullptr;
-        return PtrCastCheck<_DST_TYPE>(this->get_Ptr());  // dynamic for DEBUG only. Should NEVER return nullptr here !
-    }
+    using SUPER_t::get_Ptr;
+    using SUPER_t::get_PtrT;
+    using SUPER_t::isValidPtr;
+    using SUPER_t::ReleasePtr;
 
     inline operator TYPE*() const noexcept {
         return this->get_Ptr();
@@ -92,5 +85,10 @@ class cSingletonPtr : protected cRefPtr<TYPE>  // cRefPtr protected for read onl
         return *this->get_Ptr();
     }
 };
+
+#define SINGLETONPTR_IMPL(T) \
+    friend cSingletonPtr<T>; \
+    CHEAPOBJECT_IMPL
+
 }  // namespace Gray
 #endif

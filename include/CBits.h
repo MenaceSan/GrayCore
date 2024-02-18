@@ -1,8 +1,5 @@
-//
 //! @file cBits.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
-
 #ifndef _INC_cBits_H
 #define _INC_cBits_H
 #ifndef NO_PRAGMA_ONCE
@@ -42,8 +39,8 @@ enum class BITOP_t : signed char {
 /// <summary>
 /// Bit mask type operations of all sorts. on various integral data types. static class.
 /// </summary>
-struct GRAYCORE_LINK cBits {    // static
-    static const BYTE k_8 = 8;  /// represent the 8 bits in a byte. BIT_ENUM_t
+struct GRAYCORE_LINK cBits {          // static
+    static const BIT_ENUM_t k_8 = 8;  /// represent the 8 bits in a byte. BIT_ENUM_t
 
     /// <summary>
     /// How many bytes to hold these bits. Round up to next byte.
@@ -72,7 +69,7 @@ struct GRAYCORE_LINK cBits {    // static
     }
 
     /// <summary>
-    /// Does this value just have a single bit set (and no more) ? Is power of 2 ?
+    /// Does this value just have a single bit set (and no more) ? Is power of 2 ? Count1Bits() == 1
     /// </summary>
     template <typename TYPE>
     static constexpr bool IsMask1(TYPE nVal) noexcept {
@@ -83,7 +80,7 @@ struct GRAYCORE_LINK cBits {    // static
     /// Any nMask bits set in nVal? NOT require all bits!
     /// </summary>
     template <typename TYPE = UINT32>
-    static constexpr bool HasMask(TYPE nVal, TYPE nMask) noexcept {
+    static constexpr bool HasAny(TYPE nVal, TYPE nMask) noexcept {
         return (nVal & nMask) != 0;
     }
 
@@ -96,7 +93,7 @@ struct GRAYCORE_LINK cBits {    // static
     /// <returns></returns>
     template <typename TYPE>
     static constexpr bool IsSet(TYPE nVal, BIT_ENUM_t nBit) noexcept {
-        return HasMask(nVal, Mask1<TYPE>(nBit));
+        return HasAny(nVal, Mask1<TYPE>(nBit));
     }
     template <typename TYPE>
     static constexpr bool IsClear(TYPE nVal, BIT_ENUM_t nBit) noexcept {
@@ -115,8 +112,8 @@ struct GRAYCORE_LINK cBits {    // static
     /// Cast from enum TYPE to UNDER_t
     /// </summary>
     template <typename UNDER_t = UINT, typename TYPE>
-    static constexpr bool HasMaskT(TYPE nVal, TYPE nMask) noexcept {
-        return HasMask<UNDER_t>(static_cast<UNDER_t>(nVal), static_cast<UNDER_t>(nMask));
+    static constexpr bool HasAnyT(TYPE nVal, TYPE nMask) noexcept {
+        return HasAny<UNDER_t>(static_cast<UNDER_t>(nVal), static_cast<UNDER_t>(nMask));
     }
 #if 0
     template <typename TYPE, typename UNDER_t>
@@ -135,7 +132,7 @@ struct GRAYCORE_LINK cBits {    // static
     static constexpr TYPE ClearBit(TYPE nVal, BIT_ENUM_t nBit) noexcept {
         return CastN(TYPE, static_cast<UNDER_t>(nVal) & ~Mask1<UNDER_t>(nBit));
     }
-    #endif
+#endif
 
     /// <summary>
     /// Or/Set mask of bits.
@@ -180,7 +177,7 @@ struct GRAYCORE_LINK cBits {    // static
     static inline BIT_ENUM_t Lowest1Bit(TYPE nVal) noexcept {
         BIT_ENUM_t nBit1 = 1;
         for (;;) {
-            if (HasMask<TYPE>(nVal, 1)) return nBit1;
+            if (HasAny<TYPE>(nVal, 1)) return nBit1;
             nVal >>= 1;
             nBit1++;
         }
@@ -411,8 +408,8 @@ class cBitmask {
         _nMask = cBits::ClearBit(_nMask, nBit);
     }
 
-    inline bool HasMask(MASK_t nBits) const noexcept {
-        return cBits::HasMask(_nMask, CastN(UNDER_t, nBits));
+    inline bool HasAny(MASK_t nBits) const noexcept {
+        return cBits::HasAny(_nMask, CastN(UNDER_t, nBits));
     }
     /// <summary>
     /// Equiv of x |= y.

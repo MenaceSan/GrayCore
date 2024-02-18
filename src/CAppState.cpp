@@ -28,34 +28,33 @@ inline void CloseHandleType_Sid(::PSID h) noexcept {
 }
 #endif
 
-HMODULE cAppState::sm_hInstance = HMODULE_NULL;  /// the current applications HINSTANCE handle/base address. _IMAGE_DOS_HEADER
+::HMODULE cAppState::sm_hInstance = HMODULE_NULL;  /// the current applications HINSTANCE handle/base address. _IMAGE_DOS_HEADER
 
-cStringF cAppArgs::get_ArgsStr() const noexcept {
-    return m_sArguments;
-}
 ITERATE_t cAppArgs::get_ArgsQty() const noexcept {
     return m_aArgs.GetSize();
 }
 cStringF cAppArgs::GetArgEnum(ITERATE_t i) const {  // command line arg.
     return m_aArgs.GetAtCheck(i);
 }
+ITERATE_t cAppArgs::AppendArg(const FILECHAR_t* pszCmd, bool sepEquals) {
+    if (sepEquals) {
+        // use "Cmd=Val" syntax? split the string into command and 1 argument ?
+        // args can come from parse for = sign else get from the next arg in sequence (that isn't starting with IsSwitch(-/))
+        const FILECHAR_t* pszArgEq = StrT::FindChar<FILECHAR_t>(pszCmd, '=');
+        if (pszArgEq != nullptr) {
+            cStringF sCmd2(ToSpan(pszCmd, StrT::Diff(pszArgEq, pszCmd)));
+            m_aArgs.Add(sCmd2);
+            pszCmd = pszArgEq + 1;
+        }
+    }
+    return m_aArgs.Add(pszCmd);
+}
 
 void cAppArgs::InitArgsArray(ITERATE_t argc, APP_ARGS_t ppszArgs, bool sepEquals) {
     //! set pre-parsed arguments m_aArgs like normal 'c' main()
     //! m_aArgs[0] = app name.
-    for (int i = 0, j = 0; i < argc; i++, j++) {
-        const FILECHAR_t* pszCmd = ppszArgs[i];
-        if (sepEquals) {
-            // use "Cmd=Val" syntax? split the string into command and 1 argument ?
-            // args can come from parse for = sign else get from the next arg in sequence (that isn't starting with IsSwitch(-/))
-            const FILECHAR_t* pszArgEq = StrT::FindChar<FILECHAR_t>(pszCmd, '=');
-            if (pszArgEq != nullptr) {
-                cStringF sCmd2(pszCmd, StrT::Diff(pszArgEq, pszCmd));
-                m_aArgs.Add(sCmd2);
-                pszCmd = pszArgEq + 1;
-            }
-        }
-        m_aArgs.Add(pszCmd);
+    for (ITERATE_t i = 0; i < argc; i++) {
+        AppendArg(ppszArgs[i], sepEquals); 
     }
 }
 
@@ -89,7 +88,7 @@ void cAppArgs::InitArgsWin(const FILECHAR_t* pszCommandArgs, const FILECHAR_t* p
 
     // skip first argument as it is typically the name of my app EXE.
     FILECHAR_t szTmp[StrT::k_LEN_Default];
-    const ITERATE_t iArgsQty = StrT::ParseArrayTmp<FILECHAR_t>(szTmp, STRMAX(szTmp), pszCommandArgs, apszArgs + iSkip, _countof(apszArgs) - iSkip, pszSep, STRP_DEF);
+    const ITERATE_t iArgsQty = StrT::ParseArrayTmp<FILECHAR_t>(TOSPAN(szTmp), pszCommandArgs, ToSpan(apszArgs + iSkip, _countof(apszArgs) - iSkip), pszSep, STRP_DEF);
 
     InitArgsArray(iArgsQty + iSkip, apszArgs, iSkip != 0);  // skip first.
 }
@@ -162,10 +161,10 @@ cAppState::cAppState()
     //! Cache the OS params for this process/app ?
     ASSERT(m_ModuleLoading.isInit());
 
-    if (GetEnvironStr(k_EnvironName, nullptr, 0) == 0) {
+    if (GetEnvironStr(k_EnvironName).IsEmpty()) {
         // MUST not already exist in this process space! Checks for DLL hell.
         FILECHAR_t szValue[StrNum::k_LEN_MAX_DIGITS_INT + 2];
-        StrT::ULtoA(PtrCastToNum(this), szValue, STRMAX(szValue), 16);
+        StrT::ULtoA(PtrCastToNum(this), TOSPAN(szValue), 16);
         SetEnvironStr(k_EnvironName, szValue);  // record this globally to any consumer in the process space.
     } else {
         // This is BAD !!! DLL HELL!
@@ -204,8 +203,8 @@ cFilePath GRAYCALL cAppState::get_AppFilePath() {  // static
 #ifdef _WIN32
     FILECHAR_t szPath[_MAX_PATH];
     const DWORD dwRetLen = _FNF(::GetModuleFileName)(HMODULE_NULL, szPath, STRMAX(szPath));
-    if (dwRetLen <= 0) return cStrConst::k_Empty.Get<FILECHAR_t>();
-    return cStringF(szPath, dwRetLen);
+    if (dwRetLen <= 0) return cStrConst::k_Empty.GetT<FILECHAR_t>();
+    return cStringF(ToSpan(szPath, dwRetLen));
 #elif defined(__linux__)
     return I().GetArgEnum(0);  // The name of the current app.
 #else
@@ -239,7 +238,7 @@ HRESULT cAppState::CheckValidSignatureI(UINT32 nGrayCoreVer, size_t nSizeofThis)
     }
 
     FILECHAR_t szValue[StrNum::k_LEN_MAX_DIGITS_INT + 2];
-    const StrLen_t len = GetEnvironStr(k_EnvironName, szValue, STRMAX(szValue));  // record this globally to any consumer in the process space.
+    const StrLen_t len = GetEnvironStr(k_EnvironName, TOSPAN(szValue));  // record this globally to any consumer in the process space.
     UNREFERENCED_PARAMETER(len);
 
     const UINT_PTR uVal = StrT::toUP<FILECHAR_t>(szValue, nullptr, 16);
@@ -261,7 +260,6 @@ APPSTATE_t GRAYCALL cAppState::GetAppState() noexcept {  // static
 }
 
 GRAYCORE_LINK bool GRAYCALL cAppState::isInCInit() noexcept {  // static
-
     //! Indicate the process/app is currently initializing static variables. not yet reached main()
     //! Also set for a thread loading a DLL/SO.
     cAppState& app = I();
@@ -272,7 +270,6 @@ GRAYCORE_LINK bool GRAYCALL cAppState::isInCInit() noexcept {  // static
 }
 
 GRAYCORE_LINK bool GRAYCALL cAppState::isAppRunning() noexcept {  // static
-
     APPSTATE_t eAppState = I().m_eAppState;
     return eAppState == APPSTATE_t::_RunInit || eAppState == APPSTATE_t::_Run || eAppState == APPSTATE_t::_RunExit;
 }
@@ -281,7 +278,6 @@ GRAYCORE_LINK bool GRAYCALL cAppState::isAppRunning() noexcept {  // static
 /// the process/app is in APPSTATE_t::_Run? Use cAppStateMain inmain;
 /// </summary>
 GRAYCORE_LINK bool GRAYCALL cAppState::isAppStateRun() noexcept {  // static
-
     APPSTATE_t eAppState = I().m_eAppState;
     return eAppState == APPSTATE_t::_Run;
 }
@@ -292,14 +288,12 @@ GRAYCORE_LINK bool GRAYCALL cAppState::isAppStateRun() noexcept {  // static
 /// _C_Termination_Done symbol is not good in DLL.
 /// </summary>
 GRAYCORE_LINK bool GRAYCALL cAppState::isInCExit() noexcept {  // static
-
     if (!isSingleCreated()) return true;
     APPSTATE_t eAppState = I().m_eAppState;
     return eAppState == APPSTATE_t::_Exit;
 }
 
-StrLen_t GRAYCALL cAppState::GetEnvironStr(const FILECHAR_t* pszVarName, FILECHAR_t* pszValue, StrLen_t iLenMax) noexcept {  // static
-
+StrLen_t GRAYCALL cAppState::GetEnvironStr(const FILECHAR_t* pszVarName, cSpanX<FILECHAR_t>& val) noexcept {  // static
     //! Get a named environment variable by name. %SystemRoot%
     //! @arg iLenMax = 0 just return the length i would have needed.
     //! @return
@@ -309,29 +303,20 @@ StrLen_t GRAYCALL cAppState::GetEnvironStr(const FILECHAR_t* pszVarName, FILECHA
     ASSERT(0);
     return 0;  // no such thing.
 #elif defined(_WIN32)
-    DWORD nReturnSize = _FNF(::GetEnvironmentVariable)(pszVarName, pszValue, iLenMax);
+    DWORD nReturnSize = _FNF(::GetEnvironmentVariable)(pszVarName, val.get_DataWork(), val.get_MaxLen());
     if (nReturnSize == 0) {
         return 0;  // HResult::GetLast() to get real error.
     }
     return nReturnSize;
 #elif defined(__linux__)
-    return StrT::CopyLen(pszValue, ::getenv(pszVarName), iLenMax);
+    return StrT::Copy(val, ::getenv(pszVarName));
 #endif
 }
 
 cStringF GRAYCALL cAppState::GetEnvironStr(const FILECHAR_t* pszVarName) noexcept {  // static
-
-    //! Get a named environment variable by name.
-    //! @arg pszVarName = nullptr = get a list of all variable names for the process?
-    //! @note
-    //!  environment variables can be cascaded for System:User:Process. no way to tell which level by name.
-    //! @note
-    //!  environment variables are very similar to a default block AppProfile.ini or registry entry.
 #ifdef _WIN32
     FILECHAR_t szValue[_MAX_PATH];
-    if (GetEnvironStr(pszVarName, szValue, STRMAX(szValue)) <= 0) {
-        return _FN("");
-    }
+    if (GetEnvironStr(pszVarName, TOSPAN(szValue)) <= 0) return _FN("");
     return szValue;
 #elif defined(__linux__)
     return ::getenv(pszVarName);
@@ -339,10 +324,10 @@ cStringF GRAYCALL cAppState::GetEnvironStr(const FILECHAR_t* pszVarName) noexcep
 }
 
 #if 0
-	cStringF cAppState::ExpandEnvironmentString()	{
-		//! Expand things like %PATH% in Environment strings or REG_EXPAND_SZ
-		return ::ExpandEnvironmentStrings();
-	}
+cStringF cAppState::ExpandEnvironmentString() {
+	//! Expand things like %PATH% in Environment strings or REG_EXPAND_SZ
+	return ::ExpandEnvironmentStrings();
+}
 #endif
 
 ITERATE_t GRAYCALL cAppState::GetEnvironArray(cArrayString<FILECHAR_t>& a) {  // static
@@ -397,24 +382,24 @@ bool cAppState::SetEnvironStr(const FILECHAR_t* pszVarName, const FILECHAR_t* ps
 #endif
 }
 
-StrLen_t GRAYCALL cAppState::GetCurrentDir(FILECHAR_t* pszDir, StrLen_t iSizeMax) {  // static
+StrLen_t GRAYCALL cAppState::GetCurrentDir(cSpanX<FILECHAR_t>& ret) {  // static
     //! return the current directory for the process.
     //! In __linux__ and _WIN32 the Process has a current/default directory. UNDER_CE does not.
     //! @note Windows services start with current directory = windows system directory.
     //! @return Length of the directory string.
 
-    if (iSizeMax <= 0) return 0;
+    if (ret.isEmpty()) return 0;
 #if defined(UNDER_CE)
-    pszDir[0] = '\0';
+    ret.get_DataWork()[0] = '\0';
     return 0;  // no concept of current directory in UNDER_CE. just use the root. (or get_AppFileDir()??)
 #elif defined(_WIN32)
-    const DWORD dwRetLen = _FNF(::GetCurrentDirectory)(iSizeMax - 1, pszDir);
-    return (StrLen_t)dwRetLen;
+    const DWORD dwRetLen = _FNF(::GetCurrentDirectory)(CastN(DWORD,ret.get_Count() - 1), ret.get_DataWork());
+    return CastN(StrLen_t, dwRetLen);
 #elif defined(__linux__)
-    if (::getcwd(pszDir, iSizeMax - 1) == nullptr) {
+    if (::getcwd(ret.get_DataWork(), ret.get_Count() - 1) == nullptr) {
         return 0;
     }
-    return StrT::Len(pszDir);
+    return StrT::Len(ret);
 #else
 #error NOOS
     return 0;
@@ -424,7 +409,7 @@ StrLen_t GRAYCALL cAppState::GetCurrentDir(FILECHAR_t* pszDir, StrLen_t iSizeMax
 cFilePath GRAYCALL cAppState::get_CurrentDir() {  // static
     //! @return the current directory path for the process.
     FILECHAR_t szPath[_MAX_PATH];
-    StrLen_t iLen = GetCurrentDir(szPath, STRMAX(szPath));
+    const StrLen_t iLen = GetCurrentDir(TOSPAN(szPath));
     if (iLen <= 0) return "";
     return szPath;
 }
@@ -468,13 +453,13 @@ cFilePath cAppState::get_TempDir() {
     UNREFERENCED_PARAMETER(nLenRet2);
 
 #elif defined(__linux__)
-    StrLen_t iLen = GetEnvironStr(_FN("TMP"), szTmp, STRMAX(szTmp));
+    StrLen_t iLen = GetEnvironStr(_FN("TMP"), TOSPAN(szTmp));
     if (iLen <= 0) {
-        iLen = GetEnvironStr(_FN("TEMP"), szTmp, STRMAX(szTmp));
+        iLen = GetEnvironStr(_FN("TEMP"), TOSPAN(szTmp));
         if (iLen <= 0) {
-            iLen = GetEnvironStr(_FN("USERPROFILE"), szTmp, STRMAX(szTmp));
+            iLen = GetEnvironStr(_FN("USERPROFILE"), TOSPAN(szTmp));
             if (iLen <= 0) {
-                iLen = StrT::CopyLen(szTmp, _FN("/tmp"), STRMAX(szTmp));  // append tmp
+                iLen = StrT::Copy(TOSPAN(szTmp), _FN("/tmp"));  // append tmp
             }
         }
     }
@@ -494,11 +479,11 @@ cFilePath cAppState::GetTempFile(const FILECHAR_t* pszFileTitle) {
         // make up a random unused file name. ALA _WIN32 GetTempFileName()
         // TODO: Test if the file already exists? use base64 name ?
         BYTE noise[8];
-        g_Rand.GetNoise(noise, sizeof(noise));  // assume InitSeed() called.
+        g_Rand.GetNoise(TOSPAN(noise));  // assume InitSeed() called.
 
-        char szNoise[(sizeof(noise) * 2) + 2];  // GetHexDigestSize
+        char szNoise[cMemSpan::GetHexDigestSize(sizeof(noise)) + 1];
         szNoise[0] = 'T';
-        StrLen_t nLen = cMem::GetHexDigest(szNoise + 1, noise, sizeof(noise));
+        const StrLen_t nLen = TOSPAN(noise).GetHexDigest(szNoise + 1);
         ASSERT(nLen == STRMAX(szNoise) - 1);
 
         sTmp = szNoise;
@@ -545,15 +530,15 @@ void cAppState::InitArgsWin(const FILECHAR_t* pszCommandArgs) {
 #ifdef _WIN32
         m_Args.InitArgsWin(_FNF(::GetCommandLine)());
 #elif defined(__linux__)
-        // We should not get here.
-        // Use "/proc/self/cmdline"
+        // We should not get here. InitArgsPosix
+        // Use "/proc/self/cmdline"?
         return;
 #endif
     } else {
         m_Args.InitArgsWin(pszCommandArgs);
     }
 
-    m_Args.m_aArgs[0] = const_cast<FILECHAR_t*>(sAppPath.get_CPtr());
+    m_Args.m_aArgs.SetAt(0,sAppPath);
 }
 
 void cAppState::InitArgsPosix(int argc, APP_ARGS_t argv) {
@@ -703,10 +688,6 @@ bool GRAYCALL cAppState::isCurrentUserAdmin() {  // static
 
 #if defined(_WIN32)
 StrLen_t GRAYCALL cAppState::GetFolderPath(int csidl, FILECHAR_t* pszPath) {  // static
-    // Get OS Folder.
-    // from Shell32.dll
-    // for Win XP e.g. C:\Documents and Settings\Dennis\Application Data\X = CSIDL_APPDATA or CSIDL_LOCAL_APPDATA
-    // for Win Vista e.g. c:\Users\Dennis\Application Data\X
     // hRes = _FNF(::SHGetFolderPathAndSubDir)( HANDLE_NULL, CSIDL_LOCAL_APPDATA|CSIDL_FLAG_CREATE, NULL, 0, pszSubFolder, szPath);
     pszPath[0] = '\0';
     HRESULT hRes = _FNF(::SHGetFolderPath)(WINHANDLE_NULL, csidl, HANDLE_NULL, SHGFP_TYPE_CURRENT, pszPath);  // ASSUME _MAX_PATH
@@ -716,19 +697,16 @@ StrLen_t GRAYCALL cAppState::GetFolderPath(int csidl, FILECHAR_t* pszPath) {  //
 #endif
 
 cFilePath GRAYCALL cAppState::GetCurrentUserDir(const FILECHAR_t* pszSubFolder, bool bCreate) {  // static
-    //! get a folder the user has write access to. for placing log files and such.
-    //! @arg pszSubFolder = create the sub folder if necessary.
-
     FILECHAR_t szPath[_MAX_PATH];
 #if defined(_WIN32) && !defined(UNDER_CE)
     StrLen_t iLen = GetFolderPath(CSIDL_LOCAL_APPDATA, szPath);
 #elif defined(__linux__)
     // e.g. "/home/Dennis/X"
-    StrLen_t iLen = cFilePath::CombineFilePath(szPath, STRMAX(szPath), _FN(FILESTR_DirSep) _FN("home"), cAppState::GetCurrentUserName());
+    StrLen_t iLen = cFilePath::CombineFilePath(TOSPAN(szPath), _FN(FILESTR_DirSep) _FN("home"), cAppState::GetCurrentUserName());
 #endif
     if (iLen <= 0) return _FN("");
     if (!StrT::IsNullOrEmpty(pszSubFolder)) {
-        iLen = cFilePath::CombineFilePathA(szPath, STRMAX(szPath), iLen, pszSubFolder);
+        iLen = cFilePath::CombineFilePathA(TOSPAN(szPath), iLen, pszSubFolder);
         if (bCreate) {
             HRESULT hRes = cFileDir::CreateDirectoryX(szPath);
             if (FAILED(hRes)) return _FN("");
@@ -737,35 +715,32 @@ cFilePath GRAYCALL cAppState::GetCurrentUserDir(const FILECHAR_t* pszSubFolder, 
     return szPath;
 }
 
-HMODULE GRAYCALL cAppState::get_HModule() noexcept {  // static
-    //! Same as HINSTANCE Passed to app at start in _WIN32 WinMain(HINSTANCE hInstance)
-    //! @return the HMODULE to the current running EXE module. for resources.
+::HMODULE GRAYCALL cAppState::get_HModule() noexcept {  // static
 #ifdef _WIN32
     if (sm_hInstance == HMODULE_NULL) {
         // _IMAGE_DOS_HEADER __ImageBase
-        _FNF(::GetModuleHandleEx)(GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, nullptr, (HMODULE*)&sm_hInstance);
+        _FNF(::GetModuleHandleEx)(GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, nullptr, (::HMODULE*)&sm_hInstance);
     }
 #endif
     return sm_hInstance;  // Assume this is set correctly at init.
 }
 
 #if 0
-	bool cAppState::GetStatTimes(FILETIME* pKernelTime, FILETIME* pUserTime) const {
-		//! How much time usage does this process have ? how long have i run ?
+bool cAppState::GetStatTimes(FILETIME* pKernelTime, FILETIME* pUserTime) const {
+	//! How much time usage does this process have ? how long have i run ?
 #ifdef _WIN32
-		// GetProcessTimes
-
+	// GetProcessTimes
 #elif defined(__linux__)
-		// How much time has this process used ? times(struct tms *buf) would also work.
-		// (1) Get the usage data structure at this moment (man getrusage)
-		getrusage(0, &t);	// RUSAGE_SELF = 0
-		// (2) What is the elapsed time ? - CPU time = User time + System time
-		// (2a) Get the seconds
-		procTime = t.ru_utime.tv_sec + t.ru_stime.tv_sec;
-		// (2b) More precisely! Get the microseconds part !
-		return (procTime + (t.ru_utime.tv_usec + t.ru_stime.tv_usec) * 1e-6);
+	// How much time has this process used ? times(struct tms *buf) would also work.
+	// (1) Get the usage data structure at this moment (man getrusage)
+	getrusage(0, &t);	// RUSAGE_SELF = 0
+	// (2) What is the elapsed time ? - CPU time = User time + System time
+	// (2a) Get the seconds
+	procTime = t.ru_utime.tv_sec + t.ru_stime.tv_sec;
+	// (2b) More precisely! Get the microseconds part !
+	return (procTime + (t.ru_utime.tv_usec + t.ru_stime.tv_usec) * 1e-6);
 #endif
-	}
+}
 #endif
 
 //*******************************************************************

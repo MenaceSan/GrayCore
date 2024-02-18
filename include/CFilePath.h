@@ -1,4 +1,3 @@
-//
 //! @file cFilePath.h
 //! Manipulate file path names.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
@@ -102,7 +101,7 @@ class GRAYCORE_LINK cFilePath : public cStringF {
     static bool GRAYCALL HasTitleWildcards(const FILECHAR_t* pszPath);
 
     static FILECHAR_t* GRAYCALL GetFileNameExt(const FILECHAR_t* pszName, StrLen_t iLen = k_StrLen_UNK, bool bMultiDot = false);
-    static StrLen_t GRAYCALL StripFileExt(FILECHAR_t* pszFile, StrLen_t iLen, bool bMultiDot = false);
+    static StrLen_t GRAYCALL StripFileExt(cSpanX<FILECHAR_t>& fileName, bool bMultiDot = false);
     static cFilePath GRAYCALL ReplaceFileExt(const FILECHAR_t* pszFilePath, const FILECHAR_t* pszExtNew);  // ChangeExtension
     static cFilePath GRAYCALL GetNameExtStar(const FILECHAR_t* pszFilePath);
 
@@ -135,23 +134,23 @@ class GRAYCORE_LINK cFilePath : public cStringF {
     /// <returns>cStringA</returns>
     static cStringA GRAYCALL MakeSymNameStr(const FILECHAR_t* pszPath, ATOMCHAR_t chSub = '_', BYTE flags = FILECHR_Dirs | FILECHR_Name);
 
-    static StrLen_t GRAYCALL MakeFullPath2(FILECHAR_t* pszFileOut, const FILECHAR_t* pszFileInp, StrLen_t iLenMax, FILECHAR_t chSep = k_DirSep);
-    static StrLen_t GRAYCALL MakeFullPath(FILECHAR_t* pszFileOut, const FILECHAR_t* pszFileInp, StrLen_t iLenMax, FILECHAR_t chSep = k_DirSep);
+    static StrLen_t GRAYCALL MakeFullPath2(cSpanX<FILECHAR_t>& ret, const FILECHAR_t* pszFileInp, FILECHAR_t chSep = k_DirSep);
+    static StrLen_t GRAYCALL MakeFullPath(cSpanX<FILECHAR_t>& ret, const FILECHAR_t* pszFileInp, FILECHAR_t chSep = k_DirSep);
     static cFilePath GRAYCALL MakeFullPathX(const FILECHAR_t* pszFileInp, FILECHAR_t chSep = k_DirSep);
 
-    static StrLen_t GRAYCALL MakeProperPath(FILECHAR_t* pszFileOut, StrLen_t iLenMax = _MAX_PATH, const FILECHAR_t* pszFileInp = nullptr, FILECHAR_t chSep = k_DirSep);
+    static StrLen_t GRAYCALL MakeProperPath(cSpanX<FILECHAR_t>& ret, const FILECHAR_t* pszFileInp = nullptr, FILECHAR_t chSep = k_DirSep);
     static cFilePath GRAYCALL MakeProperPathX(const FILECHAR_t* pszFileInp, FILECHAR_t chSep = k_DirSep);
 
     static StrLen_t GRAYCALL AddFileDirSep(FILECHAR_t* pszOut, StrLen_t iLen = k_StrLen_UNK, FILECHAR_t chSep = k_DirSep);
     static cFilePath GRAYCALL RemoveFileDirSep(const cStringF& sDir);
 
-    static StrLen_t GRAYCALL CombineFilePathA(FILECHAR_t* pszFilePath, StrLen_t iLenMax, StrLen_t iLen, const FILECHAR_t* pszName, FILECHAR_t chSep = k_DirSep);
-    static StrLen_t GRAYCALL CombineFilePath(FILECHAR_t* pszFilePath, StrLen_t iLenMax, const FILECHAR_t* pszDir, const FILECHAR_t* pszName, FILECHAR_t chSep = k_DirSep);  // .NET Combine
+    static StrLen_t GRAYCALL CombineFilePathA(cSpanX<FILECHAR_t>& ret, StrLen_t iLen1, const FILECHAR_t* pszName, FILECHAR_t chSep = k_DirSep);
+    static StrLen_t GRAYCALL CombineFilePath(cSpanX<FILECHAR_t>& ret, const FILECHAR_t* pszDir, const FILECHAR_t* pszName, FILECHAR_t chSep = k_DirSep);  // .NET Combine
     static cFilePath GRAYCALL CombineFilePathX(const FILECHAR_t* pszBase, const FILECHAR_t* pszName, FILECHAR_t chSep = k_DirSep);
     static cFilePath _cdecl CombineFilePathF(FILECHAR_t chSep, const FILECHAR_t* pszBase, ...);
 
     static StrLen_t GRAYCALL ExtractDir(OUT FILECHAR_t* pszPath, StrLen_t iLen = k_StrLen_UNK, bool bTrailingSep = true);
-    static StrLen_t GRAYCALL ExtractDirCopy(OUT FILECHAR_t* pszDirPath, StrLen_t iLenMax, const FILECHAR_t* pszFilePathSrc, bool bTrailingSep = true);
+    static StrLen_t GRAYCALL ExtractDirCopy(cSpanX<FILECHAR_t>& ret, const FILECHAR_t* pszFilePathSrc, bool bTrailingSep = true);
     static cFilePath GRAYCALL GetFileDir(const FILECHAR_t* pszFilePath, bool bTrailingSep = true);
 
     static bool GRAYCALL IsRelativeRoot(const FILECHAR_t* pszFullPath, const FILECHAR_t* pszRootDir, StrLen_t iLen = k_StrLen_UNK);

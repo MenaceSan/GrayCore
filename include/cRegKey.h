@@ -1,8 +1,7 @@
-//
 //! @file cRegKey.h
 //! Wrap a handle to a windows registry key.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
+
 #ifndef _INC_cRegKey_H
 #define _INC_cRegKey_H
 #ifndef NO_PRAGMA_ONCE
@@ -14,6 +13,7 @@
 #include "cBits.h"
 #include "cHandlePtr.h"
 #include "cIniBase.h"   // IIniBaseGetter
+#include "cSpan.h"
 
 #ifdef _WIN32
 
@@ -38,17 +38,9 @@ struct cRegKeyName {
     /// <param name="hKey"></param>
     /// <returns></returns>
     static inline bool IsKeyBase(::HKEY hKey) noexcept {
-        return cBits::HasMask(CastN(size_t, hKey), CastN(size_t, HKEY_CLASSES_ROOT));
+        return cBits::HasAny(CastN(size_t, hKey), CastN(size_t, HKEY_CLASSES_ROOT));
     }
 };
-
-template <>
-inline void CloseHandleType(::HKEY h) noexcept {  // static
-    //! ASSUME IsValidHandle(h)
-    if (cRegKeyName::IsKeyBase(h))  // never close base keys
-        return;
-    ::RegCloseKey(h);  // ignored BOOL return.
-}
 
 /// <summary>
 /// Declare a static starting/init value for a registry/config key.
@@ -67,6 +59,13 @@ struct cRegKeyInit {
         return m_pszKeyName != nullptr;
     }
 };
+
+template <>
+inline void CloseHandleType(::HKEY h) noexcept {
+    //! ASSUME IsValidHandle(h)
+    if (cRegKeyName::IsKeyBase(h)) return;  // never close base keys
+    ::RegCloseKey(h);                       // ignored BOOL return.
+}
 
 /// <summary>
 /// read and write to/from the Windows registry hive by its handle. advapi32.dll
@@ -174,23 +173,25 @@ struct GRAYCORE_LINK cRegKey : public cHandlePtr<::HKEY>, public IIniBaseGetter 
         return HResult::FromWin32(lRet);
     }
 
-    HRESULT EnumKey(DWORD dwIndex, OUT FILECHAR_t* pszNameRet, DWORD dwSizeNameMax) const noexcept {
+    HRESULT EnumKey(DWORD dwIndex, cSpanX<FILECHAR_t>& name) const noexcept {
         //! Walk the list of child keys by name for a registry key.
         //! @arg dwSizeName = the max size of the buffer and the size of the name returned.
         //! @return
         //!  0 = S_OK, or ERROR_NO_MORE_ITEMS = no more entries.
-        const LSTATUS lRet = _FNF(::RegEnumKeyEx)(get_Handle(), dwIndex, pszNameRet, &dwSizeNameMax, nullptr, nullptr, nullptr, nullptr);
+        DWORD dwSizeNameMax = name.get_MaxLen();
+        const LSTATUS lRet = _FNF(::RegEnumKeyEx)(get_Handle(), dwIndex, name.get_DataWork(), &dwSizeNameMax, nullptr, nullptr, nullptr, nullptr);
         if (lRet != S_OK) return HResult::FromWin32(lRet);
         return CastN(HRESULT, dwSizeNameMax);
     }
 
     // Values
 
-    HRESULT EnumValue(DWORD dwIndex, FILECHAR_t* pszNameRet, DWORD dwSizeNameMax, DWORD* pdwTypeRet = nullptr, void* pDataRet = nullptr, DWORD* pdwSizeData = nullptr) const noexcept {
+    HRESULT EnumValue(DWORD dwIndex, cSpanX<FILECHAR_t>& name, DWORD* pdwTypeRet = nullptr, void* pDataRet = nullptr, DWORD* pdwSizeData = nullptr) const noexcept {
         //! Walk the list of values for a registry key.
         //! @note strings will always be of type FILECHAR_t
         //! @return 0=S_OK, HRESULT_WIN32_C(ERROR_NO_MORE_ITEMS) = no more entries. (0x80070103)
-        const LSTATUS lRet = _FNF(::RegEnumValue)(get_Handle(), dwIndex, pszNameRet, &dwSizeNameMax, nullptr, pdwTypeRet, (LPBYTE)pDataRet, pdwSizeData);
+        DWORD dwSizeNameMax = name.get_MaxLen();
+        const LSTATUS lRet = _FNF(::RegEnumValue)(get_Handle(), dwIndex, name.get_DataWork(), &dwSizeNameMax, nullptr, pdwTypeRet, (LPBYTE)pDataRet, pdwSizeData);
         if (lRet != S_OK) return HResult::FromWin32(lRet);
         return CastN(HRESULT, dwSizeNameMax);
     }
@@ -221,10 +222,12 @@ struct GRAYCORE_LINK cRegKey : public cHandlePtr<::HKEY>, public IIniBaseGetter 
     /// <param name="rdwType">REG_DWORD, REG_SZ, etc.</param>
     /// <param name="pData">nullptr = just return the size we need.</param>
     /// <param name="rdwDataSize"></param>
-    /// <returns>0 = S_OK, 2=ERROR_FILE_NOT_FOUND</returns>
-    HRESULT QueryValue(const FILECHAR_t* pszValueName, OUT DWORD& rdwType, OUT void* pData, OUT DWORD& rdwDataSize) const noexcept {
-        const LSTATUS lRet = _FNF(::RegQueryValueEx)(get_Handle(), pszValueName, nullptr, &rdwType, (LPBYTE)pData, &rdwDataSize);
-        return HResult::FromWin32(lRet);
+    /// <returns>0 = S_OK, ERROR_FILE_NOT_FOUND</returns>
+    HRESULT QueryValue(const FILECHAR_t* pszValueName, OUT DWORD& rdwType, cMemSpan& ret) const noexcept {
+        DWORD dwDataSize = CastN(DWORD, ret.get_DataSize());
+        const LSTATUS lRet = _FNF(::RegQueryValueEx)(get_Handle(), pszValueName, nullptr, &rdwType, ret.get_DataW(), &dwDataSize);
+        if (lRet) return HResult::FromWin32(lRet);
+        return CastN(HRESULT, dwDataSize);
     }
 
     /// <summary>
@@ -239,12 +242,12 @@ struct GRAYCORE_LINK cRegKey : public cHandlePtr<::HKEY>, public IIniBaseGetter 
     }
 
     // Helper Combos
-    HRESULT OpenQuerySubKey(::HKEY hKeyBase, const FILECHAR_t* pszSubKey, FILECHAR_t* pData, DWORD dwDataSize = _MAX_PATH - 1) {
+    HRESULT OpenQuerySubKey(::HKEY hKeyBase, const FILECHAR_t* pszSubKey, cSpanX<FILECHAR_t>& ret) {
         //! This is always a string type data.
         const HRESULT hRes = Open(hKeyBase, pszSubKey, KEY_QUERY_VALUE);
         if (FAILED(hRes)) return hRes;
         DWORD dwType = REG_SZ;  // always REG_SZ or REG_EXPAND_SZ
-        return QueryValue(nullptr, OUT dwType, pData, OUT dwDataSize);
+        return QueryValue(nullptr, OUT dwType, ret);
     }
 
 
@@ -253,7 +256,7 @@ struct GRAYCORE_LINK cRegKey : public cHandlePtr<::HKEY>, public IIniBaseGetter 
     /// </summary>
     /// <param name="bExpand">Use ::ExpandEnvironmentStrings() for stuff like "%PATH%"</param>
     /// <returns></returns>
-    static StrLen_t GRAYCALL MakeValueStr(OUT FILECHAR_t* pszValue, StrLen_t iSizeMax, DWORD dwType, const void* pData, DWORD dwDataSize, bool bExpand = false);
+    static StrLen_t GRAYCALL MakeValueStr(cSpanX<FILECHAR_t>& ret, DWORD dwType, const cMemSpan& data, bool bExpand = false);
 
     /// <summary>
     /// Get a string from a registry value regardless of its actual type. convert to a string if needed.
@@ -263,7 +266,7 @@ struct GRAYCORE_LINK cRegKey : public cHandlePtr<::HKEY>, public IIniBaseGetter 
     /// <param name="iSizeMax">sizeof(pszValue);</param>
     /// <param name="bExpand"></param>
     /// <returns> 0 = S_OK</returns>
-    HRESULT QueryValueStr(const FILECHAR_t* lpszValueName, OUT FILECHAR_t* pszValue, StrLen_t iSizeMax, bool bExpand = false) const;
+    HRESULT QueryValueStr(const FILECHAR_t* lpszValueName, cSpanX<FILECHAR_t>& ret, bool bExpand = false) const;
     HRESULT PropGet(const IniChar_t* pszPropTag, OUT cStringI& rsValue) const override;
 };
 }  // namespace Gray

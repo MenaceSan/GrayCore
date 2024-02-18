@@ -1,7 +1,6 @@
-//
 //! @file FileName.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
+
 #ifndef _INC_FileName_H
 #define _INC_FileName_H
 #ifndef NO_PRAGMA_ONCE

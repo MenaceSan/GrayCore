@@ -1,8 +1,6 @@
-//
 //! @file cHashTable.h
 //! A Hash Table with a HASHCODE_t as the key.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cHashTable_H
 #define _INC_cHashTable_H

@@ -17,8 +17,9 @@ namespace Gray {
 /// @note cAtomRef can be defined in the C++ init code. So the cAtomManager must be safe to run at init time.
 /// e.g. static const cAtomRef a_Root(CATOM_N(Root)); //
 /// </summary>
-struct GRAYCORE_LINK cAtomManager : public cSingleton<cAtomManager> {
-    friend class cSingleton<cAtomManager>;
+struct GRAYCORE_LINK cAtomManager final : public cSingleton<cAtomManager> {
+    SINGLETON_IMPL(cAtomManager);
+
     friend struct cAtomRef;
     typedef cStringHeadT<ATOMCHAR_t> DATA_t;
     typedef cRefPtr<DATA_t> REF_t;
@@ -44,10 +45,10 @@ struct GRAYCORE_LINK cAtomManager : public cSingleton<cAtomManager> {
     /// <param name="pDef"></param>
     void SetAtomStatic(DATA_t* pDef);
 
- public:
     cAtomManager();
     ~cAtomManager() noexcept;
 
+ public:
     /// <summary>
     /// Get the atom that corresponds to a string. do not create it.
     /// </summary>
@@ -69,10 +70,8 @@ struct GRAYCORE_LINK cAtomManager : public cSingleton<cAtomManager> {
     cAtomRef FindorCreateAtomStr(const cStringA& sName) noexcept;
     cAtomRef FindorCreateAtomStr(const ATOMCHAR_t* pszName) noexcept;
 
-    HRESULT DebugDumpFile(cStreamOutput& o) const;
+    HRESULT DebugDumpFile(ITextWriter& o) const;
     bool DebugTest() const;
-
-    CHEAPOBJECT_IMPL;
 };
 }  // namespace Gray
 #endif

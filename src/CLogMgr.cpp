@@ -1,4 +1,3 @@
-//
 //! @file cLogMgr.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 // clang-format off
@@ -38,7 +37,7 @@ HRESULT cLogNexus::addEvent(cLogEvent& rEvent) noexcept {  // virtual
     for (int i = 0;; i++) {
         cLogSink* pSink;
         {
-            cThreadGuard lock(m_LockLog);  // sync multiple threads.
+            const auto guard(m_LockLog.Lock());  // sync multiple threads.
             pSink = m_aSinks.GetAtCheck(i);
             if (pSink == nullptr) break;
         }
@@ -58,7 +57,7 @@ HRESULT cLogNexus::addEvent(cLogEvent& rEvent) noexcept {  // virtual
 }
 
 HRESULT cLogNexus::FlushLogs() {  // virtual
-    cThreadGuard lock(m_LockLog);
+    const auto guard(m_LockLog.Lock());
     for (ITERATE_t i = 0;; i++) {
         cLogSink* pSink = EnumSinks(i);
         if (pSink == nullptr) break;
@@ -69,7 +68,7 @@ HRESULT cLogNexus::FlushLogs() {  // virtual
 
 bool cLogNexus::HasSink(cLogSink* pSinkFind, bool bDescend) const {
     if (pSinkFind == nullptr) return false;
-    cThreadGuard lock(m_LockLog);
+    const auto guard(m_LockLog.Lock());
     for (ITERATE_t i = 0;; i++) {
         const cLogSink* pSink = EnumSinks(i);
         if (pSink == nullptr) return false;  // end marker ?
@@ -84,7 +83,7 @@ bool cLogNexus::HasSink(cLogSink* pSinkFind, bool bDescend) const {
 HRESULT cLogNexus::AddSink(cLogSink* pSinkAdd) {
     if (pSinkAdd == nullptr) return E_POINTER;
     if (HasSink(pSinkAdd, true)) return S_FALSE;  // no dupes.
-    cThreadGuard lock(m_LockLog);
+    const auto guard(m_LockLog.Lock());
     m_aSinks.AddHead(pSinkAdd);
     return S_OK;
 }
@@ -92,7 +91,7 @@ HRESULT cLogNexus::AddSink(cLogSink* pSinkAdd) {
 bool cLogNexus::RemoveSink(cLogSink* pSinkRemove, bool bDescend) {
     if (pSinkRemove == nullptr) return false;
     bool bRemoved = false;
-    cThreadGuard lock(m_LockLog);
+    const auto guard(m_LockLog.Lock());
     for (ITERATE_t i = 0;; i++) {
         cLogSink* pSink = EnumSinks(i);
         if (pSink == nullptr) return bRemoved;
@@ -110,7 +109,7 @@ bool cLogNexus::RemoveSink(cLogSink* pSinkRemove, bool bDescend) {
 }
 
 cLogSink* cLogNexus::FindSinkType(const TYPEINFO_t& rType, bool bDescend) const {
-    cThreadGuard lock(m_LockLog);
+    const auto guard(m_LockLog.Lock());
     for (ITERATE_t i = 0;; i++) {
         const cLogSink* pSink = EnumSinks(i);
         if (pSink == nullptr) break;
@@ -145,6 +144,11 @@ cLogMgr::cLogMgr()
 #endif
 }
 
+HRESULT cLogMgr::WriteString(const char* pszStr)  { // override
+    // Someone wants to dump raw text at the logger. Not sure why.
+    return addEventS(LOG_ATTR_PRINT | LOG_ATTR_SCRIPT, LOGLVL_t::_INFO, pszStr);
+}
+
 #ifdef _CPPUNWIND
 void cLogMgr::LogExceptionV(cExceptionHolder* pEx, const LOGCHAR_t* pszCatchContext, va_list vargs) noexcept {
     //! if ( this == nullptr ) may be OK?
@@ -164,7 +168,7 @@ void cLogMgr::LogExceptionV(cExceptionHolder* pEx, const LOGCHAR_t* pszCatchCont
     // Keep a record of what we catch.
     try {
         LOGCHAR_t szMsg[cExceptionHolder::k_MSG_MAX_SIZE];
-        StrBuilder<LOGCHAR_t> sb(szMsg, STRMAX(szMsg));
+        StrBuilder<LOGCHAR_t> sb(TOSPAN(szMsg));
         if (pEx == nullptr) {
             sb.AddStr("Unknown exception");
         } else {

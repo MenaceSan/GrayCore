@@ -1,7 +1,5 @@
-//
 //! @file cIniSection.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cIniSection_H
 #define _INC_cIniSection_H
@@ -13,12 +11,11 @@
 #include "cArray.h"
 #include "cBlob.h"
 #include "cIniBase.h"
+#include "ITextWriter.h"
 #include "cTextPos.h"
 
 namespace Gray {
 #define INI_CR "\r\n"  /// use "\n" or "\r\n" like FILE_EOL, STR_NL? M$ likes Windows format ("\r\n") to work with notepad.
-
-struct cStreamOutput;
 
 /// <summary>
 /// Helper for writing an INI file/stream.
@@ -26,12 +23,12 @@ struct cStreamOutput;
 /// </summary>
 class GRAYCORE_LINK cIniWriter {
  protected:
-    cStreamOutput* m_pOut;   /// write out to this stream.
+    ITextWriter* m_pOut;   /// write out to this stream.
     bool m_bStartedSection;  /// Must write a newline to close the previous section when we start a new one.
 
  public:
-    cIniWriter(cStreamOutput* pOut) : m_pOut(pOut), m_bStartedSection(false) {
-        ASSERT(pOut != nullptr);
+    cIniWriter(ITextWriter* pOut) : m_pOut(pOut), m_bStartedSection(false) {
+        ASSERT_NN(pOut);
     }
 
     HRESULT WriteSectionHead0(const IniChar_t* pszSectionData);
@@ -46,7 +43,7 @@ class GRAYCORE_LINK cIniWriter {
 };
 
 /// <summary>
-/// static Helper for reading/parsing an INI file/stream.
+/// static Helper for reading/parsing an INI file/stream. Lines from cTextReader?
 /// </summary>
 struct GRAYCORE_LINK cIniReader {  // static
     static bool GRAYCALL IsSectionHeader(const IniChar_t* pszLine) noexcept;
@@ -80,11 +77,12 @@ class GRAYCORE_LINK cIniSectionData : public IIniBaseEnumerator, public IIniBase
     bool m_bStripComments;  /// has been stripped of blank lines, comments, leading and trailing line spaces.
 
  private:
-    cBlob m_Buffer;          /// raw/processed data buffer for m_ppLines.  (null term)
-    StrLen_t m_iBufferUsed;  /// how much of the buffer have we used ? including null.
+    cBlob m_Buffer;          /// raw/processed data buffer for m_apLines.  (null term)
+    StrLen_t m_iBufferUsed;  /// how much of the buffer have we used ? including null. cStack??
 
+    // cStack ??
     cArray<IniChar_t*> m_apLines;  /// array of pointers to lines inside m_Buffer. (e.g. "Tag=Val" but not required to have mapped values.)
-    ITERATE_t m_iLinesUsed;        /// how many lines do we have? Not all lines are validly used.
+    ITERATE_t m_iLinesUsed;        /// how many lines do we have? Not all lines are validly used. <= m_apLines
 
  private:
     void MoveLineOffsets(ITERATE_t iLineStart, INT_PTR iDiffChars);
@@ -96,7 +94,6 @@ class GRAYCORE_LINK cIniSectionData : public IIniBaseEnumerator, public IIniBase
     IniChar_t* AllocBuffer(StrLen_t nSizeChars);
 
     void AllocLines(ITERATE_t iLinesAlloc);
-
     IniChar_t* AllocBeginMin(StrLen_t nSizeChars);
 
  public:
@@ -126,8 +123,11 @@ class GRAYCORE_LINK cIniSectionData : public IIniBaseEnumerator, public IIniBase
         return CastN(StrLen_t, m_Buffer.get_DataSize());
     }
 
+    /// <summary>
+    /// Get line index of the nullptr entry. at the end.
+    /// </summary>
+    /// <returns></returns>
     ITERATE_t get_LineQty() const noexcept {
-        //! @return index of the nullptr entry. at the end.
         return m_iLinesUsed;
     }
     /// <summary>
@@ -135,9 +135,9 @@ class GRAYCORE_LINK cIniSectionData : public IIniBaseEnumerator, public IIniBase
     /// </summary>
     /// <param name="iLine">line in this section. 0 based.</param>
     /// <returns>The line text. nullptr = Last.</returns>
-    IniChar_t* GetLineEnum(ITERATE_t iLine = 0) const noexcept {
+    const IniChar_t* GetLineEnum(ITERATE_t iLine = 0) const noexcept {
         if (IS_INDEX_BAD(iLine, m_iLinesUsed)) return nullptr;
-        return m_apLines[iLine];
+        return m_apLines.GetAt(iLine);
     }
 
     static StrLen_t GRAYCALL IsLineTrigger(const IniChar_t* pszLine);
@@ -161,7 +161,7 @@ class GRAYCORE_LINK cIniSectionData : public IIniBaseEnumerator, public IIniBase
         return SetLine(iLine, nullptr);
     }
 
-    static StrLen_t GRAYCALL MakeLine(IniChar_t* pszTmp, StrLen_t iSizeMax, const IniChar_t* pszKey, const IniChar_t* pszArg, IniChar_t chSep = '=');
+    static StrLen_t GRAYCALL MakeLine(cSpanX<IniChar_t>& tmp, const IniChar_t* pszKey, const IniChar_t* pszArg, IniChar_t chSep = '=');
 
     ITERATE_t AddKeyArg(const IniChar_t* pszKey, const IniChar_t* pszArg);
     ITERATE_t AddKeyInt(const IniChar_t* pszKey, int iArg) {
@@ -178,7 +178,7 @@ class GRAYCORE_LINK cIniSectionData : public IIniBaseEnumerator, public IIniBase
     cStringA GetStringAll(const IniChar_t* pszSep = nullptr) const;
 
     HRESULT ReadSectionData(OUT cStringA& rsSectionNext, cStreamInput& stream, bool bStripComments);
-    HRESULT WriteSectionData(cStreamOutput& file);
+    HRESULT WriteSectionData(ITextWriter& file);
 };
 
 /// <summary>
@@ -213,7 +213,7 @@ class GRAYCORE_LINK cIniSection : public cIniSectionData {
     }
     static bool GRAYCALL IsSectionTypeMatch(const IniChar_t* pszSection1, const IniChar_t* pszSection2) noexcept;
 
-    HRESULT WriteSection(cStreamOutput& file);
+    HRESULT WriteSection(ITextWriter& file);
 
     bool IsSectionType(const IniChar_t* pszSectionType) const noexcept {
         return IsSectionTypeMatch(m_sSectionTitle, pszSectionType);

@@ -1,8 +1,6 @@
-//
 //! @file cResourceDir.h
 //! Abstraction to load resources from windows resource modules, directories or Zip files.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cResourceDir_H
 #define _INC_cResourceDir_H

@@ -1,15 +1,16 @@
-//
 //! @file StrBuilder.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
+
 #ifndef _INC_StrBuilder_H
 #define _INC_StrBuilder_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 #include "StrConst.h"
+#include "StrNum.h"
 #include "StrT.h"
 #include "cBlob.h"
+#include "ITextWriter.h"
 
 namespace Gray {
 template <typename _TYPE_CH>
@@ -22,64 +23,77 @@ struct GRAYCORE_LINK StrFormat;  // Forward declare.
 /// </summary>
 /// <typeparam name="_TYPE_CH">char or wchar_t</typeparam>
 template <typename _TYPE_CH = char>
-class GRAYCORE_LINK StrBuilder : protected cBlob {
+class GRAYCORE_LINK StrBuilder : protected cBlob, public ITextWriter {
     typedef cBlob SUPER_t;
     friend struct StrFormat<_TYPE_CH>;
     friend struct StrTemplate;
 
  public:
     static const StrLen_t k_nGrowSizeChunk = 1024;  /// -le- k_LEN_Default if isHeap()
-    StrLen_t m_nWriteLast;                          /// new items added/written here. end of readable. like cQueueIndex
+    StrLen_t m_nWriteIndex;                         /// new items added/written here. end of readable. like cQueueIndex
 
  protected:
-    inline _TYPE_CH* get_DataWork() {
-        return SUPER_t::get_DataW<_TYPE_CH>();
-    }
-
     inline StrLen_t get_AllocQty() const noexcept {
         return CastN(StrLen_t, SUPER_t::get_DataSize() / sizeof(_TYPE_CH));
     }
 
+ public:
+    inline _TYPE_CH* get_DataWork() {
+        return SUPER_t::get_DataW<_TYPE_CH>();
+    }
     inline void SetTerminated() noexcept {
         // always force terminate.
-        if (!isValidPtr())  // just estimating.
-            return;
-        get_DataWork()[this->m_nWriteLast] = '\0';
+        if (!isValidPtr()) return;  // just estimating.
+        DEBUG_CHECK(this->IsInSize(m_nWriteIndex));
+        get_DataWork()[this->m_nWriteIndex] = '\0';
     }
 
- public:
+    /// Build with a growing heap buffer.
+    StrBuilder(StrLen_t nSizeChunk = k_nGrowSizeChunk) noexcept : SUPER_t(nSizeChunk), m_nWriteIndex(0) {
+        SetTerminated();
+    }
+    /// Build with a non-growing static buffer.
+    StrBuilder(const cSpanX<_TYPE_CH>& m) noexcept : SUPER_t(m, MEMTYPE_t::_Temp), m_nWriteIndex(0) {
+        SetTerminated();
+    }
+    StrBuilder(SUPER_t& m) noexcept : SUPER_t(m), m_nWriteIndex(0) {
+        SetTerminated();
+    }
+
     /// <summary>
     /// How much space is avail for write into buffer? (given the current get_AllocQty() allocation size)
     /// Free space to write more. Not including '\0'
     /// </summary>
     /// <returns>Qty of TYPE</returns>
     inline StrLen_t get_WriteSpaceQty() const noexcept {
-        return (get_AllocQty() - this->m_nWriteLast) - 1;  // leave space for '\0'
+        return (get_AllocQty() - this->m_nWriteIndex) - 1;  // leave space for '\0'
     }
     inline StrLen_t get_WriteSpaceMax() const noexcept {
-        return ((isHeap() ? StrT::k_LEN_MAX : get_AllocQty()) - this->m_nWriteLast) - 1;
+        return isHeap() ? ((cStrConst::k_LEN_MAX - this->m_nWriteIndex) - 1) : get_WriteSpaceQty();
     }
 
     /// <summary>
-    /// Do i have enough room to write iNeedCount of TYPE?
-    /// Allocate as much as i can and truncate the rest. paired with AdvanceWrite().
+    /// Attempt to get more space for write iNeedCount of TYPE.
+    /// ALWAYS check this->get_WriteSpaceQty() after this!
+    /// Allocate as much as i can and truncate the rest.
+    /// Paired with AdvanceWrite().
     /// </summary>
     /// <param name="iNeedCount"></param>
     /// <returns></returns>
-    _TYPE_CH* GetWritePrepared(StrLen_t iNeedCount) {
+    _TYPE_CH* GetWritePrep(StrLen_t iNeedCount) {
         if (isNull()) return nullptr;  // just estimating?
         if (isHeap()) {
             const StrLen_t nLenSpace = this->get_WriteSpaceQty();
             if (iNeedCount > nLenSpace) {  // Get more space ? or truncate?
                 // grow = ReAlloc for more space.
                 const StrLen_t nOldAlloc = this->get_AllocQty();
-                if (nOldAlloc < StrT::k_LEN_MAX) {                              // can we grow?
+                if (nOldAlloc < cStrConst::k_LEN_MAX) {                         // can we grow?
                     StrLen_t nNewAlloc = nOldAlloc + (iNeedCount - nLenSpace);  // Min size for new alloc.
                     StrLen_t iRem = nNewAlloc % k_nGrowSizeChunk;
                     if (iRem <= 0) iRem = k_nGrowSizeChunk;  // grow a full block.
                     nNewAlloc += iRem;
-                    if (nNewAlloc > StrT::k_LEN_MAX) {  // we hit the end! do what we can. truncate!
-                        nNewAlloc = StrT::k_LEN_MAX;
+                    if (nNewAlloc > cStrConst::k_LEN_MAX) {  // we hit the end! do what we can. truncate!
+                        nNewAlloc = cStrConst::k_LEN_MAX;
                         // return nullptr;
                     }
                     nNewAlloc++;  // room for '\0'
@@ -87,52 +101,60 @@ class GRAYCORE_LINK StrBuilder : protected cBlob {
                 }
             }
         }
-        return get_DataWork() + this->m_nWriteLast;
+        return get_DataWork() + this->m_nWriteIndex;
+    }
+
+    cSpanX<_TYPE_CH> get_SpanWrite() {
+        return ToSpan(get_DataWork() + this->m_nWriteIndex, get_WriteSpaceQty());
+    }
+    cSpanX<_TYPE_CH> GetSpanWrite(StrLen_t iNeedCount) {
+        _TYPE_CH* p = GetWritePrep(iNeedCount);  // MUST call this first to grow.
+        return ToSpan(p, get_WriteSpaceQty());  // May be greater than i asked for!
     }
 
     /// <summary>
     /// advanced the used space.
-    /// The estimated size in GetWritePrepared() might have been larger.
+    /// The estimated size in GetWritePrep() might have been larger.
     /// </summary>
     /// <param name="nLen"></param>
     inline void AdvanceWrite(StrLen_t nLen) noexcept {
         DEBUG_CHECK(nLen <= get_WriteSpaceQty());
-        this->m_nWriteLast += nLen;
-        DEBUG_CHECK(this->m_nWriteLast >= nLen);
-        SetTerminated();
-    }
-
-    /// Build with a growing heap buffer.
-    StrBuilder(StrLen_t nSizeChunk = k_nGrowSizeChunk) noexcept : SUPER_t(nSizeChunk), m_nWriteLast(0) {
-        SetTerminated();
-    }
-    /// Build with a non-growing static buffer.
-    StrBuilder(_TYPE_CH* p, StrLen_t nSize) noexcept : SUPER_t(p, nSize * sizeof(_TYPE_CH), MEMTYPE_t::_Temp), m_nWriteLast(0) {
-        SetTerminated();
-    }
-    StrBuilder(SUPER_t& m) noexcept : SUPER_t(m), m_nWriteLast(0) {
+        this->m_nWriteIndex += nLen;
+        DEBUG_CHECK(this->m_nWriteIndex >= nLen);
         SetTerminated();
     }
 
     void SetEmptyStr() noexcept {
-        m_nWriteLast = 0;
+        m_nWriteIndex = 0;
         SetTerminated();
     }
     void SetTrimWhiteSpaceEnd() {
-        m_nWriteLast = StrT::TrimWhitespaceEnd(get_DataWork(), m_nWriteLast);
+        m_nWriteIndex = StrT::TrimWhitespaceEnd(get_DataWork(), m_nWriteIndex);
     }
 
     /// <summary>
-    /// get Length used/filled. not including '\0';
+    /// get used/filled Length. not including '\0';
     /// </summary>
     inline StrLen_t get_Length() const noexcept {
-        return m_nWriteLast;
+        return m_nWriteIndex;
     }
-    inline const _TYPE_CH* get_Str() const noexcept {
+    /// <summary>
+    /// Get raw pointer to the string value.
+    /// </summary>
+    /// <returns></returns>
+    inline const _TYPE_CH* get_CPtr() const noexcept {
         return SUPER_t::get_DataC<_TYPE_CH>();
     }
-    cSpan<_TYPE_CH> get_SpanStr() const {
-        return cSpan<_TYPE_CH>(get_Str(), get_Length());
+
+    /// <summary>
+    /// operator to auto cast to const pointer
+    /// </summary>
+    operator const _TYPE_CH*() const noexcept {
+        return get_CPtr();
+    }
+
+    cSpan<_TYPE_CH> get_SpanStr() const noexcept {
+        return ToSpan(get_CPtr(), get_Length()); // NOT the '\0'
     }
 
     /// <summary>
@@ -142,108 +164,134 @@ class GRAYCORE_LINK StrBuilder : protected cBlob {
         return get_WriteSpaceQty() <= 0;
     }
 
-    bool AddChar(_TYPE_CH ch) {
+    void AddChar(_TYPE_CH ch) {
         // m_nLenLeft includes space for terminator '\0'
-        _TYPE_CH* pszWrite = GetWritePrepared(1);
-        const StrLen_t nLenRet = get_WriteSpaceQty();
-        if (nLenRet < 1) return false;  // no space.
+        _TYPE_CH* pszWrite = GetWritePrep(1);
+        if (isOverflow()) return;  // no space.
         if (pszWrite != nullptr) *pszWrite = ch;
         AdvanceWrite(1);
-        return true;
     }
     /// Add newline.
-    bool AddNl() {
-        return AddChar('\n');
+    void AddNl() {
+        AddChar('\n');
     }
-    /// Add newline ONLY if there is already text.
-    bool AddNl2() {
-        if (m_nWriteLast <= 0) return false;
-        return AddChar('\n');
+    /// Add separator (newline) ONLY if there is already text.
+    void AddSep(char ch = '\n') {
+        if (m_nWriteIndex > 0) AddChar(ch);
     }
 
-    StrLen_t AddCharRepeat(_TYPE_CH ch, StrLen_t iRepeat) {
-        _TYPE_CH* pszWrite = GetWritePrepared(iRepeat);
-        const StrLen_t nLenSpace = get_WriteSpaceQty();
-        const StrLen_t nLenRet = cValT::Min(iRepeat, nLenSpace);
-        if (pszWrite != nullptr) {
-            cValArray::FillQty<_TYPE_CH>(pszWrite, nLenRet, ch);
+    void AddCharRepeat(_TYPE_CH ch, StrLen_t iRepeat) {
+        cSpanX<_TYPE_CH> spanWrite = GetSpanWrite(iRepeat);
+        const StrLen_t nLenWrite = cValT::Min(iRepeat, spanWrite.get_MaxLen());
+        if (!spanWrite.isNull()) {
+            cValSpan::FillQty<_TYPE_CH>(spanWrite.get_DataWork(), nLenWrite, ch);
         }
-        AdvanceWrite(nLenRet);
-        return nLenRet;
+        AdvanceWrite(nLenWrite);
     }
 
-    StrLen_t AddStrLen(const _TYPE_CH* pszStr, StrLen_t nLen) {
+    void AddStrLen(const _TYPE_CH* pszStr, StrLen_t nLen) {
         // nLen = not including space for '\0'
-        if (nLen <= 0) return 0;  // just add nothing.
-        _TYPE_CH* pszWrite = GetWritePrepared(nLen);
-        const StrLen_t nLenSpace = get_WriteSpaceQty();
-        StrLen_t nLenRet = cValT::Min(nLenSpace, nLen);
-        if (pszWrite != nullptr) {
-            nLenRet = StrT::CopyLen(pszWrite, pszStr, nLenRet + 1);  // add 1 more for '\0'
+        if (nLen <= 0) return;  // just add nothing.
+        cSpanX<_TYPE_CH> spanWrite = GetSpanWrite(nLen);
+        StrLen_t nLenWrite = cValT::Min(spanWrite.get_MaxLen(), nLen);
+        if (!spanWrite.isNull()) {
+            StrT::CopyLen(spanWrite.get_DataWork(), pszStr, nLenWrite + 1);  // add 1 more for '\0'
         }
-        AdvanceWrite(nLenRet);
-        return nLenRet;
+        AdvanceWrite(nLenWrite);
     }
 
     /// AKA WriteString()
-    StrLen_t AddStr(const _TYPE_CH* pszStr) {
-        return AddStrLen(pszStr, StrT::Len(pszStr));
+    void AddStr(const _TYPE_CH* pszStr) {
+        if (pszStr == nullptr) return;
+        AddStrLen(pszStr, StrT::Len(pszStr));
+    }
+    /// Add quoted string. NOT escaped! EscSeqAddQ() ?
+    void AddStrQ(const _TYPE_CH* pszStr, STR_BLOCK_t eBlockType = STR_BLOCK_t::_QUOTE) {
+        if (eBlockType != STR_BLOCK_t::_NONE) {
+            AddChar(StrT::GetBlockStart(eBlockType));
+        }
+        AddStr(pszStr);
+        if (eBlockType != STR_BLOCK_t::_NONE) {
+            AddChar(StrT::GetBlockEnd(eBlockType));
+        }
     }
     void AddCrLf() {
         // AKA CRNL
-        AddStr(cStrConst::k_CrLf);
+        AddStrLen(cStrConst::k_CrLf, 2);
     }
 
     /// Add a nullptr terminated list of strings. AKA Concat
-    StrLen_t _cdecl Join(const _TYPE_CH* psz1, ...) {
-        StrLen_t len = 0;
+    void _cdecl Join(const _TYPE_CH* psz1, ...) {
         va_list vargs;
         va_start(vargs, psz1);
         for (int i = 0; i < k_ARG_ARRAY_MAX; i++) {
             if (StrT::IsNullOrEmpty(psz1)) break;
-            const StrLen_t lenStr = AddStr(psz1);
-            len += lenStr;
+            AddStr(psz1);
             psz1 = va_arg(vargs, const _TYPE_CH*);  // next
         }
         va_end(vargs);
-        return len;
     }
 
     /// <summary>
     /// add raw bytes as chars with no filtering.
     /// </summary>
     void AddBytesRaw(const void* pSrc, size_t nSize) {
-        _TYPE_CH* pszWrite = GetWritePrepared((StrLen_t)nSize);
-        StrLen_t nLenRet = get_WriteSpaceQty();
-        nLenRet = cValT::Min(nLenRet, (StrLen_t)nSize);
-        if (pszWrite != nullptr) {
-            cMem::Copy(pszWrite, pSrc, nLenRet);
-        }
-        AdvanceWrite(nLenRet);
+        const StrLen_t nLen = CastN(StrLen_t, nSize / sizeof(_TYPE_CH));
+        AdvanceWrite(GetSpanWrite(nLen).SetCopyQty(PtrCast<_TYPE_CH>(pSrc), nLen));
     }
 
     void AddBytesFiltered(const void* pSrc, size_t nSize) {
         // Just add a string from void*. Don't assume terminated string. filter for printable characters.
-        _TYPE_CH* pszWrite = GetWritePrepared((StrLen_t)nSize);
-        StrLen_t nLenRet = get_WriteSpaceQty();
-        nLenRet = cValT::Min(nLenRet, (StrLen_t)nSize);
-        if (pszWrite != nullptr) {
+        auto spanWrite = GetSpanWrite((StrLen_t)nSize);
+        StrLen_t nLenRet = cValT::Min(spanWrite.get_MaxLen(), (StrLen_t)nSize);
+        if (!spanWrite.isNull() && pSrc != nullptr) {
+            _TYPE_CH* pWrite = spanWrite.get_DataWork();
             for (StrLen_t i = 0; i < nLenRet; i++) {
                 BYTE ch = ((BYTE*)pSrc)[i];
                 if (ch < 32 || ch == 127 || (ch > 128 && ch < 160))  // strip junk chars.
-                    pszWrite[i] = '?';
+                    pWrite[i] = '?';
                 else
-                    pszWrite[i] = ch;
+                    pWrite[i] = ch;
             }
         }
         AdvanceWrite(nLenRet);
     }
 
-    void AddUInt(UINT64 uVal, const _TYPE_CH* pszPrefix = nullptr, RADIX_t nRadix = 10, char chRadixA = 'A');
-    void AddFloat(double dVal, char chE = 0);
+    void AddInt(INT64 uVal);
+    void AddUInt(UINT64 uVal, RADIX_t nRadix = 10);
+    void AddFloat(double dVal, char chE = -'e');
 
     void AddFormatV(const _TYPE_CH* pszFormat, va_list vargs);
     void _cdecl AddFormat(const _TYPE_CH* pszFormat, ...);
+
+    HRESULT WriteString(const char* pszStr) override {  // ITextWriter
+        const StrLen_t nWritePrev = m_nWriteIndex;
+        AddStr(StrArg<_TYPE_CH>(pszStr));
+        return CastN(HRESULT, m_nWriteIndex - nWritePrev);
+    }
+    HRESULT WriteString(const wchar_t* pszStr) override {  // ITextWriter
+        const StrLen_t nWritePrev = m_nWriteIndex;
+        AddStr(StrArg<_TYPE_CH>(pszStr));
+        return CastN(HRESULT, m_nWriteIndex - nWritePrev);
+    }
+
+    /// <summary>
+    /// Write values out to a string as comma separated base 10 numbers.
+    /// opposite of cMemSpan::ReadFromCSV().
+    /// For Bytes Try to use SetHexDigest() or Base64 instead?
+    /// </summary>
+    /// <typeparam name="_TYPE_VAL"></typeparam>
+    /// <param name="src"></param>
+    template <typename _TYPE_VAL>
+    void AddCSV(const cSpan<_TYPE_VAL>& src) {  // static
+        //! Similar to StrT::ConvertToCSV?
+        for (_TYPE_VAL v : src) {
+            AddSep(',');
+            const StrLen_t iLenVal = StrNum::ValueToA<_TYPE_VAL>(GetSpanWrite(StrNum::k_LEN_MAX_DIGITS_INT), v);
+            if (iLenVal <= 0) break;
+            AdvanceWrite(iLenVal);
+        }
+    }
 };
 }  // namespace Gray
 #endif

@@ -1,7 +1,5 @@
-//
 //! @file cTimeFile.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cTimeFile_H
 #define _INC_cTimeFile_H
@@ -12,7 +10,7 @@
 #include "cDebugAssert.h"
 #include "cString.h"
 #include "cTimeUnits.h"
-#include "cValArray.h"
+#include "cValSpan.h"
 
 #ifdef __linux__
 #include "cTimeVal.h"

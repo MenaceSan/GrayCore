@@ -95,7 +95,10 @@ class cArrayHeadT : public cRefBase, public cHeapObject {
 
     /// Get the whole array as a span of memory.
     cSpan<_TYPE> get_Span() const noexcept {
-        return cSpan<_TYPE>(get_DataConst(), get_Count());
+        return ToSpan(get_DataConst(), get_Count());
+    }
+    cSpanX<_TYPE> get_Span() noexcept {
+        return ToSpan(get_DataWork(), get_Count());
     }
 
     /// <summary>
@@ -129,7 +132,7 @@ class cArrayHeadT : public cRefBase, public cHeapObject {
         ASSERT_NN(pHead);
         if (construct) {
             _TYPE* pData = pHead->get_DataWork();
-            cValArray::ConstructElementsX(pData, nCount);
+            cValSpan::ConstructElementsX(pData, nCount);
         }
         return pHead;
     }
@@ -140,7 +143,7 @@ class cArrayHeadT : public cRefBase, public cHeapObject {
         if (destruct) {
             // destruct the deleted elements.
             _TYPE* pData = get_DataWork();
-            cValArray::DestructElementsX<_TYPE>(&pData[nCountNew], m_nCount - nCountNew);
+            cValSpan::DestructElementsX<_TYPE>(&pData[nCountNew], m_nCount - nCountNew);
         }
         m_nCount = nCountNew;
         m_HashCode = k_HASHCODE_CLEAR;  // invalidate hash.
@@ -165,7 +168,7 @@ class cArrayHeadT : public cRefBase, public cHeapObject {
 
         if (construct) {
             // construct new elements
-            cValArray::ConstructElementsX<_TYPE>(pHeadNew->get_DataWork() + nCountOld, nCountNew - nCountOld);
+            cValSpan::ConstructElementsX<_TYPE>(pHeadNew->get_DataWork() + nCountOld, nCountNew - nCountOld);
         }
         return pHeadNew;
     }
@@ -202,7 +205,7 @@ class cArrayT : public cRefPtr<cArrayHeadT<TYPE> > {
         HEAD_t* pNew = HEAD_t::CreateHead(nCountNew, true);
         ASSERT(pNew != nullptr || nCountNew == 0);
         if (pNew != nullptr && pOld != nullptr) {
-            cValArray::CopyQty(pNew->get_DataWork(), pOld->get_DataConst(), cValT::Min(nCountNew, nCountOld));  // Copy from pOld
+            cValSpan::CopyQty(pNew->get_DataWork(), pOld->get_DataConst(), cValT::Min(nCountNew, nCountOld));  // Copy from pOld
         }
         this->put_Ptr(pNew);
     }
@@ -250,7 +253,7 @@ class cArrayT : public cRefPtr<cArrayHeadT<TYPE> > {
         return pHead->get_DataConst();
     }
 
-    cSpan<TYPE> get_Span() const noexcept {
+    cSpanX<TYPE> get_Span() const noexcept {
         HEAD_t* pHead = this->get_Ptr();
         if (pHead == nullptr) return {};
         return pHead->get_Span();
@@ -364,7 +367,7 @@ class cArrayT : public cRefPtr<cArrayHeadT<TYPE> > {
         } else {
             put_Count(nCountOld + 1);  // grow it to new size
             TYPE* pData = this->get_Ptr()->get_DataWork();
-            cValArray::MoveElement1(pData + nCountOld, pData + nIndex);  // make space.
+            cValSpan::MoveElement1(pData + nCountOld, pData + nIndex);  // make space.
         }
 
         // insert new value in the gap
@@ -386,7 +389,7 @@ class cArrayT : public cRefPtr<cArrayHeadT<TYPE> > {
             const ITERATE_t nCountOld = pOld->get_Count();
             if (i < 0 || i > nCountOld) i = nCountOld;
 
-            ASSERT(!cMem::IsInsideBlock(pCopy, pOld->get_DataConst() + i, nCountOld - i));  // append to self not supported.
+            ASSERT(!pOld->get_Span().IsInternalPtr(pCopy));  // append to self not supported.
 
             const REFCOUNT_t iRefCounts = pOld->get_RefCount();
             if (iRefCounts != 1) {
@@ -402,12 +405,12 @@ class cArrayT : public cRefPtr<cArrayHeadT<TYPE> > {
             // Move existing elements.
             cMem::CopyOverlap(pData + i + countInsert, pData + i, (nCountOld - i) * sizeof(TYPE));
             // construct new elements at insert point.
-            cValArray::ConstructElementsX<TYPE>(pData + i, countInsert);
+            cValSpan::ConstructElementsX<TYPE>(pData + i, countInsert);
         }
 
         if (pCopy != nullptr) {
             // Copy new.
-            cValArray::CopyQty(pNew->get_DataWork() + i, pCopy, countInsert);
+            cValSpan::CopyQty(pNew->get_DataWork() + i, pCopy, countInsert);
         }
     }
     void InsertArray(ITERATE_t i, const THIS_t& src) {
@@ -424,7 +427,7 @@ class cArrayT : public cRefPtr<cArrayHeadT<TYPE> > {
         if (nMoveCount < 0)  // nIndex is out of range!
             return;
         TYPE* pData = pHead->get_DataWork();
-        cValArray::DestructElementsX<TYPE>(pData + nIndex, 1);
+        cValSpan::DestructElementsX<TYPE>(pData + nIndex, 1);
         if (nMoveCount > 0) { // not last.
             cMem::CopyOverlap(pData + nIndex, pData + nIndex + 1, nMoveCount * sizeof(TYPE));
         }

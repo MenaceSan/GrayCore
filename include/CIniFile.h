@@ -1,7 +1,5 @@
-//
 //! @file cIniFile.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cIniFile_H
 #define _INC_cIniFile_H
@@ -20,9 +18,7 @@ namespace Gray {
 /// Reads the whole file into memory so we may parse it further.
 /// Allows initial data keys without [SECTIONTYPE Sectionnamedata] (unlike windows)
 /// </summary>
-class GRAYCORE_LINK cIniFile : public IIniBaseEnumerator  // enumerate the sections.
-{
- private:
+class GRAYCORE_LINK cIniFile : public IIniBaseEnumerator { // enumerate the sections.
     cArrayRef<cIniSectionEntry> m_aSections;  /// store all my sections. not sorted, dupes allowed.
 
  public:
@@ -36,7 +32,7 @@ class GRAYCORE_LINK cIniFile : public IIniBaseEnumerator  // enumerate the secti
         //! Was this read ?
         return m_aSections.GetSize();
     }
-    cIniSectionEntryPtr EnumSection(ITERATE_t i = 0) const {
+    cRefPtr<cIniSectionEntry> EnumSection(ITERATE_t i = 0) const {
         return m_aSections.GetAtCheck(i);
     }
 
@@ -45,10 +41,10 @@ class GRAYCORE_LINK cIniFile : public IIniBaseEnumerator  // enumerate the secti
     HRESULT WriteIniFile(const FILECHAR_t* pszFilePath) const;
 
     HRESULT PropGetEnum(PROPIDX_t ePropIdx, OUT cStringI& rsValue, OUT cStringI* psPropTag = nullptr) const override;
-    cIniSectionEntryPtr FindSection(const IniChar_t* pszSectionTitle = nullptr, bool bPrefix = false) const;
+    cRefPtr<cIniSectionEntry> FindSection(const IniChar_t* pszSectionTitle = nullptr, bool bPrefix = false) const;
 
     const IniChar_t* FindKeyLinePtr(const IniChar_t* pszSectionTitle, const IniChar_t* pszKey) const;
-    virtual cIniSectionEntryPtr AddSection(const IniChar_t* pszSectionTitle = nullptr, bool bStripComments = false, int iLine = 0);
+    virtual cRefPtr<cIniSectionEntry> AddSection(const IniChar_t* pszSectionTitle = nullptr, bool bStripComments = false, int iLine = 0);
     HRESULT SetKeyLine(const IniChar_t* pszSectionTitle, const IniChar_t* pszKey, const IniChar_t* pszLine);
     HRESULT SetKeyArg(const IniChar_t* pszSectionTitle, const IniChar_t* pszKey, const IniChar_t* pszArg);
 };

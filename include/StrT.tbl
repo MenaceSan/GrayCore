@@ -1,4 +1,3 @@
-//
 //! @file StrT.tbl
 //! included by "StrT.h" or "StrT.cpp" to force instantiation of the functions.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
@@ -28,26 +27,27 @@ StrTTbl(bool,IsWhitespace,(const TYPE* pStr, StrLen_t iLenMaxChars))
 StrTTbl(bool,IsPrintable,(const TYPE* pStr, StrLen_t iLenChars))
 StrTTbl(StrLen_t,GetWhitespaceEnd,(const TYPE* pStr, StrLen_t iLenChars ))
 
-StrTTbl(ITERATE_t,TableFind,(const TYPE* pszFindThis, const void* ppszTableInit, size_t iElemSize))
-StrTTbl(ITERATE_t,TableFindHead,(const TYPE* pszFindHead, const void* ppszTableInit, size_t iElemSize))
-StrTTbl(ITERATE_t,TableFindSorted,(const TYPE* pszFindThis, const void* ppszTableInit, ITERATE_t iCountMax, size_t iElemSize))
-StrTTbl(ITERATE_t,TableFindHeadSorted,(const TYPE* pszFindHead, const void* ppszTableInit, ITERATE_t iCountMax, size_t iElemSize))
+StrTTbl(ITERATE_t,TableFind,(const TYPE* pszFindThis, const cSpanUnk& t))
+StrTTbl(ITERATE_t,TableFindHead,(const TYPE* pszFindHead, const cSpanUnk& t))
+StrTTbl(ITERATE_t,TableFindSorted,(const TYPE* pszFindThis, const cSpanUnk& t))
+StrTTbl(ITERATE_t,TableFindHeadSorted,(const TYPE* pszFindHead, const cSpanUnk& t))
 
 // String modifiers
 
 StrTTbl(StrLen_t,CopyLen,(TYPE* pDst, const TYPE* pSrc, StrLen_t iLenMaxChars))		// NOEXCEPT
 
-StrTTbl(StrLen_t,EscSeqRemove,(TYPE* pStrOut, const TYPE* pStrIn, StrLen_t iLenOutMax, StrLen_t iLenInMax))
-StrTTbl(StrLen_t,EscSeqRemoveQ,(TYPE* pStrOut, const TYPE* pStrIn, StrLen_t iLenOutMax, StrLen_t iLenInMax))
-StrTTbl(StrLen_t,EscSeqAdd,(TYPE* pStrOut, const TYPE* pStrIn, StrLen_t iLenOutMax))
-StrTTbl(StrLen_t,EscSeqAddQ,(TYPE* pStrOut, const TYPE* pStrIn, StrLen_t iLenOutMax))
+StrTTbl(StrLen_t,EscSeqDecode,(cSpanX<TYPE>& ret, const TYPE* pStrIn, StrLen_t iLenInMax))
+StrTTbl(StrLen_t,EscSeqDecodeQ,(cSpanX<TYPE>& ret, const TYPE* pStrIn, StrLen_t iLenInMax))
+StrTTbl(bool,EscSeqTest,(const TYPE* pStrIn))
+StrTTbl(StrLen_t,EscSeqAdd,(cSpanX<TYPE>& ret, const TYPE* pStrIn))
+StrTTbl(StrLen_t,EscSeqAddQ,(cSpanX<TYPE>& ret, const TYPE* pStrIn))
 
 StrTTbl(StrLen_t,TrimWhitespaceEnd,(TYPE* pStr, StrLen_t iLenChars ))
 StrTTbl(TYPE*,TrimWhitespace,(TYPE* pStr, StrLen_t iLenMax))
-StrTTbl(StrLen_t,ReplaceX,(TYPE* pDst, StrLen_t iDstLenMax, StrLen_t iDstIdx, StrLen_t iDstSegLen, const TYPE* pSrc, StrLen_t iSrcLen))
+StrTTbl(StrLen_t,ReplaceX,(cSpanX<TYPE>& dst, StrLen_t iDstIdx, StrLen_t iDstSegLen, const TYPE* pSrc, StrLen_t iSrcLen))
 
-StrTTbl(ITERATE_t,ParseArray,(TYPE* pszCmdLine, StrLen_t nCmdLenMax, TYPE** ppCmd, ITERATE_t iCmdQtyMax, const TYPE* pszSep, STRP_MASK_t uFlags))
-StrTTbl(ITERATE_t,ParseArrayTmp,(TYPE* pszTmp, StrLen_t iTmpSizeMax, const TYPE* pszCmdLine, TYPE** ppCmd, ITERATE_t iCmdQtyMax, const TYPE* pszSep, STRP_MASK_t uFlags))
+StrTTbl(ITERATE_t,ParseArray,(cSpanX<TYPE>& cmdLine, cSpanX<TYPE*>& cmds, const TYPE* pszSep, STRP_MASK_t uFlags))
+StrTTbl(ITERATE_t,ParseArrayTmp,(cSpanX<TYPE>& tmp, const TYPE* pszCmdLine, cSpanX<TYPE*> cmds, const TYPE* pszSep, STRP_MASK_t uFlags))
 StrTTbl(StrLen_t,MatchRegEx,(const TYPE* pText, const TYPE* pPattern, bool bIgnoreCase, StrLen_t nTextMax))
 
 StrTTbl(TYPE*,FindBlockEnd,(STR_BLOCK_t eBlockType, const TYPE* pszLine, StrLen_t iLenMaxChars))

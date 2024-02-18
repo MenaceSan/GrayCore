@@ -1,80 +1,72 @@
-//
 //! @file cList.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
-
 #ifndef _INC_cList_H
 #define _INC_cList_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
-
 #include "HResult.h"
 #include "cDebugAssert.h"
 #include "cHeapObject.h"
 
 namespace Gray {
 /// <summary>
-/// base class for a single node in a cListParentBase. AKA
-/// derive a class from cListNodeBase to be a node member in a cListParentBase.
-/// Single owner = This item belongs to JUST ONE cListParentBase (m_pParent)
-/// Double linked list.
-/// NOT circular. head and tail are nullptr.
+/// abstract base class for a single node/element in a Double linked cList.
+/// @NOTE Single owner = This item belongs to JUST ONE cList (m_pParent)
+/// derive a class from cListNode to be a node member in a cList.
+/// NOT circular. Node head/prev and tail/next are nullptr.
 /// </summary>
-class GRAYCORE_LINK cListNodeBase : public cHeapObject {
-    friend class cListParentBase;  // so m_pNext and m_pPrev can be manipulated directly.
-
- private:
-    cListParentBase* m_pParent;  /// link me back to my parent object.
-    cListNodeBase* m_pNext;      /// next sibling
-    cListNodeBase* m_pPrev;      /// previous sibling
+class GRAYCORE_LINK cListNode : public cHeapObject {
+    friend class cList;  // so m_pNext and m_pPrev can be manipulated directly.
+    cList* m_pParent = nullptr;    /// link me back to my parent object.
+    cListNode* m_pNext = nullptr;  /// next sibling
+    cListNode* m_pPrev = nullptr;  /// previous sibling
 
  protected:
-    virtual void put_Parent(cListParentBase* pParent) {
-        //! I am being added to a list. (or nullptr = no list)
-        ASSERT(m_pParent == nullptr || pParent == nullptr || m_pParent == pParent);
-        m_pParent = pParent;  // link me back to my parent object.
-    }
-
- protected:
-    cListNodeBase() noexcept  // always just a base class.
-        : m_pParent(nullptr)  // not linked yet.
-          ,
-          m_pNext(nullptr),
-          m_pPrev(nullptr) {}
-
- public:
-    virtual ~cListNodeBase() noexcept {
+    cListNode() noexcept : m_pParent(nullptr), m_pNext(nullptr), m_pPrev(nullptr) {}
+    virtual ~cListNode() noexcept {
         //! ASSUME: RemoveFromParent() was already called! (virtuals don't work in destruct!)
         DEBUG_CHECK(!hasParent());
     }
 
-    cListParentBase* get_Parent() const noexcept {
+    /// <summary>
+    /// I am being added to a list. (or nullptr = no list)
+    /// DO NOT remove from list inside this call!
+    /// </summary>
+    /// <param name="pParent"></param>
+    virtual void OnChangeListParent(cList* pParent) {
+        ASSERT(m_pParent == nullptr || pParent == nullptr || m_pParent == pParent);
+        m_pParent = pParent;  // link me to my list parent object.
+    }
+
+ public:
+    cList* get_Parent() const noexcept {
         return m_pParent;
     }
-    cListNodeBase* get_Next() const noexcept {
+    cListNode* get_Next() const noexcept {
         return m_pNext;
     }
-    cListNodeBase* get_Prev() const noexcept {
+    cListNode* get_Prev() const noexcept {
         return m_pPrev;
     }
 
+    /// <summary>
+    /// is this in a list?
+    /// </summary>
     bool hasParent() const noexcept {
-        //! is this in a list?
-        if (m_pParent != nullptr) {
-            return true;
-        }
+        if (m_pParent != nullptr) return true;
         // If i have no parent i shouldn't have any siblings either.
         DEBUG_CHECK(m_pNext == nullptr && m_pPrev == nullptr);
         return false;
     }
 
-    //! remove ListNode from List.
-    //! @note Must define body of this function after cListParentBase has been defined.
+    /// <summary>
+    /// Remove this ListNode(myself) from my parent list (if i have one).
+    /// </summary>
     void RemoveFromParent();
 
     /// <summary>
-    /// delete myself from the system. 
+    /// delete myself from the system.
     /// Pre-destructor cleanup things can be done since virtual(s) don't work in destructor(s).
     /// @note this does not free the memory. override to do this.
     /// </summary>
@@ -87,120 +79,144 @@ class GRAYCORE_LINK cListNodeBase : public cHeapObject {
 //*************************************************
 
 /// <summary>
-/// Double linked list. NOT circular. head and tail are nullptr.
+/// generic Double linked list container. NOT circular. head and tail are nullptr.
 /// @note Lists are primarily used if inserts and deletes for large sets occurs frequently.
+/// @note cListNode can ONLY belong to one single cList.
 /// Objects should remove themselves from the list when deleted.
 /// Similar to the MFC CList, or std::list(T), std::deque
 /// </summary>
-class GRAYCORE_LINK cListParentBase { // generic list of objects based on cListNodeBase.
-    friend class cListNodeBase;  // so it can call RemoveListNode() to remove self.
+class GRAYCORE_LINK cList {
+    friend class cListNode;  // so it can call RemoveListNode() to remove self.
+    cListNode* m_pHead;      /// Head of my list.
+    cListNode* m_pTail;      /// Tail of my list.
 
  protected:
     ITERATE_t m_iCount;  /// how many children? nice to get read only direct access to this for scripting.
- private:
-    cListNodeBase* m_pHead;  /// Head of my list.
-    cListNodeBase* m_pTail;  /// Tail of my list.
 
  protected:
+    cList() noexcept : m_iCount(0), m_pHead(nullptr), m_pTail(nullptr) {}
+    virtual ~cList() {
+        // @note virtuals do not work in destructor!
+        // ASSUME: DisposeAll() or Empty() is called from higher levels
+        //  it is important for virtual RemoveListNode() callback
+        DEBUG_CHECK(isEmptyList());
+    }
+
+    void ClearList() noexcept {
+        DEBUG_ASSERT(m_iCount == 0, "List not cleaned up properly!");
+        m_pHead = nullptr;
+        m_pTail = nullptr;
+        m_iCount = 0;
+    }
+
     //! Override this to get called when an item is removed from this list.
     //! Never called directly. ALWAYS called from pObRec->RemoveFromParent()
-    virtual void RemoveListNode(cListNodeBase* pNode);  /// allow Override of this. called when child removed from list.
+    virtual void RemoveListNode(cListNode* pNode);  /// allow Override of this. called when child removed from list.
 
  public:
-    cListParentBase() noexcept : m_iCount(0), m_pHead(nullptr), m_pTail(nullptr) {}
-    virtual ~cListParentBase() {
-        //! @note virtuals do not work in destructors !
-        //! ASSUME: DisposeAll() or Empty() is called from higher levels
-        //!  it is important for virtual RemoveListNode() callback
-        ASSERT(isEmpty());
-    }
-
-    //! Override this to check items being added.
-    //! pPrev = nullptr = first
-    virtual void InsertListNode(cListNodeBase* pNodeNew, cListNodeBase* pNodePrev = nullptr);
-    void InsertList(cListParentBase* pListSrc, cListNodeBase* pNodePrev = nullptr);
-
-    void InsertBefore(cListNodeBase* pNodeNew, const cListNodeBase* pNodeNext) {
-        //! @arg pNext = nullptr = insert last
-        InsertListNode(pNodeNew, (pNodeNext != nullptr) ? (pNodeNext->get_Prev()) : get_Tail());
-    }
-    void InsertHead(cListNodeBase* pNodeNew) {
-        InsertListNode(pNodeNew, nullptr);
-    }
-    void InsertTail(cListNodeBase* pNodeNew) {
-        InsertListNode(pNodeNew, get_Tail());
-    }
-
-    void DisposeAll();
-    void SetEmpty();
-
-    cListNodeBase* get_Head() const noexcept {
+    cListNode* get_Head() const noexcept {
         return m_pHead;
     }
-    cListNodeBase* get_Tail() const noexcept {
+    cListNode* get_Tail() const noexcept {
         return m_pTail;
     }
     ITERATE_t get_Count() const noexcept {
         return m_iCount;
     }
-    bool isEmpty() const noexcept {
+    bool isEmptyList() const noexcept {
         return get_Count() == 0;
     }
-
-    /// iterate the linked list.
-    cListNodeBase* GetAt(ITERATE_t index) const;
-
-    bool IsMyChild(const cListNodeBase* pNode) const noexcept {
-        if (pNode == nullptr) return false;
-        return pNode->get_Parent() == this;
+    bool IsMyChild(const cListNode* pNode) const noexcept {
+        return pNode != nullptr && pNode->get_Parent() == this;
     }
+
+    /// <summary>
+    /// iterate/enumerate the linked list.
+    /// Not very efficient.
+    /// </summary>
+    /// <returns>nullptr = past end of list.</returns>
+    /// <param name="index"></param>
+    cListNode* GetAt(ITERATE_t index) const;
+
+    //! Override this to check items being added.
+    //! pPrev = nullptr = first
+    virtual void InsertListNode(cListNode* pNodeNew, cListNode* pNodePrev = nullptr);
+
+    /// <summary>
+    /// Transfer the contents of another list pListSrc into this one.
+    /// </summary>
+    /// <param name="pListSrc"></param>
+    /// <param name="pNodePrev"></param>
+    void MoveListNodes(cList* pListSrc, cListNode* pNodePrev = nullptr);
+
+    /// <summary>
+    /// Insert in some order in the list.
+    /// </summary>
+    /// <param name="pNodeNew"></param>
+    /// <param name="pNodeNext">nullptr = InsertTail</param>
+    void InsertBefore(cListNode* pNodeNew, const cListNode* pNodeNext) {
+        InsertListNode(pNodeNew, (pNodeNext != nullptr) ? (pNodeNext->get_Prev()) : get_Tail());
+    }
+    void InsertHead(cListNode* pNodeNew) {
+        InsertListNode(pNodeNew, nullptr);
+    }
+    void InsertTail(cListNode* pNodeNew) {
+        InsertListNode(pNodeNew, get_Tail());
+    }
+
+    /// <summary>
+    /// call DisposeThis() for all entries.
+    /// </summary>
+    void DisposeAll();
+
+    /// <summary>
+    /// empty the list. but don't necessarily DisposeThis() the objects.
+    /// </summary>
+    void SetEmptyList();
 };
 
 //*************************************************
 
-inline void cListNodeBase::RemoveFromParent() {
-    //! Remove this(myself) from my parent list (if i have one)
-    if (m_pParent != nullptr) {
-        m_pParent->RemoveListNode(this);  // only call this from here !
-                                          // ASSERT( m_pParent != pParentPrev );	// We are now unlinked. (or deleted)
-    }
+inline void cListNode::RemoveFromParent() {
+    if (m_pParent == nullptr) return;
+    m_pParent->RemoveListNode(this);  // only call this from here !
+    // ASSERT( m_pParent != pParentPrev );	// We are now unlinked. (or deleted)
 }
 
 //*************************************************
 // template type casting for lists.
 
 /// <summary>
-/// Assume this is a node (in a linked list) of type _TYPE_REC. e.g. _TYPE_REC is based on cListNodeT which is based on cListNodeBase.
+/// Assume this is a node (in a linked list) of type _TYPE_REC. e.g. _TYPE_REC is based on cListNodeT which is based on cListNode.
 /// </summary>
 /// <typeparam name="_TYPE_REC"></typeparam>
-template <class _TYPE_REC = cListNodeBase>
-class cListNodeT : public cListNodeBase {
-    typedef cListNodeBase SUPER_t;
-
- public:
+template <class _TYPE_REC = cListNode>
+struct cListNodeT : public cListNode {
+    typedef cListNode SUPER_t;
+    /// get_Next cast to _TYPE_REC
     _TYPE_REC* get_Next() const {
-        //! _TYPE_REC cast version of get_Next
         return static_cast<_TYPE_REC*>(SUPER_t::get_Next());
     }
+    /// get_Prev cast to _TYPE_REC
     _TYPE_REC* get_Prev() const {
-        //! _TYPE_REC cast version of get_Next
         return static_cast<_TYPE_REC*>(SUPER_t::get_Prev());
     }
 };
 
 /// <summary>
 /// Hold a List of _TYPE_REC things.
-/// @note _TYPE_REC is the type of class this list contains. _TYPE_REC is based on cListNodeT<_TYPE_REC> and/or cListNodeBase
+/// @note _TYPE_REC is the type of class this list contains. _TYPE_REC is based on cListNodeT<_TYPE_REC> and/or cListNode
 /// </summary>
 /// <typeparam name="_TYPE_REC"></typeparam>
-template <class _TYPE_REC /* = cListNodeBase */>
-class cListT : public cListParentBase {
-    typedef cListParentBase SUPER_t;
+template <class _TYPE_REC = cListNode>
+struct cListT : public cList {
+    typedef cList SUPER_t;
     typedef cListNodeT<_TYPE_REC> NODEBASE_t;
 
- public:
+    /// <summary>
+    /// iterate/enumerate the linked list.
+    /// </summary>
     _TYPE_REC* GetAt(ITERATE_t index) const {
-        //! iterate the linked list.
         return static_cast<_TYPE_REC*>(SUPER_t::GetAt(index));
     }
     _TYPE_REC* get_Head() const {

@@ -1,7 +1,6 @@
-//
 //! @file StrConst.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
+
 #ifndef _INC_StrConst_H
 #define _INC_StrConst_H
 #ifndef NO_PRAGMA_ONCE
@@ -9,6 +8,7 @@
 #endif
 
 #include "PtrCast.h"
+#include "Index.h"
 
 namespace Gray {
 typedef char ATOMCHAR_t;  /// character type for atom. (for symbolic names (SymName) or numbers) NEVER UNICODE.
@@ -40,21 +40,22 @@ constexpr StrLen_t k_LEN_MAX_CSYM = 128;  /// arbitrary max size of (Symbolic/Sy
 /// <summary>
 /// Produce a string constant of either UNICODE or UTF8. For use inside templates.
 /// </summary>
-class GRAYCORE_LINK cStrConst {
- public:
+struct cStrConst {
     const char* m_A;     /// a UTF8 string.
     const wchar_t* m_W;  /// the UNICODE version of m_A;
+    StrLen_t _Len;  /// STRMAX
 
     static const StrLen_t k_TabSize = 4;  /// default desired spaces for a tab.
+    static const StrLen_t k_LEN_MAX = 15000;  /// arbitrary max size for Format() etc. NOTE: _MSC_VER says stack frame should be at least 16384
 
     static const char k_EmptyA = '\0';     /// like CString::m_Nil
     static const wchar_t k_EmptyW = '\0';  /// like CString::m_Nil
 
-    static const cStrConst k_Empty;  /// Empty cStrConst string as &k_EmptyA or &k_EmptyW. like CString::m_Nil
-    static const cStrConst k_CrLf;   /// STR_CRLF
+    GRAYCORE_LINK static const cStrConst k_Empty;  /// Empty cStrConst string as &k_EmptyA or &k_EmptyW. like CString::m_Nil
+    GRAYCORE_LINK static const cStrConst k_CrLf;    /// STR_CRLF
 
- public:
-    cStrConst(const char* a, const wchar_t* w) noexcept : m_A(a), m_W(w) {}
+    cStrConst(const cStrConst& s) = default;
+    cStrConst(const char* a, const wchar_t* w, StrLen_t len) noexcept : m_A(a), m_W(w), _Len(len) {}
 
     inline bool isNull() const noexcept {
         return m_A == nullptr;
@@ -88,18 +89,18 @@ class GRAYCORE_LINK cStrConst {
 
     // template derived type
     template <typename TYPE>
-    const TYPE* Get() const noexcept;
+    const TYPE* GetT() const noexcept = delete;
+
+    template <>
+    inline const char* GetT() const noexcept {
+        return m_A;
+    }    
+    template <>
+    inline const wchar_t* GetT() const noexcept {
+        return m_W;
+    }
 };
-
-template <>
-inline const char* cStrConst::Get<char>() const noexcept {
-    return m_A;
-}
-template <>
-inline const wchar_t* cStrConst::Get<wchar_t>() const noexcept {
-    return m_W;
-}
-
-#define CSTRCONST(t) ::Gray::cStrConst(__TOA(t), __TOW(t))  /// define a const for both Unicode and UTF8 in templates. used at run-time not just compile time.
 }  // namespace Gray
+
+#define CSTRCONST(t) ::Gray::cStrConst(__TOA(t), __TOW(t), STRMAX(t))  /// define a const for both Unicode and UTF8 in templates. used at run-time not just compile time.
 #endif

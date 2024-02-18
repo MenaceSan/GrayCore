@@ -1,4 +1,3 @@
-//
 //! @file cTimeFile.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 // clang-format off
@@ -61,10 +60,10 @@ cString cTimeFile::GetTimeFormStr(const GChar_t* pszFormat, TZ_TYPE nTimeZone) c
     if (!GetTimeUnits(Tu, nTimeZone)) return "";
 
     GChar_t szBuffer[256];
-    StrLen_t iLenChars = Tu.GetFormStr(szBuffer, STRMAX(szBuffer), pszFormat);
+    const StrLen_t iLenChars = Tu.GetFormStr(TOSPAN(szBuffer), pszFormat);
     if (iLenChars <= 0) return "";
 
-    return cString(szBuffer, iLenChars);
+    return ToSpan(szBuffer, iLenChars);
 }
 
 TIMESECD_t cTimeFile::get_AgeSec() const noexcept {

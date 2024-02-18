@@ -1,7 +1,5 @@
-//
 //! @file cFile.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cFile_H
 #define _INC_cFile_H
@@ -125,12 +123,17 @@ class GRAYCORE_LINK cFile : public cObject, public cOSHandle, public cStream {
     bool IsFileNameExt(const FILECHAR_t* pszExt) const noexcept;
 
     // File Mode stuff.
+
+    /// <summary>
+    /// get basic set of OF_FLAGS_t. get rid of OF_NONCRIT type flags. e.g. OF_READ
+    /// </summary>
     OF_FLAGS_t get_Mode() const noexcept {
-        //! get basic set of OF_FLAGS_t. get rid of OF_NONCRIT type flags. e.g. OF_READ
         return m_nOpenFlags & OF_OPEN_MASK;  //
     }
+    /// <summary>
+    /// Get the full/hidden elements of the OF_FLAGS_t Flags. e.g. OF_NONCRIT
+    /// </summary>
     OF_FLAGS_t get_ModeFlags() const noexcept {
-        //! Get the full/hidden elements of the OF_FLAGS_t Flags. e.g. OF_NONCRIT
         return m_nOpenFlags;
     }
     bool isModeWrite() const noexcept {
@@ -166,7 +169,7 @@ class GRAYCORE_LINK cFile : public cObject, public cOSHandle, public cStream {
 
     // cStream override
     HRESULT ReadX(void* pData, size_t nDataSize) noexcept override;
-    HRESULT WriteX(const void* pData, size_t nDataSize) override;  // disambiguate.
+    HRESULT WriteX(const void* pData, size_t nDataSize) override;  
     HRESULT FlushX() override;
     STREAM_POS_t GetPosition() const override;
     STREAM_POS_t GetLength() const override;

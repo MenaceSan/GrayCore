@@ -1,7 +1,5 @@
-//
 //! @file StrCharAscii.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_StrCharAscii_H
 #define _INC_StrCharAscii_H
@@ -22,5 +20,4 @@ enum class ASCII_t {
 #undef StrCharASCII
 };
 }  // namespace Gray
-
 #endif

@@ -1,4 +1,3 @@
-//
 //! @file cCodeProfiler.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 // clang-format off
@@ -34,35 +33,23 @@ struct CATTR_PACKED cCodeProfilerItem {
 /// <summary>
 /// Thread locked singleton stream to write out to. Can be shared by multiple threads.
 /// </summary>
-class GRAYCORE_LINK cCodeProfilerControl : public cSingleton<cCodeProfilerControl> {
+class GRAYCORE_LINK cCodeProfilerControl final : public cSingleton<cCodeProfilerControl> {
+    SINGLETON_IMPL(cCodeProfilerControl);
     friend class cCodeProfileFunc;
-    friend class cSingleton<cCodeProfilerControl>;
 
  protected:
     cFile m_File;
     mutable cThreadLockCount m_Lock;
     PROCESSID_t m_ProcessId;
 
- public:
+ protected:
     cCodeProfilerControl() : cSingleton<cCodeProfilerControl>(this, typeid(cCodeProfilerControl)), m_ProcessId(cAppState::get_CurrentProcessId()) {}
     ~cCodeProfilerControl() {
         StopTime();
     }
 
-    bool get_Active() const {
-        return cCodeProfileFunc::sm_bActive;
-    }
-
-    bool put_Active(bool bActive) {
-        if (bActive == get_Active()) return true;
-        if (bActive) return StartTime();
-        StopTime();
-        return true;
-    }
-
- protected:
     bool StartTime() {
-        cThreadGuard lock(m_Lock);
+        const auto guard(m_Lock.Lock());
         cCodeProfileFunc::sm_bActive = true;
         if (m_File.isValidHandle()) return true;
         // open it. PCP file.
@@ -73,7 +60,7 @@ class GRAYCORE_LINK cCodeProfilerControl : public cSingleton<cCodeProfilerContro
     }
 
     void StopTime() {
-        cThreadGuard lock(m_Lock);
+        const auto guard(m_Lock.Lock());
         cCodeProfileFunc::sm_bActive = false;
         m_File.Close();
     }
@@ -81,17 +68,15 @@ class GRAYCORE_LINK cCodeProfilerControl : public cSingleton<cCodeProfilerContro
     void WriteTime(const cTimePerf& nTimeEnd, const class cCodeProfileFunc& Func) noexcept {
         // cThreadLockableRef
         DEBUG_ASSERT(get_Active(), "Active");
-        if (!m_File.isValidHandle())  
-            return;       
-        cThreadGuard lock(m_Lock);
-        if (!m_File.isValidHandle())  
-            return;
-        
+        if (!m_File.isValidHandle()) return;
+        const auto guard(m_Lock.Lock());
+        if (!m_File.isValidHandle()) return;
+
         const StrLen_t iLenFile = StrT::Len(Func.m_src.m_pszFile);
         const StrLen_t iLenFunc = StrT::Len(Func.m_src.m_pszFunction);
         const StrLen_t iLenTotal = sizeof(cCodeProfilerItem) + iLenFile + iLenFunc + 2;
 
-        BYTE Tmp[sizeof(cCodeProfilerItem) + 1024]; // pack binary blob.
+        BYTE Tmp[sizeof(cCodeProfilerItem) + 1024];  // pack binary blob.
         DEBUG_ASSERT(iLenTotal < (StrLen_t)sizeof(Tmp), "LenTotal");
 
         cCodeProfilerItem* pLogItem = reinterpret_cast<cCodeProfilerItem*>(Tmp);
@@ -102,10 +87,22 @@ class GRAYCORE_LINK cCodeProfilerControl : public cSingleton<cCodeProfilerContro
         pLogItem->m_Cycles = nTimeEnd.m_nTime - Func.m_nTimeStart.m_nTime;
         // pLogItem->m_Time = nTime;
 
-        cMem::Copy(Tmp + sizeof(cCodeProfilerItem), Func.m_src.m_pszFile, iLenFile + 1);    // include '\0'
-        cMem::Copy(Tmp + sizeof(cCodeProfilerItem) + iLenFile + 1, Func.m_src.m_pszFunction, iLenFunc + 1); // include '\0'
+        cMem::Copy(Tmp + sizeof(cCodeProfilerItem), Func.m_src.m_pszFile, iLenFile + 1);                     // include '\0'
+        cMem::Copy(Tmp + sizeof(cCodeProfilerItem) + iLenFile + 1, Func.m_src.m_pszFunction, iLenFunc + 1);  // include '\0'
 
         m_File.WriteX(Tmp, iLenTotal);
+    }
+
+ public:
+    bool get_Active() const {
+        return cCodeProfileFunc::sm_bActive;
+    }
+
+    bool put_Active(bool bActive) {
+        if (bActive == get_Active()) return true;
+        if (bActive) return StartTime();
+        StopTime();
+        return true;
     }
 };
 

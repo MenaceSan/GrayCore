@@ -1,7 +1,5 @@
-//
 //! @file cOSUser.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cOSUser_H
 #define _INC_cOSUser_H
@@ -34,8 +32,7 @@ class cSecurityId;
 /// SetPrivilege( SE_DEBUG_NAME ) to get debug type info like cOSProcess.get_CommandLine().
 /// like ATL CAccessToken
 /// </summary>
-class GRAYCORE_LINK cOSUserToken : public cOSHandle {
- public:
+struct GRAYCORE_LINK cOSUserToken : public cOSHandle {
     cOSUserToken();
     cOSUserToken(DWORD dwDesiredAccess, HANDLE hProcess = INVALID_HANDLE_VALUE);
 
@@ -55,5 +52,4 @@ class GRAYCORE_LINK cOSUserToken : public cOSHandle {
 };
 #endif
 }  // namespace Gray
-
 #endif

@@ -1,4 +1,3 @@
-//
 //! @file cQueue.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 // clang-format off
@@ -6,7 +5,6 @@
 // clang-format on
 #include "cLogMgr.h"
 #include "cQueue.h"
-#include "cQueueChunked.h"
 #include "cUnitTest.h"
 
 namespace Gray {
@@ -14,31 +12,31 @@ HRESULT cQueueIndex::SeekQ(STREAM_OFFSET_t iOffset, SEEK_t eSeekOrigin) noexcept
     switch (CastN(SEEK_t, CastN(BYTE, eSeekOrigin) & 0x0f)) {
         default:
         case SEEK_t::_Set:  // FILE_BEGIN
-            m_nReadLast = CastN(ITERATE_t, iOffset);
+            m_nReadIndex = CastN(ITERATE_t, iOffset);
             break;
         case SEEK_t::_Cur:  // advance the read. FILE_CURRENT
-            m_nReadLast += CastN(ITERATE_t, iOffset);
+            m_nReadIndex += CastN(ITERATE_t, iOffset);
             break;
         case SEEK_t::_End:  // FILE_END
-            m_nReadLast = CastN(ITERATE_t, m_nWriteLast - iOffset);
+            m_nReadIndex = CastN(ITERATE_t, m_nWriteIndex - iOffset);
             break;
     }
-    if (m_nReadLast < 0) {  // seek before start.
+    if (m_nReadIndex < 0) {  // seek before start.
         // FAILURE!! before start.
-        m_nReadLast = 0;
+        m_nReadIndex = 0;
         return HRESULT_WIN32_C(ERROR_EMPTY);
     }
-    if (m_nReadLast > m_nWriteLast) {
+    if (m_nReadIndex > m_nWriteIndex) {
         // FAILURE!! past end
-        m_nReadLast = m_nWriteLast;
+        m_nReadIndex = m_nWriteIndex;
         return HRESULT_WIN32_C(ERROR_DATABASE_FULL);
     }
-    return CastN(HRESULT, m_nReadLast);
+    return CastN(HRESULT, m_nReadIndex);
 }
 
 #ifndef GRAY_STATICLIB                           // force implementation/instantiate for DLL/SO.
 template struct GRAYCORE_LINK cQueueRead<char>;  // Force implementation/instantiate for DLL/SO.
 template class GRAYCORE_LINK cQueueRW<char>;
-template class GRAYCORE_LINK cQueueStatic<char, 512>;  // Force implementation/instantiate for DLL/SO.
+template class GRAYCORE_LINK cQueueStatic<512, char>;  // Force implementation/instantiate for DLL/SO.
 #endif
 }  // namespace Gray

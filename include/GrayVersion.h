@@ -1,4 +1,3 @@
-//
 //! @file GrayVersion.h
 //! Can be included in RC file as well! RC_INVOKED
 //! version broken out into a separate file for minimal impact on the Version Control System.
@@ -6,7 +5,6 @@
 //! @note Windows PE only supports the first 2 digits.
 //! @note Obscure rule in .MSI forces use of versions >= 1.0.0. NO version 0. allowed.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef GRAY_VERSION_N
 #ifndef NO_PRAGMA_ONCE

@@ -1,9 +1,7 @@
-//
 //! @file cSingleton.h
 //!	A singleton is a type of class of which only one single instance may exist.
 //! This is commonly used for management classes used to control system-wide resources.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cSingleton_H
 #define _INC_cSingleton_H
@@ -38,6 +36,10 @@ class cSingletonStatic {
  protected:
     static TYPE* sm_pThe;  /// pointer to the one and only object of this TYPE. ASSUME automatically init to = nullptr.
 
+    TYPE* get_This() { 
+        return static_cast<TYPE*>(this);    // cast to TYPE.
+    }
+
  protected:
     /// <summary>
     /// the singleton must be constructed with a reference to top level object. Probably the same as 'this' but might not be in multi-inherit case.
@@ -52,18 +54,28 @@ class cSingletonStatic {
             return;
         }
         sm_pThe = pThis;
-        DEBUG_ASSERT(sm_pThe == this, "cSingletonStatic");  // is it really always the same?? IS this a waste of time/code ?
+        DEBUG_ASSERT(sm_pThe == get_This(), "cSingletonStatic");  // is it really always the same?? IS this a waste of time/code ?
     }
     virtual ~cSingletonStatic() noexcept {
         //! the singleton accessors
         if (sm_pThe != nullptr) {
-            DEBUG_ASSERT(sm_pThe == this, "~cSingletonStatic");
+            DEBUG_ASSERT(sm_pThe == get_This(), "~cSingletonStatic");
             sm_pThe = nullptr;
         }
     }
 
+    /// <summary>
+    /// Some singletons can have a derived type. e.g. cAppImpl
+    /// </summary>
+    /// <typeparam name="TYPE2"></typeparam>
+    /// <returns></returns>
+    template <class TYPE2>
+    static TYPE2* GRAYCALL get_SingleCast() {  // ASSUME TYPE2 derived from TYPE?
+        return PtrCastCheck<TYPE2>(get_Single());
+    }
+
  public:
-    // the singleton accessors
+    /// has this singleton been created yet? may be effected by static init time load order. or destruct order?
     static inline bool isSingleCreated() noexcept {
         return sm_pThe != nullptr;
     }
@@ -74,15 +86,13 @@ class cSingletonStatic {
     static inline TYPE* get_SingleU() noexcept {
         return sm_pThe;
     }
+    /// <summary>
+    /// Get pointer to singleton. ASSUME this object exists.
+    /// if static type = This is a complex or abstract or assumed that we cannot just create automatically on first usage.
+    /// </summary>
     static inline TYPE* get_Single() {
-        //! This is a complex or abstract or assumed static type that we cannot just create automatically on first usage.
-        //! ASSUME this object exists.
         DEBUG_CHECK(isSingleCreated());
         return sm_pThe;  // get_SingleU()
-    }
-    template <class TYPE2>
-    static TYPE2* GRAYCALL get_SingleCast() {  // ASSUME TYPE2 derived from TYPE?
-        return PtrCastCheck<TYPE2>(get_Single());
     }
     /// <summary>
     /// The singleton by reference.
@@ -91,10 +101,11 @@ class cSingletonStatic {
     static inline TYPE& I() noexcept {
         return *get_Single();
     }
+
 };
 
 template <class TYPE>
-TYPE* cSingletonStatic<TYPE>::sm_pThe = nullptr;  // assume this is always set before any usage.
+TYPE* cSingletonStatic<TYPE>::sm_pThe = nullptr;  // assume nullptr init will ALWAYS work regardless of static init usage order.
 
 /// <summary>
 /// NON template abstract base for cSingleton. MUST be IHeapObject
@@ -105,31 +116,41 @@ TYPE* cSingletonStatic<TYPE>::sm_pThe = nullptr;  // assume this is always set b
 /// </summary>
 class GRAYCORE_LINK cSingletonRegister : public cObject, public cHeapObject {
     friend class cSingletonManager;
-    CHEAPOBJECT_IMPL;  /// Get the top level "new" pointer in the case of multiple inheritance.
+    // CHEAPOBJECT_IMPL;  /// Get the top level "new" pointer in the case of multiple inheritance.
 
  protected:
 #ifndef UNDER_CE
-    HMODULE m_hModuleLoaded;  /// What modules loaded this ? So singletons can be destroyed if DLL/SO unloads. cOSModule::GetModuleHandleForAddr()
+    ::HMODULE m_hModuleLoaded;  /// What modules loaded this ? So singletons can be destroyed if DLL/SO unloads. cOSModule::GetModuleHandleForAddr()
 #endif
  public:
-    static cThreadLockFast sm_LockSingle;  /// common lock for all cSingleton.
+    static cThreadLockCount sm_LockSingle;  /// common lock for all cSingleton.
 
  protected:
     cSingletonRegister(const TYPEINFO_t& rAddrCode) noexcept;
-    ~cSingletonRegister() override;
+    ~cSingletonRegister() noexcept override;
     void RegisterSingleton() noexcept;
 
+    /// <summary>
+    /// override this to Destroy any children i might have from some other module.
+    /// </summary>
+    /// <param name="hMod"></param>
+    /// <returns></returns>
+    virtual void ReleaseModuleChildren(::HMODULE hMod) {
+        ASSERT(m_hModuleLoaded != hMod);
+    }
+
  public:
-    static void GRAYCALL ReleaseModule(HMODULE hMod);
+    /// <summary>
+    /// Destroy all singletons in this module if it is unloading.
+    /// </summary>
+    static void GRAYCALL ReleaseModule(::HMODULE hMod);
 };
 
 /// <summary>
-/// abstract base class for singleton created lazy/on demand if it does not yet exist or maybe static.
-///  see cSingletonRefBase to destroy on non use.
-/// Thread safe.
+/// abstract base class for singleton created lazy/on demand if it does not yet exist.
+/// Thread safe. ALWAYS mark derived class as 'final'
 /// ASSUME cSingletonRegister will handle proper destruct order on app close or module unload.
 /// ASSUME TYPE is based on cSingleton and IHeapObject.
-/// @note If this is really static beware of the "first use" race condition. static init will ASSERT if dynamic is called first.
 /// @note This can get created at C static init time if used inside some other static. But later is OK too of course.
 ///  It's Safe being constructed INSIDE another C runtime init constructor. (order irrelevant) ASSUME m_pThe = nullptr at init.
 ///  http://www.cs.wustl.edu/~schmidt/editorial-3.html
@@ -151,7 +172,6 @@ class cSingleton : public cSingletonStatic<TYPE>, public cSingletonRegister {
     /// </summary>
     ~cSingleton() override {}
 
- public:
     /// <summary>
     /// get (or create) a pointer to the derived singleton TYPE2 object.
     /// ASSUME TYPE2 derived from TYPE.
@@ -159,38 +179,42 @@ class cSingleton : public cSingletonStatic<TYPE>, public cSingletonRegister {
     /// @note This ensures proper creation order for singletons (Statics) that ref each other!
     /// @note This can create a race condition. This decides the true TYPE of the object.
     /// </summary>
-    /// <typeparam name="TYPE2"></typeparam>
-    /// <returns></returns>
-    template <class TYPE2 = TYPE>
-    static TYPE2* GRAYCALL get_SingleT() noexcept {  // ASSUME TYPE2 derived from TYPE
-        if (!SUPER_t::isSingleCreated()) {
-            // Double Check Lock for multi threaded
-            cThreadGuardFast threadguard(cSingletonRegister::sm_LockSingle);  // thread sync critical section.
-            if (!SUPER_t::isSingleCreated()) {
-                DEBUG_CHECK(!TYPE2::isSingleCreated());  // SUPER_t::sm_psure, The
-                auto p = new TYPE2();
+    /// <returns>NEVER nullptr</returns>
+    static TYPE* GRAYCALL get_SingleCreate() noexcept {  // ASSUME TYPE2 derived from TYPE
+        if (!isSingleCreated()) {
+            // Double Check Lock for multi threaded safety.
+            const auto guard(cSingletonRegister::sm_LockSingle.Lock());  // thread sync critical section.
+            if (!isSingleCreated()) {
+                auto p = new TYPE();
                 DEBUG_CHECK(p == SUPER_t::sm_pThe);
-                DEBUG_CHECK(TYPE2::isSingleCreated());  // SUPER_t::sm_pThe
-                p->RegisterSingleton();                 // Register only if i know it is dynamic. Not static.
+                DEBUG_CHECK(isSingleCreated());
+                p->RegisterSingleton();  // Register only when fully formed.
             }
         }
-        return SUPER_t::get_SingleCast<TYPE2>();
+        return get_SingleU();
     }
 
+ public:
     /// <summary>
     /// get (or create) a pointer to the singleton object.
     /// </summary>
     /// <returns></returns>
     static TYPE* GRAYCALL get_Single() noexcept {
-        return get_SingleT<TYPE>();
+        return get_SingleCreate();
     }
 
     /// <summary>
     /// The singleton by reference.
     /// </summary>
     static TYPE& GRAYCALL I() noexcept {
-        return *get_SingleT<TYPE>();
+        return *get_SingleCreate();
     }
 };
+
+// Allow cSingleton base to call my protected/private constructor
+#define SINGLETON_IMPL(T) \
+    friend cSingleton<T>; \
+    CHEAPOBJECT_IMPL
+
 }  // namespace Gray
 #endif  // _INC_cSingleton_H

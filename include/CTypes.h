@@ -1,7 +1,6 @@
-//
 //! @file cTypes.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
+
 #ifndef _INC_cTypes_H
 #define _INC_cTypes_H
 #ifndef NO_PRAGMA_ONCE

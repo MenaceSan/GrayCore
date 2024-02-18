@@ -1,4 +1,3 @@
-//
 //! @file cTimeInt.cpp
 //! Replace the MFC CTime function. Must be usable with file system.
 //! Accurate Measure whole seconds
@@ -34,8 +33,6 @@ cTimeInt::cTimeInt(const cTimeFile& fileTime) noexcept {
 }
 
 TIMESEC_t GRAYCALL cTimeInt::GetTimeFromDays(double dTimeDays) noexcept {  // static
-    //! Set to time in seconds from time in days.
-    //! Opposite of cTimeDouble::GetTimeFromSec()
     return (TIMESEC_t)((dTimeDays - cTimeDouble::k_nDaysDiffTimeInt) * cTimeUnits::k_nSecondsPerDay);
 }
 
@@ -208,14 +205,12 @@ bool cTimeInt::GetTimeUnits(OUT cTimeUnits& rTu, TZ_TYPE nTimeZone) const {
 //**************************************************************************
 // String formatting
 
-StrLen_t cTimeInt::GetTimeFormStr(GChar_t* pszOut, StrLen_t iOutSizeMax, const GChar_t* pszFormat, TZ_TYPE nTimeZone) const {
+StrLen_t cTimeInt::GetTimeFormStr(cSpanX<GChar_t>& ret, const GChar_t* pszFormat, TZ_TYPE nTimeZone) const {
     // TODO look for %z or %Z to preserve timezone.
     //! MFC just calls this "Format"
     cTimeUnits Tu;
-    if (!GetTimeUnits(Tu, nTimeZone)) {
-        return 0;
-    }
-    return Tu.GetFormStr(pszOut, iOutSizeMax, pszFormat);
+    if (!GetTimeUnits(Tu, nTimeZone)) return 0;
+    return Tu.GetFormStr(ret, pszFormat);
 }
 
 cString cTimeInt::GetTimeFormStr(const GChar_t* pszFormat, TZ_TYPE nTimeZone) const {
@@ -227,11 +222,10 @@ cString cTimeInt::GetTimeFormStr(const GChar_t* pszFormat, TZ_TYPE nTimeZone) co
     //!  nTimeZone = (seconds) what TZ was this recorded in (_timezone), TZ_UTC, TZ_GMT, TZ_EST, TZ_LOCAL
 
     GChar_t szTemp[cTimeUnits::k_FormStrMax];  // estimate reasonable max size.
-    StrLen_t iLenChars = GetTimeFormStr(szTemp, STRMAX(szTemp), pszFormat, nTimeZone);
-    if (iLenChars <= 0) {
-        return "";
-    }
-    return cString(szTemp, iLenChars);
+    const StrLen_t iLenChars = GetTimeFormStr(TOSPAN(szTemp), pszFormat, nTimeZone);
+    if (iLenChars <= 0) return "";
+
+    return ToSpan(szTemp, iLenChars);
 }
 
 HRESULT cTimeInt::SetTimeStr(const GChar_t* pszDateTime, TZ_TYPE nTimeZone) {
@@ -267,7 +261,7 @@ cString GRAYCALL cTimeInt::GetTimeSpanStr(TIMESECD_t nSeconds, TIMEUNIT_t eUnitH
     cTimeUnits tu;  // 0
     tu.AddSeconds(nSeconds);
     GChar_t szMsg[256];
-    tu.GetTimeSpanStr(szMsg, STRMAX(szMsg), eUnitHigh, iUnitsDesired, bShortText);
+    tu.GetTimeSpanStr(TOSPAN(szMsg), eUnitHigh, iUnitsDesired, bShortText);
     return szMsg;
 }
 cString GRAYCALL cTimeInt::GetTimeDeltaBriefStr(TIMESECD_t dwSeconds) {  // static

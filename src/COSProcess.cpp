@@ -1,4 +1,3 @@
-//
 //! @file cOSProcess.cpp
 //! @note Launching processes is a common basic feature for __linux__
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
@@ -96,7 +95,7 @@ HRESULT cOSProcess::CreateProcessX(const FILECHAR_t* pszExeName, const FILECHAR_
     FILECHAR_t sCommandLine[_MAX_PATH];
     sCommandLine[0] = '\0';
     if (!StrT::IsWhitespace(pszArgs)) {
-        StrLen_t len = StrT::CopyLen(sCommandLine, pszExeName, STRMAX(sCommandLine));
+        StrLen_t len = StrT::Copy(TOSPAN(sCommandLine), pszExeName);
         len += StrT::CopyLen<FILECHAR_t>(sCommandLine + len, _FN(" "), STRMAX(sCommandLine) - len);
         StrT::CopyLen(sCommandLine + len, pszArgs, STRMAX(sCommandLine) - len);
         pszArgs = sCommandLine;
@@ -140,7 +139,7 @@ HRESULT cOSProcess::CreateProcessX(const FILECHAR_t* pszExeName, const FILECHAR_
 
         char* args[k_ARG_ARRAY_MAX];  // arbitrary max.
         char szTmp[StrT::k_LEN_Default];
-        int iArgs = StrT::ParseArrayTmp<FILECHAR_t>(szTmp, STRMAX(szTmp), pszArgs, args + 1, _countof(args) - 2, " ", STRP_DEF);
+        int iArgs = StrT::ParseArrayTmp<FILECHAR_t>(TOSPAN(szTmp), pszArgs, ToSpan(args + 1, _countof(args) - 2), " ", STRP_DEF);
         args[0] = (char*)pszExeName;
         args[iArgs + 1] = nullptr;  // terminated.
 
@@ -172,15 +171,13 @@ cFilePath cOSProcess::get_ProcessPath() const {  // virtual
         // HRESULT hRes = HResult::GetLast(); // GetLastError is set.
         return "";  // I don't have PROCESS_QUERY_INFORMATION or PROCESS_VM_READ rights.
     }
-    return cStringF(szProcessName, dwRet);
+    return cStringF(ToSpan(szProcessName, dwRet));
 #elif defined(__linux__)
     if (m_sPath.IsEmpty()) {
         cStringF sFileName = cStringF::GetFormatf(_FN("/proc/%d/cmdline"), this->get_ProcessId());
         cFile file;
         HRESULT hRes = file.OpenX(sFileName);
-        if (FAILED(hRes)) {
-            return _FN("");
-        }
+        if (FAILED(hRes)) return _FN("");
         hRes = file.ReadX(szProcessName, sizeof(szProcessName));
         // TODO __linux__  chop args?
         m_sPath = cStringF(szProcessName);
@@ -306,10 +303,8 @@ cStringF cOSProcess::get_CommandLine() const {
 
     // Read it.
     char szCmdLine[_MAX_PATH * 2];
-    szCmdLine[0] = '\0';
-    hRes = file.ReadX(szCmdLine, STRMAX(szCmdLine));
+    hRes = file.ReadSpan(TOSPAN(szCmdLine));
 #endif
-    szCmdLine[STRMAX(szCmdLine)] = '\0';  // Extra safe termination.
     return szCmdLine;
 }
 

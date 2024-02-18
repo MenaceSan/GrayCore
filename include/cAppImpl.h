@@ -19,9 +19,9 @@ namespace Gray {
 /// Basic framework for my application I implement. Windows or Console.
 /// Assume a static like cAppImpl theApp is defined some place.
 /// </summary>
-class GRAYCORE_LINK cAppImpl : public cSingletonStatic<cAppImpl>, public IAppCommands {
+class GRAYCORE_LINK cAppImpl : public cSingletonStatic<cAppImpl>, public IAppCommands {  // NOT final!
  protected:
-    THREADID_t m_nMainThreadId;  /// The thread the app started with. main().
+    THREADID_t m_nMainThreadId;  /// The first thread the app started. main().
 
  public:
     const FILECHAR_t* m_pszAppName;  /// Specifies the name of my application. (display friendly)
@@ -42,14 +42,15 @@ class GRAYCORE_LINK cAppImpl : public cSingletonStatic<cAppImpl>, public IAppCom
     THREADID_t inline get_MainThreadId() const noexcept {
         return m_nMainThreadId;
     }
-    cAppCommand* FindCommand(CommandId_t id) const override {
-        return _Commands.FindCommand(id);
+    cAppCommand* GetCommand(CommandId_t id) const override {
+        return _Commands.GetCommand(id);
     }
     cAppCommand* FindCommand(const ATOMCHAR_t* pszName) const override {
         return _Commands.FindCommand(pszName);
     }
 
-    HRESULT RunCommand(ITERATE_t i);
+    HRESULT RunCommand(const ATOMCHAR_t* pszCmd, const ATOMCHAR_t* pszArgs);
+    HRESULT RunCommandN(ITERATE_t i);
     HRESULT RunCommands();
 
     static inline HINSTANCE get_HInstance() {
@@ -57,6 +58,9 @@ class GRAYCORE_LINK cAppImpl : public cSingletonStatic<cAppImpl>, public IAppCom
         return cAppState::get_HModule();
     }
 
+    /// <summary>
+    /// Get help for all the _Commands we support.
+    /// </summary>
     virtual cString get_HelpText() const;
 
     virtual BOOL InitInstance();
@@ -86,7 +90,7 @@ class GRAYCORE_LINK cAppImpl : public cSingletonStatic<cAppImpl>, public IAppCom
     /// </summary>
     /// <param name="hInstance"></param>
     /// <returns>APP_EXITCODE_t</returns>
-    APP_EXITCODE_t Main(HMODULE hInstance = HMODULE_NULL);
+    APP_EXITCODE_t Main(::HMODULE hInstance = HMODULE_NULL);
 };
 #endif
 }  // namespace Gray

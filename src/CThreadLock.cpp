@@ -1,4 +1,3 @@
-//
 //! @file cThreadLock.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 // clang-format off
@@ -7,81 +6,82 @@
 #include "cThreadLock.h"
 
 namespace Gray {
-bool cThreadState::WaitForThreadExit(TIMESYSD_t iTimeMSec) noexcept {  // virtual
-    // similar to ::pthread_join() but with a timer. NOT optimal.
-    const cTimeSys tStart(cTimeSys::GetTimeNow());
-    for (;;) {
-        if (!isThreadRunning()) return true;
-        UINT tDiff = (UINT)tStart.get_AgeSys();
-        if (tDiff > (UINT)iTimeMSec) break;                 // -1 = INFINITE
-        cThreadId::SleepCurrent((tDiff > 400) ? 200 : 10);  // milliseconds
-    }
-    return false;  // didn't stop in time! may have to hard terminate
-}
-
 #ifdef __linux__
-const pthread_mutex_t cThreadLockMutex::k_MutexInit = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
+const pthread_mutex_t cMutex::k_Init = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
 #endif
 
-void cThreadLockFast::Lock() {
+bool cLockableBase::WaitUnique(TIMESYSD_t nDelayMS) {
 #ifdef _DEBUG
-    TIMESYSD_t dwWaitCount = 0;
+    TIMESYSD_t nWaitCount = 0;
 #endif
-    TIMESYSD_t dwWaitTimeMS = 0;
-    THREADID_t nTid = cThreadId::GetCurrentId();  // get my current thread id.
-    for (;;) {
-        const THREADID_t nTidowner = InterlockedN::CompareExchange(&m_nLockThreadID, nTid, cThreadId::k_NULL);
-        if (nTidowner == cThreadId::k_NULL || cThreadId::IsEqualId(nTidowner, nTid)) break;  // i got it. or already had it.
-        // Some other thread owns the lock. Wait.
-        ASSERT(cThreadId::IsValidId(nTidowner));
-        cThreadId::SleepCurrent(dwWaitTimeMS);  // Give up the rest of the time slice. just wait for it to free.
-        dwWaitTimeMS = 1;
+    TIMESYSD_t nWaitTimeMS = 0;
+    while (!this->isLockCount()) {
+        if (nDelayMS <= 0) {
+            return false;  // FAILED to lock
+        }
+        cThreadId::SleepCurrent(nWaitTimeMS);  // wait for a tick.
+        if (nWaitTimeMS == 0) nWaitTimeMS = 1;
+        if (nDelayMS != cTimeSys::k_INF) nDelayMS--;
+
 #ifdef _DEBUG
-        dwWaitCount++;  // Count how long i had to wait.
+        nWaitCount++;  // Count how long i had to wait.
 #endif
     }
-    SUPER_t::IncLockCount();
-#ifdef _DEBUG
-    ASSERT(isThreadLockedByCurrent());  // may have several locks on the same thread.
-    if (dwWaitCount) {
-        // DEBUG_CHECK(0);	// collide cleared.
-    }
-#endif
+    return true;
 }
 
-bool cThreadLockFast::LockTry(TIMESYSD_t dwDelayMS) {
-    //! inline version of this made bad code?
-    //! Take ownership if the lock is free or owned by the calling thread
+bool cThreadLockable::LockThread(const THREADID_t nTid, TIMESYSD_t nDelayMS) {
+    ASSERT(cThreadId::IsValidId(nTid));
+    ASSERT(nDelayMS == cTimeSys::k_INF || nDelayMS >= 0);
 #ifdef _DEBUG
-    TIMESYSD_t dwWaitCount = 0;
+    TIMESYSD_t nWaitCount = 0;
 #endif
-    TIMESYSD_t dwWaitTimeMS = 0;
-    THREADID_t nTid = cThreadId::GetCurrentId();  //  get my current thread id.
+    TIMESYSD_t nWaitTimeMS = 0;
     for (;;) {
-        THREADID_t nTidowner = InterlockedN::CompareExchange(&m_nLockThreadID, nTid, cThreadId::k_NULL);
-        if (nTidowner == cThreadId::k_NULL || cThreadId::IsEqualId(nTidowner, nTid)) break;  // i got it. or already had it.
+        const THREADID_t nTidOwnerPrev = InterlockedN::CompareExchange(&_ThreadLockOwner, nTid, cThreadId::k_NULL);
+        if (nTidOwnerPrev == cThreadId::k_NULL || cThreadId::IsEqualId(nTidOwnerPrev, nTid)) {  // i got it. (or already had it)
+            IncLockCount();
+            ASSERT(IsThreadLockOwner(nTid));  // i locked it!
+            return true;
+        }
 
         // Some other thread owns the lock. Wait.
-        ASSERT(cThreadId::IsValidId(nTidowner));
-        if (dwDelayMS <= 0) {
+        ASSERT(cThreadId::IsValidId(nTidOwnerPrev));
+
+        if (nDelayMS == 0) {
 #ifdef _DEBUG
-            if (dwWaitCount) {
+            if (nWaitCount) {
                 // DEBUG_CHECK(0);	// collide cleared.
             }
 #endif
-            return false;  // FAILED to lock
+            return false;  // FAILED to lock in time.
         }
-        cThreadId::SleepCurrent(dwWaitTimeMS);  // wait for a tick.
-        if (dwWaitTimeMS == 0) {
-            dwWaitTimeMS = 1;
-        } else {
-            dwDelayMS--;
-        }
+        cThreadId::SleepCurrent(nWaitTimeMS);  // wait for a tick.
+        if (nWaitTimeMS == 0) nWaitTimeMS = 1;
+        if (nDelayMS != cTimeSys::k_INF) nDelayMS--;
+
 #ifdef _DEBUG
-        dwWaitCount++;  // Count how long i had to wait.
+        nWaitCount++;  // Count how long i had to wait.
 #endif
     }
-    SUPER_t::IncLockCount();
-    return true;
+}
+
+cLockerT<cThreadLockFast> cThreadLockFast::Lock() noexcept {
+    LockThread(cThreadId::GetCurrentId(), cTimeSys::k_INF);
+#ifdef _DEBUG
+    ASSERT(isThreadLockedByCurrent());  // may have several locks on the same thread.
+#endif
+    return cLockerT<cThreadLockFast>(this, true);
+}
+
+cLockerT<cThreadLockFast> cThreadLockFast::LockTry(TIMESYSD_t nDelayMS) {
+    if (LockThread(cThreadId::GetCurrentId(), nDelayMS)) {
+#ifdef _DEBUG
+        ASSERT(get_LockCount() == 1);
+        ASSERT(isThreadLockedByCurrent());  // may have several locks on the same thread.
+#endif
+        return cLockerT<cThreadLockFast>(this, true);
+    }
+    return cLockerT<cThreadLockFast>(nullptr, false);
 }
 }  // namespace Gray

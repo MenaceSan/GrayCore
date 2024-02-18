@@ -58,7 +58,7 @@ struct GRAYCORE_LINK cAppCommand {
 /// Interface to manage a list of cAppCommand(s)
 /// </summary>
 struct IAppCommands {
-    virtual cAppCommand* FindCommand(CommandId_t id) const = 0;
+    virtual cAppCommand* GetCommand(CommandId_t id) const = 0;
     virtual cAppCommand* FindCommand(const ATOMCHAR_t* pszName) const = 0;
 };
 
@@ -75,7 +75,7 @@ struct GRAYCORE_LINK cAppCommands : public IAppCommands {
     /// Add or override existing cAppCommand. ASSUME static allocation of cAppCommand.
     /// </summary>
     cAppCommand* RegisterCommand(cAppCommand& cmd);
-    cAppCommand* FindCommand(CommandId_t id) const override;
+    cAppCommand* GetCommand(CommandId_t id) const override;
     cAppCommand* FindCommand(const ATOMCHAR_t* pszName) const override;
 };
 }  // namespace Gray

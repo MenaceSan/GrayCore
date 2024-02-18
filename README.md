@@ -126,23 +126,19 @@ GRAY_STATICLIB = Static lib else DLL/SO  (default)
 No options for:
 consume CRT as a dll only. 
 stdcall calling convention only. 
-NO_CRT
+USE_CRT
 MFC
 
 @todo
 USE_CRT = 0 = minimize use of CRT MSVCRTD . remove or wrap -> sprintf, strtod, rand, malloc ?
-Timeunits : span merge duplicated code.
-ThreadLock RW,
+ThreadLock RW for RefPtr
+Better TextReader used as parser and read index ? Eqiv to ITextWriter
 Log message cache for details messages. Released if not needed.
-CreateObject and service locator/creator by type name
-vsprintfN overflow return for Linux and Win32 is not quite right/consistent. -1 or max or new size?
-Log messages that require response/ack. not duplicated, revokable, UID.
-_CPPRTTI = for dynamic_cast ? not avail in UNDER_CE
-_CPPUNWIND = for exceptions. not avail in UNDER_CE
+
 __GNUC__ 64 bit sync exchange in 32 bit code. _InterlockedCompareExchange64
-Heap:Alloc() fail should not always assert. this may not always be fatal/unexpected.
+
 __linux__ getopt() like argument definitions for apps.
-Test UNICODE vs binary vs ASCII cFileText files. WriteString() and SeekX().
+
 enumerate devices/drives mounted on system.
 LINUX write file attributes? chmod() for particular user.
 Test - thread handling for cString. can multiple threads use instances of the same string ? instance interlock count delete works OK?

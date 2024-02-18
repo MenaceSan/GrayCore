@@ -195,7 +195,7 @@ HRESULT cAppConsole::WriteStrErr(const char* pszText) {
     //! >=0 = success
     if (!isConsoleMode()) return true;
 
-    cThreadGuard guard(m_Lock);
+    const auto guard(m_Lock.Lock());
 
 #if defined(_WIN32)
     // @note we must do this to get the dual windows/console stuff to work.
@@ -226,7 +226,7 @@ HRESULT cAppConsole::WriteStrOut(const char* pszText) {
     //! @note _WIN32 could probably use the m_h directly.
 
     if (!isConsoleMode()) return S_OK;
-    cThreadGuard guard(m_Lock);
+    const auto guard(m_Lock.Lock());
 #if defined(_WIN32)
     // @note we must do this to get the dual windows/console stuff to work.
     DWORD dwLengthWritten = 0;

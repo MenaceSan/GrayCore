@@ -1,7 +1,5 @@
-//
 //! @file cExceptionAssert.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cExceptionAssert_H
 #define _INC_cExceptionAssert_H

@@ -1,7 +1,5 @@
-//
 //! @file cUInt64.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cUInt64_H
 #define _INC_cUInt64_H
@@ -12,6 +10,7 @@
 #include "StrArg.h"
 #include "cBits.h"
 #include "cString.h"
+#include "StrBuilder.h"
 #include "cTypes.h"
 
 namespace Gray {
@@ -310,7 +309,7 @@ class GRAYCORE_LINK CATTR_PACKED cUInt64 {
         return *this;
     }
 
-    StrLen_t GetStr(char* pszOut, StrLen_t iOutMax, RADIX_t nBaseRadix = 10) const;
+    void BuildStr(StrBuilder<char>& ret, RADIX_t nBaseRadix = 10) const;
     cString GetStr(RADIX_t nBaseRadix = 10) const;
     bool SetStr(const char* pszVal, RADIX_t nBaseRadix = 10, const char** ppszEnd = (const char**)nullptr);
 

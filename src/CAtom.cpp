@@ -1,4 +1,3 @@
-//
 //! @file cAtom.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 // clang-format off
@@ -24,7 +23,7 @@ cAtomManager::~cAtomManager() noexcept {
 
 cAtomRef cAtomManager::FindAtomStr(const ATOMCHAR_t* pszText) const {
     if (StrT::IsNullOrEmpty(pszText)) return m_aEmpty;
-    cThreadGuard lock(m_Lock);
+    const auto guard(m_Lock.Lock());
     cAtomRef pDef(m_aName.FindArgForKey(pszText));
     if (!pDef.isValidPtr()) return m_aEmpty;
     return cAtomRef(pDef);
@@ -32,7 +31,7 @@ cAtomRef cAtomManager::FindAtomStr(const ATOMCHAR_t* pszText) const {
 
 cAtomRef cAtomManager::FindAtomHashCode(ATOMCODE_t idAtom) const {
     if (idAtom == k_HASHCODE_CLEAR) return m_aEmpty;
-    cThreadGuard lock(m_Lock);
+    const auto guard(m_Lock.Lock());
     cAtomRef pDef(m_aHash.FindArgForKey(idAtom));
     if (!pDef.isValidPtr()) return m_aEmpty;
     return cAtomRef(pDef);
@@ -41,7 +40,7 @@ cAtomRef cAtomManager::FindAtomHashCode(ATOMCODE_t idAtom) const {
 bool cAtomManager::RemoveAtom(DATA_t* pDef) {
     // below kRefsBase
     if (pDef == nullptr) return false;
-    cThreadGuard lock(m_Lock);
+    const auto guard(m_Lock.Lock());
     bool bRetRemove = m_aHash.DeleteArg(pDef);
     ASSERT(bRetRemove);
     bRetRemove = m_aName.DeleteArg(pDef);
@@ -67,7 +66,7 @@ cAtomRef cAtomManager::CreateAtom(const cHashIterator& index, COMPARE_t iCompare
 cAtomRef cAtomManager::FindorCreateAtomStr(const cStringA& sName) noexcept {
     if (sName.IsEmpty()) return m_aEmpty;
 
-    cThreadGuard lock(m_Lock);
+    const auto guard(m_Lock.Lock());
 
     COMPARE_t iCompareRes;
     cHashIterator index = m_aName.FindINearKey(sName, iCompareRes);
@@ -82,7 +81,7 @@ cAtomRef cAtomManager::FindorCreateAtomStr(const ATOMCHAR_t* pszName) noexcept {
     //! Find the atom in the atom table if it exists else create a new one.
     if (StrT::IsNullOrEmpty(pszName)) return m_aEmpty;
 
-    cThreadGuard lock(m_Lock);
+    const auto guard(m_Lock.Lock());
 
     COMPARE_t iCompareRes;
     cHashIterator index = m_aName.FindINearKey(pszName, iCompareRes);
@@ -97,8 +96,8 @@ void cAtomManager::SetAtomStatic(DATA_t* pDef) {
     m_aStatic.Add(pDef);
 }
 
-HRESULT cAtomManager::DebugDumpFile(cStreamOutput& o) const {
-    cThreadGuard lock(m_Lock);
+HRESULT cAtomManager::DebugDumpFile(ITextWriter& o) const {
+    const auto guard(m_Lock.Lock());
 
     // Order by name
     FOREACH_HASH_TABLE(m_aName, i) {

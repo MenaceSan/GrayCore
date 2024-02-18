@@ -1,7 +1,5 @@
-//
 //! @file cMime.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cMime_H
 #define _INC_cMime_H

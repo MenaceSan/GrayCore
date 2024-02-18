@@ -1,4 +1,3 @@
-//
 //! @file cHookJump.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 // clang-format off
@@ -80,7 +79,7 @@ HRESULT cHookJump::InstallHook(FARPROC pFuncOrig, FARPROC pFuncNew, bool bSkipCh
     //! bSkipChainable = if chainable code exists, we should skip over it. because we assume other callers might do this too.
     //! @todo i could insert a value in an address table if the jump uses that format ? jmp [XXX]
 
-    cThreadGuardFast guard(m_Lock);
+    const auto guard(m_Lock.Lock());
     if (pFuncOrig == nullptr || pFuncNew == nullptr) {
         ASSERT(pFuncNew != nullptr);
         DEBUG_ERR(("InstallHook: nullptr."));
@@ -110,7 +109,7 @@ HRESULT cHookJump::InstallHook(FARPROC pFuncOrig, FARPROC pFuncNew, bool bSkipCh
         // The normal way to make 64 bit jumps is to put value in memory and then do like: jmp qword ptr [7FFF77CF3428h]   (6 bytes =? ff 25 f2 2c 06 00 )
         SetProtectPages(true);
         DEBUG_ERR(("InstallHook: 64 bit overflow."));
-        return HRESULT_FROM_WIN32(ERROR_INVALID_HOOK_HANDLE);
+        return HRESULT_WIN32_C(ERROR_INVALID_HOOK_HANDLE);
     }
 #endif
     const int lRelAddr = (int)lRelPtr;  // 32 bit.
@@ -137,7 +136,7 @@ HRESULT cHookJump::InstallHook(FARPROC pFuncOrig, FARPROC pFuncNew, bool bSkipCh
 }
 
 void cHookJump::RemoveHook() {
-    cThreadGuardFast guard(m_Lock);
+    const auto guard(m_Lock.Lock());
     if (!isHookInstalled())  // was never set?
         return;
     ASSERT(m_pFuncOrig != nullptr);

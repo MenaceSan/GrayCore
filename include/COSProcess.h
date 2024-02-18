@@ -1,8 +1,6 @@
-//
 //! @file cOSProcess.h
 //! @note Launching processes is a common basic feature for __linux__
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cOSProcess_H
 #define _INC_cOSProcess_H

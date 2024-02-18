@@ -1,4 +1,3 @@
-//
 //! @file cInterlockedVal.h
 //! single values that are safe to change on multiple threads.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
@@ -16,7 +15,7 @@
 
 namespace Gray {
 
-#define _SIZEOF_INT 4  /// sizeof(int) seems to be 32 bits in all tested configurations. _MSC_VER and __GNUC__, 32 and 64 bit.
+#define _SIZEOF_INT 4  /// sizeof(int) seems to be 32 bits in all tested platforms/configurations. _MSC_VER and __GNUC__, 32 and 64 bit Intel.
 #if defined(USE_64BIT) && defined(__GNUC__)
 #define _SIZEOF_LONG 8  /// # bytes in long or unsigned long for __DECL_ALIGN macro. Use if we can't do sizeof(x)
 #else
@@ -422,13 +421,21 @@ class GRAYCORE_LINK cInterlockedVal {
         ASSERT((PtrCastToNum(&m_nValue) % sizeof(TYPE)) == 0);  // must be aligned!!
     }
 
-    TYPE Inc() noexcept { //! @return post increment. e.g. NEVER 0
+    /// <summary>
+    /// increment.
+    /// </summary>
+    /// <returns>post increment value. e.g. NEVER 0</returns>
+    TYPE Inc() noexcept {
         return InterlockedN::Increment(&m_nValue);
     }
     void IncV() noexcept {
         InterlockedN::Increment(&m_nValue);
     }
-    TYPE Dec() noexcept { //! @return post decrement.
+    /// <summary>
+    /// decrement.
+    /// </summary>
+    /// <returns>post decrement value</returns>
+    TYPE Dec() noexcept { 
         return InterlockedN::Decrement(&m_nValue);
     }
     void DecV() noexcept {
@@ -441,7 +448,7 @@ class GRAYCORE_LINK cInterlockedVal {
     /// <param name="nValue">previous value.</param>
     /// <returns>pre-add value</returns>
     TYPE AddX(TYPE nValue) noexcept {
-        // DEBUG_ASSERT(!cBits::HasMask<TYPE>(m_nValue, nValue), "AddX");
+        // DEBUG_ASSERT(!cBits::HasAny<TYPE>(m_nValue, nValue), "AddX");
         return InterlockedN::ExchangeAdd(&m_nValue, nValue);
     }
     TYPE Exchange(TYPE nValue) noexcept {
@@ -457,10 +464,12 @@ class GRAYCORE_LINK cInterlockedVal {
         return lComparand == CompareExchange(nValue, lComparand);
     }
 
+    /// pre-inc operator.
     inline TYPE operator++() noexcept {
         //! @return The value post increment. e.g. NEVER 0
         return Inc();
     }
+    /// pre-dec operator.
     inline TYPE operator--() noexcept {
         //! @return The value post decrement
         return Dec();

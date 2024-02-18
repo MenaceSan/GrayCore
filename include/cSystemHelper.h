@@ -1,7 +1,5 @@
-//
 //! @file cSystemHelper.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cSystemHelper_H
 #define _INC_cSystemHelper_H
@@ -18,8 +16,8 @@ namespace Gray {
 /// The detected system params may be effected by system virtualization.
 /// Higher level than cSystemInfo
 /// </summary>
-class GRAYCORE_LINK cSystemHelper : public cSingleton<cSystemHelper> {
-    friend class cSingleton<cSystemHelper>;
+class GRAYCORE_LINK cSystemHelper final : public cSingleton<cSystemHelper> {
+    SINGLETON_IMPL(cSystemHelper);
 
  protected:
     cStringF m_sSystemName;  /// Cached (or overridden for debug purposes) system name.
@@ -27,13 +25,13 @@ class GRAYCORE_LINK cSystemHelper : public cSingleton<cSystemHelper> {
  public:
     cSystemInfo& m_Info;
 
- public:
+ protected:
     cSystemHelper();
 
+ public:
+    static cFilePath GRAYCALL get_SystemDir();
     cString get_OSInfoStr() const;
     cStringF get_SystemName();  /// The node name of the machine.
-
-    static cFilePath GRAYCALL get_SystemDir();
 };
 }  // namespace Gray
 

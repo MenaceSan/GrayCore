@@ -1,4 +1,3 @@
-//
 //! @file cSecurityAttributes.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 // clang-format off
@@ -71,11 +70,10 @@ cSecurityId::cSecurityId(DWORD dwSecondSubAuth)	{
 }
 #endif
 
-bool cSecurityId::SetSID(SID* pSID) {
+bool cSecurityId::SetSID(::SID* pSID) {
     //! Copy SID.
     if (pSID == nullptr) {
-        // Clear.
-        this->Free();
+        this->Free();   // Clear.
         return true;
     }
     if (pSID == get_SID()) return true;  // same.
@@ -83,7 +81,7 @@ bool cSecurityId::SetSID(SID* pSID) {
     size_t nLengthSid = ::GetLengthSid(pSID);
     if (nLengthSid <= 0) return false;
 
-    this->AllocPtr3(pSID, nLengthSid);
+    this->AllocSpan(cMemSpan(pSID, nLengthSid));
     return true;
 }
 

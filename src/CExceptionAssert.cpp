@@ -1,4 +1,3 @@
-//
 //! @file cExceptionAssert.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 // clang-format off
@@ -56,7 +55,7 @@ int _cdecl _purecall() {
 }
 #endif
 
-#if defined(_MSC_VER) && defined(GRAY_STATICLIB)
+#if defined(GRAY_STATICLIB)
 void _cdecl _amsg_exit(int iArg) {
     //! overload to try to trap some of the other strange exit conditions !!!
     //! Some strange _MSC_VER stdlib calls use this for really bad stuff.

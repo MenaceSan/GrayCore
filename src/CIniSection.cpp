@@ -1,4 +1,3 @@
-//
 //! @file cIniSection.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 // clang-format off
@@ -23,16 +22,12 @@ HRESULT cIniWriter::WriteSectionHead0(const IniChar_t* pszSectionTitle) {
     if (m_bStartedSection) {
         // New line to separate from last section.
         hRes = m_pOut->WriteString(INI_CR);
-        if (FAILED(hRes)) {
-            return hRes;  // HRESULT_WIN32_C(ERROR_WRITE_FAULT);
-        }
+        if (FAILED(hRes)) return hRes;  // HRESULT_WIN32_C(ERROR_WRITE_FAULT);
         m_bStartedSection = false;
     }
 
     hRes = m_pOut->Printf("[%s]" INI_CR, StrArg<IniChar_t>(pszSectionTitle));
-    if (FAILED(hRes)) {
-        return hRes;  // HRESULT_WIN32_C(ERROR_WRITE_FAULT);
-    }
+    if (FAILED(hRes)) return hRes;  // HRESULT_WIN32_C(ERROR_WRITE_FAULT);
     m_bStartedSection = true;
     return hRes;
 }
@@ -48,7 +43,7 @@ HRESULT cIniWriter::WriteSectionHead1(const IniChar_t* pszSectionType, const Ini
     }
 
     IniChar_t szTmp[_MAX_PATH];
-    StrLen_t iLenTmp = StrT::sprintfN(szTmp, STRMAX(szTmp), "%s %s", StrArg<IniChar_t>(pszSectionType), StrArg<IniChar_t>(pszSectionName));
+    StrLen_t iLenTmp = StrT::sprintfN(TOSPAN(szTmp), "%s %s", StrArg<IniChar_t>(pszSectionType), StrArg<IniChar_t>(pszSectionName));
     UNREFERENCED_PARAMETER(iLenTmp);
 
     return WriteSectionHead0(szTmp);
@@ -61,7 +56,7 @@ HRESULT cIniWriter::WriteSectionHead1Q(const IniChar_t* pszSectionType, const In
     }
 
     IniChar_t szTmp[_MAX_PATH];
-    StrLen_t iLenTmp = StrT::EscSeqAddQ(szTmp, pszArg, STRMAX(szTmp));
+    StrLen_t iLenTmp = StrT::EscSeqAddQ(TOSPAN(szTmp), pszArg);
     UNREFERENCED_PARAMETER(iLenTmp);
 
     return WriteSectionHead1(pszSectionType, szTmp);
@@ -74,7 +69,7 @@ HRESULT _cdecl cIniWriter::WriteSectionHeadFormat(const IniChar_t* pszSectionTyp
     IniChar_t szTmp[_MAX_PATH];
     va_list vargs;
     va_start(vargs, pszFormat);
-    const StrLen_t iLenTmp = StrT::vsprintfN(szTmp, STRMAX(szTmp), pszFormat, vargs);
+    const StrLen_t iLenTmp = StrT::vsprintfN(TOSPAN(szTmp), pszFormat, vargs);
     UNREFERENCED_PARAMETER(iLenTmp);
     va_end(vargs);
 
@@ -102,19 +97,19 @@ HRESULT cIniWriter::WriteKeyStrQ(const IniChar_t* pszKey, const IniChar_t* pszVa
     }
 
     IniChar_t szValTmp[StrT::k_LEN_Default];
-    StrLen_t iLenTmp = StrT::EscSeqAddQ(szValTmp, pszValue, STRMAX(szValTmp));
+    StrLen_t iLenTmp = StrT::EscSeqAddQ(TOSPAN(szValTmp), pszValue);
     UNREFERENCED_PARAMETER(iLenTmp);
 
     return WriteKeyUnk(pszKey, szValTmp);
 }
 HRESULT cIniWriter::WriteKeyInt(const IniChar_t* pszKey, int iVal) {
     IniChar_t szTmp[k_LEN_MAX_CSYM];
-    StrT::ItoA(iVal, szTmp, STRMAX(szTmp));
+    StrT::ItoA(iVal, TOSPAN(szTmp));
     return WriteKeyUnk(pszKey, szTmp);
 }
 HRESULT cIniWriter::WriteKeyUInt(const IniChar_t* pszKey, UINT dwVal) {
     IniChar_t szTmp[k_LEN_MAX_CSYM];
-    StrLen_t iLenTmp = StrT::UtoA((UINT)dwVal, szTmp, STRMAX(szTmp), 0x10);
+    StrLen_t iLenTmp = StrT::UtoA((UINT)dwVal, TOSPAN(szTmp), 0x10);
     UNREFERENCED_PARAMETER(iLenTmp);
     return WriteKeyUnk(pszKey, szTmp);
 }
@@ -185,8 +180,7 @@ IniChar_t* GRAYCALL cIniReader::FindLineArg(const IniChar_t* pszLine, bool bAllo
     return nullptr;
 }
 
-StrLen_t GRAYCALL cIniReader::FindScriptLineEnd(const IniChar_t* pszLine)  // static
-{
+StrLen_t GRAYCALL cIniReader::FindScriptLineEnd(const IniChar_t* pszLine) { // static
     //! Now parse the line for comments and trailing whitespace junk
     //! comments are #; as first char or // comment at end of line
     //! be careful not to strip http://xx so we require a space after // for comments.
@@ -199,13 +193,12 @@ StrLen_t GRAYCALL cIniReader::FindScriptLineEnd(const IniChar_t* pszLine)  // st
     // Skip leading whitespace?
     StrLen_t iLenChars = 0;  // StrT::GetNonWhitespaceI(pszLine);
     IniChar_t ch = pszLine[iLenChars];
-    if (ch == '\0' || ch == ';' || ch == '#')  // indicate comments. (only if first char)
-    {
+    if (ch == '\0' || ch == ';' || ch == '#') {  // indicate comments. (only if first char)
         return 0;
     }
 
     bool bInQuote = false;
-    for (; iLenChars < StrT::k_LEN_MAX; iLenChars++) {
+    for (; iLenChars < cStrConst::k_LEN_MAX; iLenChars++) {
         ch = pszLine[iLenChars];
         if (ch == '\0') break;
         if (ch == '"') {  // STR_BLOCK_t::_QUOTE
@@ -248,23 +241,21 @@ cStringI GRAYCALL cIniReader::GetLineParse2(const IniChar_t* pszLine, IniChar_t*
         return cStringI(pszLine);
     }
 
-    StrLen_t iLen = StrT::Diff(pszArgs, pszLine) - 1;
-    iLen = StrT::GetWhitespaceEnd(pszLine, iLen);
-    return cStringI(pszLine, iLen);
+    const StrLen_t iLen = StrT::GetWhitespaceEnd(pszLine, StrT::Diff(pszArgs, pszLine) - 1);
+    return ToSpan(pszLine, iLen);
 }
 
-cStringI GRAYCALL cIniReader::GetLineParse3(const IniChar_t* pszLine, OUT cStringI& rsArgs)  // static
-{
+cStringI GRAYCALL cIniReader::GetLineParse3(const IniChar_t* pszLine, OUT cStringI& rsArgs) { // static
     //! Parse a line in the format of: "TAG=Value // comments."
     //! Clip comments off the end of the arg.
     //! @return Tag/Property/Key text. rsArgs = Value.
 
     IniChar_t* pszArgs = nullptr;
     cStringI sKey = GetLineParse2(pszLine, &pszArgs);
-    StrLen_t nLenArg = FindScriptLineEnd(pszArgs);
+    const StrLen_t nLenArg = FindScriptLineEnd(pszArgs);
 
     // Maybe empty if this is a comment line.
-    rsArgs = cStringI(pszArgs, nLenArg);
+    rsArgs = cStringI(ToSpan(pszArgs, nLenArg));
     return sKey;
 }
 
@@ -367,9 +358,8 @@ IniChar_t* cIniSectionData::AllocBuffer(StrLen_t nSizeChars) {
 
 bool cIniSectionData::IsValidLines() const {
     //! All lines MUST be in the m_Buffer.
-
     for (int i = 0; i < m_iLinesUsed; i++) {
-        if (!m_Buffer.IsInternalPtr(m_apLines[i])) return false;
+        if (!m_Buffer.IsInternalPtr(m_apLines.GetAt(i))) return false;
     }
     return true;
 }
@@ -389,7 +379,7 @@ IniChar_t* cIniSectionData::AllocBeginMin(StrLen_t nSizeChars) {
     if (nSizeChars > (StrLen_t)m_Buffer.get_DataSize()) {
         AllocBuffer(nSizeChars);
     }
-    ITERATE_t iLineQty = cValT::Min((StrLen_t)k_LINE_QTY_MAX, nSizeChars + 1);
+    const ITERATE_t iLineQty = cValT::Min((StrLen_t)k_LINE_QTY_MAX, nSizeChars + 1);
     if (iLineQty > m_apLines.GetSize()) {
         AllocLines(iLineQty);
     }
@@ -399,7 +389,7 @@ IniChar_t* cIniSectionData::AllocBeginMin(StrLen_t nSizeChars) {
 void cIniSectionData::AllocComplete() {
     //! done loading, so trim to its used size.
     CODEPROFILEFUNC();
-    AllocLines(m_iLinesUsed + 1);    // add null line at end.
+    AllocLines(m_iLinesUsed + 1);    // add nullptr line at end.
     AllocBuffer(m_iBufferUsed + 1);  // include a second null char.
 }
 
@@ -420,7 +410,7 @@ void cIniSectionData::SetLinesCopy(const cIniSectionData& section) {
     AllocBuffer(section.get_BufferSize());
     m_iBufferUsed = section.get_BufferUsed();
 
-    cMem::Copy(m_apLines.get_DataWork(), section.m_apLines.get_DataConst(), m_iLinesUsed * sizeof(IniChar_t*));
+    m_apLines.SetCopyQty(section.m_apLines.get_DataConst(), m_iLinesUsed);
     m_Buffer.SetCopyAll(section.m_Buffer);
 
     MoveLineOffsets(0, StrT::Diff(m_Buffer.get_DataC<IniChar_t>(), section.m_Buffer.get_DataC<IniChar_t>()));
@@ -500,7 +490,7 @@ HRESULT cIniSectionData::PropGet(const IniChar_t* pszPropTag, OUT cStringI& rsVa
         rsValue = "";
         return HRESULT_WIN32_C(ERROR_UNKNOWN_PROPERTY);
     }
-    rsValue = cStringI(pszVal, cIniReader::FindScriptLineEnd(pszVal));
+    rsValue = cStringI(ToSpan(pszVal, cIniReader::FindScriptLineEnd(pszVal)));
     return S_OK;
 }
 
@@ -522,7 +512,7 @@ ITERATE_t cIniSectionData::AddLine(const IniChar_t* pszLine) {
     }
 
     IniChar_t* pszLineDest = m_Buffer.get_DataW<IniChar_t>() + m_iBufferUsed;
-    StrLen_t iLenMax = (iBufferAlloc - m_iBufferUsed);
+    const StrLen_t iLenMax = (iBufferAlloc - m_iBufferUsed);
     StrLen_t iLen = StrT::CopyLen(m_Buffer.get_DataW<IniChar_t>() + m_iBufferUsed, pszLine, iLenMax);
     if (iLen >= iLenMax - 1) {
         // We chopped the line !!
@@ -574,8 +564,7 @@ bool cIniSectionData::SetLine(ITERATE_t iLine, const IniChar_t* pszLine) {
         iLenDiff = iLenNew - iLenOld;
     }
 
-    StrLen_t iBufferStart = StrT::Diff(pszDst, m_Buffer.get_DataC<IniChar_t>());
-    iBufferStart += iLenOld;
+    const StrLen_t iBufferStart = StrT::Diff(pszDst, m_Buffer.get_DataC<IniChar_t>()) + iLenOld;
 
     // Move above data to make room.
     StrLen_t iBufferNew = m_iBufferUsed + iLenDiff;
@@ -598,15 +587,15 @@ bool cIniSectionData::SetLine(ITERATE_t iLine, const IniChar_t* pszLine) {
     return true;
 }
 
-StrLen_t GRAYCALL cIniSectionData::MakeLine(IniChar_t* pszTmp, StrLen_t iSizeMax, const IniChar_t* pszKey, const IniChar_t* pszArg, IniChar_t chSep)  // static
+StrLen_t GRAYCALL cIniSectionData::MakeLine(cSpanX<IniChar_t>& tmp, const IniChar_t* pszKey, const IniChar_t* pszArg, IniChar_t chSep)  // static
 {
     //! Build a line in the form of KEY=ARG
     //! chSep = ':' or '='
-    StrLen_t iLen = StrT::CopyLen(pszTmp, pszKey, iSizeMax);
-    if (iLen < iSizeMax) {
-        pszTmp[iLen++] = chSep;
+    StrLen_t iLen = StrT::Copy(tmp, pszKey);
+    if (iLen < tmp.get_MaxLen()) {
+        tmp.get_DataWork()[iLen++] = chSep;
     }
-    iLen += StrT::CopyLen(pszTmp + iLen, pszArg, iSizeMax - iLen);
+    iLen += StrT::CopyLen(tmp.get_DataWork() + iLen, pszArg, tmp.get_MaxLen() - iLen);
     return iLen;
 }
 
@@ -614,7 +603,7 @@ ITERATE_t cIniSectionData::AddKeyArg(const IniChar_t* pszKey, const IniChar_t* p
     //! Add the line, even if it is duplicated key.
     if (pszKey == nullptr || pszArg == nullptr) return 0;
     IniChar_t szTmp[_MAX_PATH + _MAX_PATH];
-    MakeLine(szTmp, STRMAX(szTmp), pszKey, pszArg);
+    MakeLine(TOSPAN(szTmp), pszKey, pszArg);
     return AddLine(szTmp);
 }
 
@@ -623,7 +612,7 @@ ITERATE_t cIniSectionData::SetKeyArg(const IniChar_t* pszKey, const IniChar_t* p
     //! @return the line we changed.
 
     IniChar_t szTmp[_MAX_PATH + _MAX_PATH];
-    MakeLine(szTmp, STRMAX(szTmp), pszKey, pszArg);
+    MakeLine(TOSPAN(szTmp), pszKey, pszArg);
 
     ITERATE_t iLine = FindKeyLine(pszKey, true);
     if (iLine >= 0) {
@@ -652,9 +641,8 @@ StrLen_t cIniSectionData::SetLinesParse(const IniChar_t* pszData, StrLen_t iLen,
     //! @return
     //!  size of pszData buffer actually used + 1 '\0'.
 
-    if (iLen < 0) {
-        iLen = StrT::Len(pszData);
-    }
+    if (iLen < 0)  iLen = StrT::Len(pszData);
+     
 
     ClearLineQty();                                 // no lines yet.
     IniChar_t* pDataNew = AllocBeginMin(iLen + 2);  // alloc 2 '\0's at the end.
@@ -668,7 +656,7 @@ StrLen_t cIniSectionData::SetLinesParse(const IniChar_t* pszData, StrLen_t iLen,
 
     // NOTE: Leave empty lines.
     ASSERT(m_apLines.GetSize() >= 1);  // ASSUME m_apLines.GetSize() has been set big enough.
-    m_iLinesUsed = StrT::ParseArray(pDataNew, iLen + 1, m_apLines.get_DataWork(), m_apLines.GetSize(), pszSep, uFlags);
+    m_iLinesUsed = StrT::ParseArray(ToSpan(pDataNew, iLen + 1), m_apLines, pszSep, uFlags);
 
     if (uFlags & STRP_EMPTY_STOP) {  // did we really use it all ? How much did we use ?
         if (m_iLinesUsed > 0) {
@@ -736,10 +724,9 @@ HRESULT cIniSectionData::ReadSectionData(OUT cStringA& rsSectionNext, cStreamInp
         ASSERT((dwLenBufferMax - i) >= k_LINE_LEN_DEF);
 
         // Read a line.
-        hRes = stmIn.ReadStringLine(pszLine, dwLenBufferMax - i);
+        hRes = stmIn.ReadStringLine(ToSpan(pszLine, dwLenBufferMax - i));
         if (FAILED(hRes)) break;
-        if (hRes == 0)  // end of the file. S_OK
-        {
+        if (hRes == 0) {  // end of the file. S_OK
             // hit the end of the file. thats OK. done with section
             if (i <= 0) {
                 hRes = S_FALSE;  // but its empty!
@@ -751,7 +738,7 @@ HRESULT cIniSectionData::ReadSectionData(OUT cStringA& rsSectionNext, cStreamInp
             pszLine = StrT::GetNonWhitespace(pszLine + 1);
             IniChar_t* pszBlockEnd = StrT::FindBlockEnd(STR_BLOCK_t::_SQUARE, pszLine);
             if (pszBlockEnd != nullptr && pszBlockEnd[0] == ']') {
-                rsSectionNext = cStringA(pszLine, StrT::Diff(pszBlockEnd, pszLine));  // Save next section header. m_sSectionNext
+                rsSectionNext = cStringA(ToSpan(pszLine, StrT::Diff(pszBlockEnd, pszLine)));  // Save next section header. m_sSectionNext
             } else {
                 // Next section header is BAD ! HRESULT_WIN32_C(ERROR_BAD_FORMAT)
                 rsSectionNext = "";  // bad !
@@ -783,7 +770,7 @@ HRESULT cIniSectionData::ReadSectionData(OUT cStringA& rsSectionNext, cStreamInp
     return hRes;
 }
 
-HRESULT cIniSectionData::WriteSectionData(cStreamOutput& file) {
+HRESULT cIniSectionData::WriteSectionData(ITextWriter& file) {
     ASSERT(IsValidLines());
 
     for (ITERATE_t j = 0; j < this->get_LineQty(); j++) {
@@ -815,7 +802,7 @@ bool GRAYCALL cIniSection::IsSectionTypeMatch(const IniChar_t* pszSection1, cons
     return !StrT::CmpHeadI(pszSection1, pszSection2);
 }
 
-HRESULT cIniSection::WriteSection(cStreamOutput& file) {
+HRESULT cIniSection::WriteSection(ITextWriter& file) {
     if (!cIniSection::IsSectionTypeRoot(this->m_sSectionTitle)) {
         cIniWriter writer(&file);
         HRESULT hRes = writer.WriteSectionHead0(this->m_sSectionTitle);
@@ -826,9 +813,7 @@ HRESULT cIniSection::WriteSection(cStreamOutput& file) {
 
 cStringI GRAYCALL cIniSection::GetSectionTitleParse(cStringI sSectionTitle, cStringI* psPropTag) {  // static
     //! Parse [SectionTitle]. similar to GetLineParse2()
-    if (psPropTag == nullptr) {
-        return sSectionTitle;
-    }
+    if (psPropTag == nullptr) return sSectionTitle;
 
     const IniChar_t* pszSep = StrT::FindChar<IniChar_t>(sSectionTitle, ' ');
     if (pszSep == nullptr) {
@@ -836,7 +821,7 @@ cStringI GRAYCALL cIniSection::GetSectionTitleParse(cStringI sSectionTitle, cStr
         return "";
     }
 
-    *psPropTag = cStringI(sSectionTitle, StrT::Diff<IniChar_t>(pszSep, sSectionTitle));
+    *psPropTag = sSectionTitle.Left(StrT::Diff<IniChar_t>(pszSep, sSectionTitle));
     return cStringI(pszSep + 1);
 }
 }  // namespace Gray

@@ -1,7 +1,5 @@
-//
 //! @file cTimeZone.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cTimeZone_H
 #define _INC_cTimeZone_H
@@ -21,6 +19,7 @@ namespace Gray {
 enum class TZ_DSTRULE_t {
     _NONE = 0,  /// don't use DST at all. UTC. 
     _AMERICAN,  /// use the American rules for DST. As they existed at the time.
+    // _MOROCCO // is insane.
 };
 
 /// <summary>

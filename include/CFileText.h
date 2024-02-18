@@ -1,7 +1,5 @@
-//
 //! @file cFileText.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cFileText_H
 #define _INC_cFileText_H
@@ -11,7 +9,7 @@
 
 #include "cFile.h"
 #include "cHandlePtr.h"
-#include "cStreamTextReader.h"
+#include "cTextReader.h"
 #include "cTextPos.h"
 
 namespace Gray {
@@ -36,7 +34,7 @@ class GRAYCORE_LINK cFileTextReader : public cFileTextBase {
     typedef cFileTextBase SUPER_t;
 
  public:
-    cStreamTextReader m_Reader;
+    cTextReaderStream m_Reader;
 
  public:
     cFileTextReader(size_t nSizeLineMax = cStream::k_FILE_BLOCK_SIZE * 2) noexcept : m_Reader(*this, nSizeLineMax) {}
@@ -49,22 +47,18 @@ class GRAYCORE_LINK cFileTextReader : public cFileTextBase {
         return cTextPos(GetPosition(), m_Reader.get_CurrentLineNumber(), 0);
     }
 
-    HRESULT ReadStringLine(char* pBuffer, StrLen_t nSizeMax) override {
-        return m_Reader.ReadStringLine(pBuffer, nSizeMax);
+    HRESULT ReadStringLine(cSpanX<char>& ret) override {
+        return m_Reader.ReadStringLine(ret);
     }
 };
 
 #if USE_CRT
-template <>
-inline void CloseHandleType(::FILE* p) noexcept {  // static
-    ::fclose(p);                                   // ignored BOOL return.
-}
 
 /// <summary>
 /// A file stream read/writer with special processing for detecting and converting text "\r\n" chars
 /// Most useful text file for reading. dont bother if write only. cFile is fine.
 /// like MFC CStdioFile. Compatible with C standard FILE,stdin,stdout,stderr.
-/// like cStreamTextReader
+/// like cTextReaderStream
 /// use OF_TEXT_A or OF_TEXT_W for format ??
 /// </summary>
 class GRAYCORE_LINK cFileText : public cFileTextBase { // Try to be compatible with MFC CStdioFile
@@ -73,7 +67,7 @@ class GRAYCORE_LINK cFileText : public cFileTextBase { // Try to be compatible w
     ::FILE* m_pStream = nullptr;  /// the current open script/text type file. named as MFC CStdioFile.
 
  private:
-    ITERATE_t m_iCurLineNum = 0;  /// track the line number we are on currently. (0 based) (for cTextPos)
+    ITERATE_t m_iLineNumCur = 0;  /// track the line number we are on currently. (0 based) (for cTextPos)
 
  private:
     HRESULT OpenCreate(cStringF sFilePath, OF_FLAGS_t nOpenFlags = OF_CREATE | OF_WRITE, _SECURITY_ATTRIBUTES* pSa = nullptr) {
@@ -94,7 +88,7 @@ class GRAYCORE_LINK cFileText : public cFileTextBase { // Try to be compatible w
     ~cFileText() noexcept override;
 
     inline ITERATE_t get_CurrentLineNumber() const noexcept {
-        return m_iCurLineNum;
+        return m_iLineNumCur;
     }
 
     bool isEOF() const;
@@ -127,14 +121,14 @@ class GRAYCORE_LINK cFileText : public cFileTextBase { // Try to be compatible w
     HRESULT WriteString(const wchar_t* pszStr) override {
         return SUPER_t::WriteString(pszStr);
     }
-    HRESULT ReadStringLine(char* pBuffer, StrLen_t nSizeMax) override;
-    HRESULT ReadStringLine(wchar_t* pszBuffer, StrLen_t iSizeMax) override {
-        return SUPER_t::ReadStringLine(pszBuffer, iSizeMax);
+    HRESULT ReadStringLine(cSpanX<char>& ret) override;
+    HRESULT ReadStringLine(cSpanX<wchar_t>& ret) override {
+        return SUPER_t::ReadStringLine(ret);
     }
 
     bool put_TextPos(const cTextPos& rPos);
     cTextPos get_TextPos() const {
-        return cTextPos(GetPosition(), m_iCurLineNum, 0);
+        return cTextPos(GetPosition(), m_iLineNumCur, 0);
     }
 };
 #endif

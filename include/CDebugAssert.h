@@ -1,8 +1,7 @@
-//
 //! @file cDebugAssert.h
 //! A very simple header for basic support of asserts.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
+
 #ifndef _INC_cDebugAssert_H
 #define _INC_cDebugAssert_H
 #ifndef NO_PRAGMA_ONCE

@@ -1,4 +1,3 @@
-//
 //! @file StrA.cpp
 //! String global search functions. Const strings
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
@@ -6,6 +5,7 @@
 #include "pch.h"
 // clang-format on
 #include "StrA.h"
+#include "StrBuilder.h"
 #include "StrChar.h"
 #include "cBits.h"
 #include "cLogMgr.h"
@@ -16,15 +16,15 @@ bool GRAYCALL StrA::IsBoolTrue(const char* pszStr, bool bHead) {  // static
     static const char* const k_pszBoolTrue[] = {
         "1",    "On",  "T",
         "true",  // JSON = "true", C#,.NET = "True"
-        "Y",    "Yes", nullptr,
+        "Y",    "Yes",
     };
 
     if (pszStr == nullptr) return false;
     ITERATE_t i;
     if (bHead) {
-        i = StrT::TableFindHeadSorted(pszStr, k_pszBoolTrue, _countof(k_pszBoolTrue) - 1);
+        i = StrT::SpanFindHeadSorted(pszStr, TOSPAN(k_pszBoolTrue));
     } else {
-        i = StrT::TableFindSorted(pszStr, k_pszBoolTrue, _countof(k_pszBoolTrue) - 1);
+        i = StrT::SpanFindSorted(pszStr, TOSPAN(k_pszBoolTrue));
     }
     return i >= 0;
 }
@@ -33,14 +33,14 @@ bool GRAYCALL StrA::IsBoolFalse(const char* pszStr, bool bHead) {
     //! convert string to boolean value.
     static const char* const k_pszBoolFalse[] = {
         // static
-        "0", "F", "false", "N", "No", "Off", nullptr,
+        "0", "F", "false", "N", "No", "Off",
     };
     if (pszStr == nullptr) return false;
     ITERATE_t i;
     if (bHead) {
-        i = StrT::TableFindHeadSorted(pszStr, k_pszBoolFalse, _countof(k_pszBoolFalse) - 1);
+        i = StrT::SpanFindHeadSorted(pszStr, TOSPAN(k_pszBoolFalse));
     } else {
-        i = StrT::TableFindSorted(pszStr, k_pszBoolFalse, _countof(k_pszBoolFalse) - 1);
+        i = StrT::SpanFindSorted(pszStr, TOSPAN(k_pszBoolFalse));
     }
     return i >= 0;
 }
@@ -55,16 +55,16 @@ bool GRAYCALL StrA::IsPlural(const char* pszWord) {
 
     static const char* const k_Plurals[] = {
         // These are already plural so don't need another s.
-        "boots", "cards", "eyes", "feet", "fish", "gloves", "hair", "leggings", "pants", "shoes", "sleeves", nullptr,
+        "boots", "cards", "eyes", "feet", "fish", "gloves", "hair", "leggings", "pants", "shoes", "sleeves",
         // sheep,  barracks, teeth, children, people, women, men, mice, geese
     };
 
-    ITERATE_t iRet = STR_TABLEFIND_SH(pszWord, k_Plurals);
+    ITERATE_t iRet = StrT::SpanFindHeadSorted(pszWord, TOSPAN(k_Plurals));
     if (iRet >= 0) return true;
 
     const char* pStr = StrT::FindCharRev(pszWord, ' ');
     if (pStr != nullptr) {
-        iRet = STR_TABLEFIND_SH(pStr + 1, k_Plurals);
+        iRet = StrT::SpanFindHeadSorted(pStr + 1, TOSPAN(k_Plurals));
         if (iRet >= 0) return true;
     }
 
@@ -115,33 +115,30 @@ INT_PTR GRAYCALL StrA::GetFixedIntRef(const char*& rpszExp, int nPlaces) {  // s
 
 //***********************************************************
 
-StrLen_t GRAYCALL StrA::MakeNamedBitmask(char* pszOut, StrLen_t iLenOutMax, UINT dwFlags, const char** ppszNames, COUNT_t iMaxNames, char chSep) {
+StrLen_t GRAYCALL StrA::MakeNamedBitmask(cSpanX<char>& ret, UINT dwFlags, const char** ppszNames, COUNT_t iMaxNames, char chSep) {
     //! For each bit set in dwFlags, copy a ppszNames[bit number] string to the pszOut. separated by chSep (|)
     //! @return string length
 
     bool bMath = (chSep == '\0');
     if (bMath) chSep = '|';
 
+    StrBuilder<char> sb(ret);
+
     COUNT_t iCount = 0;
-    StrLen_t iLen = 0;
-    for (BIT_ENUM_t i = 0; dwFlags != 0 && iLen < iLenOutMax; i++, dwFlags >>= 1) {  // walk the bits.
+    for (BIT_ENUM_t i = 0; dwFlags != 0 && !sb.isOverflow(); i++, dwFlags >>= 1) {  // walk the bits.
         if (!(dwFlags & 1)) continue;
-        if (iCount > 0) {
-            pszOut[iLen++] = chSep;
-        }
+        if (iCount > 0) sb.AddChar(chSep);
         if (i >= iMaxNames) {
             // No more names so just label as numbers. Ideally this would not be called.
-            iLen += StrT::UtoA(cBits::Mask1<UINT>(i), pszOut + iLen, iLenOutMax - iLen, 0x10);
+            sb.AdvanceWrite(StrT::UtoA(cBits::Mask1<UINT>(i), sb.get_SpanWrite(), 0x10));
         } else {
-            iLen += StrT::CopyLen(pszOut + iLen, ppszNames[i], iLenOutMax - iLen);
+            sb.AddStr(ppszNames[i]);
         }
         iCount++;
     }
-
-    if (iCount == 0 && bMath) {
-        // No bits were set.
-        iLen = StrT::CopyLen(pszOut, "0", iLenOutMax);
+    if (iCount == 0 && bMath) {        
+        return StrT::Copy(ret, "0"); // No bits were set.
     }
-    return iLen;
+    return sb.get_Length();
 }
 }  // namespace Gray

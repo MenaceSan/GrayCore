@@ -374,9 +374,6 @@
     <ClInclude Include="include\cResourceDir.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="include\cValArray.h">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="include\cArrayT.h">
       <Filter>include</Filter>
     </ClInclude>
@@ -384,9 +381,6 @@
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="include\cQueueChunked.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cStreamTextReader.h">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="include\cUniquePtr.h">
@@ -417,6 +411,24 @@
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="include\cLogSinkConsole.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cQueueDyn.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cThreadBase.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cOSModDyn.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cValSpan.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cTextReader.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ITextWriter.h">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>
@@ -699,9 +711,6 @@
     <ClCompile Include="src\cRegKey.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\cStreamTextReader.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="NoCRT.inl" />
     <ClCompile Include="src\cBlob.cpp">
       <Filter>src</Filter>
@@ -710,6 +719,15 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\cLogSink.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cThreadBase.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cOSModDyn.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cTextReader.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

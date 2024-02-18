@@ -1,4 +1,3 @@
-//
 //! @file cException.h
 //! Custom exception classes.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)

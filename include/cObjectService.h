@@ -1,7 +1,5 @@
-//
 //! @file cObjectService.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cObjectService_H
 #define _INC_cObjectService_H
@@ -24,18 +22,20 @@ namespace Gray {
 /// https://en.wikipedia.org/wiki/Service_locator_pattern
 /// like MFC CRuntimeClass. used to create cObject based objects by string name.
 /// </summary>
-class GRAYCORE_LINK cObjectService : public cSingleton<cObjectService> {
+class GRAYCORE_LINK cObjectService final : public cSingleton<cObjectService> {
+    SINGLETON_IMPL(cObjectService);
     cArraySortPtrName<cObjectFactory, ATOMCHAR_t> _Factories;  // all factories.
 
- public:
+ protected:
     cObjectService() noexcept : cSingleton<cObjectService>(this, typeid(cObjectService)) {}
 
+ public:
     bool RegisterFactory(cObjectFactory& factory) noexcept;
     bool RemoveFactory(cObjectFactory& factory) noexcept;
+    void ReleaseModuleChildren(::HMODULE hMod) override;
 
     static cObject* GRAYCALL CreateObject(const ATOMCHAR_t* pszTypeName);
     static cObject* GRAYCALL CreateObject(const TYPEINFO_t& type);
-    // 		static void GRAYCALL ReleaseModule(HMODULE hMod);
 };
 }  // namespace Gray
 

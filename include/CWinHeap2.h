@@ -1,8 +1,6 @@
-//
 //! @file cWinHeap2.h
 //! define inline headers for Global vs Local Heap variations. This doesnt matter anymore ?
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cWinHeap2_H
 #define _INC_cWinHeap2_H

@@ -1,4 +1,3 @@
-//
 //! @file cTimeUnits.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 // clang-format off
@@ -10,6 +9,7 @@
 #include "cTimeInt.h"
 #include "cTimeUnits.h"
 #include "cTimeZone.h"
+#include "StrBuilder.h"
 #ifdef __linux__
 #include "cTimeVal.h"
 #endif
@@ -60,18 +60,16 @@ const WORD cTimeUnits::k_MonthDaySums[2][static_cast<int>(TIMEMONTH_t::_QTY) + 1
     {0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335, 366}   // leap year
 };
 
-const GChar_t* const cTimeUnits::k_MonthName[static_cast<int>(TIMEMONTH_t::_QTY) + 1] = {  // Jan=0
-    _GT("January"), _GT("February"), _GT("March"), _GT("April"), _GT("May"), _GT("June"), _GT("July"), _GT("August"), _GT("September"), _GT("October"), _GT("November"), _GT("December"), nullptr};
+const GChar_t* const cTimeUnits::k_MonthName[static_cast<int>(TIMEMONTH_t::_QTY)] = {  // Jan=0
+    _GT("January"), _GT("February"), _GT("March"), _GT("April"), _GT("May"), _GT("June"), _GT("July"), _GT("August"), _GT("September"), _GT("October"), _GT("November"), _GT("December")};
 
-const GChar_t* const cTimeUnits::k_MonthAbbrev[static_cast<int>(TIMEMONTH_t::_QTY) + 1] = {
-    _GT("Jan"), _GT("Feb"), _GT("Mar"), _GT("Apr"), _GT("May"), _GT("Jun"), _GT("Jul"), _GT("Aug"), _GT("Sep"), _GT("Oct"), _GT("Nov"), _GT("Dec"), nullptr,
-};
+const GChar_t* const cTimeUnits::k_MonthAbbrev[static_cast<int>(TIMEMONTH_t::_QTY)] = {_GT("Jan"), _GT("Feb"), _GT("Mar"), _GT("Apr"), _GT("May"), _GT("Jun"), _GT("Jul"), _GT("Aug"), _GT("Sep"), _GT("Oct"), _GT("Nov"), _GT("Dec")};
 
-const GChar_t* const cTimeUnits::k_DayName[static_cast<int>(TIMEDOW_t::_QTY) + 1] = {  // Sun=0
-    _GT("Sunday"), _GT("Monday"), _GT("Tuesday"), _GT("Wednesday"), _GT("Thursday"), _GT("Friday"), _GT("Saturday"), nullptr};
+const GChar_t* const cTimeUnits::k_DayName[static_cast<int>(TIMEDOW_t::_QTY) ] = {  // Sun=0
+    _GT("Sunday"), _GT("Monday"), _GT("Tuesday"), _GT("Wednesday"), _GT("Thursday"), _GT("Friday"), _GT("Saturday") };
 
-const GChar_t* const cTimeUnits::k_DayAbbrev[static_cast<int>(TIMEDOW_t::_QTY) + 1] = {  // Sun=0
-    _GT("Sun"), _GT("Mon"), _GT("Tue"), _GT("Wed"), _GT("Thu"), _GT("Fri"), _GT("Sat"), nullptr};
+const GChar_t* const cTimeUnits::k_DayAbbrev[static_cast<int>(TIMEDOW_t::_QTY) ] = {  // Sun=0
+    _GT("Sun"), _GT("Mon"), _GT("Tue"), _GT("Wed"), _GT("Thu"), _GT("Fri"), _GT("Sat") };
 
 const GChar_t cTimeUnits::k_Seps[3] = _GT("/:");  // Normal date string separators. "/:"
 
@@ -455,7 +453,7 @@ void cTimeUnits::AddTZ(TZ_TYPE nTimeZone) {
 
 //******************************************************************
 
-StrLen_t cTimeUnits::GetTimeSpanStr(GChar_t* pszOut, StrLen_t iOutSizeMax, TIMEUNIT_t eUnitHigh, int iUnitsDesired, bool bShortText) const {
+StrLen_t cTimeUnits::GetTimeSpanStr(cSpanX<GChar_t>& ret, TIMEUNIT_t eUnitHigh, int iUnitsDesired, bool bShortText) const {
     //! A delta/span time string. from years to milliseconds.
     //! Get a text description of amount of time span (delta)
     //! @arg
@@ -472,27 +470,27 @@ StrLen_t cTimeUnits::GetTimeSpanStr(GChar_t* pszOut, StrLen_t iOutSizeMax, TIMEU
     }
 
     int iUnitsPrinted = 0;
-    StrLen_t iOutLen = 0;
     UINT64 nUnits = 0;
     int i = static_cast<int>(TIMEUNIT_t::_Year);  // 0
     for (; i < static_cast<int>(eUnitHigh); i++) {
         nUnits = (nUnits + GetUnit0((TIMEUNIT_t)i)) * k_Units[i].m_uSubRatio;
     }
 
+    StrBuilder<GChar_t> sb(ret);
+
     for (; i < static_cast<int>(TIMEUNIT_t::_Microsecond); i++) {  // highest to lowest.
         nUnits += GetUnit0((TIMEUNIT_t)i);
         if (!nUnits) continue;  // just skip empty units.
 
-        if (iOutLen) {
-            iOutLen += StrT::CopyLen(pszOut + iOutLen, _GT(" "), iOutSizeMax - iOutLen);  // " and ";
-        }
+        sb.AddSep(' ');  // " and ";
+         
         if (bShortText) {
-            iOutLen += StrT::sprintfN(pszOut + iOutLen, iOutSizeMax - iOutLen, _GT("%u%s"), (int)nUnits, StrArg<GChar_t>(cTimeUnits::k_Units[i].m_pszUnitNameS));
+            sb.Printf(_GT("%u%s"), (int)nUnits, StrArg<GChar_t>(cTimeUnits::k_Units[i].m_pszUnitNameS));
         } else if (nUnits == 1) {
-            iOutLen += StrT::CopyLen(pszOut + iOutLen, _GT("1 "), iOutSizeMax - iOutLen);
-            iOutLen += StrT::CopyLen(pszOut + iOutLen, cTimeUnits::k_Units[i].m_pszUnitNameL, iOutSizeMax - iOutLen);
+            sb.AddStr(_GT("1 "));
+            sb.AddStr(cTimeUnits::k_Units[i].m_pszUnitNameL);
         } else {
-            iOutLen += StrT::sprintfN(pszOut + iOutLen, iOutSizeMax - iOutLen, _GT("%u %ss"), (int)nUnits, cTimeUnits::k_Units[i].m_pszUnitNameL);
+            sb.Printf(_GT("%u %ss"), (int)nUnits, cTimeUnits::k_Units[i].m_pszUnitNameL);
         }
 
         if (++iUnitsPrinted >= iUnitsDesired)  // only print iUnitsDesired most significant units of time
@@ -502,25 +500,25 @@ StrLen_t cTimeUnits::GetTimeSpanStr(GChar_t* pszOut, StrLen_t iOutSizeMax, TIMEU
 
     if (iUnitsPrinted == 0) {
         // just 0
-        iOutLen = StrT::CopyLen(pszOut, bShortText ? _GT("0s") : _GT("0 seconds"), iOutSizeMax);
+        return StrT::Copy(ret, bShortText ? _GT("0s") : _GT("0 seconds"));
     }
 
-    return iOutLen;
+    return sb.get_Length();
 }
 
-StrLen_t cTimeUnits::GetFormStr(GChar_t* pszOut, StrLen_t iOutSizeMax, const GChar_t* pszFormat) const {
+StrLen_t cTimeUnits::GetFormStr(cSpanX<GChar_t>& ret, const GChar_t* pszFormat) const {
     if (PtrCastToNum(pszFormat) < static_cast<int>(TIMEFORMAT_t::_QTY)) {  // IS_INTRESOURCE()
         pszFormat = k_StrFormats[PtrCastToNum(pszFormat)];
     }
 
     GChar_t szTmp[2];
+    StrBuilder<GChar_t> sb(ret);
 
-    StrLen_t iOut = 0;
-    for (StrLen_t i = 0; iOut < iOutSizeMax; i++) {
+    for (StrLen_t i = 0; !sb.isOverflow(); i++) {
         GChar_t ch = pszFormat[i];
         if (ch == '\0') break;
         if (ch != '%') {
-            pszOut[iOut++] = ch;
+            sb.AddChar(ch);
             continue;
         }
 
@@ -532,7 +530,7 @@ StrLen_t cTimeUnits::GetFormStr(GChar_t* pszOut, StrLen_t iOutSizeMax, const GCh
         }
 
         const GChar_t* pszVal = nullptr;
-        int iValPad = 0;
+        int iValWidth = 0;
         short wVal = 0;
         switch (ch) {
             case '/':
@@ -546,11 +544,11 @@ StrLen_t cTimeUnits::GetFormStr(GChar_t* pszOut, StrLen_t iOutSizeMax, const GCh
 
             case 'y':  // Year without century, as decimal number (00 to 99)
                 wVal = m_wYear % 100;
-                iValPad = 2;
+                iValWidth = 2;
                 break;
             case 'Y':  // Year with century, as decimal number
                 wVal = m_wYear;
-                iValPad = 0;
+                iValWidth = 0;
                 break;
 
             case 'b':  // Abbreviated month name
@@ -564,11 +562,11 @@ StrLen_t cTimeUnits::GetFormStr(GChar_t* pszOut, StrLen_t iOutSizeMax, const GCh
                 break;
             case 'm':  // Month as decimal number (01 to 12)
                 wVal = m_wMonth;
-                iValPad = 2;
+                iValWidth = 2;
                 break;
             case 'd':  // Day of month as decimal number (01 to 31)
                 wVal = m_wDay;
-                iValPad = 2;
+                iValWidth = 2;
                 break;
 
             case 'a':
@@ -579,24 +577,24 @@ StrLen_t cTimeUnits::GetFormStr(GChar_t* pszOut, StrLen_t iOutSizeMax, const GCh
                 break;
             case 'w':  // Weekday as decimal number (0 to 6; Sunday is 0)
                 wVal = static_cast<WORD>(get_DOW());
-                iValPad = 0;
+                iValWidth = 0;
                 break;
             case 'j':  // Day of year as decimal number (001 to 366)
                 wVal = static_cast<WORD>(get_DOW());
-                iValPad = 3;
+                iValWidth = 3;
                 break;
 
             case 'H':  // Hour in 24-hour format (00 to 23)
                 wVal = m_wHour;
-                iValPad = 2;
+                iValWidth = 2;
                 break;
             case 'k':
                 wVal = m_wHour;
-                iValPad = 0;
+                iValWidth = 0;
                 break;
             case 'I':  // Hour in 12-hour format (01 to 12)
                 wVal = (m_wHour % 12);
-                iValPad = 2;
+                iValWidth = 2;
                 if (!wVal) wVal = 12;
                 break;
             case 'p':  // Current locale's A.M./P.M. indicator for 12-hour clock
@@ -604,11 +602,11 @@ StrLen_t cTimeUnits::GetFormStr(GChar_t* pszOut, StrLen_t iOutSizeMax, const GCh
                 break;
             case 'M':  // Minute as decimal number (00 to 59)
                 wVal = m_wMinute;
-                iValPad = 2;
+                iValWidth = 2;
                 break;
             case 'S':  // Second as decimal number (00 to 59)
                 wVal = m_wSecond;
-                iValPad = 2;
+                iValWidth = 2;
                 break;
 
             case 'Z': {  // Either the time-zone name or time zone abbreviation, depending on registry settings; no characters if time zone is unknown
@@ -645,30 +643,29 @@ StrLen_t cTimeUnits::GetFormStr(GChar_t* pszOut, StrLen_t iOutSizeMax, const GCh
                 break;
         }
 
-        GChar_t* pszOutCur = pszOut + iOut;
-        StrLen_t iOutSizeLeft = iOutSizeMax - iOut;
         if (pszVal != nullptr) {
-            iOut += StrT::CopyLen(pszOutCur, pszVal, iOutSizeLeft);
-        } else if (iValPad > 0 && iValPad < iOutSizeLeft) {
+            sb.AddStr(pszVal);
+        } else if (iValWidth > 0 && iValWidth < sb.get_WriteSpaceQty()) {
             // right padded number.
-            GChar_t* pszMSD = StrT::ULtoARev(wVal, pszOutCur, iValPad + 1, 10, 'A');
+            GChar_t* pszOutCur = sb.GetWritePrep(iValWidth);
+            cSpanX<GChar_t> spanMSD = StrNum::ULtoARev(wVal, pszOutCur, iValWidth, 10, 'A');
+            GChar_t* pszMSD = spanMSD.get_DataWork();
             while (pszMSD > pszOutCur) {
                 *(--pszMSD) = '0';
             }
-            iOut += iValPad;
+            sb.AdvanceWrite(iValWidth);
         } else {
-            iOut += StrT::UtoA(wVal, pszOutCur, iOutSizeLeft);
+            sb.AdvanceWrite(StrT::UtoA(wVal, sb.get_SpanWrite()));
         }
     }
 
-    pszOut[iOut] = '\0';
-    return iOut;
+    return sb.get_Length();
 }
 
 //******************************************************************
 
 HRESULT cTimeUnits::SetTimeStr(const GChar_t* pszDateTime, TZ_TYPE nTimeZone) {
-    //! set cTimeUnits from a string.
+    //! parse cTimeUnits from a string.
     //! @arg
     //!  pszDateTime = "2008/10/23 12:0:0 PM GMT"
     //!  rnTimeZoneOffset = if found a time zone indicator in the string. do not set if nothing found.
@@ -697,26 +694,26 @@ HRESULT cTimeUnits::SetTimeStr(const GChar_t* pszDateTime, TZ_TYPE nTimeZone) {
 
 StrLen_t cTimeParser::ParseNamedUnit(const GChar_t* pszName) {
     // Get values for named units. TIMEUNIT_t::_Year to TIMEUNIT_t::_TZ
-    ITERATE_t iStart = STR_TABLEFIND_NH(pszName, cTimeUnits::k_MonthName);
+    ITERATE_t iStart = StrT::SpanFindHead(pszName, TOSPAN(cTimeUnits::k_MonthName));
     if (iStart >= 0) {
         m_Unit[m_iUnitsParsed].m_Type = TIMEUNIT_t::_Month;
         m_Unit[m_iUnitsParsed].m_nValue = (TIMEVALU_t)(iStart + 1);
         return StrT::Len(cTimeUnits::k_MonthName[iStart]);
     }
-    iStart = STR_TABLEFIND_NH(pszName, cTimeUnits::k_MonthAbbrev);
+    iStart = StrT::SpanFindHead(pszName, TOSPAN(cTimeUnits::k_MonthAbbrev));
     if (iStart >= 0) {
         m_Unit[m_iUnitsParsed].m_Type = TIMEUNIT_t::_Month;
         m_Unit[m_iUnitsParsed].m_nValue = (TIMEVALU_t)(iStart + 1);
         return StrT::Len(cTimeUnits::k_MonthAbbrev[iStart]);
     }
 
-    iStart = STR_TABLEFIND_NH(pszName, cTimeUnits::k_DayName);
+    iStart = StrT::SpanFindHead(pszName, TOSPAN(cTimeUnits::k_DayName));
     if (iStart >= 0) {
         m_Unit[m_iUnitsParsed].m_Type = TIMEUNIT_t::_DOW;  // Temporary for DOW
         m_Unit[m_iUnitsParsed].m_nValue = (TIMEVALU_t)iStart;
         return StrT::Len(cTimeUnits::k_DayName[iStart]);
     }
-    iStart = STR_TABLEFIND_NH(pszName, cTimeUnits::k_DayAbbrev);
+    iStart = StrT::SpanFindHead(pszName, TOSPAN(cTimeUnits::k_DayAbbrev));
     if (iStart >= 0) {
         m_Unit[m_iUnitsParsed].m_Type = TIMEUNIT_t::_DOW;  // Temporary for DOW
         m_Unit[m_iUnitsParsed].m_nValue = (TIMEVALU_t)iStart;

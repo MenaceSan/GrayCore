@@ -911,6 +911,8 @@
     <ClInclude Include="include\cMem.h" />
     <ClInclude Include="include\cBlob.h" />
     <ClInclude Include="include\cMemPage.h" />
+    <ClInclude Include="include\cOSModDyn.h" />
+    <ClInclude Include="include\cQueueDyn.h" />
     <ClInclude Include="include\cSpan.h" />
     <ClInclude Include="include\cMime.h" />
     <ClInclude Include="include\cNonCopyable.h" />
@@ -943,14 +945,15 @@
     <ClInclude Include="include\cStreamProgress.h" />
     <ClInclude Include="include\cStreamQueue.h" />
     <ClInclude Include="include\cStreamStack.h" />
-    <ClInclude Include="include\cStreamTextReader.h" />
     <ClInclude Include="include\cString.h" />
     <ClInclude Include="include\cSystemHelper.h" />
     <ClInclude Include="include\cSystemInfo.h" />
     <ClInclude Include="include\cTempPool.h" />
     <ClInclude Include="include\cTextPos.h" />
+    <ClInclude Include="include\cTextReader.h" />
     <ClInclude Include="include\cThreadArray.h" />
     <ClInclude Include="include\cThreadArrayString.h" />
+    <ClInclude Include="include\cThreadBase.h" />
     <ClInclude Include="include\cThreadLocalSys.h" />
     <ClInclude Include="include\cThreadLock.h" />
     <ClInclude Include="include\cThreadLockRef.h" />
@@ -969,7 +972,7 @@
     <ClInclude Include="include\cUniquePtr.h" />
     <ClInclude Include="include\cUnitTest.h" />
     <ClInclude Include="include\cUnitTestDecl.h" />
-    <ClInclude Include="include\cValArray.h" />
+    <ClInclude Include="include\cValSpan.h" />
     <ClInclude Include="include\cValT.h" />
     <ClInclude Include="include\cWinHeap.h" />
     <ClInclude Include="include\cWinHeap2.h" />
@@ -978,6 +981,7 @@
     <ClInclude Include="include\GrayVersion.h" />
     <ClInclude Include="include\HResult.h" />
     <ClInclude Include="include\Index.h" />
+    <ClInclude Include="include\ITextWriter.h" />
     <ClInclude Include="include\IUnknown.h" />
     <ClInclude Include="include\IUnkObject.h" />
     <ClInclude Include="include\PtrCast.h" />
@@ -1074,6 +1078,7 @@
     <ClCompile Include="src\cObjectService.cpp" />
     <ClCompile Include="src\cOSHandle.cpp" />
     <ClCompile Include="src\cOSHandleSet.cpp" />
+    <ClCompile Include="src\cOSModDyn.cpp" />
     <ClCompile Include="src\cOSModImpl.cpp" />
     <ClCompile Include="src\cOSModule.cpp" />
     <ClCompile Include="src\cOSProcess.cpp" />
@@ -1086,13 +1091,14 @@
     <ClCompile Include="src\cSingleton.cpp" />
     <ClCompile Include="src\cStream.cpp" />
     <ClCompile Include="src\cStreamStack.cpp" />
-    <ClCompile Include="src\cStreamTextReader.cpp" />
     <ClCompile Include="src\cString.cpp" />
     <ClCompile Include="src\cSystemInfo.cpp" />
     <ClCompile Include="src\cTempPool.cpp" />
     <ClCompile Include="src\cTextPos.cpp" />
+    <ClCompile Include="src\cTextReader.cpp" />
     <ClCompile Include="src\cThreadLock.cpp" />
     <ClCompile Include="src\cThreadLockRW.cpp" />
+    <ClCompile Include="src\cThreadBase.cpp" />
     <ClCompile Include="src\cTimeDouble.cpp" />
     <ClCompile Include="src\cTimeFile.cpp" />
     <ClCompile Include="src\cTimeInt.cpp" />

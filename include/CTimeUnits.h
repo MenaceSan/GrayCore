@@ -1,8 +1,6 @@
-//
 //! @file cTimeUnits.h
 //! common for cTimeInt, cTimeDouble, cTimeSys
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cTimeUnits_H
 #define _INC_cTimeUnits_H
@@ -14,6 +12,7 @@
 #include "StrArg.h"
 #include "StrConst.h"
 #include "cDebugAssert.h"
+#include "cSpan.h"
 #include <time.h>  // system time_t for count of seconds. int32 or int64.
 
 namespace Gray {
@@ -173,11 +172,11 @@ struct GRAYCORE_LINK cTimeUnits {
     static const WORD k_MonthDaySums[2][static_cast<int>(TIMEMONTH_t::_QTY) + 1];  /// Jan=0
 
     // may change for language ?
-    static const GChar_t* const k_MonthName[static_cast<int>(TIMEMONTH_t::_QTY) + 1];  /// January=0
-    static const GChar_t* const k_MonthAbbrev[static_cast<int>(TIMEMONTH_t::_QTY) + 1];  /// Jan=0
+    static const GChar_t* const k_MonthName[static_cast<int>(TIMEMONTH_t::_QTY) ];  /// January=0
+    static const GChar_t* const k_MonthAbbrev[static_cast<int>(TIMEMONTH_t::_QTY)];  /// Jan=0
 
-    static const GChar_t* const k_DayName[static_cast<int>(TIMEDOW_t::_QTY) + 1];  /// Sunday=0
-    static const GChar_t* const k_DayAbbrev[static_cast<int>(TIMEDOW_t::_QTY) + 1];  /// Sun=0
+    static const GChar_t* const k_DayName[static_cast<int>(TIMEDOW_t::_QTY) ];  /// Sunday=0
+    static const GChar_t* const k_DayAbbrev[static_cast<int>(TIMEDOW_t::_QTY) ];  /// Sun=0
 
     // internationalization. regional
     static const GChar_t k_TimeSeparator = ':';  /// this is the same for all formats. e.g. 09:00 AM. NOT USED ?
@@ -199,9 +198,8 @@ struct GRAYCORE_LINK cTimeUnits {
 
     COMPARE_TYPE Compare(cTimeUnits& b) const;
     bool isTimeFuture() const;
-    bool isTimePast() const {
-        //! AKA Expired ?
-        return !isTimeFuture();
+    bool isTimePast() const {        
+        return !isTimeFuture(); //! AKA Expired ?
     }
 
     /// <summary>
@@ -268,12 +266,12 @@ struct GRAYCORE_LINK cTimeUnits {
     /// </summary>
     /// <param name="wYear"></param>
     /// <returns>length of string in chars. -lte- 0 = failed.</returns>
-    StrLen_t GetFormStr(GChar_t* pszOut, StrLen_t iOutSizeMax, const GChar_t* pszFormat) const;
-    StrLen_t GetFormStr(GChar_t* pszOut, StrLen_t iOutSizeMax, TIMEFORMAT_t eFormat = TIMEFORMAT_t::_DEFAULT) const {
-        return GetFormStr(pszOut, iOutSizeMax, CastNumToPtr<GChar_t>(static_cast<int>(eFormat)));
+    StrLen_t GetFormStr(cSpanX<GChar_t>& ret, const GChar_t* pszFormat) const;
+    StrLen_t GetFormStr(cSpanX<GChar_t>& ret, TIMEFORMAT_t eFormat = TIMEFORMAT_t::_DEFAULT) const {
+        return GetFormStr(ret, CastNumToPtr<GChar_t>(static_cast<int>(eFormat)));
     }
     HRESULT SetTimeStr(const GChar_t* pszDateTime, TZ_TYPE nTimeZoneOffset);
-    StrLen_t GetTimeSpanStr(GChar_t* pszOut, StrLen_t iOutSizeMax, TIMEUNIT_t eUnitHigh = TIMEUNIT_t::_Day, int iUnitsDesired = 2, bool bShortText = false) const;
+    StrLen_t GetTimeSpanStr(cSpanX<GChar_t>& ret, TIMEUNIT_t eUnitHigh = TIMEUNIT_t::_Day, int iUnitsDesired = 2, bool bShortText = false) const;
 
     static int GRAYCALL IsLeapYear(TIMEVALU_t wYear);
     static int GRAYCALL GetLeapYearsSince2K(TIMEVALU_t wYear);

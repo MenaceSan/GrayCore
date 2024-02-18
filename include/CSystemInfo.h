@@ -1,7 +1,5 @@
-//
 //! @file cSystemInfo.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cSystemInfo_H
 #define _INC_cSystemInfo_H
@@ -47,13 +45,13 @@ namespace Gray {
 /// The detected system params may be effected by system virtualization.
 /// lower level than cSystemHelper. does not use cString.
 /// </summary>
-class GRAYCORE_LINK cSystemInfo : public cSingleton<cSystemInfo> {
-    friend class cSingleton<cSystemInfo>;
+class GRAYCORE_LINK cSystemInfo final : public cSingleton<cSystemInfo> {
+    SINGLETON_IMPL(cSystemInfo);
 
 #ifdef _WIN32
  public:
-    SYSTEM_INFO m_SystemInfo;   /// Cached info.  _MSC_VER <= 1200
-    OSVERSIONINFOEXW m_OsInfo;  /// always use *W version and call RtlGetVersion() to overcome M$ nerf. OSVERSIONINFOEXW
+    ::SYSTEM_INFO m_SystemInfo;   /// Cached info.  _MSC_VER <= 1200
+    ::OSVERSIONINFOEXW m_OsInfo;  /// always use *W version and call RtlGetVersion() to overcome M$ nerf. OSVERSIONINFOEXW
 #elif defined(__linux__)
  protected:
     struct utsname m_utsname;    /// output from uname() on __linux__.
@@ -86,13 +84,11 @@ class GRAYCORE_LINK cSystemInfo : public cSingleton<cSystemInfo> {
     bool isVer3_17_plus() const noexcept;
 #endif
 
-    static StrLen_t GRAYCALL GetSystemDir(FILECHAR_t* pszDir, StrLen_t iLenMax);
-    static HRESULT GRAYCALL GetSystemName(FILECHAR_t* pszName, StrLen_t iLenMax);
+    static StrLen_t GRAYCALL GetSystemDir(cSpanX<FILECHAR_t>& ret);
+    static HRESULT GRAYCALL GetSystemName(cSpanX<FILECHAR_t>& ret);
 
     static bool GRAYCALL SystemShutdown(bool bReboot);
     static void GRAYCALL SystemBeep();
-
-    CHEAPOBJECT_IMPL;
 };
 }  // namespace Gray
 

@@ -1,8 +1,6 @@
-//
 //! @file cPtrTraceMgr.h
 //! Attempt to trace use of pointers.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cPtrTraceMgr_H
 #define _INC_cPtrTraceMgr_H
@@ -45,8 +43,8 @@ struct GRAYCORE_LINK cPtrTraceEntry {
 /// <summary>
 /// USE_PTRTRACE_IUNK = We are tracing all calls to cIUnkPtr or cRefPtr so we can figure out who is not releasing their ref.
 /// </summary>
-class GRAYCORE_LINK cPtrTraceMgr : public cSingleton<cPtrTraceMgr> {
-    friend class cSingleton<cPtrTraceMgr>;
+class GRAYCORE_LINK cPtrTraceMgr final : public cSingleton<cPtrTraceMgr> {
+    SINGLETON_IMPL(cPtrTraceMgr);
     friend cPtrTrace;
 
     mutable cThreadLockCount m_Lock;
@@ -62,7 +60,6 @@ class GRAYCORE_LINK cPtrTraceMgr : public cSingleton<cPtrTraceMgr> {
         return m_aTraces.GetSize();
     }
     virtual int TraceDump(cLogProcessor* pLog, ITERATE_t iCountExpected);
-    CHEAPOBJECT_IMPL;
 };
 }  // namespace Gray
 #endif

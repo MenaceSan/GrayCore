@@ -1,4 +1,3 @@
-//
 //! @file cFilePath.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 // clang-format off
@@ -116,10 +115,8 @@ bool GRAYCALL cFilePath::IsFilePathTitle(const FILECHAR_t* pszName) {  // static
         if (i > _MAX_PATH - 1) break;  // weird.
         FILECHAR_t ch = pszName[0];
         if (ch == '\0') return true;
-        if (IsCharDirSep(ch))  // this sort of access is not allowed.
-            break;
-        if (ch == ':')  // this sort of access is not allowed.
-            break;
+        if (IsCharDirSep(ch)) break;  // this sort of access is not allowed.            
+        if (ch == ':') break;  // this sort of access is not allowed.            
     }
     return false;
     ;
@@ -244,24 +241,20 @@ FILECHAR_t* GRAYCALL cFilePath::GetFileNameExt(const FILECHAR_t* pszName, StrLen
     return pszExt;
 }
 
-StrLen_t GRAYCALL cFilePath::StripFileExt(FILECHAR_t* pszFile, StrLen_t iLen, bool bMultiDot) {  // static
+StrLen_t GRAYCALL cFilePath::StripFileExt(cSpanX<FILECHAR_t>& fileName, bool bMultiDot) {  // static
     //! strip the ext off the file name (or path).
     //! @arg
     //!	iLen = the known string length of the file name.
     //! @return
     //!	new length of the string.
-    if (pszFile == nullptr) return 0;
-    if (iLen <= k_StrLen_UNK) {
-        iLen = StrT::Len(pszFile);
-    } else {
-        pszFile[iLen] = '\0';
-    }
-    FILECHAR_t* pszExt = GetFileNameExt(pszFile, iLen, bMultiDot);
+    if (fileName.isNull()) return 0;
+    FILECHAR_t* pszExt = GetFileNameExt(fileName, fileName.get_MaxLen(), bMultiDot);
     if (StrT::IsNullOrEmpty(pszExt)) {
-        return iLen;
+        return fileName.get_MaxLen();
     }
+    ASSERT(fileName.IsInternalPtr(pszExt));
     *pszExt = '\0';
-    return StrT::Diff(pszExt, pszFile);
+    return StrT::Diff(pszExt, fileName.get_DataConst());
 }
 
 cFilePath GRAYCALL cFilePath::ReplaceFileExt(const FILECHAR_t* pszFilePath, const FILECHAR_t* pszExtNew) {
@@ -271,13 +264,12 @@ cFilePath GRAYCALL cFilePath::ReplaceFileExt(const FILECHAR_t* pszFilePath, cons
     if (pszFilePath == nullptr) return "";
 
     FILECHAR_t szTemp[_MAX_PATH];
-    StrLen_t iLen = StrT::CopyLen(szTemp, pszFilePath, STRMAX(szTemp));
+    StrLen_t iLen = StrT::Copy(TOSPAN(szTemp), pszFilePath);
     FILECHAR_t* pszExt = GetFileNameExt(szTemp, iLen);
     if (pszExt != nullptr) {
         iLen = StrT::Diff(pszExt, szTemp);
     }
-
-    StrT::CopyLen(szTemp + iLen, pszExtNew, STRMAX(szTemp) - iLen);
+    StrT::Copy(ToSpan(szTemp + iLen, STRMAX(szTemp) - iLen), pszExtNew);
     return szTemp;
 }
 
@@ -312,8 +304,8 @@ bool GRAYCALL cFilePath::HasTitleWildcards(const FILECHAR_t* pszPath) {  // stat
 cFilePath GRAYCALL cFilePath::GetFileNameNE(const FILECHAR_t* pszPath, StrLen_t iLenPath, bool bMultiDot) {  // static
     // Title, GetFileTitle()
     FILECHAR_t szTmp[_MAX_PATH];
-    StrLen_t iLenTmp = StrT::CopyLen(szTmp, GetFileName(pszPath, iLenPath), STRMAX(szTmp));
-    StripFileExt(szTmp, iLenTmp, bMultiDot);
+    const StrLen_t iLenTmp = StrT::Copy(TOSPAN(szTmp), GetFileName(pszPath, iLenPath));
+    StripFileExt(ToSpan(szTmp, iLenTmp), bMultiDot);
     return szTmp;
 }
 
@@ -338,12 +330,9 @@ StrLen_t GRAYCALL cFilePath::MakeSymName(ATOMCHAR_t* pszOut, const FILECHAR_t* p
             iLen = 0;  // start over.
             iLenLastDot = k_StrLen_UNK;
             continue;
-        } else if (ch == '.')  // dots in name
-        {
-            if (iLen == 0)  // skip it at start. just part of the name (thats odd but acceptable)
-                continue;
-            if (iLenLastDot == iLen - 1)  // relative dir ? ( if .. ) should collapse this back to the previous slash?
-            {
+        } else if (ch == '.') {             // dots in name
+            if (iLen == 0) continue;        // skip it at start. just part of the name (thats odd but acceptable)
+            if (iLenLastDot == iLen - 1) {  // relative dir ? ( if .. ) should collapse this back to the previous slash?
                 // Go back to last slash if there is one? MakeProperPath() ?
                 // DEBUG_ERR(( "Relative path?!" ));
                 continue;
@@ -351,26 +340,21 @@ StrLen_t GRAYCALL cFilePath::MakeSymName(ATOMCHAR_t* pszOut, const FILECHAR_t* p
             iLenLastDot = iLen;
             ch = chSub;
         } else if (IsCharDirSep(ch)) {
-            if (iLen == 0)  // skip it. root based ?
-                continue;
+            if (iLen == 0) continue;  // skip it. root based ?
             ch = chSub;
-        } else if (StrChar::IsDigitA(ch))  // ! alphanumeric
-        {
+        } else if (StrChar::IsDigitA(ch)) {  // ! alphanumeric
             // don't allow numbers at start
             if (iLen == 0 && !(flags & FILECHR_Name2))  // skip it. can't lead with number. ignore prefix as it may not always be used?
                 ch = chSub;
-        } else if (!StrChar::IsAlpha(ch) && ch != chSub)  // IsCSym
-        {
-            ch = chSub;  // not a valid symbolic char!
+        } else if (!StrChar::IsAlpha(ch) && ch != chSub) {  // IsCSym
+            ch = chSub;                                     // not a valid symbolic char!
         }
-        if (ch == '\0')  // just skip it.
-            continue;
+        if (ch == '\0') continue;                // just skip it.
         pszOut[iLen++] = CastN(ATOMCHAR_t, ch);  // only a valid symbolic char
     }
 
-    if (iLenLastDot > 0 && !(flags & FILECHR_Ext))  // strip extension.
-    {
-        iLen = iLenLastDot;  // just the last ext. other dots in the name are OK.
+    if (iLenLastDot > 0 && !(flags & FILECHR_Ext)) {  // strip extension.
+        iLen = iLenLastDot;                           // just the last ext. other dots in the name are OK.
     }
     pszOut[iLen] = '\0';
     return iLen;
@@ -378,8 +362,8 @@ StrLen_t GRAYCALL cFilePath::MakeSymName(ATOMCHAR_t* pszOut, const FILECHAR_t* p
 
 cStringA GRAYCALL cFilePath::MakeSymNameStr(const FILECHAR_t* pszPath, ATOMCHAR_t chSub, BYTE flags) {  // static
     ATOMCHAR_t szTmp[k_LEN_MAX_CSYM];
-    StrLen_t iLen = MakeSymName(szTmp, pszPath, chSub, flags);
-    return cStringA(szTmp, iLen);
+    const StrLen_t iLen = MakeSymName(szTmp, pszPath, chSub, flags);
+    return ToSpan(szTmp, iLen);
 }
 
 COMPARE_t GRAYCALL cFilePath::ComparePath(const FILECHAR_t* pszName1, const FILECHAR_t* pszName2, StrLen_t iLenMax) noexcept {  // static
@@ -428,25 +412,25 @@ COMPARE_t GRAYCALL cFilePath::ComparePath(const FILECHAR_t* pszName1, const FILE
     return COMPARE_Equal;  // they are the same.
 }
 
-StrLen_t GRAYCALL cFilePath::MakeFullPath2(FILECHAR_t* pszFileOut, const FILECHAR_t* pszFileInp, StrLen_t iLenMax, FILECHAR_t chSep) {  // static
+StrLen_t GRAYCALL cFilePath::MakeFullPath2(cSpanX<FILECHAR_t>& ret, const FILECHAR_t* pszFileInp, FILECHAR_t chSep) {  // static
     //! ASSERT(!IsFilePathRooted(pszFileInp))
     //! @note UNDER_CE has no concept of application current directory. All paths are rooted.
     //! @return Length
-    StrLen_t iLen = cAppState::GetCurrentDir(pszFileOut, iLenMax);
-    return CombineFilePathA(pszFileOut, iLenMax, iLen, pszFileInp, chSep);
+    const StrLen_t iLen = cAppState::GetCurrentDir(ret);
+    return CombineFilePathA(ret, iLen, pszFileInp, chSep);
 }
 
-StrLen_t GRAYCALL cFilePath::MakeFullPath(FILECHAR_t* pszFileOut, const FILECHAR_t* pszFileInp, StrLen_t iLenMax, FILECHAR_t chSep) {  // static
+StrLen_t GRAYCALL cFilePath::MakeFullPath(cSpanX<FILECHAR_t>& ret, const FILECHAR_t* pszFileInp, FILECHAR_t chSep) {  // static
     //! If this is a relative path (to app current dir) make this an absolute (rooted) path
     //! @return Length
 
     if (IsFilePathRooted(pszFileInp)) {
         // its already rooted. leave it.
-        return StrT::CopyLen(pszFileOut, pszFileInp, iLenMax);
+        return StrT::Copy(ret, pszFileInp);
     }
 
     // Was relative to the apps current dir. Get true full path.
-    return MakeFullPath2(pszFileOut, pszFileInp, iLenMax, chSep);
+    return MakeFullPath2(ret, pszFileInp, chSep);
 }
 
 cFilePath GRAYCALL cFilePath::MakeFullPathX(const FILECHAR_t* pszFileInp, FILECHAR_t chSep) {  // static
@@ -459,7 +443,7 @@ cFilePath GRAYCALL cFilePath::MakeFullPathX(const FILECHAR_t* pszFileInp, FILECH
 
     // Was relative to the apps current directory. Get true full path.
     FILECHAR_t szTmp[_MAX_PATH];
-    StrLen_t nLen = MakeFullPath2(szTmp, pszFileInp, STRMAX(szTmp), chSep);
+    StrLen_t nLen = MakeFullPath2(TOSPAN(szTmp), pszFileInp, chSep);
     UNREFERENCED_PARAMETER(nLen);
     return szTmp;
 }
@@ -471,13 +455,9 @@ StrLen_t GRAYCALL cFilePath::AddFileDirSep(FILECHAR_t* pszOut, StrLen_t iLen, FI
     //! @return Length
 
     ASSERT_NN(pszOut);
-    if (iLen < 0) {
-        iLen = StrT::Len(pszOut);
-    }
-    if (iLen <= 0) {
-        // DONT make root.
-        return 0;
-    }
+    if (iLen < 0) iLen = StrT::Len(pszOut);
+    if (iLen <= 0) return 0;  // DONT make root.
+
     // can't add if too long.
     if (iLen < _MAX_PATH && !IsCharDirSep(pszOut[iLen - 1])) {
         pszOut[iLen++] = chSep;
@@ -493,37 +473,31 @@ StrLen_t GRAYCALL cFilePath::AddFileDirSep(FILECHAR_t* pszOut, StrLen_t iLen, FI
 /// <param name="sDir"></param>
 /// <returns></returns>
 cFilePath GRAYCALL cFilePath::RemoveFileDirSep(const cStringF& sDir) {
-    StrLen_t len = sDir.GetLength();
+    const StrLen_t len = sDir.GetLength();
     if (len <= 1) return sDir;
-    StrLen_t len2 = len - 1;
+    const StrLen_t len2 = len - 1;
     if (!IsCharDirSep(sDir[len2])) return sDir;  // no change.
-    return cStringF(sDir, len2);
+    return sDir.Left(len2);
 }
 
-StrLen_t GRAYCALL cFilePath::CombineFilePathA(FILECHAR_t* pszFilePath, StrLen_t iLenMax, StrLen_t iLen, const FILECHAR_t* pszName, FILECHAR_t chSep) {  // static
+StrLen_t GRAYCALL cFilePath::CombineFilePathA(cSpanX<FILECHAR_t>& ret, StrLen_t iLen, const FILECHAR_t* pszName, FILECHAR_t chSep) {  // static
     //! Append file/subdir pszName to existing pszFilePath path.
     //! @arg chSep = k_DirSep default.
     //! @return New total Length
 
-    ASSERT_NN(pszFilePath);
-    if (iLen < 0)  // k_StrLen_UNK
-    {
-        iLen = StrT::Len(pszFilePath);
-    }
-    if (pszName == nullptr) {
-        return iLen;
-    }
-    if (iLen > 0)  // add a dir separator, but don't make root.
-    {
-        if (iLen < iLenMax - 1) {
-            iLen = AddFileDirSep(pszFilePath, iLen, chSep);
+    if (iLen <= k_StrLen_UNK) iLen = StrT::Len(ret.get_DataConst());
+    if (pszName == nullptr) return iLen;
+
+    if (iLen > 0) {  // add a dir separator, but don't make root.
+        if (iLen < ret.get_MaxLen() - 1) {
+            iLen = AddFileDirSep(ret.get_DataWork(), iLen, chSep);
         }
         while (IsCharDirSep(pszName[0])) pszName++;
     }
-    return iLen + StrT::CopyLen(pszFilePath + iLen, SkipRelativePrefix(pszName), iLenMax - iLen);
+    return iLen + StrT::CopyLen(ret.get_DataWork() + iLen, SkipRelativePrefix(pszName), ret.get_MaxLen() - iLen);
 }
 
-StrLen_t GRAYCALL cFilePath::CombineFilePath(FILECHAR_t* pszFilePath, StrLen_t iLenMax, const FILECHAR_t* pszDir, const FILECHAR_t* pszName, FILECHAR_t chSep) {  // static
+StrLen_t GRAYCALL cFilePath::CombineFilePath(cSpanX<FILECHAR_t>& ret, const FILECHAR_t* pszDir, const FILECHAR_t* pszName, FILECHAR_t chSep) {  // static
     //! combine pszDir and pszName to make a single path. MakeProperPath.
     //! Similar to Shell PathAppend()
     //! .NET System.IO.Path.Combine
@@ -533,14 +507,13 @@ StrLen_t GRAYCALL cFilePath::CombineFilePath(FILECHAR_t* pszFilePath, StrLen_t i
     //!  pszOut = pszDir + k_DirSep + pszName
     //! @note Resolve all relativism's in MakeProperPath
 
-    ASSERT_NN(pszFilePath);
-    ASSERT(pszFilePath != pszName);
+    ASSERT(ret != pszName);
 
     // TODO Test if pszName already starts with pszDir ? and is rooted ?
 
-    StrLen_t iLen = (pszDir == nullptr) ? k_StrLen_UNK : StrT::CopyLen(pszFilePath, pszDir, iLenMax);
-    iLen = CombineFilePathA(pszFilePath, iLenMax, iLen, pszName, chSep);
-    return MakeProperPath(pszFilePath, iLenMax, pszFilePath, chSep);
+    StrLen_t iLen = (pszDir == nullptr) ? k_StrLen_UNK : StrT::Copy(ret, pszDir);
+    iLen = CombineFilePathA(ret, iLen, pszName, chSep);
+    return MakeProperPath(ret, ret, chSep);
 }
 
 cFilePath GRAYCALL cFilePath::CombineFilePathX(const FILECHAR_t* pszDir, const FILECHAR_t* pszName, FILECHAR_t chSep) {  // static
@@ -549,7 +522,7 @@ cFilePath GRAYCALL cFilePath::CombineFilePathX(const FILECHAR_t* pszDir, const F
     //! .NET System.IO.Path.Combine
     //! @arg chSep = k_DirSep default.
     FILECHAR_t szFilePath[_MAX_PATH];
-    CombineFilePath(szFilePath, _MAX_PATH, pszDir, pszName, chSep);
+    CombineFilePath(TOSPAN(szFilePath), pszDir, pszName, chSep);
     return szFilePath;
 }
 
@@ -559,18 +532,18 @@ cFilePath _cdecl cFilePath::CombineFilePathF(FILECHAR_t chSep, const FILECHAR_t*
     //! @arg pszBase = first entry in the list. nullptr terminated list.
 
     FILECHAR_t szFilePath[_MAX_PATH];
-    StrLen_t iLen = StrT::CopyLen(szFilePath, pszBase, STRMAX(szFilePath));
+    StrLen_t iLen = StrT::Copy(TOSPAN(szFilePath), pszBase);
 
     va_list vargs;
     va_start(vargs, pszBase);
-    for (int iCount = 0; iCount < k_ARG_ARRAY_MAX; iCount++)  // arbitrary max.
-    {
+    for (int iCount = 0; iCount < k_ARG_ARRAY_MAX; iCount++) {  // arbitrary max.
         const FILECHAR_t* pszPart = va_arg(vargs, const FILECHAR_t*);
         if (pszPart == nullptr) break;
-        iLen = CombineFilePathA(szFilePath, STRMAX(szFilePath) - iLen, iLen, pszPart, chSep);
+        iLen = CombineFilePathA(TOSPAN(szFilePath), iLen, pszPart, chSep);
     }
     va_end(vargs);
-    iLen = MakeProperPath(szFilePath, STRMAX(szFilePath), nullptr, chSep);
+
+    iLen = MakeProperPath(TOSPAN(szFilePath), nullptr, chSep);
     return szFilePath;
 }
 
@@ -578,9 +551,7 @@ bool GRAYCALL cFilePath::IsRelativeRoot(const FILECHAR_t* pszFullPath, const FIL
     //! is the pszRootDir inside pszFullPath?
     //! e.g. pszFullPath="a\b\c", pszRootDir="a" = true
     if (pszFullPath == nullptr) return false;
-    if (iLenRootDir < 0) {
-        iLenRootDir = StrT::Len(pszRootDir);
-    }
+    if (iLenRootDir < 0) iLenRootDir = StrT::Len(pszRootDir);
     if (!ComparePath(pszFullPath, pszRootDir, iLenRootDir)) return true;
     return false;
 }
@@ -603,10 +574,7 @@ cFilePath GRAYCALL cFilePath::MakeRelativePath(const FILECHAR_t* pszFullPath, co
     //! Try using IsRelativeRoot() before call to this.
     //! e.g. pszFullPath = "c:\data\a\b\c.txt", pszRootDir = "c:\data", Return= "a\b\c.txt"
 
-    if (StrT::IsNullOrEmpty(pszRootDir)) {
-        // nothing here.
-        return pszFullPath;
-    }
+    if (StrT::IsNullOrEmpty(pszRootDir))  return pszFullPath; // nothing here.
 
     StrLen_t iLen;
 
@@ -617,15 +585,13 @@ cFilePath GRAYCALL cFilePath::MakeRelativePath(const FILECHAR_t* pszFullPath, co
     } else {
         // pszRootDir isn't absolute path. make it one.
         iLen = StrT::Len(pszRootDir);
-        if (!ComparePath(pszFullPath, pszRootDir, iLen))  // shortcut test.
-        {
+        if (!ComparePath(pszFullPath, pszRootDir, iLen)) {  // shortcut test.
             // yes pszFullPath is in pszRootDir. take a shortcut.
             if (IsCharDirSep(pszFullPath[iLen])) iLen++;
             return (pszFullPath + iLen);
         }
-
         // So try the Current Working Directory full path next!
-        MakeFullPath2(szWorkDir, pszRootDir, STRMAX(szWorkDir));
+        MakeFullPath2(TOSPAN(szWorkDir), pszRootDir);
         pszRootDir = szWorkDir;
     }
 
@@ -713,7 +679,7 @@ cStringF GRAYCALL cFilePath::GetFilePathUpDir1(const FILECHAR_t* pszPath, StrLen
     //! @arg iQtyDirs = -1 = for "sdf:/dir1/dir2/dir3/dir4" = "sdf:/dir1/dir2/dir3"
     const FILECHAR_t* pszAct = GetFilePathUpDir2(pszPath, iLen, iQtyDirs);
     if (pszAct == nullptr) return "";
-    return cStringF(pszPath, StrT::Diff(pszAct, pszPath) - 1);
+    return ToSpan(pszPath, StrT::Diff(pszAct, pszPath) - 1);
 }
 
 bool GRAYCALL cFilePath::MakeFilePathUpDir(FILECHAR_t* pszPath) {  // static
@@ -728,7 +694,7 @@ bool GRAYCALL cFilePath::MakeFilePathUpDir(FILECHAR_t* pszPath) {  // static
     return true;
 }
 
-StrLen_t GRAYCALL cFilePath::MakeProperPath(FILECHAR_t* pszFileOut, StrLen_t iLenMax, const FILECHAR_t* pszFileInp, FILECHAR_t chSep) {  // static
+StrLen_t GRAYCALL cFilePath::MakeProperPath(cSpanX<FILECHAR_t>& ret, const FILECHAR_t* pszFileInp, FILECHAR_t chSep) {  // static
     //! Make sure all forward/back slashes are chSep.
     //! Remove/resolve relatives like ../ or ./ except if relativism would make us lower than root, then just leave it. like _WIN32 PathCanonicalize()
     //! _WIN32 calls use paths using \ backslashes. (default) __linux__ uses HTTP style forward / slashes.
@@ -741,37 +707,34 @@ StrLen_t GRAYCALL cFilePath::MakeProperPath(FILECHAR_t* pszFileOut, StrLen_t iLe
     //!  Length of pszFileOut
 
     ASSERT(IsCharDirSep(chSep));
-    ASSERT_NN(pszFileOut);
 
-    if (pszFileInp == nullptr)  // in place.
-        pszFileInp = pszFileOut;
-    bool bCopy = (pszFileOut != pszFileInp);  // in place fix is OK.
+    if (pszFileInp == nullptr) pszFileInp = ret;  // in place.
+
+    bool bCopy = (ret != pszFileInp);  // in place fix is OK.
 
     int iFolders = 0;
     StrLen_t iOut = 0;
 
-    while (iOut < iLenMax) {
+    while (iOut < ret.get_MaxLen()) {
         FILECHAR_t ch = *(pszFileInp++);
         FILECHAR_t chNew = ch;
         if (ch == '.') {
             StrLen_t iCountDots = 0;
             while (pszFileInp[iCountDots] == '.') iCountDots++;
-            if (IsCharDirSep(pszFileInp[iCountDots]))  // ../stuff
-            {
+            if (IsCharDirSep(pszFileInp[iCountDots])) {  // ../stuff
                 // Back up a directory if we can.
                 iCountDots++;
-                FILECHAR_t* pszUpDir = GetFilePathUpDir2(pszFileOut, iOut, iCountDots);
-                if (pszUpDir == nullptr)  // iCountDots > iFolders
-                {
+                FILECHAR_t* pszUpDir = GetFilePathUpDir2(ret.get_DataWork(), iOut, iCountDots);
+                if (pszUpDir == nullptr) {  // iCountDots > iFolders
                     // Just preserve it since it cant be resolved?
                     iCountDots--;
                     if (bCopy) {
-                        iOut += StrT::CopyLen(pszFileOut + iOut, pszFileInp - 1, cValT::Min(iCountDots + 2, iLenMax - iOut));
+                        iOut += StrT::CopyLen(ret.get_DataWork() + iOut, pszFileInp - 1, cValT::Min<StrLen_t>(iCountDots + 2, ret.get_MaxLen() - iOut));
                     } else {
                         iOut += iCountDots + 1;
                     }
                 } else {
-                    iOut = StrT::Diff(pszUpDir, pszFileOut);
+                    iOut = StrT::Diff(pszUpDir, ret.get_DataConst());
                     bCopy = true;
                 }
                 pszFileInp += iCountDots;  // skip over it.
@@ -784,7 +747,7 @@ StrLen_t GRAYCALL cFilePath::MakeProperPath(FILECHAR_t* pszFileOut, StrLen_t iLe
             chNew = chSep;
         }
         if (bCopy || chNew != ch) {
-            pszFileOut[iOut] = chNew;
+            ret.get_DataWork()[iOut] = chNew;
         }
         if (ch == '\0')  // done.
             break;
@@ -796,7 +759,7 @@ StrLen_t GRAYCALL cFilePath::MakeProperPath(FILECHAR_t* pszFileOut, StrLen_t iLe
 cFilePath GRAYCALL cFilePath::MakeProperPathX(const FILECHAR_t* pszFileInp, FILECHAR_t chSep) {  // static
     //! Make sure all forward/back slashes are same chSep.
     FILECHAR_t szFilePath[_MAX_PATH];
-    MakeProperPath(szFilePath, STRMAX(szFilePath), pszFileInp, chSep);
+    MakeProperPath(TOSPAN(szFilePath), pszFileInp, chSep);
     return szFilePath;
 }
 
@@ -811,13 +774,11 @@ StrLen_t GRAYCALL cFilePath::ExtractDir(OUT FILECHAR_t* pszFilePath, StrLen_t iL
     if (pszTitle == nullptr) return 0;
 
     for (; pszTitle > pszFilePath; pszTitle--) {
-        if (*pszTitle == ':')  // has a drive letter.
-        {
+        if (*pszTitle == ':') {  // has a drive letter.
             pszTitle++;
             break;
         }
-        if (IsCharDirSep(*pszTitle))  // Might be LINUX
-        {
+        if (IsCharDirSep(*pszTitle)) {  // Might be LINUX
             if (bTrailingSep) pszTitle++;
             break;
         }
@@ -826,20 +787,20 @@ StrLen_t GRAYCALL cFilePath::ExtractDir(OUT FILECHAR_t* pszFilePath, StrLen_t iL
     return StrT::Diff(pszTitle, pszFilePath);
 }
 
-StrLen_t GRAYCALL cFilePath::ExtractDirCopy(OUT FILECHAR_t* pszDirPath, StrLen_t iLenMax, const FILECHAR_t* pszFilePathSrc, bool bTrailingSep) {  // static
+StrLen_t GRAYCALL cFilePath::ExtractDirCopy(cSpanX<FILECHAR_t>& ret, const FILECHAR_t* pszFilePathSrc, bool bTrailingSep) {  // static
     //! Remove the file name from this and just leave the path. (was ExtractDir)
     //! @arg bTrailingSep = leave the trailing /
     //! @return
     //!  length of the new string.
-    StrLen_t iLen = StrT::CopyLen(pszDirPath, pszFilePathSrc, iLenMax);
-    return ExtractDir(pszDirPath, iLen, bTrailingSep);
+    const StrLen_t iLen = StrT::Copy(ret, pszFilePathSrc);
+    return ExtractDir(ret.get_DataWork(), iLen, bTrailingSep);
 }
 
 cFilePath GRAYCALL cFilePath::GetFileDir(const FILECHAR_t* pszPath, bool bTrailingSep) {  // static
     //! Extract the directory from a file path. include the trailing / k_DirSep if bTrailingSep is set.
     //! @arg bTrailingSep = leave the trailing /
     FILECHAR_t szPath[_MAX_PATH];
-    StrLen_t iLen = ExtractDirCopy(szPath, STRMAX(szPath), pszPath, bTrailingSep);
+    const StrLen_t iLen = ExtractDirCopy(TOSPAN(szPath), pszPath, bTrailingSep);
     UNREFERENCED_PARAMETER(iLen);
     return szPath;
 }

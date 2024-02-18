@@ -1,8 +1,6 @@
-//
 //! @file cRefPtr.h
 //! General object smart pointer mechanism.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cRefPtr_H
 #define _INC_cRefPtr_H
@@ -30,11 +28,11 @@ namespace Gray {
 /// @note These objects emulate the COM IUnknown. we may use cIUnkPtr for this also. QueryInterface support is optional.
 /// Use IUNKNOWN_DISAMBIG(cRefBase) with this
 /// </summary>
-class GRAYCORE_LINK cRefBase : public IUnknown {               // virtual
-    static const REFCOUNT_t k_REFCOUNT_STATIC = 0x20000000;    /// for structures that are 'static' or stack based. never use delete
-    static const REFCOUNT_t k_REFCOUNT_DEBUG = 0x40000000;     /// mark this as debug. (even in release mode)
-    static const REFCOUNT_t k_REFCOUNT_DESTRUCT = 0x80000000;  /// we are in the process of destruction.
-    static const REFCOUNT_t k_REFCOUNT_MASK = 0xC0000000;      /// hide extra information in the m_nRefCount
+class GRAYCORE_LINK cRefBase : public IUnknown {                                       // virtual
+    static const REFCOUNT_t k_REFCOUNT_STATIC = 0x20000000;                            /// for structures that are 'static' or stack based. never delete
+    static const REFCOUNT_t k_REFCOUNT_DEBUG = 0x40000000;                             /// mark this as debug. (even in release mode)
+    static const REFCOUNT_t k_REFCOUNT_DESTRUCT = 0x80000000;                          /// we are in the process of destruction.
+    static const REFCOUNT_t k_REFCOUNT_MASK = k_REFCOUNT_DESTRUCT | k_REFCOUNT_DEBUG;  /// hide extra information in the m_nRefCount
 
     mutable cInterlockedUInt32 m_nRefCount;  /// count the number of refs. Multi-Thread safe. check _MT here ?? Negative NEVER allowed!
 
@@ -44,7 +42,7 @@ class GRAYCORE_LINK cRefBase : public IUnknown {               // virtual
         DEBUG_CHECK(isValidObj());
         DEBUG_CHECK(!isDestructing());
         const REFCOUNT_t nRefCount = get_RefCount();
-        DEBUG_CHECK(nRefCount < k_REFCOUNT_DEBUG);
+        DEBUG_CHECK((nRefCount & k_REFCOUNT_MASK) == 0);
 #ifdef USE_PTRTRACE_REF
         if (isSmartDebug()) {
             DEBUG_CHECK(nRefCount != 123123);  // dummy for breakpoint.
@@ -65,10 +63,10 @@ class GRAYCORE_LINK cRefBase : public IUnknown {               // virtual
 #endif
 #endif
         const REFCOUNT_t nRefCount = m_nRefCount.Dec();
-        if (nRefCount == 0) {
+        if ((nRefCount & ~k_REFCOUNT_MASK) == 0) {
             onZeroRefCount();  // free my memory. delete this.
         } else {
-            DEBUG_CHECK(nRefCount > 0 && nRefCount < k_REFCOUNT_DEBUG);
+            DEBUG_CHECK(!isDestructing());
         }
     }
 
@@ -90,14 +88,14 @@ class GRAYCORE_LINK cRefBase : public IUnknown {               // virtual
     }
 
     /// <summary>
-    /// get a unique (only on this machine/process instance) hash code.
+    /// get a unique (only on this machine/process instance) hash code. override this for more persistent Hash.
     /// </summary>
     HASHCODE_t get_HashCode() const noexcept {
         return PtrCastToNum(this);
     }
 
     /// <summary>
-    /// virtualized version of get_HashCode().
+    /// virtual version of get_HashCode().
     /// </summary>
     /// <returns></returns>
     STDMETHOD_(HASHCODE_t, get_HashCodeX)() const noexcept {
@@ -184,7 +182,7 @@ class GRAYCORE_LINK cRefBase : public IUnknown {               // virtual
 
     bool isStaticConstruct() const noexcept {
         //! Was StaticConstruct() called for this ?
-        return cBits::HasMask(m_nRefCount.get_Value(), k_REFCOUNT_STATIC);
+        return cBits::HasAny(m_nRefCount.get_Value(), k_REFCOUNT_STATIC);
     }
     /// <summary>
     /// If this is really static, not dynamic. Call this in parents constructor or main (if global).
@@ -203,7 +201,7 @@ class GRAYCORE_LINK cRefBase : public IUnknown {               // virtual
     }
 
     bool isDestructing() const noexcept {
-        return cBits::HasMask(m_nRefCount.get_Value(), k_REFCOUNT_DESTRUCT);
+        return cBits::HasAny(m_nRefCount.get_Value(), k_REFCOUNT_DESTRUCT);
     }
     /// <summary>
     /// this object is in the act of destruction. Destruct never throw!
@@ -219,7 +217,7 @@ class GRAYCORE_LINK cRefBase : public IUnknown {               // virtual
     /// </summary>
     /// <returns></returns>
     bool isSmartDebug() const noexcept {
-        return cBits::HasMask(m_nRefCount.get_Value(), k_REFCOUNT_DEBUG);
+        return cBits::HasAny(m_nRefCount.get_Value(), k_REFCOUNT_DEBUG);
     }
     /// <summary>
     /// Mark this object as debug. Trace it. maybe object is in the act of destruction?
@@ -268,6 +266,18 @@ class cRefPtr : public cPtrFacade<TYPE>
             if (p2->isSmartDebug()) TraceAttach(typeid(TYPE), p2, src);
 #endif
         }
+    }
+
+ protected:
+    /// <summary>
+    /// If changed, Release previous ref. Attach the new pointer and add a ref.
+    /// </summary>
+    /// <param name="p"></param>
+    void put_Ptr(TYPE* p) {
+        if (SUPER_t::IsEqual(p)) return;
+        ReleasePtr();
+        this->AttachPtr(p);
+        IncRefFirst();
     }
 
  public:
@@ -319,16 +329,13 @@ class cRefPtr : public cPtrFacade<TYPE>
     bool isCorruptPtr() const noexcept {
         if (!SUPER_t::isValidPtr()) return false;             // nullptr is not corrupt.
         if (!cMem::IsValidApp(this->get_Ptr())) return true;  // isCorruptPtr
-        cRefBase* p = this->get_PtrDyn<cRefBase>();
+        const cRefBase* p = this->get_PtrDyn<cRefBase>();
         if (p == nullptr) return true;
         if (p->get_RefCount() <= 0) return true;
-
 #if 0  // Is TYPE properly defined at this location in the header file ?? Forward ref might not compile here.
-			TYPE* p2 = this->get_PtrDyn<TYPE>();
-			if (p2 == nullptr)
-				return true;
+        const TYPE* p2 = this->get_PtrDyn<TYPE>();
+		if (p2 == nullptr) return true;
 #endif
-
         return false;
     }
     /// <summary>
@@ -360,8 +367,10 @@ class cRefPtr : public cPtrFacade<TYPE>
         return false;
     }
 
+    /// <summary>
+    /// Get cRefBase::get_RefCount
+    /// </summary>
     REFCOUNT_t get_RefCount() const noexcept {
-        //! @return cRefBase::get_RefCount
         if (!isValidPtr()) return 0;
         return this->get_Ptr()->get_RefCount();
     }
@@ -382,20 +391,15 @@ class cRefPtr : public cPtrFacade<TYPE>
         put_Ptr(ref.get_Ptr());
         return *this;
     }
-
- protected:
-    /// <summary>
-    /// If changed, Release previous ref. Attach the new pointer and add a ref.
-    /// </summary>
-    /// <param name="p"></param>
-    void put_Ptr(TYPE* p) {
-        if (!SUPER_t::IsEqual(p)) {
-            ReleasePtr();
-            this->AttachPtr(p);
-            IncRefFirst();
-        }
-    }
 };
+
+/// <summary>
+/// C++ can ONLY infer type as arg to function but NOT via constructor! no idea why.
+/// </summary>
+template <typename T>
+constexpr cRefPtr<T> ToRef(const T* p) noexcept {
+    return cRefPtr<T>(p);
+}
 
 #ifndef GRAY_STATICLIB  // force implementation/instantiate for DLL/SO.
 template class GRAYCORE_LINK cRefPtr<cRefBase>;

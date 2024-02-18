@@ -1,9 +1,8 @@
-//
 //! @file cWinHeap.inl
 //! macro template for cWinLocalHandle, cWinLocalV, cWinLocalT<> etc
 //! @note requires proper #define set up. DON'T include this directly!
 //! "#define WINHEAPN(), WINHEAPM(), WINHEAPH, WINHEAPF()"
-//! 
+
 namespace Gray {
 /// <summary>
 /// implementation of cWinLocalHandle or cWinGlobalHandle
@@ -42,7 +41,7 @@ class WINHEAPN(Handle) : public cMemSpan {
         //! If i have the m_pData, make sure the m_hData matches.
         if (get_DataC() == p) return;
         Free();
-        SetSpan(p, get_DataSize());
+        SetSpan2(p, get_DataSize());
         if (isValidPtr()) {
             m_hData = WINHEAPF(Handle)(p);
         }
@@ -54,7 +53,7 @@ class WINHEAPN(Handle) : public cMemSpan {
     void AttachHandle(HANDLE_t hData, size_t nSize, void* pData = nullptr) noexcept {
         // ASSERT( m_hData == HANDLE_NULL );
         m_hData = hData;
-        SetSpan(pData, nSize);
+        SetSpan2(pData, nSize);
     }
 
     /// <summary>
@@ -74,7 +73,7 @@ class WINHEAPN(Handle) : public cMemSpan {
 #ifdef UNDER_CE
             SetSpan((void*)(m_hData), get_DataSize());
 #else
-            SetSpan(WINHEAPF(Lock)(m_hData), get_DataSize());
+            SetSpan2(WINHEAPF(Lock)(m_hData), get_DataSize());
 #endif
 #ifdef _DEBUG
             if (!isValidPtr()) {
@@ -126,10 +125,10 @@ class WINHEAPN(Handle) : public cMemSpan {
         AllocHandle(dwSize, dwFlags);
         return Lock();
     }
-    void* AllocPtr3(const void* pSrc, size_t dwSize, DWORD dwFlags = WINHEAPM(FIXED)) {
-        void* pDst = AllocPtr2(dwSize, dwFlags);
-        if (pDst != nullptr) {
-            cMem::Copy(pDst, pSrc, dwSize);
+    void* AllocSpan(const cMemSpan& src, DWORD dwFlags = WINHEAPM(FIXED)) {
+        void* pDst = AllocPtr2(src.get_DataSize(), dwFlags);
+        if (src.isNull()) {
+            src.CopyTo(pDst);
         }
         return pDst;
     }

@@ -22,15 +22,15 @@ struct GRAYCORE_LINK cArraySortString : public cArraySorted<cStringT<_TYPE_CH>, 
     typedef typename SUPER_t::KEY_t KEY_t;
 
  public:
-    ~cArraySortString() override {}
     COMPARE_t CompareKey(KEY_t pszID1, ARG_t sID2) const noexcept override {
-        ASSERT(pszID1 != nullptr);
+        ASSERT_NN(pszID1);
         return StrT::CmpI<_TYPE_CH>(pszID1, sID2);
     }
     COMPARE_t CompareData(ARG_t sID1, ARG_t sID2) const noexcept override {
         return StrT::CmpI<_TYPE_CH>(sID1, sID2);
     }
     ITERATE_t AddStr(const _TYPE_CH* pszStr) {
+        ASSERT_NN(pszStr);
         return this->Add(STR_t(pszStr));
     }
 

@@ -1,8 +1,7 @@
-//
 //! @file cUnitTestDecl.h
 //! Included from header file to minimally declare a unit test.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
+
 #ifndef _INC_cUnitTestDecl_H
 #define _INC_cUnitTestDecl_H
 #ifndef NO_PRAGMA_ONCE

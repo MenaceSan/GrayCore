@@ -1,4 +1,3 @@
-//
 //! @file cList.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 // clang-format off
@@ -8,43 +7,33 @@
 #include "cList.h"
 
 namespace Gray {
-void cListParentBase::SetEmpty() {
-    //! empty the list. but don't necessarily DisposeThis() the objects.
-    cListNodeBase* pNodeLast = nullptr;
-    for (;;)  // iterate the list.
-    {
-        cListNodeBase* pNode = get_Head();
+void cList::SetEmptyList() {
+    cListNode* pNodeLast = nullptr;
+    for (;;) {  // iterate the list.
+        cListNode* pNode = get_Head();
         if (pNode == nullptr) break;
         ASSERT(pNodeLast != pNode);
         pNodeLast = pNode;
         ASSERT(IsMyChild(pNode));
         pNode->RemoveFromParent();  // ASSUME RemoveListNode(pNode) will be called.
     }
-    DEBUG_ASSERT(m_iCount == 0, "List not cleaned up properly!");
-    m_iCount = 0;  // this should not be needed. but just in case of leaks.
-    m_pHead = nullptr;
-    m_pTail = nullptr;
+    ClearList();  // this should not be needed. but just in case of leaks.
 }
 
-void cListParentBase::DisposeAll(void) {
-    //! call DisposeThis() for all entries.
-    cListNodeBase* pNodeLast = nullptr;
-    for (;;)  // iterate the list.
-    {
-        cListNodeBase* pNode = get_Head();
+void cList::DisposeAll(void) {
+    cListNode* pNodeLast = nullptr;
+    for (;;) {  // iterate the list.
+        cListNode* pNode = get_Head();
         if (pNode == nullptr) break;
         ASSERT(pNodeLast != pNode);
         pNodeLast = pNode;
         ASSERT(IsMyChild(pNode));
         pNode->DisposeThis();  // ASSUME RemoveFromParent() then RemoveListNode(pNode) will be called.
     }
-    DEBUG_ASSERT(m_iCount == 0, "List not cleaned up properly!");
-    m_iCount = 0;  // this should not be needed. but just in case of leaks.
-    m_pHead = nullptr;
-    m_pTail = nullptr;
+    ClearList();
 }
 
-void cListParentBase::RemoveListNode(cListNodeBase* pNodeRemove) {  // virtual Override this = called when removed from list.
+void cList::RemoveListNode(cListNode* pNodeRemove) {  // virtual Override this = called when removed from list.
     //! Some child object is being removed from my list.
     //! Override this to get called when an item is removed from this list.
     //! just remove from list. It may or may not be deleting itself.
@@ -54,8 +43,8 @@ void cListParentBase::RemoveListNode(cListNodeBase* pNodeRemove) {  // virtual O
     ASSERT_NN(pNodeRemove);
     ASSERT(IsMyChild(pNodeRemove));
 
-    cListNodeBase* pNodeNext = pNodeRemove->get_Next();
-    cListNodeBase* pNodePrev = pNodeRemove->get_Prev();
+    cListNode* pNodeNext = pNodeRemove->get_Next();
+    cListNode* pNodePrev = pNodeRemove->get_Prev();
 
     if (pNodeNext != nullptr) {
         // ASSUME pNodeNext->m_pPrev was pointing at this.
@@ -73,34 +62,29 @@ void cListParentBase::RemoveListNode(cListNodeBase* pNodeRemove) {  // virtual O
     m_iCount--;
     pNodeRemove->m_pNext = nullptr;
     pNodeRemove->m_pPrev = nullptr;
-    pNodeRemove->put_Parent(nullptr);  // officially removed from list. may be virtual.
-    ASSERT(!pNodeRemove->hasParent());
+    pNodeRemove->OnChangeListParent(nullptr);  // officially removed from list. may be virtual. may delete object!
 }
 
-void cListParentBase::InsertListNode(cListNodeBase* pNodeNew, cListNodeBase* pNodePrev) {  // virtual Override this = called when add to list.
+void cList::InsertListNode(cListNode* pNodeNew, cListNode* pNodePrev) {  // virtual Override this = called when add to list.
     //! Add pNodeNew after pNodePrev.
     //! pNodePrev = nullptr == add to the start.
     //! @note If the item is already here, it will NOT be removed then re-added.
 
     if (pNodeNew == nullptr) return;
     DEBUG_CHECK(pNodePrev != pNodeNew);
-    if (pNodeNew->hasParent()) {    // currently in a list.
-        if (IsMyChild(pNodeNew)) {  // already here.
-            // allow a change in order??
-            return;
-        }
-        pNodeNew->RemoveFromParent();  // Get out of any previous list first.
+    if (pNodeNew->hasParent()) {          // currently in a list.
+        if (IsMyChild(pNodeNew)) return;  // already here. // allow a change in order?
+        pNodeNew->RemoveFromParent();     // Remove from any previous list first.
         DEBUG_CHECK(!pNodeNew->hasParent());
     }
 
-    cListNodeBase* pNodeNext;
+    cListNode* pNodeNext;
     if (pNodePrev != nullptr) {  // put after some other node?
         DEBUG_CHECK(IsMyChild(pNodePrev));
         pNodeNext = pNodePrev->get_Next();
         pNodePrev->m_pNext = pNodeNew;
     } else {
-        // put at head.
-        pNodeNext = get_Head();
+        pNodeNext = get_Head();  // put at head.
         m_pHead = pNodeNew;
     }
 
@@ -113,22 +97,17 @@ void cListParentBase::InsertListNode(cListNodeBase* pNodeNew, cListNodeBase* pNo
         m_pTail = pNodeNew;
     }
 
-    pNodeNew->m_pNext = pNodeNext;
-    pNodeNew->put_Parent(this);
     m_iCount++;
+    pNodeNew->m_pNext = pNodeNext;
+    pNodeNew->OnChangeListParent(this);
     DEBUG_CHECK(pNodeNew->hasParent());
-    // DEBUG_CHECK(pNodeNew->isValidCheck());
 }
 
-void cListParentBase::InsertList(cListParentBase* pListSrc, cListNodeBase* pNodePrev) {
-    //! Transfer the contents of another list into this one.
-    if (pListSrc == this || pListSrc == nullptr) {
-        // not really a transfer at all
-        return;
-    }
-    cListNodeBase* pNode = pListSrc->get_Head();
+void cList::MoveListNodes(cList* pListSrc, cListNode* pNodePrev) {
+    if (pListSrc == this || pListSrc == nullptr) return;  // not really a transfer at all
+    cListNode* pNode = pListSrc->get_Head();
     while (pNode != nullptr) {
-        cListNodeBase* pNodeNext = pNode->get_Next();
+        cListNode* pNodeNext = pNode->get_Next();
         pNode->RemoveFromParent();  // should not be needed
         this->InsertListNode(pNode, pNodePrev);
         pNodePrev = pNode;
@@ -136,12 +115,9 @@ void cListParentBase::InsertList(cListParentBase* pListSrc, cListNodeBase* pNode
     }
 }
 
-cListNodeBase* cListParentBase::GetAt(ITERATE_t index) const {
-    //! iterate the linked list.
-    //! Not very efficient. iterative.
-    //! @return nullptr = past end of list.
+cListNode* cList::GetAt(ITERATE_t index) const {
     if (IS_INDEX_BAD(index, get_Count())) return nullptr;
-    cListNodeBase* pNode = get_Head();
+    cListNode* pNode = get_Head();
     while (index-- > 0 && pNode != nullptr) {
         pNode = pNode->get_Next();
     }
@@ -149,7 +125,7 @@ cListNodeBase* cListParentBase::GetAt(ITERATE_t index) const {
 }
 
 #if 0
-cListNodeBase* cListParentBase::GetNext(cListNodeBase* pNode) const	{
+cListNode* cList::GetNext(cListNode* pNode) const	{
 	//! iterate the linked list.
 	if (pNode == nullptr) return get_Head();
 	ASSERT(pNode->get_Parent() == this);

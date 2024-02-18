@@ -1,7 +1,5 @@
-//
 //! @file cThreadLocalSys.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cThreadLocalSys_H
 #define _INC_cThreadLocalSys_H
@@ -148,7 +146,7 @@ class cThreadLocalSysNew : public cThreadLocalSysT<TYPE> {
  protected:
     static void NTAPI OnThreadClose(IN void* pData) {
         //! The thread has closed (or cThreadLocalSys was destroyed) so destroy/free/delete my TYPE pointer object.
-        ASSERT(pData != nullptr);
+        ASSERT_NN(pData);
         TYPE* pData2 = PtrCast<TYPE>(pData);
         delete pData2;
     }

@@ -1,4 +1,3 @@
-//
 //! @file cLogSink.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 // clang-format off
@@ -10,6 +9,7 @@
 #include "cLogEvent.h"
 #include "cLogMgr.h"
 #include "cLogSink.h"
+#include "cSpan.h"
 
 #ifdef UNDER_CE
 #include <dbgapi.h>  // OutputDebugStringA
@@ -43,9 +43,9 @@ void cLogEvent::GetFormattedDefault(StrBuilder<LOGCHAR_t>& s) const {
 
 cStringL cLogEvent::get_FormattedDefault() const {
     LOGCHAR_t szTemp[StrT::k_LEN_Default];  // assume this magic number is big enough. Logging is weird and special so dont use dynamic memory.
-    StrBuilder<LOGCHAR_t> s(szTemp, STRMAX(szTemp));
+    StrBuilder<LOGCHAR_t> s(TOSPAN(szTemp));
     GetFormattedDefault(s);
-    return s.get_Str();
+    return s.get_CPtr();
 }
 
 //**************************************************************
@@ -69,7 +69,7 @@ HRESULT cLogProcessor::addEventV(LOG_ATTR_MASK_t uAttrMask, LOGLVL_t eLogLevel, 
     if (StrT::IsNullOrEmpty(pszFormat)) return E_INVALIDARG;
 
     LOGCHAR_t szTemp[StrT::k_LEN_Default];  // assume this magic number is big enough.
-    StrLen_t iLen = StrT::vsprintfN(szTemp, STRMAX(szTemp), pszFormat, vargs);
+    StrLen_t iLen = StrT::vsprintfN(TOSPAN(szTemp), pszFormat, vargs);
     if (iLen <= 0) return E_INVALIDARG;
     return addEventS(uAttrMask, eLogLevel, szTemp);
 }
@@ -87,7 +87,7 @@ HRESULT cLogSinkDebug::WriteString(const LOGCHAR_t* pszText) {  // override
     //! Do NOT assume new line.
     //! default OutputDebugString event if no other handler. (this == nullptr)
 #ifdef _WIN32
-    cThreadGuard threadguard(m_Lock);
+    const auto guard(m_Lock.Lock());
 #ifdef UNDER_CE
     ::OutputDebugStringW(StrArg<wchar_t>(pszText));
 #else

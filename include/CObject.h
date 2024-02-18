@@ -1,7 +1,5 @@
-//
 //! @file cObject.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cObject_H
 #define _INC_cObject_H
@@ -53,13 +51,12 @@ class DECLSPEC_NOVTABLE cObjectSignature : public cMemSignature<_SIGVALID> {
 class GRAYCORE_LINK CObject {
  public:
     virtual ~CObject() noexcept {}
-    virtual void Serialize(cArchive& a);  // Emulate MFC method. cArchive = CArchive
 };
 
 #ifdef _DEBUG
 #define ASSERT_VALID(p) (p)->AssertValid()  // Emulate MFC
 #else
-#define ASSERT_VALID(p) ASSERT((p) != nullptr)
+#define ASSERT_VALID(p) ASSERT((p) != nullptr)  // Cheaper call in release mode.
 #endif
 #endif  // _MFC_VER
 
@@ -67,6 +64,14 @@ class GRAYCORE_LINK CObject {
 /// Similar to MFC CObject but with more function. isValidCheck.
 /// </summary>
 struct GRAYCORE_LINK cObject : public CObject {
+    /// <summary>
+    /// get my vtable/vfptr that is attached to my HMODULE
+    /// </summary>
+    const void* const* GetVTable() const;
+
+    /// Emulate MFC method. cArchive = CArchive. BUT has HRESULT return instead of void and throw.
+    virtual HRESULT Serialize(cArchive& a);  
+
     /// <summary>
     /// use with AssertValid()
     /// ASSUME ! cMem::IsCorruptApp()

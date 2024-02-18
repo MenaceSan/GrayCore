@@ -1,9 +1,7 @@
-//
 //! @file cLogMgr.h
 //! Message / Event Log Macros. (Debug Mostly)
 //! similar to Log4J (with appenders) formatters per sink to control actual format?
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cLogMgr_H
 #define _INC_cLogMgr_H
@@ -118,8 +116,8 @@ class GRAYCORE_LINK cLogNexus : public cLogProcessor {
 /// The root log message cLogNexus. take in all log messages and decide where they go.
 /// Only one default singleton log manager per system.
 /// </summary>
-class GRAYCORE_LINK cLogMgr : public cSingleton<cLogMgr>, public cLogNexus {
-    friend class cSingleton<cLogMgr>;
+class GRAYCORE_LINK cLogMgr final : public cSingleton<cLogMgr>, public cLogNexus, public ITextWriter {
+    SINGLETON_IMPL(cLogMgr);
     static TIMESECD_t sm_TimePrevException;  /// throttle/don't flood log with exceptions().
 
  protected:
@@ -133,7 +131,8 @@ class GRAYCORE_LINK cLogMgr : public cSingleton<cLogMgr>, public cLogNexus {
     void LogExceptionV(cExceptionHolder* pEx, const LOGCHAR_t* pszCatchContext, va_list vargs) noexcept;
     void _cdecl LogExceptionF(cExceptionHolder* pEx, const LOGCHAR_t* pszCatchContext, ...) noexcept;
 #endif
-    CHEAPOBJECT_IMPL;
+
+    HRESULT WriteString(const char* pszStr) override;
 };
 
 /// <summary>

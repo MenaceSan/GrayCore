@@ -1,7 +1,5 @@
-//
 //! @file StrChar.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_StrChar_H
 #define _INC_StrChar_H
@@ -9,7 +7,7 @@
 #pragma once
 #endif
 
-#include "cValArray.h"
+#include "cValSpan.h"
 
 #ifdef _WIN32
 #include <wtypes.h>  // BSTR
@@ -166,16 +164,14 @@ struct GRAYCORE_LINK StrChar {  // static
 
     static constexpr bool IsUpper(wchar_t ch) noexcept {
         //! isupper(ch) in UNICODE
-        if (IsAscii(ch)) {
-            return IsUpperA(ch);
-        }
+        if (IsAscii(ch))  return IsUpperA(ch);
+         
         return IsUpperAXSet(ch) || IsUpperUSet(ch);
     }
     static constexpr bool IsLower(wchar_t ch) noexcept {
         //! islower(ch) in UNICODE
-        if (IsAscii(ch)) {
-            return IsLowerA(ch);
-        }
+        if (IsAscii(ch))  return IsLowerA(ch);
+        
         return IsLowerAXSet(ch) || IsLowerUSet(ch);
     }
 

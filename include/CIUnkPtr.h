@@ -1,8 +1,6 @@
-//
 //! @file cIUnkPtr.h
 //! Template for a type specific smart/reference counted pointer to a IUnknown based object.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cIUnkPtr_H
 #define _INC_cIUnkPtr_H
@@ -19,8 +17,6 @@
 #endif
 
 namespace Gray {
-struct cLogProcessor;
-
 /// <summary>
 /// Smart/reference counted pointer to an IUnknown based object.
 /// like _WIN32 ATL CComPtr<> or "com_ptr_t"
@@ -74,7 +70,7 @@ class cIUnkPtr : public cPtrFacade<TYPE>
     }
 
  public:
-    //! Construct and destruction
+    /// Construct and destruction
     cIUnkPtr() {}
     cIUnkPtr(const TYPE* p2) : SUPER_t(const_cast<TYPE*>(p2)) {
         //! add ref. Does not work with cPtrFacade!
@@ -102,8 +98,10 @@ class cIUnkPtr : public cPtrFacade<TYPE>
         ReleasePtr();
     }
 
+    /// <summary>
+    /// Get the current reference count. Add and remove a ref to get the count.
+    /// </summary>
     REFCOUNT_t get_RefCount() const {
-        //! @return the current reference count. Add and remove a ref to get the count.
         if (!SUPER_t::isValidPtr()) return 0;
         auto p2 = this->get_Ptr();
         const REFCOUNT_t iRefCount = CastN(REFCOUNT_t, p2->AddRef());  // ULONG
@@ -148,27 +146,32 @@ class cIUnkPtr : public cPtrFacade<TYPE>
         //! @note this seems to only work for _MSC_VER.
         return __uuidof(TYPE);
     }
+    /// <summary>
+    /// set the proper pointer for this interface.
+    /// Do proper COM style dynamic_cast for Interface using QueryInterface.
+    /// </summary>
+    /// <param name="p2"></param>
+    /// <returns></returns>
     HRESULT SetQI(IUnknown* p2) {
-        //! set the proper pointer for this interface.
-        //! Do proper COM style dynamic_cast for Interface using QueryInterface.
         return SetQI(p2, GetIID());
     }
 #endif  // _MSC_VER
 
+    /// <summary>
+    /// call Release. Compliment SetFirstIUnk().
+    /// </summary>
+    /// <returns>the new reference count</returns>
     REFCOUNT_t ReleasePtr() {
-        //! Compliment SetFirstIUnk()
-        //! @return the new reference count
         if (!SUPER_t::isValidPtr()) return 0;
-
         TYPE* p2 = this->get_Ptr();  // make local copy.
 #ifdef _DEBUG
         AssertIUnk(p2);
 #endif
+        this->ClearPtr(); // make sure possible destructors called in DecRefCount don't reuse this.
+        const REFCOUNT_t iRefCount = CastN(REFCOUNT_t, p2->Release());  // this might delete this ?
 #ifdef USE_PTRTRACE_IUNK
         TraceRelease();
 #endif
-        this->ClearPtr(); // make sure possible destructors called in DecRefCount don't reuse this.
-        const REFCOUNT_t iRefCount = CastN(REFCOUNT_t, p2->Release());  // this might delete this ?
         return iRefCount;
     }
 

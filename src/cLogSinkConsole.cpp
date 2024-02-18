@@ -1,4 +1,3 @@
-//
 //! @file cLogSinkConsole.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 // clang-format off
@@ -12,11 +11,7 @@
 #include "cOSProcess.h"
 
 #if !defined(UNDER_CE)
-namespace Gray {
-cLogSinkConsole::cLogSinkConsole() {
-    // assume will call cLogSinkConsole::AddSinkCheck()
-}
-cLogSinkConsole::~cLogSinkConsole() {}
+namespace Gray { 
 
 HRESULT cLogSinkConsole::WriteString(const LOGCHAR_t* pszText) {  // virtual
     // LOG_ATTR_PRINT? // WriteStrErr or WriteStrOut?

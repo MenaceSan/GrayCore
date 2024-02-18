@@ -61,7 +61,7 @@ struct GRAYCORE_LINK cArrayString : public cArray<cStringT<_TYPE_CH>, const _TYP
     /// <param name="i"></param>
     /// <returns>"" = if index is out of range.</returns>
     STR_t GetAtCheck(ITERATE_t i) const {
-        if (!SUPER_t::IsValidIndex(i)) return cStrConst::k_Empty.Get<_TYPE_CH>();  // STR_t("")
+        if (!SUPER_t::IsValidIndex(i)) return cStrConst::k_Empty.GetT<_TYPE_CH>();  // STR_t("")
         return SUPER_t::GetAt(i);
     }
 
@@ -77,7 +77,7 @@ struct GRAYCORE_LINK cArrayString : public cArray<cStringT<_TYPE_CH>, const _TYP
         szSep[1] = '\0';
         _TYPE_CH szTmp[StrT::k_LEN_Default];
         _TYPE_CH* aCmds[k_ARG_ARRAY_MAX];
-        const ITERATE_t iStrings = StrT::ParseArrayTmp(szTmp, STRMAX(szTmp), pszStr, aCmds, _countof(aCmds), szSep);
+        const ITERATE_t iStrings = StrT::ParseArrayTmp(TOSPAN(szTmp), pszStr, TOSPAN(aCmds), szSep);
         SetCPtrs((const _TYPE_CH**)aCmds, iStrings);
         return iStrings;
     }
@@ -127,16 +127,7 @@ struct GRAYCORE_LINK cArrayString : public cArray<cStringT<_TYPE_CH>, const _TYP
         va_end(vargs);
         return this->Add(sTmp);
     }
-    ITERATE_t AddTable(const _TYPE_CH* const* ppszTable, size_t iElemSize = sizeof(_TYPE_CH*)) {
-        ITERATE_t i = 0;
-        for (; *ppszTable != nullptr; i++) {
-            ASSERT(i < k_MaxElements);  // reasonable max.
-            this->Add(*ppszTable);
-            ppszTable = (const _TYPE_CH* const*)(((const BYTE*)ppszTable) + iElemSize);
-        }
-        return i;
-    }
-
+   
     /// <summary>
     /// Add a non dupe to the list end. if dupe then return index of match.
     /// Enforce iMax qty by delete head.
@@ -145,8 +136,7 @@ struct GRAYCORE_LINK cArrayString : public cArray<cStringT<_TYPE_CH>, const _TYP
         if (StrT::IsNullOrEmpty(pszStr) || iMax < 1) return k_ITERATE_BAD;
         ITERATE_t iQty = this->GetSize();
         for (ITERATE_t i = 0; i < iQty; i++) {
-            if (!StrT::CmpI(this->GetAt(i).get_CPtr(), pszStr))  // dupe
-            {
+            if (!StrT::CmpI(this->GetAt(i).get_CPtr(), pszStr))  { // dupe
                 return i;
             }
         }

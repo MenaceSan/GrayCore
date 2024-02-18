@@ -1,4 +1,3 @@
-//
 //! @file cPtrTrace.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 // clang-format off
@@ -21,7 +20,7 @@ namespace Gray {
 int cPtrTraceMgr::TraceDump(cLogProcessor* pLog, ITERATE_t iCountExpected) {  // virtual
     //! Dump all the IUnks that are left not released !!!
 
-    cThreadGuard threadguard(m_Lock);  // thread sync critical section.
+    const auto guard(m_Lock.Lock());  // thread sync critical section.
     const ITERATE_t iCount = m_aTraces.GetSize();
     int iLockCountTotal = 0;
 
@@ -43,7 +42,7 @@ int cPtrTraceMgr::TraceDump(cLogProcessor* pLog, ITERATE_t iCountExpected) {  //
         iLockCountTotal += iLockCount2;
     }
     if (pLog != nullptr) {
-        pLog->addEventF(LOG_ATTR_DEBUG, (iCount == iCountExpected) ? LOGLVL_t::_INFO : LOGLVL_t::_ERROR, "IUnk Dump of %d objects %d locks (of %d expected).", iCount, iLockCountTotal, iCountExpected);
+        pLog->addEventF(LOG_ATTR_DEBUG, (iCount == iCountExpected) ? LOGLVL_t::_INFO : LOGLVL_t::_ERROR, "IUnk Dump of %d objects, with %d locks (of %d expected).", iCount, iLockCountTotal, iCountExpected);
     }
     return iLockCountTotal;
 }
@@ -59,7 +58,7 @@ UINT_PTR GRAYCALL cPtrTrace::TraceAttachX(const TYPEINFO_t& typeInfo, IUnknown* 
         return 0;
     ASSERT_NN(pIUnk);
     auto& mgr = cPtrTraceMgr::I();
-    cThreadGuard threadguard(mgr.m_Lock);  // thread sync critical section.
+    const auto guard(mgr.m_Lock.Lock());  // thread sync critical section.
 
     UINT_PTR id = ++mgr._TraceIdLast;
     if (src)
@@ -72,7 +71,7 @@ UINT_PTR GRAYCALL cPtrTrace::TraceAttachX(const TYPEINFO_t& typeInfo, IUnknown* 
 void GRAYCALL cPtrTrace::TraceUpdateX(UINT_PTR id, const cDebugSourceLine& src) noexcept {
     ASSERT(id);
     auto& mgr = cPtrTraceMgr::I();
-    cThreadGuard threadguard(mgr.m_Lock);  // thread sync critical section.
+    const auto guard(mgr.m_Lock.Lock());  // thread sync critical section.
     const ITERATE_t index = mgr.m_aTraces.FindIForKey(id);
     if (index < 0) return;
     mgr.m_aTraces.ElementAt(index).m_Src = src;
@@ -86,7 +85,7 @@ void GRAYCALL cPtrTrace::TraceReleaseX(UINT_PTR id) {
         return;
     }
     auto& mgr = cPtrTraceMgr::I();
-    cThreadGuard threadguard(mgr.m_Lock);  // thread sync critical section.
+    const auto guard(mgr.m_Lock.Lock());  // thread sync critical section.
     bool ret = mgr.m_aTraces.RemoveKey(id);
     ASSERT(ret);
 }

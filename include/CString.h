@@ -1,10 +1,8 @@
-//
 //! @file cString.h
 //! Create a UTF8/UNICODE interchangeable string.
 //! ref counted string class.
 //! STL C string emulating. NOT MFC.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cString_H
 #define _INC_cString_H
@@ -53,7 +51,7 @@ class GRAYCORE_LINK cStringHeadT final : public cArrayHeadT<_TYPE_CH> {
     static THIS_t* CreateStringData2(StrLen_t nCharCount, const _TYPE_CH* pSrc) {
         THIS_t* p = CreateStringData(nCharCount);
         if (pSrc != nullptr) {  // init
-            StrT::CopyLen(p->get_DataWork(), pSrc, nCharCount + 1);
+            StrT::Copy(p->get_Span(), pSrc);
         }
         return p;
     }
@@ -75,8 +73,8 @@ class GRAYCORE_LINK cStringHeadT final : public cArrayHeadT<_TYPE_CH> {
         const StrLen_t iLen = get_CharCount();
         if (iLen <= 0) return k_HASHCODE_CLEAR;
         if (m_HashCode == k_HASHCODE_CLEAR) {
-            // Lazy populate this value.
-            const_cast<THIS_t*>(this)->m_HashCode = StrT::GetHashCode32(get_DataConst(), iLen);
+            // Lazy populate this mutable value. 
+            m_HashCode = StrT::GetHashCode32(get_DataConst(), iLen);
         }
         return m_HashCode;
     }
@@ -95,7 +93,6 @@ class GRAYCORE_LINK cStringHeadT final : public cArrayHeadT<_TYPE_CH> {
 /// Mimic the MFC ATL::CStringT<> functionality.
 /// Unlike STL std::string this is shareable via reference count. No dynamic copied each time.
 /// Use this for best string functionality.
-/// NOTE cObject based ??
 /// </summary>
 /// <typeparam name="_TYPE_CH">char or wchar_t</typeparam>
 template <typename _TYPE_CH = char>
@@ -141,22 +138,19 @@ class GRAYCORE_LINK cStringT {
         Init();
         Assign(pwText);
     }
-    cStringT(const wchar_t* pwText, StrLen_t iLenMax) {
-        //! @arg iLenMax = STRMAX = _countof(wText)-1 default StrT::k_LEN_MAX
-        //! @arg iLenMax = max chars, not including '\0' ! NOT sizeof() or _countof() like StrT::CopyLen
+    cStringT(const cSpan<wchar_t>& src) {
+        // src = STRMAX = _countof(wText)-1  max chars, not including '\0' ! NOT sizeof() or _countof() like StrT::Copy
         Init();
-        AssignLen(pwText, iLenMax);
+        AssignSpan(src);
     }
     cStringT(const char* pszStr) {
         //! Init and convert UNICODE is needed.
         Init();
         Assign(pszStr);
     }
-    cStringT(const char* pszStr, StrLen_t iLenMax) {
-        //! @arg iLenMax = _countof(StrT::k_LEN_MAX)-1 default
-        //! @arg iLenMax = max chars, not including '\0' ! NOT sizeof() or _countof() like StrT::CopyLen
+    cStringT(const cSpan<char>& src) {
         Init();
-        AssignLen(pszStr, iLenMax);
+        AssignSpan(src);
     }
 
     cStringT(const THIS_t& ref) noexcept {
@@ -230,6 +224,21 @@ class GRAYCORE_LINK cStringT {
         }
         return pHead->get_CharCount();
     }
+
+    cSpan<_TYPE_CH> get_SpanStr() const {
+        return ToSpan(this->get_CPtr(), this->GetLength()); // NOT the '\0'
+    }
+
+    /// <summary>
+    /// Get a character.
+    /// </summary>
+    /// <param name="nIndex"></param>
+    /// <returns></returns>
+    _TYPE_CH GetAt(StrLen_t nIndex) const {  // 0 based
+        ASSERT(nIndex <= GetLength());       // allow to get the '\0' char
+        return m_pchData[nIndex];
+    }
+
     /// <summary>
     /// AKA SetEmpty
     /// </summary>
@@ -253,16 +262,6 @@ class GRAYCORE_LINK cStringT {
     }
 
     /// <summary>
-    /// Get a character.
-    /// </summary>
-    /// <param name="nIndex"></param>
-    /// <returns></returns>
-    _TYPE_CH GetAt(StrLen_t nIndex) const {  // 0 based
-        ASSERT(nIndex <= GetLength());       // allow to get the '\0' char
-        return m_pchData[nIndex];
-    }
-
-    /// <summary>
     /// Set a character.
     /// </summary>
     /// <param name="nIndex"></param>
@@ -274,7 +273,15 @@ class GRAYCORE_LINK cStringT {
         ASSERT(isValidString());
     }
 
+    /// <summary>
+    /// MUST call ReleaseBuffer() after this.
+    /// </summary>
+    /// <param name="iMinLength"></param>
+    /// <returns></returns>
     _TYPE_CH* GetBuffer(StrLen_t iMinLength);
+    cSpanX<_TYPE_CH> GetSpanWrite(StrLen_t iMinLength) {
+        return ToSpan(GetBuffer(iMinLength), iMinLength);
+    }
     void ReleaseBuffer(StrLen_t nNewLength = k_StrLen_UNK);
 
     /// <summary>
@@ -293,17 +300,22 @@ class GRAYCORE_LINK cStringT {
         return *this;
     }
 
-    void AssignLenT(const _TYPE_CH* pszStr, StrLen_t iLenMax);
+    /// <summary>
+    /// Copy src into this string. 
+    /// </summary>
+    /// <typeparam name="_TYPE_CH">max chars, not including '\0' ! NOT sizeof() or _countof() like StrT::CopyLen</typeparam>
+    /// <param name="src">nullptr = just allocate and leave blank. Allow overlaps.</param>
+    void AssignSpanT(const cSpan<_TYPE_CH>& src);
 
     // UTF8. auto converted
-    void AssignLen(const char* pszStr, StrLen_t iSizeMax = StrT::k_LEN_MAX);
+    void AssignSpan(const cSpan<char>& src);
     const THIS_t& operator=(const char* pStr) {
         Assign(pStr);
         return *this;
     }
 
     // UNICODE. auto converted
-    void AssignLen(const wchar_t* pwText, StrLen_t iSizeMax = StrT::k_LEN_MAX);
+    void AssignSpan(const cSpan<wchar_t>& src);
     const THIS_t& operator=(const wchar_t* pStr) {
         Assign(pStr);
         return *this;
@@ -334,7 +346,7 @@ class GRAYCORE_LINK cStringT {
     void MakeLower();
     THIS_t Left(StrLen_t nCount) const;
     THIS_t Right(StrLen_t nCount) const;
-    THIS_t Mid(StrLen_t nFirst, StrLen_t nCount = StrT::k_LEN_MAX) const;
+    THIS_t Mid(StrLen_t nFirst, StrLen_t nCount = cStrConst::k_LEN_MAX) const;
 
     StrLen_t Find(_TYPE_CH ch, StrLen_t nPosStart = 0) const;
 
@@ -441,11 +453,11 @@ class GRAYCORE_LINK cStringT {
     }
 
     StrLen_t SetCodePage(const wchar_t* pwText, CODEPAGE_t uCodePage = CP_UTF8);
-    StrLen_t GetCodePage(OUT wchar_t* pwText, StrLen_t iLenMax, CODEPAGE_t uCodePage = CP_UTF8) const;
+    StrLen_t GetCodePage(OUT cSpanX<wchar_t>& ret, CODEPAGE_t uCodePage = CP_UTF8) const;
 
     THIS_t GetTrimWhitespace() const;
 
-    HRESULT SerializeInput(cStreamInput& File, StrLen_t iLenMax = StrT::k_LEN_MAX);
+    HRESULT SerializeInput(cStreamInput& File, StrLen_t iLenMax = cStrConst::k_LEN_MAX);
     HRESULT SerializeOutput(cStreamOutput& File) const;
     HRESULT SerializeOutput(cArchive& a) const;
     HRESULT Serialize(cArchive& a);
@@ -490,7 +502,7 @@ class GRAYCORE_LINK cStringT {
         return this->Find(ch, 0);
     }
     void assign(const _TYPE_CH* pszStr, StrLen_t iLenCat) {
-        *this = THIS_t(pszStr, iLenCat);
+        *this = THIS_t(ToSpan(pszStr, iLenCat));
     }
     void append(const _TYPE_CH* pszStr, StrLen_t iLenCat) {
         this->Insert(this->GetLength(), pszStr, iLenCat);
@@ -506,10 +518,10 @@ class GRAYCORE_LINK cStringT {
         // optimize that this is the end length.
         UNREFERENCED_PARAMETER(iSize);
     }
-    THIS_t substr(StrLen_t nFirst, StrLen_t nCount = StrT::k_LEN_MAX) const {
+    THIS_t substr(StrLen_t nFirst, StrLen_t nCount = cStrConst::k_LEN_MAX) const {
         // Like return this->Mid(nFirst, nCount)
-        if (nFirst >= this->GetLength()) return cStrConst::k_Empty.Get<_TYPE_CH>();
-        return THIS_t(this->get_CPtr() + nFirst, nCount);
+        if (nFirst >= this->GetLength()) return cStrConst::k_Empty.GetT<_TYPE_CH>();
+        return ToSpan(this->get_CPtr() + nFirst, nCount);
     }
 
     static THIS_t _cdecl Join(const _TYPE_CH* s1, ...);

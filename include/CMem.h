@@ -1,8 +1,6 @@
-//
 //! @file cMem.h
 //! Move memory blocks and bytes around.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cMem_H
 #define _INC_cMem_H
@@ -72,11 +70,6 @@ struct GRAYCORE_LINK cMem {                          // static cSingleton
         return IsValidApp(pData);
     }
 
-    static constexpr bool IsInsideBlock(const void* p, const void* pBlock, size_t len) noexcept {
-        const ptrdiff_t d = Diff(p, pBlock);
-        return d >= 0 && d < CastN(ptrdiff_t, len);
-    }
-
     static inline bool IsZeros(const void* pData, size_t nSize) noexcept {
         //! Is all zeros ? nSize = 0 = true.
         if (!IsValidApp(pData))  // nullptr or corrupt?
@@ -110,10 +103,8 @@ struct GRAYCORE_LINK cMem {                          // static cSingleton
 #endif
     }
 
-    static COMPARE_t GRAYCALL Compare(const void* pData1, size_t iLen1, const void* pData2, size_t iLen2);
-
     static inline bool IsEqual(const void* p1, const void* p2, size_t nSizeBlock) noexcept {
-        return cMem::Compare(p1, p2, nSizeBlock) == COMPARE_Equal;
+        return Compare(p1, p2, nSizeBlock) == COMPARE_Equal;
     }
 
     static inline COMPARE_t CompareSecure(const void* p1, const void* p2, size_t nSizeBlock) noexcept {
@@ -318,18 +309,6 @@ struct GRAYCORE_LINK cMem {                          // static cSingleton
             cValT::Swap(*pMem1, *pMem2);
         }
     }
-
-    // read/write a string of comma separated numbers.
-    static StrLen_t GRAYCALL ConvertToString(char* pszDst, StrLen_t iSizeDstMax, const BYTE* pSrc, size_t nSrcQty);
-    static StrLen_t GRAYCALL ConvertToString(wchar_t* pszDst, StrLen_t iSizeDstMax, const BYTE* pSrc, size_t nSrcQty);
-    static size_t GRAYCALL ReadFromCSV(BYTE* pDst, size_t iLenBytesMax, const char* pszSrc);
-
-    static constexpr StrLen_t GetHexDigestSize(size_t nSize) noexcept {
-        /// How much space does the hex digest need?
-        return CastN(StrLen_t, (nSize * 2) + 1);
-    }
-    static StrLen_t GRAYCALL GetHexDigest(OUT char* pszHexString, const BYTE* pData, size_t nSizeData);
-    static HRESULT GRAYCALL SetHexDigest(const char* pszHexString, OUT BYTE* pData, size_t nSizeData, bool testEnd = true);
 };
 
 /// <summary>

@@ -1,17 +1,16 @@
-//
 //! @file StrT.inl
 //! included by "StrT.h" or "StrT.cpp" to implement the functions. (perhaps inline, perhaps not)
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
-#ifndef _INC_StrUtil_INL
-#define _INC_StrUtil_INL
+#ifndef _INC_StrT_INL
+#define _INC_StrT_INL
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
 #include "StrA.h"
 #include "StrConst.h"
+#include "cValT.h"
 
 namespace Gray {
 //***************************************************************************
@@ -23,9 +22,9 @@ COMPARE_t GRAYCALL StrT::Cmp(const TYPE* pszStr1, const TYPE* pszStr2) noexcept 
     if (pszStr1 == nullptr) return COMPARE_Less;
     if (pszStr2 == nullptr) return COMPARE_Greater;
     for (StrLen_t i = 0;; i++) {
-        DEBUG_CHECK(i < StrT::k_LEN_MAX);
-        TYPE ch1 = pszStr1[i];
-        TYPE ch2 = pszStr2[i];
+        DEBUG_CHECK(i < cStrConst::k_LEN_MAX);
+        const TYPE ch1 = pszStr1[i];
+        const TYPE ch2 = pszStr2[i];
         if (ch1 == '\0' || ch1 != ch2) return ch1 - ch2;
     }
 }
@@ -35,10 +34,10 @@ COMPARE_t GRAYCALL StrT::CmpN(const TYPE* pszStr1, const TYPE* pszStr2, StrLen_t
     if (pszStr1 == nullptr) return COMPARE_Less;
     if (pszStr2 == nullptr) return COMPARE_Greater;
     if (iLenMaxChars < 0) return COMPARE_Less;
-    DEBUG_CHECK(iLenMaxChars <= StrT::k_LEN_MAX);
+    DEBUG_CHECK(iLenMaxChars <= cStrConst::k_LEN_MAX);
     for (StrLen_t i = 0; i < iLenMaxChars; i++) {
-        TYPE ch1 = pszStr1[i];
-        TYPE ch2 = pszStr2[i];
+        const TYPE ch1 = pszStr1[i];
+        const TYPE ch2 = pszStr2[i];
         if (ch1 == '\0' || ch1 != ch2) return ch1 - ch2;
     }
     return COMPARE_Equal;
@@ -53,9 +52,10 @@ COMPARE_t GRAYCALL StrT::CmpI(const TYPE* pszStr1, const TYPE* pszStr2) noexcept
     if (pszStr1 == nullptr) return COMPARE_Less;
     if (pszStr2 == nullptr) return COMPARE_Greater;
     for (StrLen_t i = 0;; i++) {
-        DEBUG_CHECK(i < StrT::k_LEN_MAX);
-        COMPARE_t iDiff = StrChar::CmpI(pszStr1[i], pszStr2[i]);
-        if (pszStr1[i] == '\0' || iDiff != 0) return iDiff;
+        DEBUG_CHECK(i < cStrConst::k_LEN_MAX);
+        const TYPE ch1 = pszStr1[i];
+        const COMPARE_t iDiff = StrChar::CmpI(ch1, pszStr2[i]);
+        if (ch1 == '\0' || iDiff != 0) return iDiff;
     }
 }
 
@@ -65,9 +65,9 @@ COMPARE_t GRAYCALL StrT::CmpIN(const TYPE* pszStr1, const TYPE* pszStr2, StrLen_
     if (pszStr1 == nullptr) return COMPARE_Less;
     if (pszStr2 == nullptr) return COMPARE_Greater;
     if (iLenMaxChars < 0) return COMPARE_Less;
-    DEBUG_CHECK(iLenMaxChars <= StrT::k_LEN_MAX);
+    DEBUG_CHECK(iLenMaxChars <= cStrConst::k_LEN_MAX);
     for (StrLen_t i = 0; i < iLenMaxChars; i++) {
-        COMPARE_t iDiff = StrChar::CmpI(pszStr1[i], pszStr2[i]);
+        const COMPARE_t iDiff = StrChar::CmpI(pszStr1[i], pszStr2[i]);
         if (pszStr1[i] == '\0' || iDiff != 0) return iDiff;
     }
     return COMPARE_Equal;
@@ -83,10 +83,10 @@ bool StrT::StartsWithI(const TYPE* pszStr1, const TYPE* pszPrefix) {
     if (pszPrefix == nullptr) pszPrefix = cStrConst::k_Empty;
 
     for (StrLen_t i = 0;; i++) {
-        ASSERT(i < StrT::k_LEN_MAX);
-        TYPE ch = pszPrefix[i];
+        ASSERT(i < cStrConst::k_LEN_MAX);
+        const TYPE ch = pszPrefix[i];
         if (ch == '\0') return true;  // consider this equal.
-        COMPARE_t iDiff = StrChar::CmpI(ch, pszStr1[i]);
+        const COMPARE_t iDiff = StrChar::CmpI(ch, pszStr1[i]);
         if (iDiff != COMPARE_Equal) return false;
     }
 }
@@ -101,9 +101,9 @@ bool GRAYCALL StrT::EndsWithI(const TYPE* pszStr1, const TYPE* pszPostfix, StrLe
     if (pszPostfix == nullptr) pszPostfix = cStrConst::k_Empty;
     if (nLenStr <= k_StrLen_UNK) nLenStr = Len(pszStr1);
 
-    ASSERT(nLenStr >= 0 && nLenStr < StrT::k_LEN_MAX);
-    StrLen_t nLenPost = Len(pszPostfix, nLenStr + 1);  // Assume this is short.
-    ASSERT(nLenPost < StrT::k_LEN_MAX);
+    ASSERT(nLenStr >= 0 && nLenStr < cStrConst::k_LEN_MAX);
+    const StrLen_t nLenPost = Len(pszPostfix, nLenStr + 1);  // Assume this is short.
+    ASSERT(nLenPost < cStrConst::k_LEN_MAX);
     if (nLenPost > nLenStr) return false;
 
     return StrT::CmpI(pszStr1 + (nLenStr - nLenPost), pszPostfix) == COMPARE_Equal;
@@ -114,12 +114,12 @@ COMPARE_t GRAYCALL StrT::CmpHeadI(const TYPE* pszFindHead, const TYPE* pszTableE
     if (pszTableElem == nullptr) return COMPARE_Less;
     if (pszFindHead == nullptr) return COMPARE_Less;
     for (StrLen_t i = 0;; i++) {
-        ASSERT(i < StrT::k_LEN_MAX);
+        ASSERT(i < cStrConst::k_LEN_MAX);
         TYPE ch1 = pszFindHead[i];
         TYPE ch2 = pszTableElem[i];
         if (!StrChar::IsCSym(ch1)) ch1 = '\0';  // force end
         if (!StrChar::IsCSym(ch2)) ch2 = '\0';  // force end
-        COMPARE_t iDiff = StrChar::CmpI(ch1, ch2);
+        const COMPARE_t iDiff = StrChar::CmpI(ch1, ch2);
         if (iDiff != 0 || ch1 == '\0') return iDiff;
     }
 }
@@ -127,8 +127,7 @@ COMPARE_t GRAYCALL StrT::CmpHeadI(const TYPE* pszFindHead, const TYPE* pszTableE
 template <typename TYPE>
 HASHCODE32_t GRAYCALL StrT::GetHashCode32(const TYPE* pszStr, StrLen_t nLen, HASHCODE32_t nHash) noexcept {
     if (pszStr == nullptr) return k_HASHCODE_CLEAR;
-    if (nLen <= k_StrLen_UNK)  // nLen was not supplied. I must figure it out.
-        nLen = StrT::Len(pszStr, k_LEN_MAX);
+    if (nLen <= k_StrLen_UNK) nLen = StrT::Len(pszStr, cStrConst::k_LEN_MAX);  // nLen was not supplied. I must figure it out.        
     if (nLen <= 0) return k_HASHCODE_CLEAR;
 
     for (StrLen_t nLen2 = nLen / 2; nLen2 > 0; nLen2--) {
@@ -303,7 +302,7 @@ bool GRAYCALL StrT::IsWhitespace(const TYPE* pStr, StrLen_t iLenMaxChars) noexce
     //! @arg iLenMaxChars = don't bother checking more than this.
 
     if (pStr == nullptr) return true;
-    if (iLenMaxChars > StrT::k_LEN_MAX) iLenMaxChars = StrT::k_LEN_MAX;
+    if (iLenMaxChars > cStrConst::k_LEN_MAX) iLenMaxChars = cStrConst::k_LEN_MAX;
     for (; iLenMaxChars > 0 && pStr[0] != '\0'; iLenMaxChars--, pStr++) {
         if (!StrChar::IsSpaceX(pStr[0])) return false;
     }
@@ -335,92 +334,67 @@ bool GRAYCALL StrT::IsPrintable(const TYPE* pStr, StrLen_t iLenChars) noexcept {
 //***********************************************************
 
 template <typename TYPE>
-const TYPE* GRAYCALL StrX<TYPE>::GetTableElem(ITERATE_t iEnumVal, const void* ppszTableInit, ITERATE_t iCountMax, size_t nElemSize) {
-    //! Get a string for an enum value.
-    //! iCountMax = I know the max.
-    if (IS_INDEX_BAD(iEnumVal, iCountMax)) {
-        return StrT::Cast<TYPE>(CSTRCONST("?"));
-    }
-    return GetTableElemU(ppszTableInit, iEnumVal, nElemSize);
-}
-
-template <typename TYPE>
-ITERATE_t GRAYCALL StrX<TYPE>::GetTableCount(const void* ppszTableInit, size_t nElemSize) {
-    //! Count the size of a null terminated table of strings.
-    //! Don't assume sorted.
-    if (ppszTableInit == nullptr) return 0;
-    const TYPE* const* ppszTable = (const TYPE* const*)ppszTableInit;
-    for (ITERATE_t i = 0;; i++) {
-        const TYPE* pszName = GetTableElemU(ppszTable, i, nElemSize);
-        if (pszName == nullptr) return i;
-    }
-    UNREACHABLE_CODE(__noop);
-}
-
-template <typename TYPE>
-ITERATE_t GRAYCALL StrX<TYPE>::GetTableCountSorted(const void* ppszTableInit, size_t nElemSize) {
-    //! make sure the table actually IS sorted !
+bool GRAYCALL StrX<TYPE>::IsTableSorted(const cSpanUnk& t) {
+    //! DEBUG . make sure the table actually IS sorted !
     //! ignores case
 
-    if (ppszTableInit == nullptr) return 0;
-    const TYPE* const* ppszTable = (const TYPE* const*)ppszTableInit;
-    for (ITERATE_t i = 0;; i++) {
-        const TYPE* pszName1 = GetTableElemU(ppszTable, i, nElemSize);
-        if (pszName1 == nullptr) return 0;
-        const TYPE* pszName2 = GetTableElemU(ppszTable, i + 1, nElemSize);
-        if (pszName2 == nullptr) return i + 1;
+    if (t.isNull()) return true;
+
+    ITERATE_t i = 0;
+    for (;; i++) {
+        if (i >= t.GetSize() - 1) return true;
+        const TYPE* pszName1 = *t.GetElemT<TYPE*>(i);
+        if (pszName1 == nullptr) break;
+        const TYPE* pszName2 = *t.GetElemT<TYPE*>(i + 1);
+        if (pszName2 == nullptr) break;
         COMPARE_t iCompare = StrT::CmpI(pszName1, pszName2);
-        if (iCompare >= COMPARE_Equal)  // no dupes!
-        {
+        if (iCompare >= COMPARE_Equal) {  // no dupes!
             ASSERT(iCompare < 0);
-            return k_ITERATE_BAD;
+            break;
         }
     }
+    return false;
 }
 
 //***********************************************************
 
 template <typename TYPE>
-ITERATE_t GRAYCALL StrT::TableFindHead(const TYPE* pszFindHead, const void* ppszTableInit, size_t nElemSize) {
+ITERATE_t GRAYCALL StrT::TableFindHead(const TYPE* pszFindHead, const cSpanUnk& t) {
     //! Find a string in a table.
     //! Ignores case. unsorted table.
     //! Use rules for StrT::CmpHeadI for compare. compare only up to the CSYM values.
     //! @return
     //!  -1 = not found. k_ITERATE_BAD
     if (StrT::IsNullOrEmpty(pszFindHead)) return k_ITERATE_BAD;
-    if (ppszTableInit == nullptr) return k_ITERATE_BAD;
-
-    const TYPE* const* ppszTable = (const TYPE* const*)ppszTableInit;
-    for (ITERATE_t i = 0;; i++) {
-        const TYPE* pszName = StrX<TYPE>::GetTableElemU(ppszTable, i, nElemSize);
-        if (pszName == nullptr) break;
+    if (t.isNull()) return k_ITERATE_BAD;
+    for (ITERATE_t i = 0; i < t.GetSize(); i++) {
+        const TYPE* pszName = *t.GetElemT<TYPE*>(i);
         if (!StrT::CmpHeadI(pszFindHead, pszName)) return i;
     }
     return k_ITERATE_BAD;
 }
 
 template <typename TYPE>
-ITERATE_t GRAYCALL StrT::TableFindHeadSorted(const TYPE* pszFindHead, const void* ppszTableInit, ITERATE_t iCountMax, size_t nElemSize) {
+ITERATE_t GRAYCALL StrT::TableFindHeadSorted(const TYPE* pszFindHead, const cSpanUnk& t) {
     //! Find a string in a table.
     //! Do a binary search (un-cased) on a sorted table.
     //! Use rules for StrT::CmpHeadI for compare. compare only up to the CSYM values.
     //! @return -1 = not found k_ITERATE_BAD
 
     if (StrT::IsNullOrEmpty(pszFindHead)) return k_ITERATE_BAD;
-    if (ppszTableInit == nullptr) return k_ITERATE_BAD;
+    if (t.isNull()) return k_ITERATE_BAD;
 #ifdef _DEBUG
-    ASSERT(StrX<TYPE>::GetTableCountSorted(ppszTableInit, nElemSize) == iCountMax);
+    ASSERT(StrX<TYPE>::IsTableSorted(t));
 #endif
 
-    const TYPE* const* ppszTable = (const TYPE* const*)ppszTableInit;
-    ITERATE_t iHigh = iCountMax - 1;
-    if (iHigh < 0) {
-        return k_ITERATE_BAD;
-    }
+    ITERATE_t iHigh = t.GetSize() - 1;
+    if (iHigh < 0) return k_ITERATE_BAD;
+
     ITERATE_t iLow = 0;
     while (iLow <= iHigh) {
         ITERATE_t i = (iHigh + iLow) / 2;
-        COMPARE_t iCompare = StrT::CmpHeadI(pszFindHead, StrX<TYPE>::GetTableElemU(ppszTable, i, nElemSize));
+        const TYPE* pszName = *t.GetElemT<TYPE*>(i);
+        COMPARE_t iCompare = StrT::CmpHeadI(pszFindHead, pszName);
         if (iCompare == COMPARE_Equal) return i;
         if (iCompare > 0) {
             iLow = i + 1;
@@ -432,40 +406,37 @@ ITERATE_t GRAYCALL StrT::TableFindHeadSorted(const TYPE* pszFindHead, const void
 }
 
 template <typename TYPE>
-ITERATE_t GRAYCALL StrT::TableFind(const TYPE* pszFindThis, const void* ppszTableInit, size_t nElemSize) {
-    if (ppszTableInit == nullptr || StrT::IsNullOrEmpty(pszFindThis)) return k_ITERATE_BAD;
-    const TYPE* const* ppszTable = (const TYPE* const*)ppszTableInit;
-    for (ITERATE_t i = 0;; i++) {
-        const TYPE* pszName = StrX<TYPE>::GetTableElemU(ppszTable, i, nElemSize);
-        if (pszName == nullptr) break;
+ITERATE_t GRAYCALL StrT::TableFind(const TYPE* pszFindThis, const cSpanUnk& t) {
+    if (StrT::IsNullOrEmpty(pszFindThis)) return k_ITERATE_BAD;
+    if (t.isNull()) return k_ITERATE_BAD;
+    for (ITERATE_t i = 0; i < t.GetSize(); i++) {
+        const TYPE* pszName = *t.GetElemT<TYPE*>(i);
         if (!StrT::CmpI(pszFindThis, pszName)) return i;
     }
     return k_ITERATE_BAD;
 }
 
 template <typename TYPE>
-ITERATE_t GRAYCALL StrT::TableFindSorted(const TYPE* pszFindThis, const void* ppszTableInit, ITERATE_t iCountMax, size_t nElemSize) {
+ITERATE_t GRAYCALL StrT::TableFindSorted(const TYPE* pszFindThis, const cSpanUnk& t) {
     //! Find a string in a table.
     //! Do a binary search (un-cased) on a sorted table.
     //! @return -1 = not found k_ITERATE_BAD
 
     if (pszFindThis == nullptr) return k_ITERATE_BAD;
-    if (ppszTableInit == nullptr) return k_ITERATE_BAD;
+    if (t.isNull()) return k_ITERATE_BAD;
 #ifdef _DEBUG
-    ASSERT(StrX<TYPE>::GetTableCountSorted(ppszTableInit, nElemSize) == iCountMax);
+    ASSERT(StrX<TYPE>::IsTableSorted(t));
 #endif
 
-    const TYPE* const* ppszTable = (const TYPE* const*)ppszTableInit;
-    ITERATE_t iHigh = iCountMax - 1;
-    if (iHigh < 0) {
-        return k_ITERATE_BAD;
-    }
+    ITERATE_t iHigh = t.GetSize() - 1;
+    if (iHigh < 0) return k_ITERATE_BAD;
+
     ITERATE_t iLow = 0;
     while (iLow <= iHigh) {
         ITERATE_t i = (iHigh + iLow) / 2;
-        const TYPE* pszName = StrX<TYPE>::GetTableElemU(ppszTable, i, nElemSize);
+        const TYPE* pszName = *t.GetElemT<TYPE*>(i);
         COMPARE_t iCompare = StrT::CmpI(pszFindThis, pszName);
-        if (iCompare == COMPARE_Equal) return (i);
+        if (iCompare == COMPARE_Equal) return i;
         if (iCompare > 0) {
             iLow = i + 1;
         } else {
@@ -486,9 +457,7 @@ StrLen_t GRAYCALL StrT::CopyLen(TYPE* pDst, const TYPE* pSrc, StrLen_t iLenMaxCh
         iLenMaxChars--;  // save room for '\0'
         if (pDst >= pSrc && pDst <= (pSrc + iLenMaxChars)) {
             i = StrT::Len(pSrc, iLenMaxChars);
-            if (pDst != pSrc)  // same string.
-            {
-                // Must do backwards copy like cMem::CopyOverlap().
+            if (pDst != pSrc) {  // same string. // Must do backwards copy like cMem::CopyOverlap().
                 int j = i;
                 for (; --j >= 0;) pDst[j] = pSrc[j];
             }
@@ -497,7 +466,6 @@ StrLen_t GRAYCALL StrT::CopyLen(TYPE* pDst, const TYPE* pSrc, StrLen_t iLenMaxCh
             for (; pSrc[i] != '\0' && i < iLenMaxChars; i++) pDst[i] = pSrc[i];
         }
     }
-
     pDst[i] = '\0';  // always terminate.
     return i;
 }
@@ -531,7 +499,7 @@ TYPE* GRAYCALL StrT::TrimWhitespace(TYPE* pStr, StrLen_t iLenMax) {
 }
 
 template <typename TYPE>
-StrLen_t GRAYCALL StrT::ReplaceX(TYPE* pDst, StrLen_t iDstLenMax, StrLen_t iDstIdx, StrLen_t iDstSegLen, const TYPE* pSrc, StrLen_t iSrcLen) {
+StrLen_t GRAYCALL StrT::ReplaceX(cSpanX<TYPE>& dst, StrLen_t iDstIdx, StrLen_t iDstSegLen, const TYPE* pSrc, StrLen_t iSrcLen) {
     //! Replace a segment of a string with pSrc, Maybe change length!
     //! @arg
     //!  iDstLenMax = don't let the pDst get bigger than this.
@@ -544,9 +512,9 @@ StrLen_t GRAYCALL StrT::ReplaceX(TYPE* pDst, StrLen_t iDstLenMax, StrLen_t iDstI
     //!  pStr = "this is a string";
 
     if (iSrcLen <= k_StrLen_UNK) iSrcLen = StrT::Len(pSrc);
-    TYPE* pDst2 = pDst + iDstIdx;
+    TYPE* pDst2 = dst.get_DataWork() + iDstIdx;
     const StrLen_t iLenRest = StrT::Len(pDst2 + iDstSegLen);
-    if (iDstIdx + iSrcLen + iLenRest >= iDstLenMax)  // not big enough!
+    if (iDstIdx + iSrcLen + iLenRest >= dst.get_MaxLen())  // not big enough!
         return 0;
     cMem::CopyOverlap(pDst2 + iSrcLen, pDst2 + iDstSegLen, (iLenRest + 1) * sizeof(TYPE));  // make room.
     cMem::Copy(pDst2, pSrc, iSrcLen * sizeof(TYPE));
@@ -563,27 +531,25 @@ TYPE* GRAYCALL StrT::FindBlockEnd(STR_BLOCK_t eBlockType, const TYPE* pszLine, S
     //!  eBlockType = what type of block is this? 0 = STR_BLOCK_t::_QUOTE.
     //!    STR_BLOCK_t::_NONE = just look for nested blocks.
     //!  pszLine = the TYPE char AFTER the opening quote/brace/etc STR_BLOCK_t char.
-    //!  iLenMaxChars = StrT::k_LEN_MAX
+    //!  iLenMaxChars = cStrConst::k_LEN_MAX
     //! @return
     //!  Pointer to the end of the block sequence. Perhaps caller will replace it with '\0' ?
     //!  nullptr = FAIL, same pointer = FAIL.
 
     if (pszLine == nullptr) return nullptr;
+    const TYPE chEnd = (eBlockType <= STR_BLOCK_t::_NONE) ? '\0' : CastN(TYPE, GetBlockEnd(eBlockType));
+
     StrLen_t i = 0;
     for (; i < iLenMaxChars; i++) {
         TYPE ch = pszLine[i];
-        if (ch == '\0') break;  // nothing closing.
-
-        if (eBlockType != STR_BLOCK_t::_NONE && ch == CastN(TYPE, k_szBlockEnd[static_cast<int>(eBlockType)])) {
-            // Found the end. OK.
-            return const_cast<TYPE*>(pszLine + i);
-        }
+        if (ch == '\0') break;                                   // nothing closing.
+        if (ch == chEnd) return const_cast<TYPE*>(pszLine + i);  // Found the end. OK.
 
         // NO Such thing as nested blocks inside " quote. only look for quote end.
         if (eBlockType == STR_BLOCK_t::_QUOTE) {  // so don't bother looking.
-            // skip \escape sequences inside quotes.
-            if (ch == '\\' && pszLine[i + 1] > ' ') {
-                i++;
+            // BUT skip \escape sequences inside quotes.
+            if (ch == '\\') {
+                i += EscSeqDecode1(ch, pszLine + i + 1);
             }
             continue;
         }
@@ -602,7 +568,7 @@ TYPE* GRAYCALL StrT::FindBlockEnd(STR_BLOCK_t eBlockType, const TYPE* pszLine, S
         STR_BLOCK_t eBlockType2 = (STR_BLOCK_t)StrT::FindCharN<char>(k_szBlockStart, (char)ch);  // cast away wchar_t
         if (eBlockType2 > STR_BLOCK_t::_NONE) {
             const TYPE* pszBlockEnd = StrT::FindBlockEnd(eBlockType2, pszLine + i + 1);
-            if (pszBlockEnd != nullptr && CastN(TYPE, k_szBlockEnd[static_cast<int>(eBlockType2)]) == pszBlockEnd[0]) {
+            if (pszBlockEnd != nullptr && CastN(TYPE, GetBlockEnd(eBlockType2)) == pszBlockEnd[0]) {
                 i = StrT::Diff(pszBlockEnd, pszLine);
             } else {
                 // Failed!
@@ -612,12 +578,12 @@ TYPE* GRAYCALL StrT::FindBlockEnd(STR_BLOCK_t eBlockType, const TYPE* pszLine, S
 
     if (eBlockType == STR_BLOCK_t::_NONE) {
         // i was just looking for nesting errors.
-        return (const_cast<TYPE*>(pszLine + i));
+        return const_cast<TYPE*>(pszLine + i);
     }
 
     // Failed to find closing character.
 #ifdef _INC_cLogMgr_H
-    DEBUG_ERR(("Unmatched ending %c mark!", k_szBlockStart[eBlockType]));
+    DEBUG_ERR(("Unmatched ending %c mark!", GetBlockStart(eBlockType)));
 #endif
     return const_cast<TYPE*>(pszLine);
 }
@@ -628,150 +594,139 @@ TYPE* GRAYCALL StrT::StripBlock(TYPE* pszText) {
     //! If the string is encased in "" or () then remove them.
 
     STR_BLOCK_t eBlockType = (STR_BLOCK_t)StrT::FindCharN<char>(k_szBlockStart, (char)pszText[0]);  // start block.
-    if (eBlockType <= STR_BLOCK_t::_NONE)                                                           // not blocked, at least not a type I recognize.
-        return pszText;
-    TYPE* pszBlockEnd = StrT::FindBlockEnd(eBlockType, pszText + 1);                                          // const_cast
-    if (pszBlockEnd == nullptr || pszBlockEnd[0] != CastN(TYPE, k_szBlockEnd[static_cast<int>(eBlockType)]))  // failed to close !
+    if (eBlockType <= STR_BLOCK_t::_NONE) return pszText;                                           // not blocked, at least not a type I recognize.
+
+    TYPE* pszBlockEnd = StrT::FindBlockEnd(eBlockType, pszText + 1);                       // const_cast
+    if (pszBlockEnd == nullptr || pszBlockEnd[0] != CastN(TYPE, GetBlockEnd(eBlockType)))  // failed to close !
         return pszText;
     *pszBlockEnd = '\0';
     return pszText + 1;
 }
 
 template <typename TYPE>
-StrLen_t GRAYCALL StrT::EscSeqRemove(TYPE* pStrOut, const TYPE* pStrIn, StrLen_t iLenOutMax, StrLen_t iLenInMax) {
-    //! Filter/decode out the 'C like' embedded escape sequences. "\n\r" etc
-    //! This string will shrink.
-    //! Assumed to be inside quotes ending at iLenInMax.
-    //! opposite of StrT::EscSeqAdd()
-    //! @note
-    //!  Since we are removing, allow pStrOut = pStrIn.
-    //! @arg
-    //!  iLenMax = the string length NOT including null.
-    //! @return new length of the string. same or less than input
-    //! @return pStrOut
-    //! @note should we check for internal chars < 32 NOT encoded ? THIS would be an error !!!
-
-    ASSERT_NN(pStrOut);
-    if (pStrIn == nullptr) return 0;
-
-    StrLen_t j = 0;
-    for (StrLen_t i = 0; i < iLenInMax && j < iLenOutMax; i++, j++) {
-        TYPE ch = pStrIn[i];
-        if (ch == '\0') break;
-        if (ch == '\\') {
-            ch = pStrIn[++i];
-            int iEsc = StrT::FindCharN<char>(k_szEscEncode, (char)ch);
-            if (iEsc >= 0 && StrChar::IsAscii(ch)) {
-                ch = k_szEscDecode[iEsc];
-            } else if (ch == 'x') {
-                // MUST be followed by at least 1 hex char. but can have 2
-                i++;
-                const TYPE* pszEndN;
-                ch = CastN(TYPE, StrT::toU(pStrIn + i, &pszEndN, 16));
-                i += Diff(pszEndN, pStrIn + i) - 1;
-            } else if (ch >= '0' && ch <= '7')  // If it's a digit then it's octal.
-            {
-                // MUST be followed by at least 1 octal chars. but can have 3
-                const TYPE* pszEndN;
-                ch = CastN(TYPE, StrT::toU(pStrIn + i, &pszEndN, 8));
-                i += Diff(pszEndN, pStrIn + i) - 1;
-            }
-#if 0
-				else if (ch == 'u')
-				{
-					// @todo u## = UNICODE encoded ! can produce multiple character UTF8 sequences.
-					const TYPE* pszEndN;
-					int iChar = StrT::toU(pStrIn + i, &pszEndN, 10);
-				}
-#endif
-            else {
-                // JUNK ? bad encoding.
-                pStrOut[j++] = '\\';  // ignore it i guess.
-            }
-        }
-        pStrOut[j] = ch;
+StrLen_t GRAYCALL StrT::EscSeqDecode1(OUT TYPE& ch, const TYPE* pStrIn) {
+    TYPE ch2 = *pStrIn;
+    int iEsc = StrT::FindCharN<char>(k_szEscEncode, (char)ch2);
+    if (iEsc >= 0 && StrChar::IsAscii(ch)) {
+        ch = k_szEscDecode[iEsc];
+        return 1;
     }
-    pStrOut[j] = '\0';
-    return j;
+    if (ch2 == 'x') {
+        // MUST be followed by at least 1 hex char. but can have 2
+        const TYPE* pszEndN;
+        ch = CastN(TYPE, StrT::toU(pStrIn + 1, &pszEndN, 16));
+        return Diff(pszEndN, pStrIn);
+    }
+    if (ch2 >= '0' && ch2 <= '7') {  // If it's a digit then it's octal.
+        // MUST be followed by at least 1 octal chars. but can have 3
+        const TYPE* pszEndN;
+        ch = CastN(TYPE, StrT::toU(pStrIn, &pszEndN, 8));
+        return Diff(pszEndN, pStrIn);
+    }
+#if 0
+    if (ch2 == 'u') {
+	    // @todo u## = UNICODE encoded ! can produce multiple character UTF8 sequences.
+		const TYPE* pszEndN;
+		ch = StrT::toU(pStrIn+1, &pszEndN, 10);
+    }
+#endif
+    // JUNK ? bad encoding.
+    return 0;
 }
 
 template <typename TYPE>
-StrLen_t GRAYCALL StrT::EscSeqRemoveQ(TYPE* pStrOut, const TYPE* pStrIn, StrLen_t iLenOutMax, StrLen_t iLenInMax) {
-    //! Remove the opening and closing quotes. Put enclosed string (decoded) into pStrOut.
-    //! @return the consumed length of pStrIn. NOT the length of pStrOut.
+StrLen_t GRAYCALL StrT::EscSeqDecode(cSpanX<TYPE>& ret, const TYPE* pStrIn, StrLen_t iLenInMax) {
+    if (pStrIn == nullptr || ret.isEmpty()) return 0;
+    StrLen_t j = 0;
+    StrLen_t i = 0;
+    for (; i < iLenInMax && j < ret.GetSize() - 1; i++, j++) {
+        TYPE ch = pStrIn[i];
+        if (ch == '\0') break;
+        if (ch == '\\') i += EscSeqDecode1(ch, pStrIn + i + 1);
+        ret.get_DataWork()[j] = ch;
+    }
+    ret.get_DataWork()[j] = '\0';
+    return i;
+}
 
-    ASSERT_NN(pStrOut);
-    if (pStrIn == nullptr) return 0;
+template <typename TYPE>
+StrLen_t GRAYCALL StrT::EscSeqDecodeQ(cSpanX<TYPE>& ret, const TYPE* pStrIn, StrLen_t iLenInMax) {
+    //! Remove the opening and closing quotes. Put enclosed string (decoded) into ret.
+    //! @return the consumed length of pStrIn. NOT the length of ret.
+
+    if (pStrIn == nullptr || ret.isEmpty()) return 0;
+
+    const StrLen_t iLenMax = cValT::Min(ret.GetSize(), iLenInMax);
 
     if (pStrIn[0] != '"') {
         // Just copy the string untranslated.
-        return StrT::CopyLen<TYPE>(pStrOut, pStrIn, cValT::Min(iLenOutMax, iLenInMax));
+        return StrT::CopyLen<TYPE>(ret.get_DataWork(), pStrIn, iLenMax);
     }
 
-    TYPE* pszBlockEnd = StrT::FindBlockEnd<TYPE>(STR_BLOCK_t::_QUOTE, pStrIn + 1, iLenInMax - 1);
-    if (pszBlockEnd == nullptr || pszBlockEnd[0] != '\"')  // not sure what this is. not closed string.
-    {
-        return k_StrLen_UNK;  // BAD. NOT Closed.
+    TYPE* pszBlockEnd = StrT::FindBlockEnd<TYPE>(STR_BLOCK_t::_QUOTE, pStrIn + 1, iLenMax - 1);
+    if (pszBlockEnd == nullptr || pszBlockEnd[0] != '\"') {  // not sure what this is. not closed string.
+        return k_StrLen_UNK;                                 // BAD. NOT Closed.
     }
 
-    StrLen_t iLenIn = StrT::Diff<TYPE>(pszBlockEnd, pStrIn);
+    const StrLen_t iLenIn = StrT::Diff<TYPE>(pszBlockEnd, pStrIn);
 
-    // remove escape chars.
-    StrT::EscSeqRemove<TYPE>(pStrOut, pStrIn + 1, iLenOutMax, iLenIn - 1);
-
-    // ignore junk after end quote. Thats my callers problem.
-    return iLenIn + 1;
+    // remove escape chars. ignore junk after end quote. Thats my callers problem.
+    return StrT::EscSeqDecode<TYPE>(ret, pStrIn + 1, iLenIn - 1) + 2;
 }
 
 template <typename TYPE>
-StrLen_t GRAYCALL StrT::EscSeqAdd(TYPE* pStrOut, const TYPE* pStrIn, StrLen_t iLenOutMax) {
+bool GRAYCALL StrT::EscSeqTest(const TYPE* pStrIn) {
+    //! @note Only double quotes and "\\\b\f\n\r\t" are needed for JSON strings.
+    ASSERT_NN(pStrIn);
+    for (StrLen_t iIn = 0;; iIn++) {
+        const TYPE ch = pStrIn[iIn];
+        if (ch == '\0') return false;  // not escape needed chars detected.
+        int iEsc = StrChar::IsAscii(ch) ? StrT::FindCharN<char>(k_szEscDecode, (char)ch) : k_StrLen_UNK;
+        if (iEsc >= 0) return true;
+        if (StrChar::IsPrintA(ch)) continue;  // just testing.
+        return true;                          // Use hex escape seq like 	\xAA
+    }
+}
+
+template <typename TYPE>
+StrLen_t GRAYCALL StrT::EscSeqAdd(cSpanX<TYPE>& ret, const TYPE* pStrIn) {
     //! Encode/Replace odd chars with escape sequences. e.g. "\n"
     //! This makes the string larger!
-    //! opposite of StrT::EscSeqRemove()
-    //! @arg pStrOut = nullptr = test output. 0 = no quotes needed.
-    //! @return
-    //!   pStrOut has chars ONLY in the range of 32 to 127
-    //!   new length of the string. same or more than input
-    //! @note Only double quotes and "\\\b\f\n\r\t" are needed for JSON strings.
+    //! opposite of StrT::EscSeqDecode()
+    //! @return new length of the string. same or more than input.
 
     ASSERT_NN(pStrIn);
+    TYPE* pStrOut = ret.get_DataWork();
+    if (pStrOut == nullptr) return 0;
     ASSERT(pStrIn != pStrOut);
 
     StrLen_t iOut = 0;
-    for (StrLen_t iIn = 0; iOut < iLenOutMax; iIn++, iOut++) {
+    for (StrLen_t iIn = 0; iOut < ret.GetSize(); iIn++, iOut++) {
         TYPE ch = pStrIn[iIn];
         if (ch == '\0') break;
-        // Why encode a question mark ?
-        int iEsc = StrT::FindCharN<char>(k_szEscDecode, (char)ch);
-        if (iEsc >= 0 && StrChar::IsAscii(ch)) {
-            if (pStrOut == nullptr) return 1;
+        int iEsc = StrChar::IsAscii(ch) ? StrT::FindCharN<char>(k_szEscDecode, (char)ch) : k_StrLen_UNK;
+        if (iEsc >= 0) {
             pStrOut[iOut++] = '\\';
             pStrOut[iOut] = k_szEscEncode[iEsc];
-        } else if (!StrChar::IsPrintA(ch)) {
-            // Use hex escape seq like 	\xAA
-            if (pStrOut == nullptr) return 1;
-            pStrOut[iOut++] = '\\';
-            pStrOut[iOut++] = 'x';
-            iOut += StrT::UtoA(ch, pStrOut + iOut, iLenOutMax - iOut, 16) - 1;
-        } else {
-            if (pStrOut == nullptr) continue;
+        } else if (StrChar::IsPrintA(ch)) {
             pStrOut[iOut] = ch;  // Not encoded.
+        } else {
+            pStrOut[iOut++] = '\\';  // Use hex escape seq like 	\xAA
+            pStrOut[iOut++] = 'x';
+            iOut += StrT::UtoA(ch, ToSpan(pStrOut + iOut, ret.GetSize() - iOut), 0x10) - 1;
         }
     }
-
-    if (pStrOut == nullptr) return 0;
     pStrOut[iOut] = '\0';
     return iOut;
 }
 
 template <typename TYPE>
-StrLen_t GRAYCALL StrT::EscSeqAddQ(TYPE* pStrOut, const TYPE* pStrIn, StrLen_t iLenOutMax) {
+StrLen_t GRAYCALL StrT::EscSeqAddQ(cSpanX<TYPE>& ret, const TYPE* pStrIn) {
     //! Encode the string and add quotes.
-    if (iLenOutMax <= 2) {
-        return 0;
-    }
+    if (ret.GetSize() < 3) return 0;
+    TYPE* pStrOut = ret.get_DataWork();
     pStrOut[0] = '\"';
-    StrLen_t iLen = StrT::EscSeqAdd(pStrOut + 1, pStrIn, iLenOutMax - 3);
+    const StrLen_t iLen = StrT::EscSeqAdd(ToSpan(pStrOut + 1, ret.GetSize() - 3), pStrIn);
     pStrOut[iLen + 1] = '\"';
     pStrOut[iLen + 2] = '\0';
     return iLen + 2;
@@ -780,56 +735,38 @@ StrLen_t GRAYCALL StrT::EscSeqAddQ(TYPE* pStrOut, const TYPE* pStrIn, StrLen_t i
 //******************************************************************************
 
 template <typename TYPE>
-ITERATE_t GRAYCALL StrT::ParseArray(TYPE* pszCmdLine, StrLen_t nCmdLenMax, TYPE** ppCmd, ITERATE_t iCmdQtyMax, const TYPE* pszSep, STRP_MASK_t uFlags) {
-    //! Parse a separated list of tokens/arguments to a function/command. inline.
-    //! @arg
-    //!  pszCmdLine = NOTE: this is modified / chopped up buffer.
-    //!  ppCmd = an array of pointers inside pszCmdLine
-    //!  iCmdQtyMax = _countof(ppCmd);
-    //!  pszSep = what are the valid separators.
-    //! @arg uFlags = STRP_MASK_t = STRP_TYPE_. deal with quoted and escaped strings.
-    //! @return
-    //!  Number of args. in ppCmd
-    //!  0 = empty string/array.
-    //! EXAMPLES:
-    //!  "tag=word&tag2=word" for HTML pages.
-    //!  "arg \t arg" preserve 1 space.
+ITERATE_t GRAYCALL StrT::ParseArray(cSpanX<TYPE>& cmdLine, cSpanX<TYPE*>& cmds, const TYPE* pszSep, STRP_MASK_t uFlags) {
 
 #if 0  // def _DEBUG
-		if (!StrT::Cmp(pszCmdLine, CSTRCONST("0,0,0,0\"")))
-		{
-			DEBUG_MSG(("Str::Cmp"));
-		}
+	if (!StrT::Cmp(cmdLine, CSTRCONST("0,0,0,0\""))) {
+		DEBUG_MSG(("Str::Cmp"));
+	}
 #endif
 
-    ASSERT(iCmdQtyMax >= 1);  // else why bother?
-    ASSERT_NN(ppCmd);
+    ASSERT(cmds.get_Count() >= 1);  // else why bother?
+
     ITERATE_t iQty = 0;
-    if (pszCmdLine == nullptr) {
+    if (cmdLine.isNull()) {
     do_cleanup:
         // nullptr terminate list if possible.
-        ITERATE_t iQtyLeft = (iCmdQtyMax - iQty);
+        const ITERATE_t iQtyLeft = cValT::Min<ITERATE_t>(cmds.GetSize() - iQty, 8);
         if (iQtyLeft > 0) {
-            if (iQtyLeft > 8) iQtyLeft = 8;  // keep this from ridiculous.
-            cMem::Zero(&ppCmd[iQty], iQtyLeft * sizeof(TYPE*));
+            cMem::Zero(cmds.get_DataWork() + iQty, iQtyLeft * sizeof(TYPE*));
         }
         return iQty;
     }
 
-    if (pszSep == nullptr) {
-        pszSep = CSTRCONST(",");
-    }
-    if (nCmdLenMax <= k_StrLen_UNK || nCmdLenMax > StrT::k_LEN_MAX) {
-        nCmdLenMax = StrT::k_LEN_MAX;
-    }
+    if (pszSep == nullptr) pszSep = CSTRCONST(",");
+
+    TYPE* pszCmdLine = cmdLine.get_DataWork();
+    TYPE** ppCmd = cmds.get_DataWork();
 
     bool bUsedNonWhitespaceSep = false;
     ppCmd[0] = pszCmdLine;  // iQty=0
     StrLen_t i = 0;
-    for (; i < nCmdLenMax; i++) {
+    for (; i < cmdLine.get_MaxLen(); i++) {
         TYPE ch = pszCmdLine[i];
-        if (ch == '\0')  // no more args i guess.
-            break;
+        if (ch == '\0') break;                       // no more args i guess.
         bool bIsWhitespace = StrChar::IsSpaceX(ch);  // include newlines here.
         if (bIsWhitespace) {
             if ((uFlags & STRP_START_WHITE) && ch != '\r' && ch != '\n') {
@@ -841,15 +778,13 @@ ITERATE_t GRAYCALL StrT::ParseArray(TYPE* pszCmdLine, StrLen_t nCmdLenMax, TYPE*
             }
             if (uFlags & STRP_MERGE_CRNL) {
                 // merge CR and LF/NL
-                if (ch == '\r' && pszCmdLine[i + 1] == '\n')  // the normal order is \r\n (13,10)
-                {
+                if (ch == '\r' && pszCmdLine[i + 1] == '\n') {  // the normal order is \r\n (13,10)
                     continue;
                 }
             }
         }
-        if (StrT::HasChar(pszSep, ch))  // found a separator.
-        {
-            if (iCmdQtyMax == 1) break;
+        if (StrT::HasChar(pszSep, ch)) {  // found a separator.
+            if (cmds.get_Count() == 1) break;
 
             if (uFlags & STRP_SPACE_SEP) {
                 // allow whitespace separators only if no other separator used.
@@ -882,17 +817,17 @@ ITERATE_t GRAYCALL StrT::ParseArray(TYPE* pszCmdLine, StrLen_t nCmdLenMax, TYPE*
             }
 
             // Start of the next token.
-            ASSERT(iQty < iCmdQtyMax - 1);
+            ASSERT(iQty < cmds.GetSize() - 1);
             ppCmd[++iQty] = pszCmdLine + i + 1;
 
-            if (iQty >= iCmdQtyMax - 1) {  // this is just the last anyhow. so we are done. only get here to allow skip of whitespace.
+            if (iQty >= cmds.GetSize() - 1) {  // this is just the last anyhow. so we are done. only get here to allow skip of whitespace.
                 // The last entry we have room for. so just take the rest of the args.
                 i++;
                 if (uFlags & STRP_START_WHITE) {
                     i += StrT::GetNonWhitespaceI(pszCmdLine + i);
                 }
                 i += StrT::Len(pszCmdLine + i);
-                i = cValT::Min(i, nCmdLenMax);
+                i = cValT::Min(i, cmdLine.get_MaxLen());
                 break;
             }
             continue;
@@ -905,9 +840,9 @@ ITERATE_t GRAYCALL StrT::ParseArray(TYPE* pszCmdLine, StrLen_t nCmdLenMax, TYPE*
 
             const STR_BLOCK_t eBlockType = (STR_BLOCK_t)StrT::FindCharN<char>(k_szBlockStart, (char)ch);  // start block.
             if (eBlockType > STR_BLOCK_t::_NONE) {
-                const TYPE* pszBlockEnd = StrT::FindBlockEnd(eBlockType, pszCmdLine + i + 1);                             // const_cast
-                if (pszBlockEnd == nullptr || pszBlockEnd[0] != CastN(TYPE, k_szBlockEnd[static_cast<int>(eBlockType)]))  // failed to close ?
-                    break;                                                                                                // FAIL
+                const TYPE* pszBlockEnd = StrT::FindBlockEnd(eBlockType, pszCmdLine + i + 1);          // const_cast
+                if (pszBlockEnd == nullptr || pszBlockEnd[0] != CastN(TYPE, GetBlockEnd(eBlockType)))  // failed to close ?
+                    break;                                                                             // FAIL
                 i = StrT::Diff(pszBlockEnd, pszCmdLine);
             }
             continue;
@@ -924,8 +859,7 @@ ITERATE_t GRAYCALL StrT::ParseArray(TYPE* pszCmdLine, StrLen_t nCmdLenMax, TYPE*
     } else if (pszCmdLine[i] != '\0') {
         pszCmdLine[i] = '\0';
     }
-    if (pszCmdStart[0] != '\0')  // this counts as an arg.
-    {
+    if (pszCmdStart[0] != '\0') {  // this counts as an arg.
         iQty++;
     }
 
@@ -933,16 +867,15 @@ ITERATE_t GRAYCALL StrT::ParseArray(TYPE* pszCmdLine, StrLen_t nCmdLenMax, TYPE*
 }
 
 template <typename TYPE>
-ITERATE_t GRAYCALL StrT::ParseArrayTmp(TYPE* pszTmp, StrLen_t iTmpSizeMax, const TYPE* pszCmdLine, TYPE** ppCmd, ITERATE_t iCmdQtyMax, const TYPE* pszSep, STRP_MASK_t uFlags) {
+ITERATE_t GRAYCALL StrT::ParseArrayTmp(cSpanX<TYPE>& tmp, const TYPE* pszCmdLine, cSpanX<TYPE*> cmds, const TYPE* pszSep, STRP_MASK_t uFlags) {
     //! Make a temporary copy of the string for parsing.
-    //! @arg iTmpSizeMax = StrT::k_LEN_MAX
+    //! @arg iTmpSizeMax = cStrConst::k_LEN_MAX
     //! @arg uFlags = deal with quoted and escaped strings.
     //! @return Quantity of arguments
-    if (pszTmp != pszCmdLine) {
-        StrLen_t iLenChars = StrT::CopyLen<TYPE>(pszTmp, pszCmdLine, iTmpSizeMax);
-        UNREFERENCED_PARAMETER(iLenChars);
+    if (tmp != pszCmdLine) {
+        StrT::Copy<TYPE>(tmp, pszCmdLine);
     }
-    return ParseArray(pszTmp, iTmpSizeMax, ppCmd, iCmdQtyMax, pszSep, uFlags);
+    return ParseArray(tmp, cmds, pszSep, uFlags);
 }
 
 //***********************************************************
@@ -957,8 +890,7 @@ StrLen_t GRAYCALL StrT::MatchRegEx(const TYPE* pText, const TYPE* pPattern, bool
         TYPE chP = *pPattern;
         TYPE chT = pText[i];
 
-        if (chP == '\0')  // pattern complete. matched?
-        {
+        if (chP == '\0') {    // pattern complete. matched?
             if (chT == '\0')  // Full match
                 return i;
             if (nTextMax > 0)  // didnt match all the text. but its a full match of the pattern.
@@ -969,9 +901,8 @@ StrLen_t GRAYCALL StrT::MatchRegEx(const TYPE* pText, const TYPE* pPattern, bool
         if (nTextMax > 0 && i >= nTextMax) {
             return -i;  // i didn't finish the pattern but i didn't break it either. partial match.
         }
-        if (chT == '\0')  // end of text to compare. no match.
-        {
-            return 0;  // no match.
+        if (chT == '\0') {  // end of text to compare. no match.
+            return 0;       // no match.
         }
         if (chP == '*') {
             // * = Ignore a sequence of chars and maybe skip to the next thing?
@@ -992,8 +923,7 @@ StrLen_t GRAYCALL StrT::MatchRegEx(const TYPE* pText, const TYPE* pPattern, bool
 
                 StrLen_t nMatch2 = StrT::MatchRegEx(pText + j, pPattern + 1, bIgnoreCase, (nTextMax > 0) ? (nTextMax - j) : nTextMax);
                 if (nMatch2 != 0) {
-                    if (nMatch2 < 0)  // Run out of text but not out of pattern.
-                    {
+                    if (nMatch2 < 0) {  // Run out of text but not out of pattern.
                         ASSERT(nTextMax > 0);
                         ASSERT(j - nMatch2 >= nTextMax);
                         return nMatch2 - j;
@@ -1003,8 +933,7 @@ StrLen_t GRAYCALL StrT::MatchRegEx(const TYPE* pText, const TYPE* pPattern, bool
             }
         }
 
-        if (chP != '?')  // ? = Ignore a single char
-        {
+        if (chP != '?') {  // ? = Ignore a single char
             if (bIgnoreCase) {
                 if (StrChar::CmpI(chT, chP) != COMPARE_Equal)  // compare char.
                     break;
@@ -1017,45 +946,5 @@ StrLen_t GRAYCALL StrT::MatchRegEx(const TYPE* pText, const TYPE* pPattern, bool
 
     return 0;  // no match.
 }
-
-//*******************************************************************************
-// Numerics
-
-template <typename TYPE>
-StrLen_t GRAYCALL StrT::ULtoAK(UINT64 uVal, OUT TYPE* pszOut, StrLen_t iStrMax, UINT nKUnit, bool bSpace) {
-    //! Make string describing a value in K/M/G/T/P/E/Z/Y units. (Kilo,Mega,Giga,Tera,Peta,Exa,Zetta,Yotta)
-    //! @arg nKUnit = 1024 default
-    //! @note
-    //!  Kilo=10^3,2^10, Exa=10^18,2^60, Zetta=10^21,2^70, (http://searchstorage.techtarget.com/sDefinition/0,,sid5_gci499008,00.html)
-    //! @return
-    //!  length of string created.
-
-    static const char k_chKUnits[10] = "\0KMGTPEZY";
-    if (nKUnit <= 0)  // default.
-        nKUnit = 1024;
-
-    double dVal = (double)uVal;
-    size_t i = 0;
-    for (; i < (_countof(k_chKUnits) - 2) && dVal >= nKUnit; i++) {
-        dVal /= nKUnit;
-    }
-
-    StrLen_t iLenUse;
-    if (i == 0) {
-        iLenUse = StrT::ULtoA(uVal, pszOut, iStrMax);  // _CVTBUFSIZE
-    } else {
-        // limit to 2 decimal places ?
-        iLenUse = StrT::DtoA(dVal, pszOut, iStrMax, 2, '\0');  // NOT 'inf' or NaN has no units.
-        if (iLenUse > 0 && iLenUse <= iStrMax - 3 && !StrChar::IsAlpha(pszOut[0])) {
-            if (bSpace) {  // insert a space or not?
-                pszOut[iLenUse++] = ' ';
-            }
-            pszOut[iLenUse++] = CastN(TYPE, k_chKUnits[i]);
-            pszOut[iLenUse] = '\0';
-        }
-    }
-    return iLenUse;
-}
 }  // namespace Gray
-
-#endif  // _INC_StrUtil_INL
+#endif  // _INC_StrT_INL

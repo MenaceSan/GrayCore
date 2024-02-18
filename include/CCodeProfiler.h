@@ -1,9 +1,7 @@
-//
 //! @file cCodeProfiler.h
 //! Declare entry/exit from a function such that it will build a profile.
 //! Write out a profile PCP file.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cCodeProfiler_H
 #define _INC_cCodeProfiler_H

@@ -1,7 +1,5 @@
-//
 //! @file cFileStatus.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cFileStatus_H
 #define _INC_cFileStatus_H
@@ -14,7 +12,7 @@
 #include "cStreamProgress.h"
 #include "cTimeFile.h"
 #include "cTimeInt.h"
-#include "cValArray.h"
+#include "cValSpan.h"
 #include "cBits.h"
 
 #ifdef _WIN32
@@ -139,7 +137,7 @@ struct GRAYCORE_LINK cFileStatus {
     /// have this attribute? e.g. FILEATTR_t::_ReadOnly
     /// </summary>
     bool IsAttrMask(FILEATTR_t dwAttrMask = FILEATTR_t::_ReadOnly) const noexcept {
-        return m_Attributes.HasMask(dwAttrMask);
+        return m_Attributes.HasAny(dwAttrMask);
     }
     bool isAttrDir() const noexcept {
         return IsAttrMask(FILEATTR_t::_Directory);

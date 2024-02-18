@@ -1,8 +1,6 @@
-//
 //! @file PtrCast.h
 //! A pointer to some struct or class. Not used for pointers to basic/intrinsic types.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_PtrCast_H
 #define _INC_PtrCast_H
@@ -32,21 +30,23 @@ constexpr UINT_PTR PtrCastToNum(const VOLATILE void* p) noexcept {
 }
 
 /// <summary>
-/// Cast void pointer to a type. Ignore C++ warnings.
+/// Cast const void pointer to a const type*. Ignore C++ warnings.
 /// put C26493 - "don't use c-style casts". warning in one place.
+/// @note: DANGER. use static_cast or dynamic_cast on complex casting.
 /// </summary>
 template <typename T>
 static constexpr const T* PtrCast(const void* p) noexcept {  // VOLATILE?
-    return static_cast<const T*>(p);
+    return reinterpret_cast<const T*>(p);
     // return (const T*)p;
 }
 /// <summary>
 /// Cast void pointer to a type. Ignore C++ warnings.
 /// put C26493 - "don't use c-style casts". warning in one place.
+/// @note: DANGER. use static_cast or dynamic_cast on complex casting.
 /// </summary>
 template <typename T>
 static constexpr T* PtrCast(void* p) noexcept {  // VOLATILE?
-    return static_cast<T*>(p);
+    return reinterpret_cast<T*>(p);
     // return (T*)p;
 }
 

@@ -1,8 +1,6 @@
-//
 //! @file cPtrTrace.h
 //! Attempt to trace use of pointers.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cPtrTrace_H
 #define _INC_cPtrTrace_H

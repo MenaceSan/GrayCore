@@ -1,7 +1,5 @@
-//
 //! @file cStreamProgress.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cStreamProgress_H
 #define _INC_cStreamProgress_H
@@ -20,7 +18,7 @@ namespace Gray {
 /// same as enum tagSTREAM_SEEK
 /// </summary>
 enum class SEEK_t {
-    _Set = 0,        /// SEEK_SET = FILE_BEGIN = STREAM_SEEK_SET = 0 = relative to the start of the file.
+    _Set = 0,        /// SEEK_SET = FILE_BEGIN = STREAM_SEEK_SET = 0 = relative to the start of the file. (default)
     _Cur = 1,        /// SEEK_CUR = FILE_CURRENT = STREAM_SEEK_CUR = 1 = relative to the current position.
     _End = 2,        /// SEEK_END = FILE_END = STREAM_SEEK_END = 2 = relative to the end of the file.
 };
@@ -49,27 +47,23 @@ struct cStreamProgressT {
 
     cStreamProgressT(TYPE nAmount = 0, TYPE nTotal = 0) noexcept : m_nAmount(nAmount), m_nTotal(nTotal) {}
     bool isComplete() const noexcept {
-        if (m_nTotal == 0)  // no idea.
-            return true;
+        if (m_nTotal == 0) return true;  // no idea.            
         if (m_nAmount >= m_nTotal) return true;
         return false;
     }
     float get_PercentFloat() const noexcept {
         //! Get percent of total.
         //! @return 0.0f to 1.0f
-        if (m_nTotal == 0)  // no idea.
-            return 0;
+        if (m_nTotal == 0) return 0;  // no idea.            
         return CastN(float, ((double)m_nAmount) / ((double)m_nTotal));
     }
     int get_PercentInt() const noexcept {
         //! @return From 0 to 100. MULDIV
-        if (m_nTotal == 0)  // no idea.
-            return 0;
+        if (m_nTotal == 0) return 0;  // no idea.
         return CastN(int, (m_nAmount * 100) / m_nTotal);
     }
     bool isValidPercent() const noexcept {
-        if (m_nTotal <= 0)  // no idea.
-            return false;
+        if (m_nTotal <= 0) return false;  // no idea.            
         return m_nAmount <= m_nTotal;
     }
     void InitZero() noexcept {
@@ -97,10 +91,9 @@ struct GRAYCORE_LINK cStreamProgressF : cStreamProgressT<float> {
         m_nAmount = 0.0f;
     }
 #if 0
-		void put_PercentComplete(float fComplete = 1.0f) noexcept
-		{
-			m_nAmount = fComplete;	// indicate we are done.
-		}
+	void put_PercentComplete(float fComplete = 1.0f) noexcept {
+		m_nAmount = fComplete;	// indicate we are done.
+	}
 #endif
     float get_PercentComplete() const noexcept {
         return m_nAmount;  // return value <= 1.0f

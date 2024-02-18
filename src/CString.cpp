@@ -1,4 +1,3 @@
-//
 //! @file cString.cpp
 //! similar to the MFC CString
 //! similar to the STL string and wstring, basic_string<char>
@@ -32,7 +31,7 @@ const wchar_t cStringT<wchar_t>::m_Nil = '\0';  // Use this instead of nullptr. 
 template <typename _TYPE_CH>
 void cStringT<_TYPE_CH>::AllocBuffer(StrLen_t iNewLength) {
     ASSERT(isValidString());
-    ASSERT(IS_INDEX_GOOD(iNewLength, StrT::k_LEN_MAX + 1));  // reasonable arbitrary limit.
+    ASSERT(IS_INDEX_GOOD(iNewLength, cStrConst::k_LEN_MAX + 1));  // reasonable arbitrary limit.
 
     if (iNewLength <= 0) {
         Empty();
@@ -141,99 +140,87 @@ _TYPE_CH* cStringT<_TYPE_CH>::GetBuffer(StrLen_t iMinLength) {
 }
 
 template <typename _TYPE_CH>
-void cStringT<_TYPE_CH>::AssignLenT(const _TYPE_CH* pszStr, StrLen_t iLenMax) {
-    //! Copy pszStr into this string. nullptr = just allocate and leave blank.
-    //! iLenMax = max chars, not including null ! NOT sizeof() or _countof() like StrT::CopyLen
-    //! DEBUG_MSG(( "cString:Assign" ));
-    //! @note What if pszStr is in the current string?
-    //! @note DO NOT ASSUME pszStr is terminated string!! DONT CALL StrT::Len
-
-    if (StrT::IsNullOrEmpty(pszStr) || iLenMax <= 0) {
+void cStringT<_TYPE_CH>::AssignSpanT(const cSpan<_TYPE_CH>& src) {
+    if (src.isEmpty()) {
         Empty();
         return;
     }
-    StrLen_t iLenCur = GetLength();      // current stated length of the string.
-    if (pszStr == m_pchData) {           // Same string.
-        if (iLenMax >= iLenCur) return;  // do nothing!
-        Assign(Left(iLenMax));
+    const StrLen_t iLenCur = GetLength();      // current stated length of the string.
+    if (src.get_DataConst() == m_pchData) {       // Same string.
+        if (src.get_MaxLen() >= iLenCur) return;  // do nothing!
+        Assign(Left(src.get_MaxLen()));           // truncate length.
         return;
     }
 
-    ASSERT(IS_INDEX_GOOD(iLenMax, StrT::k_LEN_MAX + 1));
-    if (pszStr == nullptr) {
+    ASSERT(IS_INDEX_GOOD(src.get_MaxLen(), cStrConst::k_LEN_MAX + 1));
+    if (src.isNull()) {
         // just allocate the space and leave it blank.
-        AllocBuffer(iLenMax);
-        ASSERT(m_pchData != nullptr);
+        AllocBuffer(src.get_MaxLen());
+        ASSERT_NN(m_pchData);
         ASSERT(m_pchData != &m_Nil);
         m_pchData[0] = '\0';
         return;
     }
 
-    if (pszStr >= m_pchData && pszStr <= m_pchData + iLenCur) {
+    const _TYPE_CH* pszStr = src.get_DataConst();
+    if (pszStr >= m_pchData && pszStr <= m_pchData + iLenCur) { // overlap?
         // Part of the same string so be safe !!
-        THIS_t sTmp(pszStr, iLenMax);  // make a copy first!
+        THIS_t sTmp(src);  // make a copy first!
         Assign(sTmp);
         return;
     }
 
-    StrLen_t iLenStr = StrT::Len(pszStr, iLenMax);
-    if (iLenMax > iLenStr) iLenMax = iLenStr;
-
-    AllocBuffer(iLenMax);
+    const StrLen_t lenNew = src.get_MaxLen();
+    AllocBuffer(lenNew);
     ASSERT_NN(m_pchData);
     ASSERT(m_pchData != &m_Nil);
-    StrT::CopyLen(m_pchData, pszStr, iLenMax + 1);
+    StrT::CopyLen(m_pchData, pszStr, lenNew + 1);
     ASSERT(isValidString());
 }
 
 //*************************************************************
 template <>
-void cStringT<char>::AssignLen(const wchar_t* pwStr, StrLen_t iLenMax) {
-    //! Convert UNICODE to UTF8
-    //! iLenMax = _countof(StrT::k_LEN_MAX)-1 default
-    //! iLenMax = max chars, not including null ! NOT sizeof() or _countof() like StrT::CopyLen
-
-    char szTmp[StrT::k_LEN_Default];
-    StrLen_t iLenNew = StrU::UNICODEtoUTF8(szTmp, STRMAX(szTmp), pwStr, iLenMax);
-    AssignLenT(szTmp, iLenNew);
+void cStringT<char>::AssignSpan(const cSpan<wchar_t>& src) {
+    // Convert UNICODE to UTF8
+    const StrLen_t iLenNew = StrU::UNICODEtoUTF8Size(src);
+    AllocBuffer(iLenNew);
+    StrU::UNICODEtoUTF8(cSpanX<char>(m_pchData, iLenNew + 1), src);   
 }
 template <>
-void cStringT<char>::AssignLen(const char* pszStr, StrLen_t iLenMax) {
-    AssignLenT(pszStr, iLenMax);
+void cStringT<char>::AssignSpan(const cSpan<char>& src) {
+    AssignSpanT(src);
 }
 template <>
 void cStringT<char>::Assign(const wchar_t* pwStr) {
     //! Convert UNICODE to UTF8
-    AssignLen(pwStr, StrT::k_LEN_MAX - 1);
+    AssignSpan(StrT::ToSpanStr(pwStr));
 }
 template <>
 void cStringT<char>::Assign(const char* pszStr) {
-    AssignLenT(pszStr, StrT::k_LEN_MAX - 1);
+    AssignSpanT(StrT::ToSpanStr(pszStr));
 }
 
 //*************************************************************
 
 template <>
-void cStringT<wchar_t>::AssignLen(const char* pszStr, StrLen_t iLenMax) {
-    //! Convert UTF8 to UNICODE
-    //! iLenMax = STRMAX = _countof(StrT::k_LEN_MAX)-1 default
-
-    wchar_t wTmp[StrT::k_LEN_Default];
-    StrLen_t iLenNew = StrU::UTF8toUNICODE(wTmp, STRMAX(wTmp), pszStr, iLenMax);
-    AssignLenT(wTmp, iLenNew);
+void cStringT<wchar_t>::AssignSpan(const cSpan<char>& src) {
+    // Convert UTF8 to UNICODE
+    const StrLen_t iLenNew = StrU::UTF8toUNICODELen(src);
+    AllocBuffer(iLenNew);
+    StrU::UTF8toUNICODE(cSpanX<wchar_t>(m_pchData, iLenNew + 1), src);   
 }
 template <>
-void cStringT<wchar_t>::AssignLen(const wchar_t* pwStr, StrLen_t iLenMax) {
-    AssignLenT(pwStr, iLenMax);
+void cStringT<wchar_t>::AssignSpan(const cSpan<wchar_t>& src) {
+    AssignSpanT(src);
 }
 template <>
 void cStringT<wchar_t>::Assign(const wchar_t* pwStr) {
-    AssignLenT(pwStr, StrT::k_LEN_MAX - 1);
+    AssignSpanT(StrT::ToSpanStr(pwStr));
 }
 template <>
 void cStringT<wchar_t>::Assign(const char* pszStr) {
     //! Convert UTF8 to UNICODE
-    AssignLen(pszStr, StrT::k_LEN_MAX - 1);
+    AssignSpan(StrT::ToSpanStr(pszStr));
 }
 
 //*************************************************************
@@ -243,7 +230,7 @@ void cStringT<_TYPE_CH>::FormatV(const _TYPE_CH* pszFormat, va_list args) {
     //! _vsntprintf
     //! use the normal sprintf() style.
     _TYPE_CH szTemp[StrT::k_LEN_Default];
-    StrT::vsprintfN(OUT szTemp, STRMAX(szTemp), pszFormat, args);
+    StrT::vsprintfN(TOSPAN(szTemp), pszFormat, args);
     Assign(szTemp);
 }
 
@@ -268,8 +255,8 @@ StrLen_t cStringT<_TYPE_CH>::Insert(StrLen_t i, const _TYPE_CH* pszStr, StrLen_t
         if (i < 0) i = 0;
         const StrLen_t lenOld = GetLength();
         if (i > lenOld) i = lenOld;
-        if (lenOld + iLenCat > StrT::k_LEN_MAX) {
-            DEBUG_ASSERT(0, "cString::Insert > StrT::k_LEN_MAX");
+        if (lenOld + iLenCat > cStrConst::k_LEN_MAX) {
+            DEBUG_ASSERT(0, "cString::Insert > cStrConst::k_LEN_MAX");
             return k_ITERATE_BAD;
         }
         AllocBuffer(lenOld + iLenCat);
@@ -281,11 +268,11 @@ StrLen_t cStringT<_TYPE_CH>::Insert(StrLen_t i, const _TYPE_CH* pszStr, StrLen_t
 
 template <typename _TYPE_CH>
 cStringT<_TYPE_CH> cStringT<_TYPE_CH>::Left(StrLen_t nCount) const {
-    //! Get the left nCount chars. truncate.
+    //! Get the left nCount chars. truncate. Same as substr(0,nCount);
     const StrLen_t lenOld = GetLength();
     if (nCount >= lenOld) return *this;
     if (nCount <= 0) return THIS_t();
-    return THIS_t(get_CPtr(), nCount);
+    return ToSpan(get_CPtr(), nCount);
 }
 
 template <typename _TYPE_CH>
@@ -296,7 +283,7 @@ cStringT<_TYPE_CH> cStringT<_TYPE_CH>::Right(StrLen_t nCount) const {
     const StrLen_t lenOld = GetLength();
     if (nCount >= lenOld) return *this;
     if (nCount <= 0) return THIS_t();
-    return THIS_t(get_CPtr() + (lenOld - nCount), nCount);
+    return ToSpan(get_CPtr() + (lenOld - nCount), nCount);
 }
 
 template <typename _TYPE_CH>
@@ -305,7 +292,7 @@ cStringT<_TYPE_CH> cStringT<_TYPE_CH>::Mid(StrLen_t nFirst, StrLen_t nCount) con
     const StrLen_t lenOld = GetLength();
     if (nFirst >= lenOld) return THIS_t();
     if (nFirst + nCount >= lenOld) nCount = lenOld - nFirst;
-    return THIS_t(get_CPtr() + nFirst, nCount);
+    return ToSpan(get_CPtr() + nFirst, nCount);
 }
 
 template <typename _TYPE_CH>
@@ -372,7 +359,7 @@ StrLen_t cStringT<char>::SetCodePage(const wchar_t* pwStr, CODEPAGE_t uCodePage)
     Assign(szTmp);
 #else
     // Convert to UTF8
-    StrU::UNICODEtoUTF8(szTmp, STRMAX(szTmp), pwStr, k_StrLen_UNK);
+    StrU::UNICODEtoUTF8(TOSPAN(szTmp), StrT::ToSpanStr(pwStr));
     Assign(szTmp);
 #endif
     return GetLength();
@@ -385,7 +372,7 @@ StrLen_t cStringT<wchar_t>::SetCodePage(const wchar_t* pwStr, CODEPAGE_t uCodePa
     return GetLength();
 }
 template <>
-StrLen_t cStringT<char>::GetCodePage(OUT wchar_t* pwText, StrLen_t iLenMax, CODEPAGE_t uCodePage) const {
+StrLen_t cStringT<char>::GetCodePage(OUT cSpanX<wchar_t>& ret, CODEPAGE_t uCodePage) const {
     //! Convert char with CODEPAGE_t to UNICODE.
     //! @arg uCodePage = CP_UTF8
     //! similar to StrU::UTF8toUNICODE
@@ -394,18 +381,18 @@ StrLen_t cStringT<char>::GetCodePage(OUT wchar_t* pwText, StrLen_t iLenMax, CODE
                                  0,            // character-type options
                                  get_CPtr(),   // address of string to map
                                  GetLength(),  // number of bytes in string
-                                 pwText,       // address of wide-character buffer
-                                 iLenMax       // size of buffer
+                                 ret.get_DataWork(),          // address of wide-character buffer
+                                 ret.GetSize() // size of buffer
     );
 #else
-    return StrU::UTF8toUNICODE(pwText, iLenMax, get_CPtr(), GetLength());  // true size is variable and < iLen
+    return StrU::UTF8toUNICODE(ret, get_SpanStr());  // true size is variable and < iLen
 #endif
 }
 template <>
-StrLen_t cStringT<wchar_t>::GetCodePage(OUT wchar_t* pwText, StrLen_t iLenMax, CODEPAGE_t uCodePage) const {
+StrLen_t cStringT<wchar_t>::GetCodePage(OUT cSpanX<wchar_t>& ret, CODEPAGE_t uCodePage) const {
     //! Just copy. No conversion if already UNICODE.
     UNREFERENCED_PARAMETER(uCodePage);
-    return StrT::CopyLen(pwText, get_CPtr(), iLenMax);
+    return StrT::Copy(ret, get_CPtr());
 }
 
 template <typename _TYPE_CH>
@@ -415,7 +402,7 @@ cStringT<_TYPE_CH> cStringT<_TYPE_CH>::GetTrimWhitespace() const {
     const StrLen_t left = StrT::GetNonWhitespaceI(m_pchData, lenOld);
     const StrLen_t right = StrT::GetWhitespaceEnd(m_pchData, lenOld);
     if (left == 0 && right == lenOld) return *this;
-    return THIS_t(m_pchData + left, right - left);
+    return ToSpan(m_pchData + left, right - left);
 }
 
 template <typename _TYPE_CH>
@@ -447,19 +434,19 @@ template <typename _TYPE_CH>
 cStringT<_TYPE_CH> GRAYCALL cStringT<_TYPE_CH>::GetErrorStr(HRESULT hResError, const void* pSource) {  // static
     if (FAILED(hResError)) {
         GChar_t szTmp[StrT::k_LEN_Default];
-        StrBuilder<GChar_t> sb(szTmp, STRMAX(szTmp));
+        StrBuilder<GChar_t> sb(TOSPAN(szTmp));
         HResult::GetTextV(hResError, sb, pSource, k_va_list_empty);  // TODO va_list
-        return THIS_t(szTmp, sb.get_Length());
+        return sb.get_SpanStr();
     }
-    if (hResError == S_OK) return CSTRCONST("OK").Get<_TYPE_CH>();
+    if (hResError == S_OK) return CSTRCONST("OK").GetT<_TYPE_CH>();
     return StrArg<_TYPE_CH>((UINT32)hResError, (RADIX_t)0x10);  // its not an error just a hex number/code.
 }
 
 template <typename _TYPE_CH>
 cStringT<_TYPE_CH> GRAYCALL cStringT<_TYPE_CH>::GetSizeK(UINT64 uVal, UINT nKUnit, bool bSpace) {  // static
     _TYPE_CH szTmp[StrNum::k_LEN_MAX_DIGITS];
-    StrLen_t nLen = StrT::ULtoAK(uVal, szTmp, STRMAX(szTmp), nKUnit, bSpace);
-    return THIS_t(szTmp, nLen);
+    const StrLen_t nLen = StrT::ULtoAK(uVal, TOSPAN(szTmp), nKUnit, bSpace);
+    return ToSpan(szTmp, nLen);
 }
 
 template <typename _TYPE_CH>
@@ -480,13 +467,13 @@ HRESULT cStringT<_TYPE_CH>::SerializeInput(cStreamInput& File, StrLen_t iLenMax)
         return HResult::GetDef(hRes, HRESULT_WIN32_C(ERROR_IO_INCOMPLETE));
     }
     StrLen_t iLen = (StrLen_t)(nSizeRead / sizeof(_TYPE_CH));
-    if (iLen > iLenMax || iLen >= StrT::k_LEN_MAX) {
+    if (iLen > iLenMax || iLen >= cStrConst::k_LEN_MAX) {
         return HRESULT_WIN32_C(RPC_S_STRING_TOO_LONG);
     }
 
     _TYPE_CH* pBuffer = this->GetBuffer(iLen);  // ASSUME extra alloc for null is made.
 
-    hRes = File.ReadT(pBuffer, nSizeRead);  // all or nothing.
+    hRes = File.ReadSpan(cMemSpan(pBuffer, nSizeRead));  // read all or nothing.
     if (FAILED(hRes)) {
         this->ReleaseBuffer(0);
         return hRes;
@@ -502,7 +489,7 @@ HRESULT cStringT<_TYPE_CH>::SerializeOutput(cStreamOutput& File) const {
     //!  File = the open file.
     //! @note
     //!  This is NOT '\0' term. though Standard RIFF strings are!
-    return File.WriteBlob(get_CPtr(), this->GetLength() * sizeof(_TYPE_CH));
+    return File.WriteBlob(get_SpanStr());
 }
 
 template <typename _TYPE_CH>

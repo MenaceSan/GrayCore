@@ -79,8 +79,6 @@ struct cArraySortHash : public cArraySortRef<TYPE, _TYPE_HASH> {
     }
 
  public:
-    ~cArraySortHash() override {}
-
     ITERATE_t FindIForAK(const TYPE* pBase) const {
         //! Like of FindIFor() but uses the key.
         //! @return index, -1 = k_ITERATE_BAD = none.
@@ -127,8 +125,6 @@ struct cArraySortValue : public cArraySortRef<TYPE, TYPE_KEY> {
     }
 
  public:
-    ~cArraySortValue() override {}
-
     ITERATE_t FindIForAK(const TYPE* pBase) const {
         //! Equivalent of FindIFor() but uses the key for faster access. must ignore key dupes.
         //! @return index, -1 = k_ITERATE_BAD = none.
@@ -196,8 +192,6 @@ struct cArraySortName : public cArraySortRef<TYPE, const _TYPECH*> {
     }
 
  public:
-    ~cArraySortName() override {}
-
     ITERATE_t FindIForAK(const TYPE* pBase) const {
         //! Equivalent of FindIFor() but uses the key.
         //! FindIForKey using the key.

@@ -1,8 +1,7 @@
-//
 //! @file StrArg.h
 //! Make some argument into a string of desired format.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
+
 #ifndef _INC_StrArg_H
 #define _INC_StrArg_H
 #ifndef NO_PRAGMA_ONCE
@@ -11,6 +10,7 @@
 
 #include "StrChar.h"
 #include "StrConst.h"
+#include "cSpan.h"
 
 namespace Gray {
 /// <summary>
@@ -123,5 +123,6 @@ inline const WORD* GRAYCALL StrArg<WORD>(const BYTE* pszStr) noexcept {  // stat
     return (const WORD*)StrArg<wchar_t>((const char*)pszStr);
 }
 #endif
+
 }  // namespace Gray
 #endif

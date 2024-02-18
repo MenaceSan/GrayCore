@@ -1,8 +1,6 @@
-//
 //! @file cFloat.h
 //! info for float/double types.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cFloat_H
 #define _INC_cFloat_H
@@ -147,12 +145,11 @@ struct GRAYCORE_LINK cFloat64 : public cFloat {
     }
 
 #if 0
-		// bool get_Negative() const
-		short get_Exponent() const noexcept
-		{
-			// TODO FIX SIGN
-			return (short)((m_v.u_qw & k_EXP_MASK) >> sdf);
-		}
+	// bool get_Negative() const
+	short get_Exponent() const noexcept {
+		// TODO FIX SIGN
+		return (short)((m_v.u_qw & k_EXP_MASK) >> sdf);
+	}
 #endif
     UINT64 get_Mantissa() const noexcept {
         return m_v.u_qw & k_MANT_MASK;

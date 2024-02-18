@@ -1,7 +1,5 @@
-//
 //! @file cStreamStack.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cStreamStack_H
 #define _INC_cStreamStack_H
@@ -25,8 +23,7 @@ class GRAYCORE_LINK cStreamStackInp : public cStreamQueue, public cStreamReader 
 
  public:
     cStreamStackInp(cStreamInput* pStreamInp = nullptr, size_t nSizeMaxBuffer = cStream::k_FILE_BLOCK_SIZE) noexcept
-        : cStreamQueue(cValT::Min<size_t>(nSizeMaxBuffer / 2U, 8U * 1024U), nSizeMaxBuffer)  // chunk size, max size.
-          ,
+        : cStreamQueue(cValT::Min<size_t>(nSizeMaxBuffer / 2U, 8U * 1024U), nSizeMaxBuffer),  // chunk size, max size.
           cStreamReader(pStreamInp) {
         DEBUG_CHECK(nSizeMaxBuffer == 0 || get_AutoReadCommit() > 0);
     }

@@ -1,7 +1,6 @@
-//
 //! @file cIniBase.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
+
 #ifndef _INC_cIniBase_H
 #define _INC_cIniBase_H
 #ifndef NO_PRAGMA_ONCE
@@ -31,6 +30,8 @@ DECLARE_INTERFACE(IIniBaseSetter) {
 DECLARE_INTERFACE(IIniBaseGetter) {
     IGNORE_WARN_INTERFACE(IIniBaseGetter);
     virtual HRESULT PropGet(const IniChar_t* pszPropTag, OUT cStringI& rsValue) const = 0;
+    // Helper
+    GRAYCORE_LINK static cStringI GRAYCALL Get2(IIniBaseGetter * p, const IniChar_t* pszPropTag);
 };
 
 /// <summary>

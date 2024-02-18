@@ -1,7 +1,5 @@
-//
 //! @file cOSHandleSet.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cOSHandleSet_H
 #define _INC_cOSHandleSet_H

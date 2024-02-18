@@ -6,13 +6,13 @@
 #include "cArchive.h"
 
 namespace Gray {
-HRESULT cArchive::Serialize(void* pData, size_t nSize) {
+HRESULT cArchive::Serialize(cMemSpan& m) {
     //! @return <0 = error HRESULT_WIN32_C(ERROR_IO_INCOMPLETE)
     HRESULT hRes;
     if (IsStoring()) {
-        hRes = ref_Out().WriteT(pData, nSize);
+        hRes = ref_Out().WriteSpan(m);
     } else {
-        hRes = ref_Inp().ReadT(pData, nSize);
+        hRes = ref_Inp().ReadSpan(m);
     }
     return hRes;
 }

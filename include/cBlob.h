@@ -1,8 +1,6 @@
-//
 //! @file cBlob.h
 //! wrap a dynamically allocated (un-typed) blob/block of heap memory.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cBlob_H
 #define _INC_cBlob_H
@@ -45,14 +43,14 @@ class GRAYCORE_LINK cBlob : public cMemSpan {
     typedef cBlob THIS_t;
     typedef cMemSpan SUPER_t;
 
-    MEMTYPE_t _MemType = MEMTYPE_t::_Null;  // how should we manage this cMemSpan
+    MEMTYPE_t _MemType = MEMTYPE_t::_Null;  // What type of memory is this stored in? should we manage this cMemSpan
 
-    // Don't public allow access to some cMemSpan methods.
+    // Don't allow public access to some cMemSpan methods.
     void SetSpanNull() = delete;
     void SetSpanConst(const void* pData, size_t nSize) = delete;
-    void SetSpanSkip(size_t nSize) = delete;
-    void SetSpan(void* pData, size_t nSize) = delete;
+    void SetSpan2(void* pData, size_t nSize) = delete;
     void SetSpan(const SUPER_t& a) = delete;
+    void SetSpanSkip(size_t nSize) = delete;
 
     /// <summary>
     /// Internal function does not clear values!
@@ -61,6 +59,39 @@ class GRAYCORE_LINK cBlob : public cMemSpan {
 
  public:
     static const THIS_t k_EmptyBlob;
+
+    constexpr cBlob() noexcept : SUPER_t(nullptr, 0), _MemType(MEMTYPE_t::_Null) {}
+    constexpr cBlob(const cMemSpan& m, bool isStaticWritable) noexcept : SUPER_t(m), _MemType(isStaticWritable ? MEMTYPE_t::_Static : MEMTYPE_t::_StaticConst) {}
+
+    /// <summary>
+    /// move constructor.
+    /// </summary>
+    cBlob(THIS_t&& ref) noexcept : SUPER_t(ref), _MemType(ref._MemType) {
+        ref.DetachBlob();
+    }
+    /// <summary>
+    /// copy constructor
+    /// </summary>
+    cBlob(const THIS_t& ref) : cBlob() {
+        SetBlobCopy(ref);
+    }
+    /// <summary>
+    /// Heap Allocate with initial size. uninitialized data.
+    /// </summary>
+    explicit cBlob(size_t nSize) : cBlob() {
+        AllocSize(nSize);
+    }
+    /// <summary>
+    /// Heap Allocate then Copy pDataCopy data into this.
+    /// </summary>
+    cBlob(const cMemSpan& s, MEMTYPE_t memType);
+
+    ~cBlob() {
+        DEBUG_CHECK(isValid());
+        if (isHeap()) {
+            FreeHeap();
+        }
+    }
 
     /// Can this grow?
     inline constexpr bool isHeap() const noexcept {
@@ -94,7 +125,7 @@ class GRAYCORE_LINK cBlob : public cMemSpan {
     void SetBlobNull() noexcept;
 
     /// <summary>
-    /// Get a writable TYPE pointer. DONT allow access to readonly!
+    /// Get a writable TYPE pointer but NOT if read-only!
     /// </summary>
     template <typename TYPE = BYTE>
     inline TYPE* get_DataW() noexcept {
@@ -105,10 +136,7 @@ class GRAYCORE_LINK cBlob : public cMemSpan {
     /// <summary>
     /// Copy from Src into me/this.
     /// </summary>
-    bool SetBlob(const void* pDataSrc, size_t nSize, MEMTYPE_t memType);
-    bool SetBlob(const cMemSpan& r, MEMTYPE_t memType) {
-        return SetBlob(r.get_DataC(), r.get_DataSize(), memType);
-    }
+    bool SetBlob(const cMemSpan& r, MEMTYPE_t memType);
     bool SetBlobCopy(const cBlob& r);
 
     /// <summary>
@@ -117,40 +145,6 @@ class GRAYCORE_LINK cBlob : public cMemSpan {
     void DetachBlob() noexcept {
         _MemType = MEMTYPE_t::_Null;
         SUPER_t::SetSpanNull();
-    }
-
-    constexpr cBlob() noexcept : SUPER_t(nullptr, 0), _MemType(MEMTYPE_t::_Null) {}
-    constexpr cBlob(const void* pDataCopy, size_t nSize, bool isStaticWritable) noexcept : SUPER_t(PtrCast<BYTE>(pDataCopy), nSize), _MemType(isStaticWritable ? MEMTYPE_t::_Static : MEMTYPE_t::_StaticConst) {}
-
-    /// <summary>
-    /// move constructor.
-    /// </summary>
-    cBlob(THIS_t&& ref) noexcept : SUPER_t(ref), _MemType(ref._MemType) {
-        ref.DetachBlob();
-    }
-    /// <summary>
-    /// copy constructor
-    /// </summary>
-    cBlob(const THIS_t& ref) : cBlob() {
-        SetBlobCopy(ref);
-    }
-    /// <summary>
-    /// Heap Allocate with initial size. uninitialized data.
-    /// </summary>
-    explicit cBlob(size_t nSize) : cBlob() {
-        AllocSize(nSize);
-    }
-    /// <summary>
-    /// Heap Allocate then Copy pDataCopy data into this.
-    /// </summary>
-    cBlob(const void* pDataSrc, size_t nSize, MEMTYPE_t memType);
-    cBlob(const cMemSpan& s, MEMTYPE_t memType) : cBlob(s.get_DataC(), s.get_DataSize(), memType) {}
-
-    ~cBlob() {
-        DEBUG_CHECK(isValid());
-        if (isHeap()) {
-            FreeHeap();
-        }
     }
 
     /// copy assignment operator. Allocate a new copy.
@@ -189,21 +183,10 @@ class GRAYCORE_LINK cBlob : public cMemSpan {
     bool AllocSize(size_t nSize);
 
     /// <summary>
-    /// Allocate then copy something into it.
-    /// @note why not prefer using ReAlloc() ?
-    /// </summary>
-    bool AllocSpan(const void* pData, size_t nSize);
-
-    /// <summary>
     /// If already allocated re-use the current blob if possible. else alloc new.
     /// copy existing data to new blob if move is needed. preserve data.
     /// </summary>
     bool ReAllocSize(size_t nSize);
-
-    /// <summary>
-    /// realloc then copy stuff into it.
-    /// </summary>
-    bool ReAllocSpan(const void* pData, size_t nSize);
 
     /// <summary>
     /// Do not shrink the buffer size. only grow. but record the size i asked for.
@@ -211,6 +194,17 @@ class GRAYCORE_LINK cBlob : public cMemSpan {
     /// Optimize reallocate to smaller size by leaving the allocation alone. Lazy realloc in the case of shrink.
     /// </summary>
     bool ReAllocLazy(size_t iSizeNew);
+
+    /// <summary>
+    /// Allocate then copy something into it.
+    /// @note why not prefer using ReAlloc() ?
+    /// </summary>
+    bool SetCopyAlloc(const cMemSpan& m);
+
+    /// <summary>
+    /// realloc then copy stuff into it.
+    /// </summary>
+    bool SetCopyReAlloc(const cMemSpan& m);
 };
 }  // namespace Gray
 #endif

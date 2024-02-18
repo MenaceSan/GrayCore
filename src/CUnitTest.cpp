@@ -1,4 +1,3 @@
-//
 //! @file cUnitTest.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 // clang-format off
@@ -38,9 +37,8 @@ class GRAYCORE_LINK cUnitTestLogger : public cLogSink, public cRefBase {
         cTimeUnits tStart;
         tStart.InitTimeNow();
         cStringF sLogFileName = cStringF::GetFormatf(_FN("UnitTestResults%04d%02d%02d_") _FN(GRAY_COMPILER_NAME) _FN("_") _FN(GRAY_BUILD_NAME) _FN(MIME_EXT_log), tStart.m_wYear, tStart.m_wMonth, tStart.m_wDay);
-        HRESULT hRes = m_File.OpenX(cFilePath::CombineFilePathX(pszFileDir, sLogFileName), OF_CREATE | OF_SHARE_DENY_NONE | OF_READWRITE | OF_TEXT);
-        if (FAILED(hRes)) return false;
-        return true;
+        const HRESULT hRes = m_File.OpenX(cFilePath::CombineFilePathX(pszFileDir, sLogFileName), OF_CREATE | OF_SHARE_DENY_NONE | OF_READWRITE | OF_TEXT);
+        return SUCCEEDED(hRes);
     }
 
     HRESULT addEvent(cLogEvent& rEvent) noexcept override {
@@ -77,7 +75,7 @@ const cStrConst cUnitTestCur::k_asTextLines[k_TEXTLINES_QTY + 1] = {
     CSTRCONST("shoe"),
     CSTRCONST("buckle"),
     CSTRCONST("my"),
-    cStrConst(nullptr, nullptr),
+    cStrConst(nullptr, nullptr, 0),
 };
 
 const cStrConst cUnitTestCur::k_sTextBlob = CSTRCONST(  // [ cUnitTestCur::k_TEXTBLOB_LEN+1 ]
@@ -182,8 +180,8 @@ bool GRAYCALL cUnitTestCur::TestTypes() {  // static
     const StrLen_t nLenStrA = StrT::Len<char>(k_sTextBlob);
     const StrLen_t nLenStrW = StrT::Len<wchar_t>(k_sTextBlob);
     UNITTEST_TRUE(nLenStrW == nLenStrA);
-    UNITTEST_TRUE(nLenStrA == k_TEXTBLOB_LEN);
-
+    UNITTEST_TRUE(nLenStrA == k_sTextBlob._Len);
+ 
     // is endian set correctly ?
     cUnion32 u32;
     u32.u_dw = 0x12345678UL;
@@ -476,7 +474,7 @@ HRESULT cUnitTests::RunUnitTests(UNITTEST_LEVEL_t nTestLevel, const LOGCHAR_t* p
 
     // Run all s_aUnitTests registered tests at sm_nTestLevel
     char szDashes[64];
-    cValArray::FillSize<BYTE>(szDashes, STRMAX(szDashes), '-');
+    cMem::Fill(szDashes, STRMAX(szDashes), '-');
     szDashes[STRMAX(szDashes)] = '\0';
     UNITTEST_TRUE(!cMem::IsCorruptApp(szDashes, sizeof(szDashes), true));
 

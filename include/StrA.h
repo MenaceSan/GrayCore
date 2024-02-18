@@ -1,7 +1,6 @@
-//
 //! @file StrA.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
+
 #ifndef _INC_StrA_H
 #define _INC_StrA_H
 #ifndef NO_PRAGMA_ONCE
@@ -10,6 +9,7 @@
 
 #include "Index.h"
 #include "StrConst.h"
+#include "cSpan.h"
 
 namespace Gray {
 /// <summary>
@@ -33,7 +33,7 @@ struct GRAYCORE_LINK StrA { // : public StrT // static
 
     //*****************************************************************************
     // String Modifying
-    static StrLen_t GRAYCALL MakeNamedBitmask(char* pszOut, StrLen_t iOutSizeMax, UINT dwFlags, const char** ppszNames, COUNT_t iMaxNames, char chSep = '\0');
+    static StrLen_t GRAYCALL MakeNamedBitmask(cSpanX<char>& ret, UINT dwFlags, const char** ppszNames, COUNT_t iMaxNames, char chSep = '\0');
 };
 }  // namespace Gray
 #endif

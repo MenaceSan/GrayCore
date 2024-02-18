@@ -1,15 +1,11 @@
-//
 //! @file cLogLevel.h
 //! Thread safe arrays of stuff.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
-
 #ifndef _INC_cLogLevel_H
 #define _INC_cLogLevel_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
-
 #include "GrayCore.h"
 
 namespace Gray {

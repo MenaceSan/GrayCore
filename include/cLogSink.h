@@ -1,7 +1,5 @@
-//
 //! @file cLogSink.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cLogSink_H
 #define _INC_cLogSink_H
@@ -76,18 +74,25 @@ class GRAYCORE_LINK cLogEventParams {
         m_uAttrMask = uAttrMask;
     }
     bool IsLogAttrMask(LOG_ATTR_MASK_t uAttrMask) const noexcept {
-        return cBits::HasMask(m_uAttrMask, uAttrMask);
+        return cBits::HasAny(m_uAttrMask, uAttrMask);
     }
 
     LOGLVL_t get_LogLevel() const noexcept {
         return m_eLogLevel; // Min level to show.
     }
+    /// <summary>
+    /// What level of importance do we want to filter for.
+    /// </summary>
+    /// <param name="eLogLevel">LOGLVL_t::_INFO (higher is more important)</param>
     void put_LogLevel(LOGLVL_t eLogLevel) noexcept {
-        //! What level of importance do we want to filter for.
         m_eLogLevel = eLogLevel;
     }
+    /// <summary>
+    /// Is this level high enough?
+    /// </summary>
+    /// <param name="eLogLevel">LOGLVL_t::_INFO (higher is more important)</param>
+    /// <returns></returns>
     bool IsLoggedLevel(LOGLVL_t eLogLevel) const noexcept {
-        //! level = LOGLVL_t::_INFO (higher is more important
         return eLogLevel >= m_eLogLevel;
     }
 
@@ -104,14 +109,17 @@ class GRAYCORE_LINK cLogEventParams {
 /// </summary>
 struct GRAYCORE_LINK cLogThrottle {
     // throttle.
-    float m_fLogThrottle;             /// how fast sent to me? messages/sec
+    float m_fLogThrottle;             /// how fast sent to me? (messages/second)
     mutable TIMESYS_t m_TimeLogLast;  /// Last time period for throttling (1 sec).
     mutable UINT m_nQtyLogLast;       /// Qty of messages since m_TimeLogLast.
 
     cLogThrottle() noexcept;
 
+    /// <summary>
+    /// Get throttle target as messages/sec
+    /// </summary>
+    /// <returns></returns>
     float get_LogThrottle() const noexcept {
-        //! messages/sec
         return m_fLogThrottle;
     }
 };
@@ -241,10 +249,6 @@ struct GRAYCORE_LINK cLogProcessor : public ILogProcessor {  // for WriteString 
 struct GRAYCORE_LINK cLogSink : public IUnknown, public cLogProcessor {
     friend class cLogNexus;
 
-    ~cLogSink() override {
-        RemoveSinkThis();
-    }
-
     /// <summary>
     /// Remove myself from the list of valid sink in cLogMgr.
     /// will descend into child cLogNexus as well.
@@ -257,7 +261,7 @@ struct GRAYCORE_LINK cLogSink : public IUnknown, public cLogProcessor {
 /// Send logged messages out to the debug system. OutputDebugString()
 /// No filter and take default formatted string
 /// </summary>
-class GRAYCORE_LINK cLogSinkDebug : public cLogSink, public cRefBase, public cStreamOutput {
+class GRAYCORE_LINK cLogSinkDebug : public cLogSink, public cRefBase, public ITextWriter {
     mutable cThreadLockCount m_Lock;  // prevent multi thread mixing of messages.
  public:
     static HRESULT GRAYCALL AddSinkCheck(cLogNexus* pLogger = nullptr);

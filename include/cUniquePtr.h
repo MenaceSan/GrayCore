@@ -1,7 +1,5 @@
-//
 //! @file cUniquePtr.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cUniquePtr_H
 #define _INC_cUniquePtr_H
@@ -20,7 +18,7 @@ namespace Gray {
 /// <typeparam name="TYPE"></typeparam>
 template <class TYPE>
 class cUniquePtr : public cPtrFacade<TYPE> { // cNonCopyable 
-    friend struct cValArray;
+    friend struct cValSpan;
     typedef cUniquePtr<TYPE> THIS_t;
     typedef cPtrFacade<TYPE> SUPER_t;
 

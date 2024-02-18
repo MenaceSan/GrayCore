@@ -1,4 +1,3 @@
-//
 //! @file cSystemInfo.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 // clang-format off
@@ -176,46 +175,42 @@ bool cSystemInfo::isVer3_17_plus() const noexcept {
 }
 #endif
 
-StrLen_t GRAYCALL cSystemInfo::GetSystemDir(FILECHAR_t* pszDir, StrLen_t iLenMax)  // static
-{
+StrLen_t GRAYCALL cSystemInfo::GetSystemDir(cSpanX<FILECHAR_t>& ret) {  // static
     //! Where does the OS keep its files. CSIDL_SYSTEM
     //! HRESULT hRes = _FNF(::SHGetFolderPath)( g_MainFrame.GetSafeHwnd(), CSIDL_SYSTEM, nullptr, 0, szPath );
 
 #ifdef UNDER_CE
-    return StrT::CopyLen(pszDir, _FN("\\Windows"), iLenMax);
+    return StrT::Copy(ret, _FN("\\Windows"));
 #elif defined(_WIN32)
     // GetWindowsDirectory() = "C:\Windows"
     // GetSystemDirectory() == "C:\Windows\System32"
-    return (StrLen_t)_FNF(::GetSystemDirectory)(pszDir, iLenMax);  // "C:\Windows\System32"
+    return (StrLen_t)_FNF(::GetSystemDirectory)(ret.get_DataWork(), ret.get_MaxLen());  // "C:\Windows\System32"
 #elif defined(__linux__)
     // NOT the same as GetEnv("topdir");
-    return StrT::CopyLen(pszDir, _FN("/sbin"), iLenMax);
+    return StrT::Copy(ret, _FN("/sbin"));
 #else
 #error NOOS
 #endif
 }
 
-HRESULT GRAYCALL cSystemInfo::GetSystemName(FILECHAR_t* pszName, StrLen_t iLenMax)  // static
-{
+HRESULT GRAYCALL cSystemInfo::GetSystemName(cSpanX<FILECHAR_t>& ret) {  // static
     // HResult::GetLast() if this fails ?
-
-    pszName[0] = '\0';
+    ret.get_DataWork()[0] = '\0';
 #if defined(__linux__) || defined(UNDER_CE)
-    int iErrNo = ::gethostname(pszName, iLenMax);
+    int iErrNo = ::gethostname(ret.get_DataWork(), ret.get_Count());
     if (iErrNo != 0)  // SOCKET_ERROR
         return HResult::FromPOSIX(iErrNo);
-    return StrT::Len(pszName);
+    return StrT::Len(ret.get_DataConst());
 #elif defined(_WIN32)
-    DWORD dwSize = iLenMax;                                        // size in TCHARs
-    if (!_FNF(::GetComputerName)(pszName, &dwSize)) return HResult::GetLastDef();
-    return (StrLen_t)dwSize;
+    DWORD dwSize = CastN(DWORD, ret.get_Count());                                                    // size in TCHARs
+    if (!_FNF(::GetComputerName)(ret.get_DataWork(), &dwSize)) return HResult::GetLastDef();
+    return CastN(StrLen_t, dwSize);
 #else
 #error NOOS
 #endif
 }
 
-bool GRAYCALL cSystemInfo::SystemShutdown(bool bReboot)  // static
-{
+bool GRAYCALL cSystemInfo::SystemShutdown(bool bReboot) { // static
     //! Shut down or reboot the whole system. not just log off the user or close the app.
 
 #ifdef UNDER_CE
@@ -246,8 +241,7 @@ bool GRAYCALL cSystemInfo::SystemShutdown(bool bReboot)  // static
 #endif
 }
 
-void GRAYCALL cSystemInfo::SystemBeep()  // static
-{
+void GRAYCALL cSystemInfo::SystemBeep() { // static
     // like _WIN32 MessageBeep(), not Beep() (which can get redirected if RDP)
 #if defined(UNDER_CE)
     ::MessageBeep(0xFFFFFFFF);
@@ -454,7 +448,7 @@ cStringF cSystemHelper::get_SystemName() {
 #endif
 
     FILECHAR_t szNodeName[kSizeSystemName + 2];
-    HRESULT hRes = cSystemInfo::GetSystemName(szNodeName, STRMAX(szNodeName));
+    HRESULT hRes = cSystemInfo::GetSystemName(TOSPAN(szNodeName));
     if (FAILED(hRes)) {
         // NO NAME? I've seen this fail on some machines. don't know why.
         return "";
@@ -468,7 +462,7 @@ cFilePath GRAYCALL cSystemHelper::get_SystemDir() {  // static
     //! Where does the OS keep its files. CSIDL_SYSTEM
     //! GetSystemDirectory() == "C:\Windows\System32" or "C:\Windows\SysWOW64" for 32 bit app on 64 bit OS.
     FILECHAR_t szTmp[_MAX_PATH];
-    cSystemInfo::GetSystemDir(szTmp, STRMAX(szTmp));
+    cSystemInfo::GetSystemDir(TOSPAN(szTmp));
     return szTmp;
 }
 }  // namespace Gray

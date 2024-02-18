@@ -1,4 +1,3 @@
-//
 //! @file cFile.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 // clang-format off
@@ -389,7 +388,7 @@ HRESULT cFile::GetFileStatus(OUT cFileStatus& attr) const {
     return S_OK;
 }
 
-HRESULT cFile::ReadX(void* pData, size_t nDataSize) noexcept {  // virtual - disambiguate.
+HRESULT cFile::ReadX(void* pData, size_t nDataSize) noexcept {  // virtual  
     //! Read a blob from the stream. advance the current position.
     //! @return
     //!  length of the read data. 0 or HRESULT_WIN32_C(ERROR_HANDLE_EOF) = end of file.
@@ -408,7 +407,7 @@ HRESULT cFile::ReadX(void* pData, size_t nDataSize) noexcept {  // virtual - dis
     return cOSHandle::ReadX(pData, nDataSize);
 }
 
-HRESULT cFile::WriteX(const void* pData, size_t nDataSize) {  // virtual - disambiguate.
+HRESULT cFile::WriteX(const void* pData, size_t nDataSize) {  // virtual 
     //! Write a blob to the stream. advance the current position.
     //! @arg
     //!  pData == nullptr = just test if i could write this much.
@@ -418,8 +417,7 @@ HRESULT cFile::WriteX(const void* pData, size_t nDataSize) {  // virtual - disam
     //!   ERROR_INVALID_USER_BUFFER = too many async calls ?? wait
     //!   ERROR_IO_PENDING = must wait!?
 
-    if (nDataSize == 0)  // nothing to do.
-        return 0;
+    if (nDataSize == 0) return 0;  // nothing to do.        
     if (pData == nullptr) {
         DEBUG_ASSERT(pData != nullptr, "Data null");
         return E_POINTER;
@@ -427,8 +425,7 @@ HRESULT cFile::WriteX(const void* pData, size_t nDataSize) {  // virtual - disam
 
     HRESULT hResLengthWritten = cOSHandle::WriteX(pData, nDataSize);
     if (FAILED(hResLengthWritten)) {
-        if (hResLengthWritten == E_HANDLE)  // handle is junk!! No idea why. Clear it.
-        {
+        if (hResLengthWritten == E_HANDLE) {  // handle is junk!! No idea why. Clear it.
             Close();
         }
         DEBUG_ASSERT(hResLengthWritten == CastN(HRESULT, nDataSize), "Write");

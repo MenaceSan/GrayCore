@@ -1,7 +1,5 @@
-//
 //! @file cOSModImpl.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cOSModImpl_H
 #define _INC_cOSModImpl_H
@@ -28,23 +26,23 @@ namespace Gray {
 /// e.g. cOSModImpl g_Module("ModuleName");
 /// @todo Support _WIN32 DLL_THREAD_ATTACH and DLL_THREAD_DETACH ?
 /// Similar to MFC AFX_EXTENSION_MODULE DLLModule or CAtlDllModuleT
-/// @note See #include "GrayLib/include/System/cOSModDyn.h" for COSMODULE_RegisterModule_IMPL()
+/// @note See #include "GrayLib/include/System/cOSModDyn.h" for cOSModDynImpl_DEF()
 /// This might have a corresponding cXObjModulePtr. cIUnkPtr can be used alternatively.
 /// </summary>
 class GRAYCORE_LINK cOSModImpl {
- public:
     /// <summary>
     /// My internal name. Just derive this from the file name ?
     /// </summary>
-    const char* m_pszModuleName;
+    const char* const m_pszModuleName;
     /// <summary>
     /// My id assigned to me when loaded DllMain(). DLL_PROCESS_ATTACH
     /// address NOT cOSHandle (Windows) or cOSHandle (Linux)?
     /// should be same as GetModuleHandleForAddr(g_Module)
     /// </summary>
-    HMODULE m_hModule;
+    ::HMODULE m_hModule = HMODULE_NULL;
+ 
     /// <summary>
-    /// got notification that we are loaded. DLL_PROCESS_ATTACH
+    /// DLL_PROCESS_ATTACH happen BEFORE constructor! OnProcessAttach only called once! 
     /// </summary>
     bool m_bProcessAttached = false;
 
@@ -53,16 +51,29 @@ class GRAYCORE_LINK cOSModImpl {
 #endif
 
  private:
-    bool OnProcessAttach2();
+    bool OnProcessAttachTry();
 
  public:
     cOSModImpl(const char* pszModuleName) noexcept;
     virtual ~cOSModImpl();
 
+    const char* get_Name() const {
+        return m_pszModuleName;
+    }
+
+    /// both constructor and OnProcessAttach called?
     bool IsLoaded() const noexcept {
         return m_pszModuleName != nullptr && m_hModule != HMODULE_NULL;
     }
 
+    ::HMODULE get_HMod() const noexcept {
+        return m_hModule;
+    }        
+
+    /// <summary>
+    /// This module has been loaded in a process space.
+    /// </summary>
+    /// <returns></returns>
     virtual bool OnProcessAttach();
     virtual void OnProcessDetach();  // DLL_PROCESS_DETACH
 
@@ -70,23 +81,20 @@ class GRAYCORE_LINK cOSModImpl {
     virtual bool DllMain(HINSTANCE hInstDll, DWORD dwReason);
 #elif defined(__linux__)
     void SOConstructor();
-    void SODestructor() {
-        OnProcessDetach();
-    }
 #endif
 };
 
 #ifndef GRAY_STATICLIB
-// ASSUME COSMODULE_IMPL is defined for DLL/SO. (and is outside namespace).
-// @note See #include <GrayLib/include/System/cOSModDyn.h> for COSMODULE_RegisterModule_IMPL()
+// ASSUME cOSModImpl_DEF is defined for DLL/SO. (and is outside namespace).
+// @note See #include <GrayCore/include/cOSModDyn.h> for cOSModDynImpl_DEF()
 // Declare/expose DllMain()
 #ifdef _WIN32  // _WINDLL
-#define COSMODULE_IMPL(N) \
+#define cOSModImpl_DEF(N) \
     __DECL_EXPORT BOOL APIENTRY DllMain(HINSTANCE hInstDll, DWORD dwReason, LPVOID) { return N::g_Module.DllMain(hInstDll, dwReason); }
 #elif defined(__linux__)
-#define COSMODULE_IMPL(N)                                                          \
+#define cOSModImpl_DEF(N)                                                          \
     CATTR_CONSTRUCTOR void _cdecl SOConstructor() { N::g_Module.SOConstructor(); } \
-    CATTR_DESTRUCTOR void _cdecl SODestructor() { g_Module.SODestructor(); }
+    CATTR_DESTRUCTOR void _cdecl SODestructor() { g_Module.OnProcessDetach(); }
 #endif
 #endif
 

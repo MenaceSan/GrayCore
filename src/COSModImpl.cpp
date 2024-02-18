@@ -1,4 +1,3 @@
-//
 //! @file cOSModImpl.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 // clang-format off
@@ -11,20 +10,15 @@
 #include "cOSModImpl.h"
 
 namespace Gray {
-cOSModImpl::cOSModImpl(const char* pszModuleName) noexcept
-    : m_pszModuleName(pszModuleName)
-// , m_hModule(HMODULE_NULL)
-{
+cOSModImpl::cOSModImpl(const char* pszModuleName) noexcept : m_pszModuleName(pszModuleName) {
     // Always static allocated. NEVER heap or Stack allocated. So Zero init is NEVER needed!
     DEBUG_CHECK(!StrT::IsWhitespace(m_pszModuleName));
-    OnProcessAttach2();
+    OnProcessAttachTry();
 }
-
 cOSModImpl::~cOSModImpl() {}  // virtual
 
 bool cOSModImpl::OnProcessAttach() {  // virtual
     // DLL_PROCESS_ATTACH
-
     ASSERT(!m_bProcessAttached);
     m_bProcessAttached = true;
 
@@ -38,28 +32,22 @@ bool cOSModImpl::OnProcessAttach() {  // virtual
     return true;
 }
 
-bool cOSModImpl::OnProcessAttach2() {  // private
-    // NOTE: In the LoadModule (dynamic) case this will get called BEFORE the constructor for cOSModDyn.
-
-    if (!IsLoaded())  // Wait for the race to be over. m_hModule MUST be set.
-        return true;
-
+bool cOSModImpl::OnProcessAttachTry() {  // private
+    // NOTE: In the LoadModule (dynamic) case this MAY get called BEFORE the constructor for cOSModDynImpl.
+    if (!IsLoaded()) return true;  // Wait for the race to be over. m_hModule MUST be set.
 #if defined(_DEBUG) && !defined(UNDER_CE)
     HINSTANCE hInstDllTest = cOSModule::GetModuleHandleForAddr(m_pszModuleName);
     ASSERT(m_hModule == hInstDllTest);
 #endif
-
     return this->OnProcessAttach();
 }
 
 void cOSModImpl::OnProcessDetach() {  // virtual
     // DLL_PROCESS_DETACH
     DEBUG_MSG(("%s:OnProcessDetach 0%x", LOGSTR(m_pszModuleName), (UINT)PtrCastToNum(m_hModule)));
-
 #ifdef _MFC_VER
     ::AfxTermExtensionModule(m_AFXExt);
 #endif
-
     // Try to release my singletons in proper order.
     cSingletonRegister::ReleaseModule(m_hModule);
 }
@@ -74,11 +62,11 @@ bool cOSModImpl::DllMain(HINSTANCE hMod, DWORD dwReason) {  // virtual
             this->OnProcessDetach();
             break;
         case DLL_PROCESS_ATTACH:
-            // NOTE: In the LoadModuel (dynamic) case this will get called BEFORE the constructor for cOSModDyn.
+            // NOTE: In the LoadModuel (dynamic) case this will get called BEFORE the constructor for cOSModDynImpl.
             ASSERT(m_hModule == HMODULE_NULL);
             ASSERT(hMod != HMODULE_NULL);
             m_hModule = hMod;
-            return this->OnProcessAttach2();
+            return this->OnProcessAttachTry();
         case DLL_THREAD_ATTACH:  // a new thread has been created.
             break;
         case DLL_THREAD_DETACH:
@@ -94,7 +82,7 @@ bool cOSModImpl::DllMain(HINSTANCE hMod, DWORD dwReason) {  // virtual
 #elif defined(__linux__)
 void cOSModImpl::SOConstructor() {
     m_hModule = cOSModule::GetModuleHandleForAddr(m_pszModuleName);
-    this->OnProcessAttach2();
+    this->OnProcessAttachTry();
 }
 #endif
 }  // namespace Gray

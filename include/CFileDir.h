@@ -1,14 +1,10 @@
-//
 //! @file cFileDir.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
-
 #ifndef _INC_cFileDir_H
 #define _INC_cFileDir_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
-
 #include "HResult.h"
 #include "cArrayString.h"
 #include "cFile.h"
@@ -19,8 +15,9 @@
 #ifdef __linux__
 #include <dirent.h>  // DIR
 #endif
- 
+
 namespace Gray {
+struct cLogProcessor;
 
 #ifdef _WIN32
 #define FILEDEVICE_PREFIX "\\\\.\\"  // usually _FN(FILEDEVICE_PREFIX). similar to "\\Device\\"
@@ -38,7 +35,7 @@ class GRAYCORE_LINK cFileDevice {
     // _WIN32 Info from GetVolumeInformation();
     cStringF m_sVolumeName;            /// can be empty.
     cStringF m_sTypeName;              /// File system format/type e.g. "NTFS", "FAT"
-    FILESYS_t m_eType;              /// Enumerate known types for m_sTypeName (file system type)
+    FILESYS_t m_eType;                 /// Enumerate known types for m_sTypeName (file system type)
     UINT64 m_nSerialNumber;            /// Volume serial number (time stamp of last format) e.g. 0x0ca0e613 for _WIN32.
     DWORD m_dwMaximumComponentLength;  /// block size? e.g. 255 bytes
     bool m_bCaseSensitive;             /// e.g. 0x03e700ff, FILE_CASE_SENSITIVE_SEARCH. else IgnoreCase
@@ -192,9 +189,9 @@ class GRAYCORE_LINK cFileDir {
     /// <summary>
     /// add the file to a list. Overload this to do extra filtering.
     /// </summary>
-    virtual HRESULT AddFileDirEntry(cFileFindEntry& FileEntry) {
-        if (!FileEntry.isDots()) {
-            m_aFiles.Add(FileEntry);
+    virtual HRESULT AddFileDirEntry(cFileFindEntry& fileEntry) {
+        if (!fileEntry.isDots()) {
+            m_aFiles.Add(fileEntry);
         }
         return S_OK;
     }
@@ -212,12 +209,13 @@ class GRAYCORE_LINK cFileDir {
     static HRESULT GRAYCALL DirFileOp(FILEOP_t eOp, const FILECHAR_t* pszDirSrc, const FILECHAR_t* pszDirDest, FILEOPF_t nFileFlags, cLogProcessor* pLog, IStreamProgressCallback* pProgress);
     static HRESULT GRAYCALL MoveDirFiles(const FILECHAR_t* pszDirSrc, const FILECHAR_t* pszDirDest, cLogProcessor* pLog = nullptr, IStreamProgressCallback* pProgress = nullptr) {
         //! Move this directory and all its files.
-        return DirFileOp(FILEOP_t::Move, pszDirSrc, pszDirDest, CastN(FILEOPF_t,0), pLog, pProgress);
+        return DirFileOp(FILEOP_t::Move, pszDirSrc, pszDirDest, CastN(FILEOPF_t, 0), pLog, pProgress);
     }
     static HRESULT GRAYCALL CopyDirFiles(const FILECHAR_t* pszDirSrc, const FILECHAR_t* pszDirDest, cLogProcessor* pLog = nullptr, IStreamProgressCallback* pProgress = nullptr) {
         //! Copy this directory and all its files.
         return DirFileOp(FILEOP_t::Copy, pszDirSrc, pszDirDest, FILEOPF_t::_None, pLog, pProgress);
     }
+
     /// <summary>
     /// Delete this directory AND all its files.
     /// similar to cFileDirDlg::DeleteDirFiles( FOF_NOCONFIRMATION | FOF_SILENT | FOF_NOERRORUI )
@@ -239,31 +237,27 @@ class GRAYCORE_LINK cFileDir {
         // clear list only if changed?
         RemoveAll();
     }
-    ITERATE_t get_FileCount() const noexcept {
-        return m_aFiles.GetSize();
-    }
-    const cFileFindEntry& GetEnumFile(ITERATE_t i) const {
-        return m_aFiles.GetAt(i);
-    }
-    cFileFindEntry& RefEnumFile(ITERATE_t i) {
-        return m_aFiles.ElementAt(i);
-    }
-    cStringF GetEnumTitleX(ITERATE_t i) const {
-        //! Get the file title + ext.
-        const cFileFindEntry& rFileEntry = m_aFiles.GetAt(i);
-        return rFileEntry.get_Name();
-    }
-    cStringF GetEnumPath(ITERATE_t i) const {
-        //! Get the full path for the file i.
-        return GetFilePath(GetEnumTitleX(i));
-    }
 
     /// <summary>
-    /// Get Full path.
+    /// rebuild Full path.
     /// </summary>
     cStringF GetFilePath(const FILECHAR_t* pszTitle) const {
         return cFilePath::CombineFilePathX(m_sDirPath, pszTitle);
     }
+    cStringF GetFilePath(const cFileFindEntry& f) const {
+        return GetFilePath(f.get_Name());
+    }
+
+    const cFileFindEntry& GetEnumFile(ITERATE_t i) const {
+        return m_aFiles.GetAt(i);
+    }
+    /// <summary>
+    /// Get the full path for the file i.
+    /// </summary>
+    cStringF GetEnumPath(ITERATE_t i) const {
+        return GetFilePath(m_aFiles.GetAt(i));
+    }
+
     void RemoveAll() {
         //! Dispose of my data.
         m_aFiles.RemoveAll();
@@ -272,7 +266,7 @@ class GRAYCORE_LINK cFileDir {
     HRESULT ReadDir(const FILECHAR_t* pszDirPath = nullptr, const FILECHAR_t* pszWildcardFile = nullptr, ITERATE_t iFilesMax = k_FilesMax, bool bFollowLink = false);
 
     HRESULT ReadDirAnyExt(const FILECHAR_t* pszFilePath, ITERATE_t iFilesMax = k_FilesMax);
-    HRESULT ReadDirPreferredExt(const FILECHAR_t* pszFilePath, const FILECHAR_t* const* pszExtTable);
+    HRESULT ReadDirPreferredExt(const FILECHAR_t* pszFilePath, const cSpan<const FILECHAR_t*> exts);
 };
 
 #ifndef GRAY_STATICLIB  // force implementation/instantiate for DLL/SO.

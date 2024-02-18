@@ -1,14 +1,10 @@
-//
 //! @file cRange.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
-
 #ifndef _INC_cRange_H
 #define _INC_cRange_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
-
 #include "cDebugAssert.h"
 
 namespace Gray {
@@ -78,10 +74,13 @@ class cRangeT {
         return (m_Hi - m_Lo) + 1;  // inclusive. integer
     }
     /// <summary>
-    /// Get range for exclusive float types.
+    /// Get range (size) for exclusive float types.
     /// assume isNormal().
     /// </summary>
     TYPE get_RangeX() const noexcept {
+        return m_Hi - m_Lo;  // exclusive.
+    }
+    TYPE get_Size() const noexcept {
         return m_Hi - m_Lo;  // exclusive.
     }
 
@@ -89,19 +88,22 @@ class cRangeT {
         //! @arg fOne = 0.0 to 1.0
         return CastN(TYPE, m_Lo + (fOne * get_RangeI()));
     }
+
+    /// <summary>
+    /// get a modulus of the range. IsInsideI.
+    /// May not be normalized ?
+    /// </summary>
+    /// <param name="iVal"></param>
+    /// <returns></returns>
     int GetSpinValueI(int iVal) const {
-        //! @return a modulus of the range.
         iVal -= (int)m_Lo;
-        int iRange = (int)get_RangeI();
+        const int iRange = (int)get_RangeI();
         iVal %= iRange;
         if (iVal < 0)
             iVal += (int)(m_Hi + 1);
         else
             iVal += (int)(m_Lo);
-#ifdef _DEBUG
-        TYPE iValClamp = (TYPE)GetClampValue((TYPE)iVal);
-        ASSERT(iVal == iValClamp);
-#endif
+        DEBUG_CHECK(IsInsideI(CastN(TYPE, iVal)));
         return iVal;
     }
 
@@ -127,7 +129,7 @@ class cRangeT {
     }
 
     /// <summary>
-    /// Expand the range to include this value. isNormal()
+    /// Expand the range to include this value. ASSUME isNormal()
     /// </summary>
     void UnionValue(TYPE nVal) noexcept {
         if (nVal < m_Lo) m_Lo = nVal;
@@ -144,14 +146,13 @@ class cRangeT {
         if (x.m_Hi < m_Lo) return false;
         return true;
     }
+    /// <summary>
+    /// assume isNormal()/proper ordered ranges
+    /// </summary>
+    /// <param name="x"></param>
     void SetUnionRange(const THIS_t& x) noexcept {
-        // assume isNormal()/proper ordered ranges
-        if (x.m_Hi > m_Hi) {
-            m_Hi = x.m_Hi;
-        }
-        if (x.m_Lo < m_Lo) {
-            m_Lo = x.m_Lo;
-        }
+        if (x.m_Hi > m_Hi) m_Hi = x.m_Hi;
+        if (x.m_Lo < m_Lo) m_Lo = x.m_Lo;
     }
 };
 }  // namespace Gray

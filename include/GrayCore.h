@@ -1,16 +1,22 @@
-//
 //! @file GrayCore.h
-//! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //! Can be included from an .RC file. RC_INVOKED
-
+//! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 #ifndef _INC_GrayCore_H
 #define _INC_GrayCore_H 0x004  /// 0.0.4 Version stamp the API. Especially important to the Variant and Archive types.
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
+#include "SysTypes.h"  // Pull in my system/compiler CLR includes and arbitrate them with common names.
 
-// Pull in my system/compiler CLR includes and arbitrate them with common names.
-#include "SysTypes.h"
+/// <summary>
+/// The main namespace for all Core functions.
+/// The main/default namespace for Gray library
+/// </summary>
+namespace Gray {  /// The main namespace for all Core functions.
+#ifndef GRAY_NAME
+#define GRAY_NAME Gray     /// Root name.
+#define GRAY_NAMES "Gray"  /// Use GRAYNAME for string.
+#endif
 
 // override the system #define UNICODE and _UNICODE. I use my own USE_UNICODE system as default char type. We don't have to use UNICODE just because the system does.
 #ifndef USE_UNICODE
@@ -29,27 +35,23 @@
 #endif
 #endif
 
-/// <summary>
-/// The main namespace for all Core functions.
-/// The main/default namespace for Gray library
-/// </summary>
-namespace Gray  /// The main namespace for all Core functions.
-{
-#ifndef GRAY_NAME
-#define GRAY_NAME Gray     /// Root name.
-#define GRAY_NAMES "Gray"  /// Use GRAYNAME for string.
-#endif
 #define GRAYCALL __stdcall  /// declare calling convention for static functions so everyone knows the arg passing scheme. don't assume compiler default. _cdecl.
+
+#if defined(_MFC_VER) && !defined(GRAY_STATICLIB)
+#define GRAY_STATICLIB  // _MFC_VER force Gray* all static lib
+#endif
 
 // use _LIB && _WINDLL && _MFC_VER to identify the type of LIB build. or it may just be who is including us.
 #ifndef GRAYCORE_LINK
-#if defined(_MFC_VER) || defined(GRAY_STATICLIB)  // GRAY_STATICLIB or _MFC_VER can be defined to make Gray* all static lib
+#ifdef GRAY_STATICLIB  // Gray* all static lib
 #define GRAYCORE_LINK
 #else
-// We are building Gray DLL/SO instead of static lib. use __DECL_IMPORT or __DECL_EXPORT. opposite of GRAY_STATICLIB
-#define GRAYCORE_LINK __DECL_IMPORT  // default is to include from a DLL/SO
+#define GRAYCORE_LINK __DECL_IMPORT  // default is to include from (or build) a DLL/SO
 #endif
+#if defined(_MSC_VER) && _MSC_VER >= 1400
+#pragma comment(lib, "GrayCore.lib")
 #endif
+ #endif
 
 #if defined(_DEBUG) || !defined(_MSC_VER)
 #define _LOCCALL  // static (local) calls might have better calling conventions? But turn off during _DEBUG
@@ -117,7 +119,5 @@ namespace Gray  /// The main namespace for all Core functions.
 #endif  // _WIN32 && MSVS2005
 
 extern GRAYCORE_LINK const va_list k_va_list_empty;  // For faking out the va_list. __GNUC__ doesn't allow a pointer to va_list. So use this to simulate nullptr.
-
 }  // namespace Gray
-
 #endif  // _INC_GRAYCORE

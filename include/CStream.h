@@ -1,21 +1,18 @@
-//
 //! @file cStream.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
-
 #ifndef _INC_cStream_H
 #define _INC_cStream_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
-
 #include "HResult.h"
-#include "StrT.h"
-#include "cHeap.h"
+#include "ITextWriter.h"
+#include "StrArg.h"
 #include "cBlob.h"
+#include "cHeap.h"
+#include "cSingleton.h"
 #include "cStreamProgress.h"  // STREAM_OFFSET_t , STREAM_POS_t, SEEK_t
 #include "cTimeSys.h"         // cTimeSys
-#include "cSingleton.h"
 
 namespace Gray {
 #ifdef _WIN32
@@ -64,7 +61,7 @@ struct GRAYCORE_LINK cStreamStats {
 };
 
 /// <summary>
-/// base class for cStreamOutput or cStreamInput.
+/// base class for binary cStreamOutput or cStreamInput.
 /// </summary>
 struct GRAYCORE_LINK cStreamBase {
     static const BYTE k_SIZE_MASK = 0x80;                 /// Used for WriteSize()
@@ -115,14 +112,13 @@ struct GRAYCORE_LINK cStreamBase {
 };
 
 /// <summary>
-/// Write a stream of data/text out to some arbitrary destination.
+/// Write a stream of binary data/text out to some arbitrary destination.
 /// i.e. console, file, socket, telnet, game client, web page client, etc..
 /// May be no SeekX() method available / implemented.
 /// similar to STL std::ostream, and IWriteStream
 /// </summary>
-struct GRAYCORE_LINK cStreamOutput : public cStreamBase {
+struct GRAYCORE_LINK cStreamOutput : public cStreamBase, public ITextWriter {
     cStreamOutput() noexcept {}
-    ~cStreamOutput() noexcept override {}
 
     /// <summary>
     /// Write a data block to the stream.
@@ -132,11 +128,15 @@ struct GRAYCORE_LINK cStreamOutput : public cStreamBase {
     /// <param name="pData"></param>
     /// <param name="nDataSize"></param>
     /// <returns>Number of bytes actually written. -lt- 0 = error.</returns>
-    virtual HRESULT WriteX(const void* pData, size_t nDataSize) { // = 0;
-        ASSERT(0);  // should never get called. (should always be overloaded)
+    virtual HRESULT WriteX(const void* pData, size_t nDataSize) {  // = 0;
+        ASSERT(0);                                                 // should never get called. (should always be overloaded)
         UNREFERENCED_PARAMETER(pData);
         UNREFERENCED_PARAMETER(nDataSize);
         return HRESULT_WIN32_C(ERROR_WRITE_FAULT);  // E_NOTIMPL
+    }
+
+    HRESULT WriteMem(const cMemSpan& m) {
+        return WriteX(m, m.get_DataSize());
     }
 
     /// <summary>
@@ -145,21 +145,26 @@ struct GRAYCORE_LINK cStreamOutput : public cStreamBase {
     /// <param name="pVal"></param>
     /// <param name="nDataSize"></param>
     /// <returns>Number of bytes written. -lt- 0 = error.</returns>
-    HRESULT WriteT(const void* pVal, size_t nDataSize) {
-        const HRESULT hRes = WriteX(pVal, nDataSize);
-        if (SUCCEEDED(hRes) && hRes != CastN(HRESULT, nDataSize)) return HRESULT_WIN32_C(ERROR_WRITE_FAULT);  // STG_WRITEFAULT
+    HRESULT WriteSpan(const cMemSpan& m) {
+        const HRESULT hRes = WriteMem(m);
+        if (SUCCEEDED(hRes) && hRes != CastN(HRESULT, m.get_DataSize())) return HRESULT_WIN32_C(ERROR_WRITE_FAULT);  // STG_WRITEFAULT
         return hRes;
     }
 
     // Support the base types directly. Host endian order.
     template <typename TYPE>
-    HRESULT WriteT(TYPE val);
+    HRESULT WriteT(TYPE val) {
+        return WriteSpan(TOSPANT(val));
+    }
 
     HRESULT WriteSize(size_t nSize);
     HRESULT WriteHashCode(HASHCODE_t nHashCode) {
         //! opposite of ReadHashCode()
         return WriteSize(nHashCode);
     }
+
+    HRESULT WriteString(const char* pszStr) override;
+    HRESULT WriteString(const wchar_t* pszStr) override;
 
     /// <summary>
     /// Write a block prefixed by its size (Bytes).
@@ -168,15 +173,12 @@ struct GRAYCORE_LINK cStreamOutput : public cStreamBase {
     /// <param name="pBuffer"></param>
     /// <param name="nSize"></param>
     /// <returns>-lt- 0 = error</returns>
-    HRESULT WriteBlob(const void* pBuffer, size_t nSize) {
-        const HRESULT hRes = WriteSize(nSize);
+    HRESULT WriteBlob(const cMemSpan& b) {
+        const HRESULT hRes = WriteSize(b.get_DataSize());
         if (FAILED(hRes)) return hRes;
-        if (nSize == 0) return S_OK;
-        return WriteT(pBuffer, nSize);
+        if (b.isEmpty()) return S_OK;
+        return WriteSpan(b);
     }
-
-    virtual HRESULT WriteString(const char* pszStr);
-    virtual HRESULT WriteString(const wchar_t* pszStr);
 
     /// <summary>
     /// Write out a string with the length prefix. ReadBlobStr()
@@ -186,59 +188,7 @@ struct GRAYCORE_LINK cStreamOutput : public cStreamBase {
     /// <returns>-lt- 0 = error</returns>
     template <typename _CH>
     HRESULT WriteBlobStr(const _CH* pszStr) {
-        return WriteBlob(pszStr, (pszStr == nullptr) ? 0 : (StrT::Len(pszStr) * sizeof(_CH)));
-    }
-
-    /// <summary>
-    /// Repeat writing of a char/wchar_t * nCount.
-    /// </summary>
-    /// <typeparam name="_CH"></typeparam>
-    /// <param name="nChar"></param>
-    /// <param name="nCount"></param>
-    /// <returns>-lt- 0 = error.</returns>
-    template <typename _CH>
-    HRESULT WriteCharRepeat(_CH nChar, int nCount = 1) {
-        ASSERT(nCount >= 0);
-        _CH szTmp[2];
-        szTmp[0] = nChar;
-        szTmp[1] = '\0';
-        for (; nCount-- > 0;) {
-            const HRESULT hRes = WriteString(szTmp);
-            if (FAILED(hRes)) return hRes;
-        }
-        return S_OK;
-    }
-
-    /// <summary>
-    /// Write just the chars of the string. NOT nullptr
-    /// </summary>
-    /// <returns>-lt- 0 = error. else number of chars written</returns>
-    template <typename _CH>
-    HRESULT VPrintf(const _CH* pszFormat, va_list args) {
-        ASSERT_NN(pszFormat);
-        _CH szTemp[StrT::k_LEN_Default];
-        const StrLen_t iLenRet = StrT::vsprintfN(szTemp, STRMAX(szTemp), pszFormat, args);
-        UNREFERENCED_PARAMETER(iLenRet);
-        return WriteString(szTemp); // WriteT ??
-    }
-
-    /// <summary>
-    /// Write just the chars of the string. NOT nullptr
-    /// Does NOT assume include NewLine or automatically add one.
-    /// @note Use StrArg(s) for safe "%s" args.
-    /// </summary>
-    /// <typeparam name="_CH">char or wchar_t</typeparam>
-    /// <param name="pszFormat"></param>
-    /// <param name=""></param>
-    /// <returns>-lt- 0 = error. else number of chars written</returns>
-    template <typename _CH>
-    HRESULT _cdecl Printf(const _CH* pszFormat, ...) {
-        ASSERT_NN(pszFormat);
-        va_list vargs;
-        va_start(vargs, pszFormat);
-        const HRESULT hResLen = VPrintf(pszFormat, vargs);
-        va_end(vargs);
-        return hResLen;
+        return WriteBlob(ToSpan(pszStr, (pszStr == nullptr) ? 0 : StrT::Len(pszStr)));
     }
 
     /// <summary>
@@ -253,7 +203,7 @@ struct GRAYCORE_LINK cStreamOutput : public cStreamBase {
     HRESULT WriteStream(cStreamInput& sInp, STREAM_POS_t nSizeMax = k_FILE_BLOCK_SIZE, IStreamProgressCallback* pProgress = nullptr, TIMESYSD_t nTimeout = 0);
 
     /// <summary>
-    /// optional, virtualized fflush() or FlushFileBuffers()
+    /// optional, virtual fflush() or FlushFileBuffers()
     /// </summary>
     /// <returns></returns>
     virtual HRESULT FlushX() {
@@ -261,33 +211,23 @@ struct GRAYCORE_LINK cStreamOutput : public cStreamBase {
     }
 };
 
-// Write all my types bool, char, int, float, double, _int64. (short, long, signed, unsigned)
-#define CTYPE_DEF(a, _TYPE, c, d, e, f, g, h)                \
-    template <>                                              \
-    inline HRESULT cStreamOutput::WriteT<_TYPE>(_TYPE val) { \
-        return WriteT(&val, sizeof(val));                    \
-    }
-#include "cTypes.tbl"
-#undef CTYPE_DEF
-
 /// <summary>
-/// Generic input stream of data.
+/// Generic input stream of binary data.
 /// @note SeekX() not always available from this interface. ReadX(nullptr) = skip over but not true seek.
 /// </summary>
 struct GRAYCORE_LINK cStreamInput : public cStreamBase {
     cStreamInput() noexcept {}
-    ~cStreamInput() override {}
 
     /// <summary>
-    /// similar to ReadCommit (put_AutoReadCommitSize) size. Used by cStreamTransaction.
     /// Leave a certain amount of data (max message size for current protocol)
     /// such that we could SeekX() back for incomplete messages.
+    /// similar to ReadCommit (put_AutoReadCommitSize) size. Used by cStreamTransaction.
     /// </summary>
     /// <param name="nSizeMin">0 = don't commit/lost any data until we have a complete message/block.</param>
     /// <returns></returns>
-    virtual size_t SetSeekSizeMin(size_t nSizeMin = k_FILE_BLOCK_SIZE) {
+    virtual size_t SetReadCommitSize(size_t nSizeMin = k_FILE_BLOCK_SIZE) {
         UNREFERENCED_PARAMETER(nSizeMin);
-        return 0;       // Previous commit size.
+        return 0;  // Previous commit size.
     }
 
     /// <summary>
@@ -295,12 +235,17 @@ struct GRAYCORE_LINK cStreamInput : public cStreamBase {
     /// Similar to MFC CFile::Read()
     /// </summary>
     /// <param name="pData">nullptr = skip over nDataSize in read stream. Same as SeekX().</param>
-    /// <param name="nDataSize"></param>
+    /// <param name="nDataSize">max size</param>
     /// <returns>Length of the stuff read. -lt- 0 = error. HRESULT_WIN32_C(ERROR_IO_INCOMPLETE) = need more data.</returns>
     virtual HRESULT ReadX(OUT void* pData, size_t nDataSize) noexcept {
         UNREFERENCED_PARAMETER(pData);
         UNREFERENCED_PARAMETER(nDataSize);
         return E_NOTIMPL;  // nothing read.
+    }
+
+    /// Read up to size of cMemSpan
+    HRESULT ReadMem(OUT cMemSpan& m) {
+        return ReadX(m.get_DataW(), m.get_DataSize());
     }
 
     /// <summary>
@@ -311,29 +256,30 @@ struct GRAYCORE_LINK cStreamInput : public cStreamBase {
     /// <returns>length read. (Not including nSizeExtra). or -lt- 0 = error.</returns>
     HRESULT ReadAll(OUT cBlob& blob, size_t nSizeExtra = 0);
 
-    virtual HRESULT ReadStringLine(OUT char* pszBuffer, StrLen_t iSizeMax);
-    virtual HRESULT ReadStringLine(OUT wchar_t* pszBuffer, StrLen_t iSizeMax);
+    virtual HRESULT ReadStringLine(cSpanX<char>& ret);
+    virtual HRESULT ReadStringLine(cSpanX<wchar_t>& ret);
 
     // Support the base types directly.
 
     /// <summary>
-    /// Read all of nSize or fail HRESULT_WIN32_C(ERROR_IO_INCOMPLETE). ASSUME host endian
+    /// Read all of nSize or fail HRESULT_WIN32_C(ERROR_IO_INCOMPLETE). Ignore endian.
     /// </summary>
     /// <param name="pVal"></param>
     /// <param name="nSize">0 = S_OK</param>
     /// <returns>-lte- 0 = actual size read. or -lt- 0 = error. HRESULT_WIN32_C(ERROR_IO_INCOMPLETE) = need more data.</returns>
-    HRESULT ReadT(OUT void* pVal, size_t nSize) {
-        const HRESULT hRes = ReadX(pVal, nSize);
-        if (SUCCEEDED(hRes) && hRes != CastN(HRESULT, nSize)) {
-            return HRESULT_WIN32_C(ERROR_IO_INCOMPLETE);  // maybe HRESULT_WIN32_C(ERROR_HANDLE_EOF) ?
-        }
-        return hRes;
+    HRESULT ReadSpan(OUT cMemSpan& ret) {
+        const HRESULT hRes = ReadMem(ret);
+        if (FAILED(hRes)) return hRes;
+        if (hRes == CastN(HRESULT, ret.get_DataSize())) return hRes;  // OK
+        return HRESULT_WIN32_C(ERROR_IO_INCOMPLETE);                  // maybe HRESULT_WIN32_C(ERROR_HANDLE_EOF) ? maybe SeekX back and try again ?
     }
     template <typename TYPE = BYTE>
-    HRESULT ReadT(OUT TYPE& val);
+    HRESULT ReadT(OUT TYPE& val) {
+        return ReadSpan(TOSPANT(val));
+    }
 
     /// <summary>
-    /// Read a type value in network order. convert to host order.
+    /// Read a type value in network order (Big endian). convert to host order.
     /// </summary>
     /// <typeparam name="TYPE"></typeparam>
     /// <param name="val"></param>
@@ -345,6 +291,7 @@ struct GRAYCORE_LINK cStreamInput : public cStreamBase {
         val = cMemT::NtoH(val);
         return hRes;
     }
+    /// read Little Endian value. (Intel)
     template <typename TYPE>
     HRESULT ReadTLE(OUT TYPE& val) {
         const HRESULT hRes = ReadT(val);
@@ -363,9 +310,9 @@ struct GRAYCORE_LINK cStreamInput : public cStreamBase {
     /// <returns>-lt- 0 = fail</returns>
     template <typename TYPE>
     HRESULT ReadSizeT(OUT TYPE& n) {
-        size_t nSize = 0;
-        const HRESULT hRes = ReadSize(nSize);
-        n = CastN(TYPE, nSize);
+        size_t nSizeTmp = 0;
+        const HRESULT hRes = ReadSize(nSizeTmp);
+        n = CastN(TYPE, nSizeTmp);
         return hRes;
     }
 
@@ -383,15 +330,15 @@ struct GRAYCORE_LINK cStreamInput : public cStreamBase {
     /// <param name="pBuffer"></param>
     /// <param name="nSizeMax"></param>
     /// <returns>-gte- 0 = actual size read.</returns>
-    HRESULT ReadBlob(OUT BYTE* pBuffer, size_t nSizeMax) {
+    HRESULT ReadBlob(cMemSpan& ret) {
         size_t nSize = 0;
         const HRESULT hRes = ReadSize(nSize);
         if (FAILED(hRes)) return hRes;
-        if (nSize > nSizeMax) { 
-            // ASSERT(0);            
+        if (nSize > ret.get_DataSize()) {
+            // ASSERT(0);
             return HRESULT_WIN32_C(ERROR_FILE_CORRUPT);  // corrupt data.
         }
-        return ReadT(pBuffer, nSize);
+        return ReadSpan(cMemSpan(ret, nSize));
     }
 
     /// <summary>
@@ -402,26 +349,17 @@ struct GRAYCORE_LINK cStreamInput : public cStreamBase {
     /// <param name="iSizeMax">_countof(pszStr), includes space for '\0'. e.g. _countof("abc") = 4</param>
     /// <returns>The size of the string (in chars) + including '\0'. HRESULT_WIN32_C(ERROR_IO_INCOMPLETE) = need more data.</returns>
     template <typename _CH>
-    HRESULT ReadBlobStr(OUT _CH* pszStr, StrLen_t iSizeMax) {
-        const HRESULT hResRead = ReadBlob(PtrCast<BYTE>(pszStr), (size_t)(iSizeMax - 1) * sizeof(_CH));
+    HRESULT ReadBlobStr(cSpanX<_CH>& ret) {
+        const HRESULT hResRead = ReadBlob(ret);
         if (FAILED(hResRead)) return hResRead;
         const StrLen_t nSizeRead = hResRead / sizeof(_CH);
-        ASSERT(nSizeRead < iSizeMax);
-        pszStr[nSizeRead] = '\0';
+        ASSERT(nSizeRead < ret.GetSize());
+        ret.get_DataWork()[nSizeRead] = '\0';
         return nSizeRead + 1;
     }
 
-    virtual HRESULT ReadPeek(void* pData, size_t nDataSize);
+    virtual HRESULT ReadPeek(cMemSpan& ret);
 };
-
-// Read all my types bool, char, int, float, double, _int64. (short, long, signed, unsigned). ASSUME serialized in host/native order. No big/little Endian issues.
-#define CTYPE_DEF(a, _TYPE, c, d, e, f, g, h)                     \
-    template <>                                                   \
-    inline HRESULT cStreamInput::ReadT<_TYPE>(OUT _TYPE & rval) { \
-        return ReadT(&rval, sizeof(rval));                        \
-    }
-#include "cTypes.tbl"
-#undef CTYPE_DEF
 
 /// <summary>
 /// This is a bi-directional serial stream. RX and TX like ISequentialStream.
@@ -434,7 +372,7 @@ struct GRAYCORE_LINK cStreamInput : public cStreamBase {
 /// </summary>
 struct GRAYCORE_LINK cStream : public cStreamInput, public cStreamOutput {
     //! Disambiguate SeekX for cStreamBase to cStreamInput for stupid compiler.
-    HRESULT SeekX(STREAM_OFFSET_t iOffset, SEEK_t eSeekOrigin = SEEK_t::_Set) noexcept override {
+   HRESULT SeekX(STREAM_OFFSET_t iOffset, SEEK_t eSeekOrigin = SEEK_t::_Set) noexcept override {
         return cStreamInput::SeekX(iOffset, eSeekOrigin);
     }
     STREAM_POS_t GetPosition() const override {
@@ -443,13 +381,8 @@ struct GRAYCORE_LINK cStream : public cStreamInput, public cStreamOutput {
     STREAM_POS_t GetLength() const override {
         return cStreamInput::GetLength();
     }
-
-    void SeekToBegin() {
-        cStreamInput::SeekToBegin();
-    }
-    STREAM_POS_t SeekToEnd() {
-        return cStreamInput::SeekToEnd();
-    }
+    using cStreamInput::SeekToBegin; 
+    using cStreamInput::SeekToEnd; 
 };
 
 /// Base class for file reader/importer/etc helper.
@@ -467,33 +400,10 @@ class GRAYCORE_LINK cStreamTransaction : public cStreamReader {
     size_t m_nSeekSizeMinPrev;  /// Previous value. Maybe nested transactions !
 
  protected:
-    HRESULT TransactionRollback() {
-        // Roll back to m_lPosStart
-        ASSERT(isTransactionActive());
-        return m_pInp->SeekX(CastN(STREAM_OFFSET_t, m_lPosStart), SEEK_t::_Set);
-    }
-
+    HRESULT TransactionRollback();
  public:
-    cStreamTransaction(cStreamInput* pInp) : cStreamReader(pInp) {
-        ASSERT(m_pInp != nullptr);
-        m_lPosStart = m_pInp->GetPosition();
-        if (m_lPosStart < 0 || m_lPosStart > CastN(STREAM_POS_t, cHeap::k_ALLOC_MAX)) {
-            m_lPosStart = k_STREAM_POS_ERR;  // Rollback not allowed!
-            return;
-        }
-        m_nSeekSizeMinPrev = m_pInp->SetSeekSizeMin(0);  // Don't use AutoReadCommit inside cStreamTransaction.
-        ASSERT(m_nSeekSizeMinPrev >= 0 && m_nSeekSizeMinPrev <= cHeap::k_ALLOC_MAX);
-        ASSERT(isTransactionActive());
-    }
-    ~cStreamTransaction() {
-        //! if we didn't say it was a success, do a rollback on destruct.
-        if (m_pInp == nullptr) return;
-        if (isTransactionActive()) {  // We failed ! didn't call SetTransactionComplete or SetTransactionFailed()
-            TransactionRollback();
-        }
-        // Restore commit ability
-        m_pInp->SetSeekSizeMin(m_nSeekSizeMinPrev);  // Complete. we can now commit reads. e.g. toss data we have declared read.
-    }
+    cStreamTransaction(cStreamInput* pInp);
+    ~cStreamTransaction();
 
     inline bool isTransactionActive() const noexcept {
         //! Was SetTransactionComplete called ?
@@ -505,18 +415,18 @@ class GRAYCORE_LINK cStreamTransaction : public cStreamReader {
         m_lPosStart = k_STREAM_POS_ERR;
         ASSERT(!isTransactionActive());
     }
-    /// <summary>
-    /// I got a partial success. I used some of the data. maybe not all?
-    /// </summary>
-    void SetTransactionCompleteN(size_t nSize) {
-        if (!isTransactionActive()) return;
-        m_lPosStart += nSize;  // roll back to here.
-    }
     void SetTransactionFailed() noexcept {
         //! The stream broke in some way. e.g. socket close.
         //! assume connection is broken. no rollback.
         if (m_pInp == nullptr) return;
         m_pInp = nullptr;
+    }
+    /// <summary>
+    /// I got a partial success. I used some of the data. maybe not all?
+    /// </summary>
+    void SetTransactionPartial(size_t nSize) {
+        if (!isTransactionActive()) return;
+        m_lPosStart += nSize;  // roll back to here.
     }
     void SetTransactionRollback() {
         //! default behavior if closed without calling SetTransactionComplete() or SetTransactionFailed().
@@ -528,9 +438,13 @@ class GRAYCORE_LINK cStreamTransaction : public cStreamReader {
 /// <summary>
 /// A junk/null cStream that just tosses write data and has no read data. For testing.
 /// </summary>
-struct GRAYCORE_LINK cStreamNull : public cStream, public cSingleton<cStreamNull> {
+class GRAYCORE_LINK cStreamNull final : public cStream, public cSingleton<cStreamNull> {
+    SINGLETON_IMPL(cStreamNull);
+
+ protected:
     cStreamNull() noexcept : cSingleton<cStreamNull>(this) {}
 
+ public:
     /// <summary>
     /// Write a data block to null.
     /// </summary>

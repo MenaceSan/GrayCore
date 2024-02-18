@@ -1,7 +1,6 @@
-//
 //! @file cIniMap.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
+
 #ifndef _INC_cIniMap_H
 #define _INC_cIniMap_H
 #ifndef NO_PRAGMA_ONCE
@@ -19,11 +18,10 @@ namespace Gray {
 /// like cPair, cPairT but more complex (dynamic types)
 /// similar to "std::tuple" or "System.Collections.Generic.KeyValuePair", cVarTuple
 /// </summary>
-class GRAYCORE_LINK cIniKeyValue {
- public:
+struct GRAYCORE_LINK cIniKeyValue {
     cAtomRef m_aKey;  /// property key name.
     cStringI m_sVal;  /// property value as a string.
- public:
+
     cIniKeyValue() noexcept {}
     cIniKeyValue(cAtomRef aKey, cStringI sVal) noexcept : m_aKey(aKey), m_sVal(sVal) {}
     ATOMCODE_t get_HashCode() const noexcept {
@@ -44,11 +42,9 @@ class GRAYCORE_LINK cIniKeyValue {
 /// ASSUME NO duplicated keys.
 /// Similar to cIniObject but props are NOT known/predefined.
 /// </summary>
-class GRAYCORE_LINK cIniMap : public IIniBaseSetter, public IIniBaseGetter, public IIniBaseEnumerator, public cArraySortStructHash<cIniKeyValue> {
- public:
+struct GRAYCORE_LINK cIniMap : public IIniBaseSetter, public IIniBaseGetter, public IIniBaseEnumerator, public cArraySortStructHash<cIniKeyValue> {
     cIniMap() noexcept {}
-    ~cIniMap() override {}
-
+ 
     ITERATE_t Find(const IniChar_t* pszPropTag) const;
     const IniChar_t* GetVal(const IniChar_t* pszPropTag) const;
     HRESULT SetVal(const IniChar_t* pszPropTag, cStringI sValue);
@@ -59,7 +55,7 @@ class GRAYCORE_LINK cIniMap : public IIniBaseSetter, public IIniBaseGetter, publ
 
     void SetCopy(const cIniMap& rAttribs);
 
-    // Type conversion get/set
+    // Type conversion get/set helpers
     HRESULT GetValInt(const IniChar_t* pszPropTag, int* piValue) const;
     HRESULT GetValDouble(const IniChar_t* pszPropTag, double* pdValue) const;
     HRESULT SetValInt(const IniChar_t* pszPropTag, int iVal);

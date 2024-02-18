@@ -1,8 +1,6 @@
-//
 //! @file cHandlePtr.h
 //! Wrap a general handle/pointer
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cHandlePtr_H
 #define _INC_cHandlePtr_H
@@ -15,13 +13,13 @@
 namespace Gray {
 /// <summary>
 /// MUST Implement versions of this for each _TYPE_HAND.
-/// Assume destruction or my caller will clear m_h
+/// for use with cHandlePtr.
 /// </summary>
 /// <typeparam name="_TYPE_HAND"></typeparam>
 /// <param name="h"></param>
 /// <returns></returns>
 template <typename _TYPE_HAND>
-static void inline CloseHandleType(_TYPE_HAND h) noexcept;  // Don't use/define a default implementation! This should fail at compile time if _TYPE_HAND is not implemented explicitly.
+GRAYCORE_LINK void CloseHandleType(_TYPE_HAND h) noexcept;  // Don't use/define a default implementation! This should fail at compile time if _TYPE_HAND is not implemented explicitly.
 
 /// <summary>
 /// Generic handle/pointer that requires an open/close operation. The underlying type is a pointer more or less.
@@ -46,10 +44,8 @@ struct cHandlePtr : protected cNonCopyable {
 
  public:
     explicit inline cHandlePtr(_TYPE_HAND h = HANDLEPTR_NULL) noexcept : m_h(h) {}
-    cHandlePtr(THIS_t&& s) noexcept
-        : m_h(s.m_h)  // move.
-    {
-        s.m_h = HANDLEPTR_NULL;
+    cHandlePtr(THIS_t&& s) noexcept : m_h(s.m_h) {
+        s.m_h = HANDLEPTR_NULL;  // move.
     }
 
     inline bool isValidHandle() const noexcept {

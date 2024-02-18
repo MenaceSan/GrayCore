@@ -1,4 +1,3 @@
-//
 //! @file cException.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 // clang-format off
@@ -27,7 +26,7 @@ BOOL cExceptionHolder::GetErrorMessage(StrBuilder<LOGCHAR_t>& sb) const {
 #if USE_UNICODE
     GChar_t szTmp[cExceptionHolder::k_MSG_MAX_SIZE];
     get_Ptr()->GetErrorMessage(szTmp, (UINT)_countof(szTmp), nullptr);
-    StrU::UNICODEtoUTF8(lpszError, nLenMaxError, szTmp, _countof(szTmp));
+    StrU::UNICODEtoUTF8(lpszError, nLenMaxError, TOSPAN(szTmp));
     return true;
 #else
     return get_Ptr()->GetErrorMessage(lpszError, (UINT)nLenMaxError, nullptr);
@@ -46,7 +45,7 @@ cStringL cExceptionHolder::get_ErrorStr() const {
 
 #ifdef _MFC_VER  // using _MFC_VER.
     LOGCHAR_t szTmp[cExceptionHolder::k_MSG_MAX_SIZE];
-    GetErrorMessage(szTmp, STRMAX(szTmp));
+    GetErrorMessage(StrBuilder<LOGCHAR_t>(TOSPAN(szTmp)));
     return szTmp;
 #else
     cException* pEx = get_Ex();
@@ -82,7 +81,7 @@ BOOL cException::GetErrorMessage(StrBuilder<GChar_t>& sb, UINT* pnHelpContext) {
 GRAYCORE_LINK cStringL cException::get_ErrorStr() {  // similar to STL what()
     // Get error in UTF8.
     GChar_t szTmp[cExceptionHolder::k_MSG_MAX_SIZE];
-    StrBuilder<GChar_t> sb(szTmp, STRMAX(szTmp));
+    StrBuilder<GChar_t> sb(TOSPAN(szTmp));
     GetErrorMessage(sb, nullptr);
     return szTmp;
 }
@@ -97,10 +96,14 @@ BOOL cExceptionHResult::GetErrorMessage(StrBuilder<GChar_t>& sb, UINT* pnHelpCon
 
     if (m_hResultCode != S_OK) {
         // return the message defined by the system for the error code
-        GChar_t szCode[cExceptionHolder::k_MSG_MAX_SIZE];
-        StrBuilder<GChar_t> sb2(szCode, STRMAX(szCode));
-        HResult::GetTextV(m_hResultCode, sb2, k_va_list_empty);  // pnHelpContext
-        sb.AddFormat(_GT("Error Pri=%d, Code=0%x(%s), Desc='%s'"), m_eSeverity, (UINT)m_hResultCode, StrArg<GChar_t>(szCode), StrArg<GChar_t>(m_pszDescription));
+        sb.AddStr(_GT("Error Pri="));
+        sb.AddUInt((UINT)m_eSeverity);
+        sb.AddStr(_GT(", Code="));
+        sb.AddUInt((UINT)m_hResultCode, 0x10);
+        sb.AddStr(_GT("("));
+        HResult::GetTextV(m_hResultCode, sb, k_va_list_empty);  // pnHelpContext
+        sb.AddStr(_GT("), Desc="));
+        sb.AddStrQ(m_pszDescription);
         return true;
     }
     return SUPER_t::GetErrorMessage(sb, pnHelpContext);

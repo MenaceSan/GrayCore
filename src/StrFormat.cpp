@@ -1,4 +1,3 @@
-//
 //! @file StrFormat.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 // https://github.com/jpbonn/coremark_lm32/blob/master/ee_printf.c
@@ -20,17 +19,28 @@
 namespace Gray {
 
 template <typename _TYPE_CH>
-void StrBuilder<_TYPE_CH>::AddUInt(UINT64 uVal, const _TYPE_CH* pszPrefix, RADIX_t nRadix, char chRadixA) {
+void StrBuilder<_TYPE_CH>::AddInt(INT64 iVal) {
+    const _TYPE_CH* pszPrefix = nullptr;
+    if (iVal < 0) {
+        iVal = -iVal;
+        pszPrefix = CSTRCONST("-");
+    }
     StrFormat<_TYPE_CH> f;
-    f.RenderUInt(*this, pszPrefix, nRadix, chRadixA, uVal);
+    f.RenderUInt(*this, pszPrefix, 10, 'A', (UINT64)iVal);
+}
+template <typename _TYPE_CH>
+void StrBuilder<_TYPE_CH>::AddUInt(UINT64 uVal, RADIX_t nRadix) {
+    StrFormat<_TYPE_CH> f;
+    f.m_bLeadZero = nRadix >= 0x10;  // sm_nRadixForUnsignedToStr
+    f.RenderUInt(*this, nullptr, nRadix, 'A', uVal);
 }
 template <typename _TYPE_CH>
 void StrBuilder<_TYPE_CH>::AddFloat(double dVal, char chE) {
     StrFormat<_TYPE_CH> f;
-    f.RenderFloat(*this, chE, dVal);
+    f.RenderFloat(*this, dVal, chE);
 }
 template <typename _TYPE_CH>
-void _cdecl StrBuilder<_TYPE_CH>::AddFormatV(const _TYPE_CH* pszFormat, va_list vargs) {
+void StrBuilder<_TYPE_CH>::AddFormatV(const _TYPE_CH* pszFormat, va_list vargs) {
     StrFormat<_TYPE_CH>::V(*this, pszFormat, vargs);
 }
 template <typename _TYPE_CH>
@@ -47,12 +57,11 @@ GRAYCORE_LINK const char StrFormatParams::k_Specs[16] = "EFGXcdefgiopsux";  // a
 
 template <typename TYPE>
 StrLen_t StrFormat<TYPE>::ParseParam(const TYPE* pszFormat) {
-    ClearParams();
     ASSERT_NN(pszFormat);
+    ClearParams();
 
     BYTE nVal = 0;
     bool bHasDot = false;
-
     StrLen_t i = 0;
     for (;; i++) {
         TYPE ch = pszFormat[i];
@@ -62,8 +71,13 @@ StrLen_t StrFormat<TYPE>::ParseParam(const TYPE* pszFormat) {
         if (m_nSpec != '\0') {  // legit end.
             if (bHasDot)
                 m_nPrecision = nVal;
-            else
+            else {
                 m_nWidthMin = nVal;
+                if (m_nPrecision < 0) {
+                    const char chSpecL = StrChar::ToLowerA(m_nSpec);
+                    if (chSpecL == 'e' || chSpecL == 'f' || chSpecL == 'g') m_nPrecision = 6;  // float default
+                }
+            }
             return i + 1;  // Display it.
         }
 
@@ -78,6 +92,13 @@ StrLen_t StrFormat<TYPE>::ParseParam(const TYPE* pszFormat) {
                 continue;
             case 'l':  // NOT 'L'
                 m_nLong++;
+                continue;
+            case 'z':  // New standard for size_t. https://www.gnu.org/software/libc/manual/html_node/Integer-Conversions.html
+#ifdef USE_64BIT
+                m_nLong = 2;
+#else
+                m_nLong = 1;
+#endif
                 continue;
             case '-':
                 m_bAlignLeft = true;
@@ -116,7 +137,7 @@ void StrFormat<TYPE>::RenderString(StrBuilder<TYPE>& out, const TYPE* pszParam, 
     if (nPrecision < 0 || nPrecision > nParamLen) nPrecision = (short)nParamLen;  // all
 
     // a truncated or shifted string.
-    short nWidth = m_nWidthMin;  // Total width of what we place in pszOut
+    short nWidth = m_nWidthMin;                   // Total width of what we place in pszOut
     if (nWidth == 0) nWidth = (short)nPrecision;  // all
 
     StrLen_t i = 0;
@@ -139,26 +160,26 @@ void StrFormat<TYPE>::RenderUInt(StrBuilder<TYPE>& out, const TYPE* pszPrefix, R
     //! @arg nLenOutMax = max string chars including a space for terminator. (even though we don't terminate)
 
     TYPE szTmp[StrNum::k_LEN_MAX_DIGITS_INT + 4];
-    TYPE* pDigits = StrT::ULtoARev(uVal, szTmp, StrNum::k_LEN_MAX_DIGITS_INT, nRadix, chRadixA);
+    cSpanX<TYPE> spanDigits = StrNum::ULtoARev(uVal, szTmp, STRMAX(szTmp), nRadix, chRadixA);
+    StrLen_t nDigits = (StrLen_t)spanDigits.get_Count();
+    TYPE* pDigits = spanDigits.get_DataWork();
 
-    StrLen_t nDigits = (StrNum::k_LEN_MAX_DIGITS_INT - StrT::Diff(pDigits, szTmp)) - 1;
     StrLen_t nPrecision = m_nPrecision;  // We can increase this to include pad 0 and sign.
     if (nPrecision > nDigits) nPrecision = (short)nDigits;
 
-    if (m_bLeadZero && m_nWidthMin > nDigits) {
-        // 0 pad is part of szTmp. Replaces ' ' padding.
-        StrLen_t nPad = m_nWidthMin;
-        if (nPad >= StrNum::k_LEN_MAX_DIGITS_INT) nPad = StrNum::k_LEN_MAX_DIGITS_INT;
-        nPad -= nDigits;
+    if (m_bLeadZero) {
+        // 0 pad as part of szTmp. Replaces ' ' padding.
+        StrLen_t nPad = (m_nWidthMin >= nDigits) ? (m_nWidthMin - nDigits) : uVal ? 1 : 0;
+        if (nPad + nDigits >= STRMAX(szTmp)) nPad = STRMAX(szTmp) - nDigits;
         pDigits -= nPad;
-        cValArray::FillQty<TYPE>(pDigits, nPad, '0');
+        cValSpan::FillQty<TYPE>(pDigits, nPad, '0');
         nDigits += nPad;
         if (nPrecision >= 0) nPrecision += nPad;
     }
 
     if (pszPrefix != nullptr) {
         // Sign is part of szTmp. Can't be padded out.
-        StrLen_t nPrefix = StrT::Len(pszPrefix);
+        const StrLen_t nPrefix = StrT::Len(pszPrefix);
         ASSERT(nPrefix <= 2);  // we left some prefix space for this.
         pDigits -= nPrefix;
         cMem::Copy(pDigits, pszPrefix, nPrefix * sizeof(TYPE));
@@ -170,24 +191,19 @@ void StrFormat<TYPE>::RenderUInt(StrBuilder<TYPE>& out, const TYPE* pszPrefix, R
 }
 
 template <typename TYPE>
-void StrFormat<TYPE>::RenderFloat(StrBuilder<TYPE>& out, char chE, double dVal) const {
-    // %g
-    // @arg chE = <0 e.g. -'e' = optional.
+void StrFormat<TYPE>::RenderFloat(StrBuilder<TYPE>& out, double dVal, char chE) const {
+    // %g =     // @arg chE = <0 e.g. -'e' = optional.
 
-    StrLen_t nPrecision = m_nPrecision;
-    if (nPrecision < 0) {
-        nPrecision = 6;  // default. for decimal places or whole string depending on chLogA < 0
-    }
-
+    StrLen_t nLen;
     TYPE szTmp[StrNum::k_LEN_MAX_DIGITS + 4];
     if (m_bPlusSign && dVal >= 0) {
-        szTmp[0] = '+';                                                                                     // prefix.
-        nPrecision = 1 + StrT::DtoA<TYPE>(dVal, szTmp + 1, StrNum::k_LEN_MAX_DIGITS - 1, nPrecision, chE);  // default = 6.
+        szTmp[0] = '+';                                                                                   // prefix.
+        nLen = 1 + StrT::DtoA<TYPE>(dVal, ToSpan(szTmp + 1, STRMAX(szTmp) - 1), m_nPrecision, chE);  // default = 6.
     } else {
-        nPrecision = StrT::DtoA<TYPE>(dVal, szTmp, StrNum::k_LEN_MAX_DIGITS, nPrecision, chE);  // default = 6.
+        nLen = StrT::DtoA<TYPE>(dVal, TOSPAN(szTmp), m_nPrecision, chE);  // default = 6.
     }
 
-    RenderString(out, szTmp, nPrecision, (short)nPrecision);
+    RenderString(out, szTmp, nLen, (short)nLen);
 }
 
 template <typename TYPE>
@@ -249,7 +265,6 @@ void StrFormat<TYPE>::RenderParam(StrBuilder<TYPE>& out, va_list* pvlist) const 
             } else {
                 nVal = va_arg(*pvlist, UINT32);
             }
-
             RenderUInt(out, pszPrefix, nBaseRadix, chRadixA, nVal);
             return;
         }
@@ -299,7 +314,7 @@ void StrFormat<TYPE>::RenderParam(StrBuilder<TYPE>& out, va_list* pvlist) const 
         case 'f':  // Float precision = decimal places. default m_nPrecision = 6
             chRadixA = '\0';
         do_num_float:
-            RenderFloat(out, chRadixA, va_arg(*pvlist, double));
+            RenderFloat(out, va_arg(*pvlist, double), chRadixA);
             return;
 
         case 'G':  // Upper case. Use the shortest representation: %E or %F
@@ -340,7 +355,7 @@ void GRAYCALL StrFormat<TYPE>::V(StrBuilder<TYPE>& out, const TYPE* pszFormat, v
 
     if (pszFormat == nullptr) return;  // Error? or just do nothing?
 
-    ASSERT(out.get_Str() != pszFormat);
+    ASSERT(out.get_CPtr() != pszFormat);
     bool bHasFormatting = false;
 
     for (StrLen_t iLenForm = 0;;) {
@@ -414,7 +429,7 @@ StrLen_t GRAYCALL StrTemplate::ReplaceTemplateBlock(StrBuilder<IniChar_t>& out, 
         ASSERT(pszInp[0] == '<' && pszInp[1] == '?');
     }
 
-    for (; i < StrT::k_LEN_MAX; i++) {
+    for (; i < cStrConst::k_LEN_MAX; i++) {
         char ch = pszInp[i];
         if (ch == '\0') break;
 
@@ -442,7 +457,7 @@ StrLen_t GRAYCALL StrTemplate::ReplaceTemplateBlock(StrBuilder<IniChar_t>& out, 
         if (ch == '>' && pszInp[i - 1] == '?') {  // found end of block.
             // NOTE: take the Template Expression from output side in case it is the product of recursive blocks.
             const StrLen_t iTemplateLen = (out.get_Length() - iBeginBlock) - 4;
-            cStringI sTemplate(out.get_DataWork() + iBeginBlock + 2, iTemplateLen);
+            cStringI sTemplate(ToSpan(out.get_DataWork() + iBeginBlock + 2, iTemplateLen));
             iBeginBlock = -1;
 
             HRESULT hRes;

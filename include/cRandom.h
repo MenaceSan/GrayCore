@@ -1,8 +1,6 @@
-//
 //! @file cRandom.h
 //! Basic random number generator.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cRandom_H
 #define _INC_cRandom_H
@@ -21,7 +19,7 @@ namespace Gray {
 DECLARE_INTERFACE(IRandomNoise) {
     typedef UINT RAND_t;  /// default value/seed size might be 32 or 64 bit .
     IGNORE_WARN_INTERFACE(IRandomNoise);
-    virtual HRESULT GetNoise(void* pData, size_t iSize) = 0;  /// fill array with random bytes. return # bytes filled.
+    virtual bool GetNoise(cMemSpan & m) = 0;  /// fill array with random bytes.
 };
 
 /// <summary>
@@ -39,10 +37,17 @@ struct GRAYCORE_LINK cRandomBase : public IRandomNoise {
     void InitSeedOS(size_t iSize = sizeof(RAND_t));
     void InitSeedUns(RAND_t uSeed);
 
-    HRESULT GetNoise(void* pData, size_t iSize) override;  /// fill array with random. return # filled.
+    bool GetNoise(cMemSpan& m) override;  /// fill array with random. return # filled.
 
     // Type helpers.
-    virtual RAND_t get_RandUns();  // UINT_MAX // RAND_t
+
+    /// <summary>
+    /// get unsigned random number in 0 to -lt- UINT_MAX range
+    /// @note derived implementation MUST override get_RandUns or GetRandUX
+    /// </summary>
+    /// <returns>RAND_t = UINT</returns>
+    virtual RAND_t get_RandUns();
+
     /// <summary>
     /// flip a coin.
     /// </summary>
@@ -59,12 +64,17 @@ struct GRAYCORE_LINK cRandomBase : public IRandomNoise {
 /// <summary>
 /// Get randomness from perf data. prefer cRandomOS but use this as fallback
 /// </summary>
-struct GRAYCORE_LINK cRandomPerf : public IRandomNoise, public cSingleton<cRandomPerf> {
+class GRAYCORE_LINK cRandomPerf final : public IRandomNoise, public cSingleton<cRandomPerf> {
+    SINGLETON_IMPL(cRandomPerf);
+
+ protected:
     cRandomPerf();
-    static void GRAYCALL GetNoisePerf(void* pData, size_t iSize);
-    HRESULT GetNoise(void* pData, size_t iSize) override {  // fill array with random. return # filled.
-        GetNoisePerf(pData, iSize);
-        return CastN(HRESULT, iSize);
+
+ public:
+    static void GRAYCALL GetNoisePerf(cMemSpan& m);
+    bool GetNoise(cMemSpan& m) override {  // fill array with random. return # filled.
+        GetNoisePerf(m);
+        return true;
     }
 };
 
@@ -72,20 +82,21 @@ struct GRAYCORE_LINK cRandomPerf : public IRandomNoise, public cSingleton<cRando
 /// Get Low level Hardware based noise supplied by the OS. NO SEED. NOT Deterministic (in theory)
 /// __linux__ use "/dev/urandom" as a get_RandomSeed().
 /// </summary>
-class GRAYCORE_LINK cRandomOS : public cRandomBase, public cSingleton<cRandomOS> {
+class GRAYCORE_LINK cRandomOS final : public cRandomBase, public cSingleton<cRandomOS> {
+    SINGLETON_IMPL(cRandomOS);
+
     void InitSeed(const cMemSpan& seed) override {
         // No way to seed this.
         UNREFERENCED_PARAMETER(seed);
     }
-    static HRESULT GRAYCALL GetNoiseOS(void* pData, size_t iSize);
 
- public:
+ protected:
     cRandomOS();
 
-    HRESULT GetNoise(void* pData, size_t iSize) override;  // fill array with random. return # filled.
-    RAND_t get_RandUns() override;                         // UINT_MAX
-
-    CHEAPOBJECT_IMPL;
+ public:
+    static HRESULT GRAYCALL GetNoiseOS(cMemSpan& m);
+    bool GetNoise(cMemSpan& m) override;  // fill array with random. return # filled.
+    RAND_t get_RandUns() override;        // UINT_MAX
 };
 
 /// <summary>
@@ -93,22 +104,22 @@ class GRAYCORE_LINK cRandomOS : public cRandomBase, public cSingleton<cRandomOS>
 /// Supply test 'random' data. (e.g. maybe not random at all). acts as a one time cipher pad.
 /// </summary>
 class GRAYCORE_LINK cRandomBlock : public IRandomNoise {
-    size_t m_nReadLast;  /// How far have we read in m_Data? recycle when at end ? like cQueueIndex
-    cBlob m_Data;   /// a block of 'random' test data.  
+    size_t m_nReadIndex;  /// How far have we read in m_Data? recycle when at end ? like cQueueIndex
+    cBlob m_Data;         /// a block of 'random' test data.
 
  public:
-    cRandomBlock(const void* pData, size_t nSize) noexcept : m_Data(pData, nSize, false), m_nReadLast(0) {}
+    cRandomBlock(const cMemSpan& m) noexcept : m_Data(m, false), m_nReadIndex(0) {}
 
     /// <summary>
     /// Get sample random data bytes
     /// </summary>
-    HRESULT GetNoise(void* pData, size_t len) override {  // IRandomNoise
+    bool GetNoise(cMemSpan& m) override {  // IRandomNoise
         if (m_Data.isValidPtr()) {
-            m_nReadLast = cMem::CopyRepeat(pData, len, m_Data, m_Data.get_DataSize(), m_nReadLast);
+            m_nReadIndex = cMem::CopyRepeat(m.get_DataW(), m.get_DataSize(), m_Data, m_Data.get_DataSize(), m_nReadIndex);
         } else {
-            cMem::Fill(pData, len, 0x2a);  // No m_Src supplied so fill with fixed data.
+            cMem::Fill(m.get_DataW(), m.get_DataSize(), 0x2a);  // No m_Src supplied so fill with fixed data.
         }
-        return CastN(HRESULT, len);
+        return true;
     }
 };
 
@@ -127,7 +138,7 @@ class GRAYCORE_LINK cRandomDef : public cRandomBase {
     /// Get next pseudo random number like ::rand();
     /// </summary>
     RAND_t get_RandUns() override;
- };
+};
 
 extern GRAYCORE_LINK cRandomDef g_Rand;  /// the global random number generator. NOT thread safe. but does that matter?
 }  // namespace Gray

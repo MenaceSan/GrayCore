@@ -1,8 +1,6 @@
-//
 //! @file cLogSinkConsole.h
 //! specific log sink/destinations/appenders
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cLogSinkConsole_H
 #define _INC_cLogSinkConsole_H
@@ -20,11 +18,10 @@ namespace Gray {
 /// Forward debug statements to the console (cAppConsole) (if i have one)
 /// No filter and take default formatted string
 /// </summary>
-class GRAYCORE_LINK cLogSinkConsole : public cLogSink, public cRefBase, public cStreamOutput {
+class GRAYCORE_LINK cLogSinkConsole : public cLogSink, public cRefBase, public ITextWriter {
  protected:
-    cLogSinkConsole();
-    ~cLogSinkConsole() override;
-
+    cLogSinkConsole() {}
+ 
  public:
     /// <summary>
     /// write raw log/debug string to the console stderr. but maybe stdout ??
@@ -53,8 +50,7 @@ class GRAYCORE_LINK cLogSinkTextArray : public cLogSink, public cRefBase {
 
  public:
     cLogSinkTextArray(ITERATE_t iMax = SHRT_MAX) noexcept : m_iMax(iMax) {}
-    ~cLogSinkTextArray() override {}
-
+ 
     HRESULT WriteLine(const LOGCHAR_t* pszMsg) {
         if (StrT::IsNullOrEmpty(pszMsg)) return 0;
         if (m_aMsgs.GetSize() >= m_iMax) return 0;

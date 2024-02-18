@@ -1,7 +1,5 @@
-//
 //! @file cTextPos.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cTextPos_H
 #define _INC_cTextPos_H
@@ -9,7 +7,8 @@
 #pragma once
 #endif
 
-#include "StrT.h"
+#include "StrChar.h"
+#include "StrConst.h"
 #include "cSpan.h"
 #include "cStreamProgress.h"
 
@@ -52,16 +51,13 @@ class GRAYCORE_LINK cTextPos {
         //! Offset in bytes into the stream.
         return m_lOffset;
     }
-    ITERATE_t get_LineNum() const noexcept  /// Get 0 based line.
-    {
+    ITERATE_t get_LineNum() const noexcept {  /// Get 0 based line.
         return this->m_iLineNum;
     }
-    ITERATE_t get_Line1() const noexcept  /// Get 1 based line.
-    {
+    ITERATE_t get_Line1() const noexcept {  /// Get 1 based line.
         return this->m_iLineNum + 1;
     }
-    StrLen_t get_Column1() const noexcept  /// Get 1 based column.
-    {
+    StrLen_t get_Column1() const noexcept {  /// Get 1 based column.
         return this->m_iColNum + 1;
     }
 
@@ -86,7 +82,7 @@ class GRAYCORE_LINK cTextPos {
         m_iColNum = 0;
     }
 
-    StrLen_t GetStr2(OUT char* pszOut, StrLen_t nLenOut) const;
+    StrLen_t GetStr2(OUT cSpanX<char>& ret) const;
 };
 
 /// <summary>
@@ -94,7 +90,7 @@ class GRAYCORE_LINK cTextPos {
 /// similar to cStreamInput but for a memory buffer.
 /// cTextPos = Current cursor position for m_pszCursor in the file. used for error messages, etc.
 /// </summary>
-class GRAYCORE_LINK cTextReader : public cTextPos {
+class GRAYCORE_LINK cTextReaderSpan : public cTextPos {
     typedef cTextPos SUPER_t;
 
  protected:
@@ -104,10 +100,10 @@ class GRAYCORE_LINK cTextReader : public cTextPos {
     const StrLen_t m_iTabSize;  /// for proper tracking of the column number on errors. and m_CursorPos. 0 = not used/don't care.
 
  public:
-    cTextReader(const char* pszStart, StrLen_t nLenMax = StrT::k_LEN_MAX, StrLen_t nTabSize = cStrConst::k_TabSize) noexcept : cTextPos(0, 0, 0), m_Text(pszStart, nLenMax), m_iTabSize(nTabSize) {}
+    cTextReaderSpan(const cSpan<char>& span, StrLen_t nTabSize = cStrConst::k_TabSize) noexcept : cTextPos(0, 0, 0), m_Text(span), m_iTabSize(nTabSize) {}
 
     StrLen_t get_LenMax() const noexcept {
-        return CastN(StrLen_t, m_Text.get_DataSize());
+        return m_Text.get_MaxLen();
     }
     StrLen_t get_LenRemaining() const noexcept {
         const StrLen_t nLenMax = get_LenMax();
@@ -122,11 +118,15 @@ class GRAYCORE_LINK cTextReader : public cTextPos {
         return SUPER_t::isValidPos() && m_Text.isValidPtr() && isValidIndex();  // includes m_lOffset >= 0
     }
     const char* get_CursorPtr() const noexcept {
-        return (const char*)m_Text.GetSpan1(CastN(size_t, this->m_lOffset));
+        return (const char*)m_Text.GetInternalPtr(CastN(size_t, this->m_lOffset));
     }
     char get_CursorChar() const noexcept {
-        if (!isValidPos()) return '\0';
-        return *get_CursorPtr();
+        const char* p = get_CursorPtr();
+        if (p == nullptr) return '\0';
+        return *p;
+    }
+    bool isEOF() const noexcept {
+        return get_CursorChar() == '\0';
     }
 
     void IncToks(StrLen_t nLen = 1) {
@@ -158,12 +158,8 @@ class GRAYCORE_LINK cTextReader : public cTextPos {
         return nLen;
     }
 
-    bool isEOF() const noexcept {
-        return get_CursorChar() == '\0';
-    }
-
-    void SetStartPtr(const char* pszStart, StrLen_t nLenMax = StrT::k_LEN_MAX) {
-        m_Text.SetSpanConst(pszStart, nLenMax);
+    void ResetSpan(const cSpan<char>& span) {
+        m_Text.SetSpan(span);
         InitTop();
     }
 };

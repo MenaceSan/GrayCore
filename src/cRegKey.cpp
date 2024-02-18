@@ -1,4 +1,3 @@
-//
 //! @file cRegKey.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 // clang-format off
@@ -20,6 +19,7 @@
 #pragma comment(lib, "advapi32.lib")  // RegCloseKey, etc.
 
 namespace Gray {
+
 const cRegKeyName cRegKey::k_aNames[] = {
     // map default HKEY values to names.
     {HKEY_CLASSES_ROOT, _FN("HKCR")},     {HKEY_CURRENT_USER, _FN("HKCU")},     {HKEY_LOCAL_MACHINE, _FN("HKLM")},       {HKEY_USERS, _FN("HKU")},
@@ -40,40 +40,41 @@ const FILECHAR_t* GRAYCALL cRegKey::GetNameBase(::HKEY hKeyBase) noexcept {  // 
     return _FN("H??");
 }
 
-StrLen_t GRAYCALL cRegKey::MakeValueStr(OUT FILECHAR_t* pszValue, StrLen_t iSizeMax, DWORD dwType, const void* pData, DWORD dwDataSize, bool bExpand) {  // static
+StrLen_t GRAYCALL cRegKey::MakeValueStr(cSpanX<FILECHAR_t>& ret, DWORD dwType, const cMemSpan& src, bool bExpand) {  // static
+    if (ret.isEmpty()) return 0;
     switch (dwType) {
         case REG_NONE:
             break;
         case REG_SZ:
-            return StrT::CopyLen(pszValue, (const FILECHAR_t*)pData, cValT::Min(iSizeMax, (StrLen_t)dwDataSize));
+            return StrT::CopyLen(ret.get_DataWork(), src.get_DataC<FILECHAR_t>(), cValT::Min(ret.get_MaxLen(), CastN(StrLen_t, src.get_DataSize() / sizeof(FILECHAR_t))));
         case REG_EXPAND_SZ:
 #ifndef UNDER_CE
             if (bExpand) {
                 FILECHAR_t szTmp[_MAX_PATH];
-                StrT::CopyLen(szTmp, (const FILECHAR_t*)pData, cValT::Min<StrLen_t>(dwDataSize, _countof(szTmp)));
-                return (StrLen_t)_FNF(::ExpandEnvironmentStrings)(szTmp, pszValue, iSizeMax);
+                StrT::CopyLen(szTmp, src.get_DataC<FILECHAR_t>(), cValT::Min<StrLen_t>( CastN(StrLen_t, src.get_DataSize() / sizeof(FILECHAR_t)), _countof(szTmp)));
+                return (StrLen_t)_FNF(::ExpandEnvironmentStrings)(szTmp, ret.get_DataWork(), ret.get_MaxLen());
             }
 #endif
-            return StrT::CopyLen(pszValue, (const FILECHAR_t*)pData, cValT::Min(iSizeMax, (StrLen_t)dwDataSize));
+            return StrT::CopyLen(ret.get_DataWork(), src.get_DataC<FILECHAR_t>(), cValT::Min(ret.get_MaxLen(),  CastN(StrLen_t, src.get_DataSize() / sizeof(FILECHAR_t))));
         case REG_BINARY: {
 #if USE_UNICODE
             ASSERT(0);
             break;
 #else
-            return cMem::ConvertToString(pszValue, iSizeMax, (const BYTE*)pData, dwDataSize);  // convert binary blob to string.
+            return StrT::ConvertToCSV(ret, src);  // convert binary blob to string.
 #endif
         }
         case REG_DWORD:
-            if (dwDataSize < sizeof(DWORD)) break;
+            if (src.get_DataSize() < sizeof(DWORD)) break;
             {
-                DWORD dwVal = *((DWORD*)pData);
-                return StrT::ItoA(dwVal, pszValue, iSizeMax - 1);
+                DWORD dwVal = *src.get_DataC<DWORD>();
+                return StrT::ItoA(dwVal, ret);
             }
         case REG_DWORD_BIG_ENDIAN:
-            if (dwDataSize < sizeof(DWORD)) break;
+            if (src.get_DataSize() < sizeof(DWORD)) break;
             {
-                DWORD dwVal = cMemT::NtoH(*((DWORD*)pData));
-                return StrT::ItoA(dwVal, pszValue, iSizeMax - 1);
+                DWORD dwVal = cMemT::NtoH(*src.get_DataC<DWORD>());
+                return StrT::ItoA(dwVal, ret);
             }
         case REG_LINK:                      // Symbolic Link (unicode)
         case REG_MULTI_SZ:                  // Multiple Unicode strings
@@ -83,40 +84,33 @@ StrLen_t GRAYCALL cRegKey::MakeValueStr(OUT FILECHAR_t* pszValue, StrLen_t iSize
             break;
 #if _MSC_VER >= 1300
         case REG_QWORD:  // 64-bit number
-            if (dwDataSize < sizeof(UINT64)) break;
+            if (src.get_DataSize() < sizeof(UINT64)) break;
             {
-                UINT64 qVal = *((UINT64*)pData);
-                return StrT::ILtoA(qVal, pszValue, iSizeMax - 1);
+                UINT64 qVal = *src.get_DataC<UINT64>();
+                return StrT::ILtoA(qVal, ret);
             }
 #endif
     }
     // Not sure how to convert this data!
-    if (iSizeMax >= 1) {
-        pszValue[0] = '\0';
-    }
+    ret.get_DataWork()[0] = '\0';
     DEBUG_CHECK(0);
     return 0;
 }
-HRESULT cRegKey::QueryValueStr(const FILECHAR_t* pszValueName, OUT FILECHAR_t* pszValue, StrLen_t iSizeMax, bool bExp) const {
+HRESULT cRegKey::QueryValueStr(const FILECHAR_t* pszValueName, cSpanX<FILECHAR_t>& ret, bool bExp) const {
     ASSERT_NN(pszValueName);
-    ASSERT_NN(pszValue);
-    ASSERT(iSizeMax > 0);
+    ASSERT(!ret.isEmpty());
     DWORD dwType = REG_NONE;  // REG_SZ
-    DWORD dwDataSize = iSizeMax - 1;
-    const HRESULT hRes = QueryValue(pszValueName, OUT dwType, pszValue, OUT dwDataSize);
-    if (hRes != S_OK) {
-        if (iSizeMax > 0) pszValue[0] = '\0';
+    const HRESULT hRes = QueryValue(pszValueName, OUT dwType, ret);
+    if (FAILED(hRes)) {
+        ret.get_DataWork()[0] = '\0';
         return hRes;
     }
-    StrLen_t nLenRet = MakeValueStr(pszValue, iSizeMax, dwType, pszValue, dwDataSize, bExp);
-    if (!nLenRet) {
-    }
-    return S_OK;
+    return MakeValueStr(ret, dwType, cMemSpan(ret, hRes), bExp);
 }
 
 HRESULT cRegKey::PropGet(const IniChar_t* pszPropTag, OUT cStringI& rsValue) const {  // override; IIniBaseGetter
     FILECHAR_t szTmpData[StrT::k_LEN_Default];
-    const HRESULT hRes = QueryValueStr(StrArg<FILECHAR_t>(pszPropTag), szTmpData, STRMAX(szTmpData), false);
+    const HRESULT hRes = QueryValueStr(StrArg<FILECHAR_t>(pszPropTag), TOSPAN(szTmpData), false);
     if (FAILED(hRes)) return hRes;
     rsValue = szTmpData;
     return S_OK;

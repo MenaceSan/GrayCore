@@ -1,77 +1,31 @@
-//
-//! @file cValArray.h
+//! @file cValSpan.h
 //! templates for arrays
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
-#ifndef _INC_cValArray_H
-#define _INC_cValArray_H
+#ifndef _INC_cValSpan_H
+#define _INC_cValSpan_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
 #include "Index.h"
+#include "cValT.h"
 #include "cMem.h"
-
 #include <new>  // STL overload the new operator to allow call of constructor directly.
 
 namespace Gray {
 /// <summary>
-/// Helper functions for array of values of some TYPE in memory.
+/// Helper functions for array/span of values (cValT) of some TYPE in memory.
 /// @note optimizations can be made if we know we are working on larger native types over treating the same things as bytes.
 /// </summary>
-struct GRAYCORE_LINK cValArray {  // static. array of Value of some TYPE.
-    /// <summary>
-    /// Is this array filled with a repeating value ? isZeros ?
-    /// </summary>
-    template <class TYPE>
-    static inline bool IsFilledQty(const TYPE* pArray, ITERATE_t nQty, TYPE nFillValue) noexcept {
-        for (ITERATE_t i = 0; i < nQty; i++) {
-            if (pArray[i] != nFillValue) return false;
-        }
-        return true;
-    }
-
-    /// <summary>
-    /// Is this array filled with a repeating value ? _countof()
-    /// </summary>
-    template <class TYPE>
-    static inline bool IsFilledSize(const void* pArray, size_t nArraySizeBytes, TYPE nFillValue) noexcept {
-        return IsFilledQty((const TYPE*)pArray, (ITERATE_t)(nArraySizeBytes / sizeof(TYPE)), nFillValue);
-    }
-
-    /// <summary>
-    /// Compare 2 arrays of a TYPE. like cMem::Compare.
-    /// </summary>
-    template <class TYPE>
-    static inline bool IsEqualQty(const TYPE* pArray1, const TYPE* pArray2, ITERATE_t nQty) noexcept {
-        if (pArray1 == pArray2) return true;
-        for (ITERATE_t i = 0; i < nQty; i++) {
-            if (!(pArray1[i] == pArray2[i]))  // Assume everything supports the == operator.
-                return false;
-        }
-        return true;  // looks the same to me.
-    }
-
-    /// <summary>
-    /// Compare 2 arrays of a TYPE. like cMem::Compare.
-    /// </summary>
-    template <class TYPE>
-    static inline COMPARE_t CompareQty(const TYPE* pArray1, const TYPE* pArray2, ITERATE_t nQty) noexcept {
-        if (pArray1 == pArray2) return COMPARE_Equal;
-        for (ITERATE_t i = 0; i < nQty; i++) {
-            if (!(pArray1[i] == pArray2[i]))  // Assume everything supports the == operator.
-                return (COMPARE_t)(pArray1[i] - pArray2[i]);
-        }
-        return COMPARE_Equal;
-    }
-
+struct GRAYCORE_LINK cValSpan {  // static. array/span of some TYPE.
+  
     /// <summary>
     /// fill an array with a repeating TYPE nFillValue.
     /// Ignore negative value for nQty
     /// </summary>
     template <class TYPE>
-    static inline void FillQty(TYPE* pArray, ITERATE_t nQty, TYPE nFillValue = 0) noexcept {
+    static inline void FillQty(TYPE* pArray, ITERATE_t nQty, TYPE nFillValue) noexcept {
         for (ITERATE_t i = 0; i < nQty; i++) {
             pArray[i] = nFillValue;
         }
@@ -82,19 +36,7 @@ struct GRAYCORE_LINK cValArray {  // static. array of Value of some TYPE.
     /// </summary>
     template <class TYPE>
     static inline void ZeroQty(TYPE* pArray, ITERATE_t nQty) noexcept {
-        for (ITERATE_t i = 0; i < nQty; i++) {
-            pArray[i] = 0;
-        }
-    }
-
-    /// <summary>
-    /// Fill a block of memory with a repeating TYPE nFillValue by size_t not quantity.
-    /// Similar to the native memset() FillMemory
-    /// If TYPE is not BYTE this may leave unaligned block at the end.
-    /// </summary>
-    template <class TYPE>
-    static inline void FillSize(void* pArray, size_t nArraySizeBytes, TYPE nFillValue) noexcept {
-        FillQty((TYPE*)pArray, (ITERATE_t)(nArraySizeBytes / sizeof(TYPE)), nFillValue);
+        cMem::Zero(pArray, nQty * sizeof(TYPE));
     }
 
     /// <summary>
@@ -183,10 +125,10 @@ struct GRAYCORE_LINK cValArray {  // static. array of Value of some TYPE.
     static void GRAYCALL Resize(TYPE* pElements, ITERATE_t nNewSize, ITERATE_t nOldSize) {  // static
         if (nNewSize > nOldSize) {
             // initialize the new elements
-            cValArray::ConstructElementsX<TYPE>(&pElements[nOldSize], nNewSize - nOldSize);
+            cValSpan::ConstructElementsX<TYPE>(&pElements[nOldSize], nNewSize - nOldSize);
         } else if (nOldSize > nNewSize) {
             // destroy the old elements
-            cValArray::DestructElementsX<TYPE>(&pElements[nNewSize], nOldSize - nNewSize);
+            cValSpan::DestructElementsX<TYPE>(&pElements[nNewSize], nOldSize - nNewSize);
         }
     }
 
@@ -235,21 +177,17 @@ struct GRAYCORE_LINK cValArray {  // static. array of Value of some TYPE.
 
 // Override implementation of simple type templates
 template <>
-inline void __cdecl cValArray::CopyQty<BYTE>(BYTE* pDest, const BYTE* pSrc, ITERATE_t nQty) {
+inline void __cdecl cValSpan::CopyQty<BYTE>(BYTE* pDest, const BYTE* pSrc, ITERATE_t nQty) {
     //! simple byte copy
     //! Any integral/static type could use this ?
     cMem::Copy(pDest, pSrc, nQty);
 }
 
 template <>
-inline void cValArray::FillQty<BYTE>(BYTE* pData, ITERATE_t nQty, BYTE bFill) noexcept {  // static
+inline void cValSpan::FillQty<BYTE>(BYTE* pData, ITERATE_t nQty, BYTE bFill) noexcept {  // static
     //! FillMemory BYTEs like memset()
     cMem::Fill(pData, (size_t)nQty, bFill);
 }
-template <>
-inline void cValArray::FillSize<BYTE>(void* pData, size_t nSizeBlock, BYTE bFill) noexcept {  // static
-    //! FillMemory BYTEs like memset()
-    cMem::Fill(pData, nSizeBlock, bFill);
-}
+
 }  // namespace Gray
-#endif  // _INC_cValArray_H
+#endif  // _INC_cValSpan_H

@@ -1,7 +1,5 @@
-//
 //! @file cWinHeap.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cWinHeap_H
 #define _INC_cWinHeap_H
@@ -19,7 +17,7 @@ namespace Gray {
 /// </summary>
 class GRAYCORE_LINK cWinHeap {
  private:
-    HANDLE m_hHeap;   /// Handle to the _WIN32 heap. GetProcessHeap()
+    ::HANDLE m_hHeap;   /// Handle to the _WIN32 heap. GetProcessHeap()
     bool m_bManaged;  /// I manage its lifetime? use HeapDestroy() ?
 
  public:
@@ -102,6 +100,5 @@ class GRAYCORE_LINK cWinHeap {
     }
 };
 }  // namespace Gray
-
 #endif
 #endif  // _INC_cWinHeap_H

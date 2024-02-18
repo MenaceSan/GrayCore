@@ -1,7 +1,5 @@
-//
 //! @file cLogEvent.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cLogEvent_H
 #define _INC_cLogEvent_H
@@ -24,9 +22,10 @@ enum class LOG_FIELD_t {
 
 /// <summary>
 /// Store a single log event (ref counted) instance for asynchronous processing.
+/// TODO store log event as (format,stringarg1,stringargN) and allow translation of the format but assume stringargs are always proper names (not translatable)
 /// </summary>
 struct GRAYCORE_LINK cLogEvent : public cLogEventParams, public cRefBase {
-    TIMESEC_t m_time = 0;                /// cTimeInt. when did this happen? maybe not set until needed. ! isTimeValid()
+    TIMESEC_t m_time = 0;                /// when did this happen? as cTimeInt. maybe not set until needed. ! isTimeValid()
     const char* m_pszSubject = nullptr;  /// static allocated general subject matter tag. can be filled in by cLogSubject. Script source ?
     cStringL m_sMsg;                     /// free form message text.
 

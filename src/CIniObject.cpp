@@ -1,4 +1,3 @@
-//
 //! @file cIniObject.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 // clang-format off
@@ -18,7 +17,7 @@ HRESULT cIniObject::PropGet(const IniChar_t* pszPropTag, OUT cStringI& rsValue) 
     return this->PropGetEnum(this->FindProp(pszPropTag), rsValue, nullptr);
 }
 
-HRESULT cIniObject::FileWriteN(cStreamOutput& rOut, PROPIDX_t ePropIdx) const {
+HRESULT cIniObject::FileWriteN(ITextWriter& rOut, PROPIDX_t ePropIdx) const {
     //! Write the prop out to the stream if _DirtyMask.
     //! cStreamOutput
     CODEPROFILEFUNC();
@@ -31,7 +30,7 @@ HRESULT cIniObject::FileWriteN(cStreamOutput& rOut, PROPIDX_t ePropIdx) const {
     return cIniWriter(&rOut).WriteKeyUnk(this->get_PropName(ePropIdx), sValue);
 }
 
-HRESULT cIniObject::FileWrite(cStreamOutput& rOut, const IniChar_t* pszProp) {
+HRESULT cIniObject::FileWrite(ITextWriter& rOut, const IniChar_t* pszProp) {
     //! write this prop by name.
     CODEPROFILEFUNC();
     const PROPIDX_t ePropIdx = this->FindProp(pszProp);  // Str_TableFindHead(pszProp,get_Props());
@@ -39,7 +38,7 @@ HRESULT cIniObject::FileWrite(cStreamOutput& rOut, const IniChar_t* pszProp) {
     return FileWriteN(rOut, ePropIdx);
 }
 
-HRESULT cIniObject::FileWriteAll(cStreamOutput& rOut) {
+HRESULT cIniObject::FileWriteAll(ITextWriter& rOut) {
     //! Write out all that are not already written.
     //! Assume [HEADER] already written.
     CODEPROFILEFUNC();

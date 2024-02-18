@@ -1,4 +1,3 @@
-//
 //! @file HResult.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 // clang-format off
@@ -247,11 +246,13 @@ bool GRAYCALL HResult::GetTextSys(HRESULT hRes, StrBuilder<GChar_t>& sb, const v
     }
 
     // nLenRet = number of TCHARs
+    cSpanX<GChar_t> spanWrite(sb.GetSpanWrite(_MAX_PATH));
+
     DWORD nLenRet = _GTN(::FormatMessage)(dwFlags,
                                           pSource,  // use with FORMAT_MESSAGE_FROM_STRING or FORMAT_MESSAGE_FROM_HMODULE
                                           hRes,
                                           LANG_NEUTRAL,  // MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US)
-                                          sb.GetWritePrepared(_MAX_PATH), sb.get_WriteSpaceQty(), (vargs != k_va_list_empty) ? &vargs : nullptr);
+                                          spanWrite.get_DataWork(), spanWrite.get_MaxLen(), (vargs != k_va_list_empty) ? &vargs : nullptr);
     if (nLenRet > 0) {
         // successful translation -- trim any trailing junk
         sb.AdvanceWrite(nLenRet);

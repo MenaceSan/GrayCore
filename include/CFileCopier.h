@@ -1,7 +1,5 @@
-//
 //! @file cFileCopier.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cFileCopier_H
 #define _INC_cFileCopier_H
@@ -74,11 +72,11 @@ struct GRAYCORE_LINK DECLSPEC_NOVTABLE IFileCopier {
 /// </summary>
 class GRAYCORE_LINK cFileCopier : public IFileCopier {
  public:
-    cStringF m_sServerRoot;  /// Prefix all server side (non local) paths with this.
+    cStringF m_sRemoteRoot;  /// Prefix all server/remote side (non local) paths with this.
 
  protected:
-    cStringF makeFilePath(const FILECHAR_t* pszFileName) const {
-        return cFilePath::CombineFilePathX(m_sServerRoot, pszFileName);
+    cStringF makeRemotePath(const FILECHAR_t* pszFileName) const {
+        return cFilePath::CombineFilePathX(m_sRemoteRoot, pszFileName);
     }
 
  public:
@@ -86,9 +84,14 @@ class GRAYCORE_LINK cFileCopier : public IFileCopier {
         //! get a debug name for the server / non local connection.
         return "File";
     }
-    HRESULT Connect(const FILECHAR_t* pszServerRoot) override {
-        //! @arg pszServerRoot = server side names can be prefixed by "C:\etc"
-        m_sServerRoot = pszServerRoot;
+
+    /// <summary>
+    /// Connect to the "remote" side 
+    /// </summary>
+    /// <param name="pszRemoteRoot">server/Remote side names can be prefixed by "C:\etc"</param>
+    /// <returns></returns>
+    HRESULT Connect(const FILECHAR_t* pszRemoteRoot) override {
+        m_sRemoteRoot = pszRemoteRoot;
         return S_OK;
     }
 

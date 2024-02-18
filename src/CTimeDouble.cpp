@@ -1,4 +1,3 @@
-//
 //! @file cTimeDouble.cpp
 //! Time in double days. Accurate Measure whole milli seconds
 //! 0 = (midnight, 30 December 1899 GMT).
@@ -6,6 +5,7 @@
 // clang-format off
 #include "pch.h"
 // clang-format on
+#include "StrBuilder.h"
 #include "cLogMgr.h"
 #include "cString.h"
 #include "cTimeDouble.h"
@@ -288,10 +288,10 @@ cString cTimeDouble::GetTimeFormStr(const GChar_t* pszFormat, TZ_TYPE nTimeZone)
     if (!GetTimeUnits(Tu, nTimeZone)) return "";
 
     GChar_t szBuffer[256];
-    StrLen_t iLenChars = Tu.GetFormStr(szBuffer, STRMAX(szBuffer), pszFormat);
+    const StrLen_t iLenChars = Tu.GetFormStr(TOSPAN(szBuffer), pszFormat);
     if (iLenChars <= 0) return "";
 
-    return cString(szBuffer, iLenChars);
+    return ToSpan(szBuffer, iLenChars);
 }
 
 //*************************************************
@@ -316,8 +316,7 @@ cString GRAYCALL cTimeDouble::GetTimeSpanStr(double dDays, TIMEUNIT_t eUnitHigh,
 
     int iUnitsPrinted = 0;
     GChar_t szMsg[256];
-    szMsg[0] = '\0';
-    StrLen_t iMsgLen = 0;
+    StrBuilder<GChar_t> sb(TOSPAN(szMsg));
 
     bool bMostSignificantFound = false;
     UINT i = (UINT)eUnitHigh;
@@ -328,24 +327,22 @@ cString GRAYCALL cTimeDouble::GetTimeSpanStr(double dDays, TIMEUNIT_t eUnitHigh,
             bMostSignificantFound = true;
         }
 
-        if (i >= static_cast<int>(TIMEUNIT_t::_Second))  // sub seconds print as a decimal.
-            break;
+        if (i >= static_cast<int>(TIMEUNIT_t::_Second)) break;  // sub seconds print as a decimal.
+
         const int nQtyOfUnit = (int)(dDays / dUnits);  // same as ::floor()
 
-        if (iMsgLen) {
-            iMsgLen += StrT::CopyLen(szMsg + iMsgLen, _GT(" "), STRMAX(szMsg) - iMsgLen);  // " and ";
-        }
+        sb.AddSep(' ');  // " and ";
+
         if (bShortText) {
-            iMsgLen += StrT::sprintfN(szMsg + iMsgLen, STRMAX(szMsg) - iMsgLen, _GT("%u%s"), nQtyOfUnit, StrArg<GChar_t>(cTimeUnits::k_Units[i].m_pszUnitNameS));
+            sb.Printf(_GT("%u%s"), nQtyOfUnit, StrArg<GChar_t>(cTimeUnits::k_Units[i].m_pszUnitNameS));
         } else if (nQtyOfUnit == 1) {
-            iMsgLen += StrT::CopyLen(szMsg + iMsgLen, _GT("1 "), STRMAX(szMsg) - iMsgLen);
-            iMsgLen += StrT::CopyLen(szMsg + iMsgLen, cTimeUnits::k_Units[i].m_pszUnitNameL, STRMAX(szMsg) - iMsgLen);
+            sb.AddStr(_GT("1 "));
+            sb.AddStr(cTimeUnits::k_Units[i].m_pszUnitNameL);
         } else {
-            iMsgLen += StrT::sprintfN(szMsg + iMsgLen, STRMAX(szMsg) - iMsgLen, _GT("%u %ss"), nQtyOfUnit, StrArg<GChar_t>(cTimeUnits::k_Units[i].m_pszUnitNameL));
+            sb.Printf(_GT("%u %ss"), nQtyOfUnit, StrArg<GChar_t>(cTimeUnits::k_Units[i].m_pszUnitNameL));
         }
-        iUnitsPrinted++;
-        if (iUnitsPrinted >= iUnitsDesired)  // only print iUnitsDesired most significant units of time
-            break;
+
+        if (++iUnitsPrinted >= iUnitsDesired) break;  // only print iUnitsDesired most significant units of time
 
         dDays -= nQtyOfUnit * dUnits;
         if (dDays <= 0) break;
@@ -353,8 +350,8 @@ cString GRAYCALL cTimeDouble::GetTimeSpanStr(double dDays, TIMEUNIT_t eUnitHigh,
 
     if (iUnitsDesired > 0 && iUnitsPrinted < iUnitsDesired && dDays > 0 && i >= static_cast<int>(TIMEUNIT_t::_Second)) {
         // remainder is always decimal.
-        iMsgLen += StrT::sprintfN(szMsg + iMsgLen, STRMAX(szMsg) - iMsgLen, _GT(" %g %s%s"), dDays / cTimeUnits::k_Units[i].m_dUnitDays, bShortText ? cTimeUnits::k_Units[i].m_pszUnitNameS : cTimeUnits::k_Units[i].m_pszUnitNameL,
-                                  bShortText ? "" : "s"  // plural.
+        sb.Printf(_GT(" %g %s%s"), dDays / cTimeUnits::k_Units[i].m_dUnitDays, bShortText ? cTimeUnits::k_Units[i].m_pszUnitNameS : cTimeUnits::k_Units[i].m_pszUnitNameL,
+                  bShortText ? "" : "s"  // plural.
         );
     }
 

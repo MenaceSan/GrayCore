@@ -1,7 +1,5 @@
-//
 //! @file StrT.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_StrT_H
 #define _INC_StrT_H
@@ -9,6 +7,7 @@
 #pragma once
 #endif
 
+// #include "StrArg.h"
 #include "StrChar.h"
 #include "StrConst.h"
 #include "StrNum.h"
@@ -16,11 +15,8 @@
 #include "cDebugAssert.h"  // ASSERT
 #include "cHeap.h"
 #include "cSpan.h"
-#include "cValArray.h"
 
 namespace Gray {
-struct cLogProcessor;
-
 /// <summary>
 /// quotes/brackets and parenthesis must be matched.
 /// string block types. see k_szBlockStart[] and k_szBlockEnd[]
@@ -67,8 +63,7 @@ enum STRP_TYPE_ : STRP_MASK_t {
 /// @note This works similar to MFC StringTraits, StrTraitMFC ?
 /// similar to char_traits &lt;TYPE&gt; for STL
 /// </summary>
-struct GRAYCORE_LINK StrT {  // static /// namespace for string templates for UTF8 and UNICODE
-    static const StrLen_t k_LEN_MAX = 15000;     /// arbitrary max size for Format() etc. NOTE: _MSC_VER says stack frame should be at least 16384
+struct GRAYCORE_LINK StrT {                      // static /// namespace for string templates for UTF8 and UNICODE
     static const StrLen_t k_LEN_Default = 8096;  /// default size for allocation of buffers.
 
     static const char k_szBlockStart[static_cast<int>(STR_BLOCK_t::_QTY) + 1];  /// array of STR_BLOCK_t	"\"{[("
@@ -86,7 +81,7 @@ struct GRAYCORE_LINK StrT {  // static /// namespace for string templates for UT
         ASSERT(IS_INDEX_GOOD_ARRAY(b, k_szBlockEnd));
         return k_szBlockEnd[static_cast<int>(b)];
     }
- 
+
     /// <summary>
     /// Get length of string not including '\0'. Like strlen()
     /// Danger. ASSUME sane iLenMax <= k_LEN_MAX ??  Dont use this function. use length limited version!
@@ -97,9 +92,16 @@ struct GRAYCORE_LINK StrT {  // static /// namespace for string templates for UT
     template <typename TYPE>
     static StrLen_t Len(const TYPE* pszStr) noexcept;
 
+    /// <summary>
+    /// Get read only span. Not including '\0'.
+    /// </summary>
     template <typename TYPE>
-    static cSpan<TYPE> ToSpan(const TYPE* pszStr) noexcept {
-        return cSpan<TYPE>(pszStr, Len(pszStr));
+    static cSpan<TYPE> ToSpanStr(const TYPE* pszStr) noexcept {
+        return ToSpan(pszStr, Len(pszStr));
+    }
+    template <typename TYPE>
+    static cSpanX<TYPE> ToSpanWrite(TYPE* pszStr) noexcept {
+        return ToSpan(pszStr, Len(pszStr) + 1);
     }
 
     /// <summary>
@@ -163,8 +165,8 @@ struct GRAYCORE_LINK StrT {  // static /// namespace for string templates for UT
     /// <returns></returns>
     template <typename TYPE>
     static StrLen_t inline Diff(const TYPE* pszEnd, const TYPE* pszStart) {
-        ASSERT(pszEnd != nullptr);
-        ASSERT(pszStart != nullptr);
+        ASSERT_NN(pszEnd);
+        ASSERT_NN(pszStart);
         const INT_PTR i = pszEnd - pszStart;                                                                            // like ptrdiff_t cMem::Diff() but in chars not bytes.
         ASSERT(i > -(INT_PTR)(cHeap::k_ALLOC_MAX / sizeof(TYPE)) && i < (INT_PTR)(cHeap::k_ALLOC_MAX / sizeof(TYPE)));  // k_ALLOC_MAX as TYPE
         return CastN(StrLen_t, i);
@@ -237,7 +239,7 @@ struct GRAYCORE_LINK StrT {  // static /// namespace for string templates for UT
     GRAYCORE_LINK static HASHCODE32_t GRAYCALL GetHashCode32(const TYPE* pszStr, StrLen_t nLen = k_StrLen_UNK, HASHCODE32_t nHash = k_HASHCODE_CLEAR) noexcept;
 
     template <typename TYPE>
-    GRAYCORE_LINK static TYPE* GRAYCALL FindChar(const TYPE* pszStr, TYPE ch, StrLen_t iLen = StrT::k_LEN_MAX) noexcept;
+    GRAYCORE_LINK static TYPE* GRAYCALL FindChar(const TYPE* pszStr, TYPE ch, StrLen_t iLen = cStrConst::k_LEN_MAX) noexcept;
     template <typename TYPE>
     GRAYCORE_LINK static StrLen_t GRAYCALL FindCharN(const TYPE* pszStr, TYPE ch) noexcept;
     template <typename TYPE>
@@ -247,10 +249,10 @@ struct GRAYCORE_LINK StrT {  // static /// namespace for string templates for UT
     template <typename TYPE>
     GRAYCORE_LINK static TYPE* GRAYCALL FindCharRev(const TYPE* pszStr, TYPE ch, StrLen_t iLen = k_StrLen_UNK);
     template <typename TYPE>
-    GRAYCORE_LINK static TYPE* GRAYCALL FindTokens(const TYPE* pszStr, const TYPE* pszTokens, StrLen_t iLenMax = StrT::k_LEN_MAX);
+    GRAYCORE_LINK static TYPE* GRAYCALL FindTokens(const TYPE* pszStr, const TYPE* pszTokens, StrLen_t iLenMax = cStrConst::k_LEN_MAX);
 
     template <typename TYPE>
-    GRAYCORE_LINK static TYPE* GRAYCALL FindStr(const TYPE* pszStr, const TYPE* pszFind, StrLen_t iLenMax = StrT::k_LEN_MAX);
+    GRAYCORE_LINK static TYPE* GRAYCALL FindStr(const TYPE* pszStr, const TYPE* pszFind, StrLen_t iLenMax = cStrConst::k_LEN_MAX);
 
     /// <summary>
     /// Find pszSubStr in pszText. (ignores case). like strstr() but ignores case like stristr().
@@ -261,10 +263,10 @@ struct GRAYCORE_LINK StrT {  // static /// namespace for string templates for UT
     /// <param name="iLenMax"></param>
     /// <returns>nullptr = can't find it.</returns>
     template <typename TYPE>
-    GRAYCORE_LINK static TYPE* GRAYCALL FindStrI(const TYPE* pszStr, const TYPE* pszFind, StrLen_t iLenMax = StrT::k_LEN_MAX);
+    GRAYCORE_LINK static TYPE* GRAYCALL FindStrI(const TYPE* pszStr, const TYPE* pszFind, StrLen_t iLenMax = cStrConst::k_LEN_MAX);
 
     template <typename TYPE>
-    GRAYCORE_LINK static StrLen_t GRAYCALL FindWord(const TYPE* pTextSearch, const TYPE* pszKeyWord, StrLen_t iLenMax = StrT::k_LEN_MAX);
+    GRAYCORE_LINK static StrLen_t GRAYCALL FindWord(const TYPE* pTextSearch, const TYPE* pszKeyWord, StrLen_t iLenMax = cStrConst::k_LEN_MAX);
 
     /// <summary>
     /// Skip tabs and spaces but NOT new lines. NOT '\0' either.
@@ -274,19 +276,19 @@ struct GRAYCORE_LINK StrT {  // static /// namespace for string templates for UT
     /// <param name="iLenMax"></param>
     /// <returns>index of first non whitespace character</returns>
     template <typename TYPE>
-    static constexpr StrLen_t GetNonWhitespaceI(const TYPE* pStr, StrLen_t iLenMax = StrT::k_LEN_MAX) noexcept {
+    static constexpr StrLen_t GetNonWhitespaceI(const TYPE* pStr, StrLen_t iLenMax = cStrConst::k_LEN_MAX) noexcept {
         if (pStr == nullptr) return 0;
         StrLen_t i = 0;
         while (i < iLenMax && StrChar::IsSpace(pStr[i])) i++;
         return i;
     }
     template <typename TYPE>
-    static const TYPE* GetNonWhitespace(const TYPE* pStr, StrLen_t iLenMax = StrT::k_LEN_MAX) noexcept {
+    static const TYPE* GetNonWhitespace(const TYPE* pStr, StrLen_t iLenMax = cStrConst::k_LEN_MAX) noexcept {
         // never return nullptr unless pStr = nullptr
         return pStr + GetNonWhitespaceI(pStr, iLenMax);
     }
     template <typename TYPE>
-    static TYPE* GetNonWhitespace(TYPE* pStr, StrLen_t iLenMax = StrT::k_LEN_MAX) noexcept {
+    static TYPE* GetNonWhitespace(TYPE* pStr, StrLen_t iLenMax = cStrConst::k_LEN_MAX) noexcept {
         return pStr + GetNonWhitespaceI(pStr, iLenMax);
     }
 
@@ -298,31 +300,42 @@ struct GRAYCORE_LINK StrT {  // static /// namespace for string templates for UT
     GRAYCORE_LINK static StrLen_t GRAYCALL GetWhitespaceEnd(const TYPE* pStr, StrLen_t iLenChars = k_StrLen_UNK);
 
     template <typename TYPE>
-    GRAYCORE_LINK static bool GRAYCALL IsWhitespace(const TYPE* pStr, StrLen_t iLenChars = StrT::k_LEN_MAX) noexcept;
+    GRAYCORE_LINK static bool GRAYCALL IsWhitespace(const TYPE* pStr, StrLen_t iLenChars = cStrConst::k_LEN_MAX) noexcept;
 
     template <typename TYPE>
-    GRAYCORE_LINK static bool GRAYCALL IsPrintable(const TYPE* pStr, StrLen_t iLenChars = StrT::k_LEN_MAX) noexcept;
+    GRAYCORE_LINK static bool GRAYCALL IsPrintable(const TYPE* pStr, StrLen_t iLenChars = cStrConst::k_LEN_MAX) noexcept;
 
     // String searching. const
 
     /// <summary>
-    /// Find a string in a non-sorted table. Ignores case.
-    /// Used with STR_TABLEFIND_N
+    /// Find a string in a table (of elements of arbitrary size) where the first element is a pointer to a string. Ignores case.
     /// </summary>
     /// <returns>-1 = no match. k_ITERATE_BAD</returns>
     template <typename TYPE>
-    GRAYCORE_LINK static ITERATE_t GRAYCALL TableFind(const TYPE* pszFindThis, const void* ppszTableInit, size_t nElemSize = sizeof(const TYPE*));
+    GRAYCORE_LINK static ITERATE_t GRAYCALL TableFind(const TYPE* pszFindThis, const cSpanUnk& t);
     template <typename TYPE>
-    GRAYCORE_LINK static ITERATE_t GRAYCALL TableFindHead(const TYPE* pszFindHead, const void* ppszTableInit, size_t nElemSize = sizeof(const TYPE*));
+    GRAYCORE_LINK static ITERATE_t GRAYCALL TableFindHead(const TYPE* pszFindHead, const cSpanUnk& t);
     template <typename TYPE>
-    GRAYCORE_LINK static ITERATE_t GRAYCALL TableFindSorted(const TYPE* pszFindThis, const void* ppszTableInit, ITERATE_t iCountMax, size_t nElemSize = sizeof(const TYPE*));
+    GRAYCORE_LINK static ITERATE_t GRAYCALL TableFindSorted(const TYPE* pszFindThis, const cSpanUnk& t);
     template <typename TYPE>
-    GRAYCORE_LINK static ITERATE_t GRAYCALL TableFindHeadSorted(const TYPE* pszFindHead, const void* ppszTableInit, ITERATE_t iCountMax, size_t nElemSize = sizeof(const TYPE*));
+    GRAYCORE_LINK static ITERATE_t GRAYCALL TableFindHeadSorted(const TYPE* pszFindHead, const cSpanUnk& t);
 
-#define STR_TABLEFIND_N(k, t) StrT::TableFind(k, t, sizeof(t[0]))
-#define STR_TABLEFIND_NH(k, t) StrT::TableFindHead(k, t, sizeof(t[0]))
-#define STR_TABLEFIND_S(k, t) StrT::TableFindSorted(k, t, _countof(t) - 1, sizeof(t[0]))
-#define STR_TABLEFIND_SH(k, t) StrT::TableFindHeadSorted(k, t, _countof(t) - 1, sizeof(t[0]))
+    template <typename TYPE_CH, class TYPE_ELEM>
+    static ITERATE_t SpanFind(const TYPE_CH* k, const cSpan<TYPE_ELEM>& t) {
+        return TableFind(k, t.get_SpanUnk());
+    }
+    template <typename TYPE_CH, class TYPE_ELEM>
+    static ITERATE_t SpanFindHead(const TYPE_CH* k, const cSpan<TYPE_ELEM>& t) {
+        return TableFindHead(k, t.get_SpanUnk());
+    }
+    template <typename TYPE_CH, class TYPE_ELEM>
+    static ITERATE_t SpanFindSorted(const TYPE_CH* k, const cSpan<TYPE_ELEM>& t) {
+        return TableFindSorted(k, t.get_SpanUnk());
+    }
+    template <typename TYPE_CH, class TYPE_ELEM>
+    static ITERATE_t SpanFindHeadSorted(const TYPE_CH* k, const cSpan<TYPE_ELEM>& t) {
+        return TableFindHeadSorted(k, t.get_SpanUnk());
+    }
 
     /// <summary>
     /// simple string regular expression (regex) pattern matching. i.e. *? Wildcards.
@@ -353,6 +366,11 @@ struct GRAYCORE_LINK StrT {  // static /// namespace for string templates for UT
     /// <returns>Length of pDst in chars. (Not including '\0')</returns>
     template <typename TYPE>
     GRAYCORE_LINK static StrLen_t GRAYCALL CopyLen(TYPE* pszDst, const TYPE* pSrc, StrLen_t iLenCharsMax) noexcept;  // iLenCharsMax includes room for '\0'
+
+    template <typename TYPE>
+    inline static StrLen_t GRAYCALL Copy(cSpanX<TYPE>& dst, const TYPE* pSrc) noexcept {  // cSpanX includes room for '\0'
+        return CopyLen(dst.get_DataWork(), pSrc, dst.GetSize());
+    }
 
     /// <summary>
     /// replaces _strupr(). No portable __linux__ equiv to _strupr()?
@@ -385,7 +403,7 @@ struct GRAYCORE_LINK StrT {  // static /// namespace for string templates for UT
 
     // like _vsntprintf
     template <typename TYPE>
-    GRAYCORE_LINK static StrLen_t GRAYCALL vsprintfN(OUT TYPE* pszOut, StrLen_t iLenOutMax, const TYPE* pszFormat, va_list vlist);
+    GRAYCORE_LINK static StrLen_t GRAYCALL vsprintfN(cSpanX<TYPE>& ret, const TYPE* pszFormat, va_list vlist);
 
     /// <summary>
     /// Format a string with variadic arguments. Truncate at iLenOutMax if necessary.
@@ -397,41 +415,70 @@ struct GRAYCORE_LINK StrT {  // static /// namespace for string templates for UT
     /// <param name=""></param>
     /// <returns>size in characters. -1 = too small. (NOT CONSISTENT WITH LINUX!)</returns>
     template <typename TYPE>
-    static StrLen_t _cdecl sprintfN(OUT TYPE* pszOut, StrLen_t iLenOutMax, const TYPE* pszFormat, ...) {
+    static StrLen_t _cdecl sprintfN(OUT cSpanX<TYPE>& ret, const TYPE* pszFormat, ...) {
         va_list vargs;
         va_start(vargs, pszFormat);
-        const StrLen_t nLenRet = StrT::vsprintfN(pszOut, iLenOutMax, pszFormat, vargs);
+        const StrLen_t nLenRet = StrT::vsprintfN(ret, pszFormat, vargs);
         va_end(vargs);
         return nLenRet;
     }
 
     template <typename TYPE>
-    GRAYCORE_LINK static TYPE* GRAYCALL FindBlockEnd(STR_BLOCK_t eBlockType, const TYPE* pLine, StrLen_t iLenMax = StrT::k_LEN_MAX);
+    GRAYCORE_LINK static TYPE* GRAYCALL FindBlockEnd(STR_BLOCK_t eBlockType, const TYPE* pLine, StrLen_t iLenMax = cStrConst::k_LEN_MAX);
     template <typename TYPE>
     GRAYCORE_LINK static TYPE* GRAYCALL StripBlock(TYPE* pszText);
 
     template <typename TYPE>
-    GRAYCORE_LINK static StrLen_t GRAYCALL EscSeqRemove(TYPE* pStrOut, const TYPE* pStrIn, StrLen_t iLenOutMax = StrT::k_LEN_MAX, StrLen_t iLenInMax = StrT::k_LEN_MAX);
+    GRAYCORE_LINK static StrLen_t GRAYCALL EscSeqDecode1(OUT TYPE& ch, const TYPE* pStrIn);
+
+    /// <summary>
+    /// Filter/decode out the 'C like' embedded escape sequences. "\n\r" etc
+    /// ret string will shrink. Assumed to be inside quotes ending at iLenInMax.
+    /// opposite of StrT::EscSeqAdd().
+    /// @note Since we are removing, allow ret = pStrIn.
+    /// @note should we check for internal chars < 32 NOT encoded ? THIS would be an error !
+    /// </summary>
+    /// <typeparam name="TYPE"></typeparam>
+    /// <param name="ret"></param>
+    /// <param name="pStrIn"></param>
+    /// <param name="iLenInMax"></param>
+    /// <returns>the consumed length of pStrIn. NOT the length of ret.</returns>
     template <typename TYPE>
-    GRAYCORE_LINK static StrLen_t GRAYCALL EscSeqRemoveQ(TYPE* pStrOut, const TYPE* pStrIn, StrLen_t iLenOutMax = StrT::k_LEN_MAX, StrLen_t iLenInMax = StrT::k_LEN_MAX);
+    GRAYCORE_LINK static StrLen_t GRAYCALL EscSeqDecode(cSpanX<TYPE>& ret, const TYPE* pStrIn, StrLen_t iLenInMax = cStrConst::k_LEN_MAX);
+    template <typename TYPE>
+    GRAYCORE_LINK static StrLen_t GRAYCALL EscSeqDecodeQ(cSpanX<TYPE>& ret, const TYPE* pStrIn, StrLen_t iLenInMax = cStrConst::k_LEN_MAX);
 
     template <typename TYPE>
-    GRAYCORE_LINK static StrLen_t GRAYCALL EscSeqAdd(TYPE* pStrOut, const TYPE* pStrIn, StrLen_t iLenOutMax = StrT::k_LEN_MAX);
+    GRAYCORE_LINK static bool GRAYCALL EscSeqTest(const TYPE* pStrIn);
     template <typename TYPE>
-    GRAYCORE_LINK static StrLen_t GRAYCALL EscSeqAddQ(TYPE* pStrOut, const TYPE* pStrIn, StrLen_t iLenOutMax = StrT::k_LEN_MAX);
+    GRAYCORE_LINK static StrLen_t GRAYCALL EscSeqAdd(cSpanX<TYPE>& ret, const TYPE* pStrIn);
+    template <typename TYPE>
+    GRAYCORE_LINK static StrLen_t GRAYCALL EscSeqAddQ(cSpanX<TYPE>& ret, const TYPE* pStrIn);
 
     template <typename TYPE>
     GRAYCORE_LINK static StrLen_t GRAYCALL TrimWhitespaceEnd(TYPE* pStr, StrLen_t iLenChars = k_StrLen_UNK);
     template <typename TYPE>
-    GRAYCORE_LINK static TYPE* GRAYCALL TrimWhitespace(TYPE* pStr, StrLen_t iLenMax = StrT::k_LEN_MAX);
+    GRAYCORE_LINK static TYPE* GRAYCALL TrimWhitespace(TYPE* pStr, StrLen_t iLenMax = cStrConst::k_LEN_MAX);
 
     template <typename TYPE>
-    GRAYCORE_LINK static StrLen_t GRAYCALL ReplaceX(TYPE* pDst, StrLen_t iDstLenMax, StrLen_t nDstIdx, StrLen_t iDstSegLen, const TYPE* pSrc, StrLen_t iSrcLen = k_StrLen_UNK);
+    GRAYCORE_LINK static StrLen_t GRAYCALL ReplaceX(cSpanX<TYPE>& dst, StrLen_t nDstIdx, StrLen_t iDstSegLen, const TYPE* pSrc, StrLen_t iSrcLen = k_StrLen_UNK);
 
+    /// <summary>
+    /// Parse a separated list of tokens/arguments to a function/command. inline.
+    /// EXAMPLES:<code>
+    ///  "tag=word&tag2=word" for HTML pages.
+    ///  "arg \t arg" preserve 1 space.</code>
+    /// </summary>
+    /// <typeparam name="TYPE"></typeparam>
+    /// <param name="cmdLine">NOTE: this is modified / chopped up buffer.</param>
+    /// <param name="cmds">an array of pointers inside pszCmdLine</param>
+    /// <param name="pszSep">what are the valid separators.</param>
+    /// <param name="uFlags">STRP_MASK_t = STRP_TYPE_. deal with quoted and escaped strings.</param>
+    /// <returns>Number of args. in ppCmd. 0 = empty string/array.</returns>
     template <typename TYPE>
-    GRAYCORE_LINK static ITERATE_t GRAYCALL ParseArray(TYPE* pszCmdLine, StrLen_t nCmdLenMax, TYPE** ppCmds, ITERATE_t iCmdQtyMax, const TYPE* pszSep = nullptr, STRP_MASK_t uFlags = STRP_DEF);
+    GRAYCORE_LINK static ITERATE_t GRAYCALL ParseArray(cSpanX<TYPE>& cmdLine, cSpanX<TYPE*>& cmds, const TYPE* pszSep = nullptr, STRP_MASK_t uFlags = STRP_DEF);
     template <typename TYPE>
-    GRAYCORE_LINK static ITERATE_t GRAYCALL ParseArrayTmp(TYPE* pszTmp, StrLen_t iTmpSizeMax, const TYPE* pszCmdLine, TYPE** ppCmds, ITERATE_t iCmdQtyMax, const TYPE* pszSep = nullptr, STRP_MASK_t uFlags = STRP_DEF);
+    GRAYCORE_LINK static ITERATE_t GRAYCALL ParseArrayTmp(cSpanX<TYPE>& tmp, const TYPE* pszCmdLine, cSpanX<TYPE*> cmds, const TYPE* pszSep = nullptr, STRP_MASK_t uFlags = STRP_DEF);
 
     //**********************************************************************
     // Numerics - All numerics can be done in Latin. So just convert to use StrNum
@@ -467,14 +514,12 @@ struct GRAYCORE_LINK StrT {  // static /// namespace for string templates for UT
 
     // numeric to string
     template <typename TYPE>
-    GRAYCORE_LINK static TYPE* GRAYCALL ULtoARev(UINT64 uVal, OUT TYPE* pszOut, StrLen_t iOutMax, RADIX_t nBaseRadix = 10, char chRadixA = 'A');
+    GRAYCORE_LINK static StrLen_t GRAYCALL ULtoA(UINT64 nVal, cSpanX<TYPE>& ret, RADIX_t nBaseRadix = 10);
     template <typename TYPE>
-    GRAYCORE_LINK static StrLen_t GRAYCALL ULtoA(UINT64 nVal, OUT TYPE* pszOut, StrLen_t iOutMax, RADIX_t nBaseRadix = 10);
-    template <typename TYPE>
-    GRAYCORE_LINK static StrLen_t GRAYCALL ILtoA(INT64 nVal, OUT TYPE* pszOut, StrLen_t iOutMax, RADIX_t nBaseRadix = 10);
+    GRAYCORE_LINK static StrLen_t GRAYCALL ILtoA(INT64 nVal, cSpanX<TYPE>& ret, RADIX_t nBaseRadix = 10);
 
     template <typename TYPE>
-    GRAYCORE_LINK static StrLen_t GRAYCALL ULtoAK(UINT64 uVal, OUT TYPE* pszStr, StrLen_t iStrMax, UINT nKUnit = 1024, bool bSpace = true);
+    GRAYCORE_LINK static StrLen_t GRAYCALL ULtoAK(UINT64 uVal, cSpanX<TYPE>& ret, UINT nKUnit = 1024, bool bSpace = true);
 
     /// <summary>
     /// Convert an UINT/UINT32/DWORD to a string. like sprintf("%u"). Use k_LEN_MAX_DIGITS_INT
@@ -483,8 +528,8 @@ struct GRAYCORE_LINK StrT {  // static /// namespace for string templates for UT
     /// </summary>
     /// <returns>length</returns>
     template <typename TYPE>
-    static StrLen_t UtoA(UINT32 nVal, OUT TYPE* pszOut, StrLen_t iStrMax, RADIX_t nBaseRadix = 10) {
-        return ULtoA(nVal, pszOut, iStrMax, nBaseRadix);  // convert 32 bit up to 64 bit.
+    static StrLen_t UtoA(UINT32 nVal, cSpanX<TYPE>& ret, RADIX_t nBaseRadix = 10) {
+        return ULtoA(nVal, ret, nBaseRadix);  // convert 32 bit up to 64 bit.
     }
 
     /// <summary>
@@ -493,15 +538,19 @@ struct GRAYCORE_LINK StrT {  // static /// namespace for string templates for UT
     /// like ltoa(); or ToString(), or like sprintf("%d"). Just cast up to 64.
     /// </summary>
     template <typename TYPE>
-    static StrLen_t ItoA(INT32 nVal, OUT TYPE* pszOut, StrLen_t iStrMax, RADIX_t nBaseRadix = 10) {
-        return ILtoA(nVal, pszOut, iStrMax, nBaseRadix);  // convert 32 bit up to 64 bit.
+    static StrLen_t ItoA(INT32 nVal, cSpanX<TYPE>& ret, RADIX_t nBaseRadix = 10) {
+        return ILtoA(nVal, ret, nBaseRadix);  // convert 32 bit up to 64 bit.
     }
 
     // String to/from Floats/Doubles
     template <typename TYPE>
     GRAYCORE_LINK static double GRAYCALL toDouble(const TYPE* pszStr, const TYPE** ppszStrEnd = /*(const TYPE**)*/ nullptr);
     template <typename TYPE>
-    GRAYCORE_LINK static StrLen_t GRAYCALL DtoA(double nVal, OUT TYPE* pszOut, StrLen_t iStrMax, int iDecPlaces = -1, char chE = -'e');
+    GRAYCORE_LINK static StrLen_t GRAYCALL DtoA(double nVal, cSpanX<TYPE>& ret, int iDecPlaces = -1, char chE = -'e');
+
+    // read/write a string of comma separated numbers.
+    template <typename TYPE>
+    static StrLen_t GRAYCALL ConvertToCSV(cSpanX<TYPE>& ret, const cMemSpan& src);
 };
 
 /// <summary>
@@ -510,21 +559,8 @@ struct GRAYCORE_LINK StrT {  // static /// namespace for string templates for UT
 /// <typeparam name="TYPE"></typeparam>
 template <typename TYPE = char>
 struct GRAYCORE_LINK StrX : public StrT {  // static
-
     static const TYPE* GRAYCALL GetBoolStr(bool bVal) noexcept;
-
-    // String searching. const
-    static inline const TYPE* GetTableElemU(const void* ppszTableInit, ITERATE_t i, size_t nSizeElem) {
-        //! U = I dont know the max yet.
-        //! @arg ppszTableInit = array of structures containing pointers to strings.
-        ASSERT(ppszTableInit != nullptr);
-        return *((const TYPE* const*)(((const BYTE*)ppszTableInit) + (i * nSizeElem)));
-    }
-
-    static const TYPE* GRAYCALL GetTableElem(ITERATE_t iEnumVal, const void* ppszTableInit, ITERATE_t iCountMax, size_t nElemSize = sizeof(const TYPE*));
-
-    static ITERATE_t GRAYCALL GetTableCount(const void* ppszTableInit, size_t nElemSize);
-    static ITERATE_t GRAYCALL GetTableCountSorted(const void* ppszTableInit, size_t nElemSize);
+    static bool GRAYCALL IsTableSorted(const cSpanUnk& t);
 };
 
 // Override implementations
@@ -612,63 +648,48 @@ inline double StrT::toDouble<wchar_t>(const wchar_t* pszStr, const wchar_t** pps
 }
 
 template <>
-inline char* StrT::ULtoARev<char>(UINT64 uVal, char* pszOut, StrLen_t iOutMax, RADIX_t nBaseRadix, char chRadixA) {  // static
-    return StrNum::ULtoARev(uVal, pszOut, iOutMax, nBaseRadix, chRadixA);
+inline StrLen_t StrT::ULtoA<char>(UINT64 uVal, cSpanX<char>& ret, RADIX_t nBaseRadix) {  // static
+    return StrNum::ULtoA(uVal, ret, nBaseRadix);
 }
 template <>
-inline wchar_t* StrT::ULtoARev<wchar_t>(UINT64 uVal, wchar_t* pszOut, StrLen_t iOutMax, RADIX_t nBaseRadix, char chRadixA) {  // static
+inline StrLen_t StrT::ULtoA<wchar_t>(UINT64 uVal, cSpanX<wchar_t>& ret, RADIX_t nBaseRadix) {  // static
     char szTmp[StrNum::k_LEN_MAX_DIGITS_INT];
-    char* pszRetA = StrNum::ULtoARev(uVal, szTmp, STRMAX(szTmp), nBaseRadix, chRadixA);
-    StrLen_t iLenInc = StrT::Diff(szTmp + STRMAX(szTmp), pszRetA);
-    if (iLenInc > iOutMax) iLenInc = iOutMax;
-    pszOut += (iOutMax - iLenInc);
-    StrU::UTF8toUNICODE(pszOut, iLenInc, pszRetA, iLenInc);
-    return pszOut;
+    const StrLen_t iStrLen = StrNum::ULtoA(uVal, TOSPAN(szTmp), nBaseRadix);
+    return StrU::UTF8toUNICODE(ret, ToSpan(szTmp, iStrLen));
+}
+template <>
+inline StrLen_t StrT::ILtoA<char>(INT64 uVal, cSpanX<char>& ret, RADIX_t nBaseRadix) {  // static
+    return StrNum::ILtoA(uVal, ret, nBaseRadix);
+}
+template <>
+inline StrLen_t StrT::ILtoA<wchar_t>(INT64 uVal, cSpanX<wchar_t>& ret, RADIX_t nBaseRadix) {  // static
+    char szTmp[StrNum::k_LEN_MAX_DIGITS_INT];
+    const StrLen_t iStrLen = StrNum::ILtoA(uVal, TOSPAN(szTmp), nBaseRadix); 
+    return StrU::UTF8toUNICODE(ret, ToSpan(szTmp, iStrLen));
 }
 
 template <>
-inline StrLen_t StrT::ULtoA<char>(UINT64 uVal, char* pszOut, StrLen_t iOutMax, RADIX_t nBaseRadix) {  // static
-    return StrNum::ULtoA(uVal, pszOut, iOutMax, nBaseRadix);
-}
-template <>
-inline StrLen_t StrT::ULtoA<wchar_t>(UINT64 uVal, wchar_t* pszOut, StrLen_t iOutMax, RADIX_t nBaseRadix) {  // static
-    char szTmp[StrNum::k_LEN_MAX_DIGITS_INT];
-    const StrLen_t iStrLen = StrNum::ULtoA(uVal, szTmp, _countof(szTmp), nBaseRadix);
-    return StrU::UTF8toUNICODE(pszOut, iOutMax, szTmp, iStrLen);
-}
-template <>
-inline StrLen_t StrT::ILtoA<char>(INT64 uVal, char* pszOut, StrLen_t iOutMax, RADIX_t nBaseRadix) {  // static
-    return StrNum::ILtoA(uVal, pszOut, iOutMax, nBaseRadix);
-}
-template <>
-inline StrLen_t StrT::ILtoA<wchar_t>(INT64 uVal, wchar_t* pszOut, StrLen_t iOutMax, RADIX_t nBaseRadix) {  // static
-    char szTmp[StrNum::k_LEN_MAX_DIGITS_INT];
-    const StrLen_t iStrLen = StrNum::ILtoA(uVal, szTmp, _countof(szTmp), nBaseRadix);
-    return StrU::UTF8toUNICODE(pszOut, iOutMax, szTmp, iStrLen);
+inline StrLen_t StrT::DtoA<char>(double nVal, cSpanX<char>& ret, int iDecPlaces, char chE) {  // static
+    return StrNum::DtoAG(nVal, ret, iDecPlaces, chE);
 }
 
 template <>
-inline StrLen_t StrT::DtoA<char>(double nVal, OUT char* pszOut, StrLen_t iStrMax, int iDecPlaces, char chE) {  // static
-    return StrNum::DtoAG(nVal, pszOut, iStrMax, iDecPlaces, chE);
-}
-
-template <>
-inline StrLen_t StrT::DtoA<wchar_t>(double nVal, OUT wchar_t* pszOut, StrLen_t iOutMax, int iDecPlaces, char chE) {  // static
+inline StrLen_t StrT::DtoA<wchar_t>(double nVal, cSpanX<wchar_t>& ret, int iDecPlaces, char chE) {  // static
     char szTmp[StrNum::k_LEN_MAX_DIGITS + 4];
     const StrLen_t iStrLen = StrNum::DtoAG2(nVal, szTmp, iDecPlaces, chE);
-    return StrU::UTF8toUNICODE(pszOut, iOutMax, szTmp, iStrLen);
+    return StrU::UTF8toUNICODE(ret, ToSpan(szTmp, iStrLen));
 }
 
 template <>
-inline StrLen_t StrT::ULtoAK<char>(UINT64 uVal, OUT char* pszOut, StrLen_t iStrMax, UINT nKUnit, bool bSpace) {  // static
-    return StrNum::ULtoAK(uVal, pszOut, iStrMax, nKUnit, bSpace);
+inline StrLen_t StrT::ULtoAK<char>(UINT64 uVal, cSpanX<char>& ret, UINT nKUnit, bool bSpace) {  // static
+    return StrNum::ULtoAK(uVal, ret, nKUnit, bSpace);
 }
 
 template <>
-inline StrLen_t StrT::ULtoAK<wchar_t>(UINT64 uVal, OUT wchar_t* pszOut, StrLen_t iStrMax, UINT nKUnit, bool bSpace) {  // static
+inline StrLen_t StrT::ULtoAK<wchar_t>(UINT64 uVal, cSpanX<wchar_t>& ret, UINT nKUnit, bool bSpace) {  // static
     char szTmp[StrNum::k_LEN_MAX_DIGITS + 4];
-    const StrLen_t iStrLen = StrNum::ULtoAK(uVal, szTmp, _countof(szTmp), nKUnit, bSpace);
-    return StrU::UTF8toUNICODE(pszOut, iStrMax, szTmp, iStrLen);
+    const StrLen_t iStrLen = StrNum::ULtoAK(uVal, TOSPAN(szTmp), nKUnit, bSpace);
+    return StrU::UTF8toUNICODE(ret, ToSpan(szTmp, iStrLen));
 }
 
 // Override implementations

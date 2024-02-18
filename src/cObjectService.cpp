@@ -1,4 +1,3 @@
-//
 //! @file cObjectService.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 // clang-format off
@@ -6,16 +5,21 @@
 // clang-format on
 #include "cAppState.h"
 #include "cArchive.h"
+#include "cOSModule.h"
 #include "cObjectService.h"
 #include "cSingleton.h"
 
 namespace Gray {
-#ifndef _MFC_VER
-void CObject::Serialize(cArchive& a) {  // virtual
+
+HRESULT cObject::Serialize(cArchive& a) {  // virtual
     // Emulate MFC method. cArchive = CArchive
     UNREFERENCED_REFERENCE(a);
+    return S_OK;
 }
-#endif
+
+const void* const* cObject::GetVTable() const {
+    return cTypeInfo::GetVTable(this);
+}
 
 cObjectFactory::cObjectFactory(const TYPEINFO_t& rTypeInfo, const ATOMCHAR_t* pszTypeName) noexcept
     : m_pszTypeName(pszTypeName ? pszTypeName : cTypeInfo::GetSymName(rTypeInfo.name())), _HashCode(StrT::GetHashCode32(m_pszTypeName)), m_TypeInfo((const cTypeInfo&)rTypeInfo) {
@@ -29,6 +33,9 @@ cObjectFactory::~cObjectFactory() {
     cObjectService& service = cObjectService::I();
     service.RemoveFactory(*this);
 }
+::HMODULE cObjectFactory::get_HModule() const {
+    return cOSModule::GetModuleHandleForAddr(&m_TypeInfo);
+}
 
 //**************************************
 
@@ -41,6 +48,15 @@ bool cObjectService::RegisterFactory(cObjectFactory& factory) noexcept {
 }
 bool cObjectService::RemoveFactory(cObjectFactory& factory) noexcept {
     return _Factories.RemoveArg(&factory);
+}
+
+void cObjectService::ReleaseModuleChildren(::HMODULE hMod) {  // override;
+    for (ITERATE_t i = _Factories.GetSize(); i;) {
+        const cObjectFactory* factory = _Factories.GetAt(--i);
+        ASSERT_NN(factory);
+        if (factory->get_HModule() != hMod) continue;
+        _Factories.RemoveAt(i);
+    }
 }
 
 cObject* GRAYCALL cObjectService::CreateObject(const ATOMCHAR_t* pszTypeName) {  // static

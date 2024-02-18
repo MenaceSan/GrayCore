@@ -1,4 +1,3 @@
-//
 //! @file cMem.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 // clang-format off
@@ -8,7 +7,7 @@
 #include "cBlob.h"
 #include "cDebugAssert.h"
 #include "cExceptionSystem.h"
-#include "cValArray.h"
+#include "cValSpan.h"
 
 namespace Gray {
 
@@ -68,8 +67,7 @@ bool GRAYCALL cMem::IsCorruptApp(const void* pData, size_t nLen, bool bWriteAcce
         sm_bDontOptimizeOut0 = 0;  // Always 0
         for (size_t i = 0; i < nLen; i += k_PageSizeMin) {
             BYTE bVal = ((const BYTE*)pData)[i];  // Read it.
-            if (bWriteAccess)                     // try to write it.
-            {
+            if (bWriteAccess) {                   // try to write it back.
                 ((BYTE*)pData)[i] = bVal | (BYTE)sm_bDontOptimizeOut0;
             }
         }
@@ -144,60 +142,28 @@ size_t GRAYCALL cMem::CompareIndex(const void* p1, const void* p2, size_t nSizeB
     return nSizeBlock;  // is equal.
 }
 
-StrLen_t GRAYCALL cMem::ConvertToString(char* pszDst, StrLen_t iSizeDstMax, const BYTE* pSrc, size_t nSrcQty) {  // static
-    //! Write bytes out to a string as comma separated base 10 number values. Not efficient!
-    //! Try to use SetHexDigest() instead?
-    //! opposite of cMem::ReadFromCSV().
-    //! @return the actual size of the string.
-    //! @note using hex or Base64 would be better?
+//**********************************************************
 
-    iSizeDstMax -= 4;  // room to terminate < max sized number.
-    StrLen_t iLenOut = 0;
-    for (size_t i = 0; i < nSrcQty; i++) {
-        if (i > 0) pszDst[iLenOut++] = ',';
-
-        StrLen_t iLenThis = StrNum::UtoA(pSrc[i], pszDst + iLenOut, iSizeDstMax - iLenOut, 10);
-        if (iLenThis <= 0) break;
-        iLenOut += iLenThis;
-        if (iLenOut >= iSizeDstMax) break;
-    }
-    return iLenOut;
+COMPARE_t cMemSpan::Compare(const cMemSpan& m2) const {
+    //! @return COMPARE_Equal
+    const size_t iLenMin = cValT::Min(get_DataSize(), m2.get_DataSize());
+    const COMPARE_t iRet = cMem::Compare(get_DataC(), m2.get_DataC(), iLenMin);
+    if (iRet != COMPARE_Equal) return iRet;
+    return cValT::Compare(get_DataSize(), m2.get_DataSize());  // the longer one wins. if otherwise equal. (but not same length)
 }
 
-StrLen_t GRAYCALL cMem::ConvertToString(wchar_t* pszDst, StrLen_t iSizeDstMax, const BYTE* pSrc, size_t nSrcQty) {  // static
-    //! Write bytes out to a string as comma separated base 10 number values. Not efficient!
-
-    UNREFERENCED_PARAMETER(pSrc);
-    ASSERT(0);
-
-    iSizeDstMax -= 4;  // room to terminate < max sized number.
-    StrLen_t iLenOut = 0;
-    for (size_t i = 0; i < nSrcQty; i++) {
-        if (i > 0) {
-            pszDst[iLenOut++] = ',';
-        }
-
-        StrLen_t iLenThis = 0;  // TODO --  StrNum::UtoA(pSrc[i], pszDst + iLenOut, iSizeDstMax - iLenOut, 10);
-        if (iLenThis <= 0) break;
-        iLenOut += iLenThis;
-        if (iLenOut >= iSizeDstMax) break;
-    }
-    return iLenOut;
-}
-
-size_t GRAYCALL cMem::ReadFromCSV(BYTE* pOut, size_t iDstMax, const char* pszSrc) {
-    //! Read/Parse bytes in from string as comma separated base 10 number values. opposite of cMem::ConvertToString().
+size_t cMemSpan::ReadFromCSV(const char* pszSrc) {
+    //! Read/Parse bytes in from string as comma separated base 10 number values. opposite of StrT::ConvertToCSV().
     //! @return the number of bytes read.
     //! @note using hex or Base64 would be better.
 
     size_t i = 0;
-    for (; i < iDstMax;) {
+    for (; i < get_DataSize();) {
         pszSrc = StrT::GetNonWhitespace(pszSrc);
         if (StrT::IsNullOrEmpty(pszSrc)) break;
         const char* pszSrcStart = pszSrc;
-        pOut[i++] = (BYTE)(StrNum::toU(pszSrc, &pszSrc, 10));
-        if (pszSrcStart == pszSrc)  // must be the field terminator? ")},;". End.
-            break;
+        get_DataW()[i++] = (BYTE)(StrNum::toU(pszSrc, &pszSrc, 10));
+        if (pszSrcStart == pszSrc) break;  // must be the field terminator? ")},;". End.
         pszSrc = StrT::GetNonWhitespace(pszSrc);
         if (pszSrc[0] != ',') break;
         pszSrc++;
@@ -205,13 +171,13 @@ size_t GRAYCALL cMem::ReadFromCSV(BYTE* pOut, size_t iDstMax, const char* pszSrc
     return i;
 }
 
-StrLen_t GRAYCALL cMem::GetHexDigest(OUT char* pszHexString, const BYTE* pData, size_t nSizeData) {  // static
-    //! Get the final hash as a pre-formatted string of hex digits. opposite of cMem::SetHexDigest
+StrLen_t cMemSpan::GetHexDigest(OUT char* pszHexString) const {
+    //! Get the final hash as a pre-formatted string of hex digits. opposite of SetHexDigest
     //! ASSUME sizeof(pszHexString) >= GetHexDigestSize()
     //! @note using Base64 would be better.
     StrLen_t iLen = 0;
-    for (size_t i = 0; i < nSizeData; i++) {
-        BYTE ch = pData[i];
+    for (size_t i = 0; i < get_DataSize(); i++) {
+        const BYTE ch = get_DataC()[i];
         pszHexString[iLen++] = StrChar::U2Hex(ch >> 4);
         pszHexString[iLen++] = StrChar::U2Hex(ch & 0x0F);
     }
@@ -219,51 +185,41 @@ StrLen_t GRAYCALL cMem::GetHexDigest(OUT char* pszHexString, const BYTE* pData, 
     return iLen;
 }
 
-HRESULT GRAYCALL cMem::SetHexDigest(const char* pszHexString, OUT BYTE* pData, size_t nSizeData, bool testEnd) {  // static
+HRESULT cMemSpan::SetHexDigest(const char* pszHexString, bool testEnd) {
     //! Set binary pDigest from string pszHexString
-    //! opposite of cMem::GetHexDigest
+    //! opposite of cMemSpan::GetHexDigest
     //! @arg pszHexString = input hex string . ASSUME large enough.
     //! @arg nSizeData = The number of expected output digits.
     //! @note using Base64 would be better.
     //! @return S_FALSE = was zero value.
 
-    if (pszHexString == nullptr || pData == nullptr) return E_POINTER;
+    if (pszHexString == nullptr || isNull()) return E_POINTER;
 
     bool bNonZero = false;
-    for (size_t i = 0; i < nSizeData; i++) {
+    for (size_t i = 0; i < get_DataSize(); i++) {
         // 2 hex chars per byte.
         char ch = *pszHexString++;
-        if (ch == '\0')  // not long enough!
-            return HRESULT_WIN32_C(RPC_X_BYTE_COUNT_TOO_SMALL);
+        if (ch == '\0') return HRESULT_WIN32_C(RPC_X_BYTE_COUNT_TOO_SMALL);  // not long enough!
         int bHex1 = StrChar::Hex2U(ch);
         if (bHex1 < 0) return HRESULT_WIN32_C(ERROR_SXS_XML_E_INVALID_HEXIDECIMAL);
         ch = *pszHexString++;
         int bHex2 = StrChar::Hex2U(ch);
         if (bHex2 < 0) return HRESULT_WIN32_C(ERROR_SXS_XML_E_INVALID_HEXIDECIMAL);
-        pData[i] = (BYTE)((bHex1 * 0x10) + bHex2);
-        if (pData[i] != 0) bNonZero = true;
+        get_DataW()[i] = (BYTE)((bHex1 * 0x10) + bHex2);
+        if (get_DataW()[i] != 0) bNonZero = true;
     }
 
     if (testEnd) {
         if (StrChar::IsDigitX(*pszHexString, 0x10))  // too long! or not terminated.
             return HRESULT_WIN32_C(ERROR_BUFFER_OVERFLOW);
     }
-
     if (bNonZero) return S_OK;
     return S_FALSE;  // zero
 }
 
-COMPARE_t GRAYCALL cMem::Compare(const void* pData1, size_t iLen1, const void* pData2, size_t iLen2) {  // static
-    //! @return COMPARE_Equal
-    const size_t iLenMin = cValT::Min(iLen1, iLen2);
-    const COMPARE_t iRet = cMem::Compare(pData1, pData2, iLenMin);
-    if (iRet != COMPARE_Equal) return iRet;
-    return cValT::Compare(iLen1, iLen2);  // the longer one wins. if otherwise equal. (but not same length)
-}
-
 //**********************************************************
 
-void GRAYCALL cValArray::ReverseArrayBlocks(void* pArray, size_t nArraySizeBytes, size_t nBlockSize) {
+void GRAYCALL cValSpan::ReverseArrayBlocks(void* pArray, size_t nArraySizeBytes, size_t nBlockSize) {
     //! reverse the order of an array of blocks/objects.
     //! similar to ReverseArray() but without the TYPE. where nBlockSize == sizeof(TYPE)
     //! @arg

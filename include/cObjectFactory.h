@@ -1,7 +1,5 @@
-//
 //! @file cObjectFactory.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cObjectFactory_H
 #define _INC_cObjectFactory_H
@@ -33,7 +31,7 @@ struct GRAYCORE_LINK cObjectFactory : public IObjectFactory {
     /// <summary>
     /// The main type name static allocated. Can use this for dynamic object creation.
     /// Might have multiple alternate aliases for interfaces. e.g. "IObjectName"
-    /// MUST be first for use with STR_TABLEFIND_NH
+    /// MUST be first for use with StrT::SpanFindHead
     /// </summary>
     const ATOMCHAR_t* const m_pszTypeName;
     const HASHCODE32_t _HashCode;  /// Hash/ATOMCODE_t of m_pszTypeName
@@ -45,6 +43,7 @@ struct GRAYCORE_LINK cObjectFactory : public IObjectFactory {
 
     cObjectFactory(const TYPEINFO_t& rTypeInfo, const ATOMCHAR_t* pszTypeName = nullptr) noexcept;
     virtual ~cObjectFactory();
+    ::HMODULE get_HModule() const;
 
     const ATOMCHAR_t* get_Name() const noexcept {
         return m_pszTypeName;
@@ -59,10 +58,12 @@ struct GRAYCORE_LINK cObjectFactory : public IObjectFactory {
 };
 
 template <typename _TYPE>
-struct cObjectFactoryT : public cSingleton<cObjectFactoryT<_TYPE> >, public cObjectFactory {
+class cObjectFactoryT : public cSingleton<cObjectFactoryT<_TYPE> >, public cObjectFactory {
     typedef cObjectFactoryT<_TYPE> THIS_t;
-
+    SINGLETON_IMPL(THIS_t);
     cObjectFactoryT() : cObjectFactory(typeid(_TYPE)), cSingleton<THIS_t>(this, typeid(THIS_t)) {}
+
+ public:
     virtual [[nodiscard]] cObject* CreateObject() const {
         return new _TYPE();
     }

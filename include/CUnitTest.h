@@ -1,9 +1,7 @@
-//
 //! @file cUnitTest.h
 //! Included from c++ file to implement unit test. Compatible with M$ unit tests.
 //! @note Don't include this from some other header file. Only use in implementation of a test.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cUnitTest_H
 #define _INC_cUnitTest_H
@@ -49,13 +47,13 @@ class cUnitTestRegister;
 /// Base class for all derived tests cUnitTest
 /// Assume we compile in the same environment as we unit test.
 /// </summary>
-struct GRAYCORE_LINK cUnitTestCur  { // static
+struct GRAYCORE_LINK cUnitTestCur {        // static
     static int sm_nCreatedUnitTests;       /// Count the cUnitTest objects I have created. NOT just m_aUnitTests
     static const FILECHAR_t* k_TestFiles;  // a sub directory under m_sTestOutDir containing all the test files.
 
     // Sample Test const data.
     static const StrLen_t k_TEXTBLOB_LEN = 566;                 /// StrT::Len(k_sTextBlob) = 0x236
-    static const cStrConst k_sTextBlob;                         /// a single allocated k_TEXTBLOB_LEN+1
+    static const cStrConst k_sTextBlob;                         /// a large test string
     static const StrLen_t k_TEXTLINES_QTY = 18;                 /// STRMAX= _countof(k_asTextLines)-1
     static const cStrConst k_asTextLines[k_TEXTLINES_QTY + 1];  /// nullptr terminated array of lines of text.
 
@@ -124,9 +122,9 @@ struct cUnitTestRegisterT : public cUnitTestRegister, public cSingletonStatic<cU
 /// e.g. cUnitTestAppState inmain;
 /// </summary>
 class GRAYCORE_LINK cUnitTestAppState {
-    cAppState& m_AppState;           /// Fast access to this.
-    APPSTATE_t m_eAppStatePrev;  /// Restore the true state of the app if we need to.
-    THREADID_t m_nMainThreadPrev;    /// The thread we started with. main().
+    cAppState& m_AppState;         /// Fast access to this.
+    APPSTATE_t m_eAppStatePrev;    /// Restore the true state of the app if we need to.
+    THREADID_t m_nMainThreadPrev;  /// The thread we started with. main().
 
  public:
     cUnitTestAppState() : m_AppState(cAppState::I()) {
@@ -144,14 +142,16 @@ class GRAYCORE_LINK cUnitTestAppState {
 /// Singleton class to hold the list of all unit tests registered.
 /// MUST use cSingleton and not cSingletonStatic to prevent C runtime load order problems.
 /// </summary>
-struct GRAYCORE_LINK cUnitTests : public cSingleton<cUnitTests>, public cUnitTestCur {
+class GRAYCORE_LINK cUnitTests final : public cSingleton<cUnitTests>, public cUnitTestCur {
+    SINGLETON_IMPL(cUnitTests);
     friend class cUnitTestRegister;
 
+ public:
     cArrayPtr<cUnitTestRegister> m_aUnitTests;        /// list of all registered unit tests. Register as they get instantiate by C runtime static loader.
     static AssertCallback_t UnitTest_AssertCallback;  /// redirect assert here for test failure. requires _DEBUG or _DEBUG_FAST.
     AssertCallback_t* m_pAssertOrig = nullptr;        /// restore the original assert.
 
-    UNITTEST_LEVEL_t m_nTestLevel;      /// The current global test level for UnitTests(). throttle tests at run time.
+    UNITTEST_LEVEL_t m_nTestLevel;         /// The current global test level for UnitTests(). throttle tests at run time.
     cArrayString<LOGCHAR_t> m_aTestNames;  /// just run these tests.
 
     cFilePath m_sTestInpDir;  /// root for source of test input files. might change based on cOSModImpl?
@@ -162,8 +162,10 @@ struct GRAYCORE_LINK cUnitTests : public cSingleton<cUnitTests>, public cUnitTes
     bool m_bRunning = false;  /// We are actively running in the Gray test framework. Not in M$ framework.
     int m_iFailures = 0;      /// Count total unit test failures.
 
+ protected:
     cUnitTests();
 
+ public:
     HRESULT InitTestOutDir();
     bool RegisterUnitTest(cUnitTestRegister* pTest);
 
@@ -183,8 +185,6 @@ struct GRAYCORE_LINK cUnitTests : public cSingleton<cUnitTests>, public cUnitTes
 
     //! Run all tests <= this UNITTEST_LEVEL_t
     HRESULT RunUnitTests(UNITTEST_LEVEL_t nTestLevel = UNITTEST_LEVEL_t::_Common, const LOGCHAR_t* pszTestNameMatch = nullptr);
-
-    CHEAPOBJECT_IMPL;  // dynamic singleton
 };
 
 #define UNITTEST_TRUE(x) ASSERT(x)      // UNITTEST_TRUE is different from a normal ASSERT ? ::Microsoft::VisualStudio::CppUnitTestFramework::Assert::IsTrue(x)
@@ -199,9 +199,11 @@ struct GRAYCORE_LINK cUnitTests : public cSingleton<cUnitTests>, public cUnitTes
 #define UNITTEST_EXT_EXP(n) __DECL_EXPORT cUnitTestRegister* UNITTEST_EXT_NAME(n) = &UNITTEST_REGISTER_NAME(n)  // use this to make the text externally exposed.
 #define UNITTEST_EXT_IMP(n) __DECL_IMPORT cUnitTestRegister* UNITTEST_EXT_NAME(n)                               // import = access to externally exposed.
 
-#define UNITTEST_METHOD(x) public: void RunUnitTest() override  /// call the public virtual as a test.
+#define UNITTEST_METHOD(x) \
+ public:                   \
+    void RunUnitTest() override  /// call the public virtual as a test.
 
 }  // namespace Gray
 
 using namespace Gray;  // Since this header is typically only included right before the unit test.
-#endif  // _INC_cUnitTest_H
+#endif                 // _INC_cUnitTest_H

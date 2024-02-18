@@ -1,8 +1,6 @@
-//
 //! @file cValT.h
 //! templates for comparing, swapping values of any type.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cValT_H
 #define _INC_cValT_H
@@ -30,16 +28,25 @@ enum COMPARE_TYPE {
 /// </summary>
 struct GRAYCORE_LINK cValT {  // static. Value/Object of some type in memory.
     /// <summary>
-    /// swap 2 values. similar to cMem::Swap() but uses the intrinsic = operator.
-    /// dangerous for complex struct that has pointers and such. may not do a 'deep' copy.
-    /// assume TYPE has a safe overloaded = operator. like std::swap()
-    /// Overload this template for any specific TYPE Swaps.
+    /// Implement cheapest possible compare for equality only.
     /// </summary>
     template <class TYPE>
-    static inline void Swap(TYPE& a, TYPE& b) noexcept {
-        TYPE tmp = std::move(a);    // use the move operator.
-        a = std::move(b);
-        b = std::move(tmp);
+    static constexpr bool IsEqual(const TYPE& a, const TYPE& b) {
+        return a == b;
+    }
+    template <class TYPE>
+    static inline bool IsEqualPtr(const TYPE* a, const TYPE* b) noexcept {
+        if (a == nullptr) {
+            if (b == nullptr) return COMPARE_Equal;
+            return COMPARE_Less;
+        }
+        if (b == nullptr) return COMPARE_Greater;
+        return IsEqual(*a, *b);
+    }
+
+    template <class TYPE>
+    static constexpr bool IsGreater(const TYPE& a, const TYPE& b) {
+        return a > b;
     }
 
     /// <summary>
@@ -52,9 +59,19 @@ struct GRAYCORE_LINK cValT {  // static. Value/Object of some type in memory.
     /// <returns>COMPARE_t 0=COMPARE_Equal.</returns>
     template <class TYPE>
     static inline COMPARE_t Compare(const TYPE& a, const TYPE& b) noexcept {
-        if (a > b) return COMPARE_Greater;  // is greater than. assume TYPE has operator.
-        if (a == b) return COMPARE_Equal;   // is equal. 0. assume TYPE has operator.
+        if (IsEqual(a, b)) return COMPARE_Equal;  // is equal. 0. assume TYPE has -eq- operator.
+        if (IsGreater(a,b)) return COMPARE_Greater;  // is greater than. assume TYPE has -gt- operator.
         return COMPARE_Less;                // must be less than.
+    }
+
+    template <class TYPE>
+    static inline COMPARE_t ComparePtr(const TYPE* a, const TYPE* b) noexcept {
+        if (a == nullptr) {
+            if (b == nullptr) return COMPARE_Equal;
+            return COMPARE_Less;
+        }
+        if (b == nullptr) return COMPARE_Greater;
+        return Compare(*a, *b);
     }
 
     /// <summary>
@@ -63,16 +80,16 @@ struct GRAYCORE_LINK cValT {  // static. Value/Object of some type in memory.
     /// </summary>
     /// <returns>larger of 2 values</returns>
     template <class TYPE>
-    constexpr static TYPE Max(const TYPE a, const TYPE b) noexcept {
-        return (a > b) ? a : b;
+    constexpr static TYPE Max(const TYPE& a, const TYPE& b) noexcept {
+        return IsGreater(a, b) ? a : b;
     }
     /// <summary>
     /// replace MIN() macro.
     /// </summary>
     /// <returns>smaller of 2 values</returns>
     template <class TYPE>
-    constexpr static TYPE Min(const TYPE a, const TYPE b) noexcept {
-        return (a > b) ? b : a;
+    constexpr static TYPE Min(const TYPE& a, const TYPE& b) noexcept {
+        return IsGreater(a, b) ? b : a;
     }
 
     /// <summary>
@@ -82,9 +99,22 @@ struct GRAYCORE_LINK cValT {  // static. Value/Object of some type in memory.
     /// </summary>
     /// <returns>absolute value</returns>
     template <class TYPE>
-    constexpr static TYPE Abs(const TYPE n) noexcept {
-        return (n < 0) ? (-n) : n;
+    constexpr static TYPE Abs(const TYPE& n) noexcept {
+        return n < 0 ? (-n) : n;
     }
-}; 
+
+    /// <summary>
+    /// swap 2 values. similar to cMem::Swap() but uses the intrinsic = operator.
+    /// dangerous for complex struct that has pointers and such. may not do a 'deep' copy.
+    /// assume TYPE has a safe overloaded = operator. like std::swap()
+    /// Overload this template for any specific TYPE Swaps.
+    /// </summary>
+    template <class TYPE>
+    static inline void Swap(TYPE& a, TYPE& b) noexcept {
+        TYPE tmp = std::move(a);  // use the std::move operator.
+        a = std::move(b);
+        b = std::move(tmp);
+    }
+};
 }  // namespace Gray
 #endif

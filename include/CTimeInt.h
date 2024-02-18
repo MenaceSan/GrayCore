@@ -1,4 +1,3 @@
-//
 //! @file cTimeInt.h
 //! Elapsed seconds since midnight (00:00:00), January 1, 1970, coordinated universal time (UTC), according to the system clock.
 //! Real Time, 32 bit (or 64 bit) SIGNED seconds in old UNIX format.
@@ -7,7 +6,6 @@
 //! Valid from 1970 to 2038 in unsigned 32 bits. (http://en.wikipedia.org/wiki/Year_2038_problem).
 //! @note TIMESEC_t is signed! It really should not be!
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cTimeInt_H
 #define _INC_cTimeInt_H
@@ -88,6 +86,7 @@ class GRAYCORE_LINK cTimeInt {  /// similar to the MFC CTime and cTimeSpan, not 
         return m_time;
     }
 
+    /// Get time in seconds from time in days. Opposite of cTimeDouble::GetTimeFromSec()
     static TIMESEC_t GRAYCALL GetTimeFromDays(double dTimeDays) noexcept;
 
     static cTimeInt GRAYCALL GetTimeFromStr(const GChar_t* pszDateTime, TZ_TYPE nTimeZone) {
@@ -117,8 +116,7 @@ class GRAYCORE_LINK cTimeInt {  /// similar to the MFC CTime and cTimeSpan, not 
         //! MFC does 64 -> 32 bits.
         return IsTimeValid(CastN(TIMESEC_t, m_time));
     }
-    int get_TotalDays() const noexcept  // like in COleDateTimeSpan
-    {
+    int get_TotalDays() const noexcept {  // like in COleDateTimeSpan
         //! Needs to be more consistent than accurate. just for compares.
         //! Should turn over at midnight.
         return CastN(int, m_time / cTimeUnits::k_nSecondsPerDay);
@@ -126,7 +124,7 @@ class GRAYCORE_LINK cTimeInt {  /// similar to the MFC CTime and cTimeSpan, not 
 
     // to/from strings.
     HRESULT SetTimeStr(const GChar_t* pszTimeDate, TZ_TYPE nTimeZone = TZ_LOCAL);
-    StrLen_t GetTimeFormStr(GChar_t* pszOut, StrLen_t iOutSizeMax, const GChar_t* pszFormat, TZ_TYPE nTimeZone = TZ_LOCAL) const;
+    StrLen_t GetTimeFormStr(cSpanX<GChar_t>& ret, const GChar_t* pszFormat, TZ_TYPE nTimeZone = TZ_LOCAL) const;
     cString GetTimeFormStr(const GChar_t* pszFormat = nullptr, TZ_TYPE nTimeZone = TZ_LOCAL) const;
     cString GetTimeFormStr(TIMEFORMAT_t eFormat, TZ_TYPE nTimeZone = TZ_LOCAL) const {
         return GetTimeFormStr(CastNumToPtr<const GChar_t>(static_cast<int>(eFormat)), nTimeZone);

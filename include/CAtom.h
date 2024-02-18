@@ -1,4 +1,3 @@
-//
 //! @file cAtom.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 

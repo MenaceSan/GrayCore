@@ -1,4 +1,3 @@
-//
 //! @file cExceptionBase.h
 //! Wrap base exception classes:
 //! STL uses exception&

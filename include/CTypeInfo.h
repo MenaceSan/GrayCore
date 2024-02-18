@@ -1,7 +1,6 @@
-//
 //! @file cTypeInfo.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
+
 #ifndef _INC_cTypeInfo_H
 #define _INC_cTypeInfo_H
 #ifndef NO_PRAGMA_ONCE
@@ -36,17 +35,19 @@ typedef std::type_info TYPEINFO_t;  // Info from typeid(TYPE)
 /// Supplement/helper for built in TYPEINFO_t via typeid()
 /// Similar to MFC CRuntimeClass, RUNTIME_CLASS()
 /// @note ASSUME TYPEINFO_t/type_info Always supports name(), hashcode() ?
-/// @note This is NOT natively related to vtable/vfptr at all ! NO _CPPRTTI is required.
+/// @note This is NOT natively related to vtable/vfptr at all ! NO _CPPRTTI is required. Though it is similar.
 /// @todo get dynamic List of virtual members from vtable?
 /// </summary>
-class GRAYCORE_LINK cTypeInfo : public TYPEINFO_t {
- public:
+struct GRAYCORE_LINK cTypeInfo : public TYPEINFO_t {
+    /// <summary>
+    /// Get a HASHCODE_t for this type.
+    /// </summary>
+    /// <returns></returns>
     size_t get_HashCode() const noexcept {
-        // HASHCODE_t
 #ifdef _MSC_VER
         return hash_code();
 #else
-        return (size_t)(this);   // PtrCastToNum()
+        return PtrCastToNum(this);
 #endif
     }
 
@@ -69,8 +70,13 @@ class GRAYCORE_LINK cTypeInfo : public TYPEINFO_t {
     }
 
 #ifdef _CPPRTTI
-    // vtable/vfptr related stuff.
-    static const void** GRAYCALL Get_vtable(void* p);
+    /// <summary>
+    /// get vtable/vfptr for an object allocated via new or static C object.
+    /// It MUST be an object. Assume this is a 'new' returned pointer.
+    /// </summary>
+    /// <param name="p"></param>
+    /// <returns></returns>
+    static const void* const* GRAYCALL GetVTable(const void* pObject);
     static const char* GRAYCALL GetMemberName_TODO(const void** vtable, PROPIDX_t i);
 #endif
 };

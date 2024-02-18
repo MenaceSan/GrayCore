@@ -1,7 +1,5 @@
-//
 //! @file StrFormat.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_StrFormat_H
 #define _INC_StrFormat_H
@@ -50,7 +48,7 @@ struct GRAYCORE_LINK StrFormatParams {
                 continue;
             if (ch < chCur)  // they are sorted.
                 return '\0';
-            return ch; // got it.
+            return ch;  // got it.
         }
         return '\0';  // nothing.
     }
@@ -74,7 +72,11 @@ struct GRAYCORE_LINK StrFormatParams {
 /// <typeparam name="TYPE"></typeparam>
 template <typename TYPE = char>
 struct GRAYCORE_LINK StrFormat : public StrFormatParams {
-    typedef StrLen_t(_cdecl* STRFORMAT_t)(TYPE* pszOut, StrLen_t nLenMax, const TYPE* pszFormat, ...);  // signature for testing. like sprintfN
+    typedef StrLen_t(_cdecl* STRFORMAT_t)(cSpanX<TYPE>& ret, const TYPE* pszFormat, ...);  // signature for testing. like StrT::sprintfN() and StrFormat::F()
+
+    StrFormat() {
+        ClearParams();
+    }
 
     /// <summary>
     /// Parse the mode for 1 single argument/param from a sprintf() format string.
@@ -94,7 +96,7 @@ struct GRAYCORE_LINK StrFormat : public StrFormatParams {
     /// <param name="nPrecision">how many chars from pszParam do we take? (not including '\0')</param>
     void RenderString(StrBuilder<TYPE>& out, const TYPE* pszParam, StrLen_t nParamLen, short nPrecision) const;
     void RenderUInt(StrBuilder<TYPE>& out, const TYPE* pszPrefix, RADIX_t nRadix, char chRadixA, UINT64 uVal) const;
-    void RenderFloat(StrBuilder<TYPE>& out, char chE, double dVal) const;
+    void RenderFloat(StrBuilder<TYPE>& out, double dVal, char chE = -'e') const;
 
     /// <summary>
     /// Render the current single parameter/spec.
@@ -102,11 +104,11 @@ struct GRAYCORE_LINK StrFormat : public StrFormatParams {
     void RenderParam(StrBuilder<TYPE>& out, va_list* pvlist) const;
 
     static void GRAYCALL V(StrBuilder<TYPE>& out, const TYPE* pszFormat, va_list vlist);
-    static inline StrLen_t GRAYCALL V(TYPE* pszOut, StrLen_t nLenOutMax, const TYPE* pszFormat, va_list vlist);
+    static inline StrLen_t GRAYCALL V(cSpanX<TYPE>& ret, const TYPE* pszFormat, va_list vlist);
 
     // variadic. sprintfN
     static inline void _cdecl F(StrBuilder<TYPE>& out, const TYPE* pszFormat, ...);
-    static inline StrLen_t _cdecl F(TYPE* pszOut, StrLen_t nLenOutMax, const TYPE* pszFormat, ...);
+    static inline StrLen_t _cdecl F(cSpanX<TYPE>& ret, const TYPE* pszFormat, ...);  // STRFORMAT_t for testing
 };
 
 /// <summary>
@@ -130,19 +132,18 @@ inline void _cdecl StrFormat<TYPE>::F(StrBuilder<TYPE>& out, const TYPE* pszForm
 }
 
 template <typename TYPE>
-inline StrLen_t GRAYCALL StrFormat<TYPE>::V(TYPE* pszOut, StrLen_t nLenOutMax, const TYPE* pszFormat, va_list vlist) {  // static
-    StrBuilder<TYPE> out(pszOut, nLenOutMax);
+inline StrLen_t GRAYCALL StrFormat<TYPE>::V(cSpanX<TYPE>& ret, const TYPE* pszFormat, va_list vlist) {  // static
+    StrBuilder<TYPE> out(ret);
     V(OUT out, pszFormat, vlist);
     return out.get_Length();
 }
 template <typename TYPE>
-inline StrLen_t _cdecl StrFormat<TYPE>::F(TYPE* pszOut, StrLen_t nLenOutMax, const TYPE* pszFormat, ...) {  // static
+inline StrLen_t _cdecl StrFormat<TYPE>::F(cSpanX<TYPE>& ret, const TYPE* pszFormat, ...) {  // static
     va_list vargs;
     va_start(vargs, pszFormat);
-    const StrLen_t nLenOut = V(pszOut, nLenOutMax, pszFormat, vargs);
+    const StrLen_t nLenOut = V(ret, pszFormat, vargs);
     va_end(vargs);
     return nLenOut;
 }
-
 }  // namespace Gray
 #endif

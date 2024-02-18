@@ -1,8 +1,6 @@
-//
 //! @file cPair.h
 //! Associate 2 arbitrary typed values.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cPair_H
 #define _INC_cPair_H
@@ -11,7 +9,7 @@
 #endif
 
 #include "cDebugAssert.h"
-#include "cValArray.h"  // ITERATE_t
+#include "cValSpan.h"  // ITERATE_t
 
 namespace Gray {
 /// <summary>
@@ -85,7 +83,7 @@ class cPair : public cPairT<_TYPE_A, _TYPE_B> {
         this->m_b = b;
     }
 
-    /// If element is a member of a static array. TODO use cSpan ?
+    /// If element is a member of a static array. TODO use cSpan ? NOT terminator.
     bool FindARetB(_TYPE_A a, _TYPE_B* pb) const noexcept {
         //! ASSUME static array.
         //! brute force lookup A to return corresponding B

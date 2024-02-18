@@ -1,7 +1,5 @@
-//
 //! @file cMemPage.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cMemPage_H
 #define _INC_cMemPage_H
@@ -22,7 +20,7 @@ class cMemPage : public cRefBase {
     friend class cMemPageMgr;
 
  public:
-    UINT_PTR m_nPageStart;         /// Always aligned to dwPageSize.
+    UINT_PTR m_nPageStart;         /// Pointer as number. Always aligned to dwPageSize.
     size_t m_nPageSize;            /// SystemInfo::dwPageSize
     DWORD m_dwOldProtectionFlags;  /// original flags used/returned by _WIN32 VirtualProtect()
     REFCOUNT_t m_nRefCount2;       /// ProtectPages count.
@@ -58,17 +56,20 @@ typedef cRefPtr<cMemPage> cMemPagePtr;
 /// Track my protected memory pages.
 /// _WIN32 ONLY allocates whole pages at a time, not just specified range of bytes. Pool these locked blocks.
 /// </summary>
-class cMemPageMgr : public cSingleton<cMemPageMgr> {
+class cMemPageMgr final : public cSingleton<cMemPageMgr> {
+    SINGLETON_IMPL(cMemPageMgr);
+
  public:
     DWORD m_dwPageSize;
     cArraySortValue<cMemPage, UINT_PTR> m_aPages;
 
- public:
+ protected:
     cMemPageMgr() noexcept : cSingleton<cMemPageMgr>(this, typeid(cMemPageMgr)), m_dwPageSize(0) {}
     virtual ~cMemPageMgr() noexcept {
         // Make sure this stuff doesnt get destroyed too early.
     }
 
+ public:
     HRESULT ProtectPages(const void* p, size_t nSize, bool bProtect) {
         //! Protect or un-protect these pages.
         if (m_dwPageSize == 0) {

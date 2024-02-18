@@ -1,16 +1,15 @@
-//
-//! @file cStreamTextReader.h
+//! @file cTextReader.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
-#ifndef _INC_cStreamTextReader_H
-#define _INC_cStreamTextReader_H
+#ifndef _INC_cTextReader_H
+#define _INC_cTextReader_H
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
 
 #include "cStreamStack.h"
 #include "cTextPos.h"
+#include "ITextWriter.h"
 
 namespace Gray {
 /// <summary>
@@ -18,14 +17,15 @@ namespace Gray {
 /// Allow control of read buffer size and line length.
 /// Faster than cStreamInput::ReadStringLine() since it buffers ? maybe ?
 /// m_nGrowSizeMax = max line size.
+/// opposite of ITextWriter.
 /// </summary>
-class GRAYCORE_LINK cStreamTextReader : public cStreamStackInp {
-    ITERATE_t m_iCurLineNum;  /// track the line number we are on currently. (0 based) (for cTextPos)
+class GRAYCORE_LINK cTextReaderStream : public cStreamStackInp {
+    ITERATE_t m_iLineNumCur;  /// track the line number we are on currently. (0 based) (for cTextPos.m_iLineNum)
  public:
     cStreamInput& m_rInp;  /// Source stream.
 
  public:
-    cStreamTextReader(cStreamInput& rInp, size_t nSizeLineMax) : cStreamStackInp(&rInp, nSizeLineMax), m_iCurLineNum(0), m_rInp(rInp) {
+    cTextReaderStream(cStreamInput& rInp, size_t nSizeLineMax) : cStreamStackInp(&rInp, nSizeLineMax), m_iLineNumCur(0), m_rInp(rInp) {
         // Max buffer size = max line length.
         this->put_AutoReadCommit(CastN(ITERATE_t, nSizeLineMax / 2));  // default = half buffer.
     }
@@ -48,7 +48,7 @@ class GRAYCORE_LINK cStreamTextReader : public cStreamStackInp {
 
  public:
     inline ITERATE_t get_CurrentLineNumber() const noexcept {
-        return m_iCurLineNum;
+        return m_iLineNumCur;
     }
 
     /// <summary>
@@ -62,7 +62,7 @@ class GRAYCORE_LINK cStreamTextReader : public cStreamStackInp {
     /// -lt- 0 = other error.</returns>
     HRESULT ReadStringLine(OUT const char** ppszLine);
 
-    HRESULT ReadStringLine(OUT char* pszBuffer, StrLen_t iSizeMax) override;
+    HRESULT ReadStringLine(cSpanX<char>& ret) override;
 
     HRESULT SeekX(STREAM_OFFSET_t iOffset, SEEK_t eSeekOrigin = SEEK_t::_Set) noexcept override;
 };

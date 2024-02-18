@@ -1,7 +1,5 @@
-//
 //! @file cPtrFacade.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cPtrFacade_H
 #define _INC_cPtrFacade_H
@@ -34,6 +32,29 @@ class cPtrFacade {
     /// </summary>
     cPtrFacade(THIS_t&& rref) : m_ptr(rref.m_ptr) {
         rref.m_ptr = nullptr;
+    }
+
+    inline TYPE** get_PPtr() noexcept {
+        // DANGER
+        // DEBUG_CHECK(!isValidPtr());
+        return &m_ptr;
+    }
+
+    /// <summary>
+    /// @note DANGER DONT call this unless you have a good reason. And you know what you are doing !
+    /// like put_Ptr() BUT sets the pointer WITHOUT adding a ref (if overload applicable). like get_PPtr().
+    /// used with Com interfaces where QueryInterface already increments the ref count.
+    /// </summary>
+    /// <param name="p"></param>
+    void AttachPtr(TYPE* p) noexcept {
+        m_ptr = p;
+    }
+    /// <summary>
+    /// just set this to nullptr.
+    /// override this to decrement a ref count or free memory.
+    /// </summary>
+    void ClearPtr() noexcept {
+        m_ptr = nullptr;
     }
 
  public:
@@ -79,9 +100,8 @@ class cPtrFacade {
     /// <returns></returns>
     template <class _DST_TYPE>
     _DST_TYPE* get_PtrT() const {
-        if (m_ptr == nullptr)  // this is ok.
-            return nullptr;
-        return PtrCastCheck<_DST_TYPE>(m_ptr);  // dynamic for DEBUG only. Should NEVER return nullptr here !
+        if (m_ptr == nullptr) return nullptr;  // this is ok.
+        return PtrCastCheck<_DST_TYPE>(this->get_Ptr());  // dynamic for DEBUG only. Should NEVER return nullptr here !
     }
 
     /// <summary>
@@ -106,30 +126,6 @@ class cPtrFacade {
         TYPE* p = m_ptr;
         m_ptr = nullptr;  // NOT ReleasePtr();
         return p;
-    }
-
- protected:
-    inline TYPE** get_PPtr() noexcept {
-        // DANGER
-        // DEBUG_CHECK(!isValidPtr());
-        return &m_ptr;
-    }
-
-    /// <summary>
-    /// @note DANGER DONT call this unless you have a good reason. And you know what you are doing !
-    /// like put_Ptr() BUT sets the pointer WITHOUT adding a ref (if overload applicable). like get_PPtr().
-    /// used with Com interfaces where QueryInterface already increments the ref count.
-    /// </summary>
-    /// <param name="p"></param>
-    void AttachPtr(TYPE* p) noexcept {
-        m_ptr = p;
-    }
-    /// <summary>
-    /// just set this to nullptr.
-    /// override this to decrement a ref count or free memory.
-    /// </summary>
-    void ClearPtr() noexcept {
-        m_ptr = nullptr;
     }
 };
 

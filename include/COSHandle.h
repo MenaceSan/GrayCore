@@ -1,8 +1,6 @@
-//
 //! @file cOSHandle.h
 //! Wrap the OS kernel handle (scoped auto-close). for _WIN32 or __linux__.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cOSHandle_H
 #define _INC_cOSHandle_H
@@ -16,10 +14,6 @@
 #include "cStreamProgress.h"  // STREAM_OFFSET_t , STREAM_POS_t, SEEK_t
 #include "cTimeSys.h"         // TIMESYSD_t
 
-namespace Gray {
-#define HANDLE_NULL NULL     /// Invalid OS handle for _WIN32. Not invalid OS handle for __linux__.
-#define WINHANDLE_NULL NULL  /// HWND, HPEN, etc are NOT OS Handles. like HWND_DESKTOP. like HANDLEPTR_NULL. This is a WINAPI void* handle via DECLARE_HANDLE like HWND, HPEN, HINSTANCE, etc. can't call CloseHandle() on it.
-
 #ifdef __linux__
 typedef int HANDLE;                                       /// an OS Handle. int not INT_PTR and not void* like _WIN32.
 static const HANDLE INVALID_HANDLE_VALUE = ((HANDLE)-1);  /// Invalid OS Handle. 0 is a valid OS handle in __linux__ but not in _WIN32. (0=stdin)
@@ -27,6 +21,10 @@ static const HANDLE INVALID_HANDLE_VALUE = ((HANDLE)-1);  /// Invalid OS Handle.
 typedef void* HMODULE;  /// ::dlclose() is different for __linux__ than _WIN32
 typedef void* HINSTANCE;
 #endif
+
+namespace Gray {
+#define HANDLE_NULL NULL     /// Invalid OS handle for _WIN32. Not invalid OS handle for __linux__.
+#define WINHANDLE_NULL NULL  /// HWND, HPEN, etc are NOT OS Handles. like HWND_DESKTOP. like HANDLEPTR_NULL. This is a WINAPI void* handle via DECLARE_HANDLE like HWND, HPEN, HINSTANCE, etc. can't call CloseHandle() on it.
 
 /// <summary>
 /// Wrap ownership of a OS Kernel HANDLE. (NOT a GUI or User handle)
@@ -37,7 +35,7 @@ typedef void* HINSTANCE;
 /// </summary>
 class GRAYCORE_LINK cOSHandle : protected cNonCopyable {
  public:
-    HANDLE m_h;
+    ::HANDLE m_h;
 
  protected:
     void CloseHandleLast() noexcept {
@@ -48,8 +46,11 @@ class GRAYCORE_LINK cOSHandle : protected cNonCopyable {
 
  public:
     explicit inline cOSHandle(HANDLE h = INVALID_HANDLE_VALUE) noexcept : m_h(h) {}
+    cOSHandle(const cOSHandle& h) noexcept : m_h(h.Duplicate()) {}
+    cOSHandle(cOSHandle&& h) noexcept : m_h(h.m_h) {
+        h.m_h = INVALID_HANDLE_VALUE;
+    }
 
-    cOSHandle(const cOSHandle& Handle) noexcept : m_h(Handle.Duplicate()) {}
     cOSHandle& operator=(const cOSHandle& Handle) {
         if (m_h != Handle.m_h) {
             AttachHandle(Handle.Duplicate());
@@ -61,13 +62,13 @@ class GRAYCORE_LINK cOSHandle : protected cNonCopyable {
         CloseHandleLast();
     }
 
-    operator HANDLE() const noexcept {
+    operator ::HANDLE() const noexcept {
         return m_h;
     }
-    HANDLE get_Handle() const noexcept {
+    ::HANDLE get_Handle() const noexcept {
         return m_h;
     }
-    HANDLE& ref_Handle() noexcept {
+    ::HANDLE& ref_Handle() noexcept {
         return m_h;
     }
 
@@ -77,7 +78,7 @@ class GRAYCORE_LINK cOSHandle : protected cNonCopyable {
     /// </summary>
     /// <param name="h"></param>
     /// <returns></returns>
-    static bool inline IsValidHandle(HANDLE h) noexcept {
+    static bool inline IsValidHandle(::HANDLE h) noexcept {
 #ifdef _WIN32
         if (h == HANDLE_NULL) return false;  /// 0 is never a valid handle value for _WIN32. (0=stdin for __linux__)
 #endif
@@ -93,7 +94,7 @@ class GRAYCORE_LINK cOSHandle : protected cNonCopyable {
     /// </summary>
     /// <param name="h"></param>
     /// <returns>true = ok</returns>
-    static inline bool CloseHandle(HANDLE h) noexcept {
+    static inline bool CloseHandle(::HANDLE h) noexcept {
         DEBUG_CHECK(IsValidHandle(h));
 #ifdef _WIN32
         const BOOL bRet = ::CloseHandle(h);  // ignored bool return.
@@ -105,7 +106,7 @@ class GRAYCORE_LINK cOSHandle : protected cNonCopyable {
     }
     void CloseHandle() noexcept {
         if (!isValidHandle()) return;
-        HANDLE h = m_h;
+        ::HANDLE h = m_h;
         m_h = INVALID_HANDLE_VALUE;
         CloseHandle(h);
     }
@@ -124,14 +125,14 @@ class GRAYCORE_LINK cOSHandle : protected cNonCopyable {
     }
 #endif
 
-    void AttachHandle(HANDLE h) noexcept {
+    void AttachHandle(::HANDLE h) noexcept {
         if (m_h != h) {
             CloseHandleLast();
             m_h = h;
         }
     }
-    HANDLE DetachHandle() noexcept {
-        HANDLE h = m_h;
+    ::HANDLE DetachHandle() noexcept {
+        ::HANDLE h = m_h;
         m_h = INVALID_HANDLE_VALUE;
         return h;
     }
@@ -217,7 +218,7 @@ class GRAYCORE_LINK cOSHandle : protected cNonCopyable {
         }
         return NewFilePointer.QuadPart;
 #else
-        DWORD dwRet = ::SetFilePointer(m_h, CastN(LONG, nOffset), nullptr, eSeekOrigin);
+        DWORD dwRet = ::SetFilePointer(m_h, CastN(LONG, nOffset), nullptr, CastN(DWORD, eSeekOrigin));
         if (dwRet == INVALID_SET_FILE_POINTER) return k_STREAM_POS_ERR;  // HResult::GetLast()
         return dwRet;
 #endif  // USE_FILE_POS64
@@ -234,7 +235,7 @@ class GRAYCORE_LINK cOSHandle : protected cNonCopyable {
     /// <param name="nOffset"></param>
     /// <param name="eSeekOrigin">SEEK_SET ?</param>
     /// <returns>the New position % int, -lt- 0=FAILED</returns>
-    HRESULT SeekX(STREAM_OFFSET_t nOffset, SEEK_t eSeekOrigin) const noexcept {
+    HRESULT SeekX(STREAM_OFFSET_t nOffset, SEEK_t eSeekOrigin = SEEK_t::_Set) const noexcept {
         if (!isValidHandle()) return E_HANDLE;
         const STREAM_POS_t nPos = SeekRaw(nOffset, eSeekOrigin);
         if (nPos == k_STREAM_POS_ERR) return HResult::GetLastDef();
@@ -274,7 +275,7 @@ class GRAYCORE_LINK cOSHandle : protected cNonCopyable {
     /// <param name="bInheritHandle"></param>
     /// <param name="dwOptions">DUPLICATE_CLOSE_SOURCE | DUPLICATE_SAME_ACCESS (ignore dwDesiredAccess)</param>
     /// <returns></returns>
-    HANDLE Duplicate(HANDLE hTargetProcess = INVALID_HANDLE_VALUE, DWORD dwDesiredAccess = DUPLICATE_SAME_ACCESS, bool bInheritHandle = false, DWORD dwOptions = DUPLICATE_SAME_ACCESS) const {
+    ::HANDLE Duplicate(HANDLE hTargetProcess = INVALID_HANDLE_VALUE, DWORD dwDesiredAccess = DUPLICATE_SAME_ACCESS, bool bInheritHandle = false, DWORD dwOptions = DUPLICATE_SAME_ACCESS) const {
         ASSERT(isValidHandle());
         HANDLE hNewHandle = INVALID_HANDLE_VALUE;
         HANDLE hCurrentProcess = ::GetCurrentProcess();
@@ -284,7 +285,7 @@ class GRAYCORE_LINK cOSHandle : protected cNonCopyable {
         return hNewHandle;
     }
 #elif defined(__linux__)
-    HANDLE Duplicate() const {
+    ::HANDLE Duplicate() const {
         // http://linux.about.com/library/cmd/blcmdl2_dup.htm
         return ::dup(m_h);
     }

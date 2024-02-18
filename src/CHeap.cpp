@@ -1,4 +1,3 @@
-//
 //! @file cHeap.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 // clang-format off
@@ -18,21 +17,16 @@
 
 namespace Gray {
 HANDLE cHeapCommon::g_hHeap = ::GetProcessHeap();  // Global singleton.
-ITERATE_t cHeapCommon::sm_nAllocs = 0;
-#ifdef USE_HEAP_STATS
-size_t cHeapCommon::sm_nAllocTotalBytes = 0;
-#endif
+cHeapStats cHeapCommon::g_Stats;
 
-size_t GRAYCALL cHeapCommon::GetAlign(const void* pData) noexcept  // static
-{
+size_t GRAYCALL cHeapCommon::GetAlign(const void* pData) noexcept { // static
     // ASSUME >= k_SizeAlignDef. 1,2,4,8,16,32
     auto bits = cBits::Lowest1Bit(PtrCastToNum(pData));
     if (bits == 0) return 0;
     return cBits::Mask1<size_t>(bits - 1);
 }
 
-UINT64 GRAYCALL cHeapCommon::get_PhysTotal()  // static
-{
+UINT64 GRAYCALL cHeapCommon::get_PhysTotal() { // static
 #ifdef UNDER_CE
     ::MEMORYSTATUS ms;
     ms.dwLength = sizeof(ms);
@@ -118,7 +112,7 @@ bool GRAYCALL cHeap::IsValidInside(const void* pData, ptrdiff_t iOffset) noexcep
     if (iOffset < 0)  // never ok. even if aligned.
         return false;
     if (!cHeap::IsValidHeap(pData)) return false;
-    const size_t nSize = cHeap::GetSize(pData);
+    const size_t nSize = GetSize(pData);
     if ((size_t)iOffset >= nSize) return false;
     return true;
 }
@@ -127,12 +121,12 @@ void GRAYCALL cHeap::FreePtr(void* pData) noexcept {  // static
     if (pData == nullptr) return;
     CODEPROFILEFUNC();
 #if defined(_DEBUG)
-    DEBUG_CHECK(cHeap::IsValidHeap(pData));
+    DEBUG_CHECK(IsValidHeap(pData));
 #endif
-    cHeap::sm_nAllocs--;
 #ifdef USE_HEAP_STATS
-    size_t nSizeAllocated = cHeap::GetSize(pData);
-    sm_nAllocTotalBytes -= nSizeAllocated;
+    g_Stats.Free(GetSize(pData));
+#else
+    g_Stats.Free();
 #endif
 #if defined(_WIN32) && !USE_CRT
     ::HeapFree(g_Heap, 0, pData);
@@ -157,18 +151,18 @@ void* GRAYCALL cHeap::AllocPtr(size_t iSize) {  // static // throw(std::bad_allo
     void* pData = ::malloc(iSize);         // nh_malloc_dbg.
 #endif
     if (pData == nullptr) {
-        // I asked for too much!
         DEBUG_ASSERT(0, "malloc");
-        return nullptr;  // E_OUTOFMEMORY
+        return nullptr;  // E_OUTOFMEMORY   // I asked for too much!
     }
 #if defined(_DEBUG)
     ASSERT(cHeap::IsValidHeap(pData));
 #endif
-    cHeap::sm_nAllocs++;
 #ifdef USE_HEAP_STATS
-    size_t nSizeAllocated = cHeap::GetSize(pData);  // the actual size.
+    const size_t nSizeAllocated = GetSize(pData);  // the actual size.
     ASSERT(nSizeAllocated >= iSize);
-    sm_nAllocTotalBytes += nSizeAllocated;  // actual alloc size may be diff from requested size.
+    g_Stats.Alloc(nSizeAllocated);
+#else
+    g_Stats.Alloc();
 #endif
     return pData;
 }
@@ -191,26 +185,29 @@ void* GRAYCALL cHeap::ReAllocPtr(void* pData, size_t iSize) {  // static
         pData2 = ::malloc(iSize);          // nh_malloc_dbg.
 #endif
     } else {
+#ifdef USE_HEAP_STATS
+        g_Stats.Free(GetSize(pData)); // act as though it was freed.
+#else
+        g_Stats.Free();      // act as though it was freed.
+#endif
 #if defined(_WIN32) && !USE_CRT
         pData2 = ::HeapReAlloc(g_hHeap, 0, pData, iSize);
 #else
         pData2 = ::realloc(pData, iSize);  // nh_malloc_dbg.
 #endif
-#ifdef USE_HEAP_STATS
-        sm_nAllocTotalBytes -= cHeap::GetSize(pData);
-#endif
-        cHeap::sm_nAllocs--;
     }
     if (pData2 == nullptr) {
         // I asked for too much!
         DEBUG_ASSERT(iSize == 0, "realloc");  // 0 sized malloc may or may not return nullptr ? not sure why.
         return nullptr;
     }
-    cHeap::sm_nAllocs++;
+
 #ifdef USE_HEAP_STATS
-    size_t nSizeAllocated = cHeap::GetSize(pData2);
-    ASSERT(nSizeAllocated >= 0 && nSizeAllocated >= iSize);
-    sm_nAllocTotalBytes += nSizeAllocated;  // alloc size may be different than requested size.
+    const size_t nSizeAllocated = GetSize(pData2);  // alloc size may be different than requested size.
+    ASSERT(nSizeAllocated >= iSize);
+    g_Stats.Alloc(nSizeAllocated);
+#else
+    g_Stats.Alloc();
 #endif
     return pData2;
 }
@@ -251,7 +248,7 @@ bool GRAYCALL cHeap::IsValidHeap(const void* pData) noexcept {  // static
 //********************************************
 
 #if defined(_MSC_VER) && (_MSC_VER >= 1300)
-// #pragma pack(1)
+// #pragma pack(4)
 /// <summary>
 /// Internal prefix for Aligned block of memory. allocated using _aligned_malloc or malloc.
 /// VERY DANGEROUS to use internal structure like this!
@@ -341,10 +338,10 @@ void GRAYCALL cHeapAlign::FreePtr(void* pData) {  // static
     if (pData == nullptr) return;
 
 #ifdef USE_HEAP_STATS
-    size_t nSizeAllocated = GetSize(pData);  // can't call _msize for aligned directly.
-    sm_nAllocTotalBytes -= nSizeAllocated;
+    g_Stats.Free(GetSize(pData));   // can't call _msize for aligned directly.
+#else
+    g_Stats.Free();
 #endif
-    sm_nAllocs--;
 
 #if defined(_WIN32) && !defined(UNDER_CE) && USE_CRT
     ::_aligned_free(pData);  // CAN'T just use free() ! we need to undo the padding.
@@ -382,12 +379,13 @@ void* GRAYCALL cHeapAlign::AllocPtr(size_t iSize, size_t iAlignment) {  // stati
     ASSERT(cHeapAlign::IsHeapAlign(pData));
 
 #ifdef USE_HEAP_STATS
-    size_t nSizeAllocated = GetSize(pData);  // can't call _msize for aligned directly.
+    const size_t nSizeAllocated = GetSize(pData);  // can't call _msize for aligned directly.
     ASSERT(nSizeAllocated >= iSize);
     ASSERT(nSizeAllocated >= iAlignment);
-    sm_nAllocTotalBytes += nSizeAllocated;  // alloc size may be different than requested size.
+    g_Stats.Alloc(nSizeAllocated);
+#else
+    g_Stats.Alloc();
 #endif
-    sm_nAllocs++;
     return pData;
 }
 #endif  // defined(_MSC_VER) && _MSC_VER >= 1300

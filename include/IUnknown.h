@@ -1,8 +1,7 @@
-//
 //! @file IUnknown.h
 //! support for COM style interfaces. might even be used in __linux__.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
+
 #ifndef _INC_IUnknown_H
 #define _INC_IUnknown_H
 #ifndef NO_PRAGMA_ONCE
@@ -91,17 +90,9 @@ MIDL_INTERFACE("00000000-0000-0000-C000-000000000046") IUnknown {
     //! @note Do not have multiple inheritance in interface definitions. MultiInherit is for classes not for interfaces.
     //!  or if you do, don't make IUnknown base ambiguous to resolve in the interface! Leave that for classes.
 
-#define IUNKNOWN_DISAMBIG_R(TYPE)      \
-    STDMETHOD_(ULONG, AddRef)          \
-    (void) override /* disambiguate.*/ \
-    {                                  \
-        return TYPE::AddRef();         \
-    }                                  \
-    STDMETHOD_(ULONG, Release)         \
-    (void) override /* disambiguate.*/ \
-    {                                  \
-        return TYPE::Release();        \
-    }
+#define IUNKNOWN_DISAMBIG_R(TYPE)                                   \
+    STDMETHOD_(ULONG, AddRef)() override { return TYPE::AddRef(); } \
+    STDMETHOD_(ULONG, Release)() override { return TYPE::Release(); }
 
 // IUNKNOWN_DISAMBIG_R and the QueryInterface() call. use this TYPE.
 #define IUNKNOWN_DISAMBIG(TYPE)                                                                                                                                                \

@@ -84,7 +84,7 @@ HRESULT cFileDevice::UpdateInfo(const FILECHAR_t* pszDeviceId) {
 
     m_sVolumeName = szVolumeNameBuffer;
     m_sTypeName = szFileSystemNameBuffer;  // "NTFS" or "FAT"
-    m_eType = (FILESYS_t)StrT::TableFindHead(szFileSystemNameBuffer, k_FileSysName);
+    m_eType = (FILESYS_t)StrT::SpanFindHead(szFileSystemNameBuffer, TOSPAN(k_FileSysName));
     if (m_eType < FILESYS_t::_DEFAULT) m_eType = FILESYS_t::_NTFS;
     m_bCaseSensitive = (dwFlags & FILE_CASE_SENSITIVE_SEARCH);
 
@@ -208,7 +208,7 @@ HRESULT GRAYCALL cFileDevice::GetSystemDeviceList(cArrayString<FILECHAR_t>& a) {
     FILECHAR_t szTmp[_MAX_PATH];
     FILECHAR_t* pszVol = szTmp;
     pszVol[0] = '\0';
-    DWORD dwLen = _FNF(::GetLogicalDriveStrings)(STRMAX(szTmp), szTmp);
+    const DWORD dwLen = _FNF(::GetLogicalDriveStrings)(STRMAX(szTmp), szTmp);
     if (dwLen <= 0) {
         return E_FAIL;
     }
@@ -220,8 +220,7 @@ HRESULT GRAYCALL cFileDevice::GetSystemDeviceList(cArrayString<FILECHAR_t>& a) {
     cFileDir fdr;
     HRESULT hRes1 = fdr.ReadDir(FILESTR_DirSep "dev" FILESTR_DirSep "disk");
     if (FAILED(hRes1)) return hRes1;
-    for (int i = 0; i < hRes1; i++) {
-        const cFileFindEntry& entry = fdr.GetEnumFile(i);
+    for (const cFileFindEntry& entry : fdr.m_aFiles) {
         a.Add(entry.get_Name());
     }
 #else
@@ -234,12 +233,10 @@ HRESULT GRAYCALL cFileDevice::GetSystemDeviceList(cArrayString<FILECHAR_t>& a) {
 
 cFileFind::cFileFind(cStringF sDir, DWORD nFileFlags) noexcept
     : m_sDirPath(sDir),
-      m_nFileFlags(nFileFlags)
-#ifdef _WIN32
-      ,
+      m_nFileFlags(nFileFlags),
+#ifdef _WIN32    
       m_hContext(INVALID_HANDLE_VALUE)
-#elif defined(__linux__)
-      ,
+#elif defined(__linux__)    
       m_bReadStats(true),
       m_hContext(nullptr)
 #endif
@@ -285,11 +282,11 @@ HRESULT cFileFind::FindFileNext(bool bFirst) {
 
     m_FileEntry.m_sFileName = m_FindInfo.cFileName;  // How should we deal with USE_UNICODE_FN names ? Use UTF8
 
-    if (!cBits::HasMask<DWORD>(m_nFileFlags, FOF_X_WantDots) && isDots()) {  // ignore the . and .. that old systems can give us.
+    if (!cBits::HasAny<DWORD>(m_nFileFlags, FOF_X_WantDots) && isDots()) {  // ignore the . and .. that old systems can give us.
         return FindFileNext(false);
     }
 
-    if (cBits::HasMask<DWORD>(m_nFileFlags, FOF_X_FollowLinks) && cBits::HasMask<DWORD>(m_FindInfo.dwFileAttributes, FILE_ATTRIBUTE_REPARSE_POINT)) {
+    if (cBits::HasAny<DWORD>(m_nFileFlags, FOF_X_FollowLinks) && cBits::HasAny<DWORD>(m_FindInfo.dwFileAttributes, FILE_ATTRIBUTE_REPARSE_POINT)) {
     }
 
     m_FileEntry.InitFileStatus(m_FindInfo);
@@ -324,7 +321,7 @@ HRESULT cFileFind::FindFileNext(bool bFirst) {
 
     if (m_bReadStats) {  // some dirs don't have stat() ability. e.g. "/proc"
         // dirent() doesn't have this stuff...it's in stat()
-        cString sFileName = GetFilePath(m_FileEntry.m_sFileName);
+        cStringF sFileName = GetFilePath(m_FileEntry);
         cFileStatusSys statusSys;
         HRESULT hRes = GetStatusSys(statusSys, sFileName, this->m_nFileFlags & FOF_X_FollowLinks);
         if (FAILED(hRes)) {
@@ -472,8 +469,7 @@ HRESULT cFileDir::ReadDir(const FILECHAR_t* pszDirPath, const FILECHAR_t* pszWil
         if (FAILED(hRes)) continue;
         iFiles++;
         hRes = state.FindFileNext();
-        if (FAILED(hRes))  // HRESULT_WIN32_C(ERROR_NO_MORE_ITEMS) is normal.
-            break;
+        if (FAILED(hRes)) break;  // HRESULT_WIN32_C(ERROR_NO_MORE_ITEMS) is normal.            
     }
 
     return (HRESULT)iFiles;  // number of files.
@@ -485,7 +481,7 @@ HRESULT cFileDir::ReadDirAnyExt(const FILECHAR_t* pszFilePath, ITERATE_t iFilesM
     return ReadDir(cFilePath::GetFileDir(pszFilePath), cFilePath::GetNameExtStar(pszFilePath), iFilesMax);
 }
 
-HRESULT cFileDir::ReadDirPreferredExt(const FILECHAR_t* pszFilePath, const FILECHAR_t* const* pszExtTable) {
+HRESULT cFileDir::ReadDirPreferredExt(const FILECHAR_t* pszFilePath, const cSpan<const FILECHAR_t*> exts) {
     //! Find just a single file with the preferred extension from a list.
     //! Ignore any existing extension
     //! @arg
@@ -505,14 +501,11 @@ HRESULT cFileDir::ReadDirPreferredExt(const FILECHAR_t* pszFilePath, const FILEC
     cFileFindEntry* aEntries[k_ExtMax];  // sorted by extension.
     cMem::Zero(aEntries, sizeof(aEntries));
     for (int i = 0; i < (int)hFiles; i++) {
-        const FILECHAR_t* pszExt = cFilePath::GetFileNameExt(GetEnumTitleX(i));
+        const FILECHAR_t* pszExt = cFilePath::GetFileNameExt(m_aFiles.GetAt(i).get_Name());
         if (pszExt == nullptr) continue;
-        ITERATE_t iExt = StrT::TableFind(pszExt, pszExtTable);
+        ITERATE_t iExt = StrT::SpanFind(pszExt, exts);
         if (IS_INDEX_BAD_ARRAY(iExt, aEntries)) continue;
-        if (iExt >= (ITERATE_t)_countof(aEntries))  // overflow !
-        {
-            continue;
-        }
+        if (iExt >= (ITERATE_t)_countof(aEntries)) continue;          // overflow !
         aEntries[iExt] = &m_aFiles[i];
         iFound++;
     }
@@ -637,8 +630,8 @@ HRESULT GRAYCALL cFileDir::DirFileOp(FILEOP_t eOp, const FILECHAR_t* pszDirSrc, 
             break;
     }
 
-    cFileDir filedir;
-    HRESULT hResCount = filedir.ReadDir(pszDirSrc, pszWildcards);
+    cFileDir fileDir;
+    HRESULT hResCount = fileDir.ReadDir(pszDirSrc, pszWildcards);
     if (FAILED(hResCount)) return hResCount;
     if (hResCount <= 0) return S_OK;  // no files moved.
 
@@ -649,21 +642,20 @@ HRESULT GRAYCALL cFileDir::DirFileOp(FILEOP_t eOp, const FILECHAR_t* pszDirSrc, 
     }
 
     int iErrors = 0;
-    for (int i = 0; i < (int)hResCount; i++) {
+    for (const cFileFindEntry& fileEntry : fileDir.m_aFiles) {
         // Move each of the files.
-        const cFileFindEntry& FileEntry = filedir.GetEnumFile(i);  // entry in the local directory.
         if (nFileFlags & FOF_FILESONLY) {
-            if (FileEntry.isAttrDir()) continue;
+            if (fileEntry.isAttrDir()) continue;
         }
 
-        cStringF sFilePathSrc = filedir.GetEnumPath(i);
-        cStringF sFileTitle = filedir.GetEnumTitleX(i);
+        cStringF sFileTitle = fileEntry.get_Name();
+        cStringF sFilePathSrc = fileDir.GetFilePath(sFileTitle);
         cStringF sFilePathDst;
         if (eOp == FILEOP_t::Move || eOp == FILEOP_t::Copy || eOp == FILEOP_t::Rename) {
             sFilePathDst = cFilePath::CombineFilePathX(pszDirDest, sFileTitle);
         }
 
-        if (FileEntry.isAttrDir()) {
+        if (fileEntry.isAttrDir()) {
             // Recursive descent.
             if (eOp == FILEOP_t::_Delete) {
                 if (StrT::IsWhitespace(pszWildcards)) {
@@ -698,7 +690,7 @@ HRESULT GRAYCALL cFileDir::DirFileOp(FILEOP_t eOp, const FILECHAR_t* pszDirSrc, 
                 if (pLog != nullptr) {
                     pLog->addEventF(LOG_ATTR_INIT, LOGLVL_t::_ERROR, "%s\"%s\" ERR=\"%s\". '%s' to '%s'.", LOGSTR(k_szCantMoveFile),
                                     LOGSTR(sFileTitle),  // cFilePath::MakeRelativePath( sFilePathDst, pszDirDest )
-                                    LOGERR(hRes), LOGSTR(filedir.get_DirPath()), LOGSTR(pszDirDest));
+                                    LOGERR(hRes), LOGSTR(fileDir.get_DirPath()), LOGSTR(pszDirDest));
                 }
             }
         }

@@ -1,4 +1,3 @@
-//
 //! @file cUInt64.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 // clang-format off
@@ -9,13 +8,11 @@
 #include "cUInt64.h"
 
 namespace Gray {
-#ifndef GRAY_STATICLIB  // force implementation/instantiate for DLL/SO.
-template class GRAYCORE_LINK cBitmask<UINT64>;
-#endif
+template class GRAYCORE_LINK cBitmask<UINT64>;  // force implementation/instantiate for DLL/SO.
 
-StrLen_t cUInt64::GetStr(char* pszOut, StrLen_t iOutMax, RADIX_t uRadixBase) const {
+void cUInt64::BuildStr(StrBuilder<char>& ret, RADIX_t uRadixBase) const {
 #ifdef USE_INT64
-    return StrT::ULtoA(m_u, pszOut, iOutMax, uRadixBase);
+    ret.AdvanceWrite(StrT::ULtoA(m_u, ret.get_SpanWrite(), uRadixBase));
 #else
     ASSERT(0);  // TODO
     return 0;
@@ -26,7 +23,7 @@ cString cUInt64::GetStr(RADIX_t uRadixBase) const {
     //! encode value as string.
     //! @note We can estimate the max string size via get_Highest1Bit()
     char szTmp[StrNum::k_LEN_MAX_DIGITS_INT];
-    GetStr(szTmp, _countof(szTmp), uRadixBase);
+    BuildStr(StrBuilder<char>(TOSPAN(szTmp)), uRadixBase);
     return szTmp;
 }
 
@@ -51,7 +48,7 @@ BIT_ENUM_t cUInt64::get_Highest1Bit() const {
 HRESULT cUInt64::SetRandomBits(BIT_ENUM_t nBits) {
     ASSERT(nBits <= 64);
 #ifdef USE_INT64
-    g_Rand.GetNoise(&m_u, sizeof(m_u));
+    g_Rand.GetNoise(TOSPANT(m_u));
     m_u &= (((UNIT_t)1) << nBits) - 1;
 #else
     m_uLo = g_Rand.get_RandUns();

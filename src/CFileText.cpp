@@ -1,4 +1,3 @@
-//
 //! @file cFileText.cpp
 //! see http://www.codeproject.com/file/handles.asp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
@@ -18,9 +17,14 @@
 #endif
 
 namespace Gray {
+template <>
+GRAYCORE_LINK void CloseHandleType(::FILE* p) noexcept {
+    ::fclose(p);                                   // ignored BOOL return.
+}
+
 HRESULT cFileTextBase::ReadStringLineA(OUT cStringA& r) {
     char szTmp[StrT::k_LEN_Default];
-    HRESULT hRes = ReadStringLine(szTmp, STRMAX(szTmp));
+    HRESULT hRes = ReadStringLine(TOSPAN(szTmp));
     if (FAILED(hRes)) return hRes;
     r = szTmp;
     return hRes;
@@ -94,7 +98,7 @@ HRESULT cFileText::OpenFileHandle(HANDLE h, OF_FLAGS_t nOpenFlags) {
 }
 
 HRESULT cFileText::OpenX(cStringF sFilePath, OF_FLAGS_t nOpenFlags) {
-    m_iCurLineNum = 0;
+    m_iLineNumCur = 0;
 
     HRESULT hRes = OpenSetup(sFilePath, nOpenFlags);
     if (FAILED(hRes)) {
@@ -173,11 +177,11 @@ HRESULT cFileText::SeekX(STREAM_OFFSET_t offset, SEEK_t eSeekOrigin) noexcept { 
 
     if (eSeekOrigin == SEEK_t::_Set) {  // SEEK_SET = FILE_BEGIN
         if (offset == 0) {
-            m_iCurLineNum = 0;  // i actually know the line number for this position.
+            m_iLineNumCur = 0;  // i actually know the line number for this position.
         }
         return (HRESULT)offset;
     }
-    m_iCurLineNum = k_ITERATE_BAD;  // invalid. no idea what the line number is now!
+    m_iLineNumCur = k_ITERATE_BAD;  // invalid. no idea what the line number is now!
     return S_OK;
 }
 
@@ -233,7 +237,7 @@ HRESULT cFileText::ReadX(void* pBuffer, size_t nSizeMax) noexcept {  // virtual
     if (uRet > nSizeMax) {
         return HResult::GetDef(GetStreamError(), HRESULT_WIN32_C(ERROR_READ_FAULT));
     }
-    // m_iCurLineNum++; // no idea.
+    // m_iLineNumCur++; // no idea.
     return CastN(HRESULT, uRet);  // size we got. 0 = end of file?
 }
 
@@ -250,7 +254,7 @@ HRESULT cFileText::WriteX(const void* pData, size_t nDataSize) {  // virtual
         return HResult::GetDef(GetStreamError(), HRESULT_WIN32_C(ERROR_WRITE_FAULT));
     }
 
-    m_iCurLineNum++;  // count lines ??
+    m_iLineNumCur++;  // count lines ??
 
     return CastN(HRESULT, nDataSize);
 }
@@ -270,12 +274,12 @@ HRESULT cFileText::WriteString(const char* pszStr) {  // virtual
         return HResult::GetDef(GetStreamError(), HRESULT_WIN32_C(ERROR_WRITE_FAULT));
     }
 
-    m_iCurLineNum++;  // count lines ??
+    m_iLineNumCur++;  // count lines ??
     return 1;
 }
 
 #if 0
-	HRESULT cFileText::ReadStringLine(wchar_t* pszBuffer, StrLen_t iSizeMax) { // virtual
+	HRESULT cFileText::ReadStringLine(cSpanX<wchar_t>& ret ) { // virtual
 		//! override cStream
 		//! Read a single line of text. like fgets()
 		//! @return length of the string read in chars. (includes \r\n) (not including '\0')
@@ -284,7 +288,7 @@ HRESULT cFileText::WriteString(const char* pszStr) {  // virtual
 	}
 #endif
 
-HRESULT cFileText::ReadStringLine(char* pszBuffer, StrLen_t iSizeMax) {  // virtual
+HRESULT cFileText::ReadStringLine(cSpanX<char>& ret) {  // virtual
     //! override cStream
     //! Read a line of text. like fgets().
     //! Read up until (including) newline character = \n = The newline character, if read, is included in the string.
@@ -293,13 +297,11 @@ HRESULT cFileText::ReadStringLine(char* pszBuffer, StrLen_t iSizeMax) {  // virt
     //!  0 = EOF (legit end of file).
     //!  < 0 = other error
 
-    if (pszBuffer == nullptr) return E_INVALIDARG;
-
+    if (ret.isNull()) return E_INVALIDARG;
     if (!isValidHandle()) return HRESULT_WIN32_C(ERROR_INVALID_TARGET_HANDLE);
-    if (isEOF()) {
-        return 0;  // __linux__ will ASSERT if we read past end.
-    }
-    char* pszRet = ::fgets(pszBuffer, iSizeMax, m_pStream);
+    if (isEOF()) return 0;  // __linux__ will ASSERT if we read past end.
+     
+    char* pszRet = ::fgets(ret.get_DataWork(), ret.get_MaxLen(), m_pStream);
     if (pszRet == nullptr) {
         if (isEOF()) {  // legit end of file
             return 0;
@@ -307,8 +309,8 @@ HRESULT cFileText::ReadStringLine(char* pszBuffer, StrLen_t iSizeMax) {  // virt
         return HResult::GetDef(GetStreamError(), HRESULT_WIN32_C(ERROR_READ_FAULT));
     }
 
-    if (m_iCurLineNum >= 0) m_iCurLineNum++;
-    return StrT::Len(pszBuffer);  // Return length in chars.
+    if (m_iLineNumCur >= 0) m_iLineNumCur++;
+    return StrT::Len(ret.get_DataConst());  // Return length in chars.
 }
 
 bool cFileText::put_TextPos(const cTextPos& rPos) {
@@ -316,7 +318,7 @@ bool cFileText::put_TextPos(const cTextPos& rPos) {
     if (!rPos.isValidPos()) return false;
     HRESULT hRes = SeekX(rPos.get_Offset(), SEEK_t::_Set);
     if (FAILED(hRes)) return false;
-    m_iCurLineNum = rPos.get_LineNum();
+    m_iLineNumCur = rPos.get_LineNum();
     return true;
 }
 #endif

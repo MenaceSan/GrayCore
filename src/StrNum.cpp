@@ -1,4 +1,3 @@
-//
 //! @file StrNum.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 // clang-format off
@@ -9,14 +8,15 @@
 #include "cFloat.h"
 #include "cFloatDeco.h"
 #include "cTypes.h"
-#include "cValArray.h"
+#include "cValSpan.h"
 
 namespace Gray {
-StrLen_t GRAYCALL StrNum::GetTrimCharsLen(const char* pszInp, StrLen_t nLen, char ch) noexcept {  // static
+StrLen_t GRAYCALL StrNum::GetTrimCharsLen(const cSpan<char>& src, char ch) noexcept {  // static
     //! Get Length of string if all ch chars are trimmed from the end.
-    if (pszInp == nullptr) return 0;
+    if (src.isNull()) return 0;
+    StrLen_t nLen = src.get_MaxLen();
     for (; nLen > 0; nLen--) {
-        if (pszInp[nLen - 1] != ch) break;
+        if (src.get_DataConst()[nLen - 1] != ch) break;
     }
     return nLen;
 }
@@ -105,14 +105,7 @@ INT64 GRAYCALL StrNum::toIL(const char* pszInp, const char** ppszInpEnd, RADIX_t
 
 //*************************************************************************************
 
-StrLen_t GRAYCALL StrNum::ULtoAK(UINT64 uVal, OUT char* pszOut, StrLen_t iStrMax, UINT nKUnit, bool bSpaceBeforeUnit) {
-    //! Make string describing a value in K/M/G/T/P/E/Z/Y units. (Kilo,Mega,Giga,Tera,Peta,Exa,Zetta,Yotta)
-    //! @arg nKUnit = 1024 default
-    //! @note
-    //!  Kilo=10^3,2^10, Exa=10^18,2^60, Zetta=10^21,2^70, (http://searchstorage.techtarget.com/sDefinition/0,,sid5_gci499008,00.html)
-    //! @return
-    //!  length of string created.
-
+StrLen_t GRAYCALL StrNum::ULtoAK(UINT64 uVal, cSpanX<char>& ret, UINT nKUnit, bool bSpaceBeforeUnit) {
     static const char k_chKUnits[10] = "\0KMGTPEZY";
     if (nKUnit <= 0)  // default.
         nKUnit = 1024;
@@ -125,11 +118,12 @@ StrLen_t GRAYCALL StrNum::ULtoAK(UINT64 uVal, OUT char* pszOut, StrLen_t iStrMax
 
     StrLen_t iLenUse;
     if (i == 0) {
-        iLenUse = ULtoA(uVal, pszOut, iStrMax);  // _CVTBUFSIZE
+        iLenUse = ULtoA(uVal, ret);  // _CVTBUFSIZE
     } else {
         // limit to 2 decimal places ?
-        iLenUse = DtoAG(dVal, pszOut, iStrMax, 2, '\0');  // NOT 'inf' or NaN has no units.
-        if (iLenUse > 0 && iLenUse <= iStrMax - 3 && !StrChar::IsAlpha(pszOut[0])) {
+        iLenUse = DtoAG(dVal, ret, 2, '\0');  // NOT 'inf' or NaN has no units.
+        char* pszOut = ret.get_DataWork();
+        if (iLenUse > 0 && iLenUse <= ret.get_MaxLen() - 3 && !StrChar::IsAlpha(pszOut[0])) {
             if (bSpaceBeforeUnit) {  // insert a space or not?
                 pszOut[iLenUse++] = ' ';
             }
@@ -141,68 +135,43 @@ StrLen_t GRAYCALL StrNum::ULtoAK(UINT64 uVal, OUT char* pszOut, StrLen_t iStrMax
 }
 
 #if 0
-StrLen_t GRAYCALL StrNum::GetSizeA(UINT64 uVal, char chRadixA) {
-    // How many digits for this number? Highest1Bit
+StrLen_t GRAYCALL StrNum::GetSizeRadix(UINT64 uVal, RADIX_t nBaseRadix) {   // static
+    // How many nBaseRadix digits for this number?
+    // TODO Highest1Bit for powers of 2? IsMask1()
+    // like: GetCountDecimalDigit32()
+    StrLen_t i=0;
+    for (;uVal>0; i++) {
+        uVal /= nBaseRadix;
+    }
+    return i;
 }
 #endif
 
-char* GRAYCALL StrNum::ULtoARev(UINT64 uVal, OUT char* pszOut, StrLen_t iStrMax, RADIX_t nBaseRadix, char chRadixA) {
-    ASSERT_NN(pszOut);
-    ASSERT(iStrMax > 0);
-    ASSERT(nBaseRadix <= StrChar::k_uRadixMax);
-
-    if (nBaseRadix < StrChar::k_uRadixMin) nBaseRadix = 10;
-    iStrMax--;
-    char* pDigits = pszOut + iStrMax;
-    *pDigits = '\0';
-
-    // ? Shortcut for nBaseRadix = 16 = no modulus
-
-    while (pDigits > pszOut) {
-        const UINT64 d = uVal % nBaseRadix;
-        *(--pDigits) = CastN(char, d + (d < 10 ? '0' : (chRadixA - 10)));  // StrChar::U2Radix
-        uVal /= nBaseRadix;
-        if (!uVal) break;  // done.
-    }
-    return pDigits;
-}
-
-StrLen_t GRAYCALL StrNum::ULtoA(UINT64 uVal, OUT char* pszOut, StrLen_t iStrMax, RADIX_t nBaseRadix) {
-    //! Format a number as a string similar to sprintf("%u")  upper case radix default.
-    //! like _itoa(iValue,pszOut,iRadix), FromInteger() and RtlIntegerToUnicodeString() or _itoa_s()
-    //! Leading zero on hex string. (if room)
-    //! @arg
-    //!  nBaseRadix = 10 default
-    //!  iStrMax = _CVTBUFSIZE = _countof(Dst) = includes room for '\0'. (just like cMem::Copy)
-    //! @return
-    //!  length of the string.
-
+StrLen_t GRAYCALL StrNum::ULtoA(UINT64 uVal, cSpanX<char>& ret, RADIX_t nBaseRadix) {
     char szTmp[StrNum::k_LEN_MAX_DIGITS_INT + 2];  // bits in int is all we really need max. (i.e. nBaseRadix=2)
-    char* pDigits = ULtoARev(uVal, szTmp, _countof(szTmp), nBaseRadix);
-    if (nBaseRadix == 16 && uVal != 0) {  // give hex a leading 0 if there is room. except if its 0 value.
-        StrLen_t iLenInc = StrT::Diff(szTmp + _countof(szTmp), pDigits);
-        if (iLenInc < iStrMax) {
-            *(--pDigits) = '0';
+    cSpanX<char> spanDigits = ULtoARev(uVal, szTmp, STRMAX(szTmp), nBaseRadix);
+
+    char* pDigits = spanDigits.get_DataWork();
+    const StrLen_t iStrMax = cValT::Min(ret.get_MaxLen(), STRMAX(szTmp));
+
+    if (nBaseRadix == 16 && uVal != 0) {  // give hex a leading 0 if there is room. except if its 0 value. m_bLeadZero
+        if (spanDigits.get_MaxLen() < iStrMax) {
+            *(--pDigits) = '0';  // prefix with 0 if room.
         }
     }
-    return StrT::CopyLen(pszOut, pDigits, iStrMax);
+    return StrT::CopyLen(ret.get_DataWork(), pDigits, iStrMax);
 }
 
-StrLen_t GRAYCALL StrNum::ILtoA(INT64 nVal, OUT char* pszOut, StrLen_t iStrMax, RADIX_t nBaseRadix) {
-    //! Make a string from a number. like ltoa(). upper case radix default.
-    //! @arg iStrMax = _countof(Dst) = includes room for '\0'. (just like cMem::Copy)
-    //! @return
-    //!  length of the string.
-
-    if (iStrMax <= 0) return 0;
-    char szTmp[StrNum::k_LEN_MAX_DIGITS_INT + 2];  // bits in int is all we really need max. (i.e. nBaseRadix=2 + sign + '\0')
+StrLen_t GRAYCALL StrNum::ILtoA(INT64 nVal, cSpanX<char>& ret, RADIX_t nBaseRadix) {
+    if (ret.isEmpty()) return 0;
     if (nVal < 0) {
         nVal = -nVal;
-        *pszOut++ = '-';
-        iStrMax--;
+        ret.get_DataWork()[0] = '-';
+        ret.SetSpanSkip(1);
     }
-    char* pDigits = ULtoARev((UINT64)nVal, szTmp, STRMAX(szTmp), nBaseRadix);
-    return StrT::CopyLen(pszOut, pDigits, iStrMax);
+    char szTmp[StrNum::k_LEN_MAX_DIGITS_INT + 2];  // bits in int is all we really need max. (i.e. nBaseRadix=2 + sign + '\0')
+    cSpan<char> spanDigits = ULtoARev((UINT64)nVal, szTmp, STRMAX(szTmp), nBaseRadix);
+    return StrT::Copy(ret, spanDigits.get_DataConst());
 }
 
 //*************************************************************************************
@@ -217,8 +186,8 @@ StrLen_t GRAYCALL StrNum::DtoAG2(double dVal, OUT char* pszOut, int iDecPlacesWa
         return 1 + DtoAG2(-dVal, pszOut + 1, iDecPlacesWanted, chE);
     }
 
-    int nExp10;  // decimal exponent
-    StrLen_t nMantLength = cFloatDeco::Grisu2(dVal, pszOut, &nExp10);
+    int nExp10 = 0;  // decimal exponent
+    StrLen_t nMantLength = cFloatDeco::Grisu2(dVal, pszOut, OUT nExp10);
     ASSERT(nMantLength > 0);
 
     StrLen_t nOutLen;
@@ -265,15 +234,13 @@ StrLen_t GRAYCALL StrNum::DtoAG2(double dVal, OUT char* pszOut, int iDecPlacesWa
     return nOutLen;
 }
 
-StrLen_t GRAYCALL StrNum::DtoAG(double dVal, OUT char* pszOut, StrLen_t iStrMax, int iDecPlacesWanted, char chE) {  // static
-    //! @arg iStrMax = k_LEN_MAX_DIGITS
-
-    if (iStrMax >= k_LEN_MAX_DIGITS) {  // buffer is big enough.
-        return DtoAG2(dVal, pszOut, iDecPlacesWanted, chE);
+StrLen_t GRAYCALL StrNum::DtoAG(double dVal, cSpanX<char>& ret, int iDecPlacesWanted, char chE) {  // static
+    if (ret.get_MaxLen() >= k_LEN_MAX_DIGITS) {  // buffer is big enough.
+        return DtoAG2(dVal, ret.get_DataWork(), iDecPlacesWanted, chE);
     }
     char szTmp[StrNum::k_LEN_MAX_DIGITS + 4];      // MUST allow at least this size.
     DtoAG2(dVal, szTmp, iDecPlacesWanted, chE);    // StrLen_t iStrLen =
-    return StrT::CopyLen(pszOut, szTmp, iStrMax);  // Copy to smaller buffer.
+    return StrT::Copy(ret, szTmp);  // Copy to smaller buffer. truncate.
 }
 
 double GRAYCALL StrNum::toDouble(const char* pszInp, const char** ppszInpEnd) {  // static
@@ -391,7 +358,6 @@ double GRAYCALL StrNum::toDouble(const char* pszInp, const char** ppszInpEnd) { 
     }
 
     double fraction = cFloatDeco::toDouble(fracHi, fracLo, (bExpNegative) ? (nExpFrac - nExp) : (nExpFrac + nExp));
-
     return (*pszStart == '-') ? (-fraction) : fraction;
 }
 }  // namespace Gray

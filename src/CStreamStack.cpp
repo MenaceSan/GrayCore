@@ -1,4 +1,3 @@
-//
 //! @file cStreamStack.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 // clang-format off
@@ -12,18 +11,16 @@ HRESULT cStreamStackInp::ReadFill() {
     //! called by ReadX()
     //! @return how much i got.
 
-    void* pWriteSpace = GetWritePrepared(this->get_GrowSizeChunk());
-    const ITERATE_t nWriteSpace = get_WriteSpaceQty();
-    if (pWriteSpace == nullptr || nWriteSpace <= 0) return 0;  // no room.
+    cMemSpan spanWrite = GetSpanWrite(this->get_GrowSizeChunk());
+    if (spanWrite.isEmpty()) return 0;       // no room.
     if (m_pInp == nullptr) return E_HANDLE;  // must supply input stream
- 
+
     // Read all i have room for.
-    HRESULT hRes = m_pInp->ReadX(pWriteSpace, CastN(size_t, nWriteSpace));
-    if (FAILED(hRes) || hRes <= 0) {
-        // if (hRes == 0)
-        //  return HRESULT_WIN32_C(ERROR_HANDLE_EOF);
+    HRESULT hRes = m_pInp->ReadMem(spanWrite);
+    if (FAILED(hRes)) {
         return hRes;
     }
+    if (hRes == 0) return 0;  // return HRESULT_WIN32_C(ERROR_HANDLE_EOF);
 
     AdvanceWrite(CastN(ITERATE_t, hRes));
     return hRes;
@@ -38,23 +35,18 @@ HRESULT cStreamStackInp::ReadFillAligned(size_t nSizeBlockAlign) {
     if (nSizeBlockAlign <= 1)  // simple case.
         return ReadFill();
 
-    void* pWriteSpace = GetWritePrepared(this->get_GrowSizeChunk());
-    const ITERATE_t iWriteSpaceQty = get_WriteSpaceQty();  // any room to write into?
-    if (pWriteSpace == nullptr || iWriteSpaceQty <= 0) {
-        return 0;  // no room.
-    }
+    cMemSpan spanWrite = GetSpanWrite(this->get_GrowSizeChunk());
+    if (spanWrite.isEmpty()) return 0;  // no room.
 
-    size_t nWriteQty = (size_t)iWriteSpaceQty;
+    size_t nWriteQty = spanWrite.get_DataSize();
     if (nWriteQty < nSizeBlockAlign)  // no room.
         return 0;
     nWriteQty -= nWriteQty % nSizeBlockAlign;  // Remove remainder.
 
-    if (m_pInp == nullptr) {  // must supply input stream
-        return E_HANDLE;
-    }
+    if (m_pInp == nullptr) return E_HANDLE;
 
     cStreamTransaction trans(m_pInp);
-    HRESULT hRes = m_pInp->ReadX(pWriteSpace, nWriteQty);
+    HRESULT hRes = m_pInp->ReadX(spanWrite.get_DataW(), nWriteQty);
     if (FAILED(hRes)) {
         trans.SetTransactionFailed();
         return hRes;
@@ -109,7 +101,7 @@ HRESULT cStreamStackPackets::WriteX(const void* pData, size_t nDataSize) {  // v
     //! Take all pData written to me and store in m_buffer.
     //! @arg pData = nullptr = just test if it has enough room.
 
-    ITERATE_t nWriteQty = this->WriteQty((const BYTE*)pData, (ITERATE_t)nDataSize, true);
+    ITERATE_t nWriteQty = this->WriteSpanQ(cSpan<BYTE>(cMemSpan(pData, nDataSize)), true);
     if ((size_t)nWriteQty < nDataSize) {
         // Just wait for the full packet.
         return HRESULT_WIN32_C(WSAEWOULDBLOCK);

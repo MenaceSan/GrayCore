@@ -1,7 +1,6 @@
-//
 //! @file HResults.tbl
-//! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //! add codes NOT FACILITY_WIN32
+//! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 
 #if defined(__GNUC__) || ( defined(_MSC_VER) && ( _MSC_VER <= 1200 ))
 HRESULT_ENTRY( EVENT_E_INTERNALEXCEPTION,	FACILITY_ITF,		0x0205L,		"An unexpected exception was raised" )

@@ -1,9 +1,7 @@
-//
 //! @file cTimeDouble.h
 //! Data Time similar to COleDateTime
 //! Elapsed days since (midnight, December 30, 1899 GMT).
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cTimeDouble_H
 #define _INC_cTimeDouble_H

@@ -1,8 +1,7 @@
-//
 //! @file cIniObject.h
 //! very simplistic string scriptable object.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
+
 #ifndef _INC_cIniObject_H
 #define _INC_cIniObject_H
 #ifndef NO_PRAGMA_ONCE
@@ -11,9 +10,10 @@
 
 #include "cBits.h"
 #include "cIniBase.h"
+#include "StrArg.h"
+#include "ITextWriter.h"
 
 namespace Gray {
-struct cStreamOutput;
 
 /// <summary>
 /// get basic name metadata about the props supported.
@@ -36,9 +36,9 @@ struct GRAYCORE_LINK cIniObject : public IIniObjectDef, public IIniBaseSetter, p
     // HRESULT PropSet(const IniChar_t* pszPropTag, const IniChar_t* pszValue) override;
     HRESULT PropGet(const IniChar_t* pszPropTag, OUT cStringI& rsValue) const override;
 
-    HRESULT FileWriteN(cStreamOutput& sOut, PROPIDX_t ePropIdx) const;
-    HRESULT FileWrite(cStreamOutput& sOut, const IniChar_t* pszProp);
-    HRESULT FileWriteAll(cStreamOutput& sOut);
+    HRESULT FileWriteN(ITextWriter& sOut, PROPIDX_t ePropIdx) const;
+    HRESULT FileWrite(ITextWriter& sOut, const IniChar_t* pszProp);
+    HRESULT FileWriteAll(ITextWriter& sOut);
 };
 }  // namespace Gray
 #endif  // _INC_cIniObject_H

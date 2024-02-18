@@ -1,4 +1,3 @@
-//
 //! @file cIniMap.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 // clang-format off
@@ -31,14 +30,14 @@ HRESULT cIniKeyValue::GetValDouble(double* pdValue) const {
 //***************************************************************
 
 ITERATE_t cIniMap::Find(const IniChar_t* pszPropTag) const {
-    ATOMCODE_t ac = cAtomRef::FindAtomStr(pszPropTag).get_HashCode();
+    const ATOMCODE_t ac = cAtomRef::FindAtomStr(pszPropTag).get_HashCode();
     if (ac == 0) return k_ITERATE_BAD;
     return this->FindIForKey(ac);
 }
 
 const IniChar_t* cIniMap::GetVal(const IniChar_t* pszPropTag) const {
     //! get the value of a named attribute.
-    ITERATE_t i = Find(pszPropTag);
+    const ITERATE_t i = Find(pszPropTag);
     if (i < 0) return nullptr;
     return GetAt(i).m_sVal;
 }
@@ -46,13 +45,13 @@ const IniChar_t* cIniMap::GetVal(const IniChar_t* pszPropTag) const {
 HRESULT cIniMap::SetVal(const IniChar_t* pszPropTag, cStringI sValue) {
     //! will replace if existing key.
     //! @return E_INVALIDARG,  HRESULT_WIN32_C(ERROR_UNKNOWN_PROPERTY)
-    ITERATE_t i = this->Add(cIniKeyValue(pszPropTag, sValue));
+    const ITERATE_t i = this->Add(cIniKeyValue(pszPropTag, sValue));
     return (HRESULT)i;
 }
 
 HRESULT cIniMap::PropGet(const IniChar_t* pszPropTag, OUT cStringI& rsValue) const {  // override
     //! IIniBaseGetter
-    ITERATE_t i = Find(pszPropTag);
+    const ITERATE_t i = Find(pszPropTag);
     if (i < 0) return HRESULT_WIN32_C(ERROR_UNKNOWN_PROPERTY);
     rsValue = GetAt(i).m_sVal;
     return (HRESULT)i;
@@ -81,29 +80,36 @@ HRESULT cIniMap::PropGetEnum(PROPIDX_t ePropIdx, OUT cStringI& rsValue, OUT cStr
 void cIniMap::SetCopy(const cIniMap& rAttribs) {
     //! Copy the attributes from rAttribs to this.
     ASSERT(&rAttribs != this);
-    for (auto e : rAttribs) {
+    for (const auto e : rAttribs) {
         this->Add(cIniKeyValue(e.m_aKey, e.m_sVal));
     }
 }
 
 HRESULT cIniMap::GetValInt(const IniChar_t* pszPropTag, int* piValue) const {
     //! error as if using scanf("%d")
-    ITERATE_t i = this->Find(pszPropTag);
+    const ITERATE_t i = this->Find(pszPropTag);
     if (i < 0) return HRESULT_WIN32_C(ERROR_UNKNOWN_PROPERTY);
     return GetAt(i).GetValInt(piValue);
 }
 
 HRESULT cIniMap::GetValDouble(const IniChar_t* pszPropTag, double* pdValue) const {
     //! error as if using scanf("%lf")
-    ITERATE_t i = this->Find(pszPropTag);
+    const ITERATE_t i = this->Find(pszPropTag);
     if (i < 0) return HRESULT_WIN32_C(ERROR_UNKNOWN_PROPERTY);
     return GetAt(i).GetValDouble(pdValue);
 }
 
 HRESULT cIniMap::SetValInt(const IniChar_t* pszPropTag, int iVal) {
     char szBuffer[k_LEN_MAX_CSYM];
-    StrT::ItoA(iVal, szBuffer, STRMAX(szBuffer));
+    StrT::ItoA(iVal, TOSPAN(szBuffer));
     return SetVal(pszPropTag, szBuffer);
 }
 
+cStringI GRAYCALL IIniBaseGetter::Get2(IIniBaseGetter* p, const IniChar_t* pszPropTag) {  // static
+    if (p == nullptr) return "";
+    cStringI sVal;
+    HRESULT hRes = p->PropGet(pszPropTag, sVal);
+    if (FAILED(hRes)) return "";
+    return sVal;
+}
 }  // namespace Gray

@@ -17,15 +17,16 @@ typedef const FILECHAR_t* const* APP_ARGS_t;  /// the args passed to main() null
 /// Like MFC CCommandLineInfo
 /// </summary>
 class GRAYCORE_LINK cAppArgs {
+    friend class cAppState;
+
     /// <summary>
     /// The unparsed raw command line arguments. NOT including 'appname.exe'. Maybe generated as needed in get_ArgsStr(). if main() style entry.
     /// </summary>
     cStringF m_sArguments;
 
- public:
     /// <summary>
-    /// Array of parsed m_sArguments. [0]=appname.exe, [1]=first arg. NOT nullptr terminated like APP_ARGS_t. Honors quoted text.
-    /// TODO Pointers into StrBuilder ??
+    /// Const Array of parsed m_sArguments. [0]=appname.exe, [1]=first arg. NOT nullptr terminated like APP_ARGS_t. Honors quoted text.
+    /// TODO cArrayPtr into cBlob? like cIniSectionData?
     /// </summary>
     cArrayString<FILECHAR_t> m_aArgs;
 
@@ -41,17 +42,22 @@ class GRAYCORE_LINK cAppArgs {
     static constexpr bool IsArgSwitch(wchar_t ch) noexcept {
         return ch == '-' || ch == '/';
     }
-    static inline bool IsArg(const FILECHAR_t* pszArg) noexcept {
-        if (StrT::IsWhitespace<FILECHAR_t>(pszArg)) return false;
-        if (IsArgSwitch(pszArg[0])) return false;
-        return true;
+    /// <summary>
+    /// Can the next argument be considered a "sub/secondary" arg. Apply/Modify the previous arg?
+    /// </summary>
+    /// <param name="pszArg"></param>
+    /// <returns></returns>
+    static inline bool IsArgMod(const FILECHAR_t* pszArg) noexcept {
+        return !StrT::IsWhitespace<FILECHAR_t>(pszArg) && !IsArgSwitch(pszArg[0]);
     }
 
     /// <summary>
     /// Get Unparsed command line args as a single line/string. might be used for cOSProcess.
     /// Does not contain App.exe name.
     /// </summary>
-    cStringF get_ArgsStr() const noexcept;
+    cStringF get_ArgsStr() const noexcept {
+        return m_sArguments;
+    }
 
     /// <summary>
     /// Get Qty of args including app name.
@@ -84,6 +90,11 @@ class GRAYCORE_LINK cAppArgs {
     /// ppszArgs[0] = app path
     /// </summary>
     void InitArgsPosix(int argc, APP_ARGS_t argv);
+
+    /// <summary>
+    /// For debug
+    /// </summary>
+    ITERATE_t AppendArg(const FILECHAR_t* pszCmd, bool sepEquals); 
 
     ITERATE_t FindCommandArg(const FILECHAR_t* pszCommandArg, bool bRegex = true, bool bIgnoreCase = true) const;
     ITERATE_t _cdecl FindCommandArgs(bool bIgnoreCase, const FILECHAR_t* pszCommandArgFind, ...) const;

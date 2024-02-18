@@ -1,7 +1,5 @@
-//
 //! @file cNonCopyable.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cNonCopyable_H
 #define _INC_cNonCopyable_H

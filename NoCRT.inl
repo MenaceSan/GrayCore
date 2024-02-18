@@ -1,4 +1,3 @@
-//
 //! @file NoCRT.inl
 //! If we want to NOT use the CRT. We must stub out its functions for each module.
 //! @copyright (c) 1992 - 2020 Dennis Robinson (http://www.menasoft.com)

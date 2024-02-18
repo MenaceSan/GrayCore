@@ -1,9 +1,7 @@
-//
 //! @file cOSModule.h
 //! Manages links to a *.dll module file.
 //! __linux__ link with "dl" library
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_cOSModule_H
 #define _INC_cOSModule_H
@@ -14,7 +12,7 @@
 #include "cBits.h"
 #include "cFilePath.h"
 #include "cMime.h"
-#include "cOSHandle.h"
+#include "cHandlePtr.h"
 
 #ifdef _WIN32
 #define MODULE_EXT MIME_EXT_dll
@@ -28,7 +26,7 @@ typedef int(GRAYCALL* FARPROC)();
 #endif
 
 namespace Gray {
-#define HMODULE_NULL ((HMODULE) nullptr)  // This sometimes means the current process module.
+#define HMODULE_NULL ((::HMODULE) nullptr)  // This sometimes means the current process module.
 
 /// <summary>
 /// manage access to a dynamically loaded *.DLL file. (or .SO in __linux__)
@@ -42,13 +40,18 @@ namespace Gray {
 /// @not VERY IMPORTANT!! for M$ C++ 2019, Objects allocated (new) in a DLL have a vtable assigned by the module. when unloaded this vtable is unloaded. This means all these objects are corrupt. Even though the memory they occupy is still valid.
 /// </summary>
 class GRAYCORE_LINK cOSModule {
-    HMODULE m_hModule;  /// sometimes the same as HINSTANCE ? = loading address of the code. NOT cOSHandle.
-    UINT32 m_uFlags;    /// k_Load_RefCount= I am responsible to unload this since i loaded it. k_Load_Preload = This is not callable code. init was not called and refs not loaded.
+    ::HMODULE m_hModule;  /// sometimes the same as HINSTANCE ? = loading address of the code. cHandlePtr NOT cOSHandle.
+    UINT32 m_uFlags;    /// k_Load_RefCount= I am responsible to unload this since i loaded it. k_Load_Resource = This is not callable code. init was not called and refs not loaded.
 #if defined(__linux__)
     cStringF m_sModuleName;  /// Must store this if __linux__ can't query it directly.
 #endif
 
  protected:
+    /// <summary>
+    /// decrement my ref count for this module. Assume someone else will clear m_hModule
+    /// @note if this is the last ref to the DLL then it will be unloaded!
+    /// @note DANGER! If we free a DLL that has vtable stuff in it, any objects based on these vtables are now broken!
+    /// </summary>
     void FreeModuleLast();
 
  public:
@@ -58,7 +61,7 @@ class GRAYCORE_LINK cOSModule {
 #define LOAD_LIBRARY_AS_IMAGE_RESOURCE 0x00000020  // __GNUC__
 #endif
     static const UINT k_Load_Normal = 0;                                 /// Flags.
-    static const UINT k_Load_Preload = DONT_RESOLVE_DLL_REFERENCES;      /// 0x01. Just load into memory but don't call any init code. Diff from __linux RTLD_LAZY. No recovery from this.
+    static const UINT k_Load_Preload = DONT_RESOLVE_DLL_REFERENCES;      /// 0x01. Just load into memory but don't call any init code. DANGER: No recovery from this. MUST unload. Diff from __linux RTLD_LAZY. 
     static const UINT k_Load_Resource = LOAD_LIBRARY_AS_IMAGE_RESOURCE;  /// 0x20. This is just a resource load. RTLD_LAZY, LOAD_LIBRARY_AS_IMAGE_RESOURCE
 #elif defined(__linux__)
     static const UINT k_Load_Normal = RTLD_NOW;     /// Flags.
@@ -69,38 +72,66 @@ class GRAYCORE_LINK cOSModule {
     static const UINT k_Load_ByName = 0x40000000;      /// try to find it (by just its file name, NOT Path) already loaded first. NOT OS flag.
     static const UINT k_Load_NoRefCount = 0x80000000;  /// I DO NOT own the ref count. Don't free. NOT OS Flag.
 
-    cOSModule(HMODULE hModule = HMODULE_NULL, UINT32 uFlags = k_Load_Normal);
+    cOSModule(::HMODULE hModule = HMODULE_NULL, UINT32 uFlags = k_Load_Normal);
     cOSModule(const FILECHAR_t* pszModuleName, UINT32 uFlags);
+    cOSModule(cOSModule&& m);
     ~cOSModule();
 
     static MIME_t GRAYCALL CheckModuleTypeFile(const FILECHAR_t* pszPathName);
 
 #ifndef UNDER_CE
-    static HMODULE GRAYCALL GetModuleHandleForAddr(const void* pAddr);
+    /// <summary>
+    /// Get the handle for the module this pAddr is in. Do NOT increment ref count for ::HMODULE.
+    /// code may be part of a shared object or DLL. track its handle in case it is unloaded dynamically
+    /// </summary>
+    /// <param name="pAddr">a function pointer?</param>
+    /// <returns>cAppState::get_HModule() = just part of the current EXE. or HMODULE_NULL = error;</returns>
+    static ::HMODULE GRAYCALL GetModuleHandleForAddr(const void* pAddr);
 #endif
+
+    /// <summary>
+    /// Get a Generic function call address in the module. assume nothing about the functions args.
+    /// @note No such thing as a UNICODE proc/function/symbol name! object formats existed before UNICODE. Except for UNDER_CE which does support UNICODE proc names!?
+    /// @note this does not work if loaded using LOAD_LIBRARY_AS_IMAGE_RESOURCE or LOAD_LIBRARY_AS_DATAFILE
+    /// </summary>
+    /// <param name="pszSymbolName"></param>
+    /// <returns>address</returns>
     FARPROC GetSymbolAddress(const char* pszSymbolName) const;
 
     bool isValidModule() const noexcept {
         return m_hModule != HMODULE_NULL;
     }
-    operator HMODULE() const noexcept {
+    operator ::HMODULE() const noexcept {
         return m_hModule;
     }
-    HMODULE get_ModuleHandle() const noexcept {
+    ::HMODULE get_ModuleHandle() const noexcept {
         return m_hModule;
     }
+    /// <summary>
+    /// Get the modules handle as an int.
+    /// </summary>
+    /// <returns></returns>
     UINT_PTR get_ModuleInt() const noexcept {
-        //! Get the modules handle as an int.
         return PtrCastToNum(m_hModule);
     }
     /// <summary>
     /// We cant call this. its not loaded as code.
     /// </summary>
     bool isResourceModule() const noexcept {
-        return cBits::HasMask(m_uFlags, k_Load_Preload | k_Load_Resource);
+        return cBits::HasAny(m_uFlags, k_Load_Preload | k_Load_Resource);
     }
 
-    StrLen_t GetModulePath(FILECHAR_t* pszModuleName, StrLen_t nSizeMax) const;
+/// <summary>
+    /// Get the file path to the loaded module.
+    /// @note there is not absolute rule that it must have one.
+    /// </summary>
+    /// <param name="name"></param>
+    /// <returns></returns>
+    StrLen_t GetModulePath(cSpanX<FILECHAR_t>& name) const;
+
+    /// <summary>
+    /// get Full path to the module.
+    /// </summary>
     cStringF get_Name() const;
 
     HRESULT GetLastErrorDef(HRESULT hResDef = E_FAIL) const noexcept {
@@ -114,7 +145,7 @@ class GRAYCORE_LINK cOSModule {
 #endif
     }
 
-    void AttachModule(HMODULE hModule = HMODULE_NULL, UINT32 uFlags = k_Load_Normal) {
+    void AttachModule(::HMODULE hModule = HMODULE_NULL, UINT32 uFlags = k_Load_Normal) {
         FreeModuleLast();
         m_hModule = hModule;
         m_uFlags = uFlags;
@@ -127,11 +158,15 @@ class GRAYCORE_LINK cOSModule {
         m_sModuleName.Empty();
 #endif
     }
-    HMODULE DetachModule() noexcept {
-        const HMODULE hModule = m_hModule;
+    ::HMODULE DetachModule() noexcept {
+        const ::HMODULE hModule = m_hModule;
         ClearModule();
         return hModule;
     }
+
+    /// <summary>
+    /// decrement my usage count. It might be freed/unloaded.
+    /// </summary>
     void FreeThisModule();
 
     bool AttachModuleName(const FILECHAR_t* pszModuleName, UINT32 uFlags = k_Load_NoRefCount);
@@ -183,7 +218,6 @@ class cOSModuleFunc {
         return m_pFunc;
     }
 };
-
 typedef cOSModuleFunc<FARPROC> cOSModuleFuncGeneric;
 
 #ifndef GRAY_STATICLIB  // force implementation/instantiate for DLL/SO.

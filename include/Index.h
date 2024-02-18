@@ -1,8 +1,6 @@
-//
 //! @file Index.h
 //! Difference of 2 pointers in memory.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-//
 
 #ifndef _INC_Index_H
 #define _INC_Index_H

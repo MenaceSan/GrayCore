@@ -49,18 +49,26 @@ class GRAYCORE_LINK cArchive {
     }
 
     /// Serialize Base Types
-    HRESULT Serialize(void* pData, size_t nSize);
+    HRESULT Serialize(cMemSpan& m);
     HRESULT SerializeSize(size_t& nSize);
+
+    template <typename _TYPE>
+    HRESULT SerializeT(_TYPE& val) {
+        return Serialize(TOSPANT(val));
+    } 
+
+    //******************************************
+    // dont use stuff below here ! DONT Emulate MFC.
 
     HRESULT Write(const void* pData, size_t nSize) {
         // Emulate MFC. Insert into the archive.
         ASSERT(IsStoring());
-        return Serialize(const_cast<void*>(pData), nSize);
+        return Serialize(cMemSpan(pData, nSize));
     }
     HRESULT Read(void* pData, size_t nSize) {
         // Emulate MFC. Extract from the archive.
         ASSERT(IsLoading());
-        return Serialize(pData, nSize);
+        return Serialize(cMemSpan(pData, nSize) );
     }
 
     /// <summary>
@@ -82,19 +90,16 @@ class GRAYCORE_LINK cArchive {
     }
 
     // define operators for serialization of a TYPE.
-#define CTYPE_DEF(a, _TYPE, c, d, e, f, g, h)                              \
-    HRESULT Serialize(_TYPE& Val) { return Serialize(&Val, sizeof(Val)); } \
-    cArchive& operator<<(const _TYPE& Val) {                               \
-        Write(&Val, sizeof(Val));                                          \
-        return *this;                                                      \
-    }                                                                      \
-    cArchive& operator>>(_TYPE& Val) {                                     \
-        Read(&Val, sizeof(Val));                                           \
-        return *this;                                                      \
+    template <typename _TYPE>
+    cArchive& operator<<(const _TYPE& val) {    
+        Write(&val, sizeof(val));    
+        return *this;                           
+    }                                           
+    template <typename _TYPE>
+    cArchive& operator>>(_TYPE& val) {                                    
+        Read(&val, sizeof(val));                               
+        return *this;                                                     
     }
-
-#include "cTypes.tbl"
-#undef CTYPE_DEF
 };
 }  // namespace Gray
 

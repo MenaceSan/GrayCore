@@ -114,10 +114,10 @@ HRESULT GRAYCALL cFileCopier::RenamePath(const FILECHAR_t* lpszOldName, const FI
 }
 
 HRESULT cFileCopier::RequestFile(const FILECHAR_t* pszSrcName, const FILECHAR_t* pszDestPath, IStreamProgressCallback* pProgress, FILE_SIZE_t nOffsetStart, FILE_SIZE_t* pnRequestSizeEst) {  // virtual
-    //! Request a file from a m_sServerRoot/pszSrcName (file system) to be brought back to me at local pszDestPath.
+    //! Request a file from a m_sRemoteRoot/pszSrcName (file system) to be brought back to me at local pszDestPath.
     //! @arg pnRequestSizeEst = unused/unnecessary for local file system copy.
 
-    cStringF sSrcPath = makeFilePath(pszSrcName);
+    cStringF sSrcPath = makeRemotePath(pszSrcName);
     bool bRequestSize = (pnRequestSizeEst != nullptr && *pnRequestSizeEst == (FILE_SIZE_t)-1);
     bool bDestEmpty = StrT::IsWhitespace(pszDestPath);
     if (bDestEmpty || bRequestSize) {
@@ -138,13 +138,13 @@ HRESULT cFileCopier::RequestFile(const FILECHAR_t* pszSrcName, const FILECHAR_t*
 }
 
 HRESULT cFileCopier::SendFile(const FILECHAR_t* pszSrcPath, const FILECHAR_t* pszDestName, IStreamProgressCallback* pProgress, FILE_SIZE_t nOffsetStart, FILE_SIZE_t nSize) {  // override virtual
-    //! Send a local file to a m_sServerRoot/pszDestName from local pszSrcPath storage
+    //! Send a local file to a m_sRemoteRoot/pszDestName from local pszSrcPath storage
     //! @note I cannot set the modification time stamp for the file here.
 
     UNREFERENCED_PARAMETER(nSize);
     if (StrT::IsWhitespace(pszDestName)) return E_INVALIDARG;
 
-    cStringF sDestPath = makeFilePath(pszDestName);
+    cStringF sDestPath = makeRemotePath(pszDestName);
     if (StrT::IsWhitespace(pszSrcPath)) {
         // Acts like a delete. delete file or directory recursively.
         return cFileDir::DeletePathX(sDestPath, FILEOPF_t::_None);
@@ -158,6 +158,6 @@ HRESULT cFileCopier::SendFile(const FILECHAR_t* pszSrcPath, const FILECHAR_t* ps
 
 HRESULT cFileCopier::SendAttr(const FILECHAR_t* pszDestName, cTimeFile timeChanged) {  // override virtual
     //! Optionally set the remote side time stamp for a file.
-    return cFileStatus::WriteFileTimes(makeFilePath(pszDestName), &timeChanged, &timeChanged);
+    return cFileStatus::WriteFileTimes(makeRemotePath(pszDestName), &timeChanged, &timeChanged);
 }
 }  // namespace Gray

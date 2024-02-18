@@ -1,4 +1,3 @@
-//
 //! @file cArrayUnique.h
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
@@ -14,9 +13,9 @@
 
 namespace Gray {
 /// <summary>
-/// An array OWNS the elements using cUniquePtr<TYPE>
+/// An array OWNS the elements using cUniquePtr
 /// It will get deleted when the array is deleted.
-/// @note try to use cArrayRef<> instead.
+/// @note try to use cArrayRef instead.
 /// </summary>
 /// <typeparam name="TYPE"></typeparam>
 template <class TYPE>
