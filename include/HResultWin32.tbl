@@ -38,6 +38,7 @@ HRESULT_WIN32_DEF( ERROR_WINHTTP_SECURE_INVALID_CERT,	12169L, "Indicates that a 
 #if defined(__linux__) || ( defined(_MSC_VER) && ( _MSC_VER <= 1200 ))
 
 // VS6 didnt support these.
+HRESULT_WIN32_DEF( ERROR_INVALID_HOOK_HANDLE,   1404L, "Invalid hook handle.")
 HRESULT_WIN32_DEF( ERROR_FUNCTION_NOT_CALLED,	1626L, "Function could not be executed." )
 HRESULT_WIN32_DEF( ERROR_INVALID_TABLE,			1628L, "Invalid or unknown table specified." )
 HRESULT_WIN32_DEF( ERROR_DATATYPE_MISMATCH,		1629L, "Data supplied is of wrong type." )

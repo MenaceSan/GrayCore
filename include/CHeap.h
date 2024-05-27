@@ -46,15 +46,14 @@ struct GRAYCORE_LINK cHeapCommon : public cMem {  // static class
     static const BYTE kFillFreed = 0xDD;   /// filled to indicate free() has been called on this.
     static const BYTE kFillPrefix = 0xFD;  /// Fills the gap before the returned memory block. _DEBUG ONLY
 
-    static const size_t k_ALLOC_MAX = 0x2000000;  /// (arbitrary) largest reasonable single malloc. e.g. Single frame allocation of big screen
-
 #ifdef USE_64BIT
     static const size_t k_SizeAlignDef = 16;  /// default/min heap alignment for the arch.
 #else
     static const size_t k_SizeAlignDef = 8;  /// default/min heap alignment for the arch.
 #endif
-
-    static HANDLE g_hHeap;  /// ::GetProcessHeap() _WIN32
+#ifdef _WIN32
+    static ::HANDLE g_hHeap;  /// ::GetProcessHeap() _WIN32
+#endif
     static cHeapStats g_Stats;
 
     /// <summary>
@@ -157,6 +156,10 @@ struct GRAYCORE_LINK cHeapAlign : public cHeapCommon {  // static
 
     static void* GRAYCALL ReAllocPtr(void* pData, size_t nSize) = delete;  // NOT supported!
 };
-#endif  // _MSC_VER
+
+#else // _MSC_VER
+typedef cHeap cHeapAlign;
+#endif  
+
 }  // namespace Gray
 #endif  // _INC_cHeap_H

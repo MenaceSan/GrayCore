@@ -8,6 +8,7 @@
 #include "StrArg.h"
 #include "cSingleton.h"
 #include "cStream.h"
+#include "cCmdInput.h"
 
 #if !defined(UNDER_CE)
 namespace Gray {
@@ -24,7 +25,7 @@ enum class AppStd_t : BYTE {
 /// <summary>
 /// What type of console is connected?
 /// </summary>
-enum class AppCon_t {
+enum class AppCon_t : signed char {
     _Unknown = -1,
     _None = 0,    /// NOT a console mode app.
     _Proc = 1,    /// Native mode. Process was build as _CONSOLE mode. stdin,stdout already setup.
@@ -40,7 +41,7 @@ class GRAYCORE_LINK cAppConsole final : public cSingleton<cAppConsole>, public I
     SINGLETON_IMPL(cAppConsole);
 
 #if defined(_WIN32)
-    HANDLE m_hStd[static_cast<int>(AppStd_t::_QTY)];  /// stdin,stdout,stderr as cOSHandle. But i don't need to close these ? ::GetStdHandle()
+    ::HANDLE m_hStd[static_cast<int>(AppStd_t::_QTY)];  /// stdin,stdout,stderr as cOSHandle. But i don't need to close these ? ::GetStdHandle()
 #elif defined(__linux__)
     // __iob_func
 #endif
@@ -52,9 +53,10 @@ class GRAYCORE_LINK cAppConsole final : public cSingleton<cAppConsole>, public I
     bool m_bConsoleParent;     /// My parent process is a console. I may attach to it.
     int m_iAllocConsoleCount;  /// I had to create my own console. must call FreeConsole() this many times.
 
-    mutable cThreadLockCount m_Lock;  /// serialize multiple threads.
+    mutable cThreadLockableX m_Lock;  /// serialize multiple threads.
  public:
     static const COUNT_t k_MAX_CONSOLE_LINES = 500;  /// arbitrary max lines shown at once.
+    cCmdInput _CmdInput;    // For ReadStringLine
 
  protected:
     cAppConsole();
@@ -68,6 +70,12 @@ class GRAYCORE_LINK cAppConsole final : public cSingleton<cAppConsole>, public I
     /// </summary>
     void CheckConsoleMode() noexcept;
     bool AttachConsoleSync();
+#if defined(_WIN32)
+    HRESULT WriteStrH(::HANDLE h, const char* pszText);
+#else
+    HRESULT WriteStrH(::FILE* pFile, const char* pszText);
+#endif
+    int ReadKeyRaw() const;
 
  public:
     ~cAppConsole() override;
@@ -86,7 +94,7 @@ class GRAYCORE_LINK cAppConsole final : public cSingleton<cAppConsole>, public I
     }
 
 #if defined(_WIN32)
-    HANDLE GetStd(AppStd_t i) const {
+    ::HANDLE GetStd(AppStd_t i) const {
         return m_hStd[(int)i];
     }
 #endif
@@ -113,6 +121,12 @@ class GRAYCORE_LINK cAppConsole final : public cSingleton<cAppConsole>, public I
     void ReleaseConsole();
 
     HRESULT WriteStrErr(const char* pszText);
+
+    /// <summary>
+    /// Write to console. Does not support UNICODE.
+    /// </summary>
+    /// <param name="pszText"></param>
+    /// <returns>HRESULT_WIN32_C(ERROR_HANDLE_DISK_FULL)</returns>
     HRESULT WriteStrOut(const char* pszText);
 
     HRESULT SetKeyModes(bool bEchoMode = true, bool bEnterMode = true);
@@ -139,6 +153,8 @@ class GRAYCORE_LINK cAppConsole final : public cSingleton<cAppConsole>, public I
     /// </summary>
     /// <returns>-1 = no char is available. else ASCII_t character produced by key or keys pressed.</returns>
     int ReadKey();
+
+    HRESULT ReadStringLine(cSpanX<char> ret);
 
     /// <summary>
     /// support cStreamOutput.

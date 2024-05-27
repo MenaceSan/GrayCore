@@ -7,11 +7,11 @@
 #pragma once
 #endif
 
+#include "ITextWriter.h"
 #include "StrArg.h"
 #include "cArray.h"
 #include "cBlob.h"
 #include "cIniBase.h"
-#include "ITextWriter.h"
 #include "cTextPos.h"
 
 namespace Gray {
@@ -23,7 +23,7 @@ namespace Gray {
 /// </summary>
 class GRAYCORE_LINK cIniWriter {
  protected:
-    ITextWriter* m_pOut;   /// write out to this stream.
+    ITextWriter* m_pOut;     /// write out to this stream.
     bool m_bStartedSection;  /// Must write a newline to close the previous section when we start a new one.
 
  public:
@@ -47,9 +47,18 @@ class GRAYCORE_LINK cIniWriter {
 /// </summary>
 struct GRAYCORE_LINK cIniReader {  // static
     static bool GRAYCALL IsSectionHeader(const IniChar_t* pszLine) noexcept;
-
     static bool GRAYCALL IsLineComment(const IniChar_t* pszLine);
+
+    /// <summary>
+    /// Find the argument/value portion of a line.
+    /// "TAG=Args", TAG(ARGS), "TAG: Args" (for HTTP) or "Tag Args" (if bAllowSpace)
+    /// @note this does not strip comments from the end of the line !
+    /// </summary>
+    /// <param name="pszLine"></param>
+    /// <param name="bAllowSpace"></param>
+    /// <returns></returns>
     static IniChar_t* GRAYCALL FindLineArg(const IniChar_t* pszLine, bool bAllowSpace = false);
+
     static StrLen_t GRAYCALL FindScriptLineEnd(const IniChar_t* pLineStr);
     static cStringI GRAYCALL GetLineParse2(const IniChar_t* pszLine, IniChar_t** ppszArgs = nullptr);
     static cStringI GRAYCALL GetLineParse3(const IniChar_t* pszLine, OUT cStringI& rsArgs);
@@ -81,11 +90,14 @@ class GRAYCORE_LINK cIniSectionData : public IIniBaseEnumerator, public IIniBase
     StrLen_t m_iBufferUsed;  /// how much of the buffer have we used ? including null. cStack??
 
     // cStack ??
-    cArray<IniChar_t*> m_apLines;  /// array of pointers to lines inside m_Buffer. (e.g. "Tag=Val" but not required to have mapped values.)
-    ITERATE_t m_iLinesUsed;        /// how many lines do we have? Not all lines are validly used. <= m_apLines
+    cArrayPtr<const IniChar_t> m_apLines;  /// array of pointers to lines inside m_Buffer. (e.g. "Tag=Val" but not required to have mapped values.)
+    ITERATE_t m_iLinesUsed;                /// how many lines do we have? Not all lines are validly used. <= m_apLines
 
  private:
     void MoveLineOffsets(ITERATE_t iLineStart, INT_PTR iDiffChars);
+    IniChar_t* GetLineMod(ITERATE_t iLine) const {
+        return const_cast<IniChar_t*>(m_apLines.GetAt(iLine));
+    }
 
  protected:
     /// <summary>
@@ -120,7 +132,7 @@ class GRAYCORE_LINK cIniSectionData : public IIniBaseEnumerator, public IIniBase
     /// </summary>
     StrLen_t get_BufferSize() const noexcept {
         if (m_iLinesUsed <= 0) return 0;
-        return CastN(StrLen_t, m_Buffer.get_DataSize());
+        return CastN(StrLen_t, m_Buffer.get_SizeBytes());
     }
 
     /// <summary>
@@ -148,7 +160,22 @@ class GRAYCORE_LINK cIniSectionData : public IIniBaseEnumerator, public IIniBase
 
     ITERATE_t FindKeyLine(const IniChar_t* pszKeyName, bool bPrefixOnly = false) const;  /// Find a key in the section (key=args)
     const IniChar_t* FindKeyLinePtr(const IniChar_t* pszKey) const;
+
+    /// <summary>
+    /// Find pszKey in the section.
+    /// @note this does not strip comments from the end of the line !
+    /// </summary>
+    /// <param name="pszKey"></param>
+    /// <param name="pszDefault"></param>
+    /// <returns>the corresponding Args (e.g.Key=Args) for the first instance of pszKey.</returns>
     const IniChar_t* FindArgForKey(const IniChar_t* pszKey, const IniChar_t* pszDefault = nullptr) const;
+
+    /// <summary>
+    /// Find pszKey in the section and interpret as int.
+    /// </summary>
+    /// <param name="pszKey"></param>
+    /// <param name="iDefault"></param>
+    /// <returns>the corresponding Args (e.g.Key=Args) for the first instance of pszKey.</returns>
     int FindIntForKey(const IniChar_t* pszKey, int iDefault = 0) const;
 
     HRESULT PropGet(const IniChar_t* pszPropTag, OUT cStringI& rsValue) const override;
@@ -161,7 +188,7 @@ class GRAYCORE_LINK cIniSectionData : public IIniBaseEnumerator, public IIniBase
         return SetLine(iLine, nullptr);
     }
 
-    static StrLen_t GRAYCALL MakeLine(cSpanX<IniChar_t>& tmp, const IniChar_t* pszKey, const IniChar_t* pszArg, IniChar_t chSep = '=');
+    static StrLen_t GRAYCALL MakeLine(cSpanX<IniChar_t> ret, const IniChar_t* pszKey, const IniChar_t* pszArg, IniChar_t chSep = '=');
 
     ITERATE_t AddKeyArg(const IniChar_t* pszKey, const IniChar_t* pszArg);
     ITERATE_t AddKeyInt(const IniChar_t* pszKey, int iArg) {
@@ -174,7 +201,7 @@ class GRAYCORE_LINK cIniSectionData : public IIniBaseEnumerator, public IIniBase
     void AllocComplete();
     virtual HRESULT PropSet(const IniChar_t* pszPropTag, const IniChar_t* pszValue) override;
 
-    StrLen_t SetLinesParse(const IniChar_t* pszData, StrLen_t iLen = k_StrLen_UNK, const IniChar_t* pszSep = nullptr, STRP_MASK_t uFlags = (STRP_START_WHITE | STRP_MERGE_CRNL | STRP_END_WHITE | STRP_EMPTY_STOP));
+    StrLen_t SetLinesParse(const cSpan<IniChar_t>& data, const IniChar_t* pszSep = nullptr, STRP_MASK_t uFlags = (STRP_START_WHITE | STRP_MERGE_CRNL | STRP_END_WHITE | STRP_EMPTY_STOP));
     cStringA GetStringAll(const IniChar_t* pszSep = nullptr) const;
 
     HRESULT ReadSectionData(OUT cStringA& rsSectionNext, cStreamInput& stream, bool bStripComments);
@@ -230,7 +257,7 @@ class GRAYCORE_LINK cIniSectionEntry : public cRefBase, public cIniSection {
 
  public:
     cIniSectionEntry(cStringI sSectionTitle, bool bStripComments = false, int iLine = 0) : cIniSection(sSectionTitle, bStripComments), m_FilePos(0, iLine) {}
-    cIniSectionEntry(const cIniSectionEntry& rSectionCopy) : cIniSection(rSectionCopy), m_FilePos(rSectionCopy.m_FilePos) {
+    cIniSectionEntry(const cIniSectionEntry& rSectionCopy) : cRefBase(), cIniSection(rSectionCopy), m_FilePos(rSectionCopy.m_FilePos) {
         // copy
     }
     virtual ~cIniSectionEntry() {}

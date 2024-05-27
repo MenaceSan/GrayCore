@@ -23,7 +23,7 @@ class cThreadLockArrayPtr : protected cArrayPtr<TYPE> {
     typedef cArrayPtr<TYPE> SUPER_t;
 
  public:
-    mutable cThreadLockCount m_Lock;
+    mutable cThreadLockableX m_Lock;
 
  public:
     cThreadLockArrayPtr() {}
@@ -48,7 +48,7 @@ class cThreadLockArrayPtr : protected cArrayPtr<TYPE> {
     bool HasArg(TYPE* pObj) const {
         //! Find the index of a specified entry.
         const auto guard(m_Lock.Lock());  // thread sync critical section.
-        return SUPER_t::FindIFor(pObj) >= 0;
+        return SUPER_t::FindIForN(pObj) >= 0;
     }
     TYPE* PopHead() {
         const auto guard(m_Lock.Lock());  // thread sync critical section.
@@ -78,12 +78,9 @@ class cThreadLockArrayRef : protected cArrayRef<TYPE> {
     typedef cArrayRef<TYPE> SUPER_t;
 
  public:
-    mutable cThreadLockCount m_Lock;
+    mutable cThreadLockableX m_Lock;
 
  public:
-    cThreadLockArrayRef() {}
-    ~cThreadLockArrayRef() {}
-
     ITERATE_t GetSize() const {
         //! Used for statistical purposes. This may change of course.
         return SUPER_t::GetSize();  // just for stats purposes.
@@ -115,7 +112,7 @@ class cThreadLockArrayRef : protected cArrayRef<TYPE> {
     bool HasArg(TYPE* pObj) const {
         //! Find a specified entry.
         const auto guard(m_Lock.Lock());  // thread sync critical section.
-        return SUPER_t::FindIFor(pObj) >= 0;
+        return SUPER_t::FindIFor3(pObj) >= 0;
     }
     ITERATE_t Add(TYPE* pObj) {
         // add to tail
@@ -155,7 +152,7 @@ class cThreadLockArrayName : protected cArraySortName<TYPE, _TYPECH> {
     typedef cArraySortName<TYPE, _TYPECH> SUPER_t;
 
  public:
-    mutable cThreadLockCount m_Lock;
+    mutable cThreadLockableX m_Lock;
 
  public:
     cThreadLockArrayName() {}
@@ -174,9 +171,9 @@ class cThreadLockArrayName : protected cArraySortName<TYPE, _TYPECH> {
         const auto guard(m_Lock.Lock());  // thread sync critical section.
         return SUPER_t::FindArgForKey(pszKey);
     }
-    ITERATE_t Add(TYPE* pObj) {
+    ITERATE_t AddSort(TYPE* pObj) {
         const auto guard(m_Lock.Lock());  // thread sync critical section.
-        return SUPER_t::Add(pObj);
+        return SUPER_t::AddSort(pObj);
     }
     bool RemoveArgKey(TYPE* pObj) {
         const auto guard(m_Lock.Lock());  // thread sync critical section.
@@ -206,7 +203,7 @@ class cThreadLockArrayHash : protected cArraySortHash<TYPE, _TYPE_HASH> {
     typedef cArraySortHash<TYPE, _TYPE_HASH> SUPER_t;
 
  public:
-    mutable cThreadLockCount m_Lock;
+    mutable cThreadLockableX m_Lock;
 
  public:
     cThreadLockArrayHash() {}
@@ -229,10 +226,10 @@ class cThreadLockArrayHash : protected cArraySortHash<TYPE, _TYPE_HASH> {
         const auto guard(m_Lock.Lock());  // thread sync critical section.
         return SUPER_t::GetAtCheck(nIndex);
     }
-    ITERATE_t Add(TYPE* pObj) {
+    ITERATE_t AddSort(TYPE* pObj) {
         // AKA Push = add to Tail.
         const auto guard(m_Lock.Lock());  // thread sync critical section.
-        return SUPER_t::Add(pObj);         // AddTail
+        return SUPER_t::AddSort(pObj);    // AddTail
     }
     cRefPtr<TYPE> PopHead() {
         // Act as a Queue, not a stack.
@@ -277,12 +274,10 @@ class cThreadLockArrayValue : protected cArraySortValue<TYPE, _TYPE_KEY> {
     typedef cArraySortValue<TYPE, _TYPE_KEY> SUPER_t;
 
  public:
-    mutable cThreadLockCount m_Lock;
+    mutable cThreadLockableX m_Lock;
 
  public:
-    cThreadLockArrayValue() {}
-    ~cThreadLockArrayValue() {}
-
+  
     ITERATE_t GetSize() const {
         //! Used for statistical purposes. This may change of course.
         return SUPER_t::GetSize();
@@ -295,10 +290,10 @@ class cThreadLockArrayValue : protected cArraySortValue<TYPE, _TYPE_KEY> {
         const auto guard(m_Lock.Lock());  // thread sync critical section.
         return SUPER_t::GetAtCheck(nIndex);
     }
-    ITERATE_t Add(TYPE* pObj) {
+    ITERATE_t AddSort(TYPE* pObj) {
         // add to tail.
         const auto guard(m_Lock.Lock());  // thread sync critical section.
-        return SUPER_t::Add(pObj);
+        return SUPER_t::AddSort(pObj);
     }
     ITERATE_t AddAfter(TYPE* pObj) {
         const auto guard(m_Lock.Lock());  // thread sync critical section.

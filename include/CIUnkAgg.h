@@ -16,14 +16,14 @@ namespace Gray {
 /// This makes interfaces look like multiple inheritance when it really is not. (why not just use multiple inheritance ?)
 /// </summary>
 /// <typeparam name="TYPE"></typeparam>
-template <class TYPE = IUnknown>
+template <class TYPE = ::IUnknown>
 class DECLSPEC_NOVTABLE cIUnkAggBase {
  protected:
     TYPE* m_pIAggOuter;  /// the outer object interface.
 
  public:
     cIUnkAggBase(TYPE* pIAggOuter) : m_pIAggOuter(pIAggOuter) {
-        ASSERT(pIAggOuter != nullptr);
+        ASSERT_NN(pIAggOuter);
     }
     virtual ~cIUnkAggBase() {}
     // Support IUnknown functions.
@@ -34,12 +34,12 @@ class DECLSPEC_NOVTABLE cIUnkAggBase {
         }
         return m_pIAggOuter->QueryInterface(riid, ppv);
     }
-    ULONG AddRef(void) {
-        ASSERT(m_pIAggOuter != nullptr);
+    ULONG AddRef() {
+        ASSERT_NN(m_pIAggOuter);
         return m_pIAggOuter->AddRef();
     }
-    ULONG Release(void) {
-        ASSERT(m_pIAggOuter != nullptr);
+    ULONG Release() {
+        ASSERT_NN(m_pIAggOuter);
         return m_pIAggOuter->Release();
     }
 };
@@ -49,28 +49,26 @@ class DECLSPEC_NOVTABLE cIUnkAggBase {
 /// </summary>
 class DECLSPEC_NOVTABLE cIUnkAgg : public cRefBase, public cIUnkAggBase<IUnknown> {
  public:
-    cIUnkAgg(IUnknown* pIAggOuter) : cIUnkAggBase((pIAggOuter == nullptr) ? this : pIAggOuter) {}
+    cIUnkAgg(::IUnknown* pIAggOuter) : cIUnkAggBase((pIAggOuter == nullptr) ? this : pIAggOuter) {}
     // Support IUknown functions.
-    STDMETHODIMP_(ULONG) AddRef(void) override {
+    STDMETHODIMP_(ULONG) AddRef() override {
         if (m_pIAggOuter == this) {
             IncRefCount();
             return CastN(ULONG, get_RefCount());
         }
-        ASSERT(m_pIAggOuter != nullptr);
+        ASSERT_NN(m_pIAggOuter);
         return m_pIAggOuter->AddRef();
     }
-    STDMETHODIMP_(ULONG) Release(void) override {
+    STDMETHODIMP_(ULONG) Release() override {
         if (m_pIAggOuter == this) {
             DecRefCount();
             return CastN(ULONG, get_RefCount());
         }
-        ASSERT(m_pIAggOuter != nullptr);
+        ASSERT_NN(m_pIAggOuter);
         return m_pIAggOuter->Release();
     }
     STDMETHODIMP QueryInterface(const IID& riid, void** ppv) override {
-        if (ppv == nullptr) {
-            return E_POINTER;
-        }
+        if (ppv == nullptr) return E_POINTER;
         if (m_pIAggOuter == nullptr) {
             *ppv = nullptr;
             return E_POINTER;

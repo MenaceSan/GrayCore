@@ -393,8 +393,6 @@ typedef unsigned long DWORD_PTR;  // Same as ULONG_PTR
 #define CALLBACK GRAYCALL           // just make this the same as GRAYCALL
 #define STDMETHODCALLTYPE GRAYCALL  // just make this the same as GRAYCALL
 
-#define _MAX_PATH PATH_MAX  // #include <limits.h> or MAX_PATH in windef.h. (Put this in Filepath.h ?) FILENAME_MAX ?
-
 #endif
 
 #if defined(__GNUC__) || defined(UNDER_CE)
@@ -407,10 +405,6 @@ typedef unsigned long DWORD_PTR;  // Same as ULONG_PTR
 #elif defined(_MSC_VER) && (_MSC_VER < 1700) && !defined(__cplusplus_cli)
 /// Don't define if M$ '/clr' switch is used. __cplusplus_cli
 #define nullptr NULL  //
-#endif
-
-#ifndef _MAX_PATH
-#define _MAX_PATH 260  // __GNUC__ can leave this out if __STRICT_ANSI__
 #endif
 
 #ifdef UNDER_CE

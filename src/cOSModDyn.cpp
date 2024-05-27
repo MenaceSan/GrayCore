@@ -9,7 +9,7 @@
 #include "cLogMgr.h"
 
 namespace Gray {
-HRESULT cOSModDynImpl::RegisterModule(IUnknown* pContainer) {
+HRESULT cOSModDynImpl::RegisterModule(::IUnknown* pContainer) {
     // ASSUME *Core DLL is the correct version and struct packing is correct.
     if (m_pContainer != nullptr) return S_FALSE;  // Already called this! Don't call it again!
     const HRESULT hRes = cAppState::CheckValidSignatureX();
@@ -20,17 +20,19 @@ HRESULT cOSModDynImpl::RegisterModule(IUnknown* pContainer) {
 }
 
 bool cOSModDynImpl::UnRegisterModule() {
+    // Try to release my singletons in proper order.
     m_pContainer.ReleasePtr();
-    return true; // safe i guess.
+    return true; // safe to unload i guess.
 }
 
 void cOSModDynImpl::OnProcessDetach() {
-    bool isSafe = UnRegisterModule();  // always make sure we call this before unload. call again here just to be safe.
+    const bool isSafe = UnRegisterModule();  // always make sure we call this before unload. call again here just to be safe.
     ASSERT(isSafe || cAppState::I().isInCExit());   // this is bad!
+    UNREFERENCED_PARAMETER(isSafe); // _DEBUG
     SUPER_t::OnProcessDetach();
 }
 
-HRESULT cOSModDyn::LoadAndRegisterModule(const FILECHAR_t* pszPath, IUnknown* pContainer, UINT32 nLibVer) {
+HRESULT cOSModDyn::LoadAndRegisterModule(const FILECHAR_t* pszPath, ::IUnknown* pContainer, UINT32 nLibVer) {
     const ITERATE_t nAllocCountPrev = cHeap::g_Stats._Allocs;  // must be the same if we skip/unload the DLL !
     UNREFERENCED_PARAMETER(nAllocCountPrev);
 
@@ -44,12 +46,13 @@ HRESULT cOSModDyn::LoadAndRegisterModule(const FILECHAR_t* pszPath, IUnknown* pC
     cAppStateModuleLoad dllLoad(_h);  // declare load context for this thread.
     HRESULT hRes = _h.LoadModuleWithSymbol(pszPath, _RegisterModuleS);
     if (FAILED(hRes)) {
+        // HRESULT_WIN32_C(ERROR_INVALID_FUNCTION)
         // HRESULT_WIN32_C(ERROR_CALL_NOT_IMPLEMENTED) // This is not a DLL we know how to use. skip it.
         return hRes;
     }
 
     hRes = HRESULT_WIN32_C(ERROR_UNSUPPORTED_TYPE);  // should not happen!
-    RegisterModuleF_t* pRegisterModule = reinterpret_cast<RegisterModuleF_t*>(_h.GetSymbolAddress(_RegisterModuleS));
+    RegisterModuleF_t pRegisterModule = CastFPtrTo<RegisterModuleF_t>(_h.GetSymbolAddress(_RegisterModuleS));
     if (pRegisterModule != nullptr) {
         GRAY_TRY {
             // Have the module register its services. or create cXObjEventSink
@@ -68,17 +71,18 @@ HRESULT cOSModDyn::LoadAndRegisterModule(const FILECHAR_t* pszPath, IUnknown* pC
     return S_OK;
 }
 
-void cOSModDyn::Unload() {
+bool cOSModDyn::Unload() {
     if (_pImpl != nullptr) {
         bool isSafe = _pImpl->UnRegisterModule();
         if (!isSafe && !cAppState::I().isInCExit()) {
             // This is bad! Don't unload it or we will crash!
             cLogMgr::I().addEventF(LOG_ATTR_0, LOGLVL_t::_CRIT, "Unload of module '%s' is NOT safe!", LOGSTR(_pImpl->get_Name()));
-            return;
+            return false;
         }
-        cSingletonRegister::ReleaseModule(_h);
+        cDependRegister::ReleaseModule(_h);
         _pImpl = nullptr;
     }
     _h.FreeThisModule();  // decrement my count. It might be freed.
+    return true;
 }
 }  // namespace Gray

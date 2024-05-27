@@ -49,7 +49,20 @@ class GRAYCORE_LINK cArchive {
     }
 
     /// Serialize Base Types
-    HRESULT Serialize(cMemSpan& m);
+
+    /// <summary>
+    /// Serialize this to cMemSpan
+    /// </summary>
+    /// <param name="ret">cMemSpan</param>
+    /// <returns>-lt- 0 = error HRESULT_WIN32_C(ERROR_IO_INCOMPLETE)</returns>
+    HRESULT Serialize(cMemSpan ret);
+
+    /// <summary>.
+    /// Write a compressed size. high bit of byte is reserved to say there is more to come. bytes stored low to high (Intel endian of course).
+    /// MFC calls this "Count"
+    /// </summary>
+    /// <param name="nSize"></param>
+    /// <returns></returns>
     HRESULT SerializeSize(size_t& nSize);
 
     template <typename _TYPE>

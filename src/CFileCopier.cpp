@@ -7,12 +7,11 @@
 #include "cFileDir.h"
 
 namespace Gray {
-HRESULT GRAYCALL cFileCopier::CopyFileStream(cStreamInput& stmIn, const FILECHAR_t* pszDstFileName, bool bFailIfExists, IStreamProgressCallback* pProgress) {
+HRESULT GRAYCALL cFileCopier::CopyFileStream(cStreamInput& stmIn, const FILECHAR_t* pszDstFileName, bool bFailIfExists, IStreamProgressCallback* pProgress, FILE_SIZE_t nOffsetStart) {
     //! Copy this (opened OF_READ) file to some other file name/path. (pszDstFileName)
     //! manually read/copy the contents of the file via WriteStream().
     //! Similar effect to cFile::CopyFileX()
 
-    // ASSUME SeekToBegin(); if appropriate.
     HRESULT hRes;
     cFile fileDst;
     if (bFailIfExists) {
@@ -24,6 +23,14 @@ HRESULT GRAYCALL cFileCopier::CopyFileStream(cStreamInput& stmIn, const FILECHAR
 
     hRes = fileDst.OpenX(pszDstFileName, OF_WRITE | OF_BINARY | OF_CREATE);
     if (FAILED(hRes)) return hRes;
+
+    // ELSE ASSUME stmIn.SeekToBegin(); if appropriate.
+    if (nOffsetStart > 0) {
+        hRes = stmIn.SeekX(nOffsetStart, SEEK_t::_Set);
+        if (FAILED(hRes)) return hRes;
+        hRes = fileDst.SeekX(nOffsetStart, SEEK_t::_Set);
+        if (FAILED(hRes)) return hRes;
+    }
 
     hRes = fileDst.WriteStream(stmIn, fileDst.GetLength(), pProgress);
     if (FAILED(hRes)) return hRes;
@@ -49,7 +56,7 @@ DWORD CALLBACK cFileCopier::onCopyProgressCallback(LARGE_INTEGER TotalFileSize, 
     if (lpData != nullptr) {
         ASSERT(TotalBytesTransferred.QuadPart <= 0xffffffff);
         ASSERT(TotalFileSize.QuadPart <= 0xffffffff);  // truncation!
-        HRESULT hRes = ((IStreamProgressCallback*)lpData)->onProgressCallback(cStreamProgress((STREAM_POS_t)TotalBytesTransferred.QuadPart, (STREAM_POS_t)TotalFileSize.QuadPart));
+        HRESULT hRes = PtrCast<IStreamProgressCallback>(lpData)->onProgressCallback(cStreamProgress((STREAM_POS_t)TotalBytesTransferred.QuadPart, (STREAM_POS_t)TotalFileSize.QuadPart));
         if (FAILED(hRes)) {
             return PROGRESS_STOP;
         }
@@ -58,9 +65,10 @@ DWORD CALLBACK cFileCopier::onCopyProgressCallback(LARGE_INTEGER TotalFileSize, 
 }
 #endif
 
-HRESULT GRAYCALL cFileCopier::CopyFileX(const FILECHAR_t* pszExistingName, const FILECHAR_t* pszNewName, IStreamProgressCallback* pProgress, bool bFailIfExists) {  // static
-    //! OS Copy a file from pszExistingName to pszNewName. The pszNewName may or may not already exist. In the old days Windows used LZCopy for this.
+HRESULT GRAYCALL cFileCopier::CopyFileX(const FILECHAR_t* pszSrcName, const FILECHAR_t* pszDstName, IStreamProgressCallback* pProgress, bool bFailIfExists) {  // static
+    //! OS Copy a file from pszSrcName to pszDstName. The pszDstName may or may not already exist. In the old days Windows used LZCopy for this.
     //! @note you may want to call WriteFileTimes() after this.
+    //! Does NOT create missing child directories.
     //! @return
     //!  ERROR_REQUEST_ABORTED = canceled by callback.
 
@@ -68,13 +76,16 @@ HRESULT GRAYCALL cFileCopier::CopyFileX(const FILECHAR_t* pszExistingName, const
     bool bRet;
     if (pProgress != nullptr) {
         BOOL fCancel = false;
-        bRet = ::CopyFileExW(cFilePath::GetFileNameLongW(pszExistingName),  // fix long name problems.
-                             cFilePath::GetFileNameLongW(pszNewName), cFileCopier::onCopyProgressCallback, pProgress, &fCancel, bFailIfExists ? COPY_FILE_FAIL_IF_EXISTS : 0);
+        bRet = ::CopyFileExW(cFilePath::GetFileNameLongW(pszSrcName),  // fix long name problems.
+                             cFilePath::GetFileNameLongW(pszDstName), cFileCopier::onCopyProgressCallback, pProgress, &fCancel, bFailIfExists ? COPY_FILE_FAIL_IF_EXISTS : 0);
     } else {
-        bRet = ::CopyFileW(cFilePath::GetFileNameLongW(pszExistingName), cFilePath::GetFileNameLongW(pszNewName), bFailIfExists);
+        bRet = ::CopyFileW(cFilePath::GetFileNameLongW(pszSrcName), cFilePath::GetFileNameLongW(pszDstName), bFailIfExists);
     }
     if (!bRet) {
-        HRESULT hRes = HResult::GetLastDef(HRESULT_WIN32_C(ERROR_FILE_NOT_FOUND));
+        const HRESULT hRes = HResult::GetLastDef(HRESULT_WIN32_C(ERROR_FILE_NOT_FOUND));
+        if (hRes == HRESULT_WIN32_C(ERROR_PATH_NOT_FOUND) && !bFailIfExists) {
+            // Create the dest folder?
+        }
         return hRes;
     }
     return S_OK;
@@ -83,10 +94,10 @@ HRESULT GRAYCALL cFileCopier::CopyFileX(const FILECHAR_t* pszExistingName, const
     // sendfile()  will send up to 2G
 
     // Fallback to stream file.
-    cFile filesrc;
-    HRESULT hRes = filesrc.OpenX(pszExistingName, OF_READ | OF_BINARY);
+    cFile fileSrc;
+    HRESULT hRes = fileSrc.OpenX(pszSrcName, OF_READ | OF_BINARY);
     if (FAILED(hRes)) return hRes;
-    return filesrc.CopyFileStream(pszNewName, bFailIfExists, pProgress);
+    return CopyFileStream(fileSrc, pszDstName, bFailIfExists, pProgress, 0);
 #endif
 }
 
@@ -113,51 +124,75 @@ HRESULT GRAYCALL cFileCopier::RenamePath(const FILECHAR_t* lpszOldName, const FI
     return S_OK;
 }
 
-HRESULT cFileCopier::RequestFile(const FILECHAR_t* pszSrcName, const FILECHAR_t* pszDestPath, IStreamProgressCallback* pProgress, FILE_SIZE_t nOffsetStart, FILE_SIZE_t* pnRequestSizeEst) {  // virtual
+HRESULT cFileCopier::RequestFile(const FILECHAR_t* pszSrcRemote, const FILECHAR_t* pszDestLocal, IStreamProgressCallback* pProgress, FILE_SIZE_t nOffsetStart, FILE_SIZE_t* pnRequestSizeEst) {  // virtual
     //! Request a file from a m_sRemoteRoot/pszSrcName (file system) to be brought back to me at local pszDestPath.
     //! @arg pnRequestSizeEst = unused/unnecessary for local file system copy.
 
-    cStringF sSrcPath = makeRemotePath(pszSrcName);
-    bool bRequestSize = (pnRequestSizeEst != nullptr && *pnRequestSizeEst == (FILE_SIZE_t)-1);
-    bool bDestEmpty = StrT::IsWhitespace(pszDestPath);
+    cStringF sSrcRemote = MakeRemotePath(pszSrcRemote);
+    const bool bRequestSize = (pnRequestSizeEst != nullptr && *pnRequestSizeEst == (FILE_SIZE_t)-1);
+    const bool bDestEmpty = StrT::IsWhitespace(pszDestLocal);
     if (bDestEmpty || bRequestSize) {
         // just retrieve the size of the file in pnRequestSizeEst using cFileStatus
         cFileStatus fs;
-        HRESULT hRes = fs.ReadFileStatus(sSrcPath);
+        const HRESULT hRes = fs.ReadFileStatus(sSrcRemote);
         if (FAILED(hRes)) return hRes;
-        if (pnRequestSizeEst == nullptr) return E_INVALIDARG;
+        if (pnRequestSizeEst == nullptr) return E_POINTER;
         // return its size.
         *pnRequestSizeEst = fs.GetFileLength();
         if (bDestEmpty) return S_OK;
     }
     if (nOffsetStart != 0) {
-        // A partial copy of the file. CopyFileStream
-        ASSERT(0);
+        // A partial copy of the file.
+        cFile fileSrc;
+        const HRESULT hRes = fileSrc.OpenX(sSrcRemote, OF_READ | OF_BINARY);
+        if (FAILED(hRes)) return hRes;
+        return cFileCopier::CopyFileStream(fileSrc, pszDestLocal, false, pProgress, nOffsetStart);
     }
-    return cFileCopier::CopyFileX(sSrcPath, pszDestPath, pProgress, false);
+    return cFileCopier::CopyFileX(sSrcRemote, pszDestLocal, pProgress, false);
 }
 
-HRESULT cFileCopier::SendFile(const FILECHAR_t* pszSrcPath, const FILECHAR_t* pszDestName, IStreamProgressCallback* pProgress, FILE_SIZE_t nOffsetStart, FILE_SIZE_t nSize) {  // override virtual
+HRESULT cFileCopier::SendFile(const FILECHAR_t* pszSrcLocal, const FILECHAR_t* pszDestRemote, IStreamProgressCallback* pProgress, FILE_SIZE_t nOffsetStart, FILE_SIZE_t nSize) {  // override virtual
     //! Send a local file to a m_sRemoteRoot/pszDestName from local pszSrcPath storage
     //! @note I cannot set the modification time stamp for the file here.
 
     UNREFERENCED_PARAMETER(nSize);
-    if (StrT::IsWhitespace(pszDestName)) return E_INVALIDARG;
+    if (StrT::IsWhitespace(pszDestRemote)) return E_INVALIDARG;
 
-    cStringF sDestPath = makeRemotePath(pszDestName);
-    if (StrT::IsWhitespace(pszSrcPath)) {
+    cStringF sDestRemote = MakeRemotePath(pszDestRemote);
+    if (StrT::IsWhitespace(pszSrcLocal)) {
         // Acts like a delete. delete file or directory recursively.
-        return cFileDir::DeletePathX(sDestPath, FILEOPF_t::_None);
+        return cFileDir::DeletePathX(sDestRemote, FILEOPF_t::_None);
     }
     if (nOffsetStart != 0) {
-        // A partial copy of the file. CopyFileStream
-        ASSERT(0);
+        // A partial copy of the file.
+        cFile fileSrc;
+        const HRESULT hRes = fileSrc.OpenX(pszSrcLocal, OF_READ | OF_BINARY);
+        if (FAILED(hRes)) return hRes;
+        return cFileCopier::CopyFileStream(fileSrc, sDestRemote, false, pProgress, nOffsetStart);
     }
-    return cFileCopier::CopyFileX(pszSrcPath, sDestPath, pProgress, false);
+
+    // Whole file.
+    HRESULT hRes = cFileCopier::CopyFileX(pszSrcLocal, sDestRemote, pProgress, false);
+    if (hRes == HRESULT_WIN32_C(ERROR_PATH_NOT_FOUND)) {
+        // Need to create the path first
+        hRes = cFileDir::CreateDirForFileX(sDestRemote, m_sRemoteRoot.GetLength());
+        if (FAILED(hRes)) return hRes;
+        hRes = cFileCopier::CopyFileX(pszSrcLocal, sDestRemote, pProgress, false);  // try again.
+    }
+
+    return hRes;
 }
 
 HRESULT cFileCopier::SendAttr(const FILECHAR_t* pszDestName, cTimeFile timeChanged) {  // override virtual
     //! Optionally set the remote side time stamp for a file.
-    return cFileStatus::WriteFileTimes(makeRemotePath(pszDestName), &timeChanged, &timeChanged);
+    return cFileStatus::WriteFileTimes(MakeRemotePath(pszDestName), &timeChanged, &timeChanged);
+}
+
+HRESULT cFileCopier::RequestDirectory(const FILECHAR_t* pszDir, OUT cArrayStruct<cFileDirEntry>& dirRet) {  // override;
+    cFileDir dir(pszDir);
+    HRESULT hRes = dir.ReadDir();
+    if (FAILED(hRes)) return hRes;
+    dirRet = dir.m_aFiles;
+    return hRes;
 }
 }  // namespace Gray

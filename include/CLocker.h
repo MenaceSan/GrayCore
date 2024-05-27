@@ -45,7 +45,7 @@ class GRAYCORE_LINK cLockableBase {
     }
 
     /// Wait for unique lock. m_nLockCount == 0
-    bool WaitUnique(TIMESYSD_t nDelayMS);
+    bool WaitUnique(TIMESYSD_t nWaitMS);
 
  public:
     inline LONG get_LockCount() const noexcept {
@@ -57,15 +57,15 @@ class GRAYCORE_LINK cLockableBase {
         DEBUG_CHECK(m_nLockCount >= 0);
         return m_nLockCount != 0;
     }
-    /// Stub for Unlock for non _MT, cThreadLockStub
+    /// Stub for Unlock for non _MT, cThreadLockableStub
     void Unlock() {
         DecLockCount();
     }
 };
 
 /// <summary>
-/// Call Lock/Unlock on something for the life span of this object.
-/// Stack only based guard. Used for: cThreadLockMutex, cThreadLockCrit, cThreadLockCount, ...
+/// Call Lock/Unlock on something for the life span of this object. Guard.
+/// Stack only based guard. Used for: cThreadLockableMutex, cThreadLockableCrit, cThreadLockableX, ...
 /// Might be used for: cDXSurfaceLock, cSemaphoreLock, cWinHeap, cDXMesh, cDXBuffer
 /// TYPE must support Unlock() and probably Lock() or be based on cLockableBase*
 /// m_p = the lock we are locking.
@@ -80,7 +80,9 @@ struct cLockerT : public cPtrFacade<TYPE> {
     /// <summary>
     /// The lock may not always work ! isValidPtr() = nullptr allows failure to lock. or early unlock.
     /// </summary>
-    explicit cLockerT(TYPE* pLockable, bool bLockSuccess) noexcept : cPtrFacade<TYPE>(pLockable) {}
+    explicit cLockerT(TYPE* pLockable, bool bLockSuccess) noexcept : cPtrFacade<TYPE>(pLockable) {
+        UNREFERENCED_PARAMETER(bLockSuccess);
+    }
 
     // cLockerT(TYPE& rLockable) noexcept : THIS_t(rLockable.Lock()) {}
 

@@ -113,8 +113,7 @@ cLogSink* cLogNexus::FindSinkType(const TYPEINFO_t& rType, bool bDescend) const 
     for (ITERATE_t i = 0;; i++) {
         const cLogSink* pSink = EnumSinks(i);
         if (pSink == nullptr) break;
-        if (typeid(*pSink) == rType)  // already here.
-            return const_cast<cLogSink*>(pSink);
+        if (typeid(*pSink) == rType) return const_cast<cLogSink*>(pSink);  // already here.
         if (bDescend) {
             const cLogNexus* pLogNexus = pSink->get_ThisLogNexus();
             if (pLogNexus != nullptr) {
@@ -136,7 +135,6 @@ cLogMgr::cLogMgr()
       cLogNexus((LOG_ATTR_MASK_t)LOG_ATTR_ALL_MASK, LOGLVL_t::_INFO)
 #endif
 {
-    //! ideally this is in the very first static initialize.
 #ifdef _DEBUG
     if (cAppState::isDebuggerPresent()) {
         cLogSinkDebug::AddSinkCheck(this);  // send logs to the debugger.
@@ -144,14 +142,20 @@ cLogMgr::cLogMgr()
 #endif
 }
 
-HRESULT cLogMgr::WriteString(const char* pszStr)  { // override
-    // Someone wants to dump raw text at the logger. Not sure why.
-    return addEventS(LOG_ATTR_PRINT | LOG_ATTR_SCRIPT, LOGLVL_t::_INFO, pszStr);
+void cLogMgr::ReleaseModuleChildren(::HMODULE hMod) {
+    // TODO  cLogNexus m_aSinks
+    UNREFERENCED_PARAMETER(hMod);
+    for (ITERATE_t i = m_aSinks.GetSize(); i;) {
+        const cLogSink* p = m_aSinks.GetAtCheck(--i);
+        UNREFERENCED_PARAMETER(p);
+        // if (p == nullptr || p->get_HModule() != hMod) continue;
+        //m_aSinks.RemoveAt(i);
+    }
 }
 
 #ifdef _CPPUNWIND
 void cLogMgr::LogExceptionV(cExceptionHolder* pEx, const LOGCHAR_t* pszCatchContext, va_list vargs) noexcept {
-    //! if ( this == nullptr ) may be OK?
+    //! if ( !cMem::IsValidApp(this)) may be OK?
     CODEPROFILEFUNC();
 
     TIMESECD_t tNowSec = static_cast<TIMESECD_t>(cTimeSys::GetTimeNow() / cTimeSys::k_FREQ);

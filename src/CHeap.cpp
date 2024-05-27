@@ -16,17 +16,19 @@
 #endif
 
 namespace Gray {
-HANDLE cHeapCommon::g_hHeap = ::GetProcessHeap();  // Global singleton.
 cHeapStats cHeapCommon::g_Stats;
+#ifdef _WIN32
+::HANDLE cHeapCommon::g_hHeap = ::GetProcessHeap();  // Global singleton.
+#endif
 
-size_t GRAYCALL cHeapCommon::GetAlign(const void* pData) noexcept { // static
+size_t GRAYCALL cHeapCommon::GetAlign(const void* pData) noexcept {  // static
     // ASSUME >= k_SizeAlignDef. 1,2,4,8,16,32
-    auto bits = cBits::Lowest1Bit(PtrCastToNum(pData));
+    auto bits = cBits::Lowest1Bit(CastPtrToNum(pData));
     if (bits == 0) return 0;
     return cBits::Mask1<size_t>(bits - 1);
 }
 
-UINT64 GRAYCALL cHeapCommon::get_PhysTotal() { // static
+UINT64 GRAYCALL cHeapCommon::get_PhysTotal() {  // static
 #ifdef UNDER_CE
     ::MEMORYSTATUS ms;
     ms.dwLength = sizeof(ms);
@@ -129,7 +131,7 @@ void GRAYCALL cHeap::FreePtr(void* pData) noexcept {  // static
     g_Stats.Free();
 #endif
 #if defined(_WIN32) && !USE_CRT
-    ::HeapFree(g_Heap, 0, pData);
+    ::HeapFree(g_hHeap, 0, pData);
 #else
     ::free(pData);
 #endif
@@ -146,9 +148,9 @@ void* GRAYCALL cHeap::AllocPtr(size_t iSize) {  // static // throw(std::bad_allo
     DEBUG_ASSERT(iSize < k_ALLOC_MAX, "AllocPtr");  // 256 * 64K - remove/change this if it becomes a problem
 #endif
 #if defined(_WIN32) && !USE_CRT
-    void* pData = ::HeapAlloc(g_Heap, 0, iSize);  // nh_malloc_dbg.
+    void* pData = ::HeapAlloc(g_hHeap, 0, iSize);  // nh_malloc_dbg.
 #else
-    void* pData = ::malloc(iSize);         // nh_malloc_dbg.
+    void* pData = ::malloc(iSize);  // nh_malloc_dbg.
 #endif
     if (pData == nullptr) {
         DEBUG_ASSERT(0, "malloc");
@@ -177,8 +179,7 @@ void* GRAYCALL cHeap::ReAllocPtr(void* pData, size_t iSize) {  // static
     ASSERT(iSize < k_ALLOC_MAX);  // 256 * 64K
     void* pData2 = nullptr;
     if (pData == nullptr) {
-        if (iSize <= 0)  // just do nothing. this is ok.
-            return nullptr;
+        if (iSize <= 0) return nullptr;  // just do nothing. this is ok.
 #if defined(_WIN32) && !USE_CRT
         pData2 = ::HeapAlloc(g_hHeap, 0, iSize);  // nh_malloc_dbg.
 #else
@@ -186,9 +187,9 @@ void* GRAYCALL cHeap::ReAllocPtr(void* pData, size_t iSize) {  // static
 #endif
     } else {
 #ifdef USE_HEAP_STATS
-        g_Stats.Free(GetSize(pData)); // act as though it was freed.
+        g_Stats.Free(GetSize(pData));  // act as though it was freed.
 #else
-        g_Stats.Free();      // act as though it was freed.
+        g_Stats.Free();                    // act as though it was freed.
 #endif
 #if defined(_WIN32) && !USE_CRT
         pData2 = ::HeapReAlloc(g_hHeap, 0, pData, iSize);
@@ -221,7 +222,7 @@ size_t GRAYCALL cHeap::GetSize(const void* pData) noexcept {  // static
 #if defined(__linux__)
     return ::malloc_usable_size((void*)pData);
 #elif defined(_WIN32) && !USE_CRT
-    return ::HeapSize(g_Heap, 0, (void*)pData);
+    return ::HeapSize(g_hHeap, 0, (void*)pData);
 #elif defined(_WIN32)
     return ::_msize((void*)pData);
 #else
@@ -270,9 +271,9 @@ struct CATTR_PACKED cHeapAlignHeader {
 /// <returns></returns>
 const cHeapAlignHeader* GRAYCALL cHeapAlign::GetHeader(const void* pData) noexcept {  // static
     if (pData == nullptr) return nullptr;
-    UINT_PTR uDataPtr = PtrCastToNum(pData);
+    UINT_PTR uDataPtr = CastPtrToNum(pData);
     uDataPtr &= ~(sizeof(UINT_PTR) - 1);
-    auto pHdr = CastNumToPtr<const cHeapAlignHeader>(uDataPtr - sizeof(cHeapAlignHeader));
+    auto pHdr = CastNumToPtrT<const cHeapAlignHeader>(uDataPtr - sizeof(cHeapAlignHeader));
     // is pHdr valid ?
 #ifdef _DEBUG
     if (pHdr->m_TailGap != kTailGap) return nullptr;
@@ -295,9 +296,7 @@ bool GRAYCALL cHeapAlign::IsHeapAlign(const void* pData) noexcept {  // static
 bool GRAYCALL cHeapAlign::IsValidInside(const void* pData, INT_PTR iOffset) noexcept {  // static
     CODEPROFILEFUNC();
     const cHeapAlignHeader* pHdr = GetHeader(pData);
-    if (pHdr == nullptr) {
-        return cHeap::IsValidInside(pData, iOffset);
-    }
+    if (pHdr == nullptr) return cHeap::IsValidInside(pData, iOffset);
 
     const void* pMallocHead = pHdr->m_pMallocHead;
     if (!cHeap::IsValidHeap(pMallocHead)) return false;
@@ -312,9 +311,7 @@ bool GRAYCALL cHeapAlign::IsValidHeap(const void* pData) noexcept {  // static
 
     // check if this is an aligned alloc first.
     const cHeapAlignHeader* pHdr = GetHeader(pData);
-    if (pHdr == nullptr) {
-        return cHeap::IsValidHeap(pData);
-    }
+    if (pHdr == nullptr) return cHeap::IsValidHeap(pData);
 
     // get the cHeapHeader pointer.
     return cHeap::IsValidHeap(pHdr->m_pMallocHead);
@@ -323,9 +320,7 @@ bool GRAYCALL cHeapAlign::IsValidHeap(const void* pData) noexcept {  // static
 size_t GRAYCALL cHeapAlign::GetSize(const void* pData) noexcept {  // static
     CODEPROFILEFUNC();
     const cHeapAlignHeader* pHdr = GetHeader(pData);
-    if (pHdr == nullptr) {
-        return cHeap::GetSize(pData);
-    }
+    if (pHdr == nullptr) return cHeap::GetSize(pData);
 
     // get the cHeapHeader pointer.
     DEBUG_CHECK(cHeap::IsValidHeap(pHdr->m_pMallocHead));
@@ -338,7 +333,7 @@ void GRAYCALL cHeapAlign::FreePtr(void* pData) {  // static
     if (pData == nullptr) return;
 
 #ifdef USE_HEAP_STATS
-    g_Stats.Free(GetSize(pData));   // can't call _msize for aligned directly.
+    g_Stats.Free(GetSize(pData));  // can't call _msize for aligned directly.
 #else
     g_Stats.Free();
 #endif
@@ -348,7 +343,7 @@ void GRAYCALL cHeapAlign::FreePtr(void* pData) {  // static
 #elif defined(_WIN32) && !USE_CRT
     ::HeapFree(g_hHeap, 0, pData);
 #else
-    ::free(pData);                                // Linux just used free() for memalign() and malloc().
+    ::free(pData);                                 // Linux just used free() for memalign() and malloc().
 #endif
 }
 
@@ -365,7 +360,7 @@ void* GRAYCALL cHeapAlign::AllocPtr(size_t iSize, size_t iAlignment) {  // stati
 #elif defined(__linux__)
     void* pData = ::memalign(iAlignment, iSize);
 #elif defined(_WIN32) && !USE_CRT
-    void* pData = ::HeapAlloc(g_Heap, 0, iSize);  // WRONG!!!
+    void* pData = ::HeapAlloc(g_hHeap, 0, iSize);  // WRONG!!!
 #elif defined(_WIN32) && USE_CRT
     void* pData = ::_aligned_malloc(iSize, iAlignment);  // nh_malloc_dbg.
 #else

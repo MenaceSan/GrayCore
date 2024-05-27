@@ -10,30 +10,22 @@
 #include "cThreadLock.h"
 
 namespace Gray {
-cAtomManager::cAtomManager() : cSingleton<cAtomManager>(this, typeid(cAtomManager)), m_aEmpty(DATA_t::CreateStringData2(0, &cStrConst::k_EmptyA)) {
-    //! created on demand to prevent any race conditions at static create time.
-    m_aName.InsertAt(cHashIterator(), COMPARE_Equal, m_aEmpty.get_Ptr());
-    m_aHash.Add(m_aEmpty.get_Ptr());
-    SetAtomStatic(m_aEmpty);
-}
-
-cAtomManager::~cAtomManager() noexcept {
-    DEBUG_MSG(("~cAtomManager"));
-}
+ 
+cAtomManager::cAtomManager() : cSingleton<cAtomManager>(this, typeid(cAtomManager)) {}
 
 cAtomRef cAtomManager::FindAtomStr(const ATOMCHAR_t* pszText) const {
-    if (StrT::IsNullOrEmpty(pszText)) return m_aEmpty;
+    if (StrT::IsNullOrEmpty(pszText)) return cAtomRef();
     const auto guard(m_Lock.Lock());
     cAtomRef pDef(m_aName.FindArgForKey(pszText));
-    if (!pDef.isValidPtr()) return m_aEmpty;
+    if (!pDef.isValidPtr()) return cAtomRef();
     return cAtomRef(pDef);
 }
 
 cAtomRef cAtomManager::FindAtomHashCode(ATOMCODE_t idAtom) const {
-    if (idAtom == k_HASHCODE_CLEAR) return m_aEmpty;
+    if (idAtom == k_HASHCODE_CLEAR) return cAtomRef();
     const auto guard(m_Lock.Lock());
     cAtomRef pDef(m_aHash.FindArgForKey(idAtom));
-    if (!pDef.isValidPtr()) return m_aEmpty;
+    if (!pDef.isValidPtr()) return cAtomRef();
     return cAtomRef(pDef);
 }
 
@@ -63,37 +55,25 @@ cAtomRef cAtomManager::CreateAtom(const cHashIterator& index, COMPARE_t iCompare
     return cAtomRef(pData);
 }
 
-cAtomRef cAtomManager::FindorCreateAtomStr(const cStringA& sName) noexcept {
-    if (sName.IsEmpty()) return m_aEmpty;
-
+cAtomRef cAtomManager::FindorCreateAtom(const cSpan<ATOMCHAR_t>& src) noexcept {
+    if (StrT::IsNullOrEmpty<ATOMCHAR_t>(src)) return cAtomRef();
     const auto guard(m_Lock.Lock());
-
     COMPARE_t iCompareRes;
-    cHashIterator index = m_aName.FindINearKey(sName, iCompareRes);
-    if (iCompareRes == COMPARE_Equal) {
-        // already here.
-        return cAtomRef(m_aName.GetAtHash(index));
-    }
+    const cHashIterator index = m_aName.FindINearKey(src, iCompareRes);
+    if (iCompareRes == COMPARE_Equal) return cAtomRef(m_aName.GetAtHash(index));  // already here.
+    return CreateAtom(index, iCompareRes, DATA_t::CreateStringSpan(src));
+}
+cAtomRef cAtomManager::FindorCreateAtom(const cStringA& sName) noexcept {
+    if (sName.IsEmpty()) return cAtomRef();
+    const auto guard(m_Lock.Lock());
+    COMPARE_t iCompareRes;
+    const cHashIterator index = m_aName.FindINearKey(sName, iCompareRes);
+    if (iCompareRes == COMPARE_Equal) return cAtomRef(m_aName.GetAtHash(index));  // already here.
     return CreateAtom(index, iCompareRes, const_cast<cStringA&>(sName).get_Head());
 }
 
-cAtomRef cAtomManager::FindorCreateAtomStr(const ATOMCHAR_t* pszName) noexcept {
-    //! Find the atom in the atom table if it exists else create a new one.
-    if (StrT::IsNullOrEmpty(pszName)) return m_aEmpty;
-
-    const auto guard(m_Lock.Lock());
-
-    COMPARE_t iCompareRes;
-    cHashIterator index = m_aName.FindINearKey(pszName, iCompareRes);
-    if (iCompareRes == COMPARE_Equal) {
-        // already here.
-        return cAtomRef(m_aName.GetAtHash(index));
-    }
-    return CreateAtom(index, iCompareRes, DATA_t::CreateStringData2(StrT::Len(pszName), pszName));
-}
-
 void cAtomManager::SetAtomStatic(DATA_t* pDef) {
-    m_aStatic.Add(pDef);
+    m_aStatic.AddSort(pDef, 2);
 }
 
 HRESULT cAtomManager::DebugDumpFile(ITextWriter& o) const {
@@ -102,13 +82,13 @@ HRESULT cAtomManager::DebugDumpFile(ITextWriter& o) const {
     // Order by name
     FOREACH_HASH_TABLE(m_aName, i) {
         auto pDef = m_aName.GetAtHash(i);
-        o.Printf("%s" FILE_EOL, StrArg<char>(pDef->get_Name()));
+        o.Printf("%s" FILE_EOL, StrArg<char>(pDef->get_CPtr()));
     }
 
     // Order by hash
     FOREACH_HASH_TABLE(m_aHash, k) {
         auto pDef = m_aHash.GetAtHash(k);
-        o.Printf("%x = '%s'" FILE_EOL, pDef->get_HashCode(), StrArg<char>(pDef->get_Name()));
+        o.Printf("%x = '%s'" FILE_EOL, pDef->get_HashCode(), StrArg<char>(pDef->get_CPtr()));
     }
     return S_OK;
 }
@@ -120,31 +100,25 @@ bool cAtomManager::DebugTest() const {
 
 //*********************************
 
-void cAtomRef::EmptyAtom(bool isLast) {
+void cAtomRef::SetEmptyA() {
     //! Free this ref count. Delete if there are no more refs
     CODEPROFILEFUNC();
-    if (IsEmpty())  // already empty. never free the empty atom.
-        return;
-
+    if (IsEmpty()) return;  // already empty. never free the empty atom.
     cAtomManager& rAM = cAtomManager::I();
 
     // Remove the cAtomRef from the tables if last use.
     const REFCOUNT_t iRefCount = get_RefCount();
     if (iRefCount <= cAtomManager::kRefsBase) {
-        // Remove me from the cAtomManager tables.
-        rAM.RemoveAtom(get_Ptr());
+        rAM.RemoveAtom(get_Ptr());  // Remove me from the cAtomManager tables.
     }
 
-    // if nullptr then caller will free ref. or we are in destruct.
-    put_Ptr(isLast ? nullptr : rAM.m_aEmpty.get_Ptr());
+    put_Ptr(nullptr);
 }
 
 size_t cAtomRef::CountHeapStats(OUT ITERATE_t& iAllocCount) const {
-    //! Every user of the atom dears 1/n of the usage of the memory
     //! return SUPER_t::CountHeapStats(iAllocCount);
     CODEPROFILEFUNC();
-    if (IsEmpty())  // already empty
-        return 0;
+    if (IsEmpty()) return 0;  // already empty        
     const REFCOUNT_t iRefCount = get_RefCount();
     ASSERT(iRefCount >= 2);
     return get_Ptr()->GetHeapStatsThis(iAllocCount) / (iRefCount - 1);
@@ -163,58 +137,23 @@ void cAtomRef::SetAtomStatic() {
     cAtomManager::I().SetAtomStatic(get_Ptr());
 }
 
-cAtomRef GRAYCALL cAtomRef::FindorCreateAtomStr(const ATOMCHAR_t* pszText) noexcept { 
-    return cAtomManager::I().FindorCreateAtomStr(pszText);
+cAtomRef GRAYCALL cAtomRef::FindorCreateAtom(const cSpan<ATOMCHAR_t>& src) noexcept {
+    return cAtomManager::I().FindorCreateAtom(src);
 }
 
-cAtomRef GRAYCALL cAtomRef::FindorCreateAtomStr(const STR_t& sText) noexcept { 
-    return cAtomManager::I().FindorCreateAtomStr(sText);
+cAtomRef GRAYCALL cAtomRef::FindorCreateAtom(const STR_t& sText) noexcept {
+    return cAtomManager::I().FindorCreateAtom(sText);
 }
 
 #ifdef _DEBUG
 HRESULT GRAYCALL cAtomRef::DebugDumpFile(const FILECHAR_t* pszFilePath) {
     CODEPROFILEFUNC();
     cFile file;
-    HRESULT hRes = file.OpenX(pszFilePath, OF_CREATE | OF_WRITE);
-    if (FAILED(hRes)) {
-        return hRes;
-    }
+    const HRESULT hRes = file.OpenX(pszFilePath, OF_CREATE | OF_WRITE);
+    if (FAILED(hRes)) return hRes;
     return cAtomManager::I().DebugDumpFile(file);
 }
 #endif
-
-HRESULT GRAYCALL cAtomRef::CheckSymName(const ATOMCHAR_t* pszTag, bool bAllowDots) {
-    //! Is this a simple 'c' style identifier/symbolic string? starts with a char and can have numbers.
-    //! @note JSON allows '.' as part of normal names ??
-    //! @arg pszTag = the identifier (valid char set).
-    //! @return > 0 = length else < 0 = HRESULT error.
-
-    if (StrT::IsNullOrEmpty(pszTag)) {
-        return HRESULT_WIN32_C(ERROR_EMPTY);
-    }
-
-    StrLen_t i = 0;
-    if (!bAllowDots) {
-        if (!StrChar::IsCSymF(pszTag[0]))  // first char of symbol is special.
-        {
-            return E_INVALIDARG;
-        }
-        i++;
-    }
-
-    STATIC_ASSERT(k_LEN_MAX_CSYM <= StrT::k_LEN_Default, "k_LEN_MAX_CSYM");
-
-    for (;; i++) {
-        if (i >= k_LEN_MAX_CSYM) return HRESULT_WIN32_C(ERROR_BAD_LENGTH);
-        ATOMCHAR_t ch = pszTag[i];
-        if (ch == '\0') break;
-        if (bAllowDots && ch == '.') continue;
-        if (StrChar::IsCSym(ch)) continue;
-        return E_INVALIDARG;
-    }
-
-    return i;
-}
 
 StrLen_t GRAYCALL cAtomRef::MakeSymName(OUT ATOMCHAR_t* pszTagRet, const ATOMCHAR_t* pszExp, bool bAllowDots) {
     if (pszExp == nullptr) return 0;
@@ -222,12 +161,9 @@ StrLen_t GRAYCALL cAtomRef::MakeSymName(OUT ATOMCHAR_t* pszTagRet, const ATOMCHA
 
     ATOMCHAR_t ch = pszExp[0];
     StrLen_t i = 0;
-    if (!bAllowDots)  // JSON allows leading numbers and dots.
-    {
-        if (!StrChar::IsCSymF(ch))  // first char of symbol is special.
-        {
-            // Insert leading '_' to cover the invalid first char?
-            pszTagRet[0] = '\0';
+    if (!bAllowDots) {                // JSON allows leading numbers and dots.
+        if (!StrChar::IsCSymF(ch)) {  // first char of symbol is special.
+            pszTagRet[0] = '\0';    // Insert leading '_' to cover the invalid first char?
             return 0;  // Can't fix this.
         }
         pszTagRet[0] = ch;  // first is special.

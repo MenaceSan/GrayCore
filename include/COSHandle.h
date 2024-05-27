@@ -10,6 +10,7 @@
 
 #include "HResult.h"
 #include "cDebugAssert.h"  // ASSERT
+#include "cMemSpan.h"
 #include "cNonCopyable.h"
 #include "cStreamProgress.h"  // STREAM_OFFSET_t , STREAM_POS_t, SEEK_t
 #include "cTimeSys.h"         // TIMESYSD_t
@@ -35,7 +36,7 @@ namespace Gray {
 /// </summary>
 class GRAYCORE_LINK cOSHandle : protected cNonCopyable {
  public:
-    ::HANDLE m_h;
+    ::HANDLE m_h;   /// The OS assigned handle to some object.
 
  protected:
     void CloseHandleLast() noexcept {
@@ -45,7 +46,7 @@ class GRAYCORE_LINK cOSHandle : protected cNonCopyable {
     }
 
  public:
-    explicit inline cOSHandle(HANDLE h = INVALID_HANDLE_VALUE) noexcept : m_h(h) {}
+    explicit inline cOSHandle(::HANDLE h = INVALID_HANDLE_VALUE) noexcept : m_h(h) {}
     cOSHandle(const cOSHandle& h) noexcept : m_h(h.Duplicate()) {}
     cOSHandle(cOSHandle&& h) noexcept : m_h(h.m_h) {
         h.m_h = INVALID_HANDLE_VALUE;
@@ -138,21 +139,21 @@ class GRAYCORE_LINK cOSHandle : protected cNonCopyable {
     }
 
     /// <summary>
-    ///
+    /// Write to raw OS handle.
     /// </summary>
     /// <param name="pData"></param>
     /// <param name="nDataSize"></param>
-    /// <returns># of bytes written. -lt- 0 = error.
+    /// <returns># of bytes written. -lte- nDataSize. -lt- 0 = error.
     /// ERROR_INVALID_USER_BUFFER = too many async calls ?? wait.
     /// ERROR_IO_PENDING = must wait!?</returns>
-    HRESULT WriteX(const void* pData, size_t nDataSize) const {
-        if (nDataSize <= 0) return S_OK;  // Do nothing.
+    HRESULT WriteX(const cMemSpan& m) const {
+        if (m.isEmpty()) return S_OK;  // Do nothing.
 #if defined(_WIN32)
         DWORD nLengthWritten = 0;
-        const bool bRet = ::WriteFile(m_h, pData, (DWORD)nDataSize, &nLengthWritten, nullptr);
+        const bool bRet = ::WriteFile(m_h, m, (DWORD)m.get_SizeBytes(), &nLengthWritten, nullptr);
         if (!bRet)
 #elif defined(__linux__)
-        int nLengthWritten = ::write(m_h, (const char*)pData, (long)nDataSize);
+        const int nLengthWritten = ::write(m_h, m.GetTPtrC<char>(), (long)m.get_SizeBytes());
         if (nLengthWritten <= 0)
 #endif
         {
@@ -164,19 +165,18 @@ class GRAYCORE_LINK cOSHandle : protected cNonCopyable {
     /// <summary>
     /// Low level read from the OS file handle m_h.
     /// </summary>
-    /// <param name="pData">buffer</param>
-    /// <param name="nDataSize">max amount of data to read</param>
-    /// <returns>lt 0 = error. 0=might be EOF?, length of data read lt nDataSize</returns>
-    HRESULT ReadX(void* pData, size_t nDataSize) const noexcept {
+    /// <param name="m">max amount of data to read</param>
+    /// <returns>-lt- 0 = error. 0=might be EOF?, length of data read lt nDataSize</returns>
+    HRESULT ReadX(cMemSpan ret) const noexcept {
         // HRESULT_WIN32_C(ERROR_HANDLE_EOF) = No more data = EOF.
         // HRESULT_WIN32_C(ERROR_READ_FAULT), etc
-        if (nDataSize <= 0) return S_OK;
+        if (ret.isEmpty()) return S_OK;
 #ifdef _WIN32
         DWORD nLengthRead = 0;
-        const bool bRet = ::ReadFile(m_h, pData, CastN(DWORD, nDataSize), &nLengthRead, nullptr);
+        const bool bRet = ::ReadFile(m_h, ret.get_BytePtrW(), CastN(DWORD, ret.get_SizeBytes()), &nLengthRead, nullptr);
         if (!bRet)
 #elif defined(__linux__)
-        int nLengthRead = ::read(m_h, pData, CastN(long, nDataSize));
+        const int nLengthRead = ::read(m_h, ret.GetTPtrW<char>(), CastN(long, ret.get_SizeBytes()));
         if (nLengthRead < 0)
 #endif
         {
@@ -184,7 +184,7 @@ class GRAYCORE_LINK cOSHandle : protected cNonCopyable {
         }
         return CastN(HRESULT, nLengthRead);
     }
-
+ 
     /// <summary>
     /// synchronous flush of write data to file.
     /// </summary>
@@ -224,7 +224,7 @@ class GRAYCORE_LINK cOSHandle : protected cNonCopyable {
 #endif  // USE_FILE_POS64
 #else
         //! Use return _tell( m_hFile ) for __linux__ ? off_t
-        return CastN(STREAM_POS_t, ::lseek(m_h, nOffset, eSeekOrigin));
+        return CastN(STREAM_POS_t, ::lseek(m_h, nOffset, (int)eSeekOrigin));
 #endif
     }
 

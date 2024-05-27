@@ -103,13 +103,13 @@ template <class TYPE = BYTE>
 struct GRAYCORE_LINK cQueueRead : public cQueueIndex, protected cSpan<TYPE> {
     cQueueRead() {}
     cQueueRead(const cSpan<TYPE>& span, ITERATE_t iReadIndex, ITERATE_t iWriteIndex) noexcept : cQueueIndex(iReadIndex, iWriteIndex), cSpan<TYPE>(span) {}
-    cQueueRead(const cMemSpan& span) noexcept : cQueueIndex(0, (ITERATE_t)(span.get_DataSize() / sizeof(TYPE))), cSpan<TYPE>(span) {}
+    cQueueRead(const cMemSpan& span) noexcept : cQueueIndex(0, (ITERATE_t)(span.get_SizeBytes() / sizeof(TYPE))), cSpan<TYPE>(span) {}
     ~cQueueRead() noexcept {}
 
     /// reset data to be read.
     void SetQueueRead(const cSpan<TYPE>& span, ITERATE_t iReadIndex = 0) {
         this->SetSpan(span);
-        InitQ(iReadIndex, span.GetSize());
+        this->InitQ(iReadIndex, span.GetSize());
     }
 
     /// <summary>
@@ -118,21 +118,21 @@ struct GRAYCORE_LINK cQueueRead : public cQueueIndex, protected cSpan<TYPE> {
     /// isEmptyQ() is OK, might be 0 length.
     /// </summary>
     inline const TYPE* get_ReadPtr() const noexcept {
-        const TYPE* p = get_DataC<TYPE>() + m_nReadIndex;
-        DEBUG_CHECK(IsInternalPtr2(p));
+        const TYPE* p = this->template GetTPtrC<TYPE>() + this->m_nReadIndex;
+        DEBUG_CHECK(this->IsInternalPtr2(p));
         return p;
     }
 
     cSpan<TYPE> get_SpanRead() const {
-        return ToSpan(get_ReadPtr(), get_ReadQty());
+        return ToSpan(this->get_ReadPtr(), this->get_ReadQty());
     }
 
     /// <summary>
     /// get a single TYPE element and advance index.
     /// </summary>
-    TYPE Read1(void) {
-        ASSERT(!isEmptyQ());
-        return get_DataC<TYPE>()[m_nReadIndex++];
+    TYPE Read1() {
+        ASSERT(!this->isEmptyQ());
+        return this->template GetTPtrC<TYPE>()[this->m_nReadIndex++];
     }
 
     /// <summary>
@@ -140,7 +140,7 @@ struct GRAYCORE_LINK cQueueRead : public cQueueIndex, protected cSpan<TYPE> {
     /// </summary>
     /// <param name="ret">nullptr = just return how much data i might get.</param>
     /// <returns>quantity i actually read.</returns>
-    HRESULT ReadPeek(cSpanX<TYPE>& ret) noexcept {
+    HRESULT ReadPeek(cSpanX<TYPE> ret) noexcept {
         const ITERATE_t iQtyAvail = ret.SetCopySpan(get_SpanRead());
         return CastN(HRESULT, iQtyAvail);
     }
@@ -150,9 +150,9 @@ struct GRAYCORE_LINK cQueueRead : public cQueueIndex, protected cSpan<TYPE> {
     /// </summary>
     /// <param name="ret">qty of TYPE units i can fit.</param>
     /// <returns>iQty i actually read.</returns>
-    ITERATE_t ReadSpanQ(cSpanX<TYPE>& buf) noexcept {
-        const ITERATE_t iQtyAvail = buf.SetCopySpan(get_SpanRead());
-        AdvanceRead(iQtyAvail);  // advance m_nReadIndex pointer.
+    ITERATE_t ReadSpanQ(cSpanX<TYPE> ret) noexcept {
+        const ITERATE_t iQtyAvail = ret.SetCopySpan(get_SpanRead());
+        this->AdvanceRead(iQtyAvail);  // advance m_nReadIndex pointer.
         return CastN(HRESULT, iQtyAvail);
     }
 
@@ -168,7 +168,7 @@ struct GRAYCORE_LINK cQueueRead : public cQueueIndex, protected cSpan<TYPE> {
         if (this->m_nReadIndex <= 0) return;  // next read is already at 0.
         const ITERATE_t iSize = this->get_ReadQty();
         if (iSize > 0) {  // there is data to move ?
-            TYPE* pStart = this->get_DataW<TYPE>();
+            TYPE* pStart = this->template GetTPtrW<TYPE>();
             const TYPE* pTmp = pStart + this->m_nReadIndex;
             cMem::CopyOverlap(pStart, pTmp, iSize * sizeof(TYPE));
         }
@@ -234,7 +234,7 @@ class GRAYCORE_LINK cQueueRW : public cQueueRead<TYPE> {
     virtual TYPE* GetWritePrep(ITERATE_t iNeedCount) {
         UNREFERENCED_PARAMETER(iNeedCount);  // no resize available here.
         if (!this->isValidPtr()) return nullptr;
-        return this->get_DataW<TYPE>() + this->m_nWriteIndex;
+        return this->template GetTPtrW<TYPE>() + this->m_nWriteIndex;
     }
 
     /// Must also call AdvanceWrite()
@@ -313,8 +313,8 @@ class GRAYCORE_LINK cQueueRW : public cQueueRead<TYPE> {
     /// <param name="pData"></param>
     /// <param name="iDataMaxQty"></param>
     /// <returns>iQty i actually read.</returns>
-    ITERATE_t ReadSpanQ(cSpanX<TYPE>& buf) noexcept {
-        const ITERATE_t nReadQty = SUPER_t::ReadSpanQ(buf);
+    ITERATE_t ReadSpanQ(cSpanX<TYPE> ret) noexcept {
+        const ITERATE_t nReadQty = SUPER_t::ReadSpanQ(ret);
         ReadCommitCheck();
         return nReadQty;
     }
@@ -322,8 +322,8 @@ class GRAYCORE_LINK cQueueRW : public cQueueRead<TYPE> {
     /// <summary>
     /// Read some bytes
     /// </summary>
-    HRESULT ReadX(void* pData, size_t nDataSize) noexcept {
-        const ITERATE_t nReadQty = ReadSpanQ(cSpanX<TYPE>(cMemSpan(pData, nDataSize)));
+    HRESULT ReadX(cMemSpan ret) noexcept {
+        const ITERATE_t nReadQty = ReadSpanQ(cSpanX<TYPE>(ret));
         return CastN(HRESULT, nReadQty * sizeof(TYPE));
     }
 
@@ -354,8 +354,8 @@ class GRAYCORE_LINK cQueueRW : public cQueueRead<TYPE> {
     /// <param name="pData"></param>
     /// <param name="nDataSize">bytes NOT instances of TYPE</param>
     /// <returns>size of data added in bytes.</returns>
-    HRESULT WriteX(const void* pData, size_t nDataSize) {
-        const ITERATE_t iWriteQty = WriteSpanQ(cSpan<TYPE>(cMemSpan(pData, nDataSize)), false);
+    HRESULT WriteX(const cMemSpan& m) {
+        const ITERATE_t iWriteQty = WriteSpanQ(cSpan<TYPE>(m), false);
         return CastN(HRESULT, iWriteQty * sizeof(TYPE));
     }
 
@@ -366,7 +366,7 @@ class GRAYCORE_LINK cQueueRW : public cQueueRead<TYPE> {
         cSpanX<TYPE> spanWrite = GetSpanWrite(1);
         if (spanWrite.isEmpty()) return false;
         if (!spanWrite.isNull()) {
-            *spanWrite.get_DataWork() = val;
+            *spanWrite.get_PtrWork() = val;
         }
         AdvanceWrite(1);
         return true;
@@ -407,14 +407,14 @@ class GRAYCORE_LINK cQueueStatic : public cQueueIndex, public cSpanStatic<_QTY, 
 #endif
     }
     bool isFullQ() const noexcept {
-        return GetWrapIndex(m_nWriteIndex + 1) == m_nReadIndex;
+        return this->GetWrapIndex(m_nWriteIndex + 1) == this->m_nReadIndex;
     }
     /// <summary>
     /// How much Total data is in the Queue ? may be wrapped. Thread safe.
     /// </summary>
     ITERATE_t get_ReadQtyT() const noexcept {
-        const ITERATE_t iRead = m_nReadIndex;
-        ITERATE_t iWrite = m_nWriteIndex;
+        const ITERATE_t iRead = this->m_nReadIndex;
+        ITERATE_t iWrite = this->m_nWriteIndex;
         if (iRead > iWrite) {  // wrap
             iWrite += _QTY;
             DEBUG_ASSERT(iWrite > iRead, "get_ReadQtyT");  // sanity check. should never happen!
@@ -425,20 +425,20 @@ class GRAYCORE_LINK cQueueStatic : public cQueueIndex, public cSpanStatic<_QTY, 
     /// get Max we can get in a single CONTIGUOUS block peek/read. For use with get_ReadPtr().
     /// </summary>
     ITERATE_t get_ReadQtyC() const noexcept {
-        const ITERATE_t iTop = (m_nWriteIndex >= m_nReadIndex) ? m_nWriteIndex : _QTY;
-        return iTop - m_nReadIndex;
+        const ITERATE_t iTop = (this->m_nWriteIndex >= this->m_nReadIndex) ? this->m_nWriteIndex : _QTY;
+        return iTop - this->m_nReadIndex;
     }
     /// <summary>
     /// use get_ReadQtyC() to get the allowed size.
     /// </summary>
     const TYPE* get_ReadPtr() const {
         ASSERT(!isEmptyQ());  // ONLY call this if there is data to read.
-        return &_Data[m_nReadIndex];
+        return &this->_Data[this->m_nReadIndex];
     }
     void AdvanceRead(ITERATE_t iCount = 1) {
         const ITERATE_t iReadCount = get_ReadQtyT();
         if (iCount > iReadCount) iCount = iReadCount;
-        m_nReadIndex = GetWrapIndex(m_nReadIndex + iCount);
+        this->m_nReadIndex = this->GetWrapIndex(this->m_nReadIndex + iCount);
     }
 
     ITERATE_t get_WriteQtyT() const noexcept {
@@ -455,11 +455,11 @@ class GRAYCORE_LINK cQueueStatic : public cQueueIndex, public cSpanStatic<_QTY, 
     /// <returns></returns>
     TYPE Read1() {
         ASSERT(!isEmptyQ());
-        ITERATE_t iRead = m_nReadIndex;
+        const ITERATE_t iRead = this->m_nReadIndex;
         ASSERT(IS_INDEX_GOOD(iRead, _QTY));
-        ITERATE_t iReadNext = GetWrapIndex(iRead + 1);
-        TYPE val = _Data[iRead];
-        m_nReadIndex = iReadNext;
+        const ITERATE_t iReadNext = this->GetWrapIndex(iRead + 1);
+        const TYPE val = this->_Data[iRead];
+        this->m_nReadIndex = iReadNext;
         return val;
     }
 
@@ -467,10 +467,10 @@ class GRAYCORE_LINK cQueueStatic : public cQueueIndex, public cSpanStatic<_QTY, 
     /// copy TYPE data out. NOT thread safe.
     /// @todo use cValSpan::CopyQty ?
     /// </summary>
-    ITERATE_t ReadSpanQ(cSpanX<TYPE>& buf) {
+    ITERATE_t ReadSpanQ(cSpanX<TYPE> ret) {
         ITERATE_t i = 0;
-        TYPE* pBuf = buf.get_DataWork();
-        for (; !isEmptyQ() && i < buf.GetSize(); i++) {
+        TYPE* pBuf = ret.get_PtrWork();
+        for (; !isEmptyQ() && i < ret.GetSize(); i++) {
             pBuf[i] = Read1();
         }
         return i;
@@ -483,13 +483,12 @@ class GRAYCORE_LINK cQueueStatic : public cQueueIndex, public cSpanStatic<_QTY, 
     /// <param name="val"></param>
     /// <returns>false = full.</returns>
     bool Write1(TYPE val) {
-        ITERATE_t iWrite = m_nWriteIndex;
+        const ITERATE_t iWrite = this->m_nWriteIndex;
         ASSERT(IS_INDEX_GOOD(iWrite, _QTY));
-        ITERATE_t iWriteNext = GetWrapIndex(iWrite + 1);
-        if (iWriteNext == m_nReadIndex)  // isFullQ() ?
-            return false;
-        _Data[iWrite] = val;
-        m_nWriteIndex = iWriteNext;
+        ITERATE_t iWriteNext = this->GetWrapIndex(iWrite + 1);
+        if (iWriteNext == m_nReadIndex) return false;  // isFullQ() ?
+        this->_Data[iWrite] = val;
+        this->m_nWriteIndex = iWriteNext;
         return true;
     }
     ITERATE_t WriteSpanQ(const cSpan<TYPE>& src) {
@@ -499,18 +498,18 @@ class GRAYCORE_LINK cQueueStatic : public cQueueIndex, public cSpanStatic<_QTY, 
         //!   length put. 0 = full. I cant write anything.
         const ITERATE_t iRoom = get_WriteQtyT();
         ASSERT(iRoom >= 0 && iRoom <= _QTY);
-        const ITERATE_t iWrite = m_nWriteIndex;
+        const ITERATE_t iWrite = this->m_nWriteIndex;
         ASSERT(iWrite >= 0 && iWrite < _QTY);
         const ITERATE_t iLengthMin = cValT::Min(iRoom, src.GetSize());  // max i can write and hold.
         if (iWrite + iLengthMin > _QTY) {                               // will overflow/wrap?
             const ITERATE_t iTmp1 = _QTY - iWrite;
-            cValSpan::CopyQty(_Data + iWrite, src.get_DataConst(), iTmp1);  // Write to end of buffer.
+            cValSpan::CopyQty(this->_Data + iWrite, src.get_PtrConst(), iTmp1);  // Write to end of buffer.
             const ITERATE_t iTmp2 = iLengthMin - iTmp1;
-            cValSpan::CopyQty(_Data, src.get_DataConst() + iTmp1, iTmp2);  // Wrap back from beginning.
-            m_nWriteIndex = iTmp2;
+            cValSpan::CopyQty(this->_Data, src.get_PtrConst() + iTmp1, iTmp2);  // Wrap back from beginning.
+            this->m_nWriteIndex = iTmp2;
         } else {
-            cValSpan::CopyQty(_Data + iWrite, src.get_DataConst(), iLengthMin);
-            m_nWriteIndex = iWrite + iLengthMin;
+            cValSpan::CopyQty(this->_Data + iWrite, src.get_PtrConst(), iLengthMin);
+            this->m_nWriteIndex = iWrite + iLengthMin;
         }
         return iLengthMin;
     }

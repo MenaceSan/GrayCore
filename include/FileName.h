@@ -29,15 +29,15 @@ typedef char FILECHAR_t;  /// a UTF8 char in a file name. like TCHAR
 /// for use with FILEOPF_t/FILEOP_FLAGS ?
 /// </summary>
 enum class FILEOP_t {
-    Move = 1,     /// AKA FO_MOVE (shellapi.h)
-    Copy = 2,     /// AKA FO_COPY (shellapi.h)
+    _Move = 1,    /// AKA FO_MOVE (shellapi.h)
+    _Copy = 2,    /// AKA FO_COPY (shellapi.h)
     _Delete = 3,  // FO_DELETE
-    Rename = 4,   /// Similar to FILEOP_t::Move, FO_RENAME
+    _Rename = 4,  /// Similar to FILEOP_t::_Move, FO_RENAME
 };
 
 /// <summary>
-/// Extend FILEOP_FLAGS (FOF_*) from include "shellapi.h" (in global namespace) FOF_FILESONLY
 /// DWORD of flags to control directory listing.
+/// Extend FILEOP_FLAGS (FOF_*) from include "shellapi.h" (in global namespace) FOF_FILESONLY
 /// </summary>
 enum FILEOPF_t : DWORD {
     _None = 0,
@@ -49,7 +49,7 @@ enum FILEOPF_t : DWORD {
 #endif
     // NON WIN32 standard.
     FOF_X_FollowLinks = 0x10000,
-    FOF_X_WantDots = 0x20000,
+    FOF_X_WantDots = 0x20000,       /// Why would anyone want the .. ?
 };
 }  // namespace Gray
 #endif

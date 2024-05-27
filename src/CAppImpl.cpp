@@ -52,9 +52,7 @@ cAppCommand* cAppCommands::RegisterCommand(cAppCommand& cmd) {
             DEBUG_WARN(("RegisterCommand name collision '%s'", LOGSTR(cmd.m_pszName)));
             return pCmd2;
         }
-        if (StrT::Cmp(pCmd2->m_pszAbbrev, cmd.m_pszAbbrev) == COMPARE_Equal) {
-            // allow collide ?
-        }
+        // allow collide m_pszAbbrev ?
     }
     m_a.Add(&cmd);
     return &cmd;
@@ -79,7 +77,7 @@ cAppCommand* cAppCommands::FindCommand(const ATOMCHAR_t* pszCmd) const {  // ove
 /// All apps should support "-help" "-?" requests for assistance.
 /// Is this arg present on the command line ? like FindCommandArg()
 /// </summary>
-struct cAppCmdHelp : public cAppCommand {
+struct cAppCmdHelp final : public cAppCommand {
     cAppCmdHelp() : cAppCommand("?", CATOM_N(help), nullptr, "Get a general description of this program.") {}
 
     /// <summary>
@@ -103,12 +101,11 @@ struct cAppCmdHelp : public cAppCommand {
         return 0;  // consume no more arguments.
     }
 };
-static cAppCmdHelp k_Help;  /// basic help command.
 
 /// <summary>
 /// I want to debug something in startup code.
 /// </summary>
-struct cAppCmdWaitForDebug : public cAppCommand {
+struct cAppCmdWaitForDebug final : public cAppCommand {
     cAppCmdWaitForDebug() : cAppCommand("wfd", "waitfordebugger", nullptr, "Wait for the debugger to attach.") {}
 
     HRESULT DoCommand(const cAppArgs& args, int iArgN = 0) override {
@@ -119,21 +116,21 @@ struct cAppCmdWaitForDebug : public cAppCommand {
         return E_NOTIMPL;
     }
 };
-static cAppCmdWaitForDebug k_WaitForDebug;  /// wait for the debugger to attach.
 
 cAppImpl::cAppImpl(const FILECHAR_t* pszAppName)
     : cSingletonStatic<cAppImpl>(this),
+      cDependRegister(typeid(cAppImpl)),
       m_nMainThreadId(cThreadId::k_NULL),
       m_pszAppName(pszAppName),  // from module file name ?
       m_nMinTickTime(10),  // mSec for OnTickApp
       m_State(cAppState::I()),
       m_bCloseSignal(false) {
     DEBUG_CHECK(!StrT::IsWhitespace(m_pszAppName));
+    static cAppCmdHelp k_Help;  /// basic help command.
     _Commands.RegisterCommand(k_Help);
+    static cAppCmdWaitForDebug k_WaitForDebug;  /// wait for the debugger to attach.
     _Commands.RegisterCommand(k_WaitForDebug);
 }
-
-cAppImpl::~cAppImpl() {}
 
 cString cAppImpl::get_HelpText() const {  // override
     cString sHelp;
@@ -144,6 +141,22 @@ cString cAppImpl::get_HelpText() const {  // override
         }
     }
     return sHelp;
+}
+
+void cAppImpl::SetArgValid(ITERATE_t i) {
+    m_ArgsValid.SetBit((BIT_ENUM_t)i);
+}
+
+cStringF cAppImpl::get_InvalidArgs() const {
+    //! Get a list of args NOT marked as valid. Not IN m_ValidArgs
+    cStringF sInvalidArgs;
+    const ITERATE_t iArgsQty = m_State.m_Args.get_ArgsQty();
+    for (ITERATE_t i = 1; i < iArgsQty; i++) {
+        if (m_ArgsValid.IsSet((BIT_ENUM_t)i)) continue;
+        if (!sInvalidArgs.IsEmpty()) sInvalidArgs += _FN(",");
+        sInvalidArgs += m_State.GetArgEnum(i);
+    }
+    return sInvalidArgs;
 }
 
 BOOL cAppImpl::InitInstance() {  // virtual
@@ -163,15 +176,28 @@ bool cAppImpl::OnTickApp() {  // virtual
     return !m_bCloseSignal && m_State.isAppStateRun();  // just keep going. not APPSTATE_t::_Exit
 }
 
-HRESULT cAppImpl::RunCommand(const ATOMCHAR_t* pszCmd, const ATOMCHAR_t* pszArgs) {
+void cAppImpl::ReleaseModuleChildren(::HMODULE hMod) {  // override;
+    for (ITERATE_t i = _Commands.m_a.GetSize(); i;) {
+        const cAppCommand* p = _Commands.m_a.GetAtCheck(--i);
+        if (p == nullptr || p->get_HModule() != hMod) continue;
+        _Commands.m_a.RemoveAt(i);
+    }
+}
+
+HRESULT cAppImpl::RunCommand(const cAppArgs& args, int i) {
+    const FILECHAR_t* pszCmd = args.GetArgEnum(i);
+    while (cAppArgs::IsArgSwitch(pszCmd[0])) {
+        pszCmd++;
+    }
+
     cAppCommand* pCmd = FindCommand(pszCmd);
     if (pCmd == nullptr) return E_INVALIDARG;  // no idea how to process this switch. might be an error. just skip this.
-    cAppArgs args;
-    return pCmd->DoCommand(args);
+
+    return pCmd->DoCommand(args, i+1);
 }
 
 HRESULT cAppImpl::RunCommandN(ITERATE_t i) {
-    if (m_State.m_ArgsValid.IsSet(CastN(BIT_ENUM_t, i)))  // already processed this argument? (out of order ?). don't process it again. no double help.
+    if (m_ArgsValid.IsSet(CastN(BIT_ENUM_t, i)))  // already processed this argument? (out of order ?). don't process it again. no double help.
         return i;
 
     const FILECHAR_t* pszCmd = m_State.m_Args.GetArgEnum(i);
@@ -182,13 +208,13 @@ HRESULT cAppImpl::RunCommandN(ITERATE_t i) {
     cAppCommand* pCmd = FindCommand(pszCmd);
     if (pCmd == nullptr) return i;  // no idea how to process this switch. might be an error. just skip this.
 
-    m_State.m_ArgsValid.SetBit(i);  // found it anyhow. block this from re-entrancy.
+    m_ArgsValid.SetBit(i);  // found it anyhow. block this from re-entrancy.
 
     HRESULT hRes = pCmd->DoCommand(m_State.m_Args, i + 1);
     if (FAILED(hRes)) {
         // Stop processing. report error.
         if (hRes == HRESULT_WIN32_C(ERROR_INVALID_STATE)) {
-            m_State.m_ArgsValid.ClearBit(i);  // try again later ?
+            m_ArgsValid.ClearBit(i);  // try again later ?
             return i;
         }
         LOGF((LOG_ATTR_INIT, LOGLVL_t::_CRIT, "Command line '%s' failed '%s'", LOGSTR(pszCmd), LOGERR(hRes)));
@@ -198,7 +224,7 @@ HRESULT cAppImpl::RunCommandN(ITERATE_t i) {
     // How many extra args did we consume?
     const int j = i + hRes;
     for (; i < j; i++) {
-        m_State.m_ArgsValid.SetBit(i + 1);  // consumed
+        m_ArgsValid.SetBit(i + 1);  // consumed
     }
 
     return j;
@@ -224,7 +250,7 @@ APP_EXITCODE_t cAppImpl::Run() {  // virtual
     }
 
     // Log a message if there were command line arguments that did nothing. unknown.
-    cStringF sInvalidArgs = m_State.get_InvalidArgs();
+    cStringF sInvalidArgs = get_InvalidArgs();
     if (!sInvalidArgs.IsEmpty()) {
         // Check m_ArgsValid. Show Error for any junk/unused arguments.
         cLogMgr::I().addEventF(LOG_ATTR_INIT, LOGLVL_t::_CRIT, "Unknown command line args. '%s'", LOGSTR(sInvalidArgs));
@@ -258,7 +284,7 @@ APP_EXITCODE_t cAppImpl::ExitInstance() {  // virtual
 APP_EXITCODE_t cAppImpl::Main(::HMODULE hInstance) {
 #ifdef _DEBUG
     DEBUG_MSG(("cAppImpl::Main '%s'", LOGSTR(m_pszAppName)));
-    APPSTATE_t eAppState = cAppState::I().get_AppState();
+    const APPSTATE_t eAppState = cAppState::I().get_AppState();
     ASSERT(eAppState == APPSTATE_t::_Run);  // Assume cAppStateMain
 #endif
 
@@ -281,9 +307,8 @@ APP_EXITCODE_t cAppImpl::Main(::HMODULE hInstance) {
         m_State.put_AppState(APPSTATE_t::_Run);
         iRet = (APP_EXITCODE_t)Run();
         m_State.put_AppState(APPSTATE_t::_RunExit);
-        APP_EXITCODE_t iRetExit = ExitInstance();
-        if (iRet == APP_EXITCODE_t::_OK)  // allow exit to make this fail.
-            iRet = iRetExit;
+        const APP_EXITCODE_t iRetExit = ExitInstance();
+        if (iRet == APP_EXITCODE_t::_OK) iRet = iRetExit;  // allow exit to make this fail.            
     }
 
     // Exit.

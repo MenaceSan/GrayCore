@@ -4,6 +4,7 @@
 #include "pch.h"
 // clang-format on
 #include "StrArg.h"
+#include "cFilePath.h"
 #include "cRegKey.h"
 
 #ifdef __GNUC__
@@ -40,22 +41,22 @@ const FILECHAR_t* GRAYCALL cRegKey::GetNameBase(::HKEY hKeyBase) noexcept {  // 
     return _FN("H??");
 }
 
-StrLen_t GRAYCALL cRegKey::MakeValueStr(cSpanX<FILECHAR_t>& ret, DWORD dwType, const cMemSpan& src, bool bExpand) {  // static
+StrLen_t GRAYCALL cRegKey::MakeValueStr(cSpanX<FILECHAR_t> ret, REGVAR_t dwType, const cMemSpan& src, bool bExpand) {  // static
     if (ret.isEmpty()) return 0;
     switch (dwType) {
         case REG_NONE:
             break;
         case REG_SZ:
-            return StrT::CopyLen(ret.get_DataWork(), src.get_DataC<FILECHAR_t>(), cValT::Min(ret.get_MaxLen(), CastN(StrLen_t, src.get_DataSize() / sizeof(FILECHAR_t))));
+            return StrT::CopyLen(ret.get_PtrWork(), src.GetTPtrC<FILECHAR_t>(), cValT::Min(ret.get_MaxLen(), CastN(StrLen_t, src.get_SizeBytes() / sizeof(FILECHAR_t))));
         case REG_EXPAND_SZ:
 #ifndef UNDER_CE
             if (bExpand) {
-                FILECHAR_t szTmp[_MAX_PATH];
-                StrT::CopyLen(szTmp, src.get_DataC<FILECHAR_t>(), cValT::Min<StrLen_t>( CastN(StrLen_t, src.get_DataSize() / sizeof(FILECHAR_t)), _countof(szTmp)));
-                return (StrLen_t)_FNF(::ExpandEnvironmentStrings)(szTmp, ret.get_DataWork(), ret.get_MaxLen());
+                FILECHAR_t szTmp[cFilePath::k_MaxLen];
+                StrT::CopyLen(szTmp, src.GetTPtrC<FILECHAR_t>(), cValT::Min<StrLen_t>(CastN(StrLen_t, src.get_SizeBytes() / sizeof(FILECHAR_t)), _countof(szTmp)));
+                return (StrLen_t)_FNF(::ExpandEnvironmentStrings)(szTmp, ret.get_PtrWork(), ret.get_MaxLen());
             }
 #endif
-            return StrT::CopyLen(ret.get_DataWork(), src.get_DataC<FILECHAR_t>(), cValT::Min(ret.get_MaxLen(),  CastN(StrLen_t, src.get_DataSize() / sizeof(FILECHAR_t))));
+            return StrT::CopyLen(ret.get_PtrWork(), src.GetTPtrC<FILECHAR_t>(), cValT::Min(ret.get_MaxLen(), CastN(StrLen_t, src.get_SizeBytes() / sizeof(FILECHAR_t))));
         case REG_BINARY: {
 #if USE_UNICODE
             ASSERT(0);
@@ -65,15 +66,15 @@ StrLen_t GRAYCALL cRegKey::MakeValueStr(cSpanX<FILECHAR_t>& ret, DWORD dwType, c
 #endif
         }
         case REG_DWORD:
-            if (src.get_DataSize() < sizeof(DWORD)) break;
+            if (src.get_SizeBytes() < sizeof(DWORD)) break;
             {
-                DWORD dwVal = *src.get_DataC<DWORD>();
+                DWORD dwVal = *src.GetTPtrC<DWORD>();
                 return StrT::ItoA(dwVal, ret);
             }
         case REG_DWORD_BIG_ENDIAN:
-            if (src.get_DataSize() < sizeof(DWORD)) break;
+            if (src.get_SizeBytes() < sizeof(DWORD)) break;
             {
-                DWORD dwVal = cMemT::NtoH(*src.get_DataC<DWORD>());
+                DWORD dwVal = cMemT::NtoH(*src.GetTPtrC<DWORD>());
                 return StrT::ItoA(dwVal, ret);
             }
         case REG_LINK:                      // Symbolic Link (unicode)
@@ -84,25 +85,25 @@ StrLen_t GRAYCALL cRegKey::MakeValueStr(cSpanX<FILECHAR_t>& ret, DWORD dwType, c
             break;
 #if _MSC_VER >= 1300
         case REG_QWORD:  // 64-bit number
-            if (src.get_DataSize() < sizeof(UINT64)) break;
+            if (src.get_SizeBytes() < sizeof(UINT64)) break;
             {
-                UINT64 qVal = *src.get_DataC<UINT64>();
+                UINT64 qVal = *src.GetTPtrC<UINT64>();
                 return StrT::ILtoA(qVal, ret);
             }
 #endif
     }
     // Not sure how to convert this data!
-    ret.get_DataWork()[0] = '\0';
+    ret.get_PtrWork()[0] = '\0';
     DEBUG_CHECK(0);
     return 0;
 }
-HRESULT cRegKey::QueryValueStr(const FILECHAR_t* pszValueName, cSpanX<FILECHAR_t>& ret, bool bExp) const {
+HRESULT cRegKey::QueryValueStr(const FILECHAR_t* pszValueName, cSpanX<FILECHAR_t> ret, bool bExp) const {
     ASSERT_NN(pszValueName);
     ASSERT(!ret.isEmpty());
-    DWORD dwType = REG_NONE;  // REG_SZ
+    REGVAR_t dwType = REG_NONE;  // REG_SZ
     const HRESULT hRes = QueryValue(pszValueName, OUT dwType, ret);
     if (FAILED(hRes)) {
-        ret.get_DataWork()[0] = '\0';
+        ret.get_PtrWork()[0] = '\0';
         return hRes;
     }
     return MakeValueStr(ret, dwType, cMemSpan(ret, hRes), bExp);

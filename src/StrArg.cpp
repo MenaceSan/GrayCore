@@ -10,36 +10,40 @@
 #include "cTempPool.h"
 
 namespace Gray {
+
 template <>
-GRAYCORE_LINK const wchar_t* GRAYCALL StrArg<wchar_t>(const char* pszStrInp) {  // static
-    //! Get a temporary string that only lives long enough to satisfy a sprintf() argument.
-    //! @note the UNICODE size is variable and <= Len(pszStr)
-    if (pszStrInp == nullptr) return __TOW("NULL");
-    const auto spanSrc = StrT::ToSpanStr(pszStrInp);
-    const StrLen_t lenU = StrU::UTF8toUNICODELen(spanSrc);  // needed UNICODE size is variable and <= Len(pszStr).
-    auto spanTmp = cTempPool::GetSpan<wchar_t>(lenU);
-    StrU::UTF8toUNICODE(spanTmp, spanSrc);  // true size is variable and < iLen
-    return spanTmp;
+GRAYCORE_LINK cSpan<wchar_t> GRAYCALL StrArg2<wchar_t>(const cSpan<char>& src) noexcept {  // static
+    const StrLen_t lenU = StrU::UTF8toUNICODELen(src);                                     // needed UNICODE size is variable and <= Len(pszStr).
+    cSpanX<wchar_t> spanTmp = cTempPool::GetSpan<wchar_t>(lenU);                           // add space for '/0'
+    StrU::UTF8toUNICODE(spanTmp, src);                                                     // true size is variable
+    return cSpan<wchar_t>(spanTmp, lenU);
 }
 template <>
-GRAYCORE_LINK const char* GRAYCALL StrArg<char>(const wchar_t* pwStrInp) {  // static
-    //! Get a temporary string that only lives long enough to satisfy a sprintf() argument.
-    //! @note the UTF8 size is variable and >= Len(pwStr)
+GRAYCORE_LINK cSpan<char> GRAYCALL StrArg2<char>(const cSpan<wchar_t>& src) noexcept {  // static
+    const StrLen_t lenA = StrU::UNICODEtoUTF8Size(src);                                 // needed UTF8 size is variable and >= Len(pwStr)!
+    cSpanX<char> spanTmp = cTempPool::GetSpan<char>(lenA);                              // add space for '/0'
+    StrU::UNICODEtoUTF8(spanTmp, src);
+    return cSpan<char>(spanTmp, lenA);
+}
+
+template <>
+GRAYCORE_LINK const wchar_t* GRAYCALL StrArg<wchar_t>(const char* pszStrInp) noexcept {  // static
+    if (pszStrInp == nullptr) return __TOW("NULL");
+    return StrArg2<wchar_t>(StrT::ToSpanStr(pszStrInp));
+}
+template <>
+GRAYCORE_LINK const char* GRAYCALL StrArg<char>(const wchar_t* pwStrInp) noexcept {  // static
     if (pwStrInp == nullptr) return __TOA("NULL");
-    const auto spanSrc = StrT::ToSpanStr(pwStrInp);
-    const StrLen_t iLenOut = StrU::UNICODEtoUTF8Size(spanSrc);  // needed UTF8 size is variable and >= Len(pwStr)!
-    auto spanTmp = cTempPool::GetSpan<char>(iLenOut);
-    StrU::UNICODEtoUTF8(spanTmp, spanSrc);
-    return spanTmp;
+    return StrArg2<char>(StrT::ToSpanStr(pwStrInp));
 }
 
 template <typename TYPE>
-GRAYCORE_LINK const TYPE* GRAYCALL StrArg(TYPE ch, StrLen_t nRepeat) {  // static
+GRAYCORE_LINK const TYPE* GRAYCALL StrArg(TYPE ch, StrLen_t nRepeat) noexcept {  // static
     //! Get a temporary string that is nRepeat chars repeating
     auto spanTmp = cTempPool::GetSpan<TYPE>(nRepeat);
-    cValSpan::FillQty<TYPE>(spanTmp.get_DataWork(), nRepeat, (TYPE)ch);
-    spanTmp.get_DataWork()[nRepeat] = '\0';
-    return spanTmp.get_DataWork();
+    cValSpan::FillQty<TYPE>(spanTmp.get_PtrWork(), nRepeat, (TYPE)ch);
+    spanTmp.get_PtrWork()[nRepeat] = '\0';
+    return spanTmp.get_PtrWork();
 }
 
 template <typename TYPE>
@@ -86,11 +90,11 @@ GRAYCORE_LINK const TYPE* GRAYCALL StrArg(double dVal) {
 }
 
 // force implementation/instantiate for DLL/SO.
-template GRAYCORE_LINK const wchar_t* GRAYCALL StrArg<wchar_t>(const char* pszStrInp);  // Force implementation/instantiate for DLL/SO.
-template GRAYCORE_LINK const char* GRAYCALL StrArg<char>(const wchar_t* pszStrInp);     // Force implementation/instantiate for DLL/SO.
+template GRAYCORE_LINK const wchar_t* GRAYCALL StrArg<wchar_t>(const char* pszStrInp) noexcept;  // Force implementation/instantiate for DLL/SO.
+template GRAYCORE_LINK const char* GRAYCALL StrArg<char>(const wchar_t* pszStrInp) noexcept;     // Force implementation/instantiate for DLL/SO.
 
-template GRAYCORE_LINK const wchar_t* GRAYCALL StrArg<wchar_t>(wchar_t ch, StrLen_t nRepeat);  // Force implementation/instantiate for DLL/SO.
-template GRAYCORE_LINK const char* GRAYCALL StrArg<char>(char ch, StrLen_t nRepeat);           // Force implementation/instantiate for DLL/SO.
+template GRAYCORE_LINK const wchar_t* GRAYCALL StrArg<wchar_t>(wchar_t ch, StrLen_t nRepeat) noexcept;  // Force implementation/instantiate for DLL/SO.
+template GRAYCORE_LINK const char* GRAYCALL StrArg<char>(char ch, StrLen_t nRepeat) noexcept;           // Force implementation/instantiate for DLL/SO.
 
 template GRAYCORE_LINK const wchar_t* GRAYCALL StrArg<wchar_t>(INT32 v);  // Force implementation/instantiate for DLL/SO.
 template GRAYCORE_LINK const char* GRAYCALL StrArg<char>(INT32 v);        // Force implementation/instantiate for DLL/SO.

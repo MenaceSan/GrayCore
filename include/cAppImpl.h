@@ -19,7 +19,7 @@ namespace Gray {
 /// Basic framework for my application I implement. Windows or Console.
 /// Assume a static like cAppImpl theApp is defined some place.
 /// </summary>
-class GRAYCORE_LINK cAppImpl : public cSingletonStatic<cAppImpl>, public IAppCommands {  // NOT final!
+class GRAYCORE_LINK cAppImpl : public cSingletonStatic<cAppImpl>, public IAppCommands, public cDependRegister {  // NOT final!
  protected:
     THREADID_t m_nMainThreadId;  /// The first thread the app started. main().
 
@@ -27,13 +27,26 @@ class GRAYCORE_LINK cAppImpl : public cSingletonStatic<cAppImpl>, public IAppCom
     const FILECHAR_t* m_pszAppName;  /// Specifies the name of my application. (display friendly)
     TIMESYSD_t m_nMinTickTime;       /// Minimum amount of time to spend in the OnTickApp() (mSec). cThreadId::SleepCurrent() if there is extra time.
     cAppState& m_State;              /// Quick reference to cAppState singleton.
+    cBitmask<> m_ArgsValid;          /// Track which command line args are valid/used/executed in m_State.m_Args. assume any left over are not.
     bool m_bCloseSignal;             /// Polite request to close the application. checked in Run() and OnTickApp() >= APPSTATE_t::_RunExit APPSTATE_t::_Exit
 
     cAppCommands _Commands;  /// built a list of possible commands. Dynamically add new command handlers to the app. to process cAppArgs.
 
+ protected:
+    void ReleaseModuleChildren(::HMODULE hMod) override;
+    const void* get_HeapPtr() const noexcept override {
+        return nullptr; // NOT heap.
+    }
+
+    /// <summary>
+    /// Dont delete this! its probably static.
+    /// </summary>
+    bool isReferenced() const noexcept override {
+        return true;
+    }
+
  public:
     cAppImpl(const FILECHAR_t* pszAppName);
-    ~cAppImpl() override;
 
     /// <summary>
     /// The thread we started with.
@@ -49,7 +62,10 @@ class GRAYCORE_LINK cAppImpl : public cSingletonStatic<cAppImpl>, public IAppCom
         return _Commands.FindCommand(pszName);
     }
 
-    HRESULT RunCommand(const ATOMCHAR_t* pszCmd, const ATOMCHAR_t* pszArgs);
+    void SetArgValid(ITERATE_t i);
+    cStringF get_InvalidArgs() const;
+
+    HRESULT RunCommand(const cAppArgs& args, int i=0);
     HRESULT RunCommandN(ITERATE_t i);
     HRESULT RunCommands();
 

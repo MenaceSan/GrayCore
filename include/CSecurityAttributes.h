@@ -41,12 +41,12 @@ class GRAYCORE_LINK cSecurityId : private cWinLocalT<::SID> {
 
  public:
     cSecurityId();
-    cSecurityId(WELL_KNOWN_SID_TYPE eWellKnownSidType);
+    cSecurityId(::WELL_KNOWN_SID_TYPE eWellKnownSidType);
     ~cSecurityId();
 
     /// getSID. like PSID and PISID // variable length?
     ::SID* get_SID() const noexcept {
-        return get_DataNC<::SID>();  // we dont actually write to it!
+        return GetTPtrNC<::SID>();  // we dont actually write to it!
     }
     operator ::SID*() const noexcept {
         return get_SID();
@@ -81,7 +81,7 @@ class GRAYCORE_LINK cSecurityACL : private cWinLocalT<::ACL> {
     ~cSecurityACL();
 
     ::ACL* get_ACL() const {
-        return get_DataNC<::ACL>();  // we dont actually write to it!
+        return GetTPtrNC<::ACL>();  // we dont actually write to it!
     }
     operator ::ACL*() const {
         return get_ACL();
@@ -114,7 +114,7 @@ struct GRAYCORE_LINK cSecurityDesc : public cWinLocalT<SECURITY_DESCRIPTOR> {
     bool InitLowIntegrity();
 
     ::SECURITY_DESCRIPTOR* get_SD() const {
-        return get_DataNC<::SECURITY_DESCRIPTOR>();
+        return GetTPtrNC<::SECURITY_DESCRIPTOR>();
     }
     operator ::SECURITY_DESCRIPTOR*() {
         return get_SD();
@@ -139,14 +139,12 @@ struct GRAYCORE_LINK cSecurityDesc : public cWinLocalT<SECURITY_DESCRIPTOR> {
         return ::SetSecurityDescriptorSacl(get_SD(), bSaclPresent, pSacl, bSaclDefaulted);
     }
 #if 0
-		BOOL SetSaclRules(size_t nCount, EXPLICIT_ACCESS* pRules)
-		{
-			ACL* pSacl = nullptr;
-			LSTATUS iRet = ::SetEntriesInAcl(nCount, pRules, nullptr, &pSacl);
-			if (iRet != NO_ERROR)
-				return false;
-			return SetSacl(pSacl);
-		}
+	BOOL SetSaclRules(size_t nCount, EXPLICIT_ACCESS* pRules) {
+    	::ACL* pSacl = nullptr;
+		LSTATUS iRet = ::SetEntriesInAcl(nCount, pRules, nullptr, &pSacl);
+		if (iRet != NO_ERROR) return false;
+		return SetSacl(pSacl);
+	}
 #endif
 
     ::ACL* GetDacl(BOOL* pbDaclPresent = nullptr, BOOL* pbDaclDefaulted = nullptr) const {
@@ -155,7 +153,7 @@ struct GRAYCORE_LINK cSecurityDesc : public cWinLocalT<SECURITY_DESCRIPTOR> {
         if (!::GetSecurityDescriptorDacl(get_SD(), pbDaclPresent, &pDacl, pbDaclDefaulted)) {
             return nullptr;
         }
-        return (pDacl);
+        return pDacl;
     }
     BOOL SetDacl(::ACL* pDacl, bool bDaclPresent = true, bool bDaclDefaulted = false) {
         return ::SetSecurityDescriptorDacl(get_SD(), bDaclPresent, pDacl, bDaclDefaulted);
@@ -183,7 +181,7 @@ class GRAYCORE_LINK cSecurityAttributes : public ::SECURITY_ATTRIBUTES {
  public:
     cSecurityAttributes(bool bInheritHandle = false, ::ACL* pDacl = nullptr);
     cSecurityAttributes(bool bInheritHandle, const FILECHAR_t* pszSaclName);
-    ~cSecurityAttributes(void);
+    ~cSecurityAttributes();
 
     operator ::SECURITY_ATTRIBUTES*() {
         return static_cast<::SECURITY_ATTRIBUTES*>(this);
@@ -194,27 +192,22 @@ class GRAYCORE_LINK cSecurityAttributes : public ::SECURITY_ATTRIBUTES {
 /// <summary>
 /// Windows bull* to indicate that i can speak to untrusted apps. mail channel can be opened by other apps. etc.
 /// </summary>
-class GRAYCORE_LINK cSecurityAttribsLowIntegrity : public cSecurityAttributes {
- public:
+struct GRAYCORE_LINK cSecurityAttribsLowIntegrity : public cSecurityAttributes {
     cSecurityAttribsLowIntegrity(bool bInheritHandle = false) : cSecurityAttributes(bInheritHandle, cSecurityDesc::k_szLowIntegrity) {}
-    ~cSecurityAttribsLowIntegrity() {}
 };
 
 /// <summary>
 /// Default Windows security. "Well Known SID" type. e.g. WinLocalSid
 /// Consolidate all the crap into a single object.
 /// </summary>
-class GRAYCORE_LINK cSecurityAttribsWKS : public cSecurityAttributes {
- public:
+struct GRAYCORE_LINK cSecurityAttribsWKS : public cSecurityAttributes {
+    cSecurityId m_sid;  /// for WELL_KNOWN_SID_TYPE
+    cSecurityACL m_dacl;
+
     cSecurityAttribsWKS(WELL_KNOWN_SID_TYPE eWellKnownSidType = WinLocalSid, DWORD dwAccess = GENERIC_ALL, bool bInheritHandle = true) : cSecurityAttributes(bInheritHandle), m_sid(eWellKnownSidType), m_dacl(m_sid, dwAccess) {
         m_sd.SetDacl(m_dacl);
         UpdateSecurityDescriptor();
     }
-    ~cSecurityAttribsWKS() {}
-
- public:
-    cSecurityId m_sid;  /// for WELL_KNOWN_SID_TYPE
-    cSecurityACL m_dacl;
 };
 }  // namespace Gray
 

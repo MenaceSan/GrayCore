@@ -1,7 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClInclude Include="pch.h" />
     <ClInclude Include="include\cAppConsole.h">
       <Filter>include</Filter>
     </ClInclude>
@@ -105,9 +104,6 @@
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="include\cThreadLock.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cThreadLockRef.h">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="include\cThreadLockRW.h">
@@ -431,6 +427,21 @@
     <ClInclude Include="include\ITextWriter.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="include\cCmdInput.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cMemSpan.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cRefLockable.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\pch.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cDependRegister.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.md" />
@@ -489,6 +500,9 @@
     <None Include="build\BuildNuGetImage-v142.bat">
       <Filter>build</Filter>
     </None>
+    <None Include="src\NoCRT.inl">
+      <Filter>src</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">
@@ -502,8 +516,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="pch.cpp" />
-    <ClCompile Include="GrayCore.cpp" />
     <ClCompile Include="src\cAppConsole.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -559,9 +571,6 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\cQueue.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\cSingleton.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\cSystemInfo.cpp">
@@ -711,7 +720,6 @@
     <ClCompile Include="src\cRegKey.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="NoCRT.inl" />
     <ClCompile Include="src\cBlob.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -730,10 +738,28 @@
     <ClCompile Include="src\cTextReader.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\cCmdInput.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GrayCore.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\pch.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cDependRegister.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="src\GrayCore.rc">
       <Filter>src</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="src\CMakeLists.txt">
+      <Filter>src</Filter>
+    </Text>
+    <Text Include="CMakeLists.txt" />
   </ItemGroup>
 </Project>

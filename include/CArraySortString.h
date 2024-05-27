@@ -14,24 +14,27 @@ namespace Gray {
 /// </summary>
 /// <typeparam name="_TYPE_CH"></typeparam>
 template <typename _TYPE_CH = TCHAR>
-struct GRAYCORE_LINK cArraySortString : public cArraySorted<cStringT<_TYPE_CH>, cStringT<_TYPE_CH>, const _TYPE_CH*> {
-    typedef cArraySorted<cStringT<_TYPE_CH>, cStringT<_TYPE_CH>, const _TYPE_CH*> SUPER_t;
-    typedef cStringT<_TYPE_CH> STR_t;  // alias for container
+struct GRAYCORE_LINK cArraySortString : public cArraySorted<cStringT<_TYPE_CH>, const cStringT<_TYPE_CH>&, const _TYPE_CH*> {
+    typedef cArraySorted<cStringT<_TYPE_CH>, const cStringT<_TYPE_CH>&, const _TYPE_CH*> SUPER_t;
 
+ public:
+    typedef cStringT<_TYPE_CH> STR_t;       // alias for container
     typedef typename SUPER_t::ARG_t ARG_t;  // template weirdness.
     typedef typename SUPER_t::KEY_t KEY_t;
 
+ protected:
+    COMPARE_t CompareElems(ARG_t data1, ARG_t data2) const noexcept override {
+        return StrT::CmpI<_TYPE_CH>(data1, data2);
+    }
+    COMPARE_t CompareKey(KEY_t key1, ARG_t data2) const noexcept override {
+        ASSERT_NN(key1);
+        return StrT::CmpI<_TYPE_CH>(key1, data2);
+    }
+
  public:
-    COMPARE_t CompareKey(KEY_t pszID1, ARG_t sID2) const noexcept override {
-        ASSERT_NN(pszID1);
-        return StrT::CmpI<_TYPE_CH>(pszID1, sID2);
-    }
-    COMPARE_t CompareData(ARG_t sID1, ARG_t sID2) const noexcept override {
-        return StrT::CmpI<_TYPE_CH>(sID1, sID2);
-    }
     ITERATE_t AddStr(const _TYPE_CH* pszStr) {
         ASSERT_NN(pszStr);
-        return this->Add(STR_t(pszStr));
+        return this->AddSort(STR_t(pszStr), 0);
     }
 
     /// <summary>
@@ -41,14 +44,14 @@ struct GRAYCORE_LINK cArraySortString : public cArraySorted<cStringT<_TYPE_CH>, 
     /// </summary>
     /// <param name="pszRoot"></param>
     /// <returns>-1 = found nothing that would be derived from pszRoot.</returns>
-    ITERATE_t FindKeyRoot(const _TYPE_CH* pszRoot) const noexcept {
-        const StrLen_t iStrLen = StrT::Len(pszRoot);
+    ITERATE_t FindKeyRoot(const cSpan<_TYPE_CH>& root) const noexcept {
+        if (this->isEmpty()) return k_ITERATE_BAD;
         ITERATE_t iHigh = this->GetSize() - 1;
         ITERATE_t iLow = 0;
         while (iLow <= iHigh) {
             const ITERATE_t i = (iHigh + iLow) / 2;
-            const STR_t sCur = this->GetAt(i);
-            const COMPARE_t iCompare = StrT::CmpIN<_TYPE_CH>(pszRoot, sCur, iStrLen);
+            const STR_t& sCur = this->GetAt(i);
+            const COMPARE_t iCompare = StrT::CmpIN<_TYPE_CH>(root, sCur, root.get_MaxLen());
             if (iCompare == COMPARE_Equal) return i;  // pszRoot is a parent of
             if (iCompare > 0) {
                 iLow = i + 1;
@@ -67,6 +70,7 @@ struct GRAYCORE_LINK cArraySortString : public cArraySorted<cStringT<_TYPE_CH>, 
     /// <param name="pszDerived"></param>
     /// <returns>-1 = found nothing that would be root of pszDerived.</returns>
     ITERATE_t FindKeyDerived(const _TYPE_CH* pszDerived) const noexcept {
+        if (this->isEmpty()) return k_ITERATE_BAD;
         ITERATE_t iHigh = this->GetSize() - 1;
         ITERATE_t iLow = 0;
         while (iLow <= iHigh) {

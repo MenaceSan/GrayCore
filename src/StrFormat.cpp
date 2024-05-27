@@ -147,7 +147,7 @@ void StrFormat<TYPE>::RenderString(StrBuilder<TYPE>& out, const TYPE* pszParam, 
         i = nWidth2;
     }
 
-    out.AddStrLen(pszParam, nPrecision);
+    out.AddSpan(ToSpan(pszParam, nPrecision));
     i += nPrecision;
 
     if (m_bAlignLeft && nWidth > i) {  // pad right
@@ -162,7 +162,7 @@ void StrFormat<TYPE>::RenderUInt(StrBuilder<TYPE>& out, const TYPE* pszPrefix, R
     TYPE szTmp[StrNum::k_LEN_MAX_DIGITS_INT + 4];
     cSpanX<TYPE> spanDigits = StrNum::ULtoARev(uVal, szTmp, STRMAX(szTmp), nRadix, chRadixA);
     StrLen_t nDigits = (StrLen_t)spanDigits.get_Count();
-    TYPE* pDigits = spanDigits.get_DataWork();
+    TYPE* pDigits = spanDigits.get_PtrWork();
 
     StrLen_t nPrecision = m_nPrecision;  // We can increase this to include pad 0 and sign.
     if (nPrecision > nDigits) nPrecision = (short)nDigits;
@@ -178,7 +178,7 @@ void StrFormat<TYPE>::RenderUInt(StrBuilder<TYPE>& out, const TYPE* pszPrefix, R
     }
 
     if (pszPrefix != nullptr) {
-        // Sign is part of szTmp. Can't be padded out.
+        // Sign prefix is part of szTmp. Can't be padded out. or "0x"
         const StrLen_t nPrefix = StrT::Len(pszPrefix);
         ASSERT(nPrefix <= 2);  // we left some prefix space for this.
         pDigits -= nPrefix;
@@ -208,7 +208,7 @@ void StrFormat<TYPE>::RenderFloat(StrBuilder<TYPE>& out, double dVal, char chE) 
 
 template <typename TYPE>
 void StrFormat<TYPE>::RenderParam(StrBuilder<TYPE>& out, va_list* pvlist) const {
-    RADIX_t nBaseRadix = 10;
+    RADIX_t nRadixBase = 10;
     char chRadixA = 'a';
     const TYPE* pszPrefix = nullptr;
     BYTE nLong = m_nLong;
@@ -225,7 +225,7 @@ void StrFormat<TYPE>::RenderParam(StrBuilder<TYPE>& out, va_list* pvlist) const 
             return;
         }
 
-        // case 'S':	// Opposite type? char/wchar_t
+        // case 'S':	// Opposite type? char/wchar_t. To Dangerous.
         case 's': {
             const TYPE* pszParam = va_arg(*pvlist, const TYPE*);
             if (pszParam == nullptr) {  // null/bad pointer?
@@ -265,40 +265,41 @@ void StrFormat<TYPE>::RenderParam(StrBuilder<TYPE>& out, va_list* pvlist) const 
             } else {
                 nVal = va_arg(*pvlist, UINT32);
             }
-            RenderUInt(out, pszPrefix, nBaseRadix, chRadixA, nVal);
+            RenderUInt(out, pszPrefix, nRadixBase, chRadixA, nVal);
             return;
         }
 
         case 'X':  // Upper case
             chRadixA = 'A';
-            nBaseRadix = 16;
+            nRadixBase = 16;
             if (m_bAddPrefix) {
                 pszPrefix = CSTRCONST("0X");
             }
             goto do_num_uns;
 
-        case 'p':  // A pointer. M$ specific ?
-                   // Set Size for the pointer.
+        case 'p':  // A pointer. M$ specific ? // Set Size for the pointer.
+                   
 #ifdef USE_64BIT
             nLong = 2;
 #else
             nLong = 1;
 #endif
+            [[fallthrough]];
 
         case 'x':  // int hex.
-            nBaseRadix = 16;
+            nRadixBase = 16;
             if (m_bAddPrefix) {
                 pszPrefix = CSTRCONST("0x");
             }
             goto do_num_uns;
         case 'o':  // int octal.
-            nBaseRadix = 8;
+            nRadixBase = 8;
             if (m_bAddPrefix) {
                 pszPrefix = CSTRCONST("0");
             }
             goto do_num_uns;
         case 'b':  // int binary
-            nBaseRadix = 2;
+            nRadixBase = 2;
             if (m_bAddPrefix) {
                 pszPrefix = CSTRCONST("0");
             }
@@ -356,7 +357,7 @@ void GRAYCALL StrFormat<TYPE>::V(StrBuilder<TYPE>& out, const TYPE* pszFormat, v
     if (pszFormat == nullptr) return;  // Error? or just do nothing?
 
     ASSERT(out.get_CPtr() != pszFormat);
-    bool bHasFormatting = false;
+    // bool bHasFormatting = false;
 
     for (StrLen_t iLenForm = 0;;) {
         if (out.isOverflow())  // no room for anything more.
@@ -369,7 +370,7 @@ void GRAYCALL StrFormat<TYPE>::V(StrBuilder<TYPE>& out, const TYPE* pszFormat, v
         }
 
         if (ch == '%') {  // Start of new param format. Maybe.
-            bHasFormatting = true;
+            // bHasFormatting = true;
             StrFormat<TYPE> paramx;
             iLenForm += paramx.ParseParam(pszFormat + iLenForm);
 
@@ -457,7 +458,7 @@ StrLen_t GRAYCALL StrTemplate::ReplaceTemplateBlock(StrBuilder<IniChar_t>& out, 
         if (ch == '>' && pszInp[i - 1] == '?') {  // found end of block.
             // NOTE: take the Template Expression from output side in case it is the product of recursive blocks.
             const StrLen_t iTemplateLen = (out.get_Length() - iBeginBlock) - 4;
-            cStringI sTemplate(ToSpan(out.get_DataWork() + iBeginBlock + 2, iTemplateLen));
+            cStringI sTemplate(ToSpan(out.get_PtrWork() + iBeginBlock + 2, iTemplateLen));
             iBeginBlock = -1;
 
             HRESULT hRes;
@@ -466,7 +467,7 @@ StrLen_t GRAYCALL StrTemplate::ReplaceTemplateBlock(StrBuilder<IniChar_t>& out, 
                 hRes = pBlockReq->PropGet(sTemplate, OUT sVal);
                 if (SUCCEEDED(hRes)) {
                     out.AdvanceWrite(-(iTemplateLen + 4));  // back up.
-                    out.AddStrLen(sVal.get_CPtr(), sVal.GetLength());
+                    out.AddSpan(sVal.get_SpanStr());
                 }
             } else {
                 hRes = HRESULT_WIN32_C(ERROR_READ_FAULT);

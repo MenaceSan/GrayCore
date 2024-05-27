@@ -11,19 +11,21 @@
 #include "cHeap.h"
 #include "cPtrFacade.h"
 #include "cSpan.h"
-#include "cValSpan.h"
 
 namespace Gray {
 /// <summary>
-/// Minimal array template of elements. like MFC version.
+/// Minimal/Base array template of elements. like MFC version.
 /// @note MFC 8.0 uses INT_PTR for GetSize()
 /// </summary>
-/// <typeparam name="TYPE">what is stored.</typeparam>
-/// <typeparam name="ARG_TYPE">const TYPE ref or TYPE depending on what makes sense for SetAt() and Add operations.</typeparam>
-template <class TYPE, class ARG_TYPE = const TYPE&>
-class cArray : public cSpanX<TYPE, ARG_TYPE> {
-    typedef cArray<TYPE, ARG_TYPE> THIS_t;
-    typedef cSpanX<TYPE, ARG_TYPE> SUPER_t;
+/// <typeparam name="SPAN_TYPE">what is stored. cSpan</typeparam>
+template <class SPAN_TYPE>
+class cArrayImpl : public SPAN_TYPE {
+    typedef SPAN_TYPE SUPER_t;
+    typedef cArrayImpl<SPAN_TYPE> THIS_t;
+
+ public:
+    typedef typename SPAN_TYPE::ELEM_t ELEM_t;
+    typedef typename SPAN_TYPE::ARG_t ARG_t;
 
  protected:
     // Don't allow public access to some cMemSpan methods.
@@ -31,51 +33,58 @@ class cArray : public cSpanX<TYPE, ARG_TYPE> {
     void SetSpanConst(const void* pData, size_t nSize) = delete;
     void SetSpan2(void* pData, size_t nSize) = delete;
     void SetSpan(const SUPER_t& a) = delete;
-    void SetSpanSkip(size_t nSize) = delete;
+    void SetSkipBytes(size_t nSize) = delete;
 
  public:
-    cArray() noexcept {}
-
-    void RemoveAll();
-    void SetSize(ITERATE_t nSizeNew);
-    void SetCopy(const THIS_t& aValues) {
-        if (this == &aValues) return;
-        // this->RemoveAll();  // destruct any previous data?
-        this->SetSize(aValues.GetSize());  // This will call empty constructors.
-        this->SetCopyAll(aValues);
-    }
+    cArrayImpl() noexcept {}
 
     /// <summary>
     /// copy constructor.
     /// </summary>
-    cArray(const THIS_t& rCopy) {
+    cArrayImpl(const THIS_t& rCopy) : SUPER_t() {
         this->SetCopy(rCopy);
     }
 
     /// <summary>
     /// set Size to iSize empty entries.
     /// </summary>
-    explicit cArray(ITERATE_t iSize) {
+    explicit cArrayImpl(ITERATE_t iSize) : SUPER_t() {
         this->SetSize(iSize);
     }
 
+#if 0
     /// <summary>
     /// move constructor.
     /// </summary>
-    cArray(THIS_t&& ref) noexcept : SUPER_t(ref) {
+    cArrayImpl(THIS_t&& ref) noexcept : SUPER_t(ref) {
         ref.SUPER_t::SetSpanNull();
     }
-    ~cArray() {
+#endif
+
+    ~cArrayImpl() {
         RemoveAll();
+    }
+
+ public:
+    void RemoveAll();
+    void SetSize(ITERATE_t nSizeNew);
+    void SetCopy(const THIS_t& aValues) {
+        if (this == &aValues) return;
+        this->SetSize(aValues.GetSize());  // This will call empty constructors.
+        this->SetCopyAll(aValues);         // will call destruct on overwrite if needed.
     }
 
     //**************************
     // Base pointer
 
-    bool IsValidMallocSize() const noexcept;
+    /// <summary>
+    /// Make sure the alloc is actually bigger than the declared/requested size.
+    /// </summary>
+    bool IsValidHeapSize() const noexcept;
+
     bool isValidCheck() const noexcept {
-        // IsValidCast(cArray<TYPE, ARG_TYPE>,this);
-        if (!this->IsValidMallocSize()) return false;
+        // IsValidCast(THIS_t,this);
+        if (!this->IsValidHeapSize()) return false;
         return true;
     }
 
@@ -85,21 +94,21 @@ class cArray : public cSpanX<TYPE, ARG_TYPE> {
         //! @return sizeof all children alloc(s). not size of *this
         if (this->isEmpty()) return 0;
         iAllocCount++;  // just the alloc for the array
-        return cHeap::GetSize(this->get_DataConst());
+        return cHeap::GetSize(this->get_PtrConst());
     }
 
     /// <summary>
-    /// Get quantity of objects truly allocated. (may not be same as Size or even properly aligned with TYPE)
+    /// Get quantity of objects truly allocated. (may not be same as Size or even properly aligned with ELEM_t)
     /// like STL capacity()
     /// </summary>
-    ITERATE_t get_CountMalloc() const noexcept {
-        return CastN(ITERATE_t, cHeap::GetSize(this->get_DataConst()) / sizeof(TYPE));
+    ITERATE_t get_HeapCount() const noexcept {
+        return CastN(ITERATE_t, cHeap::GetSize(this->get_PtrConst()) / sizeof(ELEM_t));
     }
 
     /// <summary>
     /// over allocate to allow room to grow.
     /// </summary>
-    constexpr static ITERATE_t GetCountMalloc(ITERATE_t i) {
+    constexpr static ITERATE_t GetHeapCountChunk(ITERATE_t i) {
         return i + (i / 16);
     }
 
@@ -107,155 +116,151 @@ class cArray : public cSpanX<TYPE, ARG_TYPE> {
     // elements
 
     /// Potentially growing the array
-    void SetAtGrow(ITERATE_t nIndex, ARG_TYPE newElement) {
+    void SetAtGrow(ITERATE_t nIndex, ARG_t newElement) {
         // ASSERT_VALID(this);
-        if (nIndex >= GetSize()) {  // must grow.
-            SetSize(nIndex + 1);
-        }
-        SetAt(nIndex, newElement);
+        if (nIndex >= this->GetSize()) SetSize(nIndex + 1);  // must grow.
+        this->SetAt(nIndex, newElement);
     }
 
     /// <summary>
     /// Add to the end. AKA push_back(), Push()
     /// </summary>
-    ITERATE_t Add(ARG_TYPE newElement) {
-        const ITERATE_t nIndex = GetSize();
+    ITERATE_t Add(ARG_t newElement) {
+        const ITERATE_t nIndex = this->GetSize();
         SetAtGrow(nIndex, newElement);
         return nIndex;
     }
 
-    const cArray<TYPE, ARG_TYPE>& operator=(const cArray<TYPE, ARG_TYPE>& aValues) {  // otherwise this is considered deleted ?
+    const THIS_t& operator=(const THIS_t& aValues) {  // otherwise this is considered deleted ?
         SetCopy(aValues);
         return *this;
     }
 
     // Operations that move elements around
-    void InsertAt(ITERATE_t nIndex, ARG_TYPE newElement);
-    void RemoveAt(ITERATE_t nIndex);
+    void InsertAt(ITERATE_t nIndex, ARG_t newElement);
+
+    /// <summary>
+    /// remove element at index.
+    /// </summary>
+    /// <param name="nIndex"></param>
+    /// <returns>true = removed. false = was not here.</returns>
+    bool RemoveAt(ITERATE_t nIndex);
+
     void RemoveAt(ITERATE_t nIndex, ITERATE_t iQty);
 
-    void AddHead(ARG_TYPE newElement) {
-        // NOT a normal stack or queue. Adds are usually to the tail.
+    /// <summary>
+    /// Add to head. NOT like normal stack or queue. Adds are usually to the tail.
+    /// </summary>
+    /// <param name="newElement"></param>
+    void AddHead(ARG_t newElement) {
         this->InsertAt(0, newElement);
     }
 
     /// <summary>
-    /// Insert an array into this array. Like MFC CArray::Append() ? sort of.
+    /// Insert an array into this array. Like MFC CArray::Append() ? sort of. Emulate MFC. but also resolve overload conflict.
     /// </summary>
     /// <param name="i">point of insert</param>
-    /// <param name="pCopy"></param>
-    /// <param name="countCopy"></param>
-    void InsertArray(ITERATE_t i, const TYPE* pCopy, ITERATE_t countCopy);
-
-    void InsertArray(ITERATE_t i, const THIS_t& src) {
-        // Emulate MFC. but also resolve overload conflict.
-        InsertArray(i, src.get_DataConst(), src.GetSize());
-    }
+    /// <param name="src"></param>
+    void InsertArray(ITERATE_t i, const cSpan<ELEM_t>& src);
 
     void RemoveLast() {
+        if (this->isEmpty()) return;
         this->RemoveAt(this->GetSize() - 1);
     }
-    TYPE PopHead() {
+    ELEM_t PopHead() {
         // pop from front of queue.
         ASSERT(!this->isEmpty());
-        TYPE tmp = this->GetAt(0);  // copy it.
+        ELEM_t tmp = this->GetAt(0);  // copy it.
         this->RemoveAt(0);
         return tmp;
     }
-    TYPE PopTail() {
+    ELEM_t PopTail() {
         // pop from top of stack.
         // AKA Pop()
         ASSERT(!this->isEmpty());
         const ITERATE_t i = this->GetSize() - 1;
-        TYPE tmp = this->GetAt(i);  // copy it.
+        ELEM_t tmp = this->GetAt(i);  // copy it.
         this->RemoveAt(i);
         return tmp;
     }
-    bool RemoveArg(ARG_TYPE arg) {
-        //! @return true = removed. false = was not here.
-        const ITERATE_t nIndex = FindIFor(arg);
-        if (nIndex < 0) return false;
-        this->RemoveAt(nIndex);
-        return true;
+    bool RemoveArg(ARG_t arg) {
+        return this->RemoveAt(this->FindIFor3(arg));
     }
 };
 
 //************************************************************************
 
-template <class TYPE, class ARG_TYPE>
-void cArray<TYPE, ARG_TYPE>::InsertArray(ITERATE_t i, const TYPE* pCopy, ITERATE_t countCopy) {
-    
-    if (countCopy <= 0) return;
+template <class SPAN_TYPE>
+void cArrayImpl<SPAN_TYPE>::InsertArray(ITERATE_t i, const cSpan<ELEM_t>& src) {
+    if (src.isEmpty()) return;
     const ITERATE_t nSizePrev = this->GetSize();
-    if (i < 0 || i > nSizePrev) i = nSizePrev;
+    if (IS_INDEX_BAD(i, nSizePrev)) i = nSizePrev;  // to the end.
 
-    ASSERT(!this->IsInternalPtr(pCopy));  // append to self not supported. ReAlloc would destroy it.
+    ASSERT(!this->IsInternalPtr(src));  // append to self not supported. ReAlloc would destroy it.
 
-    const ITERATE_t nSizeNew = nSizePrev + countCopy;  // new size.
-    const ITERATE_t allocateCount = GetCountMalloc(nSizeNew);
-    TYPE* pData = PtrCast<TYPE>(cHeap::ReAllocPtr(get_DataWork(), allocateCount * sizeof(TYPE)));
+    const ITERATE_t nSizeCopy = src.GetSize();
+    const ITERATE_t nSizeNew = nSizePrev + nSizeCopy;  // new size.
+    const ITERATE_t allocateCount = GetHeapCountChunk(nSizeNew);
+    ELEM_t* pData = PtrCast<ELEM_t>(cHeap::ReAllocPtr(this->get_PtrWork(), allocateCount * sizeof(ELEM_t)));
     ASSERT_NN(pData);
-    SUPER_t::SetSpan2(pData, nSizeNew * sizeof(TYPE));
+    SUPER_t::SetSpan2(pData, nSizeNew * sizeof(ELEM_t));
 
     // Move existing elements.
-    cMem::CopyOverlap(pData + i + countCopy, pData + i, (nSizePrev - i) * sizeof(TYPE));
+    cMem::CopyOverlap(pData + i + nSizeCopy, pData + i, (nSizePrev - i) * sizeof(ELEM_t));
     // construct new elements
-    cValSpan::ConstructElementsX<TYPE>(pData + i, countCopy);
-    if (pCopy != nullptr) {  // Copy over new.
-        cValSpan::CopyQty(pData + i, pCopy, countCopy);
-    }
+    cValSpan::ConstructElementsX<ELEM_t>(pData + i, nSizeCopy);
+    if (!src.isNull()) cValSpan::CopyQty(pData + i, src.get_PtrConst(), nSizeCopy);  // Copy over new.
 }
 
-template <class TYPE, class ARG_TYPE>
-void cArray<TYPE, ARG_TYPE>::RemoveAll() {
+template <class SPAN_TYPE>
+void cArrayImpl<SPAN_TYPE>::RemoveAll() {
     //! AKA RemoveAll, Empty
     //! @note SetSize(0) is slightly more efficient than RemoveAll() if u plan to re-use the array.
 #ifdef _DEBUG
     // AssertSize();
 #endif
-    TYPE* pData = get_DataWork();
+    ELEM_t* pData = this->get_PtrWork();
     if (pData != nullptr) {
-        const ITERATE_t nSizePrev = GetSize();
+        const ITERATE_t nSizeCur = this->GetSize();
         SUPER_t::SetSpanNull();
-        cValSpan::DestructElementsX<TYPE>(pData, nSizePrev);
+        cValSpan::DestructElementsX<ELEM_t>(pData, nSizeCur);
         cHeap::FreePtr(pData);
     }
 }
 
-template <class TYPE, class ARG_TYPE>
-void cArray<TYPE, ARG_TYPE>::SetSize(ITERATE_t nSizeNew) {
+template <class SPAN_TYPE>
+void cArrayImpl<SPAN_TYPE>::SetSize(ITERATE_t nSizeNew) {
     //! @note SetSize(0) is slightly more efficient than RemoveAll() if u plan to re-use the array.
+    // TODO What happens on alloc E_OUTOFMEMORY !?
     ASSERT(nSizeNew >= 0);
-    const ITERATE_t nSizePrev = GetSize();
-    TYPE* pData = get_DataWork();
-    if (nSizeNew <= get_CountMalloc()) {
+    const ITERATE_t nSizePrev = this->GetSize();
+    ELEM_t* pData = this->get_PtrWork();
+    if (nSizeNew <= this->get_HeapCount()) {
         // it fits. don't shrink the allocated array. just destroy unused entries. we may expand again some day.
-        cValSpan::Resize<TYPE>(pData, nSizeNew, nSizePrev);
+        cValSpan::Resize<ELEM_t>(pData, nSizeNew, nSizePrev);
         SUPER_t::put_Count2(nSizeNew);
     } else {
         // otherwise, grow heap array
         // MFC will heuristically determine growth when nGrowBy == 0 (this avoids heap fragmentation in many situations)
         ASSERT(nSizeNew > nSizePrev);
         ITERATE_t allocateCount = nSizeNew;
-        if (nSizePrev != 0) {  // not the first time we have done this.
-            allocateCount = GetCountMalloc(allocateCount);
-        }
-        pData = PtrCast<TYPE>(cHeap::ReAllocPtr(pData, allocateCount * sizeof(TYPE)));
+        if (nSizePrev != 0) allocateCount = GetHeapCountChunk(allocateCount);  // not the first time we have done this.
+        pData = PtrCast<ELEM_t>(cHeap::ReAllocPtr(pData, allocateCount * sizeof(ELEM_t)));
         ASSERT_NN(pData);
         // construct new elements
-        cValSpan::ConstructElementsX<TYPE>(&pData[nSizePrev], nSizeNew - nSizePrev);
-        SUPER_t::SetSpan2(pData, nSizeNew * sizeof(TYPE));
+        cValSpan::ConstructElementsX<ELEM_t>(&pData[nSizePrev], nSizeNew - nSizePrev);
+        SUPER_t::SetSpan2(pData, nSizeNew * sizeof(ELEM_t));
     }
 }
 
-template <class TYPE, class ARG_TYPE>
-void cArray<TYPE, ARG_TYPE>::InsertAt(ITERATE_t nIndex, ARG_TYPE newElement) {
+template <class SPAN_TYPE>
+void cArrayImpl<SPAN_TYPE>::InsertAt(ITERATE_t nIndex, ARG_t newElement) {
     //! Insert at this location, move anything after this.
     // newElement as interior pointer is ok.
 
     ASSERT(nIndex >= 0);  // will expand to meet need
 
-    const ITERATE_t nSizePrev = GetSize();
+    const ITERATE_t nSizePrev = this->GetSize();
 
     if (nIndex >= nSizePrev) {
         // adding after the end of the array
@@ -264,35 +269,36 @@ void cArray<TYPE, ARG_TYPE>::InsertAt(ITERATE_t nIndex, ARG_TYPE newElement) {
         // inserting in the middle of the array
         SetSize(nSizePrev + 1);  // grow it to new size
         // destroy initial data before copying over it (inefficient i know but is very convenient)
-        MoveElement(nSizePrev, nIndex);
+        this->MoveElement(nSizePrev, nIndex);
     }
 
     // insert new value in the gap
-    SetAt(nIndex, newElement);  // ASSUME copy constructor will be called!
+    this->SetAt(nIndex, newElement);  // ASSUME copy constructor will be called!
 }
 
-template <class TYPE, class ARG_TYPE>
-void cArray<TYPE, ARG_TYPE>::RemoveAt(ITERATE_t nIndex) {
+template <class SPAN_TYPE>
+bool cArrayImpl<SPAN_TYPE>::RemoveAt(ITERATE_t nIndex) {
     //! NOTE: Any destructor effecting the array MAY be reentrant ?!
 
-    if (nIndex < 0) return;
-    const ITERATE_t nSizePrev = GetSize();
+    if (nIndex < 0) return false;
+    const ITERATE_t nSizePrev = this->GetSize();
     const ITERATE_t nMoveCount = nSizePrev - (nIndex + 1);
-    if (nMoveCount < 0) return;
+    if (nMoveCount < 0) return false;
 
-    TYPE* pData = get_DataWork();
-    cValSpan::DestructElementsX<TYPE>(&pData[nIndex], 1);
+    ELEM_t* pData = this->get_PtrWork();
+    cValSpan::DestructElementsX<ELEM_t>(&pData[nIndex], 1);
     if (nMoveCount > 0) {  // not last.
-        cMem::CopyOverlap(&pData[nIndex], &pData[nIndex + 1], nMoveCount * sizeof(TYPE));
+        cMem::CopyOverlap(&pData[nIndex], &pData[nIndex + 1], nMoveCount * sizeof(ELEM_t));
     }
     SUPER_t::put_Count2(nSizePrev - 1);
+    return true;
 }
 
-template <class TYPE, class ARG_TYPE>
-void cArray<TYPE, ARG_TYPE>::RemoveAt(ITERATE_t nIndex, ITERATE_t iQty) {
+template <class SPAN_TYPE>
+void cArrayImpl<SPAN_TYPE>::RemoveAt(ITERATE_t nIndex, ITERATE_t iQty) {
     // NOTE: Any destructor effecting the array will be reentrant ?!
     if (iQty <= 0 || nIndex < 0) return;
-    const ITERATE_t nSizePrev = GetSize();
+    const ITERATE_t nSizePrev = this->GetSize();
     ITERATE_t nMoveCount = nSizePrev - (nIndex + iQty);
     if (nMoveCount < 0) {  // iQty beyond the end!
         ASSERT(nMoveCount >= 0);
@@ -305,24 +311,23 @@ void cArray<TYPE, ARG_TYPE>::RemoveAt(ITERATE_t nIndex, ITERATE_t iQty) {
         return;
     }
     // just remove a range
-    TYPE* pData = get_DataWork();
-    cValSpan::DestructElementsX<TYPE>(&pData[nIndex], iQty);
+    ELEM_t* pData = this->get_PtrWork();
+    cValSpan::DestructElementsX<ELEM_t>(&pData[nIndex], iQty);
     if (nMoveCount > 0) {  // not last.
-        cMem::CopyOverlap(&pData[nIndex], &pData[nIndex + iQty], nMoveCount * sizeof(TYPE));
+        cMem::CopyOverlap(&pData[nIndex], &pData[nIndex + iQty], nMoveCount * sizeof(ELEM_t));
     }
     SUPER_t::put_Count2(nSizePrev - iQty);
 }
 
-template <class TYPE, class ARG_TYPE>
-bool cArray<TYPE, ARG_TYPE>::IsValidMallocSize() const noexcept {
-    // Make sure the alloc is actually bigger than the declared size.
-    const ITERATE_t nSizePrev = GetSize();
-    const TYPE* pData = get_DataConst();
+template <class SPAN_TYPE>
+bool cArrayImpl<SPAN_TYPE>::IsValidHeapSize() const noexcept {
+    const ITERATE_t nSizeCur = this->GetSize();
+    const ELEM_t* pData = this->get_PtrConst();
     if (pData == nullptr) {
-        if (nSizePrev != 0) return false;
+        if (nSizeCur != 0) return false;
     } else {
-        // ASSERT(nSizePrev>0);
-        if (nSizePrev > get_CountMalloc()) return false;  // NOTE: get_CountMalloc will check m_pData
+        // ASSERT(nSizeCur>0);
+        if (nSizeCur > get_HeapCount()) return false;  // NOTE: get_HeapCount will check m_pData
     }
     return true;
 }
@@ -330,38 +335,27 @@ bool cArray<TYPE, ARG_TYPE>::IsValidMallocSize() const noexcept {
 //*************************************************
 
 /// <summary>
-/// An array of some type of pointer using cPtrFacade. Allow dupes.
+/// Base for array of some type of pointer using cPtrFacade. Allow dupes.
 /// base for cArrayPtr, cArryNew, cArrayIUnk and cArrayRef
 /// </summary>
-/// <typeparam name="TYPE">some cPtrFacade derived</typeparam>
-/// <typeparam name="ARG_TYPE"></typeparam>
-template <class TYPE, class ARG_TYPE = TYPE*>
-struct cArrayFacade : public cArray<TYPE, ARG_TYPE> {
-    typedef cArray<TYPE, ARG_TYPE> SUPER_t;
-    typedef cArrayFacade<TYPE, ARG_TYPE> THIS_t;
- 
-    /// <summary>
-    /// Compare a data record to another data record. Use cValT::Compare()??
-    /// </summary>
-    /// <param name="pData1"></param>
-    /// <param name="pData2"></param>
-    /// <returns></returns>
-    COMPARE_t CompareData(ARG_TYPE pData1, ARG_TYPE pData2) const noexcept override {
-        // return cValT::Compare(Data1,Data2);
-        return cMem::Compare(pData1, pData2, sizeof(*pData2));
-    }
+/// <typeparam name="SPAN_TYPE">some cPtrFacade derived</typeparam>
+template <class SPAN_TYPE>
+struct cArrayFacade : public cArrayImpl<SPAN_TYPE> {
+    typedef cArrayImpl<SPAN_TYPE> SUPER_t;
+    typedef typename SPAN_TYPE::ELEM_t ELEM_t;
+    typedef typename SPAN_TYPE::ARG_t ARG_t;
 
     /// Just return nullptr if index out of bounds. AKA Safe. GetAtSafe()
-    ARG_TYPE GetAtCheck(ITERATE_t index) const {
+    ARG_t GetAtCheck(ITERATE_t index) const {
         if (!SUPER_t::IsValidIndex(index)) return nullptr;
         return SUPER_t::GetAt(index);
     }
 
-    TYPE PopHead() {
+    ELEM_t PopHead() {
         if (SUPER_t::isEmpty()) return nullptr;
         return SUPER_t::PopHead();
     }
-    TYPE PopTail() {
+    ELEM_t PopTail() {
         if (SUPER_t::isEmpty()) return nullptr;
         return SUPER_t::PopTail();
     }
@@ -369,11 +363,12 @@ struct cArrayFacade : public cArray<TYPE, ARG_TYPE> {
 
 /// <summary>
 /// An array of some sort of dumb pointer. Pointer memory ownership is unknown. Does not free it automatically.
+/// allow dupes. NOT sorted.
 /// </summary>
-/// <typeparam name="TYPE">is allowed to be const X</typeparam>
+/// <typeparam name="SPAN_TYPE">is allowed to be const X</typeparam>
 template <class TYPE>
-struct cArrayPtr : public cArrayFacade<TYPE*, TYPE*> {
-    typedef cArrayFacade<TYPE*, TYPE*> SUPER_t;
+struct cArrayPtr : public cArrayFacade<cSpanSearchable<TYPE*, TYPE*>> {
+    typedef cArrayFacade<cSpanSearchable<TYPE*, TYPE*>> SUPER_t;
 
     /// <summary>
     /// Manually delete Dynamic heap allocated object.
@@ -414,10 +409,14 @@ struct cArrayPtr : public cArrayFacade<TYPE*, TYPE*> {
 /// </summary>
 /// <typeparam name="TYPE"></typeparam>
 template <class TYPE>
-struct cArrayVal : public cArray<TYPE, TYPE> {
-    typedef cArray<TYPE, TYPE> SUPER_t;
+struct cArrayVal : public cArrayImpl<cSpanSearchable<TYPE, TYPE>> {
     cArrayVal() {}
-    explicit cArrayVal(ITERATE_t iSize) : SUPER_t(iSize) {}
+    explicit cArrayVal(ITERATE_t iSize) : cArrayImpl<cSpanSearchable<TYPE, TYPE>>(iSize) {}
+};
+template <class TYPE>
+struct cArrayStruct : public cArrayImpl<cSpanX<TYPE, const TYPE&>> {
+    cArrayStruct() {}
+    explicit cArrayStruct(ITERATE_t iSize) : cArrayImpl<cSpanX<TYPE, const TYPE&>>(iSize) {}
 };
 }  // namespace Gray
 #endif  // _INC_cArray_H

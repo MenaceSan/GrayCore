@@ -265,7 +265,7 @@ cSecurityAttributes::cSecurityAttributes(bool bInheritHandle, const FILECHAR_t* 
     UpdateSecurityDescriptor();
 }
 
-cSecurityAttributes::~cSecurityAttributes(void) {}
+cSecurityAttributes::~cSecurityAttributes() {}
 
 bool cSecurityAttributes::isValid() const noexcept {
     if (this->nLength <= 0) return false;

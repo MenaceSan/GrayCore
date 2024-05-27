@@ -37,7 +37,7 @@ enum class UNITTEST_LEVEL_t {
     _Common,  /// 4 = Common or application level tests.
     _Slow,    /// 5=slow tests
     _All,     /// 6=interactive tests, need special external rigs, db, etc
-    _Off,     /// These test don't work yet. or is broken.
+    _Off,     /// These test don't work yet. or are broken.
 };
 
 class cUnitTestRegister;
@@ -54,8 +54,7 @@ struct GRAYCORE_LINK cUnitTestCur {        // static
     // Sample Test const data.
     static const StrLen_t k_TEXTBLOB_LEN = 566;                 /// StrT::Len(k_sTextBlob) = 0x236
     static const cStrConst k_sTextBlob;                         /// a large test string
-    static const StrLen_t k_TEXTLINES_QTY = 18;                 /// STRMAX= _countof(k_asTextLines)-1
-    static const cStrConst k_asTextLines[k_TEXTLINES_QTY + 1];  /// nullptr terminated array of lines of text.
+    static const cStrConst k_asTextLines[18];  /// nullptr terminated array of lines of text.
 
     static bool GRAYCALL TestTypes();
 };
@@ -151,7 +150,7 @@ class GRAYCORE_LINK cUnitTests final : public cSingleton<cUnitTests>, public cUn
     static AssertCallback_t UnitTest_AssertCallback;  /// redirect assert here for test failure. requires _DEBUG or _DEBUG_FAST.
     AssertCallback_t* m_pAssertOrig = nullptr;        /// restore the original assert.
 
-    UNITTEST_LEVEL_t m_nTestLevel;         /// The current global test level for UnitTests(). throttle tests at run time.
+    UNITTEST_LEVEL_t m_nTestLevel = UNITTEST_LEVEL_t::_Common;  /// The current global test level for UnitTests(). throttle tests at run time.
     cArrayString<LOGCHAR_t> m_aTestNames;  /// just run these tests.
 
     cFilePath m_sTestInpDir;  /// root for source of test input files. might change based on cOSModImpl?
@@ -164,6 +163,7 @@ class GRAYCORE_LINK cUnitTests final : public cSingleton<cUnitTests>, public cUn
 
  protected:
     cUnitTests();
+    void ReleaseModuleChildren(::HMODULE hMod) override;
 
  public:
     HRESULT InitTestOutDir();
@@ -187,8 +187,8 @@ class GRAYCORE_LINK cUnitTests final : public cSingleton<cUnitTests>, public cUn
     HRESULT RunUnitTests(UNITTEST_LEVEL_t nTestLevel = UNITTEST_LEVEL_t::_Common, const LOGCHAR_t* pszTestNameMatch = nullptr);
 };
 
-#define UNITTEST_TRUE(x) ASSERT(x)      // UNITTEST_TRUE is different from a normal ASSERT ? ::Microsoft::VisualStudio::CppUnitTestFramework::Assert::IsTrue(x)
-#define UNITTEST_TRUE2(x, d) ASSERT(x)  // UNITTEST_TRUE with a description
+#define UNITTEST_TRUE(x) ASSERTA(x)     // UNITTEST_TRUE is different from a normal ASSERT ? ::Microsoft::VisualStudio::CppUnitTestFramework::Assert::IsTrue(x)
+#define UNITTEST_TRUE2(x, d) ASSERTA(x)  // UNITTEST_TRUE with a description
 
 // declare a global exposed cUnitTest. Don't use this directly but use UNITTEST2_* to  support M$ test.
 #define UNITTEST_REGISTER_NAME(n) g_UnitTest_##n

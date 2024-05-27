@@ -15,10 +15,10 @@ namespace Gray {
 /// How is some memory blob managed? writable? heap free on destruct? size aligned?
 /// </summary>
 enum class MEMTYPE_t : BYTE {
-    _Null = 0,      /// nullptr allocation.
+    _Null = 0,     /// nullptr allocation.
     _StaticConst,  /// Static const. No free, No write. Pointer lives forever.
     _Static,       /// Static allocation of memory. No free but i might write to it. Pointer lives forever.
-    _Temp,          /// Externally/unknown allocated. Stack based? Cannot preserve pointer.
+    _Temp,         /// Externally/unknown allocated. probably Stack based? Cannot preserve pointer.
 
     /// <summary>
     /// A cHeap allocated blob. Allow write, cHeap::FreePtr() on destruct.
@@ -26,14 +26,14 @@ enum class MEMTYPE_t : BYTE {
     /// ASSUME pointer aligned to k_SizeAlignDef = 8 bytes on 32 bit systems, 16 bytes on 64 bit systems.
     /// </summary>
     _Heap,
- 
-    // TODO BitMask added to indicate alignment required.
-    _A16 = 0x11,     /// 16 byte cHeapAlign. Used only for 32 bit since same as default for 64 bit.
-    _A32 = 0x12,     /// 32 byte cHeapAlign.
-    _A64 = 0x13,     /// 64 byte cHeapAlign.
-    _A128 = 0x14,    /// 128 byte cHeapAlign.
 
-    _Secure = 0x20,       /// Zero on Free . TODO
+    // TODO BitMask added to indicate alignment required.
+    _A16 = 0x11,   /// 16 byte cHeapAlign. Used only for 32 bit since same as default for 64 bit.
+    _A32 = 0x12,   /// 32 byte cHeapAlign.
+    _A64 = 0x13,   /// 64 byte cHeapAlign.
+    _A128 = 0x14,  /// 128 byte cHeapAlign.
+
+    _Secret = 0x20,  /// Zero on Free
 };
 
 /// <summary>
@@ -43,14 +43,14 @@ class GRAYCORE_LINK cBlob : public cMemSpan {
     typedef cBlob THIS_t;
     typedef cMemSpan SUPER_t;
 
-    MEMTYPE_t _MemType = MEMTYPE_t::_Null;  // What type of memory is this stored in? should we manage this cMemSpan
+    MEMTYPE_t _MemType = MEMTYPE_t::_Null;  /// What type of memory is cMemSpan stored in? should we manage this cMemSpan?
 
     // Don't allow public access to some cMemSpan methods.
     void SetSpanNull() = delete;
     void SetSpanConst(const void* pData, size_t nSize) = delete;
     void SetSpan2(void* pData, size_t nSize) = delete;
     void SetSpan(const SUPER_t& a) = delete;
-    void SetSpanSkip(size_t nSize) = delete;
+    void SetSkipBytes(size_t nSize) = delete;
 
     /// <summary>
     /// Internal function does not clear values!
@@ -97,7 +97,7 @@ class GRAYCORE_LINK cBlob : public cMemSpan {
     inline constexpr bool isHeap() const noexcept {
         return _MemType >= MEMTYPE_t::_Heap;
     }
-  
+
     /// <summary>
     /// static does not necessarily mean (const) read only. static can be writable.
     /// If the blobs are in truly read only memory. CPU memory protection will just throw its own exception if we try to modify it..
@@ -128,9 +128,9 @@ class GRAYCORE_LINK cBlob : public cMemSpan {
     /// Get a writable TYPE pointer but NOT if read-only!
     /// </summary>
     template <typename TYPE = BYTE>
-    inline TYPE* get_DataW() noexcept {
+    inline TYPE* GetTPtrW() noexcept {
         DEBUG_CHECK(!isReadOnly());
-        return SUPER_t::get_DataW<TYPE>();
+        return SUPER_t::GetTPtrW<TYPE>();
     }
 
     /// <summary>
@@ -193,7 +193,7 @@ class GRAYCORE_LINK cBlob : public cMemSpan {
     /// A heap blob that is faster to reallocate.
     /// Optimize reallocate to smaller size by leaving the allocation alone. Lazy realloc in the case of shrink.
     /// </summary>
-    bool ReAllocLazy(size_t iSizeNew);
+    bool ReAllocLazy(size_t nSizeNew);
 
     /// <summary>
     /// Allocate then copy something into it.

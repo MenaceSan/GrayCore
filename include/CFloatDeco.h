@@ -11,6 +11,11 @@
 #include "cDebugAssert.h"  // ASSERT
 #include "cFloat.h"
 
+#if defined(__GNUC__) && (__GNUC__ > 4) 
+__extension__ typedef __int128 int128;
+__extension__ typedef unsigned __int128 uint128;
+#endif
+
 namespace Gray {
 // _umul128 TODO MulDiv ?
 
@@ -66,7 +71,7 @@ class GRAYCORE_LINK cFloatDeco {
         if (l & (UINT64{1} << 63))  // rounding
             h++;
 #elif (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && defined(__x86_64__)
-        unsigned __int128 p = static_cast<unsigned __int128>(m_uMant) * static_cast<unsigned __int128>(rhs.m_uMant);
+        uint128 p = static_cast<uint128>(m_uMant) * static_cast<uint128>(rhs.m_uMant);
         h = p >> 64;
         UINT64 l = static_cast<UINT64>(p);
         if (l & (UINT64(1) << 63))  // rounding
@@ -132,12 +137,27 @@ class GRAYCORE_LINK cFloatDeco {
     static cFloatDeco GRAYCALL GetCachedPower(int nExp2, OUT int& rnExp10);
     static double GRAYCALL toDouble(UINT32 frac1, UINT32 frac2, int nExp10);
 
-    static void GRAYCALL GrisuRound(char* pszOut, StrLen_t len, UINT64 delta, UINT64 rest, UINT64 ten_kappa, UINT64 wp_w);
+    static void GRAYCALL GrisuRound(char* pszOut, StrLen_t len, UINT64 delta, UINT64 rest, UINT64 ten_kappa, UINT64 wp_w) noexcept;
     static StrLen_t GRAYCALL Grisu2(double dVal, char* pszOut, OUT int& rnExp10);
 
     static StrLen_t GRAYCALL MantRound(char* pszOut, StrLen_t nMantLength);
+    /// <summary>
+    /// Change mantissa size up or down.
+    /// </summary>
+    /// <param name="pszOut"></param>
+    /// <param name="nMantLength"></param>
+    /// <param name="nMantLengthNew"></param>
+    /// <returns>size change.</returns>
     static StrLen_t GRAYCALL MantAdjust(char* pszOut, StrLen_t nMantLength, StrLen_t nMantLengthNew);
 
+    /// <summary>
+    /// like ecvt() using e exponent.
+    /// </summary>
+    /// <param name="pszOut">string to contains digits.</param>
+    /// <param name="nMantLength"></param>
+    /// <param name="nExp10"></param>
+    /// <param name="chE">'e' or 'E'</param>
+    /// <returns></returns>
     static StrLen_t GRAYCALL FormatE(char* pszOut, StrLen_t nMantLength, int nExp10, char chE);
     static StrLen_t GRAYCALL FormatF(char* pszOut, StrLen_t nMantLength, int nExp10, int iDecPlacesWanted);
 };

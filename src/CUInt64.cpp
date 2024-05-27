@@ -10,9 +10,9 @@
 namespace Gray {
 template class GRAYCORE_LINK cBitmask<UINT64>;  // force implementation/instantiate for DLL/SO.
 
-void cUInt64::BuildStr(StrBuilder<char>& ret, RADIX_t uRadixBase) const {
+void cUInt64::BuildStr(StrBuilder<char>& sb, RADIX_t uRadixBase) const {
 #ifdef USE_INT64
-    ret.AdvanceWrite(StrT::ULtoA(m_u, ret.get_SpanWrite(), uRadixBase));
+    sb.AdvanceWrite(StrT::ULtoA(m_u, sb.get_SpanWrite(), uRadixBase));
 #else
     ASSERT(0);  // TODO
     return 0;
@@ -23,17 +23,20 @@ cString cUInt64::GetStr(RADIX_t uRadixBase) const {
     //! encode value as string.
     //! @note We can estimate the max string size via get_Highest1Bit()
     char szTmp[StrNum::k_LEN_MAX_DIGITS_INT];
-    BuildStr(StrBuilder<char>(TOSPAN(szTmp)), uRadixBase);
+    StrBuilder<char> sb(TOSPAN(szTmp));
+    BuildStr(sb, uRadixBase);
     return szTmp;
 }
 
-bool cUInt64::SetStr(const char* pszVal, RADIX_t uRadixBase, const char** ppszEnd) {
+HRESULT cUInt64::SetStr(const cSpan<char>& src, RADIX_t nRadixBase) {
 #ifdef USE_INT64
-    m_u = StrT::toUL(pszVal, ppszEnd, uRadixBase);
+    const char* ppszEnd = nullptr;
+    m_u = StrT::toUL(src.get_PtrConst(), &ppszEnd, nRadixBase);
+    return CastN(HRESULT, ppszEnd - src.get_PtrConst());
 #else
     ASSERT(0);  // TODO
+    return E_NOTIMPL;
 #endif
-    return true;
 }
 
 BIT_ENUM_t cUInt64::get_Highest1Bit() const {
@@ -96,19 +99,16 @@ bool cUInt64::isPrime() const {
     //! http://en.wikipedia.org/wiki/Primality_test
     //! @note this can be VERY slow for big numbers.
 
-    if (!isOdd())  // do the easy test first. Even numbers are never prime.
-    {
-        return (*this == 2);
-    }
+    if (!isOdd()) return (*this == 2);  // do the easy test first. Even numbers are never prime.
+
     ASSERT(!isZero());  // zero is not a valid test.
 
     cUInt64 pminus1(*this);
     pminus1 -= 1;
-    if (pminus1.isZero())  // 1 is not prime.
-        return false;
+    if (pminus1.isZero()) return false;  // 1 is not prime.
 
-    BIT_ENUM_t nBits = get_Highest1Bit() - 1;  // test number is less than the prime.
-    ITERATE_t nTries = nBits;                  // this ought to be enough tries to make sure it is prime.
+    const BIT_ENUM_t nBits = get_Highest1Bit() - 1;  // test number is less than the prime.
+    ITERATE_t nTries = nBits;                        // this ought to be enough tries to make sure it is prime.
     if (nTries < 10) nTries = 10;
     if (nTries > 100) nTries = 100;
 
@@ -116,8 +116,7 @@ bool cUInt64::isPrime() const {
         cUInt64 x;
         x.SetRandomBits(nBits);  // random test number less than the prime. since it is not div 2, >= div 3
         ASSERT(x < *this);
-        if (x.isZero())  // not a useful test.
-            continue;
+        if (x.isZero()) continue;  // not a useful test.
         cUInt64 r;
         r.SetPowerMod(x, pminus1, *this);
         if (r != 1) return false;  // Not prime.
@@ -156,9 +155,10 @@ int cUInt64::SetRandomPrime(BIT_ENUM_t nBits, cThreadState* pCancel) {
 
 void cUInt64::OpBitShiftLeft1(UNIT_t nBitMask) {
 #ifdef USE_INT64
-    UNIT_t nTmp = m_u;
-    UNIT_t nCarryBit = nTmp >> (k_UNIT_BITS - 1);
+    const UNIT_t nTmp = m_u;
+    const UNIT_t nCarryBit = nTmp >> (k_UNIT_BITS - 1);
     ASSERT(nCarryBit == 0 || nCarryBit == 1);
+    UNREFERENCED_PARAMETER(nCarryBit);
     m_u = ((nTmp << 1) | nBitMask);
 #else
     // _addcarry_u64

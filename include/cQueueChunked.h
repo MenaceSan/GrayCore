@@ -42,7 +42,7 @@ class cQueueChunked : public cQueueIndex {
     const TYPE* GetReadPtr(const ITERATE_t firstReadIndex) const {
         ASSERT(firstReadIndex <= _CHUNKGROW);
         ASSERT_NN(_pFirst);
-        return _pFirst->get_DataC() + firstReadIndex;
+        return _pFirst->GetPtrC() + firstReadIndex;
     }
 
     /// <summary>
@@ -66,7 +66,7 @@ class cQueueChunked : public cQueueIndex {
     TYPE* GetWritePrep() {
         if (_pLast == nullptr) {
             _pFirst = _pLast = new Chunk_t();
-            return _pLast->get_DataW();
+            return _pLast->GetPtrW();
         }
         const ITERATE_t lastWriteIndex = get_LastWriteIndex();
         ASSERT(lastWriteIndex <= _CHUNKGROW);
@@ -75,9 +75,9 @@ class cQueueChunked : public cQueueIndex {
             _pLast->_pNext = pNext;
             _pLast = pNext;
             _nLastIndex += _CHUNKGROW;
-            return _pLast->get_DataW();
+            return _pLast->GetPtrW();
         }
-        return _pLast->get_DataW() + lastWriteIndex;
+        return _pLast->GetPtrW() + lastWriteIndex;
     }
 
     cSpanX<TYPE> get_SpanWrite() {
@@ -134,17 +134,17 @@ class cQueueChunked : public cQueueIndex {
         }
     }
 
-    TYPE Read1(void) {
+    TYPE Read1() {
         const ITERATE_t firstReadIndex = get_FirstReadIndex();
         TYPE val = *GetReadPtr(firstReadIndex);
         AdvanceRead(1);
         return val;
     }
-    ITERATE_t ReadSpanQ(cSpanX<TYPE>& buf) {
+    ITERATE_t ReadSpanQ(cSpanX<TYPE> ret) {
         //! copy data out.
         ITERATE_t i = 0;
-        TYPE* pBuf = buf.get_DataWork();
-        for (; !isEmptyQ() && i < buf.GetSize(); i++) {
+        TYPE* pBuf = ret.get_PtrWork();
+        for (; !isEmptyQ() && i < ret.GetSize(); i++) {
             pBuf[i] = Read1();
         }
         return i;
@@ -166,7 +166,7 @@ class cQueueChunked : public cQueueIndex {
     /// copy all data into Q.
     void WriteSpanQ(const cSpan<TYPE>& src) {
         ITERATE_t nCount = src.GetSize();
-        const TYPE* pSrc = src.get_DataConst();
+        const TYPE* pSrc = src.get_PtrConst();
         while (nCount > 0) {
             const auto chunkQty = get_SpanWrite().SetCopyQty(pSrc, nCount);
             AdvanceWrite(chunkQty);

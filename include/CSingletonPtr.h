@@ -12,13 +12,13 @@
 
 namespace Gray {
 /// <summary>
-/// Base class for a cSingletonStatic that is reference counted and lazy created/loaded.
+/// Base class for a cSingletonStatic that is reference counted and lazy created/loaded. Use with cSingletonPtr.
 /// This will be destroyed when the last reference is released. recreated again on demand.
 /// e.g. a public service (shared by all) that is loaded on demand and released when no one needs it.
 /// </summary>
 /// <typeparam name="TYPE"></typeparam>
 template <class TYPE>
-class cSingletonRefBase : public cSingletonStatic<TYPE>, public cRefBase, public cHeapObject {
+class cSingletonRefBase : public cSingletonStatic<TYPE>, public cRefBase, public cHeapObject, public cObject {
     typedef cSingletonStatic<TYPE> SUPER_t;
     // CHEAPOBJECT_IMPL;
 
@@ -29,7 +29,7 @@ class cSingletonRefBase : public cSingletonStatic<TYPE>, public cRefBase, public
 };
 
 /// <summary>
-/// A lazy loaded / released cSingletonStatic. ASSUME TYPE is cSingletonStatic, cRefBase, cHeapObject based. equiv to cSingletonRefBase
+/// A lazy loaded / released cSingletonStatic. ASSUME TYPE is cSingletonRefBase base or at least cSingletonStatic, cRefBase, cHeapObject, cObject based. 
 /// </summary>
 /// <typeparam name="TYPE"></typeparam>
 template <class TYPE>
@@ -42,7 +42,7 @@ class cSingletonPtr : protected cRefPtr<TYPE> {  // cRefPtr protects from releas
     /// <returns></returns>
     static TYPE* GRAYCALL get_SingleCreate() {
         if (!TYPE::isSingleCreated()) {
-            const auto guard(cSingletonRegister::sm_LockSingle.Lock());  // thread sync critical section.
+            const auto guard(cDependRegister::sm_LockSingle.Lock());  // thread sync critical section.
             if (!TYPE::isSingleCreated()) {
                 auto p = new TYPE();
                 DEBUG_CHECK(TYPE::isSingleCreated());
@@ -56,12 +56,13 @@ class cSingletonPtr : protected cRefPtr<TYPE> {  // cRefPtr protects from releas
     /// create instance now or later?
     /// Allocate a reference automatically by default.
     /// Attach to cSingletonRefBase
-    /// false = defer Allocate until later
+    /// createNow = false = defer Allocate until later
     /// </summary>
-    cSingletonPtr(bool bInitNow = true) : SUPER_t(bInitNow ? get_SingleCreate() : nullptr) {}
+    cSingletonPtr(bool createNow = true) : SUPER_t(createNow ? get_SingleCreate() : nullptr) {}
 
     /// <summary>
-    /// Late Attach/Create the Object that is base on cSingletonRefBase (or equiv). Call this as often as we want. Maybe cSingletonPtr changed/upgraded ?
+    /// Late Attach/Create the Object that is base on cSingletonRefBase (or equiv).
+    /// Call this as often as we want. Maybe cSingletonPtr changed/upgraded ?
     /// If i created an empty cSingletonPtr(false) (as part of some class) this is how I populate it on that classes constructor later/lazy.
     /// </summary>
     void InitPtr() {

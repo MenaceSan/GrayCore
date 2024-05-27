@@ -33,7 +33,7 @@ cExceptionSystem::cExceptionSystem(SYSCODE_t uNTStatus, struct _EXCEPTION_POINTE
     }
 
     PVOID pAddr = (pData) ? (pData->ExceptionRecord->ExceptionAddress) : 0;
-    UINT_PTR dwAddr = PtrCastToNum(pAddr);
+    UINT_PTR dwAddr = CastPtrToNum(pAddr);
     dwAddr -= k_dwCodeStart;
     m_pAddress = (PVOID)(dwAddr);
 }
@@ -58,7 +58,7 @@ cExceptionSystem::~cExceptionSystem() THROW_DEF {}
 BOOL cExceptionSystem::GetErrorMessage(StrBuilder<GChar_t>& sb, UINT* pnHelpContext) {  // virtual
     //! @note what module is this in ? in the case of a DLL
     //! look up m_nSystemErrorCode codes ??
-    sb.AddFormat(_GT("Exception code=0%X, addr=0%p, context=%d"), m_nSystemErrorCode, PtrCastToNum(m_pAddress), (pnHelpContext != nullptr) ? pnHelpContext : 0);
+    sb.AddFormat(_GT("Exception code=0%X, addr=0%p, context=%d"), m_nSystemErrorCode, CastPtrToNum(m_pAddress), (pnHelpContext != nullptr) ? pnHelpContext : 0);
     return true;
 }
 
@@ -82,7 +82,7 @@ int _cdecl cExceptionSystem::FilterException(SYSCODE_t uNTStatus, struct _EXCEPT
     }
     return EXCEPTION_CONTINUE_SEARCH;  // not what i wanted.
 }
-CATTR_NORETURN void _cdecl cExceptionSystem::CatchTerminate(void) {  // static
+CATTR_NORETURN void _cdecl cExceptionSystem::CatchTerminate() {  // static
     //! A handler can not be found for a thrown exception,
     //! or for some other exceptional circumstance that makes impossible to continue the handling process.
     //! http://www.cplusplus.com/reference/std/exception/set_terminate/

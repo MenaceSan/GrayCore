@@ -7,6 +7,7 @@
 #include "cBlob.h"
 #include "cDebugAssert.h"
 #include "cExceptionSystem.h"
+#include "cMem.h"
 #include "cValSpan.h"
 
 namespace Gray {
@@ -107,9 +108,6 @@ bool GRAYCALL cMem::IsCorruptApp(const void* pData, size_t nLen, bool bWriteAcce
 }
 
 size_t GRAYCALL cMem::CompareIndex(const void* p1, const void* p2, size_t nSizeBlock) {  // static
-    //! Compare two buffers and return at what point they differ.
-    //! Does not assume memory alignment for uintptr_t block compares.
-
     if (p1 == p2) return nSizeBlock;  // is equal.
     if (p1 == nullptr || p2 == nullptr) return 0;
 
@@ -144,12 +142,12 @@ size_t GRAYCALL cMem::CompareIndex(const void* p1, const void* p2, size_t nSizeB
 
 //**********************************************************
 
-COMPARE_t cMemSpan::Compare(const cMemSpan& m2) const {
+COMPARE_t cMemSpan::Compare(const cMemSpan& m2) const noexcept {
     //! @return COMPARE_Equal
-    const size_t iLenMin = cValT::Min(get_DataSize(), m2.get_DataSize());
-    const COMPARE_t iRet = cMem::Compare(get_DataC(), m2.get_DataC(), iLenMin);
+    const size_t iLenMin = cValT::Min(get_SizeBytes(), m2.get_SizeBytes());
+    const COMPARE_t iRet = cMem::Compare(GetTPtrC(), m2.GetTPtrC(), iLenMin);
     if (iRet != COMPARE_Equal) return iRet;
-    return cValT::Compare(get_DataSize(), m2.get_DataSize());  // the longer one wins. if otherwise equal. (but not same length)
+    return cValT::Compare(get_SizeBytes(), m2.get_SizeBytes());  // not same length? if otherwise equal the longer one wins
 }
 
 size_t cMemSpan::ReadFromCSV(const char* pszSrc) {
@@ -158,11 +156,11 @@ size_t cMemSpan::ReadFromCSV(const char* pszSrc) {
     //! @note using hex or Base64 would be better.
 
     size_t i = 0;
-    for (; i < get_DataSize();) {
+    for (; i < get_SizeBytes();) {
         pszSrc = StrT::GetNonWhitespace(pszSrc);
         if (StrT::IsNullOrEmpty(pszSrc)) break;
         const char* pszSrcStart = pszSrc;
-        get_DataW()[i++] = (BYTE)(StrNum::toU(pszSrc, &pszSrc, 10));
+        GetTPtrW()[i++] = (BYTE)(StrNum::toU(pszSrc, &pszSrc, 10));
         if (pszSrcStart == pszSrc) break;  // must be the field terminator? ")},;". End.
         pszSrc = StrT::GetNonWhitespace(pszSrc);
         if (pszSrc[0] != ',') break;
@@ -176,8 +174,8 @@ StrLen_t cMemSpan::GetHexDigest(OUT char* pszHexString) const {
     //! ASSUME sizeof(pszHexString) >= GetHexDigestSize()
     //! @note using Base64 would be better.
     StrLen_t iLen = 0;
-    for (size_t i = 0; i < get_DataSize(); i++) {
-        const BYTE ch = get_DataC()[i];
+    for (size_t i = 0; i < get_SizeBytes(); i++) {
+        const BYTE ch = GetTPtrC()[i];
         pszHexString[iLen++] = StrChar::U2Hex(ch >> 4);
         pszHexString[iLen++] = StrChar::U2Hex(ch & 0x0F);
     }
@@ -196,22 +194,21 @@ HRESULT cMemSpan::SetHexDigest(const char* pszHexString, bool testEnd) {
     if (pszHexString == nullptr || isNull()) return E_POINTER;
 
     bool bNonZero = false;
-    for (size_t i = 0; i < get_DataSize(); i++) {
+    for (size_t i = 0; i < get_SizeBytes(); i++) {
         // 2 hex chars per byte.
         char ch = *pszHexString++;
         if (ch == '\0') return HRESULT_WIN32_C(RPC_X_BYTE_COUNT_TOO_SMALL);  // not long enough!
-        int bHex1 = StrChar::Hex2U(ch);
-        if (bHex1 < 0) return HRESULT_WIN32_C(ERROR_SXS_XML_E_INVALID_HEXIDECIMAL);
+        const UINT bHex1 = StrChar::Hex2U(ch);
+        if (bHex1 >= 0x10) return HRESULT_WIN32_C(ERROR_SXS_XML_E_INVALID_HEXIDECIMAL);
         ch = *pszHexString++;
-        int bHex2 = StrChar::Hex2U(ch);
-        if (bHex2 < 0) return HRESULT_WIN32_C(ERROR_SXS_XML_E_INVALID_HEXIDECIMAL);
-        get_DataW()[i] = (BYTE)((bHex1 * 0x10) + bHex2);
-        if (get_DataW()[i] != 0) bNonZero = true;
+        const UINT bHex2 = StrChar::Hex2U(ch);
+        if (bHex2 >= 0x10) return HRESULT_WIN32_C(ERROR_SXS_XML_E_INVALID_HEXIDECIMAL);
+        GetTPtrW()[i] = CastN(BYTE,(bHex1 * 0x10) + bHex2);
+        if (GetTPtrW()[i] != 0) bNonZero = true;
     }
 
     if (testEnd) {
-        if (StrChar::IsDigitX(*pszHexString, 0x10))  // too long! or not terminated.
-            return HRESULT_WIN32_C(ERROR_BUFFER_OVERFLOW);
+        if (StrChar::IsDigitRadix(*pszHexString, 0x10)) return HRESULT_WIN32_C(ERROR_BUFFER_OVERFLOW);  // too long! or not terminated.            
     }
     if (bNonZero) return S_OK;
     return S_FALSE;  // zero
@@ -219,39 +216,27 @@ HRESULT cMemSpan::SetHexDigest(const char* pszHexString, bool testEnd) {
 
 //**********************************************************
 
-void GRAYCALL cValSpan::ReverseArrayBlocks(void* pArray, size_t nArraySizeBytes, size_t nBlockSize) {
-    //! reverse the order of an array of blocks/objects.
-    //! similar to ReverseArray() but without the TYPE. where nBlockSize == sizeof(TYPE)
-    //! @arg
-    //!  nArraySizeBytes = the size of the whole array in bytes.
-    //!  nBlockSize = size of array element in bytes.
-
-    ASSERT(nBlockSize > 0);
-    size_t nBlockOverflow = nArraySizeBytes % nBlockSize;
-    ASSERT(nBlockOverflow == 0);  // MUST be aligned!
-    UNREFERENCED_PARAMETER(nBlockOverflow);
-    // nArraySizeBytes -= nBlockOverflow;
-
-    // Optimize the intrinsic sized blocks first.
-    switch (nBlockSize) {
+void cMemSpan::ReverseSpan(size_t stride) {
+    // Optimize for the intrinsic sized blocks first.
+    switch (stride) {
         case sizeof(BYTE):
-            ReverseArray<BYTE>((BYTE*)pArray, nArraySizeBytes);
+            cSpanX<BYTE>(*this).ReverseSpan();
             return;
         case sizeof(WORD):
-            ReverseArray<WORD>((WORD*)pArray, nArraySizeBytes);
+            cSpanX<WORD>(*this).ReverseSpan();
             return;
         case sizeof(UINT32):
-            ReverseArray<UINT32>((UINT32*)pArray, nArraySizeBytes);
+            cSpanX<UINT32>(*this).ReverseSpan();
             return;
+        default:
+            break;
     }
 
     // array of arbitrary block size.
-
-    BYTE* pMemBS = (BYTE*)pArray;
-    BYTE* pMemBE = ((BYTE*)pArray) + nArraySizeBytes - nBlockSize;  // end
-
-    for (; pMemBS < pMemBE; pMemBS += nBlockSize, pMemBE -= nBlockSize) {
-        cMem::Swap(pMemBS, pMemBE, nBlockSize);
+    BYTE* pMemBS = this->get_BytePtrW();
+    BYTE* pMemBE = pMemBS + this->get_SizeBytes() - stride;  // end
+    for (; pMemBS < pMemBE; pMemBS += stride, pMemBE -= stride) {
+        cMem::Swap(pMemBS, pMemBE, stride);
     }
 }
 }  // namespace Gray

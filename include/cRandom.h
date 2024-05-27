@@ -19,7 +19,7 @@ namespace Gray {
 DECLARE_INTERFACE(IRandomNoise) {
     typedef UINT RAND_t;  /// default value/seed size might be 32 or 64 bit .
     IGNORE_WARN_INTERFACE(IRandomNoise);
-    virtual bool GetNoise(cMemSpan & m) = 0;  /// fill array with random bytes.
+    virtual bool GetNoise(cMemSpan ret) = 0;  /// fill array with random bytes.
 };
 
 /// <summary>
@@ -37,7 +37,12 @@ struct GRAYCORE_LINK cRandomBase : public IRandomNoise {
     void InitSeedOS(size_t iSize = sizeof(RAND_t));
     void InitSeedUns(RAND_t uSeed);
 
-    bool GetNoise(cMemSpan& m) override;  /// fill array with random. return # filled.
+    /// <summary>
+    /// fill a buffer with random data from get_RandUns().
+    /// </summary>
+    /// <param name="ret"></param>
+    /// <returns>-lt- 0 = error.</returns>
+    bool GetNoise(cMemSpan ret) override;  /// fill array with random. return # filled.
 
     // Type helpers.
 
@@ -71,9 +76,9 @@ class GRAYCORE_LINK cRandomPerf final : public IRandomNoise, public cSingleton<c
     cRandomPerf();
 
  public:
-    static void GRAYCALL GetNoisePerf(cMemSpan& m);
-    bool GetNoise(cMemSpan& m) override {  // fill array with random. return # filled.
-        GetNoisePerf(m);
+    static void GRAYCALL GetNoisePerf(cMemSpan ret);
+    bool GetNoise(cMemSpan ret) override {  // fill array with random. return # filled.
+        GetNoisePerf(ret);
         return true;
     }
 };
@@ -94,9 +99,9 @@ class GRAYCORE_LINK cRandomOS final : public cRandomBase, public cSingleton<cRan
     cRandomOS();
 
  public:
-    static HRESULT GRAYCALL GetNoiseOS(cMemSpan& m);
-    bool GetNoise(cMemSpan& m) override;  // fill array with random. return # filled.
-    RAND_t get_RandUns() override;        // UINT_MAX
+    static HRESULT GRAYCALL GetNoiseOS(cMemSpan ret);
+    bool GetNoise(cMemSpan ret) override;  // fill array with random. return # filled.
+    RAND_t get_RandUns() override;         // UINT_MAX
 };
 
 /// <summary>
@@ -104,20 +109,20 @@ class GRAYCORE_LINK cRandomOS final : public cRandomBase, public cSingleton<cRan
 /// Supply test 'random' data. (e.g. maybe not random at all). acts as a one time cipher pad.
 /// </summary>
 class GRAYCORE_LINK cRandomBlock : public IRandomNoise {
-    size_t m_nReadIndex;  /// How far have we read in m_Data? recycle when at end ? like cQueueIndex
-    cBlob m_Data;         /// a block of 'random' test data.
+    size_t m_nReadIndex = 0;  /// How far have we read in m_Data? recycle when at end ? like cQueueIndex
+    cBlob m_Data;             /// a block of 'random' test data.
 
  public:
-    cRandomBlock(const cMemSpan& m) noexcept : m_Data(m, false), m_nReadIndex(0) {}
+    cRandomBlock(const cMemSpan& m) noexcept : m_Data(m, false) {}
 
     /// <summary>
     /// Get sample random data bytes
     /// </summary>
-    bool GetNoise(cMemSpan& m) override {  // IRandomNoise
+    bool GetNoise(cMemSpan ret) override {  // IRandomNoise
         if (m_Data.isValidPtr()) {
-            m_nReadIndex = cMem::CopyRepeat(m.get_DataW(), m.get_DataSize(), m_Data, m_Data.get_DataSize(), m_nReadIndex);
+            m_nReadIndex = cMem::CopyRepeat(ret.GetTPtrW(), ret.get_SizeBytes(), m_Data, m_Data.get_SizeBytes(), m_nReadIndex);
         } else {
-            cMem::Fill(m.get_DataW(), m.get_DataSize(), 0x2a);  // No m_Src supplied so fill with fixed data.
+            cMem::Fill(ret.GetTPtrW(), ret.get_SizeBytes(), 0x2a);  // No m_Src supplied so fill with fixed data.
         }
         return true;
     }

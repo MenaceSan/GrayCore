@@ -25,27 +25,87 @@ class GRAYCORE_LINK cIniFile : public IIniBaseEnumerator { // enumerate the sect
     static const IniChar_t k_SectionDefault[1];  /// "" = default section name for tags not in a section.
 
  public:
-    cIniFile();
-    virtual ~cIniFile();
+    virtual ~cIniFile() {}
 
+    /// <summary>
+    /// Was this read ?
+    /// </summary>
     ITERATE_t get_SectionsQty() const noexcept {
-        //! Was this read ?
         return m_aSections.GetSize();
     }
     cRefPtr<cIniSectionEntry> EnumSection(ITERATE_t i = 0) const {
         return m_aSections.GetAtCheck(i);
     }
 
+    /// <summary>
+    /// Read in all the sections in the file.
+    /// @todo USE cIniSectionData::ReadSectionData() ??
+    /// </summary>
+    /// <param name="s"></param>
+    /// <param name="bStripComments">strip comments and whitespace. else preserve them.</param>
+    /// <returns></returns>
     HRESULT ReadIniStream(cStreamInput& s, bool bStripComments = false);
+
+    /// <summary>
+    /// Open and read a whole INI file.
+    /// @note we need to read a file before writing it. (gets all the comments etc)
+    /// </summary>
+    /// <param name="pszFilePath"></param>
+    /// <param name="bStripComments">strip comments from the file.</param>
+    /// <returns></returns>
     HRESULT ReadIniFile(const FILECHAR_t* pszFilePath, bool bStripComments = false);
+
+    /// <summary>
+    /// Write the whole INI file. preserve line comments (if the didn't get stripped via bStripComments).
+    /// </summary>
+    /// <param name="pszFilePath"></param>
+    /// <returns></returns>
     HRESULT WriteIniFile(const FILECHAR_t* pszFilePath) const;
 
+    /// <summary>
+    /// Enumerate the sections. IIniBaseEnumerator
+    /// </summary>
+    /// <param name="ePropIdx"></param>
+    /// <param name="rsValue"></param>
+    /// <param name="psPropTag">return the section type as [SECTION Value] if it applies.</param>
+    /// <returns></returns>
     HRESULT PropGetEnum(PROPIDX_t ePropIdx, OUT cStringI& rsValue, OUT cStringI* psPropTag = nullptr) const override;
+
+    /// <summary>
+    /// Find section. Assume file has been read into memory already.
+    /// </summary>
+    /// <param name="pszSectionTitle"></param>
+    /// <param name="bPrefix"></param>
+    /// <returns></returns>
     cRefPtr<cIniSectionEntry> FindSection(const IniChar_t* pszSectionTitle = nullptr, bool bPrefix = false) const;
 
+    /// <summary>
+    /// Find a line in the [pszSectionTitle] with a key looking like pszKey=
+    /// </summary>
+    /// <param name="pszSectionTitle"></param>
+    /// <param name="pszKey"></param>
+    /// <returns></returns>
     const IniChar_t* FindKeyLinePtr(const IniChar_t* pszSectionTitle, const IniChar_t* pszKey) const;
+
+    /// <summary>
+    /// Create a new section in the file.
+    /// Don't care if the key exists or not. dupes are OK.
+    /// </summary>
+    /// <param name="pszSectionTitle">"SECTIONTYPE SECTIONNAME" (ASSUME already stripped []). "" = k_SectionDefault;</param>
+    /// <param name="bStripComments"></param>
+    /// <param name="iLine"></param>
+    /// <returns></returns>
     virtual cRefPtr<cIniSectionEntry> AddSection(const IniChar_t* pszSectionTitle = nullptr, bool bStripComments = false, int iLine = 0);
+
+    /// <summary>
+    /// Set
+    /// </summary>
+    /// <param name="pszSectionTitle">OK for nullptr</param>
+    /// <param name="pszKey"></param>
+    /// <param name="pszLine">nullptr = delete;</param>
+    /// <returns></returns>
     HRESULT SetKeyLine(const IniChar_t* pszSectionTitle, const IniChar_t* pszKey, const IniChar_t* pszLine);
+
     HRESULT SetKeyArg(const IniChar_t* pszSectionTitle, const IniChar_t* pszKey, const IniChar_t* pszArg);
 };
 }  // namespace Gray

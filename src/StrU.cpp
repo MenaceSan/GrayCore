@@ -10,7 +10,7 @@
 #include "cSystemInfo.h"
 
 namespace Gray {
-bool GRAYCALL StrU::IsUTFLead(const void* pvU) {  // static
+bool GRAYCALL StrU::IsUTFLead(const void* pvU) noexcept {  // static
     if (pvU == nullptr) return false;
     const BYTE* pU = reinterpret_cast<const BYTE*>(pvU);
     if (pU[0] != StrU::UTFLead_0) return false;
@@ -20,7 +20,7 @@ bool GRAYCALL StrU::IsUTFLead(const void* pvU) {  // static
     return false;
 }
 
-StrLen_t GRAYCALL StrU::UTF8SizeChar(int wideChar) {  // static
+StrLen_t GRAYCALL StrU::UTF8SizeChar(int wideChar) noexcept {  // static
 #if 0
     if( !wideChar ) return 1;
 	static const StrLen_t kWidth[32] = { 1 , 1 , 1 , 1 , 1 , 1 , 1 , 2 , 2 , 2 , 2 , 3 , 3 , 3 , 3 , 3 , 4 , 4 , 4 , 4 , 4 , 5 , 5 , 5 , 5 , 5 , 6 , 6 , 6 , 6 , 6 , 7 };
@@ -35,7 +35,7 @@ StrLen_t GRAYCALL StrU::UTF8SizeChar(int wideChar) {  // static
     return 7;
 }
 
-StrLen_t GRAYCALL StrU::UTF8SizeChar1(char firstChar) {  // static
+StrLen_t GRAYCALL StrU::UTF8SizeChar1(char firstChar) noexcept {  // static
     const unsigned char firstByte = CastN(unsigned char, firstChar);
     if (firstByte < 0x80) return 1;  // needs NO special UTF8 decoding.
     if ((firstByte & 0xe0) == 0x0c0) return 2;
@@ -44,7 +44,7 @@ StrLen_t GRAYCALL StrU::UTF8SizeChar1(char firstChar) {  // static
     return k_StrLen_UNK;                        // invalid format !? stop
 }
 
-StrLen_t GRAYCALL StrU::UTF8toUNICODEChar(OUT wchar_t& wChar, const char* pInp, StrLen_t iSizeInpBytes) {  // static
+StrLen_t GRAYCALL StrU::UTF8toUNICODEChar(OUT wchar_t& wChar, const char* pInp, StrLen_t iSizeInpBytes) noexcept {  // static
     if (iSizeInpBytes <= 0) return 0;                                                                      // FAILED
 
     const StrLen_t iSizeChar = UTF8SizeChar1(*pInp);
@@ -69,7 +69,7 @@ StrLen_t GRAYCALL StrU::UTF8toUNICODEChar(OUT wchar_t& wChar, const char* pInp, 
     return iSizeChar;
 }
 
-StrLen_t GRAYCALL StrU::UNICODEtoUTF8Char(char* pOut, StrLen_t iSizeOutMaxBytes, int wideChar) {  // static
+StrLen_t GRAYCALL StrU::UNICODEtoUTF8Char(char* pOut, StrLen_t iSizeOutMaxBytes, int wideChar) noexcept {  // static
 
     const StrLen_t iSizeChar = UTF8SizeChar(wideChar);
     if (iSizeChar == 1) {  // needs NO special UTF8 encoding.
@@ -93,11 +93,11 @@ StrLen_t GRAYCALL StrU::UNICODEtoUTF8Char(char* pOut, StrLen_t iSizeOutMaxBytes,
 
 //*********************************************
 
-StrLen_t GRAYCALL StrU::UTF8toUNICODELen(const cSpan<char>& src) {  // static
+StrLen_t GRAYCALL StrU::UTF8toUNICODELen(const cSpan<char>& src) noexcept {  // static
     if (src.isNull()) return 0;
 
     StrLen_t iOut = 0;
-    const char* pInp = src.get_DataConst();
+    const char* pInp = src.get_PtrConst();
     StrLen_t iSizeInpBytes = src.GetSize();
     for (; iSizeInpBytes > 0;) {
         const char ch = pInp[0];
@@ -111,11 +111,11 @@ StrLen_t GRAYCALL StrU::UTF8toUNICODELen(const cSpan<char>& src) {  // static
     return iOut;
 }
 
-StrLen_t GRAYCALL StrU::UNICODEtoUTF8Size(const cSpan<wchar_t>& src) {  // static
+StrLen_t GRAYCALL StrU::UNICODEtoUTF8Size(const cSpan<wchar_t>& src) noexcept {  // static
     if (src.isNull()) return 0;
 
     StrLen_t iOut = 0;
-    const wchar_t* pwInp = src.get_DataConst();
+    const wchar_t* pwInp = src.get_PtrConst();
     const StrLen_t iSizeInpChars = src.GetSize();
     for (StrLen_t iInp = 0; iInp < iSizeInpChars; iInp++) {
         const wchar_t wChar = pwInp[iInp];
@@ -127,13 +127,15 @@ StrLen_t GRAYCALL StrU::UNICODEtoUTF8Size(const cSpan<wchar_t>& src) {  // stati
     return iOut;
 }
 
-StrLen_t GRAYCALL StrU::UTF8toUNICODE(OUT cSpanX<wchar_t>& ret, const cSpan<char>& src) {  // static
+StrLen_t GRAYCALL StrU::UTF8toUNICODE(cSpanX<wchar_t> ret, const cSpan<char>& src) noexcept {  // static
     if (ret.isEmpty()) {
         DEBUG_CHECK(!ret.isEmpty());
         return k_ITERATE_BAD;
     }
 
-    wchar_t* pwOut = ret.get_DataWork();
+    wchar_t* pwOut = ret.get_PtrWork();
+    if (pwOut == nullptr) return UTF8toUNICODELen(src);
+
     if (src.isEmpty() || src.isNull()) {
         pwOut[0] = '\0';
         return 0;
@@ -148,7 +150,7 @@ StrLen_t GRAYCALL StrU::UTF8toUNICODE(OUT cSpanX<wchar_t>& ret, const cSpan<char
         if (iOut >= iSizeOutMaxChars) break;
         if (ch >= 0x80) {  // special UTF8 encoded char.
             wchar_t wChar;
-            const StrLen_t lenChar = UTF8toUNICODEChar(wChar, src.get_DataConst() + iInp, src.GetSize() - iInp);
+            const StrLen_t lenChar = UTF8toUNICODEChar(wChar, src.get_PtrConst() + iInp, src.GetSize() - iInp);
             if (lenChar <= 0) {
                 if (lenChar == 0) break;
                 pwOut[iOut] = ch;
@@ -168,9 +170,15 @@ StrLen_t GRAYCALL StrU::UTF8toUNICODE(OUT cSpanX<wchar_t>& ret, const cSpan<char
     return iOut;
 }
 
-StrLen_t GRAYCALL StrU::UNICODEtoUTF8(OUT cSpanX<char>& ret, const cSpan<wchar_t>& src) {  // static
+StrLen_t GRAYCALL StrU::UNICODEtoUTF8(cSpanX<char> ret, const cSpan<wchar_t>& src) noexcept {  // static
+    if (ret.isEmpty()) {
+        DEBUG_CHECK(!ret.isEmpty());
+        return 0;
+    }
 
-    char* pOut = ret.get_DataWork();
+    char* pOut = ret.get_PtrWork();
+    if (pOut == nullptr) return UNICODEtoUTF8Size(src);
+
     if (src.isEmpty() || src.isNull()) {
         pOut[0] = '\0';
         return 0;

@@ -196,7 +196,7 @@ struct GRAYCORE_LINK cTimeUnits {
     void SetZeros();
     bool InitTimeNow(TZ_TYPE nTimeZone = TZ_LOCAL);
 
-    COMPARE_TYPE Compare(cTimeUnits& b) const;
+    COMPRET_t Compare(cTimeUnits& b) const;
     bool isTimeFuture() const;
     bool isTimePast() const {        
         return !isTimeFuture(); //! AKA Expired ?
@@ -266,12 +266,12 @@ struct GRAYCORE_LINK cTimeUnits {
     /// </summary>
     /// <param name="wYear"></param>
     /// <returns>length of string in chars. -lte- 0 = failed.</returns>
-    StrLen_t GetFormStr(cSpanX<GChar_t>& ret, const GChar_t* pszFormat) const;
-    StrLen_t GetFormStr(cSpanX<GChar_t>& ret, TIMEFORMAT_t eFormat = TIMEFORMAT_t::_DEFAULT) const {
-        return GetFormStr(ret, CastNumToPtr<GChar_t>(static_cast<int>(eFormat)));
+    StrLen_t GetFormStr(cSpanX<GChar_t> ret, const GChar_t* pszFormat) const;
+    StrLen_t GetFormStr(cSpanX<GChar_t> ret, TIMEFORMAT_t eFormat = TIMEFORMAT_t::_DEFAULT) const {
+        return GetFormStr(ret, CastNumToPtrT<GChar_t>(static_cast<int>(eFormat)));
     }
     HRESULT SetTimeStr(const GChar_t* pszDateTime, TZ_TYPE nTimeZoneOffset);
-    StrLen_t GetTimeSpanStr(cSpanX<GChar_t>& ret, TIMEUNIT_t eUnitHigh = TIMEUNIT_t::_Day, int iUnitsDesired = 2, bool bShortText = false) const;
+    StrLen_t GetTimeSpanStr(cSpanX<GChar_t> ret, TIMEUNIT_t eUnitHigh = TIMEUNIT_t::_Day, int iUnitsDesired = 2, bool bShortText = false) const;
 
     static int GRAYCALL IsLeapYear(TIMEVALU_t wYear);
     static int GRAYCALL GetLeapYearsSince2K(TIMEVALU_t wYear);
@@ -303,7 +303,7 @@ struct GRAYCORE_LINK cTimeUnits {
         return IsLeapYear(m_wYear) ? 366 : 365;
     }
 
-    cTimeUnits(void) {
+    cTimeUnits() {
         SetZeros();  // a valid time?
     }
     cTimeUnits(TIMEVALU_t wYear, TIMEVALU_t wMonth, TIMEVALU_t wDay, TIMEVALU_t wHour = 0, TIMEVALU_t wMinute = 0, TIMEVALU_t wSecond = 0, TIMEVALU_t wMilliseconds = 0, TIMEVALU_t wMicroseconds = 0, TZ_TYPE nTZ = TZ_UTC)

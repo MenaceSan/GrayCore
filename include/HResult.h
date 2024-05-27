@@ -11,6 +11,7 @@
 #include "FileName.h"  // FILECHAR_t
 #include "StrConst.h"
 #include "cPair.h"
+#include "cSpan.h"
 
 #ifdef _WIN32
 #include <winerror.h>
@@ -102,8 +103,8 @@ enum HRESULT_OTHER_TYPE_ : UINT32 {
 /// ASSUME this array is HRESULT sorted.
 /// </summary>
 struct GRAYCORE_LINK HResultCode {
-    HRESULT m_code;        /// DWORD error code for a FACILITY_TYPE. might just use WORD?
-    const char* m_pszMsg;  /// associated error message string. UTF8
+    const HRESULT m_code;        /// DWORD error code for a FACILITY_TYPE. might just use WORD?
+    const char* const m_pszMsg;  /// associated error message string. UTF8
 
     /// <summary>
     /// Find a code by its HRESULT assuming this is the first of an array of HResultCode
@@ -126,7 +127,7 @@ struct GRAYCORE_LINK HResult {
     typedef cPair<FACILITY_TYPE, const GChar_t*> Facility_t;  /// name each FACILITY_TYPE.
     static const Facility_t k_Facility[];                     /// names of all known FACILITY_TYPE.
 
-    HRESULT m_hRes;  // DWORD
+    const HRESULT m_hRes;  // DWORD
 
     HResult(HRESULT hRes) noexcept : m_hRes(hRes) {}
     HResult(FACILITY_TYPE eFacility, WORD wCode) noexcept : m_hRes(MAKE_HRESULT(1, eFacility, wCode)) {
@@ -305,7 +306,7 @@ struct GRAYCORE_LINK HResult {
     /// <param name="vargs">additional arguments.</param>
     static void GRAYCALL GetTextV(HRESULT hRes, StrBuilder<GChar_t>& sb, const void* pSource = nullptr, va_list vargs = k_va_list_empty);
 
-    static HRESULT GRAYCALL GetHResFromStr(const GChar_t* pszError, StrLen_t nLenError = -1);
+    static HRESULT GRAYCALL GetHResFromStr(const cSpan<GChar_t>& str);
 };
 }  // namespace Gray
 #endif  // _INC_HResult_H

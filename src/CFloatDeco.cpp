@@ -44,20 +44,18 @@ cFloatDeco cFloatDeco::GetCachedPower(int nExp2, OUT int& rnExp10) {  // static
          cFloatDeco(CUINT64(eb96bf6e, badf77d9), 1039),  cFloatDeco(CUINT64(af87023b, 9bf0ee6b), 1066)};
 
     // int nExp10o = static_cast<int>(ceil((-61 - nExp2) * 0.30102999566398114)) + 374;
-    double dk = (-61 - nExp2) * 0.30102999566398114 + 347;  // dk must be positive, so can do ceiling in positive
-    int nExp10 = static_cast<int>(dk);
+    const double dk = (-61 - nExp2) * 0.30102999566398114 + 347;  // dk must be positive, so can do ceiling in positive
+    int nExp10 = CastN(int, dk);
     if (nExp10 != dk)  // Round up.
         nExp10++;
 
-    unsigned index = static_cast<unsigned>((nExp10 >> 3) + 1);
-    if (IS_INDEX_BAD_ARRAY(index, k_CachedPowers)) {
-        // exp out of range.
+    const unsigned index = CastN(unsigned, (nExp10 >> 3) + 1);
+    if (IS_INDEX_BAD_ARRAY(index, k_CachedPowers)) {  // exp out of range?
         rnExp10 = 0;
-        if (index < 0) return k_CachedPowers[0];
         return k_CachedPowers[_countof(k_CachedPowers) - 1];
     }
 
-    rnExp10 = -(-348 + static_cast<int>(index << 3));  // decimal exponent doesn't need lookup table
+    rnExp10 = -(-348 + CastN(int, index << 3));  // decimal exponent doesn't need lookup table
     return k_CachedPowers[index];
 }
 
@@ -102,11 +100,9 @@ double GRAYCALL cFloatDeco::toDouble(UINT32 fracHi, UINT32 fracLo, int nExp10) {
     return fraction;
 }
 
-void cFloatDeco::GrisuRound(char* pszOut, StrLen_t len, UINT64 delta, UINT64 rest, UINT64 ten_kappa, UINT64 wp_w) {  // static
+void cFloatDeco::GrisuRound(char* pszOut, StrLen_t len, UINT64 delta, UINT64 rest, UINT64 ten_kappa, UINT64 wp_w) noexcept {  // static
     //! Round last digit down?
-    while (rest < wp_w && delta - rest >= ten_kappa &&
-           (rest + ten_kappa < wp_w ||  // closer
-            wp_w - rest > rest + ten_kappa - wp_w)) {
+    while (rest < wp_w && delta - rest >= ten_kappa && (rest + ten_kappa < wp_w || wp_w - rest > rest + ten_kappa - wp_w)) {  // closer
         pszOut[len - 1]--;
         rest += ten_kappa;
     }
@@ -135,10 +131,10 @@ StrLen_t cFloatDeco::Grisu2(double dVal, char* pszOut, OUT int& rnExp10) {  // s
 
     const cFloatDeco one(UINT64(1) << -Wp.m_iExp2, Wp.m_iExp2);
     const cFloatDeco wp_w = Wp - W;
-    UINT32 p1 = static_cast<UINT32>(Wp.m_uMant >> -one.m_iExp2);
+    UINT32 p1 = CastN(UINT32, Wp.m_uMant >> -one.m_iExp2);
     UINT64 p2 = Wp.m_uMant & (one.m_uMant - 1);
 
-    int kappa = static_cast<int>(GetCountDecimalDigit32(p1));
+    int kappa = CastN(int, GetCountDecimalDigit32(p1));
     ASSERT(kappa <= 10);
 
     StrLen_t nLength = 0;
@@ -153,10 +149,10 @@ StrLen_t cFloatDeco::Grisu2(double dVal, char* pszOut, OUT int& rnExp10) {  // s
         }
         if (d != 0 || nLength > 0) pszOut[nLength++] = '0' + static_cast<char>(d);
         kappa--;
-        UINT64 tmp = (static_cast<UINT64>(p1) << -one.m_iExp2) + p2;
+        UINT64 tmp = (CastN(UINT64, p1) << -one.m_iExp2) + p2;
         if (tmp <= delta) {
             rnExp10 += kappa;
-            GrisuRound(pszOut, nLength, delta, tmp, static_cast<UINT64>(k_Exp10[kappa]) << -one.m_iExp2, wp_w.m_uMant);
+            GrisuRound(pszOut, nLength, delta, tmp, CastN(UINT64, k_Exp10[kappa]) << -one.m_iExp2, wp_w.m_uMant);
             return nLength;
         }
     }
@@ -165,7 +161,7 @@ StrLen_t cFloatDeco::Grisu2(double dVal, char* pszOut, OUT int& rnExp10) {  // s
     for (;;) {
         p2 *= 10;
         delta *= 10;
-        char d = static_cast<char>(p2 >> -one.m_iExp2);
+        const char d = static_cast<char>(p2 >> -one.m_iExp2);
         if (d || nLength > 0) pszOut[nLength++] = '0' + d;
         p2 &= one.m_uMant - 1;
         kappa--;
@@ -191,8 +187,7 @@ StrLen_t cFloatDeco::MantRound(char* pszOut, StrLen_t nMantLength) {  // static
                 }
                 pszOut[i] = '0';  // Roll to 0
             }
-            if (i <= 0) {
-                // Need to carry shift. e.g. 99.99 rounds up to 100
+            if (i <= 0) {  // Need to carry shift. e.g. 99.99 rounds up to 100
                 cMem::CopyOverlap(pszOut + 1, pszOut, nMantLength + 1);
                 pszOut[0] = '1';
                 nMantLength++;
@@ -204,29 +199,20 @@ StrLen_t cFloatDeco::MantRound(char* pszOut, StrLen_t nMantLength) {  // static
 }
 
 StrLen_t cFloatDeco::MantAdjust(char* pszOut, StrLen_t nMantLength, StrLen_t nMantLengthNew) {  // static
-    //! Change mantissa size up or down.
-    //! @return size change.
-    StrLen_t iDelta = nMantLengthNew - nMantLength;
+    const StrLen_t iDelta = nMantLengthNew - nMantLength;
     if (iDelta == 0) return 0;
     if (iDelta < 0) {
-        // Chop off decimal places.
-        MantRound(pszOut, nMantLengthNew);
-    } else {
-        // Post Pad out with 0.
+        MantRound(pszOut, nMantLengthNew);  // Chop off decimal places.
+    } else {                                // Post Pad out with 0.
         if (nMantLengthNew > StrNum::k_LEN_MAX_DIGITS) nMantLengthNew = StrNum::k_LEN_MAX_DIGITS;
-        
         cValSpan::FillQty<char>(pszOut + nMantLength, iDelta, '0');
     }
     return iDelta;
 }
 
 StrLen_t cFloatDeco::FormatE(char* pszOut, StrLen_t nMantLength, int nExp10, char chE) {  // static
-    //! like ecvt() using e exponent.
-    //! @arg pszOut = string to contains digits.
-    //! @arg chE = 'e' or 'E'
-
-    StrLen_t nExponent1 = (nMantLength + nExp10) - 1;  // 10^(nExponent1-1) <= v < 10^nExponent1
     StrLen_t i;
+    StrLen_t nExponent1 = (nMantLength + nExp10) - 1;  // 10^(nExponent1-1) <= v < 10^nExponent1
 
     if (nMantLength == 1) {
         // no decimal point. e.g. 1e30

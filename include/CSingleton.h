@@ -10,6 +10,7 @@
 #endif
 
 #include "cDebugAssert.h"
+#include "cDependRegister.h"
 #include "cHeapObject.h"
 #include "cNonCopyable.h"
 #include "cObject.h"
@@ -31,13 +32,14 @@ namespace Gray {
 /// <typeparam name="TYPE"></typeparam>
 template <class TYPE>
 class cSingletonStatic {
-    NonCopyable_IMPL(cSingletonStatic);
+    NonCopyable_IMPL(cSingletonStatic) static TYPE* sm_pThe;  /// pointer to the one and only object of this TYPE. ASSUME automatically init to = nullptr.
 
  protected:
-    static TYPE* sm_pThe;  /// pointer to the one and only object of this TYPE. ASSUME automatically init to = nullptr.
-
-    TYPE* get_This() { 
-        return static_cast<TYPE*>(this);    // cast to TYPE.
+    TYPE* get_This() {
+        return static_cast<TYPE*>(this);  // cast to TYPE.
+    }
+    void ClearSing() {
+        sm_pThe = nullptr;
     }
 
  protected:
@@ -56,8 +58,8 @@ class cSingletonStatic {
         sm_pThe = pThis;
         DEBUG_ASSERT(sm_pThe == get_This(), "cSingletonStatic");  // is it really always the same?? IS this a waste of time/code ?
     }
-    virtual ~cSingletonStatic() noexcept {
-        //! the singleton accessors
+    virtual ~cSingletonStatic() {
+        // ASSUME if isInCExit() this will be called AFTER cDependRegister has done its cleanup!!
         if (sm_pThe != nullptr) {
             DEBUG_ASSERT(sm_pThe == get_This(), "~cSingletonStatic");
             sm_pThe = nullptr;
@@ -101,55 +103,15 @@ class cSingletonStatic {
     static inline TYPE& I() noexcept {
         return *get_Single();
     }
-
 };
 
 template <class TYPE>
 TYPE* cSingletonStatic<TYPE>::sm_pThe = nullptr;  // assume nullptr init will ALWAYS work regardless of static init usage order.
 
 /// <summary>
-/// NON template abstract base for cSingleton. MUST be IHeapObject
-/// Register this to allow for proper order of virtual destruction at C runtime destruct.
-/// Allows for ordered destruction of singletons if modules unload. (Not in proper reverse load order)
-/// @note Static singletons are not multi threaded anyhow. so don't worry about static init order for sm_LockSingle. assume static init is single threaded.
-/// @TODO allocate static space and use linked list to store order ?
-/// </summary>
-class GRAYCORE_LINK cSingletonRegister : public cObject, public cHeapObject {
-    friend class cSingletonManager;
-    // CHEAPOBJECT_IMPL;  /// Get the top level "new" pointer in the case of multiple inheritance.
-
- protected:
-#ifndef UNDER_CE
-    ::HMODULE m_hModuleLoaded;  /// What modules loaded this ? So singletons can be destroyed if DLL/SO unloads. cOSModule::GetModuleHandleForAddr()
-#endif
- public:
-    static cThreadLockCount sm_LockSingle;  /// common lock for all cSingleton.
-
- protected:
-    cSingletonRegister(const TYPEINFO_t& rAddrCode) noexcept;
-    ~cSingletonRegister() noexcept override;
-    void RegisterSingleton() noexcept;
-
-    /// <summary>
-    /// override this to Destroy any children i might have from some other module.
-    /// </summary>
-    /// <param name="hMod"></param>
-    /// <returns></returns>
-    virtual void ReleaseModuleChildren(::HMODULE hMod) {
-        ASSERT(m_hModuleLoaded != hMod);
-    }
-
- public:
-    /// <summary>
-    /// Destroy all singletons in this module if it is unloading.
-    /// </summary>
-    static void GRAYCALL ReleaseModule(::HMODULE hMod);
-};
-
-/// <summary>
 /// abstract base class for singleton created lazy/on demand if it does not yet exist.
 /// Thread safe. ALWAYS mark derived class as 'final'
-/// ASSUME cSingletonRegister will handle proper destruct order on app close or module unload.
+/// ASSUME cDependRegister will handle proper destruct order on app close or module unload.
 /// ASSUME TYPE is based on cSingleton and IHeapObject.
 /// @note This can get created at C static init time if used inside some other static. But later is OK too of course.
 ///  It's Safe being constructed INSIDE another C runtime init constructor. (order irrelevant) ASSUME m_pThe = nullptr at init.
@@ -157,7 +119,7 @@ class GRAYCORE_LINK cSingletonRegister : public cObject, public cHeapObject {
 /// </summary>
 /// <typeparam name="TYPE"></typeparam>
 template <class TYPE>
-class cSingleton : public cSingletonStatic<TYPE>, public cSingletonRegister {
+class cSingleton : public cSingletonStatic<TYPE>, public cDependRegister, public cObject, public cHeapObject {
     typedef cSingletonStatic<TYPE> SUPER_t;
 
  protected:
@@ -166,11 +128,7 @@ class cSingleton : public cSingletonStatic<TYPE>, public cSingletonRegister {
     /// </summary>
     /// <param name="pThis"></param>
     /// <param name="rAddrCode">typeid(XXX) but GCC doesn't like it as part of template? track the module for the codes implementation.</param>
-    cSingleton(TYPE* pThis, const TYPEINFO_t& rAddrCode = typeid(TYPE)) noexcept : SUPER_t(pThis), cSingletonRegister(rAddrCode) {}
-    /// <summary>
-    /// I am being destroyed. sm_pThe is set to nullptr in ~cSingletonStatic
-    /// </summary>
-    ~cSingleton() override {}
+    cSingleton(TYPE* pThis, const TYPEINFO_t& rAddrCode = typeid(TYPE)) noexcept : SUPER_t(pThis), cDependRegister(rAddrCode) {}
 
     /// <summary>
     /// get (or create) a pointer to the derived singleton TYPE2 object.
@@ -181,17 +139,25 @@ class cSingleton : public cSingletonStatic<TYPE>, public cSingletonRegister {
     /// </summary>
     /// <returns>NEVER nullptr</returns>
     static TYPE* GRAYCALL get_SingleCreate() noexcept {  // ASSUME TYPE2 derived from TYPE
-        if (!isSingleCreated()) {
+        if (!SUPER_t::isSingleCreated()) {
             // Double Check Lock for multi threaded safety.
-            const auto guard(cSingletonRegister::sm_LockSingle.Lock());  // thread sync critical section.
-            if (!isSingleCreated()) {
+            const auto guard(cDependRegister::sm_LockSingle.Lock());  // thread sync critical section.
+            if (!SUPER_t::isSingleCreated()) {
                 auto p = new TYPE();
-                DEBUG_CHECK(p == SUPER_t::sm_pThe);
-                DEBUG_CHECK(isSingleCreated());
+                DEBUG_CHECK(p == SUPER_t::get_SingleU());
+                DEBUG_CHECK(SUPER_t::isSingleCreated());
                 p->RegisterSingleton();  // Register only when fully formed.
             }
         }
-        return get_SingleU();
+        return SUPER_t::get_SingleU();
+    }
+
+    /// <summary>
+    /// i created this cHeapObject so i know there are no other refs.
+    /// </summary>
+    /// <returns></returns>
+    bool isReferenced() const noexcept override {
+        return false;
     }
 
  public:

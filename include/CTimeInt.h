@@ -53,16 +53,7 @@ class GRAYCORE_LINK cTimeInt {  /// similar to the MFC CTime and cTimeSpan, not 
     }
     cTimeInt(double dTimeDays) noexcept : m_time(GetTimeFromDays(dTimeDays)) {}
     cTimeInt(const cTimeFile& fileTime) noexcept;
-
-    const cTimeInt& operator=(const cTimeInt& timeSrc) noexcept {
-        m_time = timeSrc.m_time;
-        return *this;
-    }
-    const cTimeInt& operator=(TIMESEC_t nTime) noexcept {
-        m_time = nTime;
-        return *this;
-    }
-
+ 
     bool operator==(TIMESEC_t nTime) const noexcept {
         return m_time == nTime;
     }
@@ -124,10 +115,10 @@ class GRAYCORE_LINK cTimeInt {  /// similar to the MFC CTime and cTimeSpan, not 
 
     // to/from strings.
     HRESULT SetTimeStr(const GChar_t* pszTimeDate, TZ_TYPE nTimeZone = TZ_LOCAL);
-    StrLen_t GetTimeFormStr(cSpanX<GChar_t>& ret, const GChar_t* pszFormat, TZ_TYPE nTimeZone = TZ_LOCAL) const;
+    StrLen_t GetTimeFormStr(cSpanX<GChar_t> ret, const GChar_t* pszFormat, TZ_TYPE nTimeZone = TZ_LOCAL) const;
     cString GetTimeFormStr(const GChar_t* pszFormat = nullptr, TZ_TYPE nTimeZone = TZ_LOCAL) const;
     cString GetTimeFormStr(TIMEFORMAT_t eFormat, TZ_TYPE nTimeZone = TZ_LOCAL) const {
-        return GetTimeFormStr(CastNumToPtr<const GChar_t>(static_cast<int>(eFormat)), nTimeZone);
+        return GetTimeFormStr(CastNumToPtrT<const GChar_t>(static_cast<int>(eFormat)), nTimeZone);
     }
 
     /// <summary>

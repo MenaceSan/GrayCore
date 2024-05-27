@@ -34,6 +34,9 @@ class GRAYCORE_LINK cAppArgs {
      void InitArgsArray(ITERATE_t argc, APP_ARGS_t ppszArgs, bool sepEquals);
 
  public:
+    cAppArgs() {}
+    cAppArgs(const FILECHAR_t* p);
+
     /// <summary>
     /// Is FILECHAR_t char 'ch' a command line switch char?
     /// </summary>
@@ -81,7 +84,7 @@ class GRAYCORE_LINK cAppArgs {
     /// </summary>
     /// <param name="pszCommandArgs">assumed to NOT contain the app path name.</param>
     /// <param name="pszSep"></param>
-    void InitArgsWin(const FILECHAR_t* pszCommandArgs, const FILECHAR_t* pszSep = nullptr);
+    void InitArgsLine(const FILECHAR_t* pszCommandArgs, const FILECHAR_t* pszSep = nullptr);
 
     /// <summary>
     /// Set pre-parsed arguments from console style like: Posix, _CONSOLE or DOS style arguments.
@@ -96,6 +99,10 @@ class GRAYCORE_LINK cAppArgs {
     /// </summary>
     ITERATE_t AppendArg(const FILECHAR_t* pszCmd, bool sepEquals); 
 
+    /// <summary>
+    /// Find a command line arg as regex or ignoring case.
+    /// bRegex = Search for a wildcard prefix.
+    /// </summary>
     ITERATE_t FindCommandArg(const FILECHAR_t* pszCommandArg, bool bRegex = true, bool bIgnoreCase = true) const;
     ITERATE_t _cdecl FindCommandArgs(bool bIgnoreCase, const FILECHAR_t* pszCommandArgFind, ...) const;
 

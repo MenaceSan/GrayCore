@@ -39,7 +39,7 @@ class GRAYCORE_LINK cLogNexus : public cLogProcessor {
  public:
     cLogEventParams m_LogFilter;         /// Union filter of what goes out to ALL sinks
     cLogThrottle m_LogThrottle;          /// Measure how fast messages are going.
-    mutable cThreadLockCount m_LockLog;  /// serialize multiple threads for m_aSinks
+    mutable cThreadLockableX m_LockLog;  /// serialize multiple threads for m_aSinks
 
  public:
     cLogNexus(LOG_ATTR_MASK_t uAttrMask = LOG_ATTR_ALL_MASK, LOGLVL_t eLogLevel = LOGLVL_t::_ANY);
@@ -116,12 +116,13 @@ class GRAYCORE_LINK cLogNexus : public cLogProcessor {
 /// The root log message cLogNexus. take in all log messages and decide where they go.
 /// Only one default singleton log manager per system.
 /// </summary>
-class GRAYCORE_LINK cLogMgr final : public cSingleton<cLogMgr>, public cLogNexus, public ITextWriter {
+class GRAYCORE_LINK cLogMgr final : public cSingleton<cLogMgr>, public cLogNexus {
     SINGLETON_IMPL(cLogMgr);
     static TIMESECD_t sm_TimePrevException;  /// throttle/don't flood log with exceptions().
 
  protected:
     cLogMgr();
+    void ReleaseModuleChildren(::HMODULE hMod) override;
 
  public:
 #ifdef _CPPUNWIND
@@ -131,8 +132,6 @@ class GRAYCORE_LINK cLogMgr final : public cSingleton<cLogMgr>, public cLogNexus
     void LogExceptionV(cExceptionHolder* pEx, const LOGCHAR_t* pszCatchContext, va_list vargs) noexcept;
     void _cdecl LogExceptionF(cExceptionHolder* pEx, const LOGCHAR_t* pszCatchContext, ...) noexcept;
 #endif
-
-    HRESULT WriteString(const char* pszStr) override;
 };
 
 /// <summary>

@@ -18,11 +18,11 @@ namespace Gray {
 /// @note multiple read locks may be released out of  order, i.e first read locker releases with other readers => unknown last read thread.
 /// similar to : Linux thread locking pthread_rwlock_wrlock() or std::shared_mutex
 /// </summary>
-class GRAYCORE_LINK cThreadLockRW : public cThreadLockFast {
+class GRAYCORE_LINK cThreadLockRW : public cThreadLockableFast {
     friend struct cThreadGuardRead;
-    typedef cThreadLockFast SUPER_t;
+    typedef cThreadLockableFast SUPER_t;
     static const THREADID_t kReaderThreadId = 1;  // shared unique thread id for all readers.
-    cThreadLockFast m_ReaderLock;                 // Since this is shared with multiple threads it must be locked from itself.
+    cThreadLockableFast m_ReaderLock;                 // Since this is shared with multiple threads it must be locked from itself.
     /// <summary>
     /// lock this for Read
     /// </summary>
@@ -73,7 +73,7 @@ struct cThreadGuardRead : public cPtrFacade<cThreadLockRW> {
             SUPER_t::get_Ptr()->UnlockRead();
         }
     }
-    cLockerT<cThreadLockFast> Upgrade() {
+    cLockerT<cThreadLockableFast> Upgrade() {
         // TODO
         if (SUPER_t::isValidPtr()) {
             SUPER_t::get_Ptr()->UnlockRead();  // release my read first.
@@ -81,7 +81,7 @@ struct cThreadGuardRead : public cPtrFacade<cThreadLockRW> {
         return SUPER_t::get_Ptr()->Lock();  // now get full access lock.
     }
     /// <summary>
-    /// return the cRefBaseRW as a const* ONLY!!
+    /// return the cThreadLockRW as a const* ONLY!!
     /// </summary>
     const cThreadLockRW* get_Ptr() const {
         return SUPER_t::get_Ptr();

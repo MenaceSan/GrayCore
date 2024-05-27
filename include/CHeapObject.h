@@ -16,17 +16,13 @@
 
 namespace Gray {
 /// <summary>
-/// This is a base interface supported by objects/classes that are ALWAYS assumed allocated on the heap.
+/// This is a base interface supported by objects/classes that are assumed allocated on the heap.
 /// Use this because multiple inheritance can hide my top heap (free-able) pointer.
 /// Top should implement some version of cHeapObject. e.g. "x = new cXObject"
 /// </summary>
 DECLARE_INTERFACE(IHeapObject) {
     IGNORE_WARN_INTERFACE(IHeapObject);
     virtual const void* get_HeapPtr() const noexcept = 0;  /// Get the top level (outermost, free-able) class pointer. I can delete get_HeapPtr().
-
-    // Add this to each IHeapObject rooted object to get the base heap allocation pointer. Avoids problems with multiple inheritance and heap allocated objects.
-#define CHEAPOBJECT_IMPL \
-    const void* get_HeapPtr() const noexcept override { return this; }
 };
 
 //*************************************************
@@ -42,32 +38,43 @@ DECLARE_INTERFACE(IHeapObject) {
 class GRAYCORE_LINK cHeapObject : public IHeapObject {
  protected:
 #ifdef USE_HEAPSIG
-    cMemSignature<0xCA11AB1E> m_Sig;  /// may want to have multiple of these ? (or none)
+    cMemSignature<0xcab005e> _Sig;  /// may want to have multiple of these ? (or none)
 #endif
 
+    // Add this to each IHeapObject rooted object to get the base heap allocation pointer. Avoids problems with multiple inheritance and heap allocated objects.
+#define CHEAPOBJECT_IMPL \
+    const void* get_HeapPtr() const noexcept override { return this; }
+
  public:
-    CHEAPOBJECT_IMPL;  /// Get the top level "new" pointer in the case of multiple inheritance.
-    cHeapObject() noexcept {
-        //! @note virtuals don't work in constructor or destructor !
-    }
+    /// <summary>
+    /// @note virtuals do not work in destructor ! get_HeapPtr? so isValidCheck() not possible here !
+    /// </summary>
     virtual ~cHeapObject() {
-        //! @note virtuals do not work in destructors ! get_HeapPtr?
-        //! so isValidCheck() not possible here !
+        ASSERT(_Sig.isValidSignature());
+    }
+
+    /// <summary>
+    /// Get the top level "new" pointer in the case of multiple inheritance. CHEAPOBJECT_IMPL;
+    /// </summary>
+    /// <returns></returns>
+    const void* get_HeapPtr() const noexcept override {
+        return this;
     }
 
     /// Is index a valid offset inside this object?
     bool IsValidInsideN(INT_PTR index) const noexcept {
 #ifdef USE_HEAPSIG
-        if (!m_Sig.isValidSignature()) return false;
+        if (!_Sig.isValidSignature()) return false;
 #endif
         const void* pBase = get_HeapPtr();
         return cHeapAlign::IsValidInside(pBase, index);
     }
+
     /// Is pTest a valid pointer inside the this object ?
     bool IsValidInsidePtr(void const* pTest) const noexcept {
         if (pTest == nullptr) return false;
 #ifdef USE_HEAPSIG
-        if (!m_Sig.isValidSignature()) return false;
+        if (!_Sig.isValidSignature()) return false;
 #endif
         const void* pBase = get_HeapPtr();
         return cHeapAlign::IsValidInside(pBase, cMem::Diff(pTest, pBase));
@@ -80,7 +87,7 @@ class GRAYCORE_LINK cHeapObject : public IHeapObject {
     /// <returns></returns>
     virtual size_t GetHeapStatsThis(OUT ITERATE_t& iAllocCount) const {
 #ifdef USE_HEAPSIG
-        ASSERT(m_Sig.isValidSignature());
+        ASSERT(_Sig.isValidSignature());
 #endif
         iAllocCount++;
         return cHeapAlign::GetSize(get_HeapPtr());
@@ -90,7 +97,7 @@ class GRAYCORE_LINK cHeapObject : public IHeapObject {
         if (!cMem::IsValidApp(this))  // NOT be based on nullptr ? sanity check.
             return false;
 #ifdef USE_HEAPSIG
-        if (!m_Sig.isValidSignature()) return false;
+        if (!_Sig.isValidSignature()) return false;
 #endif
         if (!cHeapAlign::IsValidHeap(get_HeapPtr()))  // might be aligned.
             return false;

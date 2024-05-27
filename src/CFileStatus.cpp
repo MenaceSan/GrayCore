@@ -50,16 +50,15 @@ void cFileStatus::InitFileStatus(const cFileStatusSys& statusSys) {
     m_timeChange = cTimeInt(statusSys.st_mtime).GetAsFileTime();
     m_timeLastAccess = cTimeInt(statusSys.st_atime).GetAsFileTime();
     m_Size = statusSys.st_size;
-    m_Attributes = 0;  // check the read,write,execute bits?
+    m_Attributes = FILEATTR_t::_None;  // check the read,write,execute bits?
     if (S_ISREG(statusSys.st_mode)) {
-        m_Attributes |= FILEATTR_t::_Normal;
+        m_Attributes.SetMask(FILEATTR_t::_Normal);
     } else if (S_ISDIR(statusSys.st_mode)) {
-        m_Attributes |= FILEATTR_t::_Directory;
+        m_Attributes.SetMask(FILEATTR_t::_Directory);
     } else if (S_ISLNK(statusSys.st_mode)) {
-        m_Attributes |= FILEATTR_t::_Link;
-    } else  // S_ISBLK, S_ISSOCK, S_ISCHR, S_ISFIFO
-    {
-        m_Attributes |= FILEATTR_t::_Volume;  // device of some sort.
+        m_Attributes.SetMask(FILEATTR_t::_Link);
+    } else {                                        // S_ISBLK, S_ISSOCK, S_ISCHR, S_ISFIFO
+        m_Attributes.SetMask(FILEATTR_t::_Volume);  // device of some sort.
     }
 #endif
 }
@@ -67,7 +66,7 @@ void cFileStatus::InitFileStatus(const cFileStatusSys& statusSys) {
 #if defined(__linux__)
 HRESULT GRAYCALL cFileStatus::GetStatusSys(OUT cFileStatusSys& statusSys, const FILECHAR_t* pszName, bool bFollowLinks) {  // static
     // https://man7.org/linux/man-pages/man2/stat.2.html
-    int iRet = (bFollowLinks) ? ::lstat(sFileName, &statusSys) : ::stat(sFileName, &statusSys);
+    int iRet = (bFollowLinks) ? ::lstat(pszName, &statusSys) : ::stat(pszName, &statusSys);
     if (iRet != 0) {
         return HResult::GetPOSIXLastDef(HRESULT_WIN32_C(ERROR_FILE_NOT_FOUND));
     }
@@ -119,8 +118,8 @@ HRESULT GRAYCALL cFileStatus::ReadFileStatus2(const FILECHAR_t* pszFilePath, cFi
 
 #ifdef _WIN32
     // NOTE: same as _WIN32 GetFileAttributesEx()
-    WIN32_FIND_DATAW statusSys;  // cFileStatusSys
-    HANDLE hContext = ::FindFirstFileW(cFilePath::GetFileNameLongW(pszFilePath), &statusSys);
+    ::WIN32_FIND_DATAW statusSys;  // cFileStatusSys
+    ::HANDLE hContext = ::FindFirstFileW(cFilePath::GetFileNameLongW(pszFilePath), &statusSys);
     if (hContext == INVALID_HANDLE_VALUE) {
         // DEBUG_ERR(( "Can't open input dir [%s]", LOGSTR(pszFilePath) ));
         return HResult::GetLastDef(HRESULT_WIN32_C(ERROR_FILE_NOT_FOUND));
@@ -141,7 +140,7 @@ HRESULT GRAYCALL cFileStatus::ReadFileStatus2(const FILECHAR_t* pszFilePath, cFi
 
     if (pFileStatus != nullptr) {
         pFileStatus->InitFileStatus(statusSys);
-        pFileStatus->UpdateLinuxHidden(cFilePath::GetFileName(pszFilePath));
+        pFileStatus->UpdateLinuxHidden(cFilePath::GetFileName(StrT::ToSpanStr(pszFilePath)));
         ASSERT(pFileStatus->isFileValid());
     }
 

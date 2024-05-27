@@ -28,10 +28,10 @@ class GRAYCORE_LINK cOSHandleSet {
 
  private:
 #ifdef _WIN32
-    cArrayVal<HANDLE> m_fds;  /// Just an array of OS handles. like fd_set. but dynamic.
+    cArrayVal<::HANDLE> m_fds;  /// an array of OS handles. like fd_set. but dynamic.
 #elif defined(__linux__)
-    HANDLE m_hHandleMax;  /// Largest handle we have. <= FD_SETSIZE
-    fd_set m_fds;         /// array of FD_SETSIZE possible HANDLE(s). NOTE: sizeof(m_fds) varies/fixed with FD_SETSIZE
+    ::HANDLE m_hHandleMax;  /// Largest handle we have. <= FD_SETSIZE
+    ::fd_set m_fds;         /// array of FD_SETSIZE possible HANDLE(s). NOTE: sizeof(m_fds) varies/fixed with FD_SETSIZE
 #else
 #error NOOS
 #endif
@@ -45,14 +45,14 @@ class GRAYCORE_LINK cOSHandleSet {
     }
 
  public:
-    cOSHandleSet(void) noexcept {
+    cOSHandleSet() noexcept {
         InitHandles();
     }
     cOSHandleSet(HANDLE h) {
         // a handle set with a single handle.
 #ifdef __linux__
         m_hHandleMax = h;
-        FD_ZERO(&fds);
+        FD_ZERO(&m_fds);
         FD_SET(h, &m_fds);
 #else
         InitHandles();
@@ -97,7 +97,7 @@ class GRAYCORE_LINK cOSHandleSet {
 #endif
         return true;
     }
-    void RemoveHandle(HANDLE h) {
+    void RemoveHandle(::HANDLE h) {
         if (h == INVALID_HANDLE_VALUE) return;
 #ifdef __linux__
         FD_CLR(h, &m_fds);

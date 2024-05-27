@@ -72,7 +72,7 @@ struct GRAYCORE_LINK StrFormatParams {
 /// <typeparam name="TYPE"></typeparam>
 template <typename TYPE = char>
 struct GRAYCORE_LINK StrFormat : public StrFormatParams {
-    typedef StrLen_t(_cdecl* STRFORMAT_t)(cSpanX<TYPE>& ret, const TYPE* pszFormat, ...);  // signature for testing. like StrT::sprintfN() and StrFormat::F()
+    typedef StrLen_t(_cdecl* STRFORMAT_t)(cSpanX<TYPE> ret, const TYPE* pszFormat, ...);  // signature for testing. like StrT::sprintfN() and StrFormat::F()
 
     StrFormat() {
         ClearParams();
@@ -104,11 +104,11 @@ struct GRAYCORE_LINK StrFormat : public StrFormatParams {
     void RenderParam(StrBuilder<TYPE>& out, va_list* pvlist) const;
 
     static void GRAYCALL V(StrBuilder<TYPE>& out, const TYPE* pszFormat, va_list vlist);
-    static inline StrLen_t GRAYCALL V(cSpanX<TYPE>& ret, const TYPE* pszFormat, va_list vlist);
+    static inline StrLen_t GRAYCALL V(cSpanX<TYPE> ret, const TYPE* pszFormat, va_list vlist);
 
     // variadic. sprintfN
     static inline void _cdecl F(StrBuilder<TYPE>& out, const TYPE* pszFormat, ...);
-    static inline StrLen_t _cdecl F(cSpanX<TYPE>& ret, const TYPE* pszFormat, ...);  // STRFORMAT_t for testing
+    static inline StrLen_t _cdecl F(cSpanX<TYPE> ret, const TYPE* pszFormat, ...);  // STRFORMAT_t for testing
 };
 
 /// <summary>
@@ -132,13 +132,13 @@ inline void _cdecl StrFormat<TYPE>::F(StrBuilder<TYPE>& out, const TYPE* pszForm
 }
 
 template <typename TYPE>
-inline StrLen_t GRAYCALL StrFormat<TYPE>::V(cSpanX<TYPE>& ret, const TYPE* pszFormat, va_list vlist) {  // static
+inline StrLen_t GRAYCALL StrFormat<TYPE>::V(cSpanX<TYPE> ret, const TYPE* pszFormat, va_list vlist) {  // static
     StrBuilder<TYPE> out(ret);
     V(OUT out, pszFormat, vlist);
     return out.get_Length();
 }
 template <typename TYPE>
-inline StrLen_t _cdecl StrFormat<TYPE>::F(cSpanX<TYPE>& ret, const TYPE* pszFormat, ...) {  // static
+inline StrLen_t _cdecl StrFormat<TYPE>::F(cSpanX<TYPE> ret, const TYPE* pszFormat, ...) {  // static
     va_list vargs;
     va_start(vargs, pszFormat);
     const StrLen_t nLenOut = V(ret, pszFormat, vargs);

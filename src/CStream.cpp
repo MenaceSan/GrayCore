@@ -7,18 +7,19 @@
 #include "cStack.h"  // include this some palce just to compile.
 #include "cStream.h"
 #include "cThreadLock.h"
+#include "cValT.h"
 
 namespace Gray {
 
 cStreamTransaction ::cStreamTransaction(cStreamInput* pInp) : cStreamReader(pInp) {
     ASSERT_NN(m_pInp);
     m_lPosStart = m_pInp->GetPosition();
-    if (m_lPosStart < 0 || m_lPosStart > CastN(STREAM_POS_t, cHeap::k_ALLOC_MAX)) {
+    if (CastN(UINT_PTR, m_lPosStart) > CastN(STREAM_POS_t, cMem::k_ALLOC_MAX)) {
         m_lPosStart = k_STREAM_POS_ERR;  // Rollback not allowed!
         return;
     }
     m_nSeekSizeMinPrev = m_pInp->SetReadCommitSize(0);  // Don't use AutoReadCommit inside cStreamTransaction.
-    ASSERT(m_nSeekSizeMinPrev >= 0 && m_nSeekSizeMinPrev <= cHeap::k_ALLOC_MAX);
+    ASSERT(m_nSeekSizeMinPrev >= 0 && m_nSeekSizeMinPrev <= cMem::k_ALLOC_MAX);
     ASSERT(isTransactionActive());
 }
 cStreamTransaction ::~cStreamTransaction() {
@@ -37,13 +38,13 @@ HRESULT cStreamTransaction ::TransactionRollback() {
     return m_pInp->SeekX(CastN(STREAM_OFFSET_t, m_lPosStart), SEEK_t::_Set);
 }
 
-STREAM_POS_t cStreamBase::GetLength() const {  // virtual // default impl
+STREAM_POS_t cStreamBase::GetLength() const noexcept {  // virtual // default impl
     cStreamBase* pThis = const_cast<cStreamBase*>(this);
-    STREAM_POS_t nCurrent = GetPosition();         // save current position.
+    const STREAM_POS_t nCurrent = GetPosition();   // save current position.
     HRESULT hRes = pThis->SeekX(0, SEEK_t::_End);  // seek to the end to find the length.
     if (FAILED(hRes)) return k_STREAM_POS_ERR;
-    STREAM_POS_t nLength = GetPosition();
-    hRes = pThis->SeekX((STREAM_OFFSET_t)nCurrent, SEEK_t::_Set);  // restore the position pointer back.
+    const STREAM_POS_t nLength = GetPosition();                           // find end.
+    hRes = pThis->SeekX(CastN(STREAM_OFFSET_t, nCurrent), SEEK_t::_Set);  // restore the position pointer back.
     if (FAILED(hRes)) return k_STREAM_POS_ERR;
     return nLength;
 }
@@ -51,74 +52,46 @@ STREAM_POS_t cStreamBase::GetLength() const {  // virtual // default impl
 //*************************************************************************
 
 HRESULT cStreamOutput::WriteString(const char* pszStr) {  // virtual
-    //! Write just the chars of the string. NOT nullptr. like fputs()
-    //! Does NOT assume include NewLine or automatically add one.
-    //! @note This can get overloaded for string only protocols. like FILE, fopen()
-    //! @note MFC CStdioFile has void return for this.
-    //! @return Number of chars written. <0 = error.
-    if (pszStr == nullptr) return 0;  // write nothing = S_OK.
-    const StrLen_t iLen = StrT::Len(pszStr);
-    return WriteSpan(cMemSpan(pszStr, iLen * sizeof(char)));
+    return WriteSpan(StrT::ToSpanStr(pszStr));
 }
 HRESULT cStreamOutput::WriteString(const wchar_t* pszStr) {  //  virtual
-    //! Write just the chars of the string. NOT nullptr. like fputs()
-    //! Does NOT assume include NewLine or automatically add one.
-    //! @note This can get overloaded for string only protocols. like FILE, fopen()
-    //! @note MFC CStdioFile has void return for this.
-    //! @return Number of chars written. <0 = error.
-    if (pszStr == nullptr) return 0;  // write nothing = S_OK.
-    const StrLen_t iLen = StrT::Len(pszStr);
-    const HRESULT hRes = WriteSpan(cMemSpan(pszStr, iLen * sizeof(wchar_t)));
+    const HRESULT hRes = WriteSpan(StrT::ToSpanStr(pszStr));
     if (FAILED(hRes)) return hRes;
     return hRes / sizeof(wchar_t);
 }
 
 HRESULT cStreamOutput::WriteStream(cStreamInput& stmIn, STREAM_POS_t nSizeMax, IStreamProgressCallback* pProgress, TIMESYSD_t nTimeout) {
-    cTimeSys tStart(cTimeSys::GetTimeNow());
+    const cTimeSys tStart(cTimeSys::GetTimeNow());
     cBlob blob(cStream::k_FILE_BLOCK_SIZE);  // temporary buffer.
-    STREAM_POS_t dwAmount = 0;
+    STREAM_POS_t dwAmount = 0;               // how much written so far.
     for (; dwAmount < nSizeMax;) {
-        size_t nSizeBlock = cStream::k_FILE_BLOCK_SIZE;
-        if (dwAmount + nSizeBlock > nSizeMax) {
-            nSizeBlock = (size_t)(nSizeMax - dwAmount);
-        }
-
-        HRESULT hResRead = stmIn.ReadX(blob.get_DataW(), nSizeBlock);
+        const size_t nSizeBlock = cValT::Min<size_t>(cStream::k_FILE_BLOCK_SIZE, nSizeMax - dwAmount);
+        const HRESULT hResRead = stmIn.ReadX(cMemSpan(blob, nSizeBlock));
         if (FAILED(hResRead)) {
-            if (hResRead == HRESULT_WIN32_C(ERROR_HANDLE_EOF))  // legit end of file. Done.
-                break;
+            if (hResRead == HRESULT_WIN32_C(ERROR_HANDLE_EOF)) break;  // legit end of file. Done.
             return hResRead;
         }
-        if (hResRead == 0) {
-            // Nothing to read at the moment.
-        do_inputdry:
-            if (nTimeout > 0 && tStart.get_AgeSys() <= nTimeout) {  // wait for more.
-                cThreadId::SleepCurrent(1);
+        if (hResRead == 0) {  // Nothing to read at the moment.
+            if (nTimeout > 0) {
+                if (tStart.get_AgeSys() >= nTimeout) break;  // max time exceeded. with NO data in stream. done.
+                cThreadId::SleepCurrent(1);                  // wait for more.
                 continue;
             }
             break;  // legit end of file. Done.
         }
 
         ASSERT((size_t)hResRead <= nSizeBlock);
-        HRESULT hResWrite = this->WriteX(blob.get_DataC(), hResRead);
+        const HRESULT hResWrite = this->WriteSpan(cMemSpan(blob, hResRead));  // write it all or fail!
         if (FAILED(hResWrite)) return hResWrite;
-        if (hResWrite != hResRead)  // couldn't write it all!
-            return HRESULT_WIN32_C(ERROR_WRITE_FAULT);
+        dwAmount += hResRead;  // block written.
 
-        if (hResRead < (HRESULT)nSizeBlock) {  // must just be the end of input stream.
-            // partial block. at end?
-            dwAmount += hResRead;
-            goto do_inputdry;
-        }
-
-        // full block.
-        dwAmount += nSizeBlock;
         if (pProgress != nullptr) {
-            HRESULT hRes = pProgress->onProgressCallback(cStreamProgress(dwAmount, nSizeMax));
-            if (hRes != S_OK) return hRes;
+            const HRESULT hResProg = pProgress->onProgressCallback(cStreamProgress(dwAmount, nSizeMax));
+            if (hResProg != S_OK) return hResProg;  // cancel?
         }
-        if (nTimeout > 0 && tStart.get_AgeSys() > nTimeout) {
-            return HRESULT_WIN32_C(ERROR_TIMEOUT);
+        if (nTimeout > 0) {
+            if (tStart.get_AgeSys() >= nTimeout) return HRESULT_WIN32_C(ERROR_TIMEOUT);  // max time exceeded. with data in stream.
+            if (hResRead < CastN(HRESULT, nSizeBlock)) cThreadId::SleepCurrent(1);       // partial block. at end of input stream? wait for more.
         }
     }
 
@@ -126,41 +99,26 @@ HRESULT cStreamOutput::WriteStream(cStreamInput& stmIn, STREAM_POS_t nSizeMax, I
 }
 
 HRESULT cStreamOutput::WriteSize(size_t nSize) {
-    //! Write a variable length packed (unsigned) size_t. opposite of ReadSize(nSize)
-    //! Packed low to high values.
-    //! Bit 7 indicates more data needed.
-    //! similar to ASN1 Length packing.
-    //! @return <0 = error.
-    // ASSERT( nSize>=0 );
-    BYTE bSize;
     while (nSize >= k_SIZE_MASK) {
-        bSize = (BYTE)((nSize & ~k_SIZE_MASK) | k_SIZE_MASK);
+        const BYTE bSize = CastN(BYTE, (nSize & ~k_SIZE_MASK) | k_SIZE_MASK);  // take 7 bits.
         const HRESULT hRes = WriteT(bSize);
         if (FAILED(hRes)) return hRes;
         nSize >>= 7;
     }
-    bSize = (BYTE)nSize;
-    return WriteT(bSize);  // end of dynamic range.
+    return WriteT(CastN(BYTE, nSize));  // end of dynamic range. last byte
 }
 
 //*************************************************************************
 
-HRESULT cStreamInput::ReadSize(OUT size_t& nSize) {
-    //! Read a packed (variable length) unsigned size. <0 = error;
-    //! Packed low to high values.
-    //! Bit 7 reserved to indicate more bytes to come.
-    //! opposite of WriteSize( size_t )
-    //! similar to ASN1 Length packing.
-    //! @return HRESULT_WIN32_C(ERROR_IO_INCOMPLETE) = no more data.
+HRESULT cStreamInput::ReadSize(OUT size_t& nSize) noexcept {
     nSize = 0;
     unsigned nBits = 0;
     for (;;) {
-        BYTE bSize;  // read 1 byte at a time.
+        BYTE bSize = 0;  // read 1 byte at a time.
         const HRESULT hRes = ReadT(bSize);
         if (FAILED(hRes)) return hRes;
         nSize |= CastN(size_t, bSize & ~k_SIZE_MASK) << nBits;
-        if (!(bSize & k_SIZE_MASK))  // end marker.
-            break;
+        if (!(bSize & k_SIZE_MASK)) break;  // end marker.
         nBits += 7;
         ASSERT(nBits <= 80);
     }
@@ -171,19 +129,19 @@ HRESULT cStreamInput::ReadAll(OUT cBlob& blob, size_t nSizeExtra) {
     const STREAM_POS_t nLengthStream = this->GetLength();
     const size_t nLengthRead = CastN(size_t, nLengthStream);
     const size_t nLengthAlloc = nLengthRead + nSizeExtra;
-    if (nLengthAlloc == 0)  // do nothing.
-        return S_OK;
+    if (nLengthAlloc == 0) return S_OK;  // do nothing.
+
     if (!blob.AllocSize(nLengthAlloc)) return E_OUTOFMEMORY;
     const HRESULT hRes = ReadSpan(cMemSpan(blob, nLengthRead));  // must get all.
     if (FAILED(hRes)) return hRes;
     // Zero the extra (if any);
     if (nSizeExtra > 0) {
-        blob.get_DataW<BYTE>()[hRes] = '\0';  // terminator as default. I want to use the blob as a c string.
+        blob.GetTPtrW<BYTE>()[hRes] = '\0';  // terminator as default. I want to use the blob as a c string.
     }
     return hRes;
 }
 
-HRESULT cStreamInput::ReadStringLine(cSpanX<char>& ret) {  // virtual
+HRESULT cStreamInput::ReadStringLine(cSpanX<char> ret) {  // virtual
     //! Read a string up until (including) a "\n" or "\r\n". end of line. FILE_EOL.
     //! Some streams can support this better than others. like fgets(FILE*)
     //! @arg iSizeMax = Maximum number of characters to be copied into pszBuffer (including room for the the terminating '\0' character).
@@ -192,26 +150,23 @@ HRESULT cStreamInput::ReadStringLine(cSpanX<char>& ret) {  // virtual
     //!  HRESULT < 0 = error. HRESULT_WIN32_C(ERROR_IO_INCOMPLETE) = not full line.
 
     const StrLen_t iSizeMax = ret.get_MaxLen() - 1;
+    char* pWrite = ret.get_PtrWork();
+    if (pWrite == nullptr) return E_POINTER;
     StrLen_t i = 0;
     for (;;) {
-        if (i >= iSizeMax) {
-            return HRESULT_WIN32_C(RPC_S_STRING_TOO_LONG);  // overrun ERROR_INVALID_DATA
-        }
-        char ch = '\0';
-        HRESULT hRes = this->ReadX(&ch, 1);  // read one character at a time.
-        if (hRes != 1) {
-            if (hRes == 0) hRes = HRESULT_WIN32_C(ERROR_IO_INCOMPLETE);
-            ret.get_DataWork()[i] = '\0';
+        if (i >= iSizeMax) return HRESULT_WIN32_C(RPC_S_STRING_TOO_LONG);  // overrun ERROR_INVALID_DATA
+        const HRESULT hRes = this->ReadSpan(cMemSpan(pWrite + i, 1));      // read one character at a time.
+        if (FAILED(hRes)) {
+            pWrite[i] = '\0';
             return hRes;  // HRESULT_WIN32_C(ERROR_IO_INCOMPLETE) is ok.
         }
-        ret.get_DataWork()[i++] = ch;
-        if (ch == '\n') break;  // "\n" or "\r\n"
+        if (pWrite[i++] == '\n') break;  // "\n" or "\r\n"
     }
-    ret.get_DataWork()[i] = '\0';
+    pWrite[i] = '\0';
     return i;
 }
 
-HRESULT cStreamInput::ReadStringLine(cSpanX<wchar_t>& ret) {  // virtual
+HRESULT cStreamInput::ReadStringLine(cSpanX<wchar_t> ret) {  // virtual
     //! Read a string up until (including) a "\n" or "\r\n". end of line. FILE_EOL.
     //! Some streams can support this better than others. like fgets(FILE*).
     //! @arg iSizeMax = Maximum number of characters to be copied into str (including the terminating null-character).
@@ -219,34 +174,33 @@ HRESULT cStreamInput::ReadStringLine(cSpanX<wchar_t>& ret) {  // virtual
     //!  >= 0 = size of the string in characters not bytes. NOT pointer to pBuffer like fgets()
     //!  HRESULT < 0 = error.
 
-    StrLen_t iSizeMax = ret.get_MaxLen() - 1;
+    const StrLen_t iSizeMax = ret.get_MaxLen() - 1;
+    wchar_t* pWrite = ret.get_PtrWork();
+    if (pWrite == nullptr) return E_POINTER;
     StrLen_t i = 0;
     for (;;) {
         if (i >= iSizeMax) return HRESULT_WIN32_C(RPC_S_STRING_TOO_LONG);  // overrun ERROR_INVALID_DATA
-        wchar_t ch = '\0';
-        HRESULT hRes = this->ReadT<wchar_t>(ch);  // read one character at a time.
+        const HRESULT hRes = this->ReadSpan(cMemSpan(pWrite + i, 1));      // read one character at a time.
         if (FAILED(hRes)) {
-            ret.get_DataWork()[i] = '\0';
+            pWrite[i] = '\0';
             return hRes;
         }
-
-        ret.get_DataWork()[i++] = ch;
-        if (ch == '\n') break;
+        if (pWrite[i++] == '\n') break;  // "\n" or "\r\n"
     }
-    ret.get_DataWork()[i] = '\0';
+    pWrite[i] = '\0';
     return i;
 }
 
-HRESULT cStreamInput::ReadPeek(cMemSpan& ret) {  // virtual
+HRESULT cStreamInput::ReadPeek(cMemSpan ret) noexcept {  // virtual
     //! Peek ahead in the stream if possible. Non blocking.
     //! just try to read data but not remove from the queue.
     //! @return Amount peeked.
 
-    HRESULT hResRead = ReadX(ret.get_DataW(), ret.get_DataSize());
+    const HRESULT hResRead = ReadX(ret);
     if (FAILED(hResRead) || hResRead == 0) return hResRead;
 
-    HRESULT hResSeek = SeekX(-hResRead, SEEK_t::_Cur);  // back up.
-    if (FAILED(hResSeek)) return hResSeek;              // ERROR.
+    const HRESULT hResSeek = SeekX(-hResRead, SEEK_t::_Cur);  // back up.
+    if (FAILED(hResSeek)) return hResSeek;                    // ERROR.
     return hResRead;
 }
 }  // namespace Gray

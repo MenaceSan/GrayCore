@@ -8,6 +8,7 @@
 #endif
 #include "HResult.h"
 #include "StrArg.h"
+#include "StrT.h"
 
 namespace Gray {
 /// <summary>

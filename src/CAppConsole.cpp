@@ -1,8 +1,7 @@
 //! @file cAppConsole.cpp
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
-// clang-format off
+
 #include "pch.h"
-// clang-format on
 #include "HResult.h"
 #include "cAppConsole.h"
 #include "cAppState.h"
@@ -62,41 +61,56 @@ bool cAppConsole::AttachConsoleSync() {
 
     ASSERT(isConsoleMode());
 
-#if defined(_WIN32) && USE_CRT
-    for (int i = 0; i < static_cast<int>(AppStd_t::_QTY); i++) {
+#if defined(_WIN32)
+    for (int i = 0; i < _countof(m_hStd); i++) {
         // redirect un-buffered STDOUT to the console
         DWORD nStdHandle;
-        ::FILE* pFileDest;
-        OF_FLAGS_t nFileFlags = OF_WRITE | OF_TEXT;
         switch ((AppStd_t)i) {
             case AppStd_t::_stdin:
                 nStdHandle = STD_INPUT_HANDLE;  // CONIN$
-                pFileDest = stdin;
-                nFileFlags = OF_READ | OF_TEXT;
                 break;
             case AppStd_t::_stdout:
                 nStdHandle = STD_OUTPUT_HANDLE;  // CONOUT$
-                pFileDest = stdout;
                 break;
             case AppStd_t::_stderr:
                 nStdHandle = STD_ERROR_HANDLE;
-                pFileDest = stderr;
                 break;
             default:
                 ASSERT(0);
                 return false;
         }
-
         m_hStd[i] = ::GetStdHandle(nStdHandle);
+    }
 
-        if (m_eConsoleType != AppCon_t::_Proc) {
-            // Now attach it to the appropriate std FILE*,
+#if USE_CRT
+    if (m_eConsoleType != AppCon_t::_Proc) {
+        // redirect un-buffered STDOUT to the console
+        for (int i = 0; i < _countof(m_hStd); i++) {
+            ::FILE* pFileDest;
+            OF_FLAGS_t nFileFlags = OF_WRITE | OF_TEXT;
+            switch ((AppStd_t)i) {
+                case AppStd_t::_stdin:
+                    pFileDest = stdin;
+                    nFileFlags = OF_READ | OF_TEXT;
+                    break;
+                case AppStd_t::_stdout:
+                    pFileDest = stdout;
+                    break;
+                case AppStd_t::_stderr:
+                    pFileDest = stderr;
+                    break;
+                default:
+                    ASSERT(0);
+                    return false;
+            }
+            // Now attach it to the appropriate std FILE*,  USE_CRT
             cFileText fileStd;
             HRESULT hRes = fileStd.OpenFileHandle(m_hStd[i], nFileFlags);
             if (FAILED(hRes)) return false;
-            *pFileDest = *fileStd.DetachFileStream();  // copy FILE struct contents! NOT Just pointer.
+            *pFileDest = *fileStd.DetachFileStream();  // copy ::FILE struct contents! NOT Just pointer.
         }
     }
+#endif
 
     if (m_eConsoleType != AppCon_t::_Proc) {
         // set the screen buffer to be big enough to let us scroll text
@@ -110,7 +124,7 @@ bool cAppConsole::AttachConsoleSync() {
             return false;
         }
 #if 0
-			// Synchronize STL iostreams. if anyone cares.
+			// Synchronize STL iostreams. if anyone cares. USE_CRT
 			std::ios::sync_with_stdio();
 #endif
     }
@@ -189,56 +203,49 @@ void cAppConsole::ReleaseConsole() {
 #endif
 }
 
-HRESULT cAppConsole::WriteStrErr(const char* pszText) {
-    //! Does not support UNICODE ?
-    //! @return EOF = (-1) error
-    //! >=0 = success
-    if (!isConsoleMode()) return true;
-
-    const auto guard(m_Lock.Lock());
-
 #if defined(_WIN32)
+HRESULT cAppConsole::WriteStrH(::HANDLE h, const char* pszText) {
     // @note we must do this to get the dual windows/console stuff to work.
     DWORD dwLengthWritten;
-    DWORD dwDataSize = StrT::Len(pszText);
-    bool bRet = ::WriteFile(GetStd(AppStd_t::_stderr), pszText, dwDataSize, &dwLengthWritten, nullptr);
+    const DWORD dwDataSize = StrT::Len(pszText);
+    const bool bRet = ::WriteFile(h, pszText, dwDataSize, &dwLengthWritten, nullptr);
     if (!bRet) {
         // GetLastError code ERROR_IO_PENDING is not a failure. Async complete.
-        HRESULT hRes = HResult::GetLastDef(HRESULT_WIN32_C(ERROR_WRITE_FAULT));
+        const HRESULT hRes = HResult::GetLastDef(HRESULT_WIN32_C(ERROR_WRITE_FAULT));
         return hRes;
     }
+    return S_OK;  // we are good.
+}
 #else  // POSIX
-    FILE* pFile = stderr;
+HRESULT cAppConsole::WriteStrH(::FILE* pFile, const char* pszText) {
     int iRet = ::fputs(pszText, pFile);
     if (iRet == EOF) {
-        // failed.
+        // failed. // EBADF=9
         HRESULT hRes = HResult::GetPOSIXLastDef(HRESULT_WIN32_C(ERROR_WRITE_FAULT));
         return hRes;
     }
-#endif
     return S_OK;  // we are good.
 }
+#endif
 
-HRESULT cAppConsole::WriteStrOut(const char* pszText) {
-    //! Write to console. Does not support UNICODE ?
-    //! @return HRESULT_WIN32_C(ERROR_HANDLE_DISK_FULL)
-    //! >=0 = success
-    //! @note _WIN32 could probably use the m_h directly.
-
+HRESULT cAppConsole::WriteStrErr(const char* pszText) {
     if (!isConsoleMode()) return S_OK;
     const auto guard(m_Lock.Lock());
 #if defined(_WIN32)
-    // @note we must do this to get the dual windows/console stuff to work.
-    DWORD dwLengthWritten = 0;
-    DWORD dwDataSize = StrT::Len(pszText);
-    bool bRet = ::WriteFile(GetStd(AppStd_t::_stdout), pszText, dwDataSize, &dwLengthWritten, nullptr);
-    if (!bRet) return HResult::GetLastDef(HRESULT_WIN32_C(ERROR_WRITE_FAULT));
+    return WriteStrH(GetStd(AppStd_t::_stderr), pszText);
 #else  // POSIX
-    FILE* pFile = stdout;
-    int iRet = ::fputs(pszText, pFile);
-    if (iRet == EOF) return HResult::GetPOSIXLastDef(HRESULT_WIN32_C(ERROR_WRITE_FAULT));  // failed. EBADF=9
+    return WriteStrH(stderr, pszText);
 #endif
-    return S_OK;  // we are good.
+}
+
+HRESULT cAppConsole::WriteStrOut(const char* pszText) {
+    if (!isConsoleMode()) return S_OK;
+    const auto guard(m_Lock.Lock());
+#if defined(_WIN32)
+    return WriteStrH(GetStd(AppStd_t::_stdout), pszText);
+#else  // POSIX
+    return WriteStrH(stdout, pszText);
+#endif
 }
 
 HRESULT cAppConsole::SetKeyModes(bool bEchoMode, bool bEnterMode) {
@@ -294,7 +301,9 @@ int cAppConsole::get_KeyReadQty() const {
 #if USE_CRT
     return ::_kbhit() ? 1 : 0;
 #else
-    return false;
+    DWORD dwEvents = 0;
+    ::GetNumberOfConsoleInputEvents(GetStd(AppStd_t::_stdin), &dwEvents);
+    return dwEvents;
 #endif
 #else
     // NOTE: can i use FIONREAD ?
@@ -304,19 +313,25 @@ int cAppConsole::get_KeyReadQty() const {
 #endif
 }
 
-int cAppConsole::ReadKeyWait() {
-    if (!isConsoleMode()) return -1;
-
+int cAppConsole::ReadKeyRaw() const {
 #ifdef _WIN32
-        // NOTE: _WIN32 fgetc(stdin) will block until the ENTER key is pressed ! then feed chars until it runs out.
+    // NOTE: _WIN32 fgetc(stdin) will block until the ENTER key is pressed ! then feed chars until it runs out.
 #if USE_CRT
     if (!m_bKeyEnterMode) {
         if (m_bKeyEchoMode) return ::_getche();
-        return ::_getch();  // don't wait for ENTER return as we get them.
+        return ::_getch();  // don't wait for ENTER. return as we get them.
     }
     return ::getchar();  // buffer chars and returns when ENTER is pressed for a whole line.
 #else
-    return -1;
+    // https://stackoverflow.com/questions/24708700/c-detect-when-user-presses-arrow-key
+    auto h = GetStd(AppStd_t::_stdin);
+    ::INPUT_RECORD eventBuffer[1];
+    DWORD dwEventsRead = 0;
+    if (!_GTN(::ReadConsoleInput)(h, eventBuffer, 1, &dwEventsRead)) {
+        return 0;
+    }
+    // eventBuffer[i].EventType == KEY_EVENT && eventBuffer[i].Event.KeyEvent.bKeyDown
+    return eventBuffer[0].Event.KeyEvent.wVirtualKeyCode;
 #endif
 #elif defined(__linux__)
     // @note NON raw mode always echoes.
@@ -324,9 +339,33 @@ int cAppConsole::ReadKeyWait() {
 #endif
 }
 
+int cAppConsole::ReadKeyWait() {
+    if (!isConsoleMode()) return -1;
+    int iKey = ReadKeyRaw();
+    if (iKey == HIBYTE(cCmdInput::kKeyPrefix)) {  // Multi byte keys.
+        iKey = cCmdInput::kKeyPrefix | ReadKeyRaw();
+    }
+    return iKey;
+}
+
 int cAppConsole::ReadKey() {
     if (get_KeyReadQty() <= 0) return -1;  // none ready.
     return ReadKeyWait();
 }
+
+HRESULT cAppConsole::ReadStringLine(cSpanX<char> ret) {
+    SetKeyModes(false, false);
+    for (;;) {
+        const int iKey = ReadKeyWait();  // 0xe0 = first of 2 char seq. 0xe04b = down arrow
+        if (iKey <= 0) return 0;         // Cancel.
+        HRESULT hRes = _CmdInput.AddInputKey(iKey, this, true);
+        if (FAILED(hRes)) return hRes;
+        if (hRes == 2) {  // done
+            StrT::Copy<char>(ret, _CmdInput.m_sCmd.get_SpanStr());
+            return 2;
+        }
+    }
+}
+
 }  // namespace Gray
 #endif  // UNDER_CE

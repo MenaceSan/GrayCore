@@ -18,7 +18,7 @@ namespace Gray {
 DECLARE_INTERFACE(IObjectFactory) {  // MIDL_INTERFACE("0C3E2E71-B93C-11d2-AAD0-006007654325")
     IGNORE_WARN_INTERFACE(IObjectFactory);
     /// Create cObject of some derived cTypeInfo. AKA CreateInstance(). Caller must know how to dispose this! cRefPtr or delete.
-    virtual [[nodiscard]] cObject* CreateObject() const = 0;
+    virtual cObject* CreateObject() const = 0;  // [[nodiscard]]
 };
 
 /// <summary>
@@ -43,7 +43,7 @@ struct GRAYCORE_LINK cObjectFactory : public IObjectFactory {
 
     cObjectFactory(const TYPEINFO_t& rTypeInfo, const ATOMCHAR_t* pszTypeName = nullptr) noexcept;
     virtual ~cObjectFactory();
-    ::HMODULE get_HModule() const;
+    ::HMODULE get_HModule() const noexcept;
 
     const ATOMCHAR_t* get_Name() const noexcept {
         return m_pszTypeName;
@@ -61,11 +61,13 @@ template <typename _TYPE>
 class cObjectFactoryT : public cSingleton<cObjectFactoryT<_TYPE> >, public cObjectFactory {
     typedef cObjectFactoryT<_TYPE> THIS_t;
     SINGLETON_IMPL(THIS_t);
+
+ protected:
     cObjectFactoryT() : cObjectFactory(typeid(_TYPE)), cSingleton<THIS_t>(this, typeid(THIS_t)) {}
 
  public:
-    virtual [[nodiscard]] cObject* CreateObject() const {
-        return new _TYPE();
+    virtual cObject* CreateObject() const {  // [[nodiscard]]
+        return new _TYPE();                  // caller must know how to free this.
     }
 };
 }  // namespace Gray

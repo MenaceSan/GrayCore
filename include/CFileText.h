@@ -47,7 +47,7 @@ class GRAYCORE_LINK cFileTextReader : public cFileTextBase {
         return cTextPos(GetPosition(), m_Reader.get_CurrentLineNumber(), 0);
     }
 
-    HRESULT ReadStringLine(cSpanX<char>& ret) override {
+    HRESULT ReadStringLine(cSpanX<char> ret) override {
         return m_Reader.ReadStringLine(ret);
     }
 };
@@ -79,8 +79,8 @@ class GRAYCORE_LINK cFileText : public cFileTextBase { // Try to be compatible w
         return E_NOTIMPL;
     }
 
-    HRESULT ReadX(void* pBuffer, size_t nSizeMax) noexcept override;  // dont call this directly.
-    HRESULT WriteX(const void* pData, size_t nDataSize) override;     // dont call this directly.
+    HRESULT ReadX(cMemSpan ret) noexcept override;  // dont call this directly.
+    HRESULT WriteX(const cMemSpan& m) override;                          // dont call this directly.
 
  public:
     cFileText();
@@ -93,7 +93,7 @@ class GRAYCORE_LINK cFileText : public cFileTextBase { // Try to be compatible w
 
     bool isEOF() const;
     HRESULT GetStreamError() const;
-    HRESULT OpenFileHandle(HANDLE h, OF_FLAGS_t nOpenFlags);
+    HRESULT OpenFileHandle(::HANDLE h, OF_FLAGS_t nOpenFlags);
  
     /// <summary>
     /// Open a text file. OF_TEXT \n processing is weird.
@@ -114,15 +114,15 @@ class GRAYCORE_LINK cFileText : public cFileTextBase { // Try to be compatible w
     ::FILE* DetachFileStream() noexcept;
 
     // override
-    STREAM_POS_t GetPosition() const override;
+    STREAM_POS_t GetPosition() const noexcept override;
     HRESULT FlushX() override;
 
     HRESULT WriteString(const char* pszStr) override;
     HRESULT WriteString(const wchar_t* pszStr) override {
         return SUPER_t::WriteString(pszStr);
     }
-    HRESULT ReadStringLine(cSpanX<char>& ret) override;
-    HRESULT ReadStringLine(cSpanX<wchar_t>& ret) override {
+    HRESULT ReadStringLine(cSpanX<char> ret) override;
+    HRESULT ReadStringLine(cSpanX<wchar_t> ret) override {
         return SUPER_t::ReadStringLine(ret);
     }
 

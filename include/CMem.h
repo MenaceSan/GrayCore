@@ -9,11 +9,12 @@
 #endif
 
 #include "Index.h"
-#include "StrConst.h"
+#include "PtrCast.h"
 #include "cDebugAssert.h"
-#include "cValT.h"
+#include "cValT.h"  // COMPARE_t
 
 namespace Gray {
+
 /// <summary>
 /// static helpers for dealing with memory blocks. test bytes, Move memory bytes around.
 /// May be on heap, const memory space or static in stack. do NOT assume. use cHeap.
@@ -22,6 +23,7 @@ struct GRAYCORE_LINK cMem {                          // static cSingleton
     static VOLATILE uintptr_t sm_bDontOptimizeOut0;  /// static global byte to fool the optimizer into preserving this data.
     static VOLATILE uintptr_t sm_bDontOptimizeOutX;  /// static global byte to fool the optimizer into preserving this data.
     static const size_t k_PageSizeMin = 64;          /// Minimum page size for architecture. Usually More like 4K ?
+    static const size_t k_ALLOC_MAX = 0x2000000;     /// (arbitrary) largest reasonable single malloc/object/span. e.g. Single frame allocation of big screen
 
     static const BYTE kFillAllocStack = 0xCC;   /// allocated on the stack in debug mode.
     static const BYTE kFillUnusedStack = 0xFE;  /// _DEBUG vsnprintf fills unused space with this.
@@ -38,22 +40,20 @@ struct GRAYCORE_LINK cMem {                          // static cSingleton
     }
 
     /// <summary>
-    /// Is this pointer in valid App space? Not kernel space. Kernel Space -lte- 1G or 2G for __linux__
-    /// Can i plausibly read from this ? heap, stack, or static.
+    /// Is this pointer in valid App data space? NOT nullptr. NOT kernel space. Kernel Space -lte- 1G or 2G for __linux__
+    /// Can i plausibly read from this ? heap, stack, or static. Maybe code pointer ?
     /// Does not mean I have write permissions. May still page fault.
     /// Used to sanity check pointers. Ensure NOT offset from nullptr?
     /// </summary>
     /// <param name="pData"></param>
     /// <returns></returns>
     static bool constexpr IsValidApp(const void* pData) noexcept {
-        const UINT_PTR u = PtrCastToNum(pData);
+        const UINT_PTR u = CastPtrToNum(pData);
 #if defined(_WIN32) && defined(USE_64BIT)
         // 1G or 2G ?
-        if (u < 1024 * 1024 * 1024)  // ASSUME memory in this range is never valid? Fail quickly. This is Kernel Space ONLY. <1G . PageSize ?
-            return false;
+        if (u < 1024 * 1024 * 1024) return false;  // ASSUME memory in this range is never valid? Fail quickly. This is Kernel Space ONLY. <1G . PageSize ?
 #else
-        if (u < 16 * 1024)  // ASSUME memory in this range is never valid? Fail quickly. This is Kernel Space ONLY. <1G . PageSize ?
-            return false;   //
+        if (u < 16 * 1024) return false;  // ASSUME memory in this range is never valid? Fail quickly. This is Kernel Space ONLY. <1G . PageSize ?
 #endif
         return true;
     }
@@ -72,8 +72,7 @@ struct GRAYCORE_LINK cMem {                          // static cSingleton
 
     static inline bool IsZeros(const void* pData, size_t nSize) noexcept {
         //! Is all zeros ? nSize = 0 = true.
-        if (!IsValidApp(pData))  // nullptr or corrupt?
-            return true;
+        if (!IsValidApp(pData)) return true;  // nullptr or corrupt?            
         const BYTE* pB = static_cast<const BYTE*>(pData);
         for (size_t i = 0; i < nSize; i++) {
             if (pB[i] != 0) return false;
@@ -95,8 +94,8 @@ struct GRAYCORE_LINK cMem {                          // static cSingleton
         const BYTE* p1B = PtrCast<BYTE>(p1);
         const BYTE* p2B = PtrCast<BYTE>(p2);
         for (size_t i = 0; i < nSizeBlock; i++) {
-            register BYTE b1 = p1B[i];
-            register BYTE b2 = p2B[i];
+            const BYTE b1 = p1B[i];
+            const BYTE b2 = p2B[i];
             if (b1 != b2) return b1 - b2;
         }
         return COMPARE_Equal;
@@ -107,8 +106,14 @@ struct GRAYCORE_LINK cMem {                          // static cSingleton
         return Compare(p1, p2, nSizeBlock) == COMPARE_Equal;
     }
 
+    /// <summary>
+    /// a constant-time buffer comparison. NOT efficient. BUT Prevents timing based hacks.
+    /// </summary>
+    /// <param name="p1"></param>
+    /// <param name="p2"></param>
+    /// <param name="nSizeBlock"></param>
+    /// <returns>COMPARE_t</returns>
     static inline COMPARE_t CompareSecure(const void* p1, const void* p2, size_t nSizeBlock) noexcept {
-        //! constant-time buffer comparison. NOT efficient. BUT Prevents timing based hacks.
         const BYTE* pB1 = PtrCast<BYTE>(p1);
         const BYTE* pB2 = PtrCast<BYTE>(p2);
         BYTE nDiff = 0;
@@ -118,6 +123,14 @@ struct GRAYCORE_LINK cMem {                          // static cSingleton
         return CastN(COMPARE_t, nDiff);
     }
 
+    /// <summary>
+    /// Compare two buffers and return at what point they differ.
+    /// Does not assume memory alignment for uintptr_t block compares.
+    /// </summary>
+    /// <param name="p1"></param>
+    /// <param name="p2"></param>
+    /// <param name="nSizeBlock"></param>
+    /// <returns>nSizeBlock = equal.</returns>
     static size_t GRAYCALL CompareIndex(const void* p1, const void* p2, size_t nSizeBlock);
 
     /// <summary>
@@ -163,7 +176,7 @@ struct GRAYCORE_LINK cMem {                          // static cSingleton
     }
 
     static inline void Xor(BYTE* pDst, const BYTE* pSrc, size_t nBlockSize) noexcept {
-        // Xor with self.
+        // Xor pDst with self.
         for (size_t i = 0; i < nBlockSize; i++) pDst[i] ^= pSrc[i];
     }
 
@@ -218,8 +231,8 @@ struct GRAYCORE_LINK cMem {                          // static cSingleton
         ::MoveMemory(pDst, pSrc, nSizeBlock);
 #else
         if (IsOverlapRev(pDst, pSrc, nSizeBlock)) {  // reverse copy overlap
-            register BYTE* pDstB = PtrCast<BYTE>(pDst) + nSizeBlock - 1;
-            register const BYTE* pSrcB = PtrCast<BYTE>(pSrc) + nSizeBlock - 1;
+            BYTE* pDstB = PtrCast<BYTE>(pDst) + nSizeBlock - 1;
+            const BYTE* pSrcB = PtrCast<BYTE>(pSrc) + nSizeBlock - 1;
             while (nSizeBlock--) {
                 *pDstB = *pSrcB;
                 pDstB--;
@@ -230,9 +243,13 @@ struct GRAYCORE_LINK cMem {                          // static cSingleton
         }
 #endif
     }
+
+    /// <summary>
+    /// like ReverseSpan
+    /// </summary>
     static inline void ReverseBytes(void* pDst, size_t nSizeBlock) noexcept {
-        register BYTE* pSrcB = PtrCast<BYTE>(pDst);
-        register BYTE* pDstB = pSrcB + nSizeBlock - 1;
+        BYTE* pSrcB = PtrCast<BYTE>(pDst);
+        BYTE* pDstB = pSrcB + nSizeBlock - 1;
         nSizeBlock /= 2;
         while (nSizeBlock--) {
             cValT::Swap(*pSrcB++, *pDstB--);
@@ -246,8 +263,8 @@ struct GRAYCORE_LINK cMem {                          // static cSingleton
         if (pDst == pSrc) {
             ReverseBytes(pDst, nSizeBlock);
         } else {
-            register BYTE* pDstB = PtrCast<BYTE>(pDst) + nSizeBlock - 1;
-            register const BYTE* pSrcB = PtrCast<BYTE>(pSrc);
+            BYTE* pDstB = PtrCast<BYTE>(pDst) + nSizeBlock - 1;
+            const BYTE* pSrcB = PtrCast<BYTE>(pSrc);
             while (nSizeBlock--) {
                 *pDstB-- = *pSrcB++;
             }
@@ -258,8 +275,8 @@ struct GRAYCORE_LINK cMem {                          // static cSingleton
     /// Fill pDst with repeating copies of pSrc. Wrap back to start if nSrcSize is too small.
     /// </summary>
     static inline size_t CopyRepeat(void* pDst, size_t nDstSize, const void* pSrc, size_t nSrcSize, size_t nSrcStart = 0) noexcept {
-        register BYTE* pDstB = PtrCast<BYTE>(pDst);
-        register const BYTE* pSrcB = PtrCast<BYTE>(pSrc);
+        BYTE* pDstB = PtrCast<BYTE>(pDst);
+        const BYTE* pSrcB = PtrCast<BYTE>(pSrc);
         for (size_t i = 0; i < nDstSize; i++) {
             pDstB[i] = pSrcB[nSrcStart];
             if (++nSrcStart > nSrcSize) nSrcStart = 0;
@@ -301,8 +318,7 @@ struct GRAYCORE_LINK cMem {                          // static cSingleton
     /// <param name="pvMem2"></param>
     /// <param name="nBlockSize"></param>
     static inline void Swap(void* pvMem1, void* pvMem2, size_t nBlockSize) noexcept {
-        if (pvMem1 == pvMem2)  // no change.
-            return;
+        if (pvMem1 == pvMem2) return;  // no change.            
         BYTE* pMem1 = PtrCast<BYTE>(pvMem1);
         BYTE* pMem2 = PtrCast<BYTE>(pvMem2);
         for (; nBlockSize--; pMem1++, pMem2++) {
@@ -320,24 +336,29 @@ struct GRAYCORE_LINK cMem {                          // static cSingleton
 template <UINT32 _SIGVALID>
 class DECLSPEC_NOVTABLE cMemSignature {
  public:
-    static const UINT32 k_INVALID = 0xDEADBEA7;  /// Mark as NOT valid when freed!
+    static const UINT32 k_INVALID = 0xDEADBEA7;  /// Mark as NOT valid when freed! Don't use this pattern for anything else.
  private:
-    UINT32 m_nSignature;  /// Hold bytes of known value.
+    UINT32 m_nSignature = _SIGVALID;  /// Hold bytes of known value.
  public:
-    cMemSignature() noexcept : m_nSignature(_SIGVALID) {
-        //! @note calling virtuals doesn't work in constructors or destructors !
+    void put_Valid() {
+        m_nSignature = _SIGVALID;
+    }
+    void put_Invalid() {
+        m_nSignature = k_INVALID;
+    }
+    cMemSignature() noexcept {
         static_assert(k_INVALID != _SIGVALID && 0 != _SIGVALID, "cMemSignature");
     }
     ~cMemSignature() {
-        //! @note calling virtuals doesn't work in constructors or destructors !
-        //! so ASSERT( isValidCheck()); not possible here !
-        ASSERT(isValidSignature());
-        m_nSignature = k_INVALID;  // Mark as invalid.
+        //! @note calling virtual doesn't work in constructor or destructor ! so ASSERT( isValidCheck()); not possible here !
+        put_Invalid();  // Mark as invalid.
+    }
+    bool inline isValidSig() const noexcept {
+        // assumes pointer is good.
+        return m_nSignature == _SIGVALID;
     }
     bool inline isValidSignature() const noexcept {
-        if (!cMem::IsValidApp(this)) return false;
-        if (m_nSignature != _SIGVALID) return false;
-        return true;
+        return cMem::IsValidApp(this) && isValidSig();
     }
 };
 
@@ -558,5 +579,10 @@ inline ULONG cMemT::ReverseType<ULONG>(ULONG nVal) noexcept {  // static
 		p[7] = (BYTE)(nVal);
 	}
 #endif
+
+/// Create a compare operator for some structure as compare of bytes
+#define COMPARE_MEM_IMPL(TYPE) \
+    inline bool operator==(const TYPE& m2) const noexcept { return cMem::IsEqual(this, &m2, sizeof(TYPE)); };
+
 }  // namespace Gray
 #endif

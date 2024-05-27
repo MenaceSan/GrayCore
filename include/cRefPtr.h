@@ -28,7 +28,7 @@ namespace Gray {
 /// @note These objects emulate the COM IUnknown. we may use cIUnkPtr for this also. QueryInterface support is optional.
 /// Use IUNKNOWN_DISAMBIG(cRefBase) with this
 /// </summary>
-class GRAYCORE_LINK cRefBase : public IUnknown {                                       // virtual
+class GRAYCORE_LINK cRefBase : public ::IUnknown {                                     // virtual
     static const REFCOUNT_t k_REFCOUNT_STATIC = 0x20000000;                            /// for structures that are 'static' or stack based. never delete
     static const REFCOUNT_t k_REFCOUNT_DEBUG = 0x40000000;                             /// mark this as debug. (even in release mode)
     static const REFCOUNT_t k_REFCOUNT_DESTRUCT = 0x80000000;                          /// we are in the process of destruction.
@@ -37,7 +37,7 @@ class GRAYCORE_LINK cRefBase : public IUnknown {                                
     mutable cInterlockedUInt32 m_nRefCount;  /// count the number of refs. Multi-Thread safe. check _MT here ?? Negative NEVER allowed!
 
  private:
-    void _InternalAddRef() noexcept {
+    void _InternalAddRef() const noexcept {
 #ifdef _DEBUG
         DEBUG_CHECK(isValidObj());
         DEBUG_CHECK(!isDestructing());
@@ -76,8 +76,12 @@ class GRAYCORE_LINK cRefBase : public IUnknown {                                
     /// Force vtable to include virtual destructor.
     /// ASSUME StaticDestruct() was called if needed.
     /// </summary>
-    virtual ~cRefBase() noexcept {
+    virtual ~cRefBase() {
         DEBUG_CHECK(get_RefCount() == 0);
+    }
+
+    bool isReferenced() const noexcept {
+        return get_RefCount() > 0;
     }
 
  public:
@@ -91,7 +95,7 @@ class GRAYCORE_LINK cRefBase : public IUnknown {                                
     /// get a unique (only on this machine/process instance) hash code. override this for more persistent Hash.
     /// </summary>
     HASHCODE_t get_HashCode() const noexcept {
-        return PtrCastToNum(this);
+        return CastPtrToNum(this);
     }
 
     /// <summary>
@@ -136,7 +140,7 @@ class GRAYCORE_LINK cRefBase : public IUnknown {                                
     /// like COM IUnknown::AddRef.
     /// </summary>
     /// <returns>count after this increment.</returns>
-    STDMETHOD_(ULONG, AddRef)() override {
+    STDMETHOD_(ULONG, AddRef)() {
         _InternalAddRef();
         return CastN(ULONG, get_RefCount());
     }
@@ -144,13 +148,13 @@ class GRAYCORE_LINK cRefBase : public IUnknown {                                
     /// Release Ref. like COM IUnknown::Release.
     /// </summary>
     /// <returns>count after this decrement.</returns>
-    STDMETHOD_(ULONG, Release)() override {
+    STDMETHOD_(ULONG, Release)() {
         const REFCOUNT_t nRefCount = get_RefCount();
         _InternalRelease();  // this could get deleted here!
         return CastN(ULONG, nRefCount - 1);
     }
 
-    STDMETHOD(QueryInterface)(const IID& riid, /* [iid_is][out] */ void __RPC_FAR* __RPC_FAR* ppvObject) override {
+    STDMETHOD(QueryInterface)(const IID& riid, /* [iid_is][out] */ void __RPC_FAR* __RPC_FAR* ppvObject) {
         //! like COM IUnknown::QueryInterface
         if (cMem::IsEqual(&riid, &__uuidof(IUnknown), sizeof(riid))) {
             *ppvObject = this;
@@ -160,19 +164,19 @@ class GRAYCORE_LINK cRefBase : public IUnknown {                                
         *ppvObject = nullptr;
         return E_NOINTERFACE;  // E_NOTIMPL
     }
-    virtual IUnknown* get_IUnknown() noexcept {  // disambiguate IUnknown base. in the case of confusing multiple inheritance. This really should not be necessary !?
+    virtual ::IUnknown* get_IUnknown() noexcept {  // disambiguate IUnknown base. in the case of confusing multiple inheritance. This really should not be necessary !?
         return this;
     }
 
 #if 0  // def _DEBUG // for testing.
-	void IncRefCount() noexcept { // always go through the COM interface!
+	void IncRefCount() noexcept { // always use COM interface!
 		AddRef();
 	}
 	void DecRefCount() noexcept {
 		Release();
 	}
 #else
-    inline void IncRefCount() noexcept {
+    inline void IncRefCount() const noexcept {
         _InternalAddRef();
     }
     inline void DecRefCount() noexcept {
@@ -187,7 +191,7 @@ class GRAYCORE_LINK cRefBase : public IUnknown {                                
     /// <summary>
     /// If this is really static, not dynamic. Call this in parents constructor or main (if global).
     /// </summary>
-    void StaticConstruct() {
+    void StaticConstruct() const {
         ASSERT(m_nRefCount.get_Value() == 0);  // only call in constructor!
         m_nRefCount.put_Value(k_REFCOUNT_STATIC);
     }
@@ -223,32 +227,30 @@ class GRAYCORE_LINK cRefBase : public IUnknown {                                
     /// Mark this object as debug. Trace it. maybe object is in the act of destruction?
     /// </summary>
     bool SetSmartDebug() noexcept {
-        if (isSmartDebug())  // already marked?
-            return false;
+        if (isSmartDebug()) return false;  // already marked?            
         m_nRefCount.AddX(k_REFCOUNT_DEBUG);
         return true;
     }
 };
 
 /// <summary>
-/// Template for a type specific reference counted (Smart) pointer based on cRefBase.
+/// a type specific reference counted (Smart) pointer based on cRefBase.
 /// "Smart pointer" to an object. like "com_ptr_t" _com_ptr_t or cComPtr. https://msdn.microsoft.com/en-us/library/hh279674.aspx
 /// Just a ref to the object of some type. TYPE must be based on cRefBase
-/// similar to boost::shared_ptr<TYPE> and std::shared_ptr<> but the object MUST be based on cRefBase.
+/// similar to boost::shared_ptr and std::shared_ptr but the object MUST be based on cRefBase.
 /// </summary>
 /// <typeparam name="TYPE">cRefBase</typeparam>
 template <class TYPE = cRefBase>
 class cRefPtr : public cPtrFacade<TYPE>
 #ifdef USE_PTRTRACE_REF
-    ,
-                public cPtrTrace
+    ,  public cPtrTrace
 #endif
 {
     typedef cRefPtr<TYPE> THIS_t;
     typedef cPtrFacade<TYPE> SUPER_t;
 
     /// <summary>
-    /// @note IncRefCount can throw !
+    /// add a ref. @note IncRefCount can throw !
     /// </summary>
 #ifdef USE_PTRTRACE_REF
     void IncRefFirst(const cDebugSourceLine* src = nullptr) noexcept
@@ -262,7 +264,7 @@ class cRefPtr : public cPtrFacade<TYPE>
 #ifdef _DEBUG
             DEBUG_CHECK(!isCorruptPtr());
 #endif
-#ifdef USE_PTRTRACE_IUNK
+#ifdef USE_PTRTRACE_REF
             if (p2->isSmartDebug()) TraceAttach(typeid(TYPE), p2, src);
 #endif
         }
@@ -274,7 +276,7 @@ class cRefPtr : public cPtrFacade<TYPE>
     /// </summary>
     /// <param name="p"></param>
     void put_Ptr(TYPE* p) {
-        if (SUPER_t::IsEqual(p)) return;
+        if (SUPER_t::IsEqual(p)) return;  // no change.
         ReleasePtr();
         this->AttachPtr(p);
         IncRefFirst();
@@ -324,24 +326,22 @@ class cRefPtr : public cPtrFacade<TYPE>
     /// <summary>
     /// is this really pointing to what it is supposed to be pointing to?
     /// Mostly just for _DEBUG usage.
+    /// TYPE might NOT be properly defined at this location in the header file! Forward ref TYPE might not compile here.
     /// </summary>
     /// <returns>true = nullptr or valid typed pointer.</returns>
     bool isCorruptPtr() const noexcept {
         if (!SUPER_t::isValidPtr()) return false;             // nullptr is not corrupt.
         if (!cMem::IsValidApp(this->get_Ptr())) return true;  // isCorruptPtr
-        const cRefBase* p = this->get_PtrDyn<cRefBase>();
+        const cRefBase* p = this->template get_PtrDyn<cRefBase>();
         if (p == nullptr) return true;
         if (p->get_RefCount() <= 0) return true;
-#if 0  // Is TYPE properly defined at this location in the header file ?? Forward ref might not compile here.
-        const TYPE* p2 = this->get_PtrDyn<TYPE>();
-		if (p2 == nullptr) return true;
-#endif
         return false;
     }
+
     /// <summary>
     /// dec my ref count and set this to nullptr.
     /// </summary>
-    void ReleasePtr() {              // override
+    void ReleasePtr() {
         TYPE* p2 = this->get_Ptr();  // make local copy.
         if (p2 == nullptr) return;
 #ifdef _DEBUG

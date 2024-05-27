@@ -42,7 +42,7 @@ class cQueueDyn : public cQueueRW<TYPE> {
     }
 
  public:
-    cQueueDyn(ITERATE_t nGrowSizeChunk = 64, ITERATE_t nGrowSizeMax = (cHeap::k_ALLOC_MAX / sizeof(TYPE))) noexcept : m_nGrowSizeChunk(nGrowSizeChunk), m_nGrowSizeMax(nGrowSizeMax) {
+    cQueueDyn(ITERATE_t nGrowSizeChunk = 64, ITERATE_t nGrowSizeMax = (cMem::k_ALLOC_MAX / sizeof(TYPE))) noexcept : m_nGrowSizeChunk(nGrowSizeChunk), m_nGrowSizeMax(nGrowSizeMax) {
         //! @arg nGrowSizeMax = 0 = not used. write only ?
 
         DEBUG_CHECK(m_nGrowSizeChunk >= 0);
@@ -106,7 +106,7 @@ class GRAYCORE_LINK cQueueBytes : public cQueueDyn<BYTE> {
     typedef cQueueDyn<BYTE> SUPER_t;
 
  public:
-    explicit cQueueBytes(size_t nGrowSizeChunk = 8 * 1024, size_t nGrowSizeMax = cHeap::k_ALLOC_MAX) noexcept : SUPER_t(CastN(ITERATE_t, nGrowSizeChunk), CastN(ITERATE_t, nGrowSizeMax)) {
+    explicit cQueueBytes(size_t nGrowSizeChunk = 8 * 1024, size_t nGrowSizeMax = cMem::k_ALLOC_MAX) noexcept : SUPER_t(CastN(ITERATE_t, nGrowSizeChunk), CastN(ITERATE_t, nGrowSizeMax)) {
         //! @arg nGrowSizeMax = 0 = not used. write only ? total size < nGrowSizeMax.
     }
     virtual ~cQueueBytes() {
@@ -119,26 +119,28 @@ class GRAYCORE_LINK cQueueBytes : public cQueueDyn<BYTE> {
     /// <param name="pDataSrc"></param>
     /// <param name="iLen"></param>
     /// <returns></returns>
-    bool InsertDataHead(const BYTE* pDataSrc, size_t iLen) {
-        BYTE* pWriteSpace = GetWritePrep(CastN(ITERATE_t, iLen));
+    bool InsertDataHead(const cMemSpan& m) {
+        const ITERATE_t iSize = CastN(ITERATE_t, m.get_SizeBytes());
+        BYTE* const pWriteSpace = GetWritePrep(iSize);
         UNREFERENCED_PARAMETER(pWriteSpace);
-        if ((size_t)get_WriteSpaceQty() < iLen) return false;
-        BYTE* pDataRead = get_DataW() + get_ReadIndex();
-        cMem::CopyOverlap(pDataRead + iLen, pDataRead, get_ReadQty());
-        cMem::Copy(pDataRead, pDataSrc, iLen);
-        AdvanceWrite(CastN(ITERATE_t, iLen));
+        if (get_WriteSpaceQty() < iSize) return false;
+        BYTE* pDataRead = GetTPtrW() + get_ReadIndex();
+        cMem::CopyOverlap(pDataRead + iSize, pDataRead, get_ReadQty());
+        cMem::Copy(pDataRead, m, iSize);
+        AdvanceWrite(CastN(ITERATE_t, iSize));
         return true;
     }
     /// <summary>
     /// Replace with new data. Toss any previous data.
     /// just set the data in the queue. erase any previous data
     /// </summary>
-    bool SetAllData(const BYTE* pData, size_t iLen) {
-        if (iLen > get_DataSize()) {  // need to grow ?
-            if (!AllocSizeMaxQ(CastN(ITERATE_t, iLen))) return false;
+    bool SetAllData(const cMemSpan& m) {
+        const ITERATE_t iSize = CastN(ITERATE_t, m.get_SizeBytes());
+        if (m.get_SizeBytes() > get_SizeBytes()) {  // need to grow ?
+            if (!AllocSizeMaxQ(iSize)) return false;
         }
-        cMem::CopyOverlap(get_DataW(), pData, iLen);  // may be from the same buffer!? use memmove to be safe.
-        InitQ(0, CastN(ITERATE_t, iLen));
+        cMem::CopyOverlap(GetTPtrW(), m, iSize);  // may be from overlapped buffer?
+        InitQ(0, iSize);
         return true;
     }
 };

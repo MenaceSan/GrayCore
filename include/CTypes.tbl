@@ -23,7 +23,7 @@ CTYPE_DEF(WChar,	wchar_t,			CTYPE_FLAG_Numeric,							"01",	0, 0xFFFF,			UINT,	"
 CTYPE_DEF(Short,	signed short,		CTYPE_FLAG_Numeric|CTYPE_FLAG_NumSigned,	"1",	(-32767 - 1), 32767,	int,	"16 bit signed")
 CTYPE_DEF(Word,		unsigned short,		CTYPE_FLAG_Numeric,							"01",	0, 0xFFFF,				UINT,	"WORD 16 bit. 2 bytes VT_UI2")	// _UI16_MAX
 
-CTYPE_DEF(Int32,	int,				CTYPE_FLAG_Numeric|CTYPE_FLAG_NumSigned,	"1",	(-2147483647 - 1), 2147483647,	int,	"signed 32 bit int. VT_INT, (ASSUME same as signed int)")
+CTYPE_DEF(Int32,	int,				CTYPE_FLAG_Numeric|CTYPE_FLAG_NumSigned,	"1",	(-2147483647 - 1), 2147483647,	int,	"signed 32 bit int. VT_INT, (ASSUME same as signed int)")	// INT_MIN, INT_MAX
 CTYPE_DEF(DWord,	unsigned int,		CTYPE_FLAG_Numeric,							"01",	0, 0xffffffffU,					UINT,	"4 bytes. VT_UI4, UINT32")
 
 #ifdef USE_FLOAT

@@ -53,20 +53,7 @@ class cUniquePtr : public cPtrFacade<TYPE> { // cNonCopyable
     ~cUniquePtr() {
         ReleasePtr();
     }
-
-    void AllocArray(size_t nSize = 1) noexcept {
-        // ReAlloc ? or just use cArray ??
-        ReleasePtr();
-        this->AttachPtr(new TYPE[nSize]);
-    }
-    void AllocArray(size_t nSize, const TYPE* p) noexcept {
-        AllocArray(nSize);
-        if (p != nullptr && this->isValidPtr()) {
-            // Use Copy operator !?!?? or just use cArray ??
-            cMem::Copy(this->get_Ptr(), p, sizeof(TYPE) * nSize);
-        }
-    }
-
+ 
     void AssignPtr(TYPE* p2) noexcept {
         // AKA put_Ptr()?
         if (!this->IsEqual(p2)) {

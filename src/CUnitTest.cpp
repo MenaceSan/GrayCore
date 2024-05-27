@@ -30,7 +30,7 @@ class GRAYCORE_LINK cUnitTestLogger : public cLogSink, public cRefBase {
     cFile m_File;  // like cLogFileDay
 
  public:
-    IUNKNOWN_DISAMBIG(cRefBase);
+    IUNKNOWN_DISAMBIG(cRefBase)
 
     bool CreateLogFile(const FILECHAR_t* pszFileDir) {
         // Create a daily file.
@@ -55,27 +55,10 @@ int cUnitTestCur::sm_nCreatedUnitTests = 0;
 
 const FILECHAR_t* cUnitTestCur::k_TestFiles = _FN("TestFiles");
 
-const cStrConst cUnitTestCur::k_asTextLines[k_TEXTLINES_QTY + 1] = {
+const cStrConst cUnitTestCur::k_asTextLines[18] = {
     // sample test data
-    CSTRCONST("four"),
-    CSTRCONST("one"),
-    CSTRCONST("money"),
-    CSTRCONST("two"),
-    CSTRCONST("red"),
-    CSTRCONST("blue"),
-    CSTRCONST("get"),
-    CSTRCONST("go"),
-    CSTRCONST("to"),
-    CSTRCONST("now"),
-    CSTRCONST("cat"),
-    CSTRCONST("green"),
-    CSTRCONST("ready"),
-    CSTRCONST("three"),
-    CSTRCONST("show"),
-    CSTRCONST("shoe"),
-    CSTRCONST("buckle"),
-    CSTRCONST("my"),
-    cStrConst(nullptr, nullptr, 0),
+    CSTRCONST("four"), CSTRCONST("one"), CSTRCONST("money"), CSTRCONST("two"),   CSTRCONST("red"),   CSTRCONST("blue"), CSTRCONST("get"),  CSTRCONST("go"),     CSTRCONST("to"),
+    CSTRCONST("now"),  CSTRCONST("cat"), CSTRCONST("green"), CSTRCONST("ready"), CSTRCONST("three"), CSTRCONST("show"), CSTRCONST("shoe"), CSTRCONST("buckle"), CSTRCONST("my"),
 };
 
 const cStrConst cUnitTestCur::k_sTextBlob = CSTRCONST(  // [ cUnitTestCur::k_TEXTBLOB_LEN+1 ]
@@ -181,7 +164,8 @@ bool GRAYCALL cUnitTestCur::TestTypes() {  // static
     const StrLen_t nLenStrW = StrT::Len<wchar_t>(k_sTextBlob);
     UNITTEST_TRUE(nLenStrW == nLenStrA);
     UNITTEST_TRUE(nLenStrA == k_sTextBlob._Len);
- 
+    UNITTEST_TRUE(nLenStrA == k_TEXTBLOB_LEN);
+
     // is endian set correctly ?
     cUnion32 u32;
     u32.u_dw = 0x12345678UL;
@@ -265,10 +249,8 @@ void cUnitTestRegister::RunUnitTest() {
 
 cUnitTests::cUnitTests()
     : cSingleton<cUnitTests>(this, typeid(cUnitTests)),
-      m_bRunning(false),
-      m_iFailures(0),
-      m_nTestLevel(UNITTEST_LEVEL_t::_Common),  // UNITTEST_LEVEL_t::_Common
-      m_pAssertOrig(nullptr) {
+      m_nTestLevel(UNITTEST_LEVEL_t::_Common)  // UNITTEST_LEVEL_t::_Common
+{
     cTimePerf::InitFreq();  // make sure this gets called. OK to call again.
 
     // TODO cRandom g_Rand Seed ?
@@ -293,6 +275,14 @@ cUnitTests::cUnitTests()
     InitTestOutDir();
 }
 
+void cUnitTests::ReleaseModuleChildren(::HMODULE hMod) {  // override;
+    for (ITERATE_t i = m_aUnitTests.GetSize(); i;) {
+        const cUnitTestRegister* p = m_aUnitTests.GetAtCheck(--i);
+        if (p == nullptr || p->get_HModule() != hMod) continue;
+        m_aUnitTests.RemoveAt(i);
+    }
+}
+
 HRESULT cUnitTests::InitTestOutDir() {
     cStringF dstDir = cFilePath::CombineFilePathX(get_TestOutDir(), k_TestFiles);
     HRESULT hRes = cFileDir::CreateDirectory1(dstDir);
@@ -309,8 +299,7 @@ HRESULT cUnitTests::InitTestOutDir() {
         cFileStatus dstStatus;
         hRes = dstStatus.ReadFileStatus(dstPath);
         if (FAILED(hRes) && hRes != HRESULT_WIN32_C(ERROR_FILE_NOT_FOUND)) break;
-        if (dstStatus.IsFileEqualTo(dir1.m_FileEntry))  //
-            continue;
+        if (dstStatus.IsFileEqualTo(dir1.m_FileEntry)) continue;
         hRes = cFileCopier::CopyFileX(dir1.get_FilePath(), dstPath);
         if (FAILED(hRes)) break;
         cFileStatus::WriteFileTimes(dstPath, dir1.m_FileEntry);
@@ -322,15 +311,14 @@ HRESULT cUnitTests::InitTestOutDir() {
 
 bool cUnitTests::RegisterUnitTest(cUnitTestRegister* pTest) {
     // add a test that we might run.
-    if (m_aUnitTests.HasArg(pTest))  // no dupes.
-        return false;
+    if (m_aUnitTests.HasArg3(pTest)) return false;  // no dupes.
     m_aUnitTests.Add(pTest);
     return true;
 }
 
 cUnitTestRegister* cUnitTests::FindUnitTest(const char* pszName) const {
     //! Find a single test by name.
-    for (auto pUt : m_aUnitTests) {
+    for (cUnitTestRegister* pUt : m_aUnitTests) {
         if (!StrT::Cmp(pUt->m_pszTypeName, pszName)) return pUt;
     }
     return nullptr;
@@ -367,7 +355,7 @@ bool cUnitTests::TestActive(const cUnitTestRegister* pUnitTest, bool remove) {
     // Is this test active ?
     if (pUnitTest->m_nTestLevel > m_nTestLevel) return false;
     if (m_aTestNames.isEmpty()) return true;  // allow all.
-    // filter.
+    // filter m_pszTypeName.
     for (int j = 0; j < m_aTestNames.GetSize(); j++) {
         if (StrT::MatchRegEx<LOGCHAR_t>(pUnitTest->m_pszTypeName, m_aTestNames[j], true) > 0) {
             if (remove) m_aTestNames.RemoveAt(j);  // found it.
@@ -440,8 +428,7 @@ HRESULT cUnitTests::RunUnitTests(UNITTEST_LEVEL_t nTestLevel, const LOGCHAR_t* p
 
     SetTestLevel(nTestLevel);
 
-    if (m_nTestLevel <= UNITTEST_LEVEL_t::_None)  // tests turned off at run time.
-        return S_OK;
+    if (m_nTestLevel <= UNITTEST_LEVEL_t::_None) return S_OK;  // tests turned off at run time.
 
     RunInitialize();
 
@@ -486,11 +473,11 @@ HRESULT cUnitTests::RunUnitTests(UNITTEST_LEVEL_t nTestLevel, const LOGCHAR_t* p
 #endif
 
     ITERATE_t iTestsRun = 0;
-    for (ITERATE_t i = 0; i < m_aUnitTests.GetSize(); i++) {
-        cUnitTestRegister* pUnitTest = m_aUnitTests[i];
+
+    for (cUnitTestRegister* pUnitTest : m_aUnitTests) {
         if (!TestActive(pUnitTest, true)) continue;
 
-        StrLen_t iLenName = StrT::Len(pUnitTest->m_pszTypeName) + 1;
+        const StrLen_t iLenName = StrT::Len(pUnitTest->m_pszTypeName) + 1;
         UNITTEST_TRUE(iLenName > 0 && iLenName < STRMAX(szDashes));
         szDashes[_countof(szDashes) - iLenName] = '\0';
 

@@ -16,24 +16,31 @@ StrLen_t GRAYCALL StrNum::GetTrimCharsLen(const cSpan<char>& src, char ch) noexc
     if (src.isNull()) return 0;
     StrLen_t nLen = src.get_MaxLen();
     for (; nLen > 0; nLen--) {
-        if (src.get_DataConst()[nLen - 1] != ch) break;
+        if (src.get_PtrConst()[nLen - 1] != ch) break;
     }
     return nLen;
 }
 
-StrLen_t GRAYCALL StrNum::GetNumberString(OUT char* pszOut, const wchar_t* pszInp, StrLen_t iStrMax) noexcept {  // static
+StrLen_t GRAYCALL StrNum::GetNumberString(cSpanX<char> ret, const wchar_t* pszInp, RADIX_t uRadix) noexcept {  // static
     if (pszInp == nullptr) return 0;
-
+    char* pszOut = ret.get_PtrWork();
     StrLen_t nLen = 0;
-    for (; nLen < iStrMax; nLen++) {
+    for (; nLen < ret.get_MaxLen() - 1; nLen++) {
         // Is this a possible number?
-        wchar_t ch = pszInp[nLen];
-        if (ch <= ' ' || ch >= 127) break;  // not a number! or letter for hex.
-
-        // if (ch == ':' || ch == ';' || ch == '(' || ch == ')')	// not a number!
-        // 	break;
-        // allow and characters that might be part of a number. Digit, '.', 'e','E','+', '-', 'A' - 'Z', 'a' - 'z' for hex values,
-        // allow comma and math separators?
+        const wchar_t ch = pszInp[nLen];
+        if (uRadix) {
+            if (ch == 'x' && nLen && pszInp[nLen - 1] == '0') {  // allow "0x" prefix
+                uRadix = 16;
+            } else if (ch == '-' && nLen == 0 && uRadix == 10) {
+            } else if (!StrChar::IsDigitRadix(ch, uRadix)) {
+                break;  // not a number!
+            }
+        } else {
+            if (ch <= ' ' || ch >= StrChar::k_ASCII) break;  // not a number! for Float!
+            // if (ch == ':' || ch == ';' || ch == '(' || ch == ')')	// not a number!
+            // allow and characters that might be part of a number. Digit, '.', 'e','E','+', '-', 'A' - 'Z', 'a' - 'z' for hex values,
+            // allow comma and math separators?
+        }
         pszOut[nLen] = (char)ch;
     }
 
@@ -43,13 +50,13 @@ StrLen_t GRAYCALL StrNum::GetNumberString(OUT char* pszOut, const wchar_t* pszIn
 
 //*************************************************************************************
 
-UINT64 GRAYCALL StrNum::toUL(const char* pszInp, const char** ppszInpEnd, RADIX_t nBaseRadix) noexcept {  // static
+UINT64 GRAYCALL StrNum::toUL(const char* pszInp, const char** ppszInpEnd, RADIX_t nRadixBase) noexcept {  // static
     bool bFlexible = false;                                                                               // allow hex ?
-    if (nBaseRadix < StrChar::k_uRadixMin) {
+    if (nRadixBase < StrChar::k_uRadixMin) {
         bFlexible = true;
-        nBaseRadix = 10;  // default.
+        nRadixBase = 10;  // default.
     }
-    ASSERT(nBaseRadix <= StrChar::k_uRadixMax);
+    ASSERT(nRadixBase <= StrChar::k_uRadixMax);
     if (pszInp == nullptr) return 0;
 
     pszInp = StrT::GetNonWhitespace(pszInp);
@@ -58,32 +65,20 @@ UINT64 GRAYCALL StrNum::toUL(const char* pszInp, const char** ppszInpEnd, RADIX_
         ch = pszInp[1];
         if (ch == 'X' || ch == 'x') {
             // its really just hex!
-            nBaseRadix = 16;
+            nRadixBase = 16;
             pszInp += 2;
         } else if (bFlexible) {  // Is this octal or hex ?
-            nBaseRadix = 16;
+            nRadixBase = 16;
             pszInp++;
         }
     }
 
     UINT64 uVal = 0;
     for (;;) {
-        ch = *pszInp;  // Char_Radix2U
-        if (StrChar::IsDigitA(ch)) {
-            ch = (char)StrChar::Dec2U(ch);
-        } else {
-            if (nBaseRadix < 10)  // not valid character for this radix.
-                break;
-            if (ch >= 'A' && ch <= (('A' - 11) + nBaseRadix)) {
-                ch -= 'A' - 10;
-            } else if (ch >= 'a' && ch <= (('a' - 11) + nBaseRadix)) {
-                ch -= 'a' - 10;
-            } else {
-                break;  // end of useful chars. // not valid character for this radix.
-            }
-        }
-        uVal *= nBaseRadix;
-        uVal += ch;
+        const UINT uValCh = StrChar::Radix2U(*pszInp);
+        if (uValCh >= nRadixBase) break;  // not valid character for this radix. end.
+        uVal *= nRadixBase;
+        uVal += uValCh;
         pszInp++;
     }
 
@@ -92,23 +87,22 @@ UINT64 GRAYCALL StrNum::toUL(const char* pszInp, const char** ppszInpEnd, RADIX_
     return uVal;
 }
 
-INT64 GRAYCALL StrNum::toIL(const char* pszInp, const char** ppszInpEnd, RADIX_t nBaseRadix) noexcept {
+INT64 GRAYCALL StrNum::toIL(const char* pszInp, const char** ppszInpEnd, RADIX_t nRadixBase) noexcept {
     //! convert string to integer value. like strtol(), or a bit like atoi()
     //! May have 0x# prefix to indicate hex
     if (pszInp == nullptr) return 0;
     pszInp = StrT::GetNonWhitespace(pszInp);
     if (pszInp[0] == '-') {
-        return -CastN(INT64, StrNum::toUL(pszInp + 1, ppszInpEnd, nBaseRadix));
+        return -CastN(INT64, StrNum::toUL(pszInp + 1, ppszInpEnd, nRadixBase));
     }
-    return CastN(INT64, StrNum::toUL(pszInp, ppszInpEnd, nBaseRadix));
+    return CastN(INT64, StrNum::toUL(pszInp, ppszInpEnd, nRadixBase));
 }
 
 //*************************************************************************************
 
-StrLen_t GRAYCALL StrNum::ULtoAK(UINT64 uVal, cSpanX<char>& ret, UINT nKUnit, bool bSpaceBeforeUnit) {
+StrLen_t GRAYCALL StrNum::ULtoAK(UINT64 uVal, cSpanX<char> ret, UINT nKUnit, bool bSpaceBeforeUnit) {
     static const char k_chKUnits[10] = "\0KMGTPEZY";
-    if (nKUnit <= 0)  // default.
-        nKUnit = 1024;
+    if (nKUnit <= 0) nKUnit = 1024;  // default.
 
     double dVal = (double)uVal;
     size_t i = 0;
@@ -122,7 +116,7 @@ StrLen_t GRAYCALL StrNum::ULtoAK(UINT64 uVal, cSpanX<char>& ret, UINT nKUnit, bo
     } else {
         // limit to 2 decimal places ?
         iLenUse = DtoAG(dVal, ret, 2, '\0');  // NOT 'inf' or NaN has no units.
-        char* pszOut = ret.get_DataWork();
+        char* pszOut = ret.get_PtrWork();
         if (iLenUse > 0 && iLenUse <= ret.get_MaxLen() - 3 && !StrChar::IsAlpha(pszOut[0])) {
             if (bSpaceBeforeUnit) {  // insert a space or not?
                 pszOut[iLenUse++] = ' ';
@@ -135,43 +129,43 @@ StrLen_t GRAYCALL StrNum::ULtoAK(UINT64 uVal, cSpanX<char>& ret, UINT nKUnit, bo
 }
 
 #if 0
-StrLen_t GRAYCALL StrNum::GetSizeRadix(UINT64 uVal, RADIX_t nBaseRadix) {   // static
-    // How many nBaseRadix digits for this number?
+StrLen_t GRAYCALL StrNum::GetSizeRadix(UINT64 uVal, RADIX_t nRadixBase) {   // static
+    // How many nRadixBase digits for this number?
     // TODO Highest1Bit for powers of 2? IsMask1()
     // like: GetCountDecimalDigit32()
     StrLen_t i=0;
     for (;uVal>0; i++) {
-        uVal /= nBaseRadix;
+        uVal /= nRadixBase;
     }
     return i;
 }
 #endif
 
-StrLen_t GRAYCALL StrNum::ULtoA(UINT64 uVal, cSpanX<char>& ret, RADIX_t nBaseRadix) {
-    char szTmp[StrNum::k_LEN_MAX_DIGITS_INT + 2];  // bits in int is all we really need max. (i.e. nBaseRadix=2)
-    cSpanX<char> spanDigits = ULtoARev(uVal, szTmp, STRMAX(szTmp), nBaseRadix);
+StrLen_t GRAYCALL StrNum::ULtoA(UINT64 uVal, cSpanX<char> ret, RADIX_t nRadixBase) {
+    char szTmp[StrNum::k_LEN_MAX_DIGITS_INT + 2];  // bits in int is all we really need max. (i.e. nRadixBase=2)
+    cSpanX<char> spanDigits = ULtoARev(uVal, szTmp, STRMAX(szTmp), nRadixBase);
 
-    char* pDigits = spanDigits.get_DataWork();
+    char* pDigits = spanDigits.get_PtrWork();
     const StrLen_t iStrMax = cValT::Min(ret.get_MaxLen(), STRMAX(szTmp));
 
-    if (nBaseRadix == 16 && uVal != 0) {  // give hex a leading 0 if there is room. except if its 0 value. m_bLeadZero
+    if (nRadixBase == 16 && uVal != 0) {  // give hex a leading 0 if there is room. except if its 0 value. m_bLeadZero
         if (spanDigits.get_MaxLen() < iStrMax) {
             *(--pDigits) = '0';  // prefix with 0 if room.
         }
     }
-    return StrT::CopyLen(ret.get_DataWork(), pDigits, iStrMax);
+    return StrT::CopyLen(ret.get_PtrWork(), pDigits, iStrMax);
 }
 
-StrLen_t GRAYCALL StrNum::ILtoA(INT64 nVal, cSpanX<char>& ret, RADIX_t nBaseRadix) {
+StrLen_t GRAYCALL StrNum::ILtoA(INT64 nVal, cSpanX<char> ret, RADIX_t nRadixBase) {
     if (ret.isEmpty()) return 0;
     if (nVal < 0) {
         nVal = -nVal;
-        ret.get_DataWork()[0] = '-';
-        ret.SetSpanSkip(1);
+        ret.get_PtrWork()[0] = '-';
+        ret.SetSkipBytes(1);
     }
-    char szTmp[StrNum::k_LEN_MAX_DIGITS_INT + 2];  // bits in int is all we really need max. (i.e. nBaseRadix=2 + sign + '\0')
-    cSpan<char> spanDigits = ULtoARev((UINT64)nVal, szTmp, STRMAX(szTmp), nBaseRadix);
-    return StrT::Copy(ret, spanDigits.get_DataConst());
+    char szTmp[StrNum::k_LEN_MAX_DIGITS_INT + 2];  // bits in int is all we really need max. (i.e. nRadixBase=2 + sign + '\0')
+    cSpan<char> spanDigits = ULtoARev((UINT64)nVal, szTmp, STRMAX(szTmp), nRadixBase);
+    return StrT::Copy(ret, spanDigits.get_PtrConst());
 }
 
 //*************************************************************************************
@@ -205,10 +199,7 @@ StrLen_t GRAYCALL StrNum::DtoAG2(double dVal, OUT char* pszOut, int iDecPlacesWa
         const StrLen_t nDecPlaceO = nMantLength + nExp10;  // 10^(nDecPlaceO-1) <= v < 10^nDecPlaceO
         if (nDecPlaceO >= -5 && nDecPlaceO <= 21) {        // 26 digits. mid point = 8; +/- 13
             // Prefer F format
-            if (nExp10 >= 0)  // Whole numbers only. No decimal places.
-                iDecPlacesWanted = 0;
-            else
-                iDecPlacesWanted = -1;
+            iDecPlacesWanted = (nExp10 >= 0) ? 0 : -1;                                     // Whole numbers only. No decimal places.
             nOutLen = cFloatDeco::FormatF(pszOut, nMantLength, nExp10, iDecPlacesWanted);  // iDecPlacesWanted
         } else {
             // Prefer E Format.
@@ -217,16 +208,14 @@ StrLen_t GRAYCALL StrNum::DtoAG2(double dVal, OUT char* pszOut, int iDecPlacesWa
     } else if (chE != '\0') {
         // E format. always has 1 whole digit.
         if (iDecPlacesWanted >= 0) {  // restrict decimal places.
-            StrLen_t iDelta = cFloatDeco::MantAdjust(pszOut, nMantLength, iDecPlacesWanted + 1);
+            const StrLen_t iDelta = cFloatDeco::MantAdjust(pszOut, nMantLength, iDecPlacesWanted + 1);
             nMantLength += iDelta;
             nExp10 -= iDelta;
         }
         nOutLen = cFloatDeco::FormatE(pszOut, nMantLength, nExp10, chE);
     } else {
         // F format.
-        if (nExp10 >= 0 && iDecPlacesWanted < 0)  // Whole numbers only. No decimal places.
-            iDecPlacesWanted = 1;                 // default = have at least 1 decimal place.
-
+        if (nExp10 >= 0 && iDecPlacesWanted < 0) iDecPlacesWanted = 1;  // Whole numbers only. No decimal places. // default = have at least 1 decimal place.
         nOutLen = cFloatDeco::FormatF(pszOut, nMantLength, nExp10, iDecPlacesWanted);
     }
 
@@ -234,13 +223,13 @@ StrLen_t GRAYCALL StrNum::DtoAG2(double dVal, OUT char* pszOut, int iDecPlacesWa
     return nOutLen;
 }
 
-StrLen_t GRAYCALL StrNum::DtoAG(double dVal, cSpanX<char>& ret, int iDecPlacesWanted, char chE) {  // static
-    if (ret.get_MaxLen() >= k_LEN_MAX_DIGITS) {  // buffer is big enough.
-        return DtoAG2(dVal, ret.get_DataWork(), iDecPlacesWanted, chE);
+StrLen_t GRAYCALL StrNum::DtoAG(double dVal, cSpanX<char> ret, int iDecPlacesWanted, char chE) {  // static
+    if (ret.get_MaxLen() >= k_LEN_MAX_DIGITS) {                                                   // buffer is big enough.
+        return DtoAG2(dVal, ret.get_PtrWork(), iDecPlacesWanted, chE);
     }
-    char szTmp[StrNum::k_LEN_MAX_DIGITS + 4];      // MUST allow at least this size.
-    DtoAG2(dVal, szTmp, iDecPlacesWanted, chE);    // StrLen_t iStrLen =
-    return StrT::Copy(ret, szTmp);  // Copy to smaller buffer. truncate.
+    char szTmp[StrNum::k_LEN_MAX_DIGITS + 4];    // MUST allow at least this size.
+    DtoAG2(dVal, szTmp, iDecPlacesWanted, chE);  // StrLen_t iStrLen =
+    return StrT::Copy(ret, szTmp);               // Copy to smaller buffer. truncate.
 }
 
 double GRAYCALL StrNum::toDouble(const char* pszInp, const char** ppszInpEnd) {  // static
@@ -271,9 +260,8 @@ double GRAYCALL StrNum::toDouble(const char* pszInp, const char** ppszInpEnd) { 
     for (;; nSizeMant++, pszInp++) {
         ch = *pszInp;
         if (StrChar::IsDigitA(ch)) continue;
-        if ((ch != '.') || (nSizeInt >= 0))  // First and only decimal point.
-            break;
-        nSizeInt = nSizeMant;  // Found the decimal point.
+        if ((ch != '.') || (nSizeInt >= 0)) break;  // First and only decimal point.
+        nSizeInt = nSizeMant;                       // Found the decimal point.
     }
 
     // Now suck up the digits in the mantissa.
@@ -293,8 +281,7 @@ double GRAYCALL StrNum::toDouble(const char* pszInp, const char** ppszInpEnd) { 
         nExpFrac = nSizeInt - 18;
         nSizeMant = 18;  // truncate
     } else {
-        if (nSizeMant == 0)  // No value? maybe just a decimal place. thats odd.
-        {
+        if (nSizeMant == 0) {  // No value? maybe just a decimal place. thats odd.
             if (ppszInpEnd != nullptr) {
                 *ppszInpEnd = (char*)pszStart;  // Nothing here that was a number.
             }
@@ -308,8 +295,7 @@ double GRAYCALL StrNum::toDouble(const char* pszInp, const char** ppszInpEnd) { 
     for (; nSizeMant > 9;) {
         ch = *pszInp;
         pszInp++;
-        if (ch != '.')  // Just skip .
-        {
+        if (ch != '.') {  // Just skip .
             fracHi = 10 * fracHi + StrChar::Dec2U(ch);
             nSizeMant--;
         }
@@ -319,8 +305,7 @@ double GRAYCALL StrNum::toDouble(const char* pszInp, const char** ppszInpEnd) { 
     for (; nSizeMant > 0;) {
         ch = *pszInp;
         pszInp++;
-        if (ch != '.')  // Just skip .
-        {
+        if (ch != '.') {  // Just skip .
             fracLo = 10 * fracLo + StrChar::Dec2U(ch);
             nSizeMant--;
         }
@@ -331,7 +316,7 @@ double GRAYCALL StrNum::toDouble(const char* pszInp, const char** ppszInpEnd) { 
     ch = *pszInp;
     bool bExpNegative = false;
     int nExp = 0;  // Exponent read from "e" field.
-    if ((ch == 'E') || (ch == 'e')) {
+    if (ch == 'E' || ch == 'e') {
         pszInp++;
         ch = *pszInp;
         if (ch == '-') {
@@ -357,7 +342,7 @@ double GRAYCALL StrNum::toDouble(const char* pszInp, const char** ppszInpEnd) { 
         *ppszInpEnd = (char*)pszInp;
     }
 
-    double fraction = cFloatDeco::toDouble(fracHi, fracLo, (bExpNegative) ? (nExpFrac - nExp) : (nExpFrac + nExp));
+    const double fraction = cFloatDeco::toDouble(fracHi, fracLo, (bExpNegative) ? (nExpFrac - nExp) : (nExpFrac + nExp));
     return (*pszStart == '-') ? (-fraction) : fraction;
 }
 }  // namespace Gray

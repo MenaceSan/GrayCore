@@ -40,9 +40,9 @@ class GRAYCORE_LINK cOSModImpl {
     /// should be same as GetModuleHandleForAddr(g_Module)
     /// </summary>
     ::HMODULE m_hModule = HMODULE_NULL;
- 
+
     /// <summary>
-    /// DLL_PROCESS_ATTACH happen BEFORE constructor! OnProcessAttach only called once! 
+    /// DLL_PROCESS_ATTACH happen BEFORE constructor! OnProcessAttach only called once!
     /// </summary>
     bool m_bProcessAttached = false;
 
@@ -55,7 +55,7 @@ class GRAYCORE_LINK cOSModImpl {
 
  public:
     cOSModImpl(const char* pszModuleName) noexcept;
-    virtual ~cOSModImpl();
+    virtual ~cOSModImpl() {}
 
     const char* get_Name() const {
         return m_pszModuleName;
@@ -68,7 +68,7 @@ class GRAYCORE_LINK cOSModImpl {
 
     ::HMODULE get_HMod() const noexcept {
         return m_hModule;
-    }        
+    }
 
     /// <summary>
     /// This module has been loaded in a process space.

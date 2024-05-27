@@ -16,6 +16,6 @@ namespace Gray {
 /// </summary>
 /// <typeparam name="TYPE"></typeparam>
 template <class TYPE>
-class cArrayIUnk : public cArrayFacade<cIUnkPtr<TYPE>, TYPE*> {};
+class cArrayIUnk : public cArrayFacade<cSpanX<cIUnkPtr<TYPE>, TYPE*>> {};
 }  // namespace Gray
 #endif  // _INC_cArrayIUnk_H

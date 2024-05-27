@@ -18,7 +18,7 @@ namespace Gray {
 /// </summary>
 enum class TZ_DSTRULE_t {
     _NONE = 0,  /// don't use DST at all. UTC. 
-    _AMERICAN,  /// use the American rules for DST. As they existed at the time.
+    _AMERICAN,  /// use the American rules for DST. As they existed at the time. They have changed.
     // _MOROCCO // is insane.
 };
 

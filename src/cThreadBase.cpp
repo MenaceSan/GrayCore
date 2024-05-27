@@ -23,6 +23,7 @@ void cThreadRef::onThreadCreate() {  // virtual
     ASSERT(isThreadRunning());
     const THREADID_t nThreadId = this->GetThreadId();
     ASSERT(nThreadId != cThreadId::k_NULL);  // ASSUME set.
+    UNREFERENCED_PARAMETER(nThreadId);
     ASSERT(isCurrentThread());               // GetThreadId() is set already in CreateThread
     m_nExitCode = THREAD_EXITCODE_RUNNING;
 #if defined(_CPPUNWIND)
@@ -117,6 +118,7 @@ THREAD_EXITCODE_t cThreadRef::GetExitCodeThread() {
         if (!::GetExitCodeThread(m_hThread, &m_nExitCode)) {
             // the thread handle is bad!
             HRESULT hRes = HResult::GetLastDef();
+            UNREFERENCED_PARAMETER(hRes);
             return THREAD_EXITCODE_ERR;
         }
     }

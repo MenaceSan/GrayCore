@@ -31,10 +31,9 @@ class GRAYCORE_LINK cStreamStackInp : public cStreamQueue, public cStreamReader 
     /// <summary>
     /// read processed/decoded data from cStreamReader cStreamInput and SeekX
     /// </summary>
-    /// <param name="pData"></param>
-    /// <param name="nDataSize"></param>
+    /// <param name="ret">cMemSpan</param>
     /// <returns></returns>
-    HRESULT ReadX(void* pData, size_t nDataSize) noexcept override = 0;  // MUST be overridden. and call ReadFill() at some point.
+    HRESULT ReadX(cMemSpan ret) noexcept override = 0;  // MUST be overridden. and call ReadFill() at some point.
 };
 
 /// <summary>
@@ -50,7 +49,7 @@ class GRAYCORE_LINK cStreamStackOut : public cStreamQueue { // cStreamOutput, pr
     HRESULT WriteFlush();
  public:
     cStreamStackOut(cStreamOutput* pStreamOut = nullptr, size_t nSizeBuffer = cStream::k_FILE_BLOCK_SIZE) noexcept : cStreamQueue(8 * 1024, nSizeBuffer), m_pStreamOut(pStreamOut) {}
-    HRESULT WriteX(const void* pData, size_t nDataSize) override = 0;  // cStreamOutput override calls WriteFlush() // MUST be overridden
+    HRESULT WriteX(const cMemSpan& m) override = 0;  // cStreamOutput override calls WriteFlush() // MUST be overridden
 };
 
 /// <summary>
@@ -61,7 +60,7 @@ class GRAYCORE_LINK cStreamStackOut : public cStreamQueue { // cStreamOutput, pr
 /// </summary>
 struct GRAYCORE_LINK cStreamStackPackets : public cStreamStackOut {
     cStreamStackPackets(cStreamOutput* pStreamOut = nullptr, size_t nSizeBuffer = cStream::k_FILE_BLOCK_SIZE) noexcept : cStreamStackOut(pStreamOut, nSizeBuffer) {}
-    HRESULT WriteX(const void* pData, size_t nDataSize) override;
+    HRESULT WriteX(const cMemSpan& m) override;
 };
 }  // namespace Gray
 

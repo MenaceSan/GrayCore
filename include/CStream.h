@@ -64,10 +64,10 @@ struct GRAYCORE_LINK cStreamStats {
 /// base class for binary cStreamOutput or cStreamInput.
 /// </summary>
 struct GRAYCORE_LINK cStreamBase {
-    static const BYTE k_SIZE_MASK = 0x80;                 /// Used for WriteSize()
+    static const BYTE k_SIZE_MASK = 0x80;                 /// Used for WriteSize(). 7 bits.
     static const size_t k_FILE_BLOCK_SIZE = (32 * 1024);  /// default arbitrary transfer block size. more than this is NOT more efficient.
 
-    virtual ~cStreamBase() noexcept {}
+    virtual ~cStreamBase() {}
 
     /// <summary>
     /// Change position in a stream. Success or failure. NO partial success.
@@ -86,7 +86,7 @@ struct GRAYCORE_LINK cStreamBase {
     /// Must override this. like: SeekX(SEEK_t::_Cur,0)
     /// </summary>
     /// <returns></returns>
-    virtual STREAM_POS_t GetPosition() const {
+    virtual STREAM_POS_t GetPosition() const noexcept {
         return k_STREAM_POS_ERR;  // It doesn't work on this type of stream!
     }
 
@@ -95,7 +95,7 @@ struct GRAYCORE_LINK cStreamBase {
     /// default implementation using SeekX and GetPosition. override this for better implementation.
     /// </summary>
     /// <returns></returns>
-    virtual STREAM_POS_t GetLength() const;
+    virtual STREAM_POS_t GetLength() const noexcept;
 
     /// <summary>
     /// Helper functions for SeekX
@@ -104,7 +104,7 @@ struct GRAYCORE_LINK cStreamBase {
     void SeekToBegin() noexcept {
         SeekX(0, SEEK_t::_Set);
     }
-    STREAM_POS_t SeekToEnd() {
+    STREAM_POS_t SeekToEnd() noexcept {
         //! ala MFC. SeekX to end of file/stream.
         SeekX(0, SEEK_t::_End);
         return GetPosition();
@@ -128,15 +128,10 @@ struct GRAYCORE_LINK cStreamOutput : public cStreamBase, public ITextWriter {
     /// <param name="pData"></param>
     /// <param name="nDataSize"></param>
     /// <returns>Number of bytes actually written. -lt- 0 = error.</returns>
-    virtual HRESULT WriteX(const void* pData, size_t nDataSize) {  // = 0;
-        ASSERT(0);                                                 // should never get called. (should always be overloaded)
-        UNREFERENCED_PARAMETER(pData);
-        UNREFERENCED_PARAMETER(nDataSize);
+    virtual HRESULT WriteX(const cMemSpan& m) {  // = 0;
+        ASSERT(0);                               // should never get called. (should always be overloaded)
+        UNREFERENCED_REFERENCE(m);
         return HRESULT_WIN32_C(ERROR_WRITE_FAULT);  // E_NOTIMPL
-    }
-
-    HRESULT WriteMem(const cMemSpan& m) {
-        return WriteX(m, m.get_DataSize());
     }
 
     /// <summary>
@@ -146,8 +141,8 @@ struct GRAYCORE_LINK cStreamOutput : public cStreamBase, public ITextWriter {
     /// <param name="nDataSize"></param>
     /// <returns>Number of bytes written. -lt- 0 = error.</returns>
     HRESULT WriteSpan(const cMemSpan& m) {
-        const HRESULT hRes = WriteMem(m);
-        if (SUCCEEDED(hRes) && hRes != CastN(HRESULT, m.get_DataSize())) return HRESULT_WIN32_C(ERROR_WRITE_FAULT);  // STG_WRITEFAULT
+        const HRESULT hRes = WriteX(m);
+        if (SUCCEEDED(hRes) && hRes != CastN(HRESULT, m.get_SizeBytes())) return HRESULT_WIN32_C(ERROR_WRITE_FAULT);  // STG_WRITEFAULT
         return hRes;
     }
 
@@ -157,12 +152,29 @@ struct GRAYCORE_LINK cStreamOutput : public cStreamBase, public ITextWriter {
         return WriteSpan(TOSPANT(val));
     }
 
+    /// <summary>
+    /// Write a variable length packed (unsigned) size_t. opposite of ReadSize(nSize).
+    /// Packed low to high values.
+    /// Bit 7 indicates more data needed.
+    /// Similar to ASN1 Length packing.
+    /// </summary>
+    /// <param name="nSize"></param>
+    /// <returns> -lt- 0 = error.</returns>
     HRESULT WriteSize(size_t nSize);
+
     HRESULT WriteHashCode(HASHCODE_t nHashCode) {
         //! opposite of ReadHashCode()
         return WriteSize(nHashCode);
     }
 
+    /// <summary>
+    /// Write just the chars of the string. NOT '\0'. like fputs()
+    /// Does NOT assume include NewLine or automatically add one.
+    /// @note This can get overloaded for string only protocols. like FILE, fopen()
+    /// @note MFC CStdioFile has void return for this.
+    /// </summary>
+    /// <param name="pszStr">nullptr ok</param>
+    /// <returns>Number of chars written. -lt- 0 = error.</returns>
     HRESULT WriteString(const char* pszStr) override;
     HRESULT WriteString(const wchar_t* pszStr) override;
 
@@ -174,7 +186,7 @@ struct GRAYCORE_LINK cStreamOutput : public cStreamBase, public ITextWriter {
     /// <param name="nSize"></param>
     /// <returns>-lt- 0 = error</returns>
     HRESULT WriteBlob(const cMemSpan& b) {
-        const HRESULT hRes = WriteSize(b.get_DataSize());
+        const HRESULT hRes = WriteSize(b.get_SizeBytes());
         if (FAILED(hRes)) return hRes;
         if (b.isEmpty()) return S_OK;
         return WriteSpan(b);
@@ -188,7 +200,7 @@ struct GRAYCORE_LINK cStreamOutput : public cStreamBase, public ITextWriter {
     /// <returns>-lt- 0 = error</returns>
     template <typename _CH>
     HRESULT WriteBlobStr(const _CH* pszStr) {
-        return WriteBlob(ToSpan(pszStr, (pszStr == nullptr) ? 0 : StrT::Len(pszStr)));
+        return WriteBlob(StrT::ToSpanStr(pszStr));
     }
 
     /// <summary>
@@ -231,21 +243,14 @@ struct GRAYCORE_LINK cStreamInput : public cStreamBase {
     }
 
     /// <summary>
-    /// Read a block from the stream. // must support this.
+    /// Read a block from the stream up to size of cMemSpan. // must support this.
     /// Similar to MFC CFile::Read()
     /// </summary>
-    /// <param name="pData">nullptr = skip over nDataSize in read stream. Same as SeekX().</param>
-    /// <param name="nDataSize">max size</param>
+    /// <param name="ret">max size. nullptr = skip over nDataSize in read stream. Same as SeekX().</param>
     /// <returns>Length of the stuff read. -lt- 0 = error. HRESULT_WIN32_C(ERROR_IO_INCOMPLETE) = need more data.</returns>
-    virtual HRESULT ReadX(OUT void* pData, size_t nDataSize) noexcept {
-        UNREFERENCED_PARAMETER(pData);
-        UNREFERENCED_PARAMETER(nDataSize);
+    virtual HRESULT ReadX(cMemSpan ret) noexcept {
+        UNREFERENCED_PARAMETER(ret);
         return E_NOTIMPL;  // nothing read.
-    }
-
-    /// Read up to size of cMemSpan
-    HRESULT ReadMem(OUT cMemSpan& m) {
-        return ReadX(m.get_DataW(), m.get_DataSize());
     }
 
     /// <summary>
@@ -256,8 +261,8 @@ struct GRAYCORE_LINK cStreamInput : public cStreamBase {
     /// <returns>length read. (Not including nSizeExtra). or -lt- 0 = error.</returns>
     HRESULT ReadAll(OUT cBlob& blob, size_t nSizeExtra = 0);
 
-    virtual HRESULT ReadStringLine(cSpanX<char>& ret);
-    virtual HRESULT ReadStringLine(cSpanX<wchar_t>& ret);
+    virtual HRESULT ReadStringLine(cSpanX<char> ret);
+    virtual HRESULT ReadStringLine(cSpanX<wchar_t> ret);
 
     // Support the base types directly.
 
@@ -267,14 +272,14 @@ struct GRAYCORE_LINK cStreamInput : public cStreamBase {
     /// <param name="pVal"></param>
     /// <param name="nSize">0 = S_OK</param>
     /// <returns>-lte- 0 = actual size read. or -lt- 0 = error. HRESULT_WIN32_C(ERROR_IO_INCOMPLETE) = need more data.</returns>
-    HRESULT ReadSpan(OUT cMemSpan& ret) {
-        const HRESULT hRes = ReadMem(ret);
+    HRESULT ReadSpan(cMemSpan ret) noexcept {
+        const HRESULT hRes = ReadX(ret);
         if (FAILED(hRes)) return hRes;
-        if (hRes == CastN(HRESULT, ret.get_DataSize())) return hRes;  // OK
-        return HRESULT_WIN32_C(ERROR_IO_INCOMPLETE);                  // maybe HRESULT_WIN32_C(ERROR_HANDLE_EOF) ? maybe SeekX back and try again ?
+        if (hRes == CastN(HRESULT, ret.get_SizeBytes())) return hRes;  // OK
+        return HRESULT_WIN32_C(ERROR_IO_INCOMPLETE);                   // maybe HRESULT_WIN32_C(ERROR_HANDLE_EOF) ? maybe SeekX back and try again ?
     }
     template <typename TYPE = BYTE>
-    HRESULT ReadT(OUT TYPE& val) {
+    HRESULT ReadT(OUT TYPE& val) noexcept {
         return ReadSpan(TOSPANT(val));
     }
 
@@ -285,7 +290,7 @@ struct GRAYCORE_LINK cStreamInput : public cStreamBase {
     /// <param name="val"></param>
     /// <returns></returns>
     template <typename TYPE>
-    HRESULT ReadTN(OUT TYPE& val) {
+    HRESULT ReadTN(OUT TYPE& val) noexcept {
         const HRESULT hRes = ReadT(val);
         if (FAILED(hRes)) return hRes;
         val = cMemT::NtoH(val);
@@ -293,14 +298,23 @@ struct GRAYCORE_LINK cStreamInput : public cStreamBase {
     }
     /// read Little Endian value. (Intel)
     template <typename TYPE>
-    HRESULT ReadTLE(OUT TYPE& val) {
+    HRESULT ReadTLE(OUT TYPE& val) noexcept {
         const HRESULT hRes = ReadT(val);
         if (FAILED(hRes)) return hRes;
         val = cMemT::LEtoH(val);
         return hRes;
     }
 
-    HRESULT ReadSize(OUT size_t& nSize);
+    /// <summary>
+    /// Read a packed (variable length) unsigned size.  
+    /// Packed low to high values.
+    /// Bit 7 reserved to indicate more bytes to come.
+    /// opposite of WriteSize( size_t ).
+    /// similar to ASN1 Length packing.
+    /// </summary>
+    /// <param name="nSize"></param>
+    /// <returns>HRESULT_WIN32_C(ERROR_IO_INCOMPLETE) = no more data</returns>
+    HRESULT ReadSize(OUT size_t& nSize) noexcept;
 
     /// <summary>
     /// Read Variable length size_t field and cast to final type.
@@ -309,32 +323,31 @@ struct GRAYCORE_LINK cStreamInput : public cStreamBase {
     /// <param name="n"></param>
     /// <returns>-lt- 0 = fail</returns>
     template <typename TYPE>
-    HRESULT ReadSizeT(OUT TYPE& n) {
+    HRESULT ReadSizeT(OUT TYPE& n) noexcept {
         size_t nSizeTmp = 0;
         const HRESULT hRes = ReadSize(nSizeTmp);
         n = CastN(TYPE, nSizeTmp);
         return hRes;
     }
 
-    HRESULT ReadHashCode(OUT UINT32& nHashCode) {
+    HRESULT ReadHashCode(OUT UINT32& nHashCode) noexcept {
         return ReadSizeT<UINT32>(nHashCode);
     }
 #ifdef USE_INT64
-    HRESULT ReadHashCode(OUT UINT64& nHashCode) {
+    HRESULT ReadHashCode(OUT UINT64& nHashCode) noexcept {
         return ReadSizeT<UINT64>(nHashCode);
     }
 #endif
     /// <summary>
     /// Read a block/blob with a leading size field.
     /// </summary>
-    /// <param name="pBuffer"></param>
-    /// <param name="nSizeMax"></param>
+    /// <param name="ret">cMemSpan</param>
     /// <returns>-gte- 0 = actual size read.</returns>
-    HRESULT ReadBlob(cMemSpan& ret) {
+    HRESULT ReadBlob(cMemSpan ret) {
         size_t nSize = 0;
         const HRESULT hRes = ReadSize(nSize);
         if (FAILED(hRes)) return hRes;
-        if (nSize > ret.get_DataSize()) {
+        if (nSize > ret.get_SizeBytes()) {
             // ASSERT(0);
             return HRESULT_WIN32_C(ERROR_FILE_CORRUPT);  // corrupt data.
         }
@@ -345,20 +358,19 @@ struct GRAYCORE_LINK cStreamInput : public cStreamBase {
     /// Read a variable length string that is prefixed by its size.
     /// </summary>
     /// <typeparam name="_CH"></typeparam>
-    /// <param name="pszStr"></param>
-    /// <param name="iSizeMax">_countof(pszStr), includes space for '\0'. e.g. _countof("abc") = 4</param>
+    /// <param name="ret">_countof(pszStr), includes space for '\0'. e.g. _countof("abc") = 4</param>
     /// <returns>The size of the string (in chars) + including '\0'. HRESULT_WIN32_C(ERROR_IO_INCOMPLETE) = need more data.</returns>
     template <typename _CH>
-    HRESULT ReadBlobStr(cSpanX<_CH>& ret) {
+    HRESULT ReadBlobStr(cSpanX<_CH> ret) {
         const HRESULT hResRead = ReadBlob(ret);
         if (FAILED(hResRead)) return hResRead;
         const StrLen_t nSizeRead = hResRead / sizeof(_CH);
         ASSERT(nSizeRead < ret.GetSize());
-        ret.get_DataWork()[nSizeRead] = '\0';
+        ret.get_PtrWork()[nSizeRead] = '\0';
         return nSizeRead + 1;
     }
 
-    virtual HRESULT ReadPeek(cMemSpan& ret);
+    virtual HRESULT ReadPeek(cMemSpan ret) noexcept;
 };
 
 /// <summary>
@@ -372,17 +384,22 @@ struct GRAYCORE_LINK cStreamInput : public cStreamBase {
 /// </summary>
 struct GRAYCORE_LINK cStream : public cStreamInput, public cStreamOutput {
     //! Disambiguate SeekX for cStreamBase to cStreamInput for stupid compiler.
-   HRESULT SeekX(STREAM_OFFSET_t iOffset, SEEK_t eSeekOrigin = SEEK_t::_Set) noexcept override {
+    HRESULT SeekX(STREAM_OFFSET_t iOffset, SEEK_t eSeekOrigin = SEEK_t::_Set) noexcept override {
         return cStreamInput::SeekX(iOffset, eSeekOrigin);
     }
-    STREAM_POS_t GetPosition() const override {
+    STREAM_POS_t GetPosition() const noexcept override {
         return cStreamInput::GetPosition();
     }
-    STREAM_POS_t GetLength() const override {
+    STREAM_POS_t GetLength() const noexcept override {
         return cStreamInput::GetLength();
     }
-    using cStreamInput::SeekToBegin; 
-    using cStreamInput::SeekToEnd; 
+
+    void SeekToBegin() noexcept {
+        return cStreamInput::SeekToBegin();  // using cStreamInput::SeekToBegin; // doesnt work for gcc!?
+    }
+    STREAM_POS_t SeekToEnd() noexcept {
+        return cStreamInput::SeekToEnd();  // using cStreamInput::SeekToEnd; // doesnt work for gcc!?
+    }
 };
 
 /// Base class for file reader/importer/etc helper.
@@ -401,6 +418,7 @@ class GRAYCORE_LINK cStreamTransaction : public cStreamReader {
 
  protected:
     HRESULT TransactionRollback();
+
  public:
     cStreamTransaction(cStreamInput* pInp);
     ~cStreamTransaction();
@@ -448,9 +466,8 @@ class GRAYCORE_LINK cStreamNull final : public cStream, public cSingleton<cStrea
     /// <summary>
     /// Write a data block to null.
     /// </summary>
-    HRESULT WriteX(const void* pData, size_t nDataSize) override {
-        UNREFERENCED_PARAMETER(pData);
-        return CastN(HRESULT, nDataSize);
+    HRESULT WriteX(const cMemSpan& m) override {
+        return CastN(HRESULT, m.get_SizeBytes());
     }
 };
 }  // namespace Gray

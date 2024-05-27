@@ -38,7 +38,7 @@ class GRAYCORE_LINK cNonCopyable {
     inline _TYPE(const _TYPE&) IS_DELETE; \
     inline const _TYPE& operator=(const _TYPE&) IS_DELETE;
 
-    NonCopyable_IMPL(cNonCopyable);
+    NonCopyable_IMPL(cNonCopyable)
 };
 }  // namespace Gray
 #endif  // cNonCopyable

@@ -37,35 +37,47 @@ typedef FILECHAR_t** APP_ARGW_t;  /// _WIN32 really defined this as LPWSTR*
 /// @note see cWinApp/cAppImpl for my app specialization stuff.
 /// </summary>
 class GRAYCORE_LINK cAppState final : public cSingleton<cAppState> {
+    typedef cSingleton<cAppState> SUPER_t;
     SINGLETON_IMPL(cAppState);
     friend class cAppImpl;
     friend struct cAppStateMain;
     friend class cUnitTestAppState;
 
  public:
-    const cObjectSignature<> m_Sig;               /// Used to check for compatible build/compile config and alignments. (_INC_GrayCore_H, sizeof(cAppState))
+    const cObjectSignature<> _Sig;                /// Used to check for compatible build/compile config and alignments. (_INC_GrayCore_H, sizeof(cAppState))
     cThreadLocalSysT<cOSModule> m_ModuleLoading;  /// any thread is currently loading a DLL/SO? isInCInit(). use cAppStateModuleLoad
     cAppArgs m_Args;                              /// Application Command line arguments. [0] = app name.
-    cBitmask<> m_ArgsValid;                       /// Track which command line args are valid/used/executed in m_Args. assume any left over are not.
     static ::HMODULE sm_hInstance;                /// the current applications HINSTANCE handle/base address. _IMAGE_DOS_HEADER, HMODULE=HINSTANCE
 
  protected:
-    APPSTATE_t m_eAppState;  /// The main state of the application. use isInCInit() for loading DLL's.
+    APPSTATE_t m_eAppState = APPSTATE_t::_Init;  /// The main state of the application. use isInCInit() for loading DLL's.
 
-    cString m_sUserName;      /// Applications assigned login/user name. Cache/Read this just once.
-    cFilePath m_sTempDir;     /// Cache my temporary files directory path.
-    bool m_bTempDirWritable;  /// I have test written to the temp directory. its good.
+    cString m_sUserName;              /// Applications assigned login/user name. Cache/Read this just once.
+    cFilePath m_sTempDir;             /// Cache my temporary files directory path.
+    bool m_bTempDirWritable = false;  /// I have test written to the temp directory. its good.
 
  protected:
     cAppState();
-    ~cAppState() override;
 
     HRESULT CheckValidSignatureI(UINT32 nGrayCoreVer, size_t nSizeofThis) const noexcept;
 
  public:
-    static cFilePath GRAYCALL get_AppFilePath();   /// The full path+name of the current EXE/PE.
-    static cFilePath GRAYCALL get_AppFileTitle();  /// File name no Ext.
-    static cFilePath GRAYCALL get_AppFileDir();    /// Current dir the app is installed.
+    ~cAppState() override;
+
+    /// <summary>
+    /// Get The full path+name of the current EXE/PE. like _pgmptr in POSIX
+    /// </summary>
+    static cFilePath GRAYCALL get_AppFilePath();
+
+    /// <summary>
+    /// Get the title of the app EXE file. File name with No extension.
+    /// </summary>
+    static cFilePath GRAYCALL get_AppFileTitle();
+
+    /// <summary>
+    /// Get the directory the current application EXE is in.
+    /// </summary>
+    static cFilePath GRAYCALL get_AppFileDir();
 
     /// <summary>
     /// Is this the correct version of cAppState?
@@ -80,16 +92,14 @@ class GRAYCORE_LINK cAppState final : public cSingleton<cAppState> {
     /// <returns></returns>
     static HRESULT inline CheckValidSignatureX(UINT32 nGrayCoreVer, size_t nSizeofThis, const cAppState* pAppX) noexcept {
         if (nGrayCoreVer != _INC_GrayCore_H) {
-            // My *Core DLL is not the correct version or packing is incorrect!
-            return HRESULT_WIN32_C(ERROR_PRODUCT_VERSION);
+            return HRESULT_WIN32_C(ERROR_PRODUCT_VERSION);  // My *Core DLL is not the correct version or packing is incorrect!
         }
-        const cAppState* const pAppState = get_SingleU();
+        const cAppState* const pAppState = SUPER_t::get_SingleU();
         if (!cMem::IsValidApp(pAppState)) {
             return HRESULT_WIN32_C(ERROR_INTERNAL_ERROR);  // Something is wrong. No idea.
         }
         if (pAppX != nullptr && pAppX != pAppState) {
-            // Mix of GRAY_STATICLIB and DLL linkage is not allowed.
-            return HRESULT_WIN32_C(ERROR_INTERNAL_ERROR);
+            return HRESULT_WIN32_C(ERROR_INTERNAL_ERROR);  // Mix of GRAY_STATICLIB and DLL linkage is not allowed.
         }
         return pAppState->CheckValidSignatureI(nGrayCoreVer, nSizeofThis);
     }
@@ -99,7 +109,7 @@ class GRAYCORE_LINK cAppState final : public cSingleton<cAppState> {
     /// Force inline version.
     /// </summary>
     static HRESULT inline CheckValidSignatureX() noexcept {
-        return CheckValidSignatureX(_INC_GrayCore_H, sizeof(cAppState), get_SingleU());
+        return CheckValidSignatureX(_INC_GrayCore_H, sizeof(cAppState), SUPER_t::get_SingleU());
     }
 
     /// <summary>
@@ -137,17 +147,21 @@ class GRAYCORE_LINK cAppState final : public cSingleton<cAppState> {
     /// </summary>
     static bool GRAYCALL isDebuggerPresent() noexcept;
 
+    /// <summary>
+    /// Is the app being run in a remote terminal? Should we act different? 
+    /// </summary>
     static bool GRAYCALL isRemoteSession() noexcept;
+
     static void GRAYCALL SetExecutionState(bool bActiveCPU, bool bActiveGUI);
 
 #if defined(_WIN32)
     /// <summary>
-    /// Get OS Folder. from Shell32.dll
+    /// Get OS type Folder. from Shell32.dll
     /// e.g. Win XP = C:\Documents and Settings\Dennis\Application Data\X = CSIDL_APPDATA or CSIDL_LOCAL_APPDATA
     /// e.g. Win Vista = c:\Users\Dennis\Application Data\X
     /// </summary>
     /// <param name="csidl"></param>
-    /// <param name="pszPath">_MAX_PATH</param>
+    /// <param name="pszPath">cFilePath::k_MaxLen</param>
     /// <returns></returns>
     static StrLen_t GRAYCALL GetFolderPath(int csidl, FILECHAR_t* pszPath);
 #endif
@@ -186,7 +200,13 @@ class GRAYCORE_LINK cAppState final : public cSingleton<cAppState> {
 
     static UINT GRAYCALL get_LibVersion() noexcept;  /// _INC_GrayCore_H
 
-    static StrLen_t GRAYCALL GetEnvironStr(const FILECHAR_t* pszVarName, cSpanX<FILECHAR_t>& val) noexcept;
+    /// <summary>
+    /// Get a environment variable by name. e.g. %SystemRoot%
+    /// </summary>
+    /// <param name="pszVarName"></param>
+    /// <param name="ret">the output value for the pszVarName. nullptr = i just wanted the length.</param>
+    /// <returns>the length i would have needed. 0 = none.</returns>
+    static StrLen_t GRAYCALL GetEnvironStr(const FILECHAR_t* pszVarName, cSpanX<FILECHAR_t> ret) noexcept;
 
     /// <summary>
     /// Get a named environment variable.
@@ -200,7 +220,7 @@ class GRAYCORE_LINK cAppState final : public cSingleton<cAppState> {
     static bool GRAYCALL SetEnvironStr(const FILECHAR_t* pszVarName, const FILECHAR_t* pszVal) noexcept;
 
     /// Current default directory for the app. @note UNDER_CE has no such thing. just use the root.
-    static StrLen_t GRAYCALL GetCurrentDir(cSpanX<FILECHAR_t>& ret);
+    static StrLen_t GRAYCALL GetCurrentDir(cSpanX<FILECHAR_t> ret);
     /// For the process. Not applicable to WINCE
     static cFilePath GRAYCALL get_CurrentDir();
     static bool GRAYCALL SetCurrentDir(const FILECHAR_t* pszDir);
@@ -215,8 +235,6 @@ class GRAYCORE_LINK cAppState final : public cSingleton<cAppState> {
     inline cStringF GetArgEnum(ITERATE_t i) const {
         return m_Args.GetArgEnum(i);
     }
-    void SetArgValid(ITERATE_t i);
-    cStringF get_InvalidArgs() const;
 
     /// <summary>
     /// Init via Windows/WinMain() style (unparsed) arguments.
@@ -260,14 +278,17 @@ struct GRAYCORE_LINK cAppStateMain {
 /// isInCInit() will now return the correct value for DLL static init.
 /// </summary>
 struct cAppStateModuleLoad {
+    cOSModule* _Recursive = nullptr;
     cAppStateModuleLoad(cOSModule& mod) {
         cAppState& I = cAppState::I();
-        ASSERT(!I.m_ModuleLoading.GetData());
+        _Recursive = I.m_ModuleLoading.GetData();  // skip recursive loads.
+        if (_Recursive) return;
         I.m_ModuleLoading.PutData(&mod);
     }
     ~cAppStateModuleLoad() {
         cAppState& I = cAppState::I();
         ASSERT(I.m_ModuleLoading.GetData());
+        if (_Recursive) return;
         I.m_ModuleLoading.PutData(nullptr);
     }
 };
@@ -276,8 +297,10 @@ struct cAppStateModuleLoad {
 /// <summary>
 /// misbehaving libraries can call exit(). This does NOT work with abort() calls.
 /// Try to catch and block this or at least log it.
+/// @NOTE uncaught exceptions and throws in destructor can exit the application .
 /// </summary>
 class GRAYCORE_LINK cAppExitCatcher final : public cSingletonStatic<cAppExitCatcher> {
+    typedef cSingletonStatic<cAppExitCatcher> SUPER_t;
     static void __cdecl ExitCatchProc();
 
  protected:
@@ -285,7 +308,6 @@ class GRAYCORE_LINK cAppExitCatcher final : public cSingletonStatic<cAppExitCatc
 
  public:
     cAppExitCatcher();
-    ~cAppExitCatcher();
 };
 #endif
 }  // namespace Gray

@@ -45,46 +45,65 @@ class GRAYCORE_LINK cStringHeadT final : public cArrayHeadT<_TYPE_CH> {
     /// <param name="nCharCount"></param>
     /// <returns></returns>
     static THIS_t* CreateStringData(StrLen_t nCharCount) {
-        ASSERT(nCharCount >= 0);
+        ASSERT(nCharCount > 0);  // never empty.
         return Cvt(SUPER_t::CreateHead(nCharCount + 1, false));
     }
-    static THIS_t* CreateStringData2(StrLen_t nCharCount, const _TYPE_CH* pSrc) {
-        THIS_t* p = CreateStringData(nCharCount);
-        if (pSrc != nullptr) {  // init
-            StrT::Copy(p->get_Span(), pSrc);
-        }
+    static THIS_t* CreateStringSpan(const cSpan<char>& src) {
+        THIS_t* p = CreateStringData(src.get_MaxLen());
+        StrT::CopyLen<_TYPE_CH>(p->get_PtrWork(), src.get_PtrConst(), src.get_MaxLen() + 1);
         return p;
     }
 
-    inline const _TYPE_CH* get_Name() const noexcept {
-        //! supported for cArraySort. NON hash sort.
-        return get_DataConst();
-    }
+    /// <summary>
+    /// Get number of characters not including '\0';
+    /// </summary>
+    /// <returns></returns>
     inline StrLen_t get_CharCount() const noexcept {
-        return CastN(StrLen_t, get_Count()) - 1;  // remove space for '\0';
+        return CastN(StrLen_t, this->get_Count()) - 1;
     }
+    inline const _TYPE_CH* get_CPtr() const noexcept {
+        return this->get_PtrConst();
+    }
+    /// <summary>
+    /// Get span NOT including space for '\0'
+    /// </summary>
+    cSpan<_TYPE_CH> get_SpanStr() const noexcept {
+        return cSpan<_TYPE_CH>(this->get_PtrConst(), get_CharCount());
+    }
+    /// <summary>
+    /// Get span including space for '\0'
+    /// </summary>
+    cSpan<_TYPE_CH> get_SpanZ() const noexcept {
+        return cSpan<_TYPE_CH>(this->get_PtrConst(), CastN(StrLen_t, this->get_Count()));
+    }
+
     bool isValidString() const noexcept {
         const StrLen_t iLen = get_CharCount();
-        if (!IsValidInsideN(iLen * sizeof(_TYPE_CH))) return false;  // should never happen!
-        if (get_RefCount() <= 0) return false;                       // should never happen!
-        return get_Name()[iLen] == '\0';                             // terminated?
+        if (iLen == 0) return false;                                       // No valid 0 length strings!
+        if (!this->IsValidInsideN(iLen * sizeof(_TYPE_CH))) return false;  // should never happen!
+        if (this->get_RefCount() <= 0) return false;                       // should never happen!
+        return get_PtrConst()[iLen] == '\0';                               // terminated?
     }
     HASHCODE32_t get_HashCode() const noexcept {
         const StrLen_t iLen = get_CharCount();
         if (iLen <= 0) return k_HASHCODE_CLEAR;
-        if (m_HashCode == k_HASHCODE_CLEAR) {
-            // Lazy populate this mutable value. 
-            m_HashCode = StrT::GetHashCode32(get_DataConst(), iLen);
+        if (this->m_HashCode == k_HASHCODE_CLEAR) {
+            this->m_HashCode = StrT::GetHashCode32(get_SpanStr());  // Lazy populate this mutable value.
         }
-        return m_HashCode;
+        return this->m_HashCode;
     }
 
     COMPARE_t CompareNoCase(const ATOMCHAR_t* pStr) const noexcept {
-        return StrT::CmpI(get_DataConst(), pStr);
+        return StrT::CmpIN(this->get_PtrConst(), pStr, get_CharCount() + 1);
     }
     bool IsEqualNoCase(const ATOMCHAR_t* pStr) const noexcept {
         // TODO: Use HashCode for speed compares.
-        return StrT::CmpI(get_DataConst(), pStr) == COMPARE_Equal;
+        return StrT::CmpIN(this->get_PtrConst(), pStr, get_CharCount() + 1) == COMPARE_Equal;
+    }
+
+    // support for cAtomManager
+    inline const _TYPE_CH* get_Name() const noexcept {
+        return this->get_PtrConst();
     }
 };
 
@@ -101,12 +120,14 @@ class GRAYCORE_LINK cStringT {
 
  protected:
     typedef cStringHeadT<_TYPE_CH> HEAD_t;
-    _TYPE_CH* m_pchData;          /// points offset into HEAD_t/cStringHeadT[1] like cRefPtr<>. NOT a direct heap pointer!
-    static const _TYPE_CH m_Nil;  /// '\0' Use this instead of nullptr. ala MFC. also like _afxDataNil. AKA cStrConst::k_Empty ?
+    _TYPE_CH* m_pchData;  /// points offset into HEAD_t/cStringHeadT[1] like cRefPtr<>. NOT a direct heap pointer!
+
+ public:
+    static const _TYPE_CH k_Nil;  /// '\0' Use this instead of nullptr. ala MFC. also like _afxDataNil. AKA cStrConst::k_Empty ?
 
  protected:
     void Init() noexcept {
-        m_pchData = const_cast<_TYPE_CH*>(&m_Nil);
+        m_pchData = const_cast<_TYPE_CH*>(&k_Nil);
     }
     void SetEmptyValid() noexcept {
         // ASSUME NOT m_Nil. Use m_Nil for empty.
@@ -122,7 +143,16 @@ class GRAYCORE_LINK cStringT {
         DEBUG_CHECK(isValidString());
     }
 
-    void AllocBuffer(StrLen_t iStrLength);
+    /// <summary>
+    /// Dynamic allocate a buffer to hold the string. resize existing or create new.
+    /// </summary>
+    /// <typeparam name="_TYPE_CH"></typeparam>
+    /// <param name="iNewLength">length in chars not including '\0'</param>
+    void AllocBuffer(StrLen_t iNewLength);
+    /// <summary>
+    /// We are about to modify/change this. make sure we don't interfere with other refs. Make a private copy of this string.
+    /// </summary>
+    /// <typeparam name="_TYPE_CH"></typeparam>
     void CloneBeforeWrite();
 
  public:
@@ -134,7 +164,7 @@ class GRAYCORE_LINK cStringT {
 
     /// Copy string
     cStringT(const wchar_t* pwText) {
-        //! Init and convert UNICODE -> UTF8 if needed.
+        // Init and convert UNICODE -> UTF8 if needed.
         Init();
         Assign(pwText);
     }
@@ -144,7 +174,7 @@ class GRAYCORE_LINK cStringT {
         AssignSpan(src);
     }
     cStringT(const char* pszStr) {
-        //! Init and convert UNICODE is needed.
+        // Init and convert UNICODE is needed.
         Init();
         Assign(pszStr);
     }
@@ -167,11 +197,14 @@ class GRAYCORE_LINK cStringT {
         Empty();
     }
 
-    explicit cStringT(HEAD_t* pHead) {
+    explicit cStringT(HEAD_t* pHead) noexcept {
         // Assign internal data object directly. weird usage.
-        DEBUG_CHECK(pHead != nullptr);
-        pHead->IncRefCount();
-        m_pchData = pHead->get_DataWork();
+        if (pHead == nullptr) {
+            Init();
+        } else {
+            pHead->IncRefCount();
+            m_pchData = pHead->get_PtrWork();
+        }
         DEBUG_CHECK(isValidString());
     }
 
@@ -179,7 +212,13 @@ class GRAYCORE_LINK cStringT {
     /// Is this string 0 length? like MFC.
     /// </summary>
     bool IsEmpty() const noexcept {
-        return m_pchData == &m_Nil;
+        return m_pchData == &k_Nil;
+    }
+
+    bool isValidString1() const noexcept {
+        const HEAD_t* const pHead = get_Head();
+        if (pHead == nullptr) return false;  // should never happen!
+        return pHead->isValidString();
     }
 
     /// <summary>
@@ -188,9 +227,16 @@ class GRAYCORE_LINK cStringT {
     /// <returns></returns>
     bool isValidString() const noexcept {
         if (IsEmpty()) return true;
-        const HEAD_t* const pHead = get_Head();
-        if (pHead == nullptr) return false;  // should never happen!
-        return pHead->isValidString();
+        return isValidString1();
+    }
+    HASHCODE32_t get_HashCode() const noexcept {
+        if (this->IsEmpty()) return 0;
+        return this->get_Head()->get_HashCode();
+    }
+    size_t CountHeapStats(OUT ITERATE_t& iAllocCount) const {
+        //! Get data allocations for all children. does not include sizeof(*this)
+        if (this->IsEmpty()) return 0;
+        return this->get_Head()->GetHeapStatsThis(iAllocCount);
     }
 
     /// <summary>
@@ -216,7 +262,7 @@ class GRAYCORE_LINK cStringT {
     /// </summary>
     /// <returns></returns>
     StrLen_t GetLength() const noexcept {
-        if (IsEmpty()) return 0;
+        if (this->IsEmpty()) return 0;
         const HEAD_t* pHead = get_Head();
         if (pHead == nullptr) {
             DEBUG_CHECK(pHead != nullptr);
@@ -225,8 +271,30 @@ class GRAYCORE_LINK cStringT {
         return pHead->get_CharCount();
     }
 
+    /// <summary>
+    /// Get span NOT including space for '\0'
+    /// </summary>
     cSpan<_TYPE_CH> get_SpanStr() const {
-        return ToSpan(this->get_CPtr(), this->GetLength()); // NOT the '\0'
+        if (this->IsEmpty()) return {};
+        const HEAD_t* pHead = get_Head();
+        if (pHead == nullptr) {
+            DEBUG_CHECK(pHead != nullptr);
+            return {};  // should NEVER happen!
+        }
+        return pHead->get_SpanStr();
+    }
+
+    /// <summary>
+    /// Get span including space for '\0'
+    /// </summary>
+    cSpan<_TYPE_CH> get_SpanZ() const {
+        if (this->IsEmpty()) return {};
+        const HEAD_t* pHead = get_Head();
+        if (pHead == nullptr) {
+            DEBUG_CHECK(pHead != nullptr);
+            return {};  // NEVER happen!
+        }
+        return pHead->get_SpanZ();
     }
 
     /// <summary>
@@ -243,8 +311,7 @@ class GRAYCORE_LINK cStringT {
     /// AKA SetEmpty
     /// </summary>
     void Empty() noexcept {
-        if (m_pchData == nullptr)  // certain off instances where it could be nullptr. arrays
-            return;
+        if (m_pchData == nullptr) return;  // certain off instances where it could be nullptr. arrays
         if (IsEmpty()) return;
         SetEmptyValid();
     }
@@ -274,15 +341,31 @@ class GRAYCORE_LINK cStringT {
     }
 
     /// <summary>
-    /// MUST call ReleaseBuffer() after this.
+    /// Allow direct manipulation of the string buffer. like MFC GetBufferSetLength.
+    /// ASSUME MUST call ReleaseBuffer() after this.
     /// </summary>
-    /// <param name="iMinLength"></param>
-    /// <returns></returns>
+    /// <typeparam name="_TYPE_CH">char or wchar_t</typeparam>
+    /// <param name="iMinLength">not including null</param>
+    /// <returns>writable pointer</returns>
     _TYPE_CH* GetBuffer(StrLen_t iMinLength);
     cSpanX<_TYPE_CH> GetSpanWrite(StrLen_t iMinLength) {
         return ToSpan(GetBuffer(iMinLength), iMinLength);
     }
+
+    /// <summary>
+    /// Call this after using GetBuffer() (like MFC GetBufferSetLength)
+    /// Reset size to actual used size.
+    /// </summary>
+    /// <typeparam name="_TYPE_CH"></typeparam>
+    /// <param name="nNewLength">new (trimmed) count of chars, not including '\0' char at the end.</param>
     void ReleaseBuffer(StrLen_t nNewLength = k_StrLen_UNK);
+
+    /// <summary>
+    /// expose internal ref count. ASSUME NOT _Nil ?
+    /// </summary>
+    REFCOUNT_t get_RefCount() const {
+        return this->get_Head()->get_RefCount();
+    }
 
     /// <summary>
     /// Copy assignment
@@ -301,7 +384,7 @@ class GRAYCORE_LINK cStringT {
     }
 
     /// <summary>
-    /// Copy src into this string. 
+    /// Copy src into this string.
     /// </summary>
     /// <typeparam name="_TYPE_CH">max chars, not including '\0' ! NOT sizeof() or _countof() like StrT::CopyLen</typeparam>
     /// <param name="src">nullptr = just allocate and leave blank. Allow overlaps.</param>
@@ -342,6 +425,22 @@ class GRAYCORE_LINK cStringT {
         return StrT::CmpI(get_CPtr(), pszStr) == 0;
     }
 
+    bool isPrintableString() const noexcept {
+        if (IsEmpty()) return true;
+        const HEAD_t* pHead = this->get_Head();
+        const StrLen_t iLen = pHead->get_CharCount();
+        ASSERT(pHead->IsValidInsideN(iLen * sizeof(_TYPE_CH)));
+        ASSERT(pHead->get_RefCount() > 0);
+        return StrT::IsPrintable(m_pchData, iLen) && (m_pchData[iLen] == '\0');
+    }
+    bool isValidCheck() const noexcept {
+        return isValidString();
+    }
+    bool IsWhitespace() const {
+        //! Like .NET String.IsNullOrWhitespace
+        return StrT::IsWhitespace(this->get_CPtr(), this->GetLength());
+    }
+
     void MakeUpper();  // MFC like not .NET like.
     void MakeLower();
     THIS_t Left(StrLen_t nCount) const;
@@ -349,6 +448,29 @@ class GRAYCORE_LINK cStringT {
     THIS_t Mid(StrLen_t nFirst, StrLen_t nCount = cStrConst::k_LEN_MAX) const;
 
     StrLen_t Find(_TYPE_CH ch, StrLen_t nPosStart = 0) const;
+    StrLen_t FindStr(const _TYPE_CH* pSubStr) const {
+        return StrT::FindStrN(get_CPtr(), pSubStr, this->GetLength());
+    }
+    StrLen_t FindStrI(const _TYPE_CH* pSubStr) const {
+        return StrT::FindStrNI(get_CPtr(), pSubStr, this->GetLength());
+    }
+
+    bool Contains(const _TYPE_CH* pSubStr) const {
+        // Find Like .NET
+        return FindStr(pSubStr) >= 0;
+    }
+    bool ContainsI(const _TYPE_CH* pSubStr) const {
+        // Like .NET
+        return FindStrI(pSubStr) >= 0;
+    }
+    bool StartsWithI(const _TYPE_CH* pSubStr) const {
+        // Like .NET
+        return StrT::StartsWithI(get_CPtr(), pSubStr);
+    }
+    bool EndsWithI(const cSpan<_TYPE_CH>& postFix) const {
+        // Like .NET
+        return StrT::EndsWithI<_TYPE_CH>(get_SpanStr(), postFix);
+    }
 
     _TYPE_CH operator[](StrLen_t nIndex) const {  // same as GetAt
         return GetAt(nIndex);
@@ -360,10 +482,10 @@ class GRAYCORE_LINK cStringT {
         return get_CPtr();
     }
 
-    friend bool operator==(const THIS_t& str1, const _TYPE_CH* str2) THROW_DEF {
+    friend bool operator==(const THIS_t& str1, const _TYPE_CH* str2) noexcept {
         return str1.Compare(str2) == COMPARE_Equal;
     }
-    friend bool operator!=(const THIS_t& str1, const _TYPE_CH* str2) THROW_DEF {
+    friend bool operator!=(const THIS_t& str1, const _TYPE_CH* str2) noexcept {
         return str1.Compare(str2) != COMPARE_Equal;
     }
 
@@ -381,41 +503,21 @@ class GRAYCORE_LINK cStringT {
     /// </summary>
     /// <param name="nIndex"></param>
     /// <param name="pszStr"></param>
-    /// <param name="iLenCat"></param>
     /// <returns>New length.</returns>
-    StrLen_t Insert(StrLen_t nIndex, const _TYPE_CH* pszStr, StrLen_t iLenCat);
-    StrLen_t Insert(StrLen_t nIndex, const _TYPE_CH* pszStr) {
-        return Insert(nIndex, pszStr, k_StrLen_UNK);
-    }
+    StrLen_t InsertSpan(StrLen_t nIndex, const cSpan<_TYPE_CH>& src);
+
     const THIS_t& operator+=(const _TYPE_CH* psz) {  // like strcat()
-        Insert(GetLength(), psz, k_StrLen_UNK);
+        InsertSpan(GetLength(), StrT::ToSpanStr(psz));
         return *this;
     }
 
     void Assign(const THIS_t& str) {
-        if (m_pchData == str.get_CPtr())  // already same.
-            return;
+        if (m_pchData == str.get_CPtr()) return;  // already same.
         Empty();
         AssignFirst(str);
     }
     void Assign(const wchar_t* pwText);
     void Assign(const char* pszStr);
-
-    bool isPrintableString() const noexcept {
-        if (IsEmpty()) return true;
-        const HEAD_t* pHead = this->get_Head();
-        const StrLen_t iLen = pHead->get_CharCount();
-        ASSERT(pHead->IsValidInsideN(iLen * sizeof(_TYPE_CH)));
-        ASSERT(pHead->get_RefCount() > 0);
-        return StrT::IsPrintable(m_pchData, iLen) && (m_pchData[iLen] == '\0');
-    }
-    bool isValidCheck() const noexcept {
-        return isValidString();
-    }
-    bool IsWhitespace() const {
-        //! Like .NET String.IsNullOrWhitespace
-        return StrT::IsWhitespace(this->get_CPtr(), this->length());
-    }
 
     /// <summary>
     /// Read in a new string from an open binary file. No length prefix.
@@ -434,26 +536,15 @@ class GRAYCORE_LINK cStringT {
     /// <returns></returns>
     bool WriteZ(cStreamOutput& File) const;
 
-    HASHCODE32_t get_HashCode() const noexcept {
-        if (this->IsEmpty()) return 0;
-        return this->get_Head()->get_HashCode();
-    }
-    size_t CountHeapStats(OUT ITERATE_t& iAllocCount) const {
-        //! Get data allocations for all children. does not include sizeof(*this)
-        if (this->IsEmpty()) return 0;
-        return this->get_Head()->GetHeapStatsThis(iAllocCount);
-    }
-    REFCOUNT_t get_RefCount() const {
-        // expose internal ref count. ASSUME NOT _Nil ?
-        return this->get_Head()->get_RefCount();
-    }
+    /// <summary>
+    /// Make this string permanent. never removed from memory.
+    /// </summary>
     void SetStringStatic() {
-        //! Make this string permanent. never removed from memory.
-        this->get_Head()->IncRefCount();
+        this->get_Head()->IncRefCount();  // never release this ref. k_REFCOUNT_STATIC ?
     }
 
     StrLen_t SetCodePage(const wchar_t* pwText, CODEPAGE_t uCodePage = CP_UTF8);
-    StrLen_t GetCodePage(OUT cSpanX<wchar_t>& ret, CODEPAGE_t uCodePage = CP_UTF8) const;
+    StrLen_t GetCodePage(cSpanX<wchar_t> ret, CODEPAGE_t uCodePage = CP_UTF8) const;
 
     THIS_t GetTrimWhitespace() const;
 
@@ -462,23 +553,7 @@ class GRAYCORE_LINK cStringT {
     HRESULT SerializeOutput(cArchive& a) const;
     HRESULT Serialize(cArchive& a);
 
-    bool Contains(const _TYPE_CH* pSubStr) {
-        // Like .NET
-        return StrT::FindStr(get_CPtr(), pSubStr) != nullptr;
-    }
-    bool ContainsI(const _TYPE_CH* pSubStr) {
-        // Like .NET
-        return StrT::FindStrI(get_CPtr(), pSubStr) != nullptr;
-    }
-    bool StartsWithI(const _TYPE_CH* pSubStr) {
-        // Like .NET
-        return StrT::StartsWithI(get_CPtr(), pSubStr);
-    }
-    bool EndsWithI(const _TYPE_CH* pSubStr) const {
-        // Like .NET
-        return StrT::EndsWithI<_TYPE_CH>(get_CPtr(), pSubStr, this->GetLength());
-    }
-
+#ifdef USE_CRT
     //! emulate STL string operators.
     //! Is any of this needed ??
     static const int npos = -1;  // k_ITERATE_BAD. same name as STL.
@@ -505,7 +580,7 @@ class GRAYCORE_LINK cStringT {
         *this = THIS_t(ToSpan(pszStr, iLenCat));
     }
     void append(const _TYPE_CH* pszStr, StrLen_t iLenCat) {
-        this->Insert(this->GetLength(), pszStr, iLenCat);
+        this->InsertSpan(this->GetLength(), ToSpan(pszStr, iLenCat));
     }
     void push_back(_TYPE_CH ch) {
         this->Insert(this->GetLength(), ch);
@@ -523,6 +598,7 @@ class GRAYCORE_LINK cStringT {
         if (nFirst >= this->GetLength()) return cStrConst::k_Empty.GetT<_TYPE_CH>();
         return ToSpan(this->get_CPtr() + nFirst, nCount);
     }
+#endif
 
     static THIS_t _cdecl Join(const _TYPE_CH* s1, ...);
     static THIS_t _cdecl GetFormatf(const _TYPE_CH* pszFormat, ...);

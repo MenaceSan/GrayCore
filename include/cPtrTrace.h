@@ -13,6 +13,7 @@
 #include "cNonCopyable.h"
 #include "cPtrFacade.h"
 #include "cTypeInfo.h"
+#include "IUnknown.h"
 
 namespace Gray {
 typedef UINT32 REFCOUNT_t;
@@ -26,11 +27,11 @@ struct GRAYCORE_LINK cPtrTrace {
     static bool sm_bActive;  /// Turn on/off global tracing via cPtrTraceMgr. be fast.
     UINT_PTR _TraceId = 0;   /// Unique id for this trace reference. 0 = no reference
 
-    static UINT_PTR GRAYCALL TraceAttachX(const TYPEINFO_t& typeInfo, IUnknown* pIUnk, const cDebugSourceLine* src = nullptr);
+    static UINT_PTR GRAYCALL TraceAttachX(const TYPEINFO_t& typeInfo, ::IUnknown* pIUnk, const cDebugSourceLine* src = nullptr);
     static void GRAYCALL TraceUpdateX(UINT_PTR id, const cDebugSourceLine& src) noexcept;
     static void GRAYCALL TraceReleaseX(UINT_PTR id);
 
-    inline void TraceAttach(const TYPEINFO_t& typeInfo, IUnknown* pIUnk, const cDebugSourceLine* src = nullptr) {
+    inline void TraceAttach(const TYPEINFO_t& typeInfo, ::IUnknown* pIUnk, const cDebugSourceLine* src = nullptr) {
         ASSERT(_TraceId == 0);
         _TraceId = TraceAttachX(typeInfo, pIUnk, src);
     }

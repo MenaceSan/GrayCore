@@ -28,7 +28,7 @@ class cPtrFacade {
     cPtrFacade(TYPE* p = nullptr) noexcept : m_ptr(p) {}
     cPtrFacade(const THIS_t& ref) : m_ptr(ref.m_ptr) {}
     /// <summary>
-    /// move constructor.
+    /// move constructor. NOT thread safe.
     /// </summary>
     cPtrFacade(THIS_t&& rref) : m_ptr(rref.m_ptr) {
         rref.m_ptr = nullptr;
@@ -58,12 +58,16 @@ class cPtrFacade {
     }
 
  public:
+    /// <summary>
+    /// Not nullptr?
+    /// </summary>
     inline bool isValidPtr() const noexcept {
-        //! Not nullptr?
         return m_ptr != nullptr;
     }
+    /// <summary>
+    /// get pointer. nullptr is allowed.
+    /// </summary>
     inline TYPE* get_Ptr() const noexcept {
-        //! nullptr is allowed.
         return m_ptr;
     }
 
@@ -71,8 +75,10 @@ class cPtrFacade {
     inline operator TYPE*() const noexcept {
         return m_ptr;
     }
+    /// <summary>
+    /// Use pointer. nullptr is NOT allowed.
+    /// </summary>
     TYPE* operator->() const noexcept {
-        // nullptr is NOT allowed.
         DEBUG_CHECK(isValidPtr());
         return m_ptr;
     }
@@ -81,14 +87,14 @@ class cPtrFacade {
     inline bool operator!() const noexcept {
         return m_ptr == nullptr;
     }
-    inline bool operator!=(/* const*/ TYPE* p2) const noexcept {
-        return p2 != m_ptr;
-    }
     inline bool IsEqual(const TYPE* p2) const noexcept {
         return p2 == m_ptr;
     }
     inline bool operator==(/* const*/ TYPE* p2) const noexcept {
         return p2 == m_ptr;
+    }
+    inline bool operator!=(/* const*/ TYPE* p2) const noexcept {
+        return p2 != m_ptr;
     }
 
     /// <summary>
@@ -135,25 +141,17 @@ template <class T>
 struct cIterator : cPtrFacade<T> {
     typedef cPtrFacade<T> SUPER_t;
     cIterator(T* p) : SUPER_t(p) {}
+    inline void Inc() {
+        this->m_ptr++;
+    }
 
     // Prefix increment
     cIterator& operator++() {
-        m_ptr++;
+        Inc();
         return *this;
     }
-
-    // Postfix increment
-    cIterator operator++(int) {
-        cIterator tmp = *this;
-        ++(*this);
-        return tmp;
-    }
-
     friend bool operator==(const cIterator& a, const cIterator& b) {
         return a.m_ptr == b.m_ptr;
-    }
-    friend bool operator!=(const cIterator& a, const cIterator& b) {
-        return a.m_ptr != b.m_ptr;
     }
 };
 }  // namespace Gray

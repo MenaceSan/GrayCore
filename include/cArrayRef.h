@@ -16,8 +16,8 @@ namespace Gray {
 /// </summary>
 /// <typeparam name="TYPE"></typeparam>
 template <class TYPE>
-class cArrayRef : public cArrayFacade<cRefPtr<TYPE>, TYPE*> {
-    typedef cArrayFacade<cRefPtr<TYPE>, TYPE*> SUPER_t;
+class cArrayRef : public cArrayFacade<cSpanX<cRefPtr<TYPE>, TYPE*>> {
+    typedef cArrayFacade<cSpanX<cRefPtr<TYPE>, TYPE*>> SUPER_t;
 
  public:
     /// <summary>
@@ -27,7 +27,7 @@ class cArrayRef : public cArrayFacade<cRefPtr<TYPE>, TYPE*> {
     /// </summary>
     void DisposeAll() {
         ITERATE_t iSize = this->GetSize();
-        for (ITERATE_t i = iSize - 1; i >= 0; i--) { // reverse order they got added. might be faster?
+        for (ITERATE_t i = iSize - 1; i >= 0; i--) {  // reverse order they got added. might be faster?
             cRefPtr<TYPE> pObj = this->GetAt(i);
             if (pObj != nullptr) pObj->DisposeThis();
             // DisposeThis removes itself from the list?

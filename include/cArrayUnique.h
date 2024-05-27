@@ -19,6 +19,6 @@ namespace Gray {
 /// </summary>
 /// <typeparam name="TYPE"></typeparam>
 template <class TYPE>
-class cArrayUnique : public cArrayFacade<cUniquePtr<TYPE>, TYPE*> {};
+class cArrayUnique : public cArrayFacade<cSpanX<cUniquePtr<TYPE>, TYPE*>> {};
 }  // namespace Gray
 #endif

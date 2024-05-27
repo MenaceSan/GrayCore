@@ -20,7 +20,7 @@
 #endif
 
 namespace Gray {
-typedef BYTE RADIX_t;  /// Base for convert of numbers to strings. e.g. 10 base vs 16 base hex numbers.
+typedef BYTE RADIX_t;  /// Base for convert of numbers to strings. e.g. 10 base vs 16 base hex numbers. ASSUME 255 is max useful radix.
 
 #ifdef _WIN32
 typedef UINT CODEPAGE_t;  /// text code page = a limited set of characters (not UNICODE). CP_ACP=default ANSI, CP_OEMCP, CP_UTF8
@@ -39,6 +39,7 @@ enum CODEPAGE_t {
 /// </summary>
 struct GRAYCORE_LINK StrChar {  // static
 
+    // Dupe of ASCII_t
     static const char k_BEL = '\a';  /// Audible bell = 7
     static const char k_BS = '\b';   /// Backspace = 8
     static const char k_HT = '\t';   /// Horizontal tab = 9
@@ -50,7 +51,7 @@ struct GRAYCORE_LINK StrChar {  // static
     // Other C escape chars are "\'\"\?\\"
 
     static const char k_Space = ' ';  /// space = start of the visible ASCII set. 0x20 = 32
-    static const char k_ASCII = 127;  /// Max for normal ASCII characters.
+    static const char k_ASCII = 127;  /// Max for normal ASCII characters. 'DELETE' is not printable.
 
     static const RADIX_t k_uRadixMin = 2;        /// binary
     static const RADIX_t k_uRadixDef = 10;       /// base 10.
@@ -72,11 +73,16 @@ struct GRAYCORE_LINK StrChar {  // static
     }
 
     /// <summary>
-    /// printable? -gt- k_ASCII is not printable or -lt- ' '. e.g. DEL.
-    /// NOT iswprint() ? NOT IsSpaceX()
+    /// lower ASCII printable? e.g. lower than ' ' is not. k_ASCII (DEL) and above is not.
+    /// NOT iswprint() ? NOT IsSpaceX().
+    /// https://theasciicode.com.ar/
     /// </summary>
     static constexpr bool IsPrintA(wchar_t ch) noexcept {
         return ch >= k_Space && ch < k_ASCII;
+    }
+    /// Include ASCII graphics and specials.
+    static constexpr bool IsPrintA2(wchar_t ch) noexcept {
+        return IsPrintA(ch) || (ch >= 128 && ch <= 255);
     }
     static constexpr bool IsAlNum(wchar_t ch) noexcept {
         //! a-z, 0-9
@@ -164,14 +170,12 @@ struct GRAYCORE_LINK StrChar {  // static
 
     static constexpr bool IsUpper(wchar_t ch) noexcept {
         //! isupper(ch) in UNICODE
-        if (IsAscii(ch))  return IsUpperA(ch);
-         
+        if (IsAscii(ch)) return IsUpperA(ch);
         return IsUpperAXSet(ch) || IsUpperUSet(ch);
     }
     static constexpr bool IsLower(wchar_t ch) noexcept {
         //! islower(ch) in UNICODE
-        if (IsAscii(ch))  return IsLowerA(ch);
-        
+        if (IsAscii(ch)) return IsLowerA(ch);
         return IsLowerAXSet(ch) || IsLowerUSet(ch);
     }
 
@@ -190,20 +194,24 @@ struct GRAYCORE_LINK StrChar {  // static
         return IsAlphaA(ch) || ch == '_';
     }
     /// <summary>
-    /// Would this be a valid 'c' symbolic name character? might also check k_LEN_MAX_CSYM.
+    /// Would this be a valid 'c' symbolic name (SymName) character? might also check k_LEN_MAX_CSYM.
     /// like: __iscsym or __iscsymf()
     /// </summary>
     static constexpr bool IsCSym(wchar_t ch) noexcept {
         return IsAlphaA(ch) || ch == '_' || IsDigitA(ch);
     }
 
+    /// <summary>
+    /// replace std::toupper() for ASCII
+    /// </summary>
     static constexpr char ToUpperA(char ch) noexcept {
-        //! replace std::toupper() for ASCII
         if (IsLowerA(ch)) return (ch - 'a') + 'A';
         return ch;
     }
+    /// <summary>
+    /// replace std::toupper() for UNICODE
+    /// </summary>
     static constexpr wchar_t ToUpperW(wchar_t ch) noexcept {
-        //! std::toupper() for UNICODE
         if (IsAscii(ch)) {
             if (IsLowerA(ch)) return (ch - 'a') + 'A';
         } else {
@@ -212,13 +220,17 @@ struct GRAYCORE_LINK StrChar {  // static
         }
         return ch;
     }
+    /// <summary>
+    /// replace std::tolower() for ASCII // ch|0x20 sort of
+    /// </summary>
     static constexpr char ToLowerA(char ch) noexcept {
-        //! replace std::tolower() for ASCII // ch|0x20 sort of
         if (IsUpperA(ch)) return (ch - 'A') + 'a';
         return ch;
     }
+    /// <summary>
+    /// std::tolower() for UNICODE
+    /// </summary>
     static constexpr wchar_t ToLowerW(wchar_t ch) noexcept {
-        //! std::tolower() for UNICODE
         if (IsAscii(ch)) {
             if (IsUpperA(ch)) return (ch - 'A') + 'a';
         } else {
@@ -230,10 +242,19 @@ struct GRAYCORE_LINK StrChar {  // static
         return ch;
     }
 
-    template <typename TYPE>
-    static TYPE ToUpper(TYPE ch);
-    template <typename TYPE>
-    static TYPE ToLower(TYPE ch);
+    /// overloads
+    static constexpr char ToUpper(char ch) noexcept {
+        return ToUpperA(ch);
+    }
+    static constexpr wchar_t ToUpper(wchar_t ch) noexcept {
+        return ToUpperW(ch);
+    }
+    static constexpr char ToLower(char ch) noexcept {
+        return ToLowerA(ch);
+    }
+    static constexpr wchar_t ToLower(wchar_t ch) noexcept {
+        return ToLowerW(ch);
+    }
 
     /// <summary>
     /// Compare 2 characters ignoring case.
@@ -257,6 +278,8 @@ struct GRAYCORE_LINK StrChar {  // static
         return ch1 - ch2;
     }
 
+    static bool GRAYCALL IsVowel(wchar_t ch) noexcept;
+
     /// <summary>
     /// Get decimal digit value.
     /// </summary>
@@ -265,30 +288,24 @@ struct GRAYCORE_LINK StrChar {  // static
         return ch - '0';
     }
 
-    static bool GRAYCALL IsDigitF(wchar_t ch);
-    static bool GRAYCALL IsDigitX(wchar_t ch, RADIX_t uRadix = 0x10);
-    static bool GRAYCALL IsVowel(wchar_t ch);
-    static char GRAYCALL U2Hex(UINT uVal);
-    static int GRAYCALL Hex2U(wchar_t ch);
-    static char GRAYCALL U2Radix(UINT uVal, RADIX_t uRadix = 10);
-    static int GRAYCALL Radix2U(wchar_t ch, RADIX_t uRadix = 10);
-};
+    static constexpr UINT Radix2U(wchar_t ch) noexcept {
+        if (IsDigitA(ch)) return ch - '0';       // Dec2U
+        if (IsUpperA(ch)) return ch - 'A' + 10;  // -gt- RADIX_t?
+        if (IsLowerA(ch)) return ch - 'a' + 10;  // -gt- RADIX_t?
+        return k_uRadixMax + 1;                  // -gt- RADIX_t k_uRadixMax
+    }
 
-template <>
-constexpr char StrChar::ToUpper(char ch) noexcept {  // static
-    return StrChar::ToUpperA(ch);
-}
-template <>
-constexpr wchar_t StrChar::ToUpper(wchar_t ch) noexcept {  // static
-    return StrChar::ToUpperW(ch);
-}
-template <>
-constexpr char StrChar::ToLower(char ch) noexcept {  // static
-    return StrChar::ToLowerA(ch);
-}
-template <>
-constexpr wchar_t StrChar::ToLower(wchar_t ch) noexcept {  // static
-    return StrChar::ToLowerW(ch);
-}
+    /// <summary>
+    /// is float or double digit?
+    /// </summary>
+    static bool GRAYCALL IsDigitF(wchar_t ch) noexcept;
+    static bool GRAYCALL IsDigitRadix(wchar_t ch, RADIX_t uRadix = 0x10) noexcept;
+
+    static char GRAYCALL U2Radix(UINT uVal, RADIX_t uRadix = 10) noexcept;
+    static UINT GRAYCALL Radix2U(wchar_t ch, RADIX_t uRadix) noexcept;
+
+    static char GRAYCALL U2Hex(UINT uVal) noexcept;
+    static UINT GRAYCALL Hex2U(wchar_t ch) noexcept;
+};
 }  // namespace Gray
 #endif  // StrChar

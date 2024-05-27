@@ -32,7 +32,7 @@ struct GRAYCORE_LINK StrNum {                             // static
     /// @note ASSUME pszOut[k_LEN_MAX_DIGITS]
     /// </summary>
     /// <returns>the length of the string that might be a number. Hit end or first char that cant be a number.</returns>
-    static StrLen_t GRAYCALL GetNumberString(OUT char* pszOut, const wchar_t* pszInp, StrLen_t iStrMax = k_LEN_MAX_DIGITS) noexcept;
+    static StrLen_t GRAYCALL GetNumberString(cSpanX<char> ret, const wchar_t* pszInp, RADIX_t uRadix) noexcept;
 
     /// <summary>
     /// Parse a string and convert to a number.
@@ -42,18 +42,18 @@ struct GRAYCORE_LINK StrNum {                             // static
     /// </summary>
     /// <param name="pszInp"></param>
     /// <param name="ppszInpEnd">the non number digit at the end . might be '\0';</param>
-    /// <param name="nBaseRadix">Radix, 0 = default to 10 and allow the string to override this. '0x' prefix will override.</param>
+    /// <param name="nRadixBase">Radix, 0 = default to 10 and allow the string to override this. '0x' prefix will override.</param>
     /// <returns></returns>
-    static UINT64 GRAYCALL toUL(const char* pszInp, const char** ppszInpEnd = (const char**)nullptr, RADIX_t nBaseRadix = 0) noexcept;
-    static INT64 GRAYCALL toIL(const char* pszInp, const char** ppszInpEnd = (const char**)nullptr, RADIX_t nBaseRadix = 10) noexcept;
+    static UINT64 GRAYCALL toUL(const char* pszInp, const char** ppszInpEnd = (const char**)nullptr, RADIX_t nRadixBase = 0) noexcept;
+    static INT64 GRAYCALL toIL(const char* pszInp, const char** ppszInpEnd = (const char**)nullptr, RADIX_t nRadixBase = 10) noexcept;
 
-    static UINT32 GRAYCALL toU(const char* pszInp, const char** ppszInpEnd = (const char**)nullptr, RADIX_t nBaseRadix = 0) noexcept {
+    static UINT32 GRAYCALL toU(const char* pszInp, const char** ppszInpEnd = (const char**)nullptr, RADIX_t nRadixBase = 0) noexcept {
         //! Read number from string. Just cast down from 64.
-        return (UINT32)toUL(pszInp, ppszInpEnd, nBaseRadix);
+        return (UINT32)toUL(pszInp, ppszInpEnd, nRadixBase);
     }
-    static INT32 GRAYCALL toI(const char* pszInp, const char** ppszInpEnd = (const char**)nullptr, RADIX_t nBaseRadix = 10) noexcept {
+    static INT32 GRAYCALL toI(const char* pszInp, const char** ppszInpEnd = (const char**)nullptr, RADIX_t nRadixBase = 10) noexcept {
         //! Just cast down from 64.
-        return (INT32)toIL(pszInp, ppszInpEnd, nBaseRadix);
+        return (INT32)toIL(pszInp, ppszInpEnd, nRadixBase);
     }
 
     /// <summary>
@@ -66,7 +66,7 @@ struct GRAYCORE_LINK StrNum {                             // static
     /// <param name="nKUnit">1024 default</param>
     /// <param name="bSpaceBeforeUnit"></param>
     /// <returns>length of string created.</returns>
-    static StrLen_t GRAYCALL ULtoAK(UINT64 uVal, cSpanX<char>& ret, UINT nKUnit, bool bSpaceBeforeUnit = false);
+    static StrLen_t GRAYCALL ULtoAK(UINT64 uVal, cSpanX<char> ret, UINT nKUnit, bool bSpaceBeforeUnit = false);
 
     /// <summary>
     /// Internal function to format a number right justified as a string similar to sprintf("%u") padded from right.
@@ -75,27 +75,27 @@ struct GRAYCORE_LINK StrNum {                             // static
     /// <param name="uVal"></param>
     /// <param name="pszOut"></param>
     /// <param name="iStrMax">must include space for null</param>
-    /// <param name="nBaseRadix">10</param>
+    /// <param name="nRadixBase">10</param>
     /// <param name="chRadixA">'A'</param>
     /// <returns>First digit (most significant)</returns>
     template <typename TYPE>
-    static cSpan<TYPE> GRAYCALL ULtoARev(UINT64 uVal, OUT TYPE* pszOut, StrLen_t iStrMax, RADIX_t nBaseRadix = 10, char chRadixA = 'A') {
+    static cSpan<TYPE> GRAYCALL ULtoARev(UINT64 uVal, OUT TYPE* pszOut, StrLen_t iStrMax, RADIX_t nRadixBase = 10, char chRadixA = 'A') {
         ASSERT_NN(pszOut);
         ASSERT(iStrMax > 0);
-        ASSERT(nBaseRadix <= StrChar::k_uRadixMax);
-        if (nBaseRadix < StrChar::k_uRadixMin) nBaseRadix = 10;
+        ASSERT(nRadixBase <= StrChar::k_uRadixMax);
+        if (nRadixBase < StrChar::k_uRadixMin) nRadixBase = 10;
         TYPE* pEnd = pszOut + iStrMax;
         *pEnd = '\0';
-        // TODO ? Shortcut for nBaseRadix = 16 = no modulus
+        // TODO ? Shortcut for nRadixBase = 16 = no modulus
         TYPE* pDigits = pEnd;
         do {
             if (pDigits <= pszOut) break;  // Overflow ! This truncates front / high values?!
             
-            const UINT64 d = uVal % nBaseRadix;
+            const UINT64 d = uVal % nRadixBase;
             *(--pDigits) = CastN(TYPE, d + (d < 10 ? '0' : (chRadixA - 10)));  // StrChar::U2Radix
-            uVal /= nBaseRadix;
+            uVal /= nRadixBase;
         } while (uVal);  // done?
-        return ToSpan(pDigits, StrT::Diff(pEnd, pDigits));
+        return ToSpan(pDigits, cValSpan::Diff(pEnd, pDigits));
     }
 
     /// <summary>
@@ -106,9 +106,9 @@ struct GRAYCORE_LINK StrNum {                             // static
     /// <param name="nVal"></param>
     /// <param name="pszOut"></param>
     /// <param name="iStrMax">_CVTBUFSIZE = _countof(Dst) = includes room for '\0'. (just like cMem::Copy)</param>
-    /// <param name="nBaseRadix">10 default</param>
+    /// <param name="nRadixBase">10 default</param>
     /// <returns>length of the string.</returns>
-    static StrLen_t GRAYCALL ULtoA(UINT64 nVal, cSpanX<char>& ret, RADIX_t nBaseRadix = 10);
+    static StrLen_t GRAYCALL ULtoA(UINT64 nVal, cSpanX<char> ret, RADIX_t nRadixBase = 10);
 
     /// <summary>
     /// Make a string from a number. like ltoa(). upper case radix default.
@@ -116,17 +116,17 @@ struct GRAYCORE_LINK StrNum {                             // static
     /// <param name="nVal"></param>
     /// <param name="pszOut"></param>
     /// <param name="iStrMax">_countof(Dst) = includes room for '\0'. (just like cMem::Copy)</param>
-    /// <param name="nBaseRadix"></param>
+    /// <param name="nRadixBase"></param>
     /// <returns>length of the string.</returns>
-    static StrLen_t GRAYCALL ILtoA(INT64 nVal, cSpanX<char>& ret, RADIX_t nBaseRadix = 10);
+    static StrLen_t GRAYCALL ILtoA(INT64 nVal, cSpanX<char> ret, RADIX_t nRadixBase = 10);
 
-    static StrLen_t GRAYCALL UtoA(UINT32 nVal, cSpanX<char>& ret, RADIX_t nBaseRadix = 10) {
-        //! Just cast up to 64. k_LEN_MAX_DIGITS_INT
-        return ULtoA(nVal, ret, nBaseRadix);
+    static StrLen_t GRAYCALL UtoA(UINT32 nVal, cSpanX<char> ret, RADIX_t nRadixBase = 10) {
+        // cast up to 64 bits. k_LEN_MAX_DIGITS_INT
+        return ULtoA(nVal, ret, nRadixBase);
     }
-    static StrLen_t GRAYCALL ItoA(INT32 nVal, cSpanX<char>& ret, RADIX_t nBaseRadix = 10) {
-        //! Just cast up to 64. k_LEN_MAX_DIGITS_INT
-        return ILtoA(nVal, ret, nBaseRadix);
+    static StrLen_t GRAYCALL ItoA(INT32 nVal, cSpanX<char> ret, RADIX_t nRadixBase = 10) {
+        // cast up to 64 bits. k_LEN_MAX_DIGITS_INT
+        return ILtoA(nVal, ret, nRadixBase);
     }
 
     static double GRAYCALL toDouble(const char* pszInp, const char** ppszInpEnd = (const char**)nullptr);
@@ -145,15 +145,15 @@ struct GRAYCORE_LINK StrNum {                             // static
     /// <param name="chE">0=%f, -lt- 0=%g, -gt- 0=%e</param>
     /// <returns>length of the string. pszOut = 'inf' or 'NaN'</returns>
     static StrLen_t GRAYCALL DtoAG2(double dVal, OUT char* pszOut, int iDecPlacesWanted = -1, char chE = -'e');
-    static StrLen_t GRAYCALL DtoAG(double dVal, cSpanX<char>& ret, int iDecPlacesWanted = -1, char chE = -'e');
+    static StrLen_t GRAYCALL DtoAG(double dVal, cSpanX<char> ret, int iDecPlacesWanted = -1, char chE = -'e');
 
     template <typename _TYPE>
     static _TYPE inline toValue(const char* pszInp, const char** ppszInpEnd = (const char**)nullptr);
     template <typename _TYPE>
-    static StrLen_t inline ValueToA(cSpanX<char>& ret, _TYPE val);
+    static StrLen_t inline ValueToA(cSpanX<char> ret, _TYPE val);
 
     template <typename _TYPE>
-    static size_t GRAYCALL ToValArray(cSpanX<_TYPE>& ret, const char* pszInp);
+    static size_t GRAYCALL ToValArray(cSpanX<_TYPE> ret, const char* pszInp);
 };
 
 template <>
@@ -182,36 +182,36 @@ inline double StrNum::toValue<double>(const char* pszInp, const char** ppszInpEn
 }
 
 template <>
-inline StrLen_t StrNum::ValueToA<INT32>(cSpanX<char>& ret, INT32 val) {
+inline StrLen_t StrNum::ValueToA<INT32>(cSpanX<char> ret, INT32 val) {
     // assume RADIX_t = 10
     return StrNum::ILtoA(val, ret);
 }
 template <>
-inline StrLen_t StrNum::ValueToA<UINT32>(cSpanX<char>& ret, UINT32 val) {
+inline StrLen_t StrNum::ValueToA<UINT32>(cSpanX<char> ret, UINT32 val) {
     // assume RADIX_t = 10
     return StrNum::ULtoA(val, ret);
 }
 template <>
-inline StrLen_t StrNum::ValueToA<INT64>(cSpanX<char>& ret, INT64 val) {
+inline StrLen_t StrNum::ValueToA<INT64>(cSpanX<char> ret, INT64 val) {
     // assume RADIX_t = 10
     return StrNum::ILtoA(val, ret);
 }
 template <>
-inline StrLen_t StrNum::ValueToA<UINT64>(cSpanX<char>& ret, UINT64 val) {
+inline StrLen_t StrNum::ValueToA<UINT64>(cSpanX<char> ret, UINT64 val) {
     // assume RADIX_t = 10
     return StrNum::ULtoA(val, ret);
 }
 template <>
-inline StrLen_t StrNum::ValueToA<float>(cSpanX<char>& ret, float val) {
+inline StrLen_t StrNum::ValueToA<float>(cSpanX<char> ret, float val) {
     return StrNum::DtoAG(val, ret);
 }
 template <>
-inline StrLen_t StrNum::ValueToA<double>(cSpanX<char>& ret, double val) {
+inline StrLen_t StrNum::ValueToA<double>(cSpanX<char> ret, double val) {
     return StrNum::DtoAG(val, ret);
 }
 
 template <typename _TYPE>
-size_t GRAYCALL StrNum::ToValArray(cSpanX<_TYPE>& ret, const char* pszInp) {  // static
+size_t GRAYCALL StrNum::ToValArray(cSpanX<_TYPE> ret, const char* pszInp) {  // static
     // Parse string
     //! @TODO Merge with cMemSpan::ReadFromCSV
     //! Similar to StrT::ParseArray()
@@ -223,7 +223,7 @@ size_t GRAYCALL StrNum::ToValArray(cSpanX<_TYPE>& ret, const char* pszInp) {  //
         }
         const char* pszInpStart = pszInp;
         if (*pszInpStart == '\0') break;
-        ret.get_DataWork()[i++] = StrNum::toValue<_TYPE>(pszInpStart, &pszInp);
+        ret.get_PtrWork()[i++] = StrNum::toValue<_TYPE>(pszInpStart, &pszInp);
         if (pszInpStart == pszInp) break;  // must be the field terminator? ")},;". End.
 
         for (; StrChar::IsSpace(*pszInp); pszInp++) {

@@ -33,7 +33,7 @@ typedef UINT64 FILE_SIZE_t;          /// similar to STREAM_POS_t size_t
 /// cBitmask FAT, FAT32 and NTFS file attribute flags. translated to approximate __linux__ NFS
 /// </summary>
 enum class FILEATTR_t : UINT32 {
-    _None,
+    _None = 0,
     _ReadOnly = 0x0001,  /// FILE_ATTRIBUTE_READONLY. __linux__ permissions for user ?
     _Hidden = 0x0002,    /// FILE_ATTRIBUTE_HIDDEN. __linux__ starts with .
     _System = 0x0004,    /// FILE_ATTRIBUTE_SYSTEM

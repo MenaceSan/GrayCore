@@ -8,6 +8,9 @@
 #include "cLogMgr.h"
 #include "cString.h"
 
+#ifdef __linux__
+#include <assert.h>
+#endif
 #ifdef UNDER_CE
 #include <dbgapi.h>
 // WinCE doesn't seem to have a macro for assert()?
@@ -28,15 +31,15 @@ bool CALLBACK cDebugAssert::AssertCallbackDefault(const char* pszExp, const cDeb
     // if (sm_pAssertCallback == cDebugAssert::AssertCallbackDefault && !cAppState::isDebuggerPresent()) return;	// Ignore it if no debugger present ?
 
 #if defined(__linux__)
-    __assert_fail(pszExp, src.m_pszFile, src.m_uLine, "");
+    assert(1);  // __assert_fail(pszExp , src.m_pszFile, src.m_uLine, "")
 #elif defined(UNDER_CE) || !defined(_DEBUG) || !defined(_MSC_VER)
     ::DebugBreak();  // Do Int 3 - to halt all threads at point.
 #elif _MSC_VER >= 1400
-    _wassert(cStringW(pszExp), cStringW(src.m_pszFile), src.m_uLine);
+    ::_wassert(cStringW(pszExp), cStringW(src.m_pszFile), src.m_uLine);
 #elif _MSC_VER >= 1300
-    _assert(pszExp, src.m_pszFile, src.m_uLine);
+    ::_assert(pszExp, src.m_pszFile, src.m_uLine);
 #else
-    _assert((void*)pszExp, (void*)src.m_pszFile, src.m_uLine);
+    ::_assert((void*)pszExp, (void*)src.m_pszFile, src.m_uLine);
 #endif
     // if this returns at all, that means we chose to ignore the assert and continue.
     return true;
@@ -51,8 +54,7 @@ bool GRAYCALL cDebugAssert::Assert_Fail(const char* pszExp, const cDebugSourceLi
 
     if (sm_pAssertCallback != nullptr) {  // Divert the assert for testing? else just log it and keep going.
         // do normal assert stuff. OR maybe do special processing for unit tests. May not return.
-        if (!sm_pAssertCallback(pszExp, src))  // AssertCallback_t
-            return false;
+        if (!sm_pAssertCallback(pszExp, src)) return false;  // AssertCallback_t           
     }
 
     // Just log it and try to continue.
@@ -64,10 +66,11 @@ bool GRAYCALL cDebugAssert::Assert_Fail(const char* pszExp, const cDebugSourceLi
 }
 
 void GRAYCALL cDebugAssert::ThrowEx_Fail(const char* pszExp, const cDebugSourceLine src) {
-    // hidden impl for use by low level functions. This might be normal in unit tests.
+    // hidden impl for use by low level functions. This might be normal in unit tests. May be: cDebugAssert::sm_bAssertTest
     cException::ThrowEx(pszExp, src);
 }
 
+#if defined(_DEBUG) || defined(_DEBUG_FAST)
 bool GRAYCALL cDebugAssert::Debug_Fail(const char* pszExp, const cDebugSourceLine src) noexcept {
     //! A 'softer' version of assert. non-fatal checks. for use in constructors, etc.
     //! @note: always return false to indicate something failed. (for macro)
@@ -78,4 +81,6 @@ bool GRAYCALL cDebugAssert::Debug_Fail(const char* pszExp, const cDebugSourceLin
     // Sync the debug thread??
     return false;
 }
+#endif
+
 }  // namespace Gray

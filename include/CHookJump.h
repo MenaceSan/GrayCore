@@ -9,6 +9,7 @@
 
 #include "cMem.h"
 #include "cThreadLock.h"
+#include "FuncPtr.h"  // FUNCPTR_t
 
 #if USE_INTEL
 namespace Gray {
@@ -24,7 +25,7 @@ class GRAYCORE_LINK cHookJump {
 
     static const BYTE k_I_JUMP = 0xe9;                 /// X86 32 bit relative jump instruction (same on 64 bit system). NOTE: "48 ff 25" can act the same in 64 bit code. 3 byte jump prefix. or "ff 25" for 32 bit code.
     static const size_t k_LEN_J = 1;                   /// size_t of the jump instruction. 0xe9 = k_JUMP_I
-    static const size_t k_LEN_JO = 4;                  /// size_t of the relative 32 bit jump offset. NOT same as sizeof(FARPROC) or INT_PTR
+    static const size_t k_LEN_JO = 4;                  /// size_t of the relative 32 bit jump offset. NOT same as sizeof(FUNCPTR_t) or INT_PTR
     static const size_t k_LEN_A = sizeof(size_t) * 2;  /// size_t k_LEN_D page aligned to 8 or 16 (for 32 bit code or 64 bit code)
 
     friend class cHookSwapLock;
@@ -35,10 +36,10 @@ class GRAYCORE_LINK cHookJump {
     friend class cHookLock;
 
  protected:
-    FARPROC m_pFuncOrig;              /// Pointer to the original/old function. The one i will replace. Inject code here.
+    FUNCPTR_t m_pFuncOrig;            /// Pointer to the original/old function. The one i will replace. Inject code here.
     BYTE m_OldCode[k_LEN_A];          /// What was at m_pFuncOrig previously. Take more than i actually need to account for isChainable() tests.
     BYTE m_Jump[k_LEN_J + k_LEN_JO];  /// What do i want to replace m_pFuncOrig with. k_I_JUMP to pFuncNew
-    mutable cThreadLockCount m_Lock;  /// prevent multiple threads from using this at the same time.
+    mutable cThreadLockableX m_Lock;  /// prevent multiple threads from using this at the same time.
 
  protected:
     bool SwapOld() noexcept {
@@ -57,7 +58,7 @@ class GRAYCORE_LINK cHookJump {
     }
 
     HRESULT SetProtectPages(bool isProtected);
-    FARPROC GetChainFuncInt() const;
+    FUNCPTR_t GetChainFuncInt() const;
 
  public:
     cHookJump() noexcept : m_pFuncOrig(nullptr) {
@@ -81,16 +82,16 @@ class GRAYCORE_LINK cHookJump {
     }
 
     bool isChainable() const noexcept;
-    FARPROC GetChainFunc() const;
+    FUNCPTR_t GetChainFunc() const;
 
-    HRESULT InstallHook(FARPROC pFuncOrig, FARPROC pFuncNew, bool bSkipChainable = false);
+    HRESULT InstallHook(FUNCPTR_t pFuncOrig, FUNCPTR_t pFuncNew, bool bSkipChainable = false);
     void RemoveHook();
 };
 
-template <class TYPE = FARPROC>
+template <class TYPE = FUNCPTR_t>
 struct cHookJumpT : public cHookJump {
     HRESULT InstallHook(TYPE pFuncOrig, TYPE pFuncNew, bool bSkipChainable = false) {
-        return cHookJump::InstallHook((FARPROC)pFuncOrig, (FARPROC)pFuncNew, bSkipChainable);
+        return cHookJump::InstallHook((FUNCPTR_t)pFuncOrig, (FUNCPTR_t)pFuncNew, bSkipChainable);
     }
     TYPE GetChainFunc() const {
         return reinterpret_cast<TYPE>(cHookJump::GetChainFunc());
@@ -100,8 +101,8 @@ struct cHookJumpT : public cHookJump {
 /// <summary>
 /// Stack based temporary lock for cHookJump. swap original call back so it may be used inside hook.
 /// </summary>
-class GRAYCORE_LINK cHookLock : public cLockerT<cThreadLockCount> {
-    typedef cLockerT<cThreadLockCount> SUPER_t;
+class GRAYCORE_LINK cHookLock : public cLockerT<cThreadLockableX> {
+    typedef cLockerT<cThreadLockableX> SUPER_t;
 
     cHookJump& m_rJump;  /// The code we are locking for use.
     bool m_bSwapOld;     /// has Old swapped back in. Must be locked. NOT isChainable
@@ -123,11 +124,10 @@ class GRAYCORE_LINK cHookLock : public cLockerT<cThreadLockCount> {
 /// Stack based temporary lock for cHookJump. Will chain if possible (isChainable()) else swap original call back so it may be used inside hook.
 /// </summary>
 /// <typeparam name="TYPE"></typeparam>
-template <class TYPE = FARPROC>
-class cHookChain : public cHookLock {
- public:
-    TYPE m_pFuncChain;  /// chained version of m_pFuncOrig. or fallback to m_pFuncOrig.
- public:
+template <class TYPE>
+struct cHookChain : public cHookLock {
+    TYPE m_pFuncChain;  /// chained version of m_pFuncOrig. or fallback to m_pFuncOrig. like: FARPROC/FUNCPTR_t
+
     cHookChain(cHookJump& rJump) : cHookLock(rJump, !rJump.isChainable()) {
         m_pFuncChain = reinterpret_cast<TYPE>(rJump.GetChainFunc());
     }

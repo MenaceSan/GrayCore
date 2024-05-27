@@ -49,18 +49,28 @@ struct GRAYCORE_LINK cDebugAssert {               // static singleton
     static bool sm_bAssertTest;                   ///  Just testing. not a real assert.
 
     static bool CALLBACK AssertCallbackDefault(const char* pszExp, const cDebugSourceLine& src);
-
-    static bool GRAYCALL Debug_Fail(const char* pszExp, const cDebugSourceLine src) noexcept;
-    static bool GRAYCALL Assert_Fail(const char* pszExp, const cDebugSourceLine src);
     static void GRAYCALL ThrowEx_Fail(const char* pszExp, const cDebugSourceLine src);
+    static bool GRAYCALL Assert_Fail(const char* pszExp, const cDebugSourceLine src);
+#if defined(_DEBUG) || defined(_DEBUG_FAST)
+    static bool GRAYCALL Debug_Fail(const char* pszExp, const cDebugSourceLine src) noexcept;   // Should be compiled out? if ! _DEBUG
+#endif
 };
+
+#ifndef THROW_IF
+#define THROW_IF(exp)                                              \
+    if (exp) {                                                     \
+        ::Gray::cDebugAssert::ThrowEx_Fail(#exp, DEBUGSOURCELINE); \
+    }  // Show the compiler that we wont proceed.
+#endif
+
+#define ASSERTA(exp) (void)((!!(exp)) || (::Gray::cDebugAssert::Assert_Fail(#exp, DEBUGSOURCELINE), 0))  // Used for unit tests as well. Never compile this out.
 
 #if defined(_DEBUG) || defined(_DEBUG_FAST)
 // debug checks
 // Use macros so these can be compiled out.
 // overload the assert statements
 #undef ASSERT
-#define ASSERT(exp) (void)((!!(exp)) || (::Gray::cDebugAssert::Assert_Fail(#exp, DEBUGSOURCELINE), 0))
+#define ASSERT ASSERTA
 #define ASSERT_NN(p) ASSERT((p) != nullptr)  // Null check, Cant ignore this !
 
 #undef DEBUG_CHECK
@@ -84,11 +94,5 @@ struct GRAYCORE_LINK cDebugAssert {               // static singleton
 
 #endif  // ! _DEBUG
 
-#ifndef THROW_IF
-#define THROW_IF(exp)                                              \
-    if (exp) {                                                     \
-        ::Gray::cDebugAssert::ThrowEx_Fail(#exp, DEBUGSOURCELINE); \
-    }  // Show the compiler that we wont proceed.
-#endif
 }  // namespace Gray
 #endif  // _INC_cDebugAssert_H

@@ -19,7 +19,7 @@ namespace Gray {
 template <class TYPE>
 class cThreadArraySortString : protected cArraySortString<TYPE> {
  public:
-    mutable cThreadLockCount m_Lock;
+    mutable cThreadLockableX m_Lock;
 };
 }  // namespace Gray
 #endif

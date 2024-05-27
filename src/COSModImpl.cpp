@@ -3,6 +3,7 @@
 // clang-format off
 #include "pch.h"
 // clang-format on
+#include "FuncPtr.h"
 #include "cAppState.h"
 #include "cDebugAssert.h"
 #include "cLogMgr.h"
@@ -15,14 +16,13 @@ cOSModImpl::cOSModImpl(const char* pszModuleName) noexcept : m_pszModuleName(psz
     DEBUG_CHECK(!StrT::IsWhitespace(m_pszModuleName));
     OnProcessAttachTry();
 }
-cOSModImpl::~cOSModImpl() {}  // virtual
 
 bool cOSModImpl::OnProcessAttach() {  // virtual
     // DLL_PROCESS_ATTACH
     ASSERT(!m_bProcessAttached);
     m_bProcessAttached = true;
 
-    DEBUG_MSG(("%s:OnProcessAttach 0%x", LOGSTR(m_pszModuleName), (UINT)PtrCastToNum(m_hModule)));
+    DEBUG_MSG(("%s:OnProcessAttach 0%x", LOGSTR(m_pszModuleName), (UINT)CastPtrToNum(m_hModule)));
 
 #ifdef _MFC_VER
     // Extension DLL one-time initialization
@@ -44,20 +44,19 @@ bool cOSModImpl::OnProcessAttachTry() {  // private
 
 void cOSModImpl::OnProcessDetach() {  // virtual
     // DLL_PROCESS_DETACH
-    DEBUG_MSG(("%s:OnProcessDetach 0%x", LOGSTR(m_pszModuleName), (UINT)PtrCastToNum(m_hModule)));
+    DEBUG_MSG(("%s:OnProcessDetach 0%x", LOGSTR(m_pszModuleName), (UINT)CastPtrToNum(m_hModule)));
 #ifdef _MFC_VER
     ::AfxTermExtensionModule(m_AFXExt);
 #endif
     // Try to release my singletons in proper order.
-    cSingletonRegister::ReleaseModule(m_hModule);
+    cDependRegister::ReleaseModule(m_hModule);
 }
 
 #ifdef _WIN32
 bool cOSModImpl::DllMain(HINSTANCE hMod, DWORD dwReason) {  // virtual
     switch (dwReason) {
         case DLL_PROCESS_DETACH:
-            if (this == nullptr)  // i've seen this happen in release mode. VS2019. just do nothing.
-                return false;
+            if (!cMem::IsValidApp(this)) return false;  // i've seen this happen in release mode. VS2019. just do nothing.
             ASSERT(hMod == m_hModule);
             this->OnProcessDetach();
             break;

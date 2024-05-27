@@ -67,7 +67,7 @@ class GRAYCORE_LINK CATTR_PACKED cUInt64 {
     {
     }
     cUInt64(const char* pszVal, RADIX_t n = 10) {
-        SetStr(pszVal, n);
+        SetStr(StrT::ToSpanStr(pszVal), n);
     }
 
     // Test Operators
@@ -309,9 +309,9 @@ class GRAYCORE_LINK CATTR_PACKED cUInt64 {
         return *this;
     }
 
-    void BuildStr(StrBuilder<char>& ret, RADIX_t nBaseRadix = 10) const;
-    cString GetStr(RADIX_t nBaseRadix = 10) const;
-    bool SetStr(const char* pszVal, RADIX_t nBaseRadix = 10, const char** ppszEnd = (const char**)nullptr);
+    void BuildStr(StrBuilder<char>& sb, RADIX_t nRadixBase = 10) const;
+    cString GetStr(RADIX_t nRadixBase = 10) const;
+    HRESULT SetStr(const cSpan<char>& src, RADIX_t nRadixBase = 10);
 
     BIT_ENUM_t get_Highest1Bit() const;
     HRESULT SetRandomBits(BIT_ENUM_t nBits);

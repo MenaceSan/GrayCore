@@ -10,8 +10,9 @@
 #include "PtrCast.h"
 
 #ifdef __linux__
-#include <pthread.h>                                      // pthread_key_t
-typedef void(NTAPI* PFLS_CALLBACK_FUNCTION)(IN void* p);  // like FARPROC
+#include <pthread.h>  // pthread_key_t
+#define NTAPI
+typedef void (*PFLS_CALLBACK_FUNCTION)(void* p);  // like FUNCPTR_t
 
 #elif defined(_WIN32) && defined(__GNUC__)  // __GNUC__ didnt define this !
 typedef VOID(NTAPI* PFLS_CALLBACK_FUNCTION)(PVOID lpFlsData);
@@ -40,7 +41,6 @@ class cThreadLocalSys {
 
 #elif defined(__linux__)
 #define TLS_OUT_OF_INDEXES ((pthread_key_t)-1)
-#define NTAPI
     typedef pthread_key_t TYPESLOT_t;  /// from ::pthread_key_create
 #else
 #error NOOS
@@ -116,7 +116,7 @@ class cThreadLocalSys {
 };
 
 /// <summary>
-/// template typed version of cThreadLocalSys
+/// template typed version of cThreadLocalSys. Hold a pointer to T.
 /// @note if TYPE needs a destructor call then i must supply it via pDestruct.
 /// </summary>
 /// <typeparam name="TYPE"></typeparam>
@@ -127,10 +127,10 @@ struct cThreadLocalSysT : public cThreadLocalSys {
         STATIC_ASSERT(sizeof(TYPE*) <= sizeof(void*), cThreadLocalSysT);  // ?
     }
     TYPE* GetData() const noexcept {
-        return (TYPE*)SUPER_t::GetData();
+        return PtrCast<TYPE>(SUPER_t::GetData());
     }
     bool PutData(TYPE* nData) noexcept {
-        return SUPER_t::PutData((void*)nData);
+        return SUPER_t::PutData(nData);
     }
 };
 

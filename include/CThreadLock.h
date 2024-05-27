@@ -21,7 +21,7 @@
 
 namespace Gray {
 /// <summary>
-/// Base class for thread lockable object.
+/// Base class for thread lockable object. like std::Lockable, BasicLockable.
 /// ASSUME sizeof(THREADID_t) -lte- sizeof(UINT_PTR) _SIZEOF_PTR for __DECL_ALIGN.
 /// </summary>
 class GRAYCORE_LINK cThreadLockable : public cLockableBase, protected cNonCopyable {
@@ -34,9 +34,17 @@ class GRAYCORE_LINK cThreadLockable : public cLockableBase, protected cNonCopyab
         InterlockedN::Exchange(&_ThreadLockOwner, cThreadId::k_NULL);
     }
 
+    /// ASSUME i own the lock and can do this.
     inline void UnlockThread() {
         if (DecLockCount() == 0) ClearThreadLockOwner();
     }
+
+    /// <summary>
+    /// Take ownership if the lock is free or owned by the calling thread
+    /// </summary>
+    /// <param name="nWaitMS"></param>
+    /// <returns></returns>
+    bool LockThread(const THREADID_t nTid, TIMESYSD_t nWaitMS = cTimeSys::k_INF);
 
     /// <summary>
     /// i already acquired this lock. multiple ways to get here. record it. we are assumed to be thread safe now.
@@ -47,9 +55,9 @@ class GRAYCORE_LINK cThreadLockable : public cLockableBase, protected cNonCopyab
         DEBUG_CHECK(isThreadLockedByCurrent());  // may have several locks on the same thread.
     }
 
- public:
     cThreadLockable() noexcept : _ThreadLockOwner(cThreadId::k_NULL) {}
 
+ public:
     /// <summary>
     /// What thread owns this lock? cThreadId::k_NULL = not locked.
     /// </summary>
@@ -85,13 +93,6 @@ class GRAYCORE_LINK cThreadLockable : public cLockableBase, protected cNonCopyab
     }
 
     /// <summary>
-    /// Take ownership if the lock is free or owned by the calling thread
-    /// </summary>
-    /// <param name="nDelayMS"></param>
-    /// <returns></returns>
-    bool LockThread(const THREADID_t nTid, TIMESYSD_t nDelayMS = cTimeSys::k_INF);
-
-    /// <summary>
     /// Special case if a thread is hard terminated.
     /// Only clear lock if nThreadId is the current owner.
     /// </summary>
@@ -108,29 +109,29 @@ class GRAYCORE_LINK cThreadLockable : public cLockableBase, protected cNonCopyab
 /// These are fairly cheap and fast (if no collide). Slow on actual collision. (but collide assumed to be infrequent)
 /// @note reentrant, multi locks on a single thread are allowed and counted.
 /// </summary>
-struct GRAYCORE_LINK cThreadLockFast : public cThreadLockable {
+struct GRAYCORE_LINK cThreadLockableFast : public cThreadLockable {
     typedef cThreadLockable SUPER_t;
-
+    cThreadLockableFast() {}
     /// <summary>
     /// Take ownership if the lock is free or owned by the calling thread. e.g. single thread can lock multiple times.
     /// Wait forever for a collision to clear.
     /// @note don't use inline. inline version of this made bad code? _MSC_VER
     /// </summary>
-    [[nodiscard]] cLockerT<cThreadLockFast> Lock() noexcept;
-    [[nodiscard]] cLockerT<cThreadLockFast> LockTry(TIMESYSD_t nDelayMS = 0);
+    [[nodiscard]] cLockerT<cThreadLockableFast> Lock() noexcept;
+    [[nodiscard]] cLockerT<cThreadLockableFast> LockTry(TIMESYSD_t nWaitMS = 0);
 };
 
 /// <summary>
 /// system mutex. similar to std::mutex
 /// </summary>
-struct cMutex {
+struct cOSMutex {
 #ifdef _WIN32
     cOSHandle m_h;
 #else  // __linux__
-    ::pthread_mutex_t m_h;                // PTHREAD_MUTEX_INITIALIZER
-    static const ::pthread_mutex_t k_Init;  // PTHREAD_MUTEX_INITIALIZER
+    ::pthread_mutex_t m_h;  // PTHREAD_MUTEX_INITIALIZER
 
-    inline ~cMutex() noexcept {
+    cOSMutex() noexcept : m_h(PTHREAD_MUTEX_INITIALIZER) {}
+    inline ~cOSMutex() {
         ::pthread_mutex_destroy(&m_h);
     }
 #endif
@@ -145,15 +146,6 @@ struct cMutex {
 #endif
     }
 
-    // not the same as isLocked
-    bool isInit() const noexcept {
-#ifdef _WIN32
-        return m_h.isValidHandle();
-#else
-        return m_h != 0;
-#endif
-    }
-
     /// <summary>
     /// Create a new system mutex.
     /// </summary>
@@ -165,7 +157,6 @@ struct cMutex {
         return m_h.isValidHandle();
 #else  // __linux__
        // Allow this mutex to be opened multiple times in the same thread.
-        m_h = k_Init;  // same as ::pthread_mutex_init() ??
         if (bInitialOwner) return Lock();
         return true;
 #endif
@@ -179,25 +170,23 @@ struct cMutex {
 #endif
     }
 
-    bool LockTry(TIMESYSD_t nDelayMS = 0) noexcept {
+    bool LockTry(TIMESYSD_t nWaitMS = 0) noexcept {
 #ifdef _WIN32
-        return m_h.WaitForSingleObject(nDelayMS) == S_OK;
+        return m_h.WaitForSingleObject(nWaitMS) == S_OK;
 #elif defined(__USE_XOPEN2K)  // __linux__
-        cTimeSpec tSpec(nDelayMS);
+        cTimeSpec tSpec(nWaitMS);
         return ::pthread_mutex_timedlock(&m_h, &tSpec) == 0;
 #else
         // if pthread_mutex_timedlock() is not available.
-        TIMESYSD_t dwWaitTimeMS = 0;
+        TIMESYSD_t nWaitTickMS = 0;
         for (;;) {
             if (::pthread_mutex_trylock(&m_h) == 0) break;
-            if (nDelayMS <= 0) {  // EBUSY
-                return false;      // FAILED to lock
-            }
-            cThreadId::SleepCurrent(dwWaitTimeMS);  // wait for a tick.
-            if (dwWaitTimeMS == 0) {
-                dwWaitTimeMS = 1;
+            if (nWaitMS <= 0) return false;         // FAILED to lock
+            cThreadId::SleepCurrent(nWaitTickMS);  // wait for a tick.
+            if (nWaitTickMS == 0) {
+                nWaitTickMS = 1;
             } else {
-                nDelayMS--;
+                nWaitMS--;
             }
         }
         return true;
@@ -215,11 +204,12 @@ struct cMutex {
 /// _ThreadLockOwner = API wont tell me if it is locked. i have to track this myself.
 /// @note I've seen use of this in Windows Service (init?) on W10 cause app exit !? 2015
 /// </summary>
-class GRAYCORE_LINK cThreadLockMutex : public cThreadLockable {
+class GRAYCORE_LINK cThreadLockableMutex : public cThreadLockable {
     typedef cThreadLockable SUPER_t;
+    typedef cThreadLockableMutex THIS_t;
 
  protected:
-    cMutex m_Mutex;
+    cOSMutex m_Mutex;
     const bool m_bInitialOwner;  /// I also lock this myself. unlock on destruct.
 
  public:
@@ -228,16 +218,16 @@ class GRAYCORE_LINK cThreadLockMutex : public cThreadLockable {
     /// DUMMY = pretend we copied stuff??
     /// </summary>
     /// <param name="a"></param>
-    cThreadLockMutex(const cThreadLockMutex& a) noexcept : m_bInitialOwner(false) {
+    cThreadLockableMutex(const THIS_t& a) noexcept : m_bInitialOwner(false) {
         UNREFERENCED_REFERENCE(a);
         m_Mutex.InitLock();
     }
-    cThreadLockMutex(const FILECHAR_t* pszMutexName = nullptr, bool bInitialOwner = false) noexcept : m_bInitialOwner(bInitialOwner) {
+    cThreadLockableMutex(const FILECHAR_t* pszMutexName = nullptr, bool bInitialOwner = false) noexcept : m_bInitialOwner(bInitialOwner) {
         if (m_Mutex.InitLock(pszMutexName, bInitialOwner) && bInitialOwner) {
             LockThreadCurrent();
         }
     }
-    inline ~cThreadLockMutex() noexcept {
+    inline ~cThreadLockableMutex() noexcept {
         // DEBUG_CHECK( ! IsLocked());
         if (m_bInitialOwner && isLocked()) {
             this->Unlock();
@@ -249,27 +239,27 @@ class GRAYCORE_LINK cThreadLockMutex : public cThreadLockable {
         if (!m_Mutex.Lock()) return false;
         SUPER_t::LockThreadCurrent();  // may have several locks on the same thread.
         return true;
-     }
+    }
 
     /// <summary>
     /// lock this object on a thread.
     /// This will wait forever for the resource to be available!
     /// @note It should NOT wait if it is in the same thread.
     /// </summary>
-    [[nodiscard]] cLockerT<cThreadLockMutex> Lock() noexcept {
-        if (LockThreadCurrent()) return cLockerT<cThreadLockMutex>(this, true);
-        return cLockerT<cThreadLockMutex>(nullptr, false);        
+    [[nodiscard]] cLockerT<THIS_t> Lock() noexcept {
+        if (LockThreadCurrent()) return cLockerT<THIS_t>(this, true);
+        return cLockerT<THIS_t>(nullptr, false);
     }
 
     /// <summary>
     /// Try to lock the mutex. give up after a certain amount of time if it is locked by another thread.
     /// </summary>
-    /// <param name="nDelayMS">amount of time to wait. 0 = don't wait</param>
+    /// <param name="nWaitMS">amount of time to wait. 0 = don't wait</param>
     /// <returns></returns>
-    [[nodiscard]] cLockerT<cThreadLockMutex> LockTry(TIMESYSD_t nDelayMS = 0) {
-        if (!m_Mutex.LockTry(nDelayMS)) return cLockerT<cThreadLockMutex>(nullptr, false);
+    [[nodiscard]] cLockerT<THIS_t> LockTry(TIMESYSD_t nWaitMS = 0) {
+        if (!m_Mutex.LockTry(nWaitMS)) return cLockerT<THIS_t>(nullptr, false);
         SUPER_t::LockThreadCurrent();
-        return cLockerT<cThreadLockMutex>(this, true);
+        return cLockerT<THIS_t>(this, true);
     }
 
     void Unlock() noexcept {
@@ -282,14 +272,15 @@ class GRAYCORE_LINK cThreadLockMutex : public cThreadLockable {
 /// <summary>
 /// Base class for data structure that may be locked for multi threaded access.
 /// These are fairly expensive size wise but fast.
-/// Use a cheaper cThreadLockFast for normal data that wont collide often.
+/// Use a cheaper cThreadLockableFast for normal data that wont collide often.
 /// Same as MFC CComCriticalSection
 /// @note This is essentially the same as a mutex. CPU burn during collision.
 /// @note reentrant, multi locks on a single thread are allowed and counted.
 /// _ThreadLockOwner = i have to glean this info myself. not sure why the API wont give it to me.
 /// </summary>
-class GRAYCORE_LINK cThreadLockCrit : public cThreadLockable {
+class GRAYCORE_LINK cThreadLockableCrit : public cThreadLockable {
     typedef cThreadLockable SUPER_t;
+    typedef cThreadLockableCrit THIS_t;
 
  protected:
     ::CRITICAL_SECTION m_CritSection;  // RTL_CRITICAL_SECTION, more efficient than a MUTEX. but takes more memory to store.
@@ -306,14 +297,14 @@ class GRAYCORE_LINK cThreadLockCrit : public cThreadLockable {
     /// DUMMY = pretend we copied stuff.
     /// </summary>
     /// <param name="a"></param>
-    cThreadLockCrit(const cThreadLockCrit& a) {
+    cThreadLockableCrit(const THIS_t& a) {
         UNREFERENCED_REFERENCE(a);
         InitLockCrit();
     }
-    cThreadLockCrit() {
+    cThreadLockableCrit() {
         InitLockCrit();
     }
-    inline ~cThreadLockCrit() {
+    inline ~cThreadLockableCrit() {
         //! DEBUG_CHECK( ! IsLocked());
         ::DeleteCriticalSection(&m_CritSection);
     }
@@ -324,16 +315,16 @@ class GRAYCORE_LINK cThreadLockCrit : public cThreadLockable {
     /// This will wait forever for the resource to be free !
     /// @note It will NOT wait if it is in the same thread.
     /// </summary>
-    [[nodiscard]] cLockerT<cThreadLockCrit> Lock() noexcept {
+    [[nodiscard]] cLockerT<THIS_t> Lock() noexcept {
         ::EnterCriticalSection(&m_CritSection);
         LockThreadCurrent();
-        return cLockerT<cThreadLockCrit>(this, true);
+        return cLockerT<THIS_t>(this, true);
     }
-    [[nodiscard]] cLockerT<cThreadLockCrit> LockTry() {
+    [[nodiscard]] cLockerT<THIS_t> LockTry() {
         //! don't wait.
-        if (::TryEnterCriticalSection(&m_CritSection) == 0) return cLockerT<cThreadLockCrit>(nullptr, false);
+        if (::TryEnterCriticalSection(&m_CritSection) == 0) return cLockerT<THIS_t>(nullptr, false);
         LockThreadCurrent();
-        return cLockerT<cThreadLockCrit>(this, true);
+        return cLockerT<THIS_t>(this, true);
     }
     void Unlock() noexcept {
         SUPER_t::Unlock();
@@ -341,13 +332,13 @@ class GRAYCORE_LINK cThreadLockCrit : public cThreadLockable {
     }
 };
 #else
-typedef cThreadLockMutex cThreadLockCrit;  // just substitute it with Mutex if not _WIN32.
+typedef cThreadLockableMutex cThreadLockableCrit;  // just substitute it with Mutex if not _WIN32.
 #endif  // _WIN32
 
 /// <summary>
 /// Stub that does nothing. For stub out in single thread environments or debug usage.
 /// </summary>
-struct cThreadLockStub : public cLockableBase {
+struct cThreadLockableStub : public cLockableBase {
     inline THREADID_t get_ThreadLockOwner() const noexcept {
         return isLockCount() ? CastN(THREADID_t, 1) : cThreadId::k_NULL;
     }
@@ -367,9 +358,9 @@ constexpr cLockerT<T> ToLock(const T& r) noexcept {
 }
 
 #if defined(_MT) || defined(__linux__)
-typedef cThreadLockFast cThreadLockCount;
+typedef cThreadLockableFast cThreadLockableX;
 #else
-typedef cThreadLockStub cThreadLockCount;
+typedef cThreadLockableStub cThreadLockableX;
 #endif
 }  // namespace Gray
 #endif  // _INC_cThreadLock_H

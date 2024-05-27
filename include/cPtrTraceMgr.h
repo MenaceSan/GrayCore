@@ -8,6 +8,7 @@
 #pragma once
 #endif
 
+#include "IUnknown.h"
 #include "cArraySort.h"
 #include "cPtrTrace.h"
 #include "cSingleton.h"
@@ -17,23 +18,24 @@ namespace Gray {
 struct cLogProcessor;
 
 /// <summary>
-/// a shared object reference being traced.
+/// a shared object (IUnknown, cRefBase) single reference (IUnkPtr or cRefPtr) being traced.
 /// </summary>
 struct GRAYCORE_LINK cPtrTraceEntry {
+    typedef cPtrTraceEntry THIS_t;
     const TYPEINFO_t* m_TypeInfo = nullptr;  /// for __typeof(TYPEINFO_t).name() for _pIUnk
-    IUnknown* _pIUnk = nullptr;              /// Pointer to my shared object. never nullptr!
+    ::IUnknown* _pIUnk = nullptr;            /// Pointer to my shared object. never nullptr!
     UINT_PTR _TraceId = 0;                   /// Unique id for this trace reference. NEVER 0
     cDebugSourceLine m_Src;                  /// where (in code) was _pIUnk set? NOT always available!
 
  public:
-    cPtrTraceEntry() noexcept {}
-    cPtrTraceEntry(const TYPEINFO_t& typeInfo, IUnknown* pIUnk, UINT_PTR traceId, const cDebugSourceLine& src) noexcept : m_TypeInfo(&typeInfo), _pIUnk(pIUnk), _TraceId(traceId), m_Src(src) {
+    cPtrTraceEntry() noexcept {}  // temporary for array construction.
+    cPtrTraceEntry(const TYPEINFO_t& typeInfo, ::IUnknown* pIUnk, UINT_PTR traceId, const cDebugSourceLine& src) noexcept : m_TypeInfo(&typeInfo), _pIUnk(pIUnk), _TraceId(traceId), m_Src(src) {
         ASSERT_NN(pIUnk);
-        ASSERT(traceId != 0);
+        ASSERT(_TraceId != 0);
     }
-    cPtrTraceEntry(const TYPEINFO_t& typeInfo, IUnknown* pIUnk, UINT_PTR traceId) noexcept : m_TypeInfo(&typeInfo), _pIUnk(pIUnk), _TraceId(traceId) {
+    cPtrTraceEntry(const TYPEINFO_t& typeInfo, ::IUnknown* pIUnk, UINT_PTR traceId) noexcept : m_TypeInfo(&typeInfo), _pIUnk(pIUnk), _TraceId(traceId) {
         ASSERT_NN(pIUnk);
-        ASSERT(traceId != 0);
+        ASSERT(_TraceId != 0);
     }
     UINT_PTR get_HashCode() const noexcept {
         return _TraceId;
@@ -47,19 +49,19 @@ class GRAYCORE_LINK cPtrTraceMgr final : public cSingleton<cPtrTraceMgr> {
     SINGLETON_IMPL(cPtrTraceMgr);
     friend cPtrTrace;
 
-    mutable cThreadLockCount m_Lock;
+    mutable cThreadLockableX m_Lock;
     UINT_PTR _TraceIdLast = 0;
     cArraySortStructHash<cPtrTraceEntry> m_aTraces;  /// may be up-cast cPtrTrace to cIUnkBasePtr or cRefPtr
 
  protected:
     cPtrTraceMgr() noexcept : cSingleton<cPtrTraceMgr>(this, typeid(cPtrTraceMgr)) {}
-    ~cPtrTraceMgr() override {}
 
  public:
     ITERATE_t GetSize() const noexcept {
         return m_aTraces.GetSize();
     }
-    virtual int TraceDump(cLogProcessor* pLog, ITERATE_t iCountExpected);
+    int TraceDump(cLogProcessor* pLog, ITERATE_t iCountExpected) const;
+    cArrayStruct<cPtrTraceEntry> FindTraces(::IUnknown* p) const;
 };
 }  // namespace Gray
 #endif

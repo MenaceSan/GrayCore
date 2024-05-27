@@ -7,20 +7,16 @@
 
 namespace Gray {
 HRESULT cIniKeyValue::GetValInt(int* piValue) const {
-    //! get value type converted to int.
-    //! error as if using scanf("%d")
     ASSERT_NN(piValue);
-    const char* pszVal = m_sVal.c_str();
+    const char* pszVal = m_sVal.get_CPtr();
     const char* pszEnd = nullptr;
     *piValue = StrT::toI(pszVal, &pszEnd);
     if (pszEnd == nullptr || pszEnd <= pszVal) return HRESULT_WIN32_C(ERROR_DATATYPE_MISMATCH);
     return S_OK;
 }
 HRESULT cIniKeyValue::GetValDouble(double* pdValue) const {
-    //! get value type converted to double.
-    //! error as if using scanf("%lf")
     ASSERT_NN(pdValue);
-    const char* pszVal = m_sVal.c_str();
+    const char* pszVal = m_sVal.get_CPtr();
     const char* pszEnd = nullptr;
     *pdValue = StrT::toDouble(pszVal, &pszEnd);
     if (pszEnd == nullptr || pszEnd <= pszVal) return HRESULT_WIN32_C(ERROR_DATATYPE_MISMATCH);
@@ -45,7 +41,7 @@ const IniChar_t* cIniMap::GetVal(const IniChar_t* pszPropTag) const {
 HRESULT cIniMap::SetVal(const IniChar_t* pszPropTag, cStringI sValue) {
     //! will replace if existing key.
     //! @return E_INVALIDARG,  HRESULT_WIN32_C(ERROR_UNKNOWN_PROPERTY)
-    const ITERATE_t i = this->Add(cIniKeyValue(pszPropTag, sValue));
+    const ITERATE_t i = this->AddSort(cIniKeyValue(pszPropTag, sValue), 1);
     return (HRESULT)i;
 }
 
@@ -80,8 +76,8 @@ HRESULT cIniMap::PropGetEnum(PROPIDX_t ePropIdx, OUT cStringI& rsValue, OUT cStr
 void cIniMap::SetCopy(const cIniMap& rAttribs) {
     //! Copy the attributes from rAttribs to this.
     ASSERT(&rAttribs != this);
-    for (const auto e : rAttribs) {
-        this->Add(cIniKeyValue(e.m_aKey, e.m_sVal));
+    for (const cIniKeyValue& e : rAttribs) {
+        this->AddSort(cIniKeyValue(e.m_aKey, e.m_sVal), 1);
     }
 }
 

@@ -85,7 +85,7 @@ struct GRAYCORE_LINK cBits {          // static
     }
 
     /// <summary>
-    /// Test if a bit is set.
+    /// Test if a single bit is set.
     /// </summary>
     /// <typeparam name="TYPE"></typeparam>
     /// <param name="nVal"></param>
@@ -243,32 +243,32 @@ struct GRAYCORE_LINK cBits {          // static
 
 #if defined(__GNUC__)
 template <>
-inline BIT_ENUM_t cBits::Count1Bits<UINT32>(UINT32 nVal) {  // static
+inline BIT_ENUM_t cBits::Count1Bits<UINT32>(UINT32 nVal) noexcept {  // static
     return ::__builtin_popcount(nVal);
 }
 template <>
-inline BIT_ENUM_t cBits::Highest1Bit<UINT32>(UINT32 nVal) {  // static
+inline BIT_ENUM_t cBits::Highest1Bit<UINT32>(UINT32 nVal) noexcept {  // static
     if (nVal == 0) return 0;
     return 32 - __builtin_clz(nVal);  // Use intrinsic function
 }
 template <>
-inline BIT_ENUM_t cBits::Lowest1Bit<UINT32>(UINT32 nVal) {  // static
+inline BIT_ENUM_t cBits::Lowest1Bit<UINT32>(UINT32 nVal) noexcept {  // static
     if (nVal == 0) return 0;
     return __builtin_ctz(nVal);  // Use intrinsic function
 }
 
 #if defined(USE_INT64)
 template <>
-inline BIT_ENUM_t cBits::Count1Bits<UINT64>(UINT64 nVal) {  // static
+inline BIT_ENUM_t cBits::Count1Bits<UINT64>(UINT64 nVal) noexcept {  // static
     return ::__builtin_popcountll(nVal);
 }
 template <>
-inline BIT_ENUM_t cBits::Highest1Bit<UINT64>(UINT64 nVal) {  // static
+inline BIT_ENUM_t cBits::Highest1Bit<UINT64>(UINT64 nVal) noexcept {  // static
     if (nVal == 0) return 0;
     return 64 - __builtin_clzll(nVal);  // Use intrinsic function
 }
 template <>
-inline BIT_ENUM_t cBits::Lowest1Bit<UINT64>(UINT64 nVal) {  // static
+inline BIT_ENUM_t cBits::Lowest1Bit<UINT64>(UINT64 nVal) noexcept {  // static
     if (nVal == 0) return 0;
     return __builtin_ctzll(nVal);  // Use intrinsic function
 }
@@ -376,6 +376,7 @@ inline ULONG cBits::Reverse<ULONG>(ULONG nVal) noexcept {  // static
 
 /// <summary>
 /// hold a mask of max MASK_t size bits. MASK_t or BIT1_t might be an enum!
+/// like: std::bitset.
 /// </summary>
 /// <typeparam name="MASK_t"></typeparam>
 template <typename MASK_t = UINT32, typename UNDER_t = MASK_t, typename BIT1_t = BIT_ENUM_t>

@@ -16,10 +16,10 @@
 
 namespace Gray {
 cOSModImpl g_Module(GRAY_NAMES "Core");
-const va_list GRAYCORE_LINK k_va_list_empty = 0;  // For faking out the va_list. __GNUC__ doesn't allow a pointer to va_list. So use this to simulate nullptr.
+va_list GRAYCORE_LINK k_va_list_empty = {};  // For faking out the va_list. __GNUC__ doesn't allow a pointer to va_list. So use this to simulate nullptr.
 
 template class GRAYCORE_LINK cInterlockedVal<int>;  // Force implementation/instantiate for DLL/SO.
-#ifdef USE_INT64
+#if defined(USE_INT64) && !defined(__GNUC__)
 template class GRAYCORE_LINK cInterlockedVal<INT64>;  // Force implementation/instantiate for DLL/SO.
 #endif
 }  // namespace Gray

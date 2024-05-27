@@ -21,19 +21,33 @@ namespace Gray {
 /// <typeparam name="TYPE">char or wchar_t</typeparam>
 /// <param name="pszStr"></param>
 /// <returns></returns>
-template <typename TYPE>
-GRAYCORE_LINK const TYPE* GRAYCALL StrArg(const char* pszStr);
-template <typename TYPE>
-GRAYCORE_LINK const TYPE* GRAYCALL StrArg(const wchar_t* pszStr);
 
 template <typename TYPE>
-inline const TYPE* StrArg(const BYTE* pszStr) {
+GRAYCORE_LINK cSpan<TYPE> GRAYCALL StrArg2(const cSpan<char>& src) noexcept;
+template <typename TYPE>
+GRAYCORE_LINK cSpan<TYPE> GRAYCALL StrArg2(const cSpan<wchar_t>& src) noexcept;
+
+/// <summary>
+/// Get a temporary string that only lives long enough to satisfy a sprintf() argument.
+/// @note the UNICODE size is variable and <= Len(pszStr)
+/// </summary>
+template <typename TYPE>
+GRAYCORE_LINK const TYPE* GRAYCALL StrArg(const char* pszStr) noexcept;
+/// <summary>
+//! Get a temporary string that only lives long enough to satisfy a sprintf() argument.
+//! @note the UTF8 size is variable and >= Len(pwStr)
+/// </summary>
+template <typename TYPE>
+GRAYCORE_LINK const TYPE* GRAYCALL StrArg(const wchar_t* pszStr) noexcept;
+
+template <typename TYPE>
+inline const TYPE* StrArg(const BYTE* pszStr) noexcept {
     // auto convert BYTE to a char type arg. // Special use of BYTE as char by SQLCHAR
     return StrArg<TYPE>(reinterpret_cast<const char*>(pszStr));
 }
 
 template <typename TYPE>
-GRAYCORE_LINK const TYPE* GRAYCALL StrArg(TYPE ch, StrLen_t nRepeat = 1);
+GRAYCORE_LINK const TYPE* GRAYCALL StrArg(TYPE ch, StrLen_t nRepeat = 1) noexcept;
 
 template <typename TYPE>
 GRAYCORE_LINK const TYPE* GRAYCALL StrArg(INT32 iVal);
@@ -49,6 +63,20 @@ GRAYCORE_LINK const TYPE* GRAYCALL StrArg(UINT64 uVal, RADIX_t uRadix = 10);
 
 template <typename TYPE>
 GRAYCORE_LINK const TYPE* GRAYCALL StrArg(double dVal);  // , int iPlaces, bool bFormat=false
+ 
+/// <summary>
+/// inline impl of simple (NOOP) types.
+/// </summary>
+/// <param name="src"></param>
+/// <returns></returns>
+template <>
+inline cSpan<char> GRAYCALL StrArg2<char>(const cSpan<char>& src) noexcept {  // static
+    return src;
+}
+template <>
+inline cSpan<wchar_t> GRAYCALL StrArg2<wchar_t>(const cSpan<wchar_t>& src) noexcept {  // static
+    return src;
+}
 
 /// <summary>
 /// safe temporary convert arguments for sprintf("%s") type params. ONLY if needed.
@@ -61,14 +89,6 @@ template <>
 inline const char* GRAYCALL StrArg<char>(const char* pszStr) noexcept {  // static
     return pszStr;
 }
-
-/// <summary>
-/// safe temporary convert arguments for sprintf("%s") type params. ONLY if needed.
-/// for string args to _cdecl (variable ...) functions
-/// inline this because no processing is needed.
-/// </summary>
-/// <param name="pszStr"></param>
-/// <returns></returns>
 template <>
 inline const wchar_t* GRAYCALL StrArg<wchar_t>(const wchar_t* pszStr) noexcept {  // static
     return pszStr;
@@ -91,7 +111,7 @@ inline const BYTE* GRAYCALL StrArg<BYTE>(const char* pszStr) noexcept {  // stat
 
 #ifdef _NATIVE_WCHAR_T_DEFINED
 template <typename TYPE>
-inline const TYPE* StrArg(const WORD* pszStr) {
+inline const TYPE* StrArg(const WORD* pszStr) noexcept {
     // auto convert WORD to a wchar_t type arg.
     return StrArg<TYPE>(reinterpret_cast<const wchar_t*>(pszStr));
 }

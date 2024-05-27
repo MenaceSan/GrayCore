@@ -34,18 +34,18 @@ class GRAYCORE_LINK StrBuilder : protected cBlob, public ITextWriter {
 
  protected:
     inline StrLen_t get_AllocQty() const noexcept {
-        return CastN(StrLen_t, SUPER_t::get_DataSize() / sizeof(_TYPE_CH));
+        return CastN(StrLen_t, SUPER_t::get_SizeBytes() / sizeof(_TYPE_CH));
     }
 
  public:
-    inline _TYPE_CH* get_DataWork() {
-        return SUPER_t::get_DataW<_TYPE_CH>();
+    inline _TYPE_CH* get_PtrWork() {
+        return SUPER_t::GetTPtrW<_TYPE_CH>();
     }
     inline void SetTerminated() noexcept {
         // always force terminate.
         if (!isValidPtr()) return;  // just estimating.
         DEBUG_CHECK(this->IsInSize(m_nWriteIndex));
-        get_DataWork()[this->m_nWriteIndex] = '\0';
+        get_PtrWork()[this->m_nWriteIndex] = '\0';
     }
 
     /// Build with a growing heap buffer.
@@ -53,10 +53,10 @@ class GRAYCORE_LINK StrBuilder : protected cBlob, public ITextWriter {
         SetTerminated();
     }
     /// Build with a non-growing static buffer.
-    StrBuilder(const cSpanX<_TYPE_CH>& m) noexcept : SUPER_t(m, MEMTYPE_t::_Temp), m_nWriteIndex(0) {
+    StrBuilder(cSpanX<_TYPE_CH> ret) noexcept : SUPER_t(ret, MEMTYPE_t::_Temp), m_nWriteIndex(0) {
         SetTerminated();
     }
-    StrBuilder(SUPER_t& m) noexcept : SUPER_t(m), m_nWriteIndex(0) {
+    StrBuilder(SUPER_t& r) noexcept : SUPER_t(r), m_nWriteIndex(0) {
         SetTerminated();
     }
 
@@ -101,11 +101,11 @@ class GRAYCORE_LINK StrBuilder : protected cBlob, public ITextWriter {
                 }
             }
         }
-        return get_DataWork() + this->m_nWriteIndex;
+        return get_PtrWork() + this->m_nWriteIndex;
     }
 
     cSpanX<_TYPE_CH> get_SpanWrite() {
-        return ToSpan(get_DataWork() + this->m_nWriteIndex, get_WriteSpaceQty());
+        return ToSpan(get_PtrWork() + this->m_nWriteIndex, get_WriteSpaceQty());
     }
     cSpanX<_TYPE_CH> GetSpanWrite(StrLen_t iNeedCount) {
         _TYPE_CH* p = GetWritePrep(iNeedCount);  // MUST call this first to grow.
@@ -128,9 +128,6 @@ class GRAYCORE_LINK StrBuilder : protected cBlob, public ITextWriter {
         m_nWriteIndex = 0;
         SetTerminated();
     }
-    void SetTrimWhiteSpaceEnd() {
-        m_nWriteIndex = StrT::TrimWhitespaceEnd(get_DataWork(), m_nWriteIndex);
-    }
 
     /// <summary>
     /// get used/filled Length. not including '\0';
@@ -143,7 +140,7 @@ class GRAYCORE_LINK StrBuilder : protected cBlob, public ITextWriter {
     /// </summary>
     /// <returns></returns>
     inline const _TYPE_CH* get_CPtr() const noexcept {
-        return SUPER_t::get_DataC<_TYPE_CH>();
+        return SUPER_t::GetTPtrC<_TYPE_CH>();
     }
 
     /// <summary>
@@ -155,6 +152,13 @@ class GRAYCORE_LINK StrBuilder : protected cBlob, public ITextWriter {
 
     cSpan<_TYPE_CH> get_SpanStr() const noexcept {
         return ToSpan(get_CPtr(), get_Length()); // NOT the '\0'
+    }
+    cSpanX<_TYPE_CH> get_SpanEdit() noexcept {
+        return ToSpan(get_PtrWork(), get_Length());  // NOT the '\0'
+    }
+    void SetTrimWhiteSpaceEnd() {
+        m_nWriteIndex = StrT::GetWhitespaceEnd(get_SpanStr());
+        SetTerminated();
     }
 
     /// <summary>
@@ -184,18 +188,18 @@ class GRAYCORE_LINK StrBuilder : protected cBlob, public ITextWriter {
         cSpanX<_TYPE_CH> spanWrite = GetSpanWrite(iRepeat);
         const StrLen_t nLenWrite = cValT::Min(iRepeat, spanWrite.get_MaxLen());
         if (!spanWrite.isNull()) {
-            cValSpan::FillQty<_TYPE_CH>(spanWrite.get_DataWork(), nLenWrite, ch);
+            cValSpan::FillQty<_TYPE_CH>(spanWrite.get_PtrWork(), nLenWrite, ch);
         }
         AdvanceWrite(nLenWrite);
     }
 
-    void AddStrLen(const _TYPE_CH* pszStr, StrLen_t nLen) {
+    void AddSpan(const cSpan<_TYPE_CH>& span) {
         // nLen = not including space for '\0'
-        if (nLen <= 0) return;  // just add nothing.
-        cSpanX<_TYPE_CH> spanWrite = GetSpanWrite(nLen);
-        StrLen_t nLenWrite = cValT::Min(spanWrite.get_MaxLen(), nLen);
+        if (span.isEmpty()) return;  // just add nothing.
+        cSpanX<_TYPE_CH> spanWrite = GetSpanWrite(span.GetSize());
+        const StrLen_t nLenWrite = cValT::Min(spanWrite.get_MaxLen(), span.GetSize());
         if (!spanWrite.isNull()) {
-            StrT::CopyLen(spanWrite.get_DataWork(), pszStr, nLenWrite + 1);  // add 1 more for '\0'
+            StrT::CopyLen(spanWrite.get_PtrWork(), span.get_PtrConst(), nLenWrite + 1);  // add 1 more for '\0'. ASSUME GetSpanWrite() allows this.
         }
         AdvanceWrite(nLenWrite);
     }
@@ -203,21 +207,21 @@ class GRAYCORE_LINK StrBuilder : protected cBlob, public ITextWriter {
     /// AKA WriteString()
     void AddStr(const _TYPE_CH* pszStr) {
         if (pszStr == nullptr) return;
-        AddStrLen(pszStr, StrT::Len(pszStr));
+        AddSpan(StrT::ToSpanStr(pszStr));
     }
     /// Add quoted string. NOT escaped! EscSeqAddQ() ?
-    void AddStrQ(const _TYPE_CH* pszStr, STR_BLOCK_t eBlockType = STR_BLOCK_t::_QUOTE) {
+    void AddSpanQ(const cSpan<_TYPE_CH>& span, STR_BLOCK_t eBlockType = STR_BLOCK_t::_QUOTE) {
         if (eBlockType != STR_BLOCK_t::_NONE) {
             AddChar(StrT::GetBlockStart(eBlockType));
         }
-        AddStr(pszStr);
+        AddSpan(span);
         if (eBlockType != STR_BLOCK_t::_NONE) {
             AddChar(StrT::GetBlockEnd(eBlockType));
         }
     }
     void AddCrLf() {
         // AKA CRNL
-        AddStrLen(cStrConst::k_CrLf, 2);
+        AddSpan(ToSpanStr<_TYPE_CH>(cStrConst::k_CrLf));
     }
 
     /// Add a nullptr terminated list of strings. AKA Concat
@@ -235,23 +239,22 @@ class GRAYCORE_LINK StrBuilder : protected cBlob, public ITextWriter {
     /// <summary>
     /// add raw bytes as chars with no filtering.
     /// </summary>
-    void AddBytesRaw(const void* pSrc, size_t nSize) {
-        const StrLen_t nLen = CastN(StrLen_t, nSize / sizeof(_TYPE_CH));
-        AdvanceWrite(GetSpanWrite(nLen).SetCopyQty(PtrCast<_TYPE_CH>(pSrc), nLen));
+    void AddBytesRaw(const cMemSpan& data) {
+        const StrLen_t nLenSrc = CastN(StrLen_t, data.get_SizeBytes() / sizeof(_TYPE_CH));
+        AdvanceWrite(GetSpanWrite(nLenSrc).SetCopyQty(data.GetTPtrC<_TYPE_CH>(), nLenSrc));
     }
 
-    void AddBytesFiltered(const void* pSrc, size_t nSize) {
+    void AddBytesFiltered(const cMemSpan& data) {
         // Just add a string from void*. Don't assume terminated string. filter for printable characters.
-        auto spanWrite = GetSpanWrite((StrLen_t)nSize);
-        StrLen_t nLenRet = cValT::Min(spanWrite.get_MaxLen(), (StrLen_t)nSize);
-        if (!spanWrite.isNull() && pSrc != nullptr) {
-            _TYPE_CH* pWrite = spanWrite.get_DataWork();
+        const StrLen_t nLenSrc = CastN(StrLen_t, data.get_SizeBytes() / sizeof(_TYPE_CH));
+        auto spanWrite = GetSpanWrite(nLenSrc);
+        const StrLen_t nLenRet = cValT::Min(spanWrite.get_MaxLen(), nLenSrc);
+        if (!spanWrite.isNull() && !data.isNull()) {
+            _TYPE_CH* pWrite = spanWrite.get_PtrWork();
+            const BYTE* pSrc = data;
             for (StrLen_t i = 0; i < nLenRet; i++) {
-                BYTE ch = ((BYTE*)pSrc)[i];
-                if (ch < 32 || ch == 127 || (ch > 128 && ch < 160))  // strip junk chars.
-                    pWrite[i] = '?';
-                else
-                    pWrite[i] = ch;
+                const BYTE ch = pSrc[i];
+                pWrite[i] = StrChar::IsPrintA(ch) ? ch: '?'; // strip unprintable chars.
             }
         }
         AdvanceWrite(nLenRet);

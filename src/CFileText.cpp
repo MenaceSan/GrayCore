@@ -17,10 +17,13 @@
 #endif
 
 namespace Gray {
+
+#if USE_CRT
 template <>
 GRAYCORE_LINK void CloseHandleType(::FILE* p) noexcept {
-    ::fclose(p);                                   // ignored BOOL return.
+    ::fclose(p);  // ignored BOOL return.
 }
+#endif
 
 HRESULT cFileTextBase::ReadStringLineA(OUT cStringA& r) {
     char szTmp[StrT::k_LEN_Default];
@@ -61,8 +64,7 @@ const FILECHAR_t* cFileText::get_ModeCPtr() const {
         return _FN("rbS");
     }
 
-    if (!(nOpenFlags & OF_TEXT))  // OF_BINARY
-    {
+    if (!(nOpenFlags & OF_TEXT)) {  // OF_BINARY
         return isModeWrite() ? _FN("wb") : _FN("rb");
     }
 
@@ -101,9 +103,7 @@ HRESULT cFileText::OpenX(cStringF sFilePath, OF_FLAGS_t nOpenFlags) {
     m_iLineNumCur = 0;
 
     HRESULT hRes = OpenSetup(sFilePath, nOpenFlags);
-    if (FAILED(hRes)) {
-        return hRes;
-    }
+    if (FAILED(hRes)) return hRes;
 
     ASSERT(m_pStream == nullptr);
     const FILECHAR_t* pszMode = get_ModeCPtr();
@@ -192,7 +192,7 @@ FILE* cFileText::DetachFileStream() noexcept {
     return pStream;
 }
 
-STREAM_POS_t cFileText::GetPosition() const {  // virtual
+STREAM_POS_t cFileText::GetPosition() const noexcept {  // virtual
     //! override cStream
     //! @note end of line translation might be broken? ftell and fseek don't work correctly when you use it.
     //! @return -1 = error.
@@ -222,41 +222,41 @@ HRESULT cFileText::GetStreamError() const {
     return HResult::FromPOSIX(::ferror(m_pStream));
 }
 
-HRESULT cFileText::ReadX(void* pBuffer, size_t nSizeMax) noexcept {  // virtual
+HRESULT cFileText::ReadX(cMemSpan ret) noexcept {  // virtual
     //! cStream
     //! Read a block of binary data or as much as we can until end of file.
     //! @return
     //!  the number of bytes actually read.
     //!  <0 = failed. HRESULT_WIN32_C(ERROR_READ_FAULT) HRESULT_WIN32_C(ERROR_HANDLE_EOF)
-    if (pBuffer == nullptr) return E_INVALIDARG;
-    if (!isValidHandle()) return HRESULT_WIN32_C(ERROR_INVALID_TARGET_HANDLE);
 
+    if (ret.isNull()) return E_INVALIDARG;
+    if (!isValidHandle()) return HRESULT_WIN32_C(ERROR_INVALID_TARGET_HANDLE);
     if (isEOF()) return 0;  // LINUX will ASSERT if we read past end.
-    size_t uRet = ::fread(pBuffer, 1, nSizeMax, m_pStream);
+
+    const size_t uRet = ::fread(ret.get_BytePtrW(), 1, ret.get_SizeBytes(), m_pStream);
     ASSERT(uRet >= 0);
-    if (uRet > nSizeMax) {
+    if (uRet > ret.get_SizeBytes()) {
         return HResult::GetDef(GetStreamError(), HRESULT_WIN32_C(ERROR_READ_FAULT));
     }
-    // m_iLineNumCur++; // no idea.
+    // m_iLineNumCur++; // no idea how many lines.
     return CastN(HRESULT, uRet);  // size we got. 0 = end of file?
 }
 
-HRESULT cFileText::WriteX(const void* pData, size_t nDataSize) {  // virtual
+HRESULT cFileText::WriteX(const cMemSpan& m) {  // virtual
     //! cStream
     //! Write binary data to the file.
     //! all or fail.
     //! @return >0 = success else fail.
-    if (pData == nullptr) return E_INVALIDARG;
+    if (m.isNull()) return E_INVALIDARG;
 
     if (!isValidHandle()) return HRESULT_WIN32_C(ERROR_INVALID_TARGET_HANDLE);
-    size_t uRet = ::fwrite(pData, nDataSize, 1, m_pStream);
+    size_t uRet = ::fwrite(m, m.get_SizeBytes(), 1, m_pStream);
     if (uRet != 1) {
         return HResult::GetDef(GetStreamError(), HRESULT_WIN32_C(ERROR_WRITE_FAULT));
     }
 
-    m_iLineNumCur++;  // count lines ??
-
-    return CastN(HRESULT, nDataSize);
+    m_iLineNumCur++;  // count lines ?? ASSUME it was just 1 line ???
+    return CastN(HRESULT, m.get_SizeBytes());
 }
 
 HRESULT cFileText::WriteString(const char* pszStr) {  // virtual
@@ -279,7 +279,7 @@ HRESULT cFileText::WriteString(const char* pszStr) {  // virtual
 }
 
 #if 0
-	HRESULT cFileText::ReadStringLine(cSpanX<wchar_t>& ret ) { // virtual
+	HRESULT cFileText::ReadStringLine(cSpanX<wchar_t> ret ) { // virtual
 		//! override cStream
 		//! Read a single line of text. like fgets()
 		//! @return length of the string read in chars. (includes \r\n) (not including '\0')
@@ -288,7 +288,7 @@ HRESULT cFileText::WriteString(const char* pszStr) {  // virtual
 	}
 #endif
 
-HRESULT cFileText::ReadStringLine(cSpanX<char>& ret) {  // virtual
+HRESULT cFileText::ReadStringLine(cSpanX<char> ret) {  // virtual
     //! override cStream
     //! Read a line of text. like fgets().
     //! Read up until (including) newline character = \n = The newline character, if read, is included in the string.
@@ -300,23 +300,21 @@ HRESULT cFileText::ReadStringLine(cSpanX<char>& ret) {  // virtual
     if (ret.isNull()) return E_INVALIDARG;
     if (!isValidHandle()) return HRESULT_WIN32_C(ERROR_INVALID_TARGET_HANDLE);
     if (isEOF()) return 0;  // __linux__ will ASSERT if we read past end.
-     
-    char* pszRet = ::fgets(ret.get_DataWork(), ret.get_MaxLen(), m_pStream);
+
+    char* pszRet = ::fgets(ret.get_PtrWork(), ret.get_MaxLen(), m_pStream);
     if (pszRet == nullptr) {
-        if (isEOF()) {  // legit end of file
-            return 0;
-        }
+        if (isEOF()) return 0;  // legit end of file
         return HResult::GetDef(GetStreamError(), HRESULT_WIN32_C(ERROR_READ_FAULT));
     }
 
     if (m_iLineNumCur >= 0) m_iLineNumCur++;
-    return StrT::Len(ret.get_DataConst());  // Return length in chars.
+    return StrT::Len(ret.get_PtrConst());  // Return length in chars.
 }
 
 bool cFileText::put_TextPos(const cTextPos& rPos) {
     // FILE_BEGIN == SEEK_SET
     if (!rPos.isValidPos()) return false;
-    HRESULT hRes = SeekX(rPos.get_Offset(), SEEK_t::_Set);
+    const HRESULT hRes = SeekX(rPos.get_Offset(), SEEK_t::_Set);
     if (FAILED(hRes)) return false;
     m_iLineNumCur = rPos.get_LineNum();
     return true;

@@ -30,19 +30,17 @@ cTimeDouble GRAYCALL cTimeDouble::EncodeTime(short h, short m, short s, short ms
 cTimeDouble GRAYCALL cTimeDouble::EncodeDate(short wYear, short wMonth, short wDay) noexcept {  // static
     //! Encode GMT Date as days since (1899/12/30 midnight GMT) or (1900/1/1 0:0:0 GMT)
     //! same as SystemTimeToVariantTime() but more accurate for mSec
-    if (wYear <= 0 || wYear > 9999) {
-        return 0.0;  // "Invalid Year in the date";
-    }
-    if (wMonth < 1 || wMonth > 12) {
-        return 0.0;  // "Invalid month in the date";
-    }
-    int nLeapYear = cTimeUnits::IsLeapYear(wYear);
+
+    if (wYear <= 0 || wYear > 9999) return 0.0;  // "Invalid Year in the date";
+    if (wMonth < 1 || wMonth > 12) return 0.0;   // "Invalid month in the date";
+
+    const int nLeapYear = cTimeUnits::IsLeapYear(wYear);
     if (wDay < 1 || wDay > cTimeUnits::k_MonthDays[nLeapYear][wMonth - 1]) {
         return 0.0;  // "Invalid day in the date";
     }
 
-    int iYear = wYear - 1;      // 1999 format. from year 0
-    int iDays = (iYear * 365);  // add years
+    const int iYear = wYear - 1;  // 1999 format. from year 0
+    int iDays = (iYear * 365);    // add years
 
     // like cTimeUnits::GetLeapYearsSince2K
     iDays += (iYear / 4) + (iYear / 400) - (iYear / 100);  // years compensated for leaps.
@@ -66,14 +64,14 @@ void cTimeDouble::DecodeDate(OUT cTimeUnits& rTu, double dblDate) {  // static
 
     // Leap years every 4 yrs except centuries not multiples of 400.
     // Number of 400 year increments since 1/1/0
-    long n400Years = (long)(nDaysAbsolute / 146097L);
+    const long n400Years = (long)(nDaysAbsolute / 146097L);
 
     // Set nDaysAbsolute to day within 400-year block
     nDaysAbsolute %= 146097L;
 
     // -1 because first century has extra day
     // Century within 400 year block (0,1,2 or 3)
-    long n400Century = (long)((nDaysAbsolute - 1) / 36524L);
+    const long n400Century = (long)((nDaysAbsolute - 1) / 36524L);
 
     long n4Years;        // Number of 4 year increments since 1/1/0
     long n4Day;          // Day within 4 year block (0 is 1/1/yr1, 1460 is 12/31/yr4)
@@ -104,7 +102,6 @@ void cTimeDouble::DecodeDate(OUT cTimeUnits& rTu, double dblDate) {  // static
     if (bLeap4) {
         // -1 because first year has 366 days
         n4Yr = (n4Day - 1) / 365;
-
         if (n4Yr != 0) n4Day = (n4Day - 1) % 365;
     } else {
         n4Yr = n4Day / 365;
@@ -207,13 +204,13 @@ cTimeDouble GRAYCALL cTimeDouble::GetTimeNow() noexcept {  // static
 
 cTimeDouble cTimeDouble::Date() noexcept {  // static
     //! Get just whole days portion for now.
-    double dDays = GetTimeNow();
+    const double dDays = GetTimeNow();
     return double(int(dDays));
 }
 
 cTimeDouble cTimeDouble::Time() noexcept {  // static
     //! Time of day now = 0 to 1
-    double dDays = GetTimeNow();
+    const double dDays = GetTimeNow();
     return dDays - int(dDays);
 }
 
@@ -222,7 +219,7 @@ cTimeDouble cTimeDouble::Time() noexcept {  // static
 cTimeDouble GRAYCALL cTimeDouble::GetTimeFromFile(const cTimeFile& ft) noexcept {  // static
     //! cTimeFile = 64-bit 100-nanosec since January 1, 1601 GMT
     //! double = days since (midnight, 30 December 1899 GMT)
-    FILETIME_t tmp = ft.get_Val();
+    const FILETIME_t tmp = ft.get_Val();
     double dTimeDays = ((double)tmp) / (864000000000.0);  // .1uSec -> days 10M*60*60*24
     dTimeDays -= 109205;                                  // magic offset number = 109205 days = 94353120000000000
     return dTimeDays;
@@ -241,7 +238,7 @@ void cTimeDouble::InitTimeNow() {
     m_dateTime = GetTimeNow();
 }
 
-TIMEDOW_t cTimeDouble::get_DayOfWeek(void) const {
+TIMEDOW_t cTimeDouble::get_DayOfWeek() const {
     //! Sunday is 0, TIMEDOW_t
     //! MFC does (sun=1) but we don't
     const int idays = (int)m_dateTime;
@@ -271,7 +268,7 @@ HRESULT cTimeDouble::SetTimeStr(const GChar_t* pszDateTime, TZ_TYPE nTimeZone) {
     }
 
     cTimeUnits Tu;
-    HRESULT hRes = Tu.SetTimeStr(pszDateTime, nTimeZone);
+    const HRESULT hRes = Tu.SetTimeStr(pszDateTime, nTimeZone);
     if (hRes <= 0) {
         m_dateTime = 0;
         return 0;
@@ -301,17 +298,12 @@ cString GRAYCALL cTimeDouble::GetTimeSpanStr(double dDays, TIMEUNIT_t eUnitHigh,
     //! iUnitHigh = 0 = days.
     //! @todo MERGE THIS WITH cTimeUnits::GetTimeSpanStr version?!
 
-    if (dDays <= 0) {
-        return bShortText ? _GT("0s") : _GT("0 seconds");
-    }
-    if (iUnitsDesired < 1) {
-        iUnitsDesired = 1;  // must have at least 1.
-    }
+    if (dDays <= 0) return bShortText ? _GT("0s") : _GT("0 seconds");
+    if (iUnitsDesired < 1) iUnitsDesired = 1;  // must have at least 1.
 
-    const int kUnitMax = _countof(cTimeUnits::k_Units) - 1;  // Skip TIMEUNIT_TZ of course.
+    static constexpr int kUnitMax = _countof(cTimeUnits::k_Units) - 1;  // Skip TIMEUNIT_TZ of course.
     if (IS_INDEX_BAD(eUnitHigh, kUnitMax)) {
-        // Just take a default.
-        eUnitHigh = TIMEUNIT_t::_Day;  // days is highest unit by default.
+        eUnitHigh = TIMEUNIT_t::_Day;  // days is highest unit by default. // Just take a default.
     }
 
     int iUnitsPrinted = 0;
@@ -319,7 +311,7 @@ cString GRAYCALL cTimeDouble::GetTimeSpanStr(double dDays, TIMEUNIT_t eUnitHigh,
     StrBuilder<GChar_t> sb(TOSPAN(szMsg));
 
     bool bMostSignificantFound = false;
-    UINT i = (UINT)eUnitHigh;
+    UINT i = CastN(UINT, eUnitHigh);
     for (; i < kUnitMax - 1; i++) {
         const double dUnits = cTimeUnits::k_Units[i].m_dUnitDays;
         if (!bMostSignificantFound) {

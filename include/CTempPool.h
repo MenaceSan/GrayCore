@@ -17,7 +17,7 @@ namespace Gray {
 class GRAYCORE_LINK cTempPool1 {
     static const int k_nBlocksMax = 16;  /// Assume nested functions won't use more than m_aBlocks in a single thread. (e.g. This is the max number of args on a single sprintf)
     int m_nBlockCur;                     /// rotate this count to re-use buffers in m_aBlocks.
-    cArray<cBlob> m_aBlocks;  /// Temporary blocks to be used on a single thread.
+    cArrayStruct<cBlob> m_aBlocks;       /// Temporary blocks to be used on a single thread.
 
  public:
     cTempPool1() noexcept : m_nBlockCur(0) {}
@@ -38,12 +38,12 @@ class GRAYCORE_LINK cTempPool1 {
         return cSpanX<TYPE>(GetMemSpan((nLenNeed + 1) * sizeof(TYPE)));
     }
     template <typename TYPE>
-    TYPE* GetT(const cSpanX<TYPE>& src) {
+    TYPE* GetT(const cSpan<TYPE>& src) {
         if (src.isEmpty()) return nullptr;
         cSpanX<TYPE> dst = GetSpan<TYPE>(src.get_MaxLen());
         dst.SetCopySpan(src);
-        dst.get_DataWork()[src.get_MaxLen()] = '\0';
-        return dst.get_DataWork();
+        dst.get_PtrWork()[src.get_MaxLen()] = '\0';
+        return dst.get_PtrWork();
     }
 };
 
@@ -83,7 +83,7 @@ class GRAYCORE_LINK cTempPool {
     /// <param name="src">will add a space for '\0'</param>
     /// <returns></returns>
     template <typename TYPE>
-    static TYPE* GRAYCALL GetT(const cSpanX<TYPE>& src) {
+    static TYPE* GRAYCALL GetT(const cSpan<TYPE>& src) {
         return GetTempPool()->GetT<TYPE>(src);
     }
 };

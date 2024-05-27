@@ -28,11 +28,11 @@ class GRAYCORE_LINK cObjectService final : public cSingleton<cObjectService> {
 
  protected:
     cObjectService() noexcept : cSingleton<cObjectService>(this, typeid(cObjectService)) {}
+    void ReleaseModuleChildren(::HMODULE hMod) override;
 
  public:
     bool RegisterFactory(cObjectFactory& factory) noexcept;
     bool RemoveFactory(cObjectFactory& factory) noexcept;
-    void ReleaseModuleChildren(::HMODULE hMod) override;
 
     static cObject* GRAYCALL CreateObject(const ATOMCHAR_t* pszTypeName);
     static cObject* GRAYCALL CreateObject(const TYPEINFO_t& type);

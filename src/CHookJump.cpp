@@ -5,6 +5,7 @@
 // clang-format on
 #include "cHookJump.h"
 #include "cLogMgr.h"
+#include "cTypeInfo.h"
 
 #if USE_INTEL
 
@@ -13,6 +14,7 @@
 #endif
 
 namespace Gray {
+
 bool cHookJump::isChainable() const noexcept {
     // The k_I_JUMP i inserted is just on top of another k_I_JUMP? Normal fixup jump table.
     // I don't need to lock and swap to call the old code. I can just chain jump to it
@@ -29,7 +31,7 @@ bool cHookJump::isChainable() const noexcept {
     return b0 == k_I_JUMP;  // the old code was just a jump as well.
 }
 
-FARPROC cHookJump::GetChainFuncInt() const {
+FUNCPTR_t cHookJump::GetChainFuncInt() const {
     // Get an chain callable function from this JMP. NOT relative address.
     // ASSUME isChainable()
 
@@ -37,28 +39,30 @@ FARPROC cHookJump::GetChainFuncInt() const {
     STATIC_ASSERT(sizeof(lRelAddr) == k_LEN_JO, lRelAddr);
     const BYTE b0 = m_OldCode[0];
 
+    STATIC_ASSERT(sizeof(m_pFuncOrig) == sizeof(void*), "m_pFuncOrig");
+
     // for k_I_JUMP
     if (b0 == k_I_JUMP) {
         cMem::Copy(&lRelAddr, m_OldCode + k_LEN_J, sizeof(lRelAddr));
-        return (FARPROC)(PtrCastToNum(m_pFuncOrig) + lRelAddr + k_LEN_J + k_LEN_JO);
+        return CastFPtrTo<FUNCPTR_t>(CastFPtrTo<UINT_PTR>(m_pFuncOrig) + lRelAddr + k_LEN_J + k_LEN_JO);
     }
 
     if (b0 == k_I_JUMP2 && m_OldCode[1] == 0x25) {
         cMem::Copy(&lRelAddr, m_OldCode + 2, sizeof(lRelAddr));
-        return *((FARPROC*)(PtrCastToNum(m_pFuncOrig) + lRelAddr + 2 + k_LEN_JO));
+        return *(CastFPtrTo<FUNCPTR_t*>(CastFPtrTo<UINT_PTR>(m_pFuncOrig) + lRelAddr + 2 + k_LEN_JO));
     }
 
     if (b0 == k_I_JUMP3 && m_OldCode[1] == k_I_JUMP2 && m_OldCode[2] == 0x25) {
         cMem::Copy(&lRelAddr, m_OldCode + 3, sizeof(lRelAddr));
-        return *((FARPROC*)(PtrCastToNum(m_pFuncOrig) + lRelAddr + 3 + k_LEN_JO));
+        return *(CastFPtrTo<FUNCPTR_t*>(CastFPtrTo<UINT_PTR>(m_pFuncOrig) + lRelAddr + 3 + k_LEN_JO));
     }
 
     return nullptr;
 }
 
-FARPROC cHookJump::GetChainFunc() const {
+FUNCPTR_t cHookJump::GetChainFunc() const {
     // Get a callable function from this.
-    FARPROC p = GetChainFuncInt();
+    FUNCPTR_t p = GetChainFuncInt();
     if (p == nullptr) return m_pFuncOrig;  // assume it is swapped back in.
     return p;
 }
@@ -67,16 +71,16 @@ HRESULT cHookJump::SetProtectPages(bool isProtected) {
     //! Set/Remove code protection. so i can read/write to code space.
     //! ASSUME locked m_Lock.
 #ifdef _WIN32
-    return cMemPageMgr::I().ProtectPages((void*)m_pFuncOrig, k_LEN_A, isProtected);
+    return cMemPageMgr::I().ProtectPages(cMemSpan(m_pFuncOrig, k_LEN_A), isProtected);
 #else
     return S_OK;
 #endif
 }
 
-HRESULT cHookJump::InstallHook(FARPROC pFuncOrig, FARPROC pFuncNew, bool bSkipChainable) {
+HRESULT cHookJump::InstallHook(FUNCPTR_t pFuncOrig, FUNCPTR_t pFuncNew, bool bSkipChainable) {
     //! Install my hook jump.
     //! @note X86 ONLY!! 32 or 64 bit.
-    //! bSkipChainable = if chainable code exists, we should skip over it. because we assume other callers might do this too.
+    //! bSkipChainable = if chain-able code exists, we should skip over it. because we assume other callers might do this too.
     //! @todo i could insert a value in an address table if the jump uses that format ? jmp [XXX]
 
     const auto guard(m_Lock.Lock());
@@ -91,21 +95,21 @@ HRESULT cHookJump::InstallHook(FARPROC pFuncOrig, FARPROC pFuncNew, bool bSkipCh
         return S_FALSE;
     }
 
-    // DEBUG_TRACE(("InstallHook: pFuncOrig = %08x, pFuncNew = %08x", PtrCastToNum(pFuncOrig), PtrCastToNum(pFuncNew) ));
+    // DEBUG_TRACE(("InstallHook: pFuncOrig = %08x, pFuncNew = %08x", CastFPtrTo<UINT_PTR>(pFuncOrig), CastFPtrTo<UINT_PTR>(pFuncNew) ));
     m_pFuncOrig = pFuncOrig;
     SetProtectPages(false);
     cMem::Copy(m_OldCode, (void*)pFuncOrig, sizeof(m_OldCode));  // save old code.
 
     if (bSkipChainable && isChainable()) {
-        // just skip chainable code til we reach non chainable code. assume its not a loop.
+        // just skip chain-able code until we reach non chain-able code. assume its not a loop.
         SetProtectPages(true);
         return cHookJump::InstallHook(GetChainFuncInt(), pFuncNew, true);
     }
 
-    const INT_PTR lRelPtr = (PtrCastToNum(pFuncNew) - PtrCastToNum(pFuncOrig)) - sizeof(m_Jump);
+    const INT_PTR lRelPtr = (CastFPtrTo<UINT_PTR>(pFuncNew) - CastFPtrTo<UINT_PTR>(pFuncOrig)) - sizeof(m_Jump);
 #ifdef USE_64BIT
     // Possible problem with 64 bit system. // assume this does not overflow 32 bits !!!NT_PTR
-    if (lRelPtr < _I32_MIN || lRelPtr > _I32_MAX) {
+    if (lRelPtr <= cTypeLimit<INT32>::Min() || lRelPtr >= cTypeLimit<INT32>::Max()) {
         // The normal way to make 64 bit jumps is to put value in memory and then do like: jmp qword ptr [7FFF77CF3428h]   (6 bytes =? ff 25 f2 2c 06 00 )
         SetProtectPages(true);
         DEBUG_ERR(("InstallHook: 64 bit overflow."));

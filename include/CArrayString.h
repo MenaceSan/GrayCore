@@ -14,9 +14,9 @@ namespace Gray {
 /// </summary>
 /// <typeparam name="_TYPE_CH"></typeparam>
 template <typename _TYPE_CH = TCHAR>
-struct GRAYCORE_LINK cArrayString : public cArray<cStringT<_TYPE_CH>, const _TYPE_CH*> {
+struct GRAYCORE_LINK cArrayString : public cArrayImpl<cSpanX<cStringT<_TYPE_CH>, const _TYPE_CH*>> {
     typedef cStringT<_TYPE_CH> STR_t;
-    typedef cArray<cStringT<_TYPE_CH>, const _TYPE_CH*> SUPER_t;
+    typedef cArrayImpl<cSpanX<cStringT<_TYPE_CH>, const _TYPE_CH*>> SUPER_t;
     typedef cArrayString<_TYPE_CH> THIS_t;
 
     static const ITERATE_t k_MaxDefault = 32;          /// default max for AddUniqueMax.
@@ -26,17 +26,15 @@ struct GRAYCORE_LINK cArrayString : public cArray<cStringT<_TYPE_CH>, const _TYP
     cArrayString(const _TYPE_CH** ppStr, ITERATE_t iCount) {
         SetCPtrs(ppStr, iCount);
     }
-    explicit cArrayString(const cArrayString& a) {
-        this->SetCopy(a);
-    }
-    cArrayString(THIS_t&& ref) noexcept : SUPER_t(ref) {
-        //! move constructor.
-    }
-
-    inline ~cArrayString() {}
-
+    cArrayString(const THIS_t& a) : SUPER_t(a) {}
+    // cArrayString(THIS_t&& ref) noexcept : SUPER_t(ref) {} // move constructor.
+ 
+    /// <summary>
+    /// find the (whole) string in the unsorted array of strings. Case Ignored.
+    /// </summary>
+    /// <param name="pszFind"></param>
+    /// <returns></returns>
     ITERATE_t FindCmpI(const _TYPE_CH* pszFind) const {
-        //! find the (whole) string in the unsorted array of strings. Case Ignored.
         const ITERATE_t iQty = this->GetSize();
         for (ITERATE_t i = 0; i < iQty; i++) {
             if (!StrT::CmpI(this->GetAt(i).get_CPtr(), pszFind)) return i;
@@ -48,7 +46,7 @@ struct GRAYCORE_LINK cArrayString : public cArray<cStringT<_TYPE_CH>, const _TYP
     /// find inside pszSearch a partial string match of any of the unsorted array of strings. Case Ignored.
     /// </summary>
     ITERATE_t FindStrIR(const _TYPE_CH* pszSearch) const {
-        ITERATE_t iQty = this->GetSize();
+        const ITERATE_t iQty = this->GetSize();
         for (ITERATE_t i = 0; i < iQty; i++) {
             if (StrT::FindStrI(pszSearch, this->GetAt(i).get_CPtr()) != nullptr) return i;
         }
@@ -60,7 +58,7 @@ struct GRAYCORE_LINK cArrayString : public cArray<cStringT<_TYPE_CH>, const _TYP
     /// </summary>
     /// <param name="i"></param>
     /// <returns>"" = if index is out of range.</returns>
-    STR_t GetAtCheck(ITERATE_t i) const {
+    STR_t GetAtCheck(ITERATE_t i) const noexcept {
         if (!SUPER_t::IsValidIndex(i)) return cStrConst::k_Empty.GetT<_TYPE_CH>();  // STR_t("")
         return SUPER_t::GetAt(i);
     }
@@ -76,9 +74,9 @@ struct GRAYCORE_LINK cArrayString : public cArray<cStringT<_TYPE_CH>, const _TYP
         szSep[0] = chSep;
         szSep[1] = '\0';
         _TYPE_CH szTmp[StrT::k_LEN_Default];
-        _TYPE_CH* aCmds[k_ARG_ARRAY_MAX];
+        const _TYPE_CH* aCmds[k_ARG_ARRAY_MAX];
         const ITERATE_t iStrings = StrT::ParseArrayTmp(TOSPAN(szTmp), pszStr, TOSPAN(aCmds), szSep);
-        SetCPtrs((const _TYPE_CH**)aCmds, iStrings);
+        SetCPtrs(aCmds, iStrings);
         return iStrings;
     }
 
@@ -102,21 +100,21 @@ struct GRAYCORE_LINK cArrayString : public cArray<cStringT<_TYPE_CH>, const _TYP
     /// Set array of strings.
     /// </summary>
     void SetCPtrs(const _TYPE_CH** ppStr, ITERATE_t iCount) {
-        this->RemoveAll();
         ASSERT(iCount < k_MaxElements);  // reasonable max.
+        this->SetSize(iCount);           
         for (ITERATE_t i = 0; i < iCount; i++) {
-            this->Add(ppStr[i]);
+            this->SetAt(i,ppStr[i]);
         }
     }
     void SetStrings(const cStringT<_TYPE_CH>* ppStr, ITERATE_t iCount) {
-        this->RemoveAll();
         ASSERT(iCount < k_MaxElements);  // reasonable max.
+        this->SetSize(iCount);
         for (ITERATE_t i = 0; i < iCount; i++) {
-            this->Add(ppStr[i]);
+            this->SetAt(i, ppStr[i]);
         }
     }
     void SetStrings(const THIS_t& a) {
-        SetStrings(a.get_DataConst(), a.GetSize());
+        SetStrings(a.get_PtrConst(), a.GetSize());
     }
 
     ITERATE_t _cdecl AddFormat(const _TYPE_CH* pszFormat, ...) {
@@ -134,12 +132,9 @@ struct GRAYCORE_LINK cArrayString : public cArray<cStringT<_TYPE_CH>, const _TYP
     /// </summary>
     ITERATE_t AddUniqueMax(const _TYPE_CH* pszStr, ITERATE_t iMax = k_MaxDefault) {
         if (StrT::IsNullOrEmpty(pszStr) || iMax < 1) return k_ITERATE_BAD;
+        const ITERATE_t i = FindCmpI(pszStr);
+        if (i >= 0) return i;  // dupe             
         ITERATE_t iQty = this->GetSize();
-        for (ITERATE_t i = 0; i < iQty; i++) {
-            if (!StrT::CmpI(this->GetAt(i).get_CPtr(), pszStr))  { // dupe
-                return i;
-            }
-        }
         while (iQty >= iMax) {
             this->RemoveAt(0);  // roll off extras from head.
             iQty--;

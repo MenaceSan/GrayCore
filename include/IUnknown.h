@@ -9,6 +9,7 @@
 #endif
 
 #include "HResult.h"
+#include "cMem.h"
 
 #ifdef _WIN32
 #include <Unknwn.h>  // IUnknown __IUnknown_INTERFACE_DEFINED__ IClassFactory
@@ -23,17 +24,12 @@
 // MIDL_INTERFACE(a) is like DECLARE_INTERFACE but includes DECLSPEC_UUID(x)
 // _MSC_VER has a bug __declspec(dllexport) a class based on a __interface. can't create = operator ?
 
-#if 0                                             // ndef DECLARE_INTERFACE // for __GNUC__ (or CINTERFACE)
-#define CINTERFACE                                // combaseapi.h looks for this.
-#define DECLARE_INTERFACE(iface) interface iface  // interface DECLSPEC_NOVTABLE iface
-#define DECLARE_INTERFACE_(iface, baseiface) interface iface : public baseiface
-#endif
-
-#ifdef __GNUC__
-#define __uuidof(x) IID_##x  // IID_IUnknown == __uuidof(IUnknown) . This doesn't work in templates of course.
-#ifndef MIDL_INTERFACE
-#define MIDL_INTERFACE(a) interface  // assume we get struct DECLSPEC_UUID(x) DECLSPEC_NOVTABLE and will support IUnknown. Similar to DECLARE_INTERFACE
-#endif
+#if defined(__GNUC__) || !defined(DECLARE_INTERFACE) // for __GNUC__ (or CINTERFACE)
+#define CINTERFACE                                // combaseapi.h looks for this. interface
+#define __uuidof(x) IID_##x                       // IID_IUnknown == __uuidof(IUnknown) . This doesn't work in templates of course.
+#define MIDL_INTERFACE(a) struct  // assume we get struct DECLSPEC_UUID(x) DECLSPEC_NOVTABLE and will support IUnknown. Similar to DECLARE_INTERFACE
+#define DECLARE_INTERFACE(iface) MIDL_INTERFACE(x) iface  // interface DECLSPEC_NOVTABLE iface
+#define DECLARE_INTERFACE_(iface, baseiface) MIDL_INTERFACE(x) iface : public baseiface
 #endif
 
 // #define GRAY_GUID_POSTFIX_S "-0000-0000-C000-100000000046"		// Use this GUID postfix for all but first 4 bytes. (8 hex digits)
@@ -50,9 +46,7 @@ typedef struct _GUID {
     WORD Data2;
     WORD Data3;
     BYTE Data4[8];
-    inline bool operator==(const _GUID& other) const {
-        return cMem::IsEqual(this, &other, sizeof(other));
-    }
+    // inline bool operator==(const _GUID& other) const { return Gray::cMem::IsEqual(this, &other, sizeof(other)); }
 } GUID;
 #endif
 
@@ -77,8 +71,8 @@ extern GRAYCORE_LINK GUID IID_IUnknown;
 /// </summary>
 MIDL_INTERFACE("00000000-0000-0000-C000-000000000046") IUnknown {
     STDMETHOD(QueryInterface)(/* [in] */ const IID& riid, /* [iid_is][out] */ void** ppvObject) = 0;
-    STDMETHOD_(ULONG, AddRef)(void) = 0;
-    STDMETHOD_(ULONG, Release)(void) = 0;
+    STDMETHOD_(ULONG, AddRef)() = 0;
+    STDMETHOD_(ULONG, Release)() = 0;
 };
 
 #endif  // __IUnknown_INTERFACE_DEFINED__
@@ -97,7 +91,7 @@ MIDL_INTERFACE("00000000-0000-0000-C000-000000000046") IUnknown {
 // IUNKNOWN_DISAMBIG_R and the QueryInterface() call. use this TYPE.
 #define IUNKNOWN_DISAMBIG(TYPE)                                                                                                                                                \
     STDMETHOD(QueryInterface)(/* [in] */ const IID& riid, /* [iid_is][out] */ void __RPC_FAR* __RPC_FAR* ppvObject) override { return TYPE::QueryInterface(riid, ppvObject); } \
-    IUNKNOWN_DISAMBIG_R(TYPE);
+    IUNKNOWN_DISAMBIG_R(TYPE)
 
 #else
 

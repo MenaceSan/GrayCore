@@ -21,19 +21,16 @@ struct GRAYCORE_LINK cAtomManager final : public cSingleton<cAtomManager> {
     SINGLETON_IMPL(cAtomManager);
 
     friend struct cAtomRef;
-    typedef cStringHeadT<ATOMCHAR_t> DATA_t;
+    typedef cStringHeadT<ATOMCHAR_t> DATA_t;    // HEAD_t
     typedef cRefPtr<DATA_t> REF_t;
 
  private:
     static const int kRefsBase = 3;  // We only have 3 refs = we can be deleted. Magic number.
 
-    mutable cThreadLockCount m_Lock;               /// make it thread safe.
+    mutable cThreadLockableX m_Lock;               /// make it thread safe.
     cHashTableName<DATA_t, 4> m_aName;             /// Sorted by ATOMCHAR_t Text. NO DUPES
     cHashTableRef<DATA_t, ATOMCODE_t, 5> m_aHash;  /// Sorted by ATOMCODE_t GetHashCode32(s) DUPES?
     cArraySortHash<DATA_t, ATOMCODE_t> m_aStatic;  /// Put atoms here to persist even with no refs. NO DUPES.
-
- public:
-    const cAtomRef m_aEmpty;  /// static "\0" atom. never use nullptr. ATOMCODE_t = 0. same as SetAtomStatic
 
  protected:
     bool RemoveAtom(DATA_t* pDef);
@@ -46,7 +43,6 @@ struct GRAYCORE_LINK cAtomManager final : public cSingleton<cAtomManager> {
     void SetAtomStatic(DATA_t* pDef);
 
     cAtomManager();
-    ~cAtomManager() noexcept;
 
  public:
     /// <summary>
@@ -67,8 +63,8 @@ struct GRAYCORE_LINK cAtomManager final : public cSingleton<cAtomManager> {
     /// </summary>
     /// <param name="sName"></param>
     /// <returns></returns>
-    cAtomRef FindorCreateAtomStr(const cStringA& sName) noexcept;
-    cAtomRef FindorCreateAtomStr(const ATOMCHAR_t* pszName) noexcept;
+    cAtomRef FindorCreateAtom(const cStringA& sName) noexcept;
+    cAtomRef FindorCreateAtom(const cSpan<ATOMCHAR_t>& src) noexcept;
 
     HRESULT DebugDumpFile(ITextWriter& o) const;
     bool DebugTest() const;

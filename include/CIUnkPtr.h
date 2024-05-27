@@ -11,6 +11,7 @@
 #include "IUnknown.h"
 #include "cPtrFacade.h"
 #include "cPtrTrace.h"
+#include "cTypeInfo.h"  // typeid()
 
 #if defined(_DEBUG) && !defined(UNDER_CE)
 #define USE_PTRTRACE_IUNK
@@ -23,11 +24,10 @@ namespace Gray {
 /// TYPE must be based on IUnknown
 /// </summary>
 /// <typeparam name="TYPE">IUnknown</typeparam>
-template <class TYPE = IUnknown>
+template <class TYPE = ::IUnknown>
 class cIUnkPtr : public cPtrFacade<TYPE>
 #ifdef USE_PTRTRACE_IUNK
-    ,
-                 public cPtrTrace
+    , public cPtrTrace
 #endif
 {
     typedef cIUnkPtr<TYPE> THIS_t;
@@ -37,8 +37,8 @@ class cIUnkPtr : public cPtrFacade<TYPE>
  public:
     static void AssertIUnk(TYPE* p2) {
         if (p2 == nullptr) return;
-        ASSERT_NN(static_cast<TYPE*>(p2));      // must be based on TYPE
-        ASSERT_NN(static_cast<IUnknown*>(p2));  // must be based on IUnknown
+        ASSERT_NN(static_cast<TYPE*>(p2));        // must be based on TYPE
+        ASSERT_NN(static_cast<::IUnknown*>(p2));  // must be based on IUnknown
     }
 #endif
 
@@ -73,7 +73,6 @@ class cIUnkPtr : public cPtrFacade<TYPE>
     /// Construct and destruction
     cIUnkPtr() {}
     cIUnkPtr(const TYPE* p2) : SUPER_t(const_cast<TYPE*>(p2)) {
-        //! add ref. Does not work with cPtrFacade!
         IncRefFirst();
     }
     cIUnkPtr(const THIS_t& ref) : SUPER_t(ref.get_Ptr()) {
@@ -121,7 +120,7 @@ class cIUnkPtr : public cPtrFacade<TYPE>
     /// <param name="p2"></param>
     /// <param name="riid"></param>
     /// <returns></returns>
-    HRESULT SetQI(IUnknown* p2, const IID& riid) {
+    HRESULT SetQI(::IUnknown* p2, const IID& riid) {
         ReleasePtr();  // leave it empty.
         if (p2 == nullptr) return E_NOINTERFACE;
         // Query for TYPE interface. acts like IUNK_GETPPTRV(pInterface, riid)
@@ -152,7 +151,7 @@ class cIUnkPtr : public cPtrFacade<TYPE>
     /// </summary>
     /// <param name="p2"></param>
     /// <returns></returns>
-    HRESULT SetQI(IUnknown* p2) {
+    HRESULT SetQI(::IUnknown* p2) {
         return SetQI(p2, GetIID());
     }
 #endif  // _MSC_VER
@@ -167,7 +166,7 @@ class cIUnkPtr : public cPtrFacade<TYPE>
 #ifdef _DEBUG
         AssertIUnk(p2);
 #endif
-        this->ClearPtr(); // make sure possible destructors called in DecRefCount don't reuse this.
+        this->ClearPtr();                                               // make sure possible destructors called in DecRefCount don't reuse this.
         const REFCOUNT_t iRefCount = CastN(REFCOUNT_t, p2->Release());  // this might delete this ?
 #ifdef USE_PTRTRACE_IUNK
         TraceRelease();
@@ -266,7 +265,7 @@ class cIUnkTraceHelper {
 #endif                        // USE_PTRTRACE_IUNK
 
 #ifndef GRAY_STATICLIB  // force implementation/instantiate for DLL/SO.
-template class GRAYCORE_LINK cIUnkPtr<IUnknown>;
+template class GRAYCORE_LINK cIUnkPtr<::IUnknown>;
 #endif
 
 }  // namespace Gray

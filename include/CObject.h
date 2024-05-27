@@ -8,23 +8,26 @@
 #endif
 
 #include "cMem.h"
+#include "cOSHandle.h"  // HMODULE
 
 namespace Gray {
 class cArchive;
 
 /// <summary>
-/// use this to make sure 2 DLL/SO's agree on the packing/format and version of some object.
+/// use this to make sure 2 DLL/SO's agree on the ABI packing/format and version of some object.
 /// </summary>
-template <UINT32 _SIGVALID = 0xCA11AB11>
+template <UINT32 _SIGVALID = 0xCA11AB1e>
 class DECLSPEC_NOVTABLE cObjectSignature : public cMemSignature<_SIGVALID> {
     typedef cMemSignature<_SIGVALID> SUPER_t;
- 
+
     const UINT32 m_nVer;         /// Must be agreed to by all users. e.g. _INC_GrayCore_H
-    const size_t m_nSizeofThis;  /// Must be agreed to by all users. sizeof(CLASS) for checking alignments/packing of structures.
+    const size_t _nSizeOfParent;  /// Must be agreed to by all users. sizeof(PARENTCLASS) for checking alignments/packing of structures (ABI).
 
  public:
-    cObjectSignature(UINT32 nVer, size_t nSizeofThis) : m_nVer(nVer), m_nSizeofThis(nSizeofThis) {}
-    ~cObjectSignature() {}
+    cObjectSignature(UINT32 nVer, size_t nSizeOfParent) : m_nVer(nVer), _nSizeOfParent(nSizeOfParent) {}
+    ~cObjectSignature() {
+        ASSERT(isValidSignature());
+    }
 
     /// <summary>
     /// Call this from the context of some other DLL or lib and make sure they match.
@@ -32,11 +35,11 @@ class DECLSPEC_NOVTABLE cObjectSignature : public cMemSignature<_SIGVALID> {
     /// Make sure this is inline compiled.
     /// </summary>
     /// <param name="nVer"></param>
-    /// <param name="nSizeofThis"></param>
+    /// <param name="nSizeOfParent"></param>
     /// <returns></returns>
-    bool inline IsValidSignature(UINT32 nVer, size_t nSizeofThis) const noexcept {
+    bool inline IsValidSignature(UINT32 nVer, size_t nSizeOfParent) const noexcept {
         if (!SUPER_t::isValidSignature()) return false;
-        if (nVer != m_nVer || nSizeofThis != m_nSizeofThis) return false;
+        if (nVer != m_nVer || nSizeOfParent != _nSizeOfParent) return false;
         return true;
     }
 };
@@ -50,7 +53,7 @@ class DECLSPEC_NOVTABLE cObjectSignature : public cMemSignature<_SIGVALID> {
 #ifndef _MFC_VER
 class GRAYCORE_LINK CObject {
  public:
-    virtual ~CObject() noexcept {}
+    virtual ~CObject() {}
 };
 
 #ifdef _DEBUG
@@ -65,12 +68,14 @@ class GRAYCORE_LINK CObject {
 /// </summary>
 struct GRAYCORE_LINK cObject : public CObject {
     /// <summary>
-    /// get my vtable/vfptr that is attached to my HMODULE
+    /// get my vtable/vftable/vfptr that is attached to my HMODULE
     /// </summary>
     const void* const* GetVTable() const;
 
+    ::HMODULE get_HModule() const noexcept;
+
     /// Emulate MFC method. cArchive = CArchive. BUT has HRESULT return instead of void and throw.
-    virtual HRESULT Serialize(cArchive& a);  
+    virtual HRESULT Serialize(cArchive& a);
 
     /// <summary>
     /// use with AssertValid()
@@ -79,7 +84,7 @@ struct GRAYCORE_LINK cObject : public CObject {
     /// @note This can't be called in constructors and destructor of course !
     /// </summary>
     /// <returns></returns>
-    virtual bool isValidCheck() const noexcept { /// memory allocation and structure definitions are valid.
+    virtual bool isValidCheck() const noexcept {  /// memory allocation and structure definitions are valid.
         if (!cMem::IsValidApp(this)) return false;
         if (!IsValidCast<const cObject>(this)) {  // structure definitions are valid. use _CPPRTTI.
             DEBUG_CHECK(false);
@@ -87,7 +92,7 @@ struct GRAYCORE_LINK cObject : public CObject {
         }
         return true;
     }
-    virtual void AssertValid() const { /// memory allocation and structure definitions are valid.
+    virtual void AssertValid() const {  /// memory allocation and structure definitions are valid.
         //! MFC override = virtual void AssertValid() const;
         ASSERT(isValidCheck());
     }
@@ -108,7 +113,5 @@ struct GRAYCORE_LINK cObject : public CObject {
 #define DECLARE_DYNCREATE(c)      //__noop. cWinClassT, cObjectFactory
 #define IMPLEMENT_DYNAMIC(c, cb)  //__noop
 #endif                            // _MFC_VER
-
 }  // namespace Gray
-
 #endif

@@ -11,6 +11,7 @@
 
 #include "Index.h"
 #include "cBits.h"
+#include "PtrCast.h"
 #include "cDebugAssert.h"  // ASSERT
 
 namespace Gray {
@@ -418,7 +419,7 @@ class GRAYCORE_LINK cInterlockedVal {
 
  public:
     cInterlockedVal(TYPE nValue = 0) noexcept : m_nValue(nValue) {
-        ASSERT((PtrCastToNum(&m_nValue) % sizeof(TYPE)) == 0);  // must be aligned!!
+        ASSERT((CastPtrToNumV(&m_nValue) % sizeof(TYPE)) == 0);  // must be aligned!!
     }
 
     /// <summary>
@@ -435,7 +436,7 @@ class GRAYCORE_LINK cInterlockedVal {
     /// decrement.
     /// </summary>
     /// <returns>post decrement value</returns>
-    TYPE Dec() noexcept { 
+    TYPE Dec() noexcept {
         return InterlockedN::Decrement(&m_nValue);
     }
     void DecV() noexcept {
@@ -512,26 +513,24 @@ typedef __DECL_ALIGN(_SIZEOF_PTR) cInterlockedVal<INT_PTR> cInterlockedIntPtr;  
 /// Cast it as needed. INT_PTR = INT32 for 32 bit, INT64 for 64 bit.
 /// </summary>
 template <typename TYPE = void>
-class GRAYCORE_LINK __DECL_ALIGN(_SIZEOF_PTR) cInterlockedPtr : protected cInterlockedVal<size_t> {
+class GRAYCORE_LINK __DECL_ALIGN(_SIZEOF_PTR) cInterlockedPtr : protected cInterlockedVal<UINT_PTR> {
  public:
-    cInterlockedPtr(TYPE* pVal) noexcept
-        : cInterlockedVal<size_t>((size_t)pVal)  // PtrCastToNum()
-    {}
+    cInterlockedPtr(TYPE* pVal) noexcept : cInterlockedVal<UINT_PTR>(CastPtrToNum(pVal)) {}
     operator TYPE*() noexcept {
-        return (TYPE*)(this->m_nValue);
+        return CastNumToPtrT<TYPE>(this->m_nValue);
     }
     operator const TYPE*() const noexcept {
-        return (const TYPE*)(this->m_nValue);
+        return CastNumToPtrT<TYPE>(this->m_nValue);
     }
 
     const cInterlockedPtr<TYPE>& operator=(TYPE* pValNew) {
         // InterlockedExchangePointer()
-        this->Exchange((size_t)pValNew);
+        this->Exchange(CastPtrToNum(pValNew));
         return *this;
     }
 };
 
-typedef cInterlockedPtr<> cInterlockedPtrV;  // void pointer.
+typedef cInterlockedPtr<void> cInterlockedPtrV;  // void pointer.
 
 //*****************************************************
 

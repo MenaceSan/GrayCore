@@ -11,8 +11,8 @@
 #endif
 
 namespace Gray {
-static const cRandomDef::RAND_t k_Seed1 = CastN(cRandomDef::RAND_t, 0xECC440A96968484A);   // Some random seed
-GRAYCORE_LINK cRandomDef g_Rand;  //! the default random number generator. NOT Thread Safe!
+static const cRandomDef::RAND_t k_Seed1 = CastN(cRandomDef::RAND_t, 0xECC440A96968484AULL);  /// a random seed. Truncated in 32 bit mode.
+GRAYCORE_LINK cRandomDef g_Rand;                                                          //! the default random number generator. NOT Thread Safe!
 
 #if defined(_WIN32) && !defined(_MSC_VER)
 // extern for CryptAcquireContext
@@ -23,7 +23,7 @@ GRAYCORE_LINK cRandomDef g_Rand;  //! the default random number generator. NOT T
 void cRandomBase::InitSeed(IRandomNoise* pSrc, size_t iSize) {
     cBlob blob(iSize);
     pSrc->GetNoise(blob);
-    InitSeed(blob);  
+    InitSeed(blob);
 }
 
 void cRandomBase::InitSeedOS(size_t iSize) {
@@ -38,7 +38,7 @@ void cRandomBase::InitSeedUns(RAND_t nSeed) {
 }
 
 cRandomBase::RAND_t cRandomBase::get_RandUns() {  // virtual
-    return GetRandUX(UINT_MAX); // default implementation.
+    return GetRandUX(UINT_MAX);                   // default implementation.
 }
 
 cRandomBase::RAND_t cRandomBase::GetRandUX(RAND_t nScale) {  // virtual
@@ -57,19 +57,17 @@ cRandomBase::RAND_t cRandomBase::GetRandRange(RAND_t iRangeLo, RAND_t iRangeHi) 
     return iRangeLo + GetRandUX((iRangeHi - iRangeLo) + 1);
 }
 
-bool cRandomBase::GetNoise(cMemSpan& m) {  // override
-    //! fill a buffer with random data from get_RandUns().
-    //! < 0 = error.
-    RAND_t* puData = m.get_DataW<RAND_t>();
-    size_t iSizeLeft = m.get_DataSize();
+bool cRandomBase::GetNoise(cMemSpan ret) {  // override
+    RAND_t* puData = ret.GetTPtrW<RAND_t>();
+    size_t iSizeLeft = ret.get_SizeBytes();
     while (iSizeLeft > 0) {
-        RAND_t uVal = get_RandUns();  // virtual.
+        const RAND_t uVal = get_RandUns();  // virtual.
         if (iSizeLeft < sizeof(uVal)) {
             // running out of room.
             cMem::Copy(puData, &uVal, iSizeLeft);  // partial fill.
             break;                                 // done.
         }
-        puData[0] = uVal;
+        *puData = uVal;
         puData++;
         iSizeLeft -= sizeof(uVal);
     }
@@ -79,13 +77,13 @@ bool cRandomBase::GetNoise(cMemSpan& m) {  // override
 //*************************************************************
 cRandomPerf::cRandomPerf() : cSingleton<cRandomPerf>(this, typeid(cRandomPerf)) {}
 
-void GRAYCALL cRandomPerf::GetNoisePerf(cMemSpan& m) {  // static
+void GRAYCALL cRandomPerf::GetNoisePerf(cMemSpan ret) {  // static
     //! Get noise via low bits of cTimePerf
     //! Prefer GetNoiseOS noise over this, but use this as a fallback or XOR.
-    UINT* puData = m.get_DataW<UINT>();
-    size_t iSizeLeft = m.get_DataSize();
+    UINT* puData = ret.GetTPtrW<UINT>();
+    size_t iSizeLeft = ret.get_SizeBytes();
     while (iSizeLeft > 0) {
-        cTimePerf tStart(true);                                 // the low bits of high performance timer should be random-ish.
+        cTimePerf tStart(true);                            // the low bits of high performance timer should be random-ish.
         UINT32 uVal = (UINT32)(tStart.m_nTime ^ k_Seed1);  // use default XOR pattern
         if (iSizeLeft < sizeof(uVal)) {
             // running out of room.
@@ -102,7 +100,7 @@ void GRAYCALL cRandomPerf::GetNoisePerf(cMemSpan& m) {  // static
 
 cRandomOS::cRandomOS() : cSingleton<cRandomOS>(this, typeid(cRandomOS)) {}
 
-HRESULT GRAYCALL cRandomOS::GetNoiseOS(cMemSpan& m) {  // static. fill array with random. return # filled.
+HRESULT GRAYCALL cRandomOS::GetNoiseOS(cMemSpan ret) {  // static. fill array with random. return # filled.
     //! Try to use the OS supplied noise generator. It may not work.
 #ifdef __linux__
     // Is the Linux version high enough for random function ?
@@ -110,8 +108,8 @@ HRESULT GRAYCALL cRandomOS::GetNoiseOS(cMemSpan& m) {  // static. fill array wit
 #if defined(SYS_getrandom)
     if (cSystemInfo::I().isVer3_17_plus()) {
         // long sys_getrandom(char __user *buf, size_t count, unsigned int flags)
-        int iRet = ::syscall(SYS_getrandom, m.get_DataW(), m.get_DataSize(), 0);
-        if (iRet >= 0) return (HRESULT)m.get_DataSize();
+        int iRet = ::syscall(SYS_getrandom, ret.GetTPtrW(), ret.get_SizeBytes(), 0);
+        if (iRet >= 0) return (HRESULT)ret.get_SizeBytes();
     }
 #endif
 
@@ -119,17 +117,17 @@ HRESULT GRAYCALL cRandomOS::GetNoiseOS(cMemSpan& m) {  // static. fill array wit
     fd.OpenHandle("/dev/random", O_RDONLY);
     if (!fd.isValidHandle()) fd.OpenHandle("/dev/urandom", O_RDONLY);
     if (fd.isValidHandle()) {
-        int iSizeRet = fd.ReadX(m.get_DataW(), m.get_DataSize());
-        if (iSizeRet == (int)m.get_DataSize()) return (HRESULT)m.get_DataSize();
+        int iSizeRet = fd.ReadX(ret);
+        if (iSizeRet == (int)ret.get_SizeBytes()) return (HRESULT)ret.get_SizeBytes();
     }
 
 #elif defined(_WIN32) && defined(_MSC_VER) && defined(WINCRYPT32API)
     // WinCrypt
     ::HCRYPTPROV hProvider;  // NOT a pointer so its not a type-ablefor cOSHandle or cHandlePtr
     if (_FNF(::CryptAcquireContext)(&hProvider, nullptr, nullptr, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT)) {
-        bool bRet = ::CryptGenRandom(hProvider, (DWORD)m.get_DataSize(), m.get_DataW());
+        bool bRet = ::CryptGenRandom(hProvider, (DWORD)ret.get_SizeBytes(), ret.GetTPtrW());
         ::CryptReleaseContext(hProvider, 0);
-        if (bRet) return (HRESULT)m.get_DataSize();
+        if (bRet) return (HRESULT)ret.get_SizeBytes();
     }
 #endif
 
@@ -139,14 +137,14 @@ HRESULT GRAYCALL cRandomOS::GetNoiseOS(cMemSpan& m) {  // static. fill array wit
     return E_NOTIMPL;
 }
 
-bool cRandomOS::GetNoise(cMemSpan& m) {  // override. fill array with random. return # filled.
+bool cRandomOS::GetNoise(cMemSpan ret) {  // override. fill array with random. return # filled.
     //! Get the best source or random noise the system can supply.
     //! Make a random seed from the most random source we can find.
-    if (m.isEmpty()) return true;
-    HRESULT hRes = GetNoiseOS(m);
+    if (ret.isEmpty()) return true;
+    HRESULT hRes = GetNoiseOS(ret);
     if (SUCCEEDED(hRes)) return true;  // all good.
     // else fallback to try the high perf timer.
-    cRandomPerf::GetNoisePerf(m);
+    cRandomPerf::GetNoisePerf(ret);
     return true;
 }
 
@@ -167,7 +165,7 @@ void cRandomDef::InitSeed(const cMemSpan& seed) {  // override
     //! Start a repeatable series of pseudo random numbers
     //! like ::srand()
     m_nSeed = k_Seed1;  // Clear any under flow.
-    cMem::Copy(&m_nSeed, seed, cValT::Min(sizeof(m_nSeed), seed.get_DataSize()));
+    TOSPANT(m_nSeed).SetCopySpan(seed);
 }
 
 cRandomDef::RAND_t cRandomDef::get_RandUns() {

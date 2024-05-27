@@ -7,7 +7,7 @@
 #include "StrBuilder.h"
 #include "cLogMgr.h"
 #include "cPair.h"
-#include "cString.h"
+#include "cFilePath.h"
 
 #ifndef UNDER_CE
 #include <errno.h>
@@ -138,13 +138,10 @@ void GRAYCALL HResult::SetLast(HRESULT h) {  // static
 void GRAYCALL HResult::AddCodes(const HResultCode* pCodes) {  // static
     //! Add a block of custom HResult codes, usually for a particular FACILITY_TYPE
     //! enable HResult::GetTextV()
-    if (s_HResult_CodeSets.HasArg(pCodes)) {  // ignore pointer dupes.
-        return;                               // already loaded
-    }
+    if (s_HResult_CodeSets.HasArg3(pCodes)) return;  // ignore pointer dupes. // already loaded
 
     // TODO
     // Is sorted?? test.
-
     s_HResult_CodeSets.Add(pCodes);
 }
 
@@ -201,33 +198,25 @@ const char* GRAYCALL HResult::GetTextBase(HRESULT hRes) {  // static
     //! Get raw unformatted text for HRESULT codes from s_HResult_CodeSets first
     //! ASSUME we called AddCodesDefault() already.
 
-    if (hRes == S_OK) {
-        // This is never an error.
-        return "OK";
-    }
+    if (hRes == S_OK) return "OK";  // This is never an error.
 
 #ifndef GRAY_STATICLIB
-    // Since we load this anyhow make sure we are using HResult::AddCodesDefault();
-    HResult::AddCodesDefault();
+    HResult::AddCodesDefault();  // Since we load this anyhow make sure we are using HResult::AddCodesDefault();
 #endif
 
-    // FACILITY_TYPE eFacility = GetFacility(hRes);
+    for (int i = 0; i < s_HResult_CodeSets.GetSize(); i++) {
+        const int j = s_HResult_CodeSets[i]->FindCode(hRes);
+        if (j >= 0) return s_HResult_CodeSets[i][j].m_pszMsg;
+    }
 
 #if defined(__linux__)
-    if (eFacility == FACILITY_POSIX) {
-        // its a POSIX code.
-        DWORD dwErrorCode = GetCode(hRes);
+    const FACILITY_TYPE eFacility = GetFacility(hRes);
+    if (eFacility == FACILITY_POSIX) {  // its a POSIX code?
+        const DWORD dwErrorCode = GetCode(hRes);
         const GChar_t* pszMsg = ::strerror(dwErrorCode);
         if (pszMsg != nullptr) return pszMsg;
     }
 #endif
-
-    for (int i = 0; i < s_HResult_CodeSets.GetSize(); i++) {
-        int j = s_HResult_CodeSets[i]->FindCode(hRes);
-        if (j >= 0) {
-            return s_HResult_CodeSets[i][j].m_pszMsg;
-        }
-    }
 
     // No idea. ASSUME FromWin32() was called if necessary.
     return nullptr;
@@ -237,8 +226,7 @@ bool GRAYCALL HResult::GetTextSys(HRESULT hRes, StrBuilder<GChar_t>& sb, const v
 #ifdef _WIN32
     // FORMAT_MESSAGE_ALLOCATE_BUFFER
     DWORD dwFlags = FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS;
-    if (pSource != nullptr)  // not FORMAT_MESSAGE_FROM_STRING?
-    {
+    if (pSource != nullptr) {  // not FORMAT_MESSAGE_FROM_STRING?
         dwFlags |= FORMAT_MESSAGE_FROM_HMODULE;
     }
     if (vargs != k_va_list_empty) {
@@ -246,13 +234,13 @@ bool GRAYCALL HResult::GetTextSys(HRESULT hRes, StrBuilder<GChar_t>& sb, const v
     }
 
     // nLenRet = number of TCHARs
-    cSpanX<GChar_t> spanWrite(sb.GetSpanWrite(_MAX_PATH));
+    cSpanX<GChar_t> spanWrite(sb.GetSpanWrite(cFilePath::k_MaxLen));
 
-    DWORD nLenRet = _GTN(::FormatMessage)(dwFlags,
-                                          pSource,  // use with FORMAT_MESSAGE_FROM_STRING or FORMAT_MESSAGE_FROM_HMODULE
-                                          hRes,
-                                          LANG_NEUTRAL,  // MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US)
-                                          spanWrite.get_DataWork(), spanWrite.get_MaxLen(), (vargs != k_va_list_empty) ? &vargs : nullptr);
+    const DWORD nLenRet = _GTN(::FormatMessage)(dwFlags,
+                                                pSource,  // use with FORMAT_MESSAGE_FROM_STRING or FORMAT_MESSAGE_FROM_HMODULE
+                                                hRes,
+                                                LANG_NEUTRAL,  // MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US)
+                                                spanWrite.get_PtrWork(), spanWrite.get_MaxLen(), (vargs != k_va_list_empty) ? &vargs : nullptr);
     if (nLenRet > 0) {
         // successful translation -- trim any trailing junk
         sb.AdvanceWrite(nLenRet);
@@ -260,68 +248,63 @@ bool GRAYCALL HResult::GetTextSys(HRESULT hRes, StrBuilder<GChar_t>& sb, const v
         return true;
     }
 #endif
-    return false;  // no system code.
-}
 
-void GRAYCALL HResult::GetTextV(HRESULT hRes, StrBuilder<GChar_t>& sb, const void* pSource, va_list vargs) {  // static
-    // first ask the system if it knows the code.
-    if (GetTextSys(hRes, sb, pSource, vargs)) {
-        // Append the code to the text.
-        sb.AddFormat(_GT(" (0%x)"), (UINT)hRes);
-        return;
-    }
-
-    // no system code. STL code?
-    // get my internal message (if i have one). Should this be done first ???
-    const char* pszErrorBase = GetTextBase(hRes);
-    if (!StrT::IsNullOrEmpty(pszErrorBase)) {
-        sb.AddStr(StrArg<GChar_t>(pszErrorBase));
-        sb.AddFormat(_GT(" (0%x)"), (UINT)hRes);
-        return;
-    }
-
-    // Not a known system error code. Do we at least know the k_Facility code?
-    FACILITY_TYPE eFacility = GetFacility(hRes);
-    DWORD dwErrorCode = GetCode(hRes);  // LSTATUS/error_status_t
-
+    // Not a system known code?
+    const FACILITY_TYPE eFacility = GetFacility(hRes);
+    const DWORD dwErrorCode = GetCode(hRes);  // LSTATUS/error_status_t
     const GChar_t* pszErrorFacility;
     if (k_Facility->FindARetB(eFacility, &pszErrorFacility)) {
         // show the (known) facility name and sub code (in facility).
-        ASSERT(pszErrorFacility != nullptr);
-        sb.AddFormat(_GT("%s Code %d"), StrArg<GChar_t>(pszErrorFacility), dwErrorCode);
-    } else {
-        // no facility code? default just show the error number in hex.
-        sb.AddFormat(_GT("Error Code 0%x"), (UINT)hRes);
+        sb.AddStr(pszErrorFacility);
+        sb.AddStr(_GT(" Code "));
+        sb.AddInt(dwErrorCode);
+        return true;
     }
+
+    return false;  // no system code description avail.
 }
 
-HRESULT GRAYCALL HResult::GetHResFromStr(const GChar_t* pszError, StrLen_t nLenError) {  // static
+void GRAYCALL HResult::GetTextV(HRESULT hRes, StrBuilder<GChar_t>& sb, const void* pSource, va_list vargs) {  // static
+    // a known error code?
+    // First test my internal message (if i have one).
+    const char* pszErrorBase = GetTextBase(hRes);
+    if (!StrT::IsNullOrEmpty(pszErrorBase)) {
+        sb.WriteString(pszErrorBase);
+    } else if (!GetTextSys(hRes, sb, pSource, vargs)) {  // else try system codes.
+        // no facility code? default just show the error number in hex.
+        sb.AddStr(_GT("Error Code "));
+    }
+    // Append the full code to the text.
+    sb.AddStr(_GT(" ("));
+    sb.AddUInt((UINT)hRes, 0x10);
+    sb.AddChar(')');
+}
+
+HRESULT GRAYCALL HResult::GetHResFromStr(const cSpan<GChar_t>& str) {  // static
     //! Reverse lookup of error string.
     //! given a string from GetTextV() get the original HRESULT code.
     //! @return HRESULT Error code from a string.
 
-    if (nLenError < 0) nLenError = StrT::Len(pszError);  // just measure it.
-
+    StrLen_t nLenError = str.get_MaxLen() - 1;
     if (nLenError <= 1) return S_FALSE;
+    const GChar_t* pszError = str;
 
     // "Error Code 0%x" for unknown codes.
     // "%s Code %d" for facility and code.
     // or ends in " (0%x)" for full message and code.
-    nLenError--;
     bool bHasEndParen = (pszError[nLenError] == ')');
     if (bHasEndParen) {
         nLenError--;
     }
     int iDigits = 0;
-    for (; nLenError > 0 && StrChar::IsDigitX(pszError[nLenError], 0x10); nLenError--) {
+    for (; nLenError > 0 && StrChar::IsDigitRadix(pszError[nLenError], 0x10); nLenError--) {
         iDigits++;
     }
     if (iDigits <= 0 || nLenError <= 1) return S_FALSE;
 
     const GChar_t* pszErrorCode = pszError + nLenError + 1;
-    if (nLenError == 10 && !StrT::CmpN(pszError, _GT("Error Code "), 11)) {
-        // full code.
-        return CastN(HRESULT, StrT::toU(pszErrorCode));
+    if (nLenError == 10 && !StrT::CmpN(pszError, _GT("Error Code "), 11)) {        
+        return CastN(HRESULT, StrT::toU(pszErrorCode)); // full code.
     }
     if (nLenError > 6 && !StrT::CmpN(pszErrorCode - 6, _GT(" Code "), 6)) {
         // facility + code.

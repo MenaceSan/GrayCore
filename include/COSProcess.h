@@ -85,10 +85,10 @@ class GRAYCORE_LINK cOSProcess {
     virtual ~cOSProcess();
 
 #ifdef _WIN32
-    cOSProcess(PROCESSID_t nPid, HANDLE hProc, HANDLE hThread) noexcept : m_nPid(nPid), m_hProcess(hProc), m_hThread(hThread) {
+    cOSProcess(PROCESSID_t nPid, ::HANDLE hProc, ::HANDLE hThread) noexcept : m_nPid(nPid), m_hProcess(hProc), m_hThread(hThread) {
         //! _WIN32 = ::GetCurrentProcess() = 0xFFFFFFFF as a shortcut. HMODULE_CURPROC
     }
-    HANDLE get_ProcessHandle() const noexcept {
+    ::HANDLE get_ProcessHandle() const noexcept {
         return m_hProcess.get_Handle();
     }
     void CloseProcessHandle();
@@ -122,7 +122,7 @@ class GRAYCORE_LINK cOSProcess {
     HRESULT OpenProcessId(PROCESSID_t dwProcessID, DWORD dwDesiredAccess = 0, bool bInheritHandle = false);
 
 #ifdef _WIN32
-    HRESULT GetProcessCommandLine(OUT wchar_t* pwText, _Inout_ size_t* pdwTextSize) const;
+    HRESULT GetProcessCommandLine(cSpanX<wchar_t> ret) const;
 #endif
     cStringF get_CommandLine() const;
 
@@ -194,28 +194,32 @@ class GRAYCORE_LINK cOSProcess {
         return ::VirtualAllocEx(get_ProcessHandle(), NULL, nSize, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
     }
 
-    HRESULT WriteProcessMemory(void* pBaseAddress, const void* pData, size_t nSize) const noexcept {
-        //! Write to memory inside some other process address space.
-        //! ASSUME: PROCESS_QUERY_INFORMATION | PROCESS_VM_WRITE access AND cOSUserToken with SE_DEBUG_NAME
-
-        SIZE_T nSizeWrite = nSize;
-        const BOOL bSuccess = ::WriteProcessMemory(get_ProcessHandle(), pBaseAddress, pData, nSize, &nSizeWrite);
-        if (!bSuccess) {
-            return HResult::GetLastDef(HRESULT_WIN32_C(ERROR_WRITE_FAULT));
-        }
+    /// <summary>
+    /// Write to memory inside some other process address space.
+    /// ASSUME: PROCESS_QUERY_INFORMATION | PROCESS_VM_WRITE access AND cOSUserToken with SE_DEBUG_NAME
+    /// </summary>
+    /// <param name="pBaseAddress"></param>
+    /// <param name="m"></param>
+    /// <returns></returns>
+    HRESULT WriteProcessMemory(void* pBaseAddress, const cMemSpan& m) const noexcept {
+        SIZE_T nSizeWrite = m.get_SizeBytes();
+        const BOOL bSuccess = ::WriteProcessMemory(get_ProcessHandle(), pBaseAddress, m, nSizeWrite, &nSizeWrite);
+        if (!bSuccess) return HResult::GetLastDef(HRESULT_WIN32_C(ERROR_WRITE_FAULT));
         return CastN(HRESULT, nSizeWrite);
     }
 
-    HRESULT ReadProcessMemory(const void* pBaseAddress, void* pDataIn, size_t nSize) const noexcept {
-        //! Read memory from inside some other process address space.
-        //! Need permissions to do this.
-        //! ASSUME: PROCESS_QUERY_INFORMATION | PROCESS_VM_READ access AND cOSUserToken with SE_DEBUG_NAME
-
-        SIZE_T nSizeRead = nSize;
-        const BOOL bSuccess = ::ReadProcessMemory(get_ProcessHandle(), pBaseAddress, pDataIn, nSize, &nSizeRead);
-        if (!bSuccess) {
-            return HResult::GetLastDef(HRESULT_WIN32_C(ERROR_READ_FAULT));
-        }
+    /// <summary>
+    /// Read memory from inside some other process address space. 
+    /// Need permissions to do this.
+    /// ASSUME: PROCESS_QUERY_INFORMATION | PROCESS_VM_READ access AND cOSUserToken with SE_DEBUG_NAME
+    /// </summary>
+    /// <param name="pBaseAddress"></param>
+    /// <param name="ret"></param>
+    /// <returns></returns>
+    HRESULT ReadProcessMemory(const void* pBaseAddress, cMemSpan ret) const noexcept {
+        SIZE_T nSizeRead = ret.get_SizeBytes();
+        const BOOL bSuccess = ::ReadProcessMemory(get_ProcessHandle(), pBaseAddress, ret.get_BytePtrW(), nSizeRead, &nSizeRead);
+        if (!bSuccess) return HResult::GetLastDef(HRESULT_WIN32_C(ERROR_READ_FAULT));
         return CastN(HRESULT, nSizeRead);
     }
 
@@ -240,12 +244,12 @@ class GRAYCORE_LINK cOSProcess {
 
     // Stats
 #ifndef UNDER_CE
-    bool GetStatTimes(OUT FILETIME* pCreationTime, OUT FILETIME* pExitTime, OUT FILETIME* pKernelTime, OUT FILETIME* pUserTime) const noexcept {
+    bool GetStatTimes(OUT ::FILETIME* pCreationTime, OUT ::FILETIME* pExitTime, OUT ::FILETIME* pKernelTime, OUT ::FILETIME* pUserTime) const noexcept {
         //! How much time has this process run ?
         return ::GetProcessTimes(get_ProcessHandle(), pCreationTime, pExitTime, pKernelTime, pUserTime) ? true : false;
     }
 
-    bool GetStatIoCounters(OUT IO_COUNTERS* pIoCounters) const noexcept {
+    bool GetStatIoCounters(OUT ::IO_COUNTERS* pIoCounters) const noexcept {
         return ::GetProcessIoCounters(get_ProcessHandle(), pIoCounters) ? true : false;
     }
 #endif  // UNDER_CE

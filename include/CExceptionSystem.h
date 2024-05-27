@@ -51,7 +51,7 @@ class GRAYCORE_LINK cExceptionSystem : public cException {
     static void GRAYCALL InitForCurrentThread();
 #ifdef _WIN32
     static CATTR_NORETURN void _cdecl CatchException(SYSCODE_t uNTStatus, struct _EXCEPTION_POINTERS* pData);  // throw (cExceptionSystem);
-    static CATTR_NORETURN void _cdecl CatchTerminate(void);
+    static CATTR_NORETURN void _cdecl CatchTerminate();
     static int _cdecl FilterException(SYSCODE_t uNTStatus, struct _EXCEPTION_POINTERS* pData);  // throw (cExceptionSystem);
 #else
     static void __cdecl SignalHandler(SYSCODE_t iSignal);

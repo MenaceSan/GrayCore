@@ -32,7 +32,7 @@ class GRAYCORE_LINK cOSModDynImpl : public cOSModImpl {
     /// </summary>
     /// <param name="pContainer">my container (e.g cXObjModule) if we care.</param>
     /// <returns></returns>
-    virtual HRESULT RegisterModule(IUnknown* pContainer);
+    virtual HRESULT RegisterModule(::IUnknown* pContainer);
 
     /// <summary>
     /// Unload data connected to this module that might be externally exposed. (if possible)
@@ -50,7 +50,7 @@ class GRAYCORE_LINK cOSModDynImpl : public cOSModImpl {
 // Declare/expose/Impl *_RegisterModule() for dynamically pluggable DLL/SO. NOT in any namespace. Avoid name mangling/decoration.
 #define cOSModDynImpl_DEF(N)                                                                                                                                    \
     cOSModImpl_DEF(N);                                                                                                                                          \
-    extern "C" __DECL_EXPORT HRESULT GRAYCALL CATOM_CAT(Gray, _RegisterModule)(UINT32 nLibVer, OUT ::Gray::cOSModDynImpl * *ppModImpl, IUnknown * pContainer) { \
+    extern "C" __DECL_EXPORT HRESULT GRAYCALL CATOM_CAT(Gray, _RegisterModule)(UINT32 nLibVer, OUT ::Gray::cOSModDynImpl * *ppModImpl, ::IUnknown * pContainer) { \
         if (nLibVer != _INC_cOSModDyn_H) return HRESULT_WIN32_C(ERROR_PRODUCT_VERSION);                                                                         \
         if (ppModImpl != nullptr) *ppModImpl = &N::g_Module;                                                                                                    \
         return N::g_Module.RegisterModule(pContainer);                                                                                                          \
@@ -64,16 +64,16 @@ class GRAYCORE_LINK cOSModDynImpl : public cOSModImpl {
 /// Ideally we dont load it unless we already know it exposes RegisterModuleF_t.!
 /// </summary>
 struct GRAYCORE_LINK cOSModDyn {
-    typedef HRESULT(GRAYCALL RegisterModuleF_t)(UINT32 nLibVer, cOSModDynImpl** ppModImpl, IUnknown* pContainer);
+    typedef HRESULT(GRAYCALL* RegisterModuleF_t)(UINT32 nLibVer, cOSModDynImpl** ppModImpl, ::IUnknown* pContainer);    // like FUNCPTR_t
     cOSModule _h;                     /// the handle to the open DLL/SO/Module can be kept here. for _pImpl
     cOSModDynImpl* _pImpl = nullptr;  /// the (in process) DLL implementation. returned via RegisterModule()
 
-    HRESULT LoadAndRegisterModule(const FILECHAR_t* pszPath, IUnknown* pContainer, UINT32 nLibVer = _INC_cOSModDyn_H);
+    HRESULT LoadAndRegisterModule(const FILECHAR_t* pszPath, ::IUnknown* pContainer, UINT32 nLibVer = _INC_cOSModDyn_H);
 
     /// <summary>
     /// Unloading the module is extremely dangerous. All objects it created have a vtable pointer in its space.
     /// </summary>
-    void Unload();
+    bool Unload();
 };
 }  // namespace Gray
 #endif

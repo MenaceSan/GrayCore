@@ -12,6 +12,9 @@
 #ifdef _MFC_VER
 #include <atlutil.h>  // CWorkerThread
 #endif
+#ifdef __linux__
+#include <pthread.h>
+#endif
 
 namespace Gray {
 #ifdef _WIN32
@@ -28,19 +31,20 @@ typedef pthread_t THREADID_t;                                                   
 typedef DWORD THREAD_EXITCODE_t;                                                                      /// Similar to APP_EXITCODE_t
 static constexpr THREAD_EXITCODE_t THREAD_EXITCODE_RUNNING = CastN(THREAD_EXITCODE_t, STILL_ACTIVE);  /// can't get exit code if not exited. STILL_ACTIVE = 0x00000103L
 static constexpr THREAD_EXITCODE_t THREAD_EXITCODE_ERR = CastN(THREAD_EXITCODE_t, -1);                /// failure exit.
+static constexpr THREAD_EXITCODE_t THREAD_EXITCODE_OK = CastN(THREAD_EXITCODE_t, 0);                  /// Similar to APP_EXITCODE_t. NOT running.
 
 #elif defined(__linux__)
 typedef void* THREAD_EXITCODE_t;                                                           /// Similar to APP_EXITCODE_t
-static constexpr THREAD_EXITCODE_t THREAD_EXITCODE_RUNNING = CastN(THREAD_EXITCODE_t, 2);  /// can't get exit code if not exited.
-static constexpr THREAD_EXITCODE_t THREAD_EXITCODE_ERR = CastN(THREAD_EXITCODE_t, 1);      /// failure exit.
+static const THREAD_EXITCODE_t THREAD_EXITCODE_RUNNING = CastNumToPtr(2);  /// can't get exit code if not exited.
+static const THREAD_EXITCODE_t THREAD_EXITCODE_ERR = CastNumToPtr(1);      /// failure exit.
+static const THREAD_EXITCODE_t THREAD_EXITCODE_OK = CastNumToPtr(0);       /// Similar to APP_EXITCODE_t. NOT running.
 
 #else
 #error NOOS
 #endif
 
-static constexpr THREAD_EXITCODE_t THREAD_EXITCODE_OK = CastN(THREAD_EXITCODE_t, 0);  /// Similar to APP_EXITCODE_t. NOT running.
 
-typedef THREAD_EXITCODE_t(_stdcall* THREAD_FUNC_t)(void*);  // entry point for a thread. same as _WIN32 PTHREAD_START_ROUTINE. like FARPROC ?
+typedef THREAD_EXITCODE_t(_stdcall* THREAD_FUNC_t)(void*);  // entry point for a thread. same as _WIN32 PTHREAD_START_ROUTINE. like FUNCPTR_t ?
 
 /// <summary>
 /// wrapper for id for a thread.
@@ -97,14 +101,14 @@ class GRAYCORE_LINK cThreadId {
 #ifdef _WIN32
         return ::GetCurrentThreadId();
 #else  // __linux__
-        return ::pthread_self();
+        return ::pthread_self(); 
 #endif
     }
     static constexpr bool IsValidId(THREADID_t id) noexcept {
         //! Is this thread valid? the system thread is considered valid.
         return id != cThreadId::k_NULL;
     }
-    static constexpr bool IsEqualId(THREADID_t a, THREADID_t b) noexcept {
+    static inline bool IsEqualId(THREADID_t a, THREADID_t b) noexcept {
         //! Are these id's the same thread? In Linux this might be similar to _WIN32 HANDLE.
 #ifdef _WIN32
         return a == b;

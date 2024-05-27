@@ -10,28 +10,28 @@
 namespace Gray {
 bool cBlob::isValidRead() const noexcept {
     if (isNull()) return false;
-    if (isHeap()) return cHeap::IsValidHeap(get_DataC());
-    return cMem::IsValidApp(get_DataC());
+    if (isHeap()) return cHeap::IsValidHeap(GetTPtrC());
+    return cMem::IsValidApp(GetTPtrC());
 }
 
 bool cBlob::isCorrupt() const noexcept {
     if (isNull()) return false;
-    if (isHeap()) return cHeap::IsCorruptHeap(get_DataC());
-    return cMem::IsCorruptApp(get_DataC(), get_DataSize());
+    if (isHeap()) return cHeap::IsCorruptHeap(GetTPtrC());
+    return cMem::IsCorruptApp(GetTPtrC(), get_SizeBytes());
 }
 size_t cBlob::get_AllocSize() const noexcept {
     DEBUG_CHECK(!isCorrupt());
-    if (isHeap()) return cHeap::GetSize(get_DataC());
-    return get_DataSize();  // NOT Heap!
+    if (isHeap()) return cHeap::GetSize(GetTPtrC());
+    return get_SizeBytes();  // NOT Heap!
 }
 
 void cBlob::FreeHeap() noexcept {
     DEBUG_CHECK(isHeap());
-    if (cBits::HasAny(static_cast<BYTE>(_MemType), static_cast<BYTE>(MEMTYPE_t::_Secure))) {
+    if (cBits::HasAny(static_cast<BYTE>(_MemType), static_cast<BYTE>(MEMTYPE_t::_Secret))) {
         SetZeros();
     }
     // cHeapAlign ?
-    cHeap::FreePtr(get_DataW());
+    cHeap::FreePtr(GetTPtrW());
 }
 
 void cBlob::SetBlobNull() noexcept {
@@ -70,8 +70,8 @@ bool cBlob::ReAllocSize(size_t nSize) {
         // transition from static to heap.
         if (!AllocSize(nSize)) return false;
         this->SetCopySpan(spanPrev);
-    } else if (nSize != spanPrev.get_DataSize()) {
-        SUPER_t::SetSpan2(cHeap::ReAllocPtr(get_DataW(), nSize), nSize);
+    } else if (nSize != spanPrev.get_SizeBytes()) {
+        SUPER_t::SetSpan2(cHeap::ReAllocPtr(GetTPtrW(), nSize), nSize);
         if (!isValidPtr()) {
             ASSERT(0);
             return false;  // FAILED E_OUTOFMEMORY
@@ -81,31 +81,30 @@ bool cBlob::ReAllocSize(size_t nSize) {
     ASSERT(isHeap());
     return true;
 }
-bool cBlob::ReAllocLazy(size_t iSizeNew) {
-    if (iSizeNew > get_DataSize() && iSizeNew > get_AllocSize()) {
-        if (!ReAllocSize(iSizeNew)) return false;
+bool cBlob::ReAllocLazy(size_t nSizeNew) {
+    if (nSizeNew > get_SizeBytes() && nSizeNew > get_AllocSize()) {
+        if (!ReAllocSize(nSizeNew)) return false;
     }
-    put_DataSize(iSizeNew);
+    put_SizeBytes(nSizeNew);
     return true;
 }
 
 bool cBlob::SetCopyAlloc(const cMemSpan& m) {
     ASSERT(m.isNull() || !isHeap() || !this->IsInternalPtr(m));  // NOT from inside myself ! // Check before Alloc
-    if (!AllocSize(m.get_DataSize())) return false;              // FAILED HRESULT_WIN32_C(ERROR_NOT_ENOUGH_MEMORY)
+    if (!AllocSize(m.get_SizeBytes())) return false;              // FAILED HRESULT_WIN32_C(ERROR_NOT_ENOUGH_MEMORY)
     this->SetCopySpan(m);
     return true;
 }
 bool cBlob::SetCopyReAlloc(const cMemSpan& m) {
     // FAIL if pData overlaps this.
-    ASSERT(m.isNull() || !isHeap() || !this->IsInternalPtr(m) || m == get_DataC());  // NOT overlap myself ! // Check before Alloc
-    if (!ReAllocSize(m.get_DataSize())) return false;            // FAILED HRESULT_WIN32_C(ERROR_NOT_ENOUGH_MEMORY)
+    ASSERT(m.isNull() || !isHeap() || !this->IsInternalPtr(m) || m == GetTPtrC());  // NOT overlap myself ! // Check before Alloc
+    if (!ReAllocSize(m.get_SizeBytes())) return false;            // FAILED HRESULT_WIN32_C(ERROR_NOT_ENOUGH_MEMORY)
     this->SetCopySpan(m);
     return true;
 }
 
 bool cBlob::SetBlob(const cMemSpan& r, MEMTYPE_t memType) {
-    if (this->IsSameSpan(r) && _MemType == memType)  // no change!
-        return true;
+    if (this->IsSameSpam(r) && _MemType == memType) return true;  // no change!        
     if (memType >= MEMTYPE_t::_Heap) {  // i want a heap block. allocate and copy. isHeap.
         if (isHeap()) return SetCopyReAlloc(r);
         return SetCopyAlloc(r);

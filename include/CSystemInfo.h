@@ -48,13 +48,13 @@ namespace Gray {
 class GRAYCORE_LINK cSystemInfo final : public cSingleton<cSystemInfo> {
     SINGLETON_IMPL(cSystemInfo);
 
-#ifdef _WIN32
  public:
+#ifdef _WIN32
     ::SYSTEM_INFO m_SystemInfo;   /// Cached info.  _MSC_VER <= 1200
     ::OSVERSIONINFOEXW m_OsInfo;  /// always use *W version and call RtlGetVersion() to overcome M$ nerf. OSVERSIONINFOEXW
 #elif defined(__linux__)
+    struct utsname m_utsname;  /// output from uname() on __linux__.
  protected:
-    struct utsname m_utsname;    /// output from uname() on __linux__.
     UINT m_nOSVer;               /// Major << 8 | minor
     UINT m_nNumberOfProcessors;  /// should we worry about SMP issues ?
     size_t m_nPageSize;          /// cMem::k_PageSizeMin
@@ -67,7 +67,6 @@ class GRAYCORE_LINK cSystemInfo final : public cSingleton<cSystemInfo> {
 
  protected:
     cSystemInfo();
-    ~cSystemInfo();
 
  public:
     UINT get_NumberOfProcessors() const noexcept;  // SMP issues ?
@@ -84,8 +83,8 @@ class GRAYCORE_LINK cSystemInfo final : public cSingleton<cSystemInfo> {
     bool isVer3_17_plus() const noexcept;
 #endif
 
-    static StrLen_t GRAYCALL GetSystemDir(cSpanX<FILECHAR_t>& ret);
-    static HRESULT GRAYCALL GetSystemName(cSpanX<FILECHAR_t>& ret);
+    static StrLen_t GRAYCALL GetSystemDir(cSpanX<FILECHAR_t> ret);
+    static HRESULT GRAYCALL GetSystemName(cSpanX<FILECHAR_t> ret);
 
     static bool GRAYCALL SystemShutdown(bool bReboot);
     static void GRAYCALL SystemBeep();

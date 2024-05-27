@@ -9,10 +9,11 @@
 #pragma once
 #endif
 
+#include "FuncPtr.h"
 #include "cBits.h"
 #include "cFilePath.h"
-#include "cMime.h"
 #include "cHandlePtr.h"
+#include "cMime.h"
 
 #ifdef _WIN32
 #define MODULE_EXT MIME_EXT_dll
@@ -20,7 +21,7 @@
 #elif defined(__linux__)
 #include <dlfcn.h>
 #define MODULE_EXT MIME_EXT_so
-typedef int(GRAYCALL* FARPROC)();
+
 #else
 #error NOOS
 #endif
@@ -41,7 +42,7 @@ namespace Gray {
 /// </summary>
 class GRAYCORE_LINK cOSModule {
     ::HMODULE m_hModule;  /// sometimes the same as HINSTANCE ? = loading address of the code. cHandlePtr NOT cOSHandle.
-    UINT32 m_uFlags;    /// k_Load_RefCount= I am responsible to unload this since i loaded it. k_Load_Resource = This is not callable code. init was not called and refs not loaded.
+    UINT32 m_uFlags;      /// k_Load_RefCount= I am responsible to unload this since i loaded it. k_Load_Resource = This is not callable code. init was not called and refs not loaded.
 #if defined(__linux__)
     cStringF m_sModuleName;  /// Must store this if __linux__ can't query it directly.
 #endif
@@ -61,7 +62,7 @@ class GRAYCORE_LINK cOSModule {
 #define LOAD_LIBRARY_AS_IMAGE_RESOURCE 0x00000020  // __GNUC__
 #endif
     static const UINT k_Load_Normal = 0;                                 /// Flags.
-    static const UINT k_Load_Preload = DONT_RESOLVE_DLL_REFERENCES;      /// 0x01. Just load into memory but don't call any init code. DANGER: No recovery from this. MUST unload. Diff from __linux RTLD_LAZY. 
+    static const UINT k_Load_Preload = DONT_RESOLVE_DLL_REFERENCES;      /// 0x01. Just load into memory but don't call any init code. DANGER: No recovery from this. MUST unload. Diff from __linux RTLD_LAZY.
     static const UINT k_Load_Resource = LOAD_LIBRARY_AS_IMAGE_RESOURCE;  /// 0x20. This is just a resource load. RTLD_LAZY, LOAD_LIBRARY_AS_IMAGE_RESOURCE
 #elif defined(__linux__)
     static const UINT k_Load_Normal = RTLD_NOW;     /// Flags.
@@ -96,7 +97,7 @@ class GRAYCORE_LINK cOSModule {
     /// </summary>
     /// <param name="pszSymbolName"></param>
     /// <returns>address</returns>
-    FARPROC GetSymbolAddress(const char* pszSymbolName) const;
+    FUNCPTR_t GetSymbolAddress(const char* pszSymbolName) const;
 
     bool isValidModule() const noexcept {
         return m_hModule != HMODULE_NULL;
@@ -104,7 +105,7 @@ class GRAYCORE_LINK cOSModule {
     operator ::HMODULE() const noexcept {
         return m_hModule;
     }
-    ::HMODULE get_ModuleHandle() const noexcept {
+    ::HMODULE get_HModuleX() const noexcept {
         return m_hModule;
     }
     /// <summary>
@@ -112,7 +113,7 @@ class GRAYCORE_LINK cOSModule {
     /// </summary>
     /// <returns></returns>
     UINT_PTR get_ModuleInt() const noexcept {
-        return PtrCastToNum(m_hModule);
+        return CastPtrToNum(m_hModule);
     }
     /// <summary>
     /// We cant call this. its not loaded as code.
@@ -121,16 +122,16 @@ class GRAYCORE_LINK cOSModule {
         return cBits::HasAny(m_uFlags, k_Load_Preload | k_Load_Resource);
     }
 
-/// <summary>
+    /// <summary>
     /// Get the file path to the loaded module.
     /// @note there is not absolute rule that it must have one.
     /// </summary>
     /// <param name="name"></param>
-    /// <returns></returns>
-    StrLen_t GetModulePath(cSpanX<FILECHAR_t>& name) const;
+    /// <returns>length, 0 = fail.</returns>
+    StrLen_t GetModulePath(cSpanX<FILECHAR_t> ret) const;
 
     /// <summary>
-    /// get Full path to the module.
+    /// get Full path to the module. for name sorting.
     /// </summary>
     cStringF get_Name() const;
 
@@ -190,11 +191,11 @@ class GRAYCORE_LINK cOSModule {
 /// track a single TYPE based entry point/procedure/function in the DLL/SO/Module file.
 /// @note It is VERY important to know the proper number and size of args before calling m_pFunc !!! (if not _cdecl)
 /// </summary>
-/// <typeparam name="TYPE"></typeparam>
-template <class TYPE = FARPROC>
+/// <typeparam name="TYPE">FUNCPTR_t</typeparam>
+template <class TYPE>
 class cOSModuleFunc {
  public:
-    TYPE m_pFunc;  /// FARPROC to typedef int (FAR WINAPI *FARPROC)();
+    TYPE m_pFunc;  /// something like:  typedef int (FAR WINAPI *FUNCTYPENAME)();
  public:
     cOSModuleFunc(TYPE pFunc = nullptr) : m_pFunc(pFunc) {}
     ~cOSModuleFunc() {}
@@ -206,22 +207,21 @@ class cOSModuleFunc {
         if (m_pFunc == nullptr) return false;
         return true;
     }
-    bool put_FuncGeneric(FARPROC pFunc) {
-        m_pFunc = reinterpret_cast<TYPE>(pFunc);
+    bool put_FuncGeneric(FUNCPTR_t pFunc) {
+        m_pFunc = CastFPtrTo<TYPE>(pFunc);
         if (m_pFunc == nullptr) return false;
         return true;
     }
     bool isValidFunc() const {
-        return m_pFunc != nullptr;
+        return m_pFunc != nullptr;  // IsValidFunction()
     }
     operator TYPE() const {
         return m_pFunc;
     }
 };
-typedef cOSModuleFunc<FARPROC> cOSModuleFuncGeneric;
 
 #ifndef GRAY_STATICLIB  // force implementation/instantiate for DLL/SO.
-template class GRAYCORE_LINK cOSModuleFunc<FARPROC>;
+template class GRAYCORE_LINK cOSModuleFunc<FUNCPTR_t>;
 #endif
 }  // namespace Gray
 #endif  // _INC_cOSModule_H

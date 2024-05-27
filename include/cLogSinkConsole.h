@@ -18,7 +18,7 @@ namespace Gray {
 /// Forward debug statements to the console (cAppConsole) (if i have one)
 /// No filter and take default formatted string
 /// </summary>
-class GRAYCORE_LINK cLogSinkConsole : public cLogSink, public cRefBase, public ITextWriter {
+class GRAYCORE_LINK cLogSinkConsole : public cLogSink, public cRefBase {
  protected:
     cLogSinkConsole() {}
  
@@ -37,7 +37,7 @@ class GRAYCORE_LINK cLogSinkConsole : public cLogSink, public cRefBase, public I
     static bool GRAYCALL RemoveSinkCheck(cLogNexus* pLogger, bool bOnlyIfParent);
     static HRESULT GRAYCALL WaitForDebugger();
 
-    IUNKNOWN_DISAMBIG(cRefBase);
+    IUNKNOWN_DISAMBIG(cRefBase)
 };
 
 /// <summary>
@@ -46,7 +46,7 @@ class GRAYCORE_LINK cLogSinkConsole : public cLogSink, public cRefBase, public I
 class GRAYCORE_LINK cLogSinkTextArray : public cLogSink, public cRefBase {
  public:
     cArrayString<LOGCHAR_t> m_aMsgs;
-    const ITERATE_t m_iMax;  /// Store this many messages.
+    const ITERATE_t m_iMax;  /// Store max this many messages.
 
  public:
     cLogSinkTextArray(ITERATE_t iMax = SHRT_MAX) noexcept : m_iMax(iMax) {}
@@ -57,7 +57,7 @@ class GRAYCORE_LINK cLogSinkTextArray : public cLogSink, public cRefBase {
         m_aMsgs.Add(pszMsg);
         return 1;
     }
-    IUNKNOWN_DISAMBIG(cRefBase);
+    IUNKNOWN_DISAMBIG(cRefBase)
 };
 }  // namespace Gray
 #endif

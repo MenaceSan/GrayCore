@@ -6,7 +6,7 @@
 #ifndef NO_PRAGMA_ONCE
 #pragma once
 #endif
-#include "cMem.h"
+#include "cMemSpan.h"
 #include "cPtrFacade.h"
 #include "cValSpan.h"
 
@@ -16,285 +16,23 @@
 
 namespace Gray {
 /// <summary>
-/// A pointer to memory block/blob/span with known size and unknown ownership.
-/// may be heap, stack, static or const based memory pointer. don't free on destruct. (although a derived class might)
-/// May be static init? or UN-INIT!
-/// </summary>
-class GRAYCORE_LINK cMemSpan { // : public cMem 
-    typedef cMemSpan THIS_t;
-    void* m_pData;   /// a block of memory of unknown ownership. Treat as MEMTYPE_t::_Temp
-    size_t m_nSize;  /// size_t of m_pData in bytes.
-
- public:
-    /// <summary>
-    /// Set/Adjust size in bytes but leave data pointer alone.
-    /// </summary>
-    void put_DataSize(size_t nSize) noexcept {
-        m_nSize = nSize;
-    }
-
-    constexpr cMemSpan() noexcept : m_pData(nullptr), m_nSize(0) {}
-    constexpr cMemSpan(const void* pData, size_t nSize) noexcept : m_pData(nSize ? const_cast<void*>(pData) : nullptr), m_nSize(nSize) {
-        // just assume we don't modify it?
-        // read only. SetSpanConst
-        DEBUG_CHECK(isValid());
-    }
-    explicit cMemSpan(const cMemSpan* pBlock) noexcept {
-        // Just shared pointers. This may be dangerous!
-        m_pData = (pBlock == nullptr) ? nullptr : pBlock->m_pData;
-        m_nSize = (pBlock == nullptr) ? 0 : pBlock->m_nSize;
-        DEBUG_CHECK(isValid());
-    }
-
-    /// <summary>
-    /// Get size in bytes.
-    /// </summary>
-    constexpr inline size_t get_DataSize() const noexcept {
-        return m_nSize;
-    }
-
-    /// <summary>
-    /// get a read only arbitrary TYPE pointer. Might be nullptr. that's OK.
-    /// </summary>
-    template <typename TYPE2 = BYTE>
-    inline const TYPE2* get_DataC() const noexcept {
-        // DEBUG_CHECK(m_nSize == 0 || m_nSize >= sizeof(TYPE2));
-        return PtrCast<TYPE2>(m_pData);
-    }
-    /// <summary>
-    /// Get a writable arbitrary TYPE2 pointer.
-    /// </summary>
-    template <typename TYPE2 = BYTE>
-    inline TYPE2* get_DataW() noexcept {
-        // DEBUG_CHECK(m_nSize == 0 || m_nSize >= sizeof(TYPE2));
-        return PtrCast<TYPE2>(m_pData);
-    }
-
-    /// <summary>
-    /// Get a Non-const pointer that we do not actually expect to write to ?! Some APIs seem to want this.
-    /// </summary>
-    /// <typeparam name="TYPE2"></typeparam>
-    /// <returns></returns>
-    template <typename TYPE2 = BYTE>
-    inline TYPE2* get_DataNC() const noexcept {
-        // DEBUG_CHECK(m_nSize == 0 || m_nSize >= sizeof(TYPE2));
-        return PtrCast<TYPE2>(m_pData);
-    }
-    /// <summary>
-    /// Is this (probably) valid to use/read/write. not nullptr.
-    /// </summary>
-    /// <returns></returns>
-    constexpr inline bool isValidPtr() const noexcept {
-        return cMem::IsValidPtr(m_pData);
-    }
-    /// <summary>
-    /// Not exactly the same as empty? since nullptr and size are allowed for lockable types.
-    /// </summary>
-    constexpr inline bool isNull() const noexcept {
-        return m_pData == nullptr;
-    }
-
-    /// <summary>
-    /// operator to auto cast to const pointer
-    /// </summary>
-    operator const void*() const noexcept {
-        return m_pData;
-    }
-    operator const BYTE*() const noexcept {
-        return PtrCast<BYTE>(m_pData);
-    }
-
-    /// <summary>
-    /// Is empty? assume NOT nullptr if not empty!
-    /// </summary>
-    constexpr inline bool isEmpty() const noexcept {
-        return m_nSize <= 0;
-    }
-
-    /// <summary>
-    /// Is in a valid state? nullptr = a valid state. Forbid: 0 sized isValidPtr !
-    /// </summary>
-    constexpr inline bool isValid() const noexcept {
-        if (isNull()) return true;
-        return isValidPtr() && m_nSize != 0;
-    }
-
-    /// <summary>
-    /// Is byte offset inside the known valid range for the block? exclusive.
-    /// I can write or read this?
-    /// </summary>
-    inline bool IsInSize(size_t i) const noexcept {
-        return IS_INDEX_GOOD(i, m_nSize);
-    }
-    /// <summary>
-    /// Is byte offset inside the known valid range for the block? or at end? inclusive.
-    /// </summary>
-    bool IsLTESize(size_t i) const noexcept {
-        if (i == m_nSize)  // at end is ok
-            return true;
-        return IS_INDEX_GOOD(i, m_nSize);
-    }
-
-    inline size_t GetOffset(const void* p) const noexcept {
-        return cMem::Diff(p, m_pData);
-    }
-
-    /// <summary>
-    /// Is p inside the known valid range for the block? Exclusive = Cant be equal to end!
-    /// </summary>
-    inline bool IsInternalPtr(const void* p) const noexcept {
-        return IsInSize(GetOffset(p));
-    }
-
-    /// <summary>
-    /// Is p inside the known valid range for the block? Inclusive = Can be equal to end.
-    /// </summary>
-    inline bool IsInternalPtr2(const void* p) const noexcept {
-        return IsLTESize(GetOffset(p));
-    }
-
-    bool IsZeros() const noexcept {
-        return cMem::IsZeros(m_pData, m_nSize);
-    }
-
-    /// <summary>
-    /// Exact same span?
-    /// </summary>
-    /// <param name="data"></param>
-    bool IsSameSpan(const THIS_t& data) const noexcept {
-        return m_nSize == data.m_nSize && m_pData == data.m_pData;
-    }
-
-    bool IsEqualData(const void* pData) const noexcept {
-        return cMem::IsEqual(m_pData, pData, m_nSize);
-    }
-
-    /// <summary>
-    /// compare spans of data.
-    /// </summary>
-    bool IsEqualSpan2(const void* pData, size_t nSize) const noexcept {
-        return m_nSize == nSize && IsEqualData(pData);
-    }
-    /// <summary>
-    /// compare blocks of data.
-    /// </summary>
-    bool IsEqualSpan(const THIS_t& data) const noexcept {
-        return IsEqualSpan2(data.m_pData, data.m_nSize);
-    }
- 
-    /// <summary>
-    /// get pointer that is good/valid for just one byte in the span.
-    /// </summary>
-    /// <param name="nOffset"></param>
-    const BYTE* GetInternalPtr(size_t nOffset) const noexcept {
-        if (!IsInSize(nOffset)) return nullptr;
-        return get_DataC<BYTE>() + nOffset;
-    }
-    /// <summary>
-    /// Get a pointer into the buffer as a byte pointer.
-    /// Ensure the data is valid to size_t !
-    /// </summary>
-    /// <param name="nOffset"></param>
-    /// <param name="size"></param>
-    /// <returns></returns>
-    const BYTE* GetInternal2(size_t nOffset, size_t size) const noexcept {
-        ASSERT(size > 0);
-        if (!IsInSize(nOffset) || !IsLTESize(nOffset + size)) {
-            DEBUG_CHECK(false);
-            return nullptr;  // not big enough!
-        }
-        return get_DataC<BYTE>() + nOffset;
-    }
-
-    /// <summary>
-    /// Get a pointer to the end of the buffer.
-    /// Never read/write to/past this pointer.
-    /// </summary>
-    /// <returns></returns>
-    const BYTE* get_SpanEnd() const noexcept {
-        return get_DataC<BYTE>() + m_nSize;
-    }
-
-    void SetSpanNull() noexcept {
-        m_nSize = 0;
-        m_pData = nullptr;
-    }
-    /// set a read only span. nullptr ok.
-    void SetSpanConst(const void* pData, size_t nSize) noexcept {
-        m_pData = const_cast<void*>(pData);
-        m_nSize = nSize;  // size does not apply if nullptr.
-        DEBUG_CHECK(isValid());
-    }
-    /// set a writable span.
-    void SetSpan2(void* pData, size_t nSize) noexcept {
-        m_nSize = nSize;  // size does not apply if nullptr.
-        m_pData = nSize ? pData : nullptr;
-        DEBUG_CHECK(isValid());
-    }
-    /// make a copy of this span
-    void SetSpan(const THIS_t& a) noexcept {
-        m_nSize = a.m_nSize;  // size does not apply if nullptr.
-        m_pData = a.m_pData;
-        DEBUG_CHECK(isValid());
-    }
-
-    /// Advance the span and shrink it.
-    inline void SetSpanSkip(size_t nSize) {
-        ASSERT(nSize <= m_nSize);
-        m_pData = get_DataW<BYTE>() + nSize;
-        m_nSize -= nSize;
-    }
-
-    void SetZeros() noexcept {
-        cMem::ZeroSecure(m_pData, m_nSize);
-    }
-    void SetCopyAll(const void* pData) noexcept {
-        cMem::Copy(m_pData, pData, m_nSize);
-    }
-    size_t SetCopySpan(const cMemSpan& span2) noexcept {
-        const size_t sizeMin = cValT::Min(m_nSize, span2.get_DataSize());
-        if (!isNull() && !span2.isNull() && m_pData != span2.get_DataC()) {
-            cMem::Copy(m_pData, span2, sizeMin);
-        }
-        return sizeMin;
-    }
-
-    void CopyTo(void* pData) const noexcept {
-        cMem::Copy(pData, m_pData, m_nSize);
-    }
-    COMPARE_t Compare(const cMemSpan& m2) const;
-
-    /// How much space does the hex digest need?
-    static constexpr StrLen_t GetHexDigestSize(size_t nSize) noexcept {
-        return CastN(StrLen_t, (nSize * 2) + 1);
-    }
-    /// <summary>
-    /// Get the required size of the hex string.
-    /// </summary>
-    StrLen_t get_HexDigestSize() const {
-        return GetHexDigestSize(get_DataSize());
-    }
-    /// ASSUME pszHexString output is big enough! GetHexDigestSize()
-    StrLen_t GetHexDigest(OUT char* pszHexString) const;
-    HRESULT SetHexDigest(const char* pszHexString, bool testEnd = true);
-
-    // read/write a string of comma separated numbers.
-    size_t ReadFromCSV(const char* pszSrc);
-};
-
-/// <summary>
 /// a span of some unknown type. Element size (stride) is known only at run time.
 /// can be used with StrT::TableFind*
 /// </summary>
 struct cSpanUnk : public cMemSpan {
-    size_t _Stride;  /// each element is of this size. AKA pitch.
+    const size_t _Stride;  /// each element is of this size. AKA pitch. Known at run time.
 
     cSpanUnk(const cMemSpan& m, size_t stride) : cMemSpan(m), _Stride(stride) {
-        ASSERT(stride > 0);
+        ASSERT(stride > 0);  // do we allow misalignment ? extra bytes ? GetOverflow
+    }
+    cSpanUnk(const void* p, COUNT_t count, size_t stride) : cSpanUnk(cMemSpan(p, count * stride), stride) {}
+
+    size_t get_Overflow() const noexcept {
+        return this->get_SizeBytes() % _Stride;
     }
 
     constexpr COUNT_t get_Count() const noexcept {
-        return get_DataSize() / _Stride;
+        return get_SizeBytes() / _Stride;
     }
     constexpr ITERATE_t GetSize() const noexcept {  // for cArray
         return CastN(ITERATE_t, get_Count());       // AKA Count
@@ -306,13 +44,18 @@ struct cSpanUnk : public cMemSpan {
     inline const void* GetElemV(ITERATE_t i) const {
         ASSERT(!isNull());
         ASSERT(IsValidIndex(i));
-        return get_DataC() + (i * _Stride);
+        return GetTPtrC<BYTE>() + (i * _Stride);
     }
 
     // String searching. const
     template <typename T>
     inline const T* GRAYCALL GetElemT(ITERATE_t i) const {
         return PtrCast<T>(GetElemV(i));
+    }
+
+    void ReverseSpan() {
+        ASSERT(get_Overflow() == 0);  // MUST be aligned!
+        cMemSpan::ReverseSpan(_Stride);
     }
 };
 
@@ -321,18 +64,20 @@ struct cSpanUnk : public cMemSpan {
 /// </summary>
 /// <typeparam name="TYPE"></typeparam>
 template <typename TYPE>
-class cSpan : public cMemSpan {
+struct cSpan : public cMemSpan {
     typedef cMemSpan SUPER_t;
     typedef cSpan<TYPE> THIS_t;
 
- public:
+    typedef TYPE ELEM_t;
+
     constexpr cSpan() noexcept {}
     constexpr cSpan(const TYPE* pData, COUNT_t nCount) noexcept : SUPER_t(pData, nCount * sizeof(TYPE)) {}
+    constexpr cSpan(const TYPE* pData, const TYPE* pDataEnd) noexcept : SUPER_t(pData, cValSpan::Diff(pDataEnd, pData) * sizeof(TYPE)) {}
 
     constexpr explicit cSpan(const cMemSpan& span) noexcept : SUPER_t(span) {}
 
     constexpr COUNT_t get_Count() const noexcept {
-        return get_DataSize() / sizeof(TYPE);
+        return get_SizeBytes() / sizeof(TYPE);
     }
     constexpr StrLen_t get_MaxLen() const noexcept {  // for StrT
         return CastN(StrLen_t, get_Count());          // AKA Count
@@ -341,11 +86,11 @@ class cSpan : public cMemSpan {
         return CastN(ITERATE_t, get_Count());       // AKA Count
     }
 
-    const TYPE* get_DataConst() const {
-        return get_DataC<TYPE>();
+    const TYPE* get_PtrConst() const {
+        return GetTPtrC<TYPE>();
     }
     operator const TYPE*() const noexcept {
-        return get_DataConst();
+        return get_PtrConst();
     }
 
     cSpanUnk get_SpanUnk() const {
@@ -360,7 +105,7 @@ class cSpan : public cMemSpan {
     }
     ptrdiff_t GetIndexIn(const TYPE* p) const noexcept {
         // ASSERT(IsInternalPtr(p));
-        return GET_INDEX_IN(get_DataConst(), p);
+        return GET_INDEX_IN(get_PtrConst(), p);
     }
 
     /// <summary>
@@ -381,12 +126,12 @@ class cSpan : public cMemSpan {
     // Accessing elements
     const TYPE& GetAt(ITERATE_t nIndex) const noexcept {
         DEBUG_CHECK(IsValidIndex(nIndex));
-        return this->get_DataConst()[nIndex];
+        return this->get_PtrConst()[nIndex];
     }
     const TYPE& GetAtSecure(ITERATE_t nIndex) const {  // throw
         //! throw an exception if we are out or range.
         ThrowIfInvalidIndex(nIndex);
-        return this->get_DataConst()[nIndex];
+        return this->get_PtrConst()[nIndex];
     }
     const TYPE& GetAtHead() const {
         // AKA front()
@@ -396,43 +141,201 @@ class cSpan : public cMemSpan {
         // AKA back()
         return this->GetAt(this->GetSize() - 1);
     }
- 
+
     // overloaded operator helpers
     inline const TYPE& operator[](ITERATE_t nIndex) const {  // throw
         // Use GetAtSecure?
-        return GetAt(nIndex);
+        return this->GetAt(nIndex);
     }
 
     typedef cIterator<const TYPE> const_iterator;  // like STL
     const_iterator begin() const noexcept {
-        return const_iterator(get_DataC<TYPE>());
+        return const_iterator(GetTPtrC<TYPE>());
     }
     const_iterator end() const noexcept {
-        return const_iterator(get_DataC<TYPE>() + get_Count());
+        return const_iterator(GetTPtrC<TYPE>() + get_Count());
+    }
+
+    THIS_t GetSkip(ITERATE_t nSize) const {
+        ASSERT(nSize <= GetSize());
+        return THIS_t(get_PtrConst() + nSize, GetSize() - nSize);
     }
 };
 
 /// <summary>
 /// A span (of TYPE) we might also write to.
 /// </summary>
-template <typename TYPE, class ARG_TYPE = const TYPE&>
-class cSpanX : public cSpan<TYPE> {
+/// <typeparam name="TYPE"></typeparam>
+/// <typeparam name="ARG_TYPE">const ref, value or pointer to something contained by TYPE.</typeparam>
+template <typename TYPE, typename ARG_TYPE = const TYPE&>
+struct cSpanX : public cSpan<TYPE> {
     typedef cSpan<TYPE> SUPER_t;
+    typedef cSpanX<TYPE, ARG_TYPE> THIS_t;
+    typedef TYPE ELEM_t;
+    typedef ARG_TYPE ARG_t;
 
- protected:
+    constexpr cSpanX(const cMemSpan& span) noexcept : SUPER_t(span) {}
+    constexpr cSpanX(const TYPE* pData = nullptr, COUNT_t nCount = 0) noexcept : SUPER_t(pData, nCount) {}
+
+    /// Find strict equal. Not sorted.
+    ITERATE_t FindIFor3(ARG_TYPE arg) const noexcept {
+        for (ITERATE_t i = this->GetSize(); i;) {
+            if (IsEqual3<ARG_TYPE>(this->GetAt(--i), arg)) return i;  // operator == ??
+        }
+        return k_ITERATE_BAD;
+    }
+
     /// <summary>
-    /// Compare a data record to another data record. QSort
-    /// ASSUME this is the same as comparing keys. Otherwise you must overload this.
-    /// Default implementation. Override this for proper implementation. This probably won't work for most cases.
+    /// Does the array contain this strict value? Not sorted.
+    /// </summary>
+    bool HasArg3(ARG_TYPE arg) const noexcept {
+        return FindIFor3(arg) != k_ITERATE_BAD;
+    }
+
+    TYPE* get_PtrWork() noexcept {
+        // return PtrCast<TYPE>(this->get_BytePtrW());
+        return this->template GetTPtrW<TYPE>();
+    }
+    TYPE& ElementAt(ITERATE_t nIndex) {
+        DEBUG_CHECK(IsValidIndex(nIndex));
+        return get_PtrWork()[nIndex];
+    }
+    inline TYPE& operator[](ITERATE_t nIndex) {  // throw
+        // Use ElementAtSecure?
+        return this->ElementAt(nIndex);
+    }
+    inline const TYPE& operator[](ITERATE_t nIndex) const {  // throw
+        // Use GetAtSecure?
+        return this->GetAt(nIndex);
+    }
+
+    using SUPER_t::begin;
+    using SUPER_t::end;
+
+    typedef cIterator<TYPE> iterator;  // like STL
+    iterator begin() noexcept {
+        return iterator(get_PtrWork());
+    }
+    iterator end() noexcept {
+        return iterator(get_PtrWork() + this->get_Count());
+    }
+
+    void SetAt(ITERATE_t nIndex, ARG_TYPE newElement) {  // throw
+        //! @note Destructor is automatically called.
+        DEBUG_CHECK(this->IsValidIndex(nIndex));
+        this->get_PtrWork()[nIndex] = newElement;  // may call a copy constructor.
+    }
+    void SetCopyAll(const TYPE* pData) noexcept {
+        if (!this->isNull()) cValSpan::CopyQty(get_PtrWork(), pData, this->GetSize());
+    }
+    ITERATE_t SetCopyQty(const TYPE* pData, ITERATE_t nQty) {
+        nQty = cValT::Min(this->GetSize(), nQty);
+        if (!this->isNull()) cValSpan::CopyQty(get_PtrWork(), pData, nQty);
+        return nQty;
+    }
+    ITERATE_t SetCopySpan(const cSpan<TYPE>& src) {
+        return SetCopyQty(src.get_PtrConst(), src.GetSize());
+    }
+
+    void Swap(ITERATE_t i, ITERATE_t j) {
+        //! like cMemT::Swap(). dangerous for types that have pointers to themselves. self referenced.
+        if (i == j) return;
+        ASSERT(this->IsValidIndex(i));
+        ASSERT(this->IsValidIndex(j));
+        TYPE* p = get_PtrWork();
+        cMem::Swap(PtrCast<BYTE>(p + i), PtrCast<BYTE>(p + j), sizeof(TYPE));
+    }
+
+    /// <summary>
+    /// shift the whole array. move an index to another place.
+    /// Similar to Swap() but only one element is moved. (sort of)
+    /// dangerous for types that have internal pointers !
+    /// </summary>
+    void MoveElement(ITERATE_t iFrom, ITERATE_t iTo) {  // throw
+        ASSERT(this->IsValidIndex(iFrom));
+        ASSERT(this->IsValidIndex(iTo));
+        TYPE* p = this->get_PtrWork();
+        cValSpan::MoveElement1(&p[iFrom], &p[iTo]);
+    }
+
+    /// <summary>
+    /// reverse the order of an array of a TYPE. similar to cMem::ReverseArrayBlocks but iBlockSize==sizeof(TYPE)
+    /// TYPE = BYTE = reverse bytes in a block. similar to htonl(), etc.
+    /// Use ReverseType<> if TYPE = BYTE and nArraySizeBytes <= largest intrinsic type size?
+    /// </summary>
+    /// <typeparam name="TYPE"></typeparam>
+    /// <param name="pArray"></param>
+    /// <param name="nArraySizeBytes"></param>
+    void ReverseSpan() noexcept {
+        TYPE* pMemBS = this->get_PtrWork();
+        TYPE* pMemBE = pMemBS + (this->GetSize() - 1);
+        for (; pMemBS < pMemBE; pMemBS++, pMemBE--) {
+            cValT::Swap<TYPE>(*pMemBS, *pMemBE);
+        }
+    }
+
+    /// <summary>
+    /// Get reference to element and throw an exception if we are out of range.
+    /// </summary>
+    TYPE& ElementAtSecure(ITERATE_t nIndex) {  // throw
+        this->ThrowIfInvalidIndex(nIndex);
+        return this->get_PtrWork()[nIndex];
+    }
+
+    void put_Count2(COUNT_t count) noexcept {
+        // Truncate this span.
+        this->put_SizeBytes(count * sizeof(TYPE));
+    }
+    THIS_t GetSkip(ITERATE_t nSizeChange) const {
+        ASSERT(nSizeChange <= this->GetSize());
+        return THIS_t(this->get_PtrConst() + nSizeChange, this->GetSize() - nSizeChange);
+    }
+};
+
+template <typename TYPE, typename ARG_TYPE = const TYPE&>
+struct cSpanSearchable : public cSpanX<TYPE, ARG_TYPE> {
+    typedef cSpanX<TYPE, ARG_TYPE> SUPER_t;
+
+    cSpanSearchable() noexcept {}
+    cSpanSearchable(const cMemSpan& m) noexcept : SUPER_t(m) {}
+
+    /// <summary>
+    /// Compare a data record to another data record. for QSort.
+    /// derived class decides how (on what internal key) the span is sorted/compared.
     /// </summary>
     /// <param name="Data1"></param>
     /// <param name="Data2"></param>
     /// <returns></returns>
-    virtual COMPARE_t CompareData(ARG_TYPE data1, ARG_TYPE data2) const noexcept {
-        // return cValT::Compare(Data1,Data2);
-        return cMem::Compare(&data1, &data2, sizeof(data2));  // should we use cValT::Compare()??
+    virtual COMPARE_t CompareElems(ARG_TYPE data1, ARG_TYPE data2) const noexcept {
+        return cValT::Compare(data1, data2);
     }
 
+    /// <summary>
+    /// Find the index of a specified entry arg. brute force. Not sorted.
+    /// </summary>
+    /// <param name="arg"></param>
+    /// <returns>index. -1 = k_ITERATE_BAD = not found.</returns>
+    ITERATE_t FindIForN(ARG_TYPE arg) const noexcept {
+        for (ITERATE_t i = this->GetSize(); i;) {
+            if (COMPARE_Equal == CompareElems(this->GetAt(--i), arg)) return i;
+        }
+        return k_ITERATE_BAD;
+    }
+
+    /// <summary>
+    /// Does the array contain this value? Not sorted.
+    /// </summary>
+    bool HasArgN(ARG_TYPE arg) const noexcept {
+        return FindIForN(arg) != k_ITERATE_BAD;
+    }
+};
+
+/// <summary>
+/// A span that MAY be sorted. base class.
+/// </summary>
+template <typename TYPE, typename ARG_TYPE = const TYPE&>
+class cSpanSorted : public cSpanSearchable<TYPE, ARG_TYPE> {
+ protected:
     ITERATE_t QSortPartition(ITERATE_t iLeft, ITERATE_t iRight);
 
     /// <summary>
@@ -445,139 +348,75 @@ class cSpanX : public cSpan<TYPE> {
     void QSort(ITERATE_t iLeft, ITERATE_t iRight);
 
  public:
-    constexpr cSpanX(const cMemSpan& span) noexcept : SUPER_t(span) {}
-    constexpr cSpanX(const TYPE* pData = nullptr, COUNT_t nCount = 0) noexcept : SUPER_t(pData, nCount) {}
-
-    TYPE* get_DataWork() {
-        return get_DataW<TYPE>();
-    }
-    TYPE& ElementAt(ITERATE_t nIndex) {
-        DEBUG_CHECK(IsValidIndex(nIndex));
-        return get_DataWork()[nIndex];
-    }
-    inline TYPE& operator[](ITERATE_t nIndex) {  // throw
-        // Use ElementAtSecure?
-        return ElementAt(nIndex);
-    }
-    inline const TYPE& operator[](ITERATE_t nIndex) const {  // throw
-        // Use GetAtSecure?
-        return GetAt(nIndex);
-    }
-
-    using SUPER_t::begin;
-    using SUPER_t::end;
-
-    typedef cIterator<TYPE> iterator;  // like STL
-    iterator begin() noexcept {
-        return iterator(get_DataWork());
-    }
-    iterator end() noexcept {
-        return iterator(get_DataWork() + get_Count());
-    }
-
     /// <summary>
-    /// Find the index of a specified entry arg. brute force.
+    /// Do a binary search for the elements key. Sorted Array.
     /// </summary>
-    /// <param name="arg"></param>
-    /// <returns>index. -1 = k_ITERATE_BAD = not found.</returns>
-    ITERATE_t FindIFor(ARG_TYPE arg) const noexcept {
-        const TYPE* p = this->get_DataConst();
-        for (ITERATE_t nIndex = 0; nIndex < this->GetSize(); nIndex++) {
-            if (p[nIndex] == arg) return nIndex;
+    /// <param name="argFind"></param>
+    /// <param name="riCompareRes">COMPARE_t
+    ///		 0 = match with index. we may allow duplicates?
+    ///		-1 = key is less than index. COMPARE_Less
+    ///		+1 = key is greater than index</param>
+    /// <returns>ITERATE_t</returns>
+    ITERATE_t FindINearS(ARG_TYPE argFind, OUT COMPARE_t& riCompareRes) const noexcept {
+        if (this->isEmpty()) {
+            riCompareRes = COMPARE_Less;
+            return 0;
         }
-        return k_ITERATE_BAD;
-    }
-    /// <summary>
-    /// Does the array contain this value?
-    /// </summary>
-    bool HasArg(ARG_TYPE arg) const noexcept {
-        return FindIFor(arg) != k_ITERATE_BAD;
-    }
 
-    void put_Count2(COUNT_t count) noexcept {
-        // Truncate this span.
-        put_DataSize(count * sizeof(TYPE));
-    }
-
-    void SetAt(ITERATE_t nIndex, ARG_TYPE newElement) {  // throw
-        //! @note Destructor is automatically called.
-        DEBUG_CHECK(IsValidIndex(nIndex));
-        this->get_DataWork()[nIndex] = newElement;  // may call a copy constructor.
-    }
-    void SetCopyAll(const TYPE* pData) noexcept {
-        if (!isNull()) {
-            cValSpan::CopyQty(get_DataWork(), pData, GetSize());
+        ITERATE_t iHigh = this->GetSize() - 1;
+        ITERATE_t iLow = 0;
+        ITERATE_t i = 0;
+        COMPARE_t iCompareRes = COMPARE_Less;
+        while (iLow <= iHigh) {
+            i = (iHigh + iLow) / 2;
+            iCompareRes = this->CompareElems(argFind, this->GetAt(i));  // virtual call.
+            if (iCompareRes == COMPARE_Equal) break;
+            if (iCompareRes > 0) {
+                iLow = i + 1;
+            } else {
+                iHigh = i - 1;
+            }
         }
-    }
-    ITERATE_t SetCopyQty(const TYPE* pData, ITERATE_t nQty) {
-        nQty = cValT::Min(GetSize(), nQty);
-        if (!isNull()) {
-            cValSpan::CopyQty(get_DataWork(), pData, nQty);
-        }
-        return nQty;
-    }
-    ITERATE_t SetCopySpan(const cSpan<TYPE>& src) {
-        return SetCopyQty(src.get_DataConst(), src.GetSize());
-    }
-
-    void Swap(ITERATE_t i, ITERATE_t j) {
-        //! like cMemT::Swap(). dangerous for types that have pointers to themselves. self referenced.
-        if (i == j) return;
-        ASSERT(IsValidIndex(i));
-        ASSERT(IsValidIndex(j));
-        TYPE* p = get_DataWork();
-        cMem::Swap(PtrCast<BYTE>(p + i), PtrCast<BYTE>(p + j), sizeof(TYPE));
+        riCompareRes = iCompareRes;
+        return i;
     }
 
     /// <summary>
-    /// shift the whole array. move an index to another place.
-    /// Similar to Swap() but only one element is moved. (sort of)
-    /// dangerous for types that have internal pointers !
+    /// Does the array contain this value? sorted.
     /// </summary>
-    void MoveElement(ITERATE_t iFrom, ITERATE_t iTo) {  // throw
-        ASSERT(IsValidIndex(iFrom));
-        ASSERT(IsValidIndex(iTo));
-        TYPE* p = get_DataWork();
-        cValSpan::MoveElement1(&p[iFrom], &p[iTo]);
+    bool HasArgS(ARG_TYPE argFind) const noexcept {
+        COMPARE_t iCompareRes;
+        const ITERATE_t i = FindINearS(argFind, OUT iCompareRes);
+        return iCompareRes == COMPARE_Equal && i >= 0;
     }
 
     /// <summary>
-    /// Get reference to element and throw an exception if we are out of range.
-    /// </summary>
-    TYPE& ElementAtSecure(ITERATE_t nIndex) {  // throw
-        ThrowIfInvalidIndex(nIndex);
-        return this->get_DataWork()[nIndex];
-    }
-
-    /// <summary>
-    /// test is sorted? Allow dupes
+    /// is sorted? Allow dupes
     /// </summary>
     bool isSpanSorted() const;
 
     /// <summary>
-    /// test is sorted? Allow NO dupes!
+    /// is sorted? Allow NO dupes!
     /// </summary>
     bool isSpanSortedND() const;
 
     void QSort() {
-        ITERATE_t iSize = this->GetSize() - 1;
-        if (iSize <= 0) return;
-        QSort(0, iSize);
+        if (this->isEmpty()) return;
+        QSort(0, this->GetSize() - 1);
     }
 };
 
 template <class TYPE, class ARG_TYPE>
-ITERATE_t cSpanX<TYPE, ARG_TYPE>::QSortPartition(ITERATE_t iLeft, ITERATE_t iRight) {
+ITERATE_t cSpanSorted<TYPE, ARG_TYPE>::QSortPartition(ITERATE_t iLeft, ITERATE_t iRight) {
     ASSERT(iLeft < iRight);
     for (;;) {
         // Do right side.
-        while (iLeft < iRight && CompareData(this->ElementAt(iLeft), this->ElementAt(iRight)) <= COMPARE_Equal)  // skip stuff already in order.
-            iRight--;
+        while (iLeft < iRight && CompareElems(this->ElementAt(iLeft), this->ElementAt(iRight)) <= COMPARE_Equal) iRight--;  // skip stuff already in order.
         if (iLeft >= iRight) break;
         this->Swap(iRight, iLeft);
 
         // Do left side.
-        while (iLeft < iRight && CompareData(this->ElementAt(iLeft), this->ElementAt(iRight)) <= COMPARE_Equal) iLeft++;
+        while (iLeft < iRight && CompareElems(this->ElementAt(iLeft), this->ElementAt(iRight)) <= COMPARE_Equal) iLeft++;
         if (iLeft >= iRight) break;
         this->Swap(iLeft, iRight);
     }
@@ -585,30 +424,32 @@ ITERATE_t cSpanX<TYPE, ARG_TYPE>::QSortPartition(ITERATE_t iLeft, ITERATE_t iRig
 }
 
 template <class TYPE, class ARG_TYPE>
-void cSpanX<TYPE, ARG_TYPE>::QSort(ITERATE_t iLeft, ITERATE_t iRight) {
+void cSpanSorted<TYPE, ARG_TYPE>::QSort(ITERATE_t iLeft, ITERATE_t iRight) {
     ITERATE_t iMid = QSortPartition(iLeft, iRight);
     if (iLeft < iMid - 1) QSort(iLeft, iMid - 1);
     if (iMid + 1 < iRight) QSort(iMid + 1, iRight);
 }
 
 template <class TYPE, class ARG_TYPE>
-bool cSpanX<TYPE, ARG_TYPE>::isSpanSorted() const {
-    ITERATE_t iQty = this->GetSize() - 1;
+bool cSpanSorted<TYPE, ARG_TYPE>::isSpanSorted() const {
+    if (this->isEmpty()) return true;
+    const ITERATE_t iQty = this->GetSize() - 1;
     for (ITERATE_t i = 0; i < iQty; i++) {
         const TYPE& a = this->GetAt(i);
         const TYPE& b = this->GetAt(i + 1);
-        if (CompareData(a, b) > 0) return false;
+        if (CompareElems(a, b) > 0) return false;  // allow dupes
     }
     return true;
 }
 
 template <class TYPE, class ARG_TYPE>
-bool cSpanX<TYPE, ARG_TYPE>::isSpanSortedND() const {
-    ITERATE_t iQty = this->GetSize() - 1;
+bool cSpanSorted<TYPE, ARG_TYPE>::isSpanSortedND() const {
+    if (this->isEmpty()) return true;
+    const ITERATE_t iQty = this->GetSize() - 1;
     for (ITERATE_t i = 0; i < iQty; i++) {
         const TYPE& a = this->GetAt(i);
         const TYPE& b = this->GetAt(i + 1);
-        if (CompareData(a, b) >= 0) return false;
+        if (CompareElems(a, b) >= 0) return false;  // no dupes.
     }
     return true;
 }
@@ -625,6 +466,10 @@ constexpr cSpanX<T> ToSpanSize(T* p, size_t size) noexcept {
     return cSpanX<T>(cMemSpan(p, size));
 }
 template <typename T>
+constexpr cSpanX<T*, T*> ToSpanSize(T** p, size_t size) noexcept {
+    return cSpanX<T*, T*>(cMemSpan(p, size));
+}
+template <typename T>
 constexpr cSpan<T> ToSpan(const T* p, ITERATE_t count) noexcept {
     return cSpan<T>(p, count);
 }
@@ -633,12 +478,16 @@ constexpr cSpanX<T> ToSpan(T* p, ITERATE_t count) noexcept {
     return cSpanX<T>(p, count);
 }
 template <typename T>
-constexpr cSpan<T> ToSpan(const cStrConst& c) noexcept {
+constexpr cSpan<T> ToSpanStr(const cStrConst& c) noexcept {
     return cSpan<T>(c.GetT<T>(), c._Len);
 }
+template <typename T>
+constexpr cSpan<T> ToSpanZ(const cStrConst& c) noexcept {
+    return cSpan<T>(c.GetT<T>(), c._Len + 1);
+}
 
-#define TOSPAN(s) ToSpanSize((s), sizeof(s))    // Assume an array. AKA TOSPANA() ?
-#define TOSPANT(v) ToSpanSize(&(v), sizeof(v))  // Assume typed value NOT an array.
+#define TOSPAN(s) ToSpanSize((s), sizeof(s))  // Assume an array. AKA TOSPANA() ? NOT cSpanUnk.
+#define TOSPANT(v) cMemSpan(&(v), sizeof(v))  // Assume typed value NOT an array.
 
 // Convert a literal string to (read only) cMemSpan at compile time.
 //! @note ONLY works for literal "static string", or BYTE[123] you cannot use a 'BYTE* x' here!
@@ -660,13 +509,16 @@ class cSpanStatic {
     }
 
  public:
-    static const size_t k_DataSize = _COUNT * sizeof(TYPE);  /// const size in bytes
-    static const COUNT_t k_Count = _COUNT;                   /// const _COUNT
+    static const size_t k_SizeBytes = _COUNT * sizeof(TYPE);  /// const size in bytes = sizeof(*this)
+    static const COUNT_t k_Count = _COUNT;                    /// const _COUNT of TYPE
 
-    constexpr const TYPE* get_DataC() const noexcept {
+    constexpr const TYPE* GetPtrC() const noexcept {
         return _Data;
     }
-    constexpr TYPE* get_DataW() noexcept {
+    constexpr TYPE* GetPtrNC() const noexcept {
+        return const_cast<TYPE*>(_Data);
+    }
+    constexpr TYPE* GetPtrW() noexcept {
         return _Data;
     }
     operator const TYPE*() const noexcept {
@@ -676,10 +528,10 @@ class cSpanStatic {
         return cSpanX<TYPE>(_Data, _COUNT);
     }
     void SetZero() {
-        cMem::Zero(_Data, k_DataSize);
+        cMem::Zero(_Data, k_SizeBytes);
     }
     void SetZeroSecure() {
-        cMem::ZeroSecure(_Data, k_DataSize);
+        cMem::ZeroSecure(_Data, k_SizeBytes);
     }
 
     /// <summary>
@@ -695,10 +547,10 @@ class cSpanStatic {
     }
 };
 
-#ifndef GRAY_STATICLIB                        // force implementation/instantiate for DLL/SO.
-template class GRAYCORE_LINK cSpanX<BYTE>;     // force implementation/instantiate for DLL/SO.
-template class GRAYCORE_LINK cSpanX<char>;     // force implementation/instantiate for DLL/SO.
-template class GRAYCORE_LINK cSpanX<wchar_t>;  // force implementation/instantiate for DLL/SO.
+#ifndef GRAY_STATICLIB                          // force implementation/instantiate for DLL/SO.
+template struct GRAYCORE_LINK cSpanX<BYTE>;     // force implementation/instantiate for DLL/SO.
+template struct GRAYCORE_LINK cSpanX<char>;     // force implementation/instantiate for DLL/SO.
+template struct GRAYCORE_LINK cSpanX<wchar_t>;  // force implementation/instantiate for DLL/SO.
 #endif
 
 }  // namespace Gray

@@ -82,7 +82,7 @@ class GRAYCORE_LINK cTextPos {
         m_iColNum = 0;
     }
 
-    StrLen_t GetStr2(OUT cSpanX<char>& ret) const;
+    StrLen_t GetStr2(OUT cSpanX<char> ret) const;
 };
 
 /// <summary>

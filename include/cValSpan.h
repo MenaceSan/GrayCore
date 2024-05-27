@@ -19,7 +19,24 @@ namespace Gray {
 /// @note optimizations can be made if we know we are working on larger native types over treating the same things as bytes.
 /// </summary>
 struct GRAYCORE_LINK cValSpan {  // static. array/span of some TYPE.
-  
+
+    /// <summary>
+    /// Difference between 2 pointers in TYPE (not bytes). Check for 64 bit overflow. Safer.
+    /// like ptrdiff_t cMem::Diff() but in chars not bytes.
+    /// </summary>
+    /// <typeparam name="TYPE"></typeparam>
+    /// <param name="pszEnd"></param>
+    /// <param name="pszStart"></param>
+    /// <returns></returns>
+    template <class TYPE>
+    static ITERATE_t inline Diff(const TYPE* pszEnd, const TYPE* pszStart) {
+        ASSERT_NN(pszEnd);
+        ASSERT_NN(pszStart);
+        const INT_PTR i = pszEnd - pszStart;
+        ASSERT(i > -(INT_PTR)(cMem::k_ALLOC_MAX / sizeof(TYPE)) && i < (INT_PTR)(cMem::k_ALLOC_MAX / sizeof(TYPE)));  // k_ALLOC_MAX as TYPE
+        return CastN(ITERATE_t, i);
+    }
+
     /// <summary>
     /// fill an array with a repeating TYPE nFillValue.
     /// Ignore negative value for nQty
@@ -46,8 +63,8 @@ struct GRAYCORE_LINK cValSpan {  // static. array/span of some TYPE.
     template <class TYPE>
     static inline void CopyQty(TYPE* pDst, const TYPE* pSrc, ITERATE_t nQty) noexcept {
         if (nQty <= 0) return;
-        ASSERT(!cMem::IsCorruptApp(pDst, nQty * sizeof(TYPE), true));
-        ASSERT(!cMem::IsCorruptApp(pSrc, nQty * sizeof(TYPE), false));
+        DEBUG_CHECK(!cMem::IsCorruptApp(pDst, nQty * sizeof(TYPE), true));
+        DEBUG_CHECK(!cMem::IsCorruptApp(pSrc, nQty * sizeof(TYPE), false));
         for (ITERATE_t i = 0; i < nQty; i++) {
             pDst[i] = pSrc[i];  // use copy operator =.
         }
@@ -63,25 +80,7 @@ struct GRAYCORE_LINK cValSpan {  // static. array/span of some TYPE.
             pDst[i] = pSrc[i];
         }
     }
-
-    /// <summary>
-    /// reverse the order of an array of a TYPE. similar to cMem::ReverseArrayBlocks but iBlockSize==sizeof(TYPE)
-    /// TYPE = BYTE = reverse bytes in a block. similar to htonl(), etc.
-    /// Use ReverseType<> if TYPE = BYTE and nArraySizeBytes <= largest intrinsic type size?
-    /// </summary>
-    /// <typeparam name="TYPE"></typeparam>
-    /// <param name="pArray"></param>
-    /// <param name="nArraySizeBytes"></param>
-    template <class TYPE>
-    static inline void ReverseArray(TYPE* pArray, size_t nArraySizeBytes) noexcept {
-        const size_t nQty = nArraySizeBytes / sizeof(TYPE);
-        TYPE* pMemBS = pArray;
-        TYPE* pMemBE = pArray + (nQty - 1);
-        for (; pMemBS < pMemBE; pMemBS++, pMemBE--) {
-            cValT::Swap<TYPE>(*pMemBS, *pMemBE);
-        }
-    }
-
+     
     /// <summary>
     /// Call constructors for an array of elements of _TYPE. For use with cArray
     /// Does not actually allocate memory.
@@ -171,13 +170,11 @@ struct GRAYCORE_LINK cValSpan {  // static. array/span of some TYPE.
         *pTo = std::move(tmp);
 #endif
     }
-
-    static void GRAYCALL ReverseArrayBlocks(void* pArray, size_t nArraySizeBytes, size_t iBlockSize);
 };
 
 // Override implementation of simple type templates
 template <>
-inline void __cdecl cValSpan::CopyQty<BYTE>(BYTE* pDest, const BYTE* pSrc, ITERATE_t nQty) {
+inline void cValSpan::CopyQty<BYTE>(BYTE* pDest, const BYTE* pSrc, ITERATE_t nQty) noexcept {
     //! simple byte copy
     //! Any integral/static type could use this ?
     cMem::Copy(pDest, pSrc, nQty);
@@ -188,6 +185,5 @@ inline void cValSpan::FillQty<BYTE>(BYTE* pData, ITERATE_t nQty, BYTE bFill) noe
     //! FillMemory BYTEs like memset()
     cMem::Fill(pData, (size_t)nQty, bFill);
 }
-
 }  // namespace Gray
 #endif  // _INC_cValSpan_H

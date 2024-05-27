@@ -14,7 +14,7 @@ namespace Gray {
 #define CastN(T, N) ((T)(N))  // static_cast<T>(N)	// Cast numeric to different numeric. no clear rule on type cast for arithmetic values. T{ 1 } or T(1) or static_cast<T>(1)
 
 typedef UINT_PTR HASHCODE_t;                /// could hold a pointer converted to a number? maybe 64 or 32 bit ? same as size_t.
-typedef UINT32 HASHCODE32_t;                /// always 32 bits. consistent value.
+typedef UINT32 HASHCODE32_t;                /// always 32 bits. consistent value. k_HASHCODE_CLEAR
 constexpr HASHCODE_t k_HASHCODE_CLEAR = 0;  /// not a valid index.
 
 #ifdef USE_64BIT

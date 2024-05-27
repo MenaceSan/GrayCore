@@ -69,9 +69,13 @@ HRESULT cLogProcessor::addEventV(LOG_ATTR_MASK_t uAttrMask, LOGLVL_t eLogLevel, 
     if (StrT::IsNullOrEmpty(pszFormat)) return E_INVALIDARG;
 
     LOGCHAR_t szTemp[StrT::k_LEN_Default];  // assume this magic number is big enough.
-    StrLen_t iLen = StrT::vsprintfN(TOSPAN(szTemp), pszFormat, vargs);
+    const StrLen_t iLen = StrT::vsprintfN(TOSPAN(szTemp), pszFormat, vargs);
     if (iLen <= 0) return E_INVALIDARG;
     return addEventS(uAttrMask, eLogLevel, szTemp);
+}
+
+HRESULT cLogProcessor::WriteString(const char* pszStr) {  // override
+    return addEventS(LOG_ATTR_PRINT | LOG_ATTR_SCRIPT, LOGLVL_t::_INFO, pszStr);
 }
 
 //************************************************************************
@@ -85,7 +89,6 @@ bool cLogSink::RemoveSinkThis() {
 
 HRESULT cLogSinkDebug::WriteString(const LOGCHAR_t* pszText) {  // override
     //! Do NOT assume new line.
-    //! default OutputDebugString event if no other handler. (this == nullptr)
 #ifdef _WIN32
     const auto guard(m_Lock.Lock());
 #ifdef UNDER_CE

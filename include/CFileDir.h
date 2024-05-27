@@ -59,9 +59,9 @@ class GRAYCORE_LINK cFileDevice {
 /// <summary>
 /// A file that is part of a directory listing.
 /// </summary>
-class GRAYCORE_LINK cFileFindEntry : public cFileStatus {
+class GRAYCORE_LINK cFileDirEntry : public cFileStatus {
     typedef cFileStatus SUPER_t;
-    typedef cFileFindEntry THIS_t;
+    typedef cFileDirEntry THIS_t;
 
     friend class cFileFind;
 
@@ -69,13 +69,13 @@ class GRAYCORE_LINK cFileFindEntry : public cFileStatus {
     cStringF m_sFileName;  /// relative file title. (NOT FULL PATH) if FILECHAR_t is NOT USE_UNICODE_FN then is UTF8.
 
  public:
-    cFileFindEntry() noexcept {
+    cFileDirEntry() noexcept {
         InitFileStatus();
     }
-    explicit cFileFindEntry(const FILECHAR_t* pszFileName) : m_sFileName(pszFileName) {
+    explicit cFileDirEntry(const FILECHAR_t* pszFileName) : m_sFileName(pszFileName) {
         InitFileStatus();
     }
-    cFileFindEntry(const FILECHAR_t* pszFileName, const cFileStatus& status) : SUPER_t(status), m_sFileName(pszFileName) {}
+    cFileDirEntry(const FILECHAR_t* pszFileName, const cFileStatus& status) : SUPER_t(status), m_sFileName(pszFileName) {}
 
     inline cStringF get_Name() const noexcept {
         return m_sFileName;
@@ -91,12 +91,13 @@ class GRAYCORE_LINK cFileFindEntry : public cFileStatus {
         if (pEntry == nullptr) return false;
         return IsFileEqualTo(*pEntry);
     }
-    bool operator==(const THIS_t& rEntry) const {
+    bool operator==(const THIS_t& rEntry) const noexcept {
         return IsFileEqualTo(rEntry);
     }
     bool operator!=(const THIS_t& rEntry) const {
         return !IsFileEqualTo(rEntry);
     }
+
     inline bool isDot() const {
         if (m_sFileName[0] != '.') return false;
         if (m_sFileName[1] == '\0') return true;
@@ -119,14 +120,14 @@ class GRAYCORE_LINK cFileFindEntry : public cFileStatus {
 /// </summary>
 class GRAYCORE_LINK cFileFind {
  public:
-    cFileFindEntry m_FileEntry;  /// The current entry. by calls to FindFile() and FindFileNext()
+    cFileDirEntry m_FileEntry;  /// The current entry. by calls to FindFile() and FindFileNext()
 
  private:
     cStringF m_sDirPath;  /// Assume it ends with k_DirSep
     DWORD m_nFileFlags;   /// FILEOPF_t Options such as follow the links in the directory. Act as though these are regular files.
 #ifdef _WIN32
     ::WIN32_FIND_DATAW m_FindInfo;  /// Always UNICODE as base.
-    HANDLE m_hContext;              /// Handle for my search. NOT cOSHandle, uses FindClose()
+    ::HANDLE m_hContext;            /// Handle for my search. NOT cOSHandle, uses FindClose()
 #elif defined(__linux__)
     cStringF m_sWildcardFilter;  /// Need to perform wildcard (strip out the *.EXT part) later/manually in Linux.
  public:
@@ -156,7 +157,7 @@ class GRAYCORE_LINK cFileFind {
     /// Get Full file path. like MFC CFileFind::GetFilePath()
     /// </summary>
     cStringF get_FilePath() const {
-        return cFilePath::CombineFilePathX(m_sDirPath, m_FileEntry.get_Name());
+        return GetFilePath(m_FileEntry.get_Name());
     }
     bool isDots() const noexcept {
         return m_FileEntry.isDots();
@@ -180,7 +181,7 @@ class GRAYCORE_LINK cFileDir {
     static const int k_FilesMax = 64 * 1024;
     static const LOGCHAR_t k_szCantMoveFile[];  /// if MoveDirFiles failed for this.
 
-    cArray<cFileFindEntry> m_aFiles;  /// Array of the files we found matching the ReadDir criteria.
+    cArrayStruct<cFileDirEntry> m_aFiles;  /// Array of the files we found matching the ReadDir criteria.
 
  protected:
     cStringF m_sDirPath;  /// Does NOT include the wild card.
@@ -189,7 +190,7 @@ class GRAYCORE_LINK cFileDir {
     /// <summary>
     /// add the file to a list. Overload this to do extra filtering.
     /// </summary>
-    virtual HRESULT AddFileDirEntry(cFileFindEntry& fileEntry) {
+    virtual HRESULT AddFileDirEntry(cFileDirEntry& fileEntry) {
         if (!fileEntry.isDots()) {
             m_aFiles.Add(fileEntry);
         }
@@ -202,18 +203,18 @@ class GRAYCORE_LINK cFileDir {
 
     static HRESULT GRAYCALL RemoveDirectory1(const FILECHAR_t* pszDirName);
     static HRESULT GRAYCALL CreateDirectory1(const FILECHAR_t* pszDirName);
-    static HRESULT GRAYCALL CreateDirectoryX(const FILECHAR_t* pszDirName);
-    static HRESULT GRAYCALL CreateDirForFileX(const FILECHAR_t* pszFilePath);
+    static HRESULT GRAYCALL CreateDirectoryX(const FILECHAR_t* pszDirName, StrLen_t iStart = 0);
+    static HRESULT GRAYCALL CreateDirForFileX(const FILECHAR_t* pszFilePath, StrLen_t iStart = 0);
     static HRESULT GRAYCALL MovePathToTrash(const FILECHAR_t* pszPath, bool bDir);
 
-    static HRESULT GRAYCALL DirFileOp(FILEOP_t eOp, const FILECHAR_t* pszDirSrc, const FILECHAR_t* pszDirDest, FILEOPF_t nFileFlags, cLogProcessor* pLog, IStreamProgressCallback* pProgress);
+    static HRESULT GRAYCALL DirFileOps(FILEOP_t eOp, const FILECHAR_t* pszDirSrc, const FILECHAR_t* pszDirDest, FILEOPF_t nFileFlags, cLogProcessor* pLog, IStreamProgressCallback* pProgress);
     static HRESULT GRAYCALL MoveDirFiles(const FILECHAR_t* pszDirSrc, const FILECHAR_t* pszDirDest, cLogProcessor* pLog = nullptr, IStreamProgressCallback* pProgress = nullptr) {
         //! Move this directory and all its files.
-        return DirFileOp(FILEOP_t::Move, pszDirSrc, pszDirDest, CastN(FILEOPF_t, 0), pLog, pProgress);
+        return DirFileOps(FILEOP_t::_Move, pszDirSrc, pszDirDest, CastN(FILEOPF_t, 0), pLog, pProgress);
     }
     static HRESULT GRAYCALL CopyDirFiles(const FILECHAR_t* pszDirSrc, const FILECHAR_t* pszDirDest, cLogProcessor* pLog = nullptr, IStreamProgressCallback* pProgress = nullptr) {
         //! Copy this directory and all its files.
-        return DirFileOp(FILEOP_t::Copy, pszDirSrc, pszDirDest, FILEOPF_t::_None, pLog, pProgress);
+        return DirFileOps(FILEOP_t::_Copy, pszDirSrc, pszDirDest, FILEOPF_t::_None, pLog, pProgress);
     }
 
     /// <summary>
@@ -224,7 +225,7 @@ class GRAYCORE_LINK cFileDir {
     /// HRESULT_WIN32_C(ERROR_PATH_NOT_FOUND)
     /// </summary>
     static HRESULT GRAYCALL DeleteDirFiles(const FILECHAR_t* pszDirName, const FILECHAR_t* pszWildcardFile = nullptr, FILEOPF_t nFileFlags = FILEOPF_t::_None) {
-        return DirFileOp(FILEOP_t::_Delete, pszDirName, pszWildcardFile, nFileFlags, nullptr, nullptr);
+        return DirFileOps(FILEOP_t::_Delete, pszDirName, pszWildcardFile, nFileFlags, nullptr, nullptr);
     }
 
     static HRESULT GRAYCALL DeletePathX(const FILECHAR_t* pszPath, FILEOPF_t nFileFlags = FILEOPF_t::_None);
@@ -244,11 +245,11 @@ class GRAYCORE_LINK cFileDir {
     cStringF GetFilePath(const FILECHAR_t* pszTitle) const {
         return cFilePath::CombineFilePathX(m_sDirPath, pszTitle);
     }
-    cStringF GetFilePath(const cFileFindEntry& f) const {
+    cStringF GetFilePath(const cFileDirEntry& f) const {
         return GetFilePath(f.get_Name());
     }
 
-    const cFileFindEntry& GetEnumFile(ITERATE_t i) const {
+    const cFileDirEntry& GetEnumFile(ITERATE_t i) const {
         return m_aFiles.GetAt(i);
     }
     /// <summary>
@@ -270,7 +271,7 @@ class GRAYCORE_LINK cFileDir {
 };
 
 #ifndef GRAY_STATICLIB  // force implementation/instantiate for DLL/SO.
-template class GRAYCORE_LINK cArray<cFileFindEntry, const cFileFindEntry&>;
+template struct GRAYCORE_LINK cArrayStruct<cFileDirEntry>;
 #endif
 }  // namespace Gray
 #endif  // _INC_cFileDir_H

@@ -4,6 +4,7 @@
 #include "pch.h"
 // clang-format on
 #include "StrChar.h"
+#include "StrT.h"
 #include "cTypeInfo.h"
 #include "cTypes.h"
 
@@ -11,9 +12,18 @@ namespace Gray {
 const char* GRAYCALL cTypeInfo::GetSymName(const char* name) noexcept {  // static
     // Turn "class GrayLib::cXObject" into "XObject"
     if (name == nullptr) return name;
-    char ch = name[0];
-    if (ch != '\0' && StrChar::ToLowerA(ch) == 'c' && StrChar::IsUpperA(name[1])) return name + 1;
-    return name;
+    const StrLen_t len = StrT::Len2(name, k_LEN_MAX_CSYM);
+    int i = len;
+    while (i > 0) {
+        const char ch = name[--i];
+        if (!StrChar::IsCSym(ch)) { 
+            i++;
+            break;
+        }
+    }
+    if (StrChar::ToLowerA(name[i + 0]) == 'c' && StrChar::IsUpperA(name[i + 1])) i++; // StrChar::IsCSymF()
+    if (!cMem::Compare(name + i, "XObj", 4)) i += 4;
+    return name + i;
 }
 
 #ifdef _CPPRTTI

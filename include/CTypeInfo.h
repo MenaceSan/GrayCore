@@ -7,11 +7,7 @@
 #pragma once
 #endif
 
-#include "GrayCore.h"
-
-#ifndef UNDER_CE
-#include <typeinfo>  // type_info& typeid(class type) std::
-#endif
+#include "PtrCast.h"
 
 namespace Gray {
 typedef short PROPIDX_t;  /// enumerate known properties for some interface/object/class. similar to COM DISPID / MEMBERID ? allow -1 to indicate not valid.
@@ -47,7 +43,7 @@ struct GRAYCORE_LINK cTypeInfo : public TYPEINFO_t {
 #ifdef _MSC_VER
         return hash_code();
 #else
-        return PtrCastToNum(this);
+        return CastPtrToNum(this);
 #endif
     }
 

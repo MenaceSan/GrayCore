@@ -19,6 +19,8 @@ namespace Gray {
 /// similar to "std::tuple" or "System.Collections.Generic.KeyValuePair", cVarTuple
 /// </summary>
 struct GRAYCORE_LINK cIniKeyValue {
+    typedef cIniKeyValue THIS_t;
+
     cAtomRef m_aKey;  /// property key name.
     cStringI m_sVal;  /// property value as a string.
 
@@ -27,12 +29,20 @@ struct GRAYCORE_LINK cIniKeyValue {
     ATOMCODE_t get_HashCode() const noexcept {
         return m_aKey.get_HashCode();
     }
-    bool operator==(const cIniKeyValue& e) const noexcept {
-        return e.get_HashCode() == get_HashCode();
+    bool operator==(const THIS_t& e) const noexcept {
+        return get_HashCode() == e.get_HashCode();
     }
 
     // Type conversion
+
+    /// <summary>
+    /// get value type from string converted to int. error as if using scanf("%d")
+    /// </summary>
     HRESULT GetValInt(int* piValue) const;
+
+    /// <summary>
+    /// get value type from string converted to double. error as if using scanf("%lf")
+    /// </summary>
     HRESULT GetValDouble(double* pdValue) const;
 };
 
@@ -44,7 +54,7 @@ struct GRAYCORE_LINK cIniKeyValue {
 /// </summary>
 struct GRAYCORE_LINK cIniMap : public IIniBaseSetter, public IIniBaseGetter, public IIniBaseEnumerator, public cArraySortStructHash<cIniKeyValue> {
     cIniMap() noexcept {}
- 
+
     ITERATE_t Find(const IniChar_t* pszPropTag) const;
     const IniChar_t* GetVal(const IniChar_t* pszPropTag) const;
     HRESULT SetVal(const IniChar_t* pszPropTag, cStringI sValue);

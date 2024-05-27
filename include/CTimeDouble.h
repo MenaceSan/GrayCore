@@ -15,21 +15,21 @@
 
 namespace Gray {
 /// <summary>
+/// Time = Absolute 64 bit double days since (1899/12/30 midnight GMT).
 /// same as DATE, COleDateTime
 /// same as _WIN32 VariantTimeToSystemTime, same as DATE, COleDateTime
-/// Absolute 64 bit double days since (1899/12/30 midnight GMT).
 /// double 1.0 = 1 day
-/// NOT the same as REFTIME which is (double) seconds.
+/// NOT the same as ::REFTIME which is (double) seconds.
 /// </summary>
 class GRAYCORE_LINK cTimeDouble {
+ protected:
+    double m_dateTime;  /// DATE = days since (midnight, 30 December 1899 GMT), fraction = time of day
+
  public:
     static const int k_nDaysDiffTimeInt = 25569;  /// days difference from cTimeDouble (1899) to cTimeInt (1970) bases // similar to __linux__ SECS_1601_TO_1970 ?
     static const double k_nY2K;                   /// The static value for y2k = January 1, 2000 in UTC/GMT
     static const double k_nY10;                   /// The first 10 years are sometimes reserved to act as offsets.
     static const int k_nZero = 0;                 /// double cant be used for in-class initializer
-
- protected:
-    double m_dateTime;  /// DATE = days since (midnight, 30 December 1899 GMT), fraction = time of day
 
  protected:
     bool InitTimeUnits(const cTimeUnits& rTu);
@@ -80,21 +80,10 @@ class GRAYCORE_LINK cTimeDouble {
         //! Get total days since epoch.
         return m_dateTime;
     }
-    operator double(void) const noexcept {
+    operator double() const noexcept {
         //! Get total days since epoch.
         return m_dateTime;
     }
-
-#if 0
-		void operator = (const cTimeDouble& date) noexcept
-		{
-			m_dateTime = date.m_dateTime;
-		}
-		void operator = (const GChar_t* pszDateTime)
-		{
-			SetTimeStr(pszDateTime, TZ_UTC);
-		}
-#endif
 
     cTimeDouble operator+(int i) noexcept {
         //! Add days.
@@ -111,14 +100,12 @@ class GRAYCORE_LINK cTimeDouble {
         return cTimeDouble(m_dateTime - dt.m_dateTime);
     }
 
-    cTimeDouble& operator+=(int idays) noexcept  /// days
-    {
+    cTimeDouble& operator+=(int idays) noexcept {  /// days
         //! Add days.
         m_dateTime += idays;
         return *this;
     }
-    cTimeDouble& operator-=(int idays) noexcept  /// days
-    {
+    cTimeDouble& operator-=(int idays) noexcept {  /// days
         //! Subtract days.
         m_dateTime -= idays;
         return *this;
@@ -132,33 +119,38 @@ class GRAYCORE_LINK cTimeDouble {
         return *this;
     }
 
-    cTimeDouble& operator++() noexcept  /// Prefix increment
-    {
+    cTimeDouble& operator++() noexcept {  /// Prefix increment
         m_dateTime += 1;
         return *this;
     }
-    cTimeDouble& operator++(int) noexcept  /// Postfix increment
-    {
+    cTimeDouble& operator++(int) noexcept {  /// Postfix increment
         m_dateTime += 1;  // add a day
         return *this;
     }
-    cTimeDouble& operator--() noexcept  /// Prefix decrement
-    {
+    cTimeDouble& operator--() noexcept { /// Prefix decrement
         m_dateTime -= 1;
         return *this;
     }
-    cTimeDouble& operator--(int) noexcept  /// Postfix decrement
-    {
+    cTimeDouble& operator--(int) noexcept { /// Postfix decrement
         m_dateTime -= 1;
         return *this;
     }
 
-    friend bool operator<(const cTimeDouble& dt1, const cTimeDouble& dt2);
-    friend bool operator<=(const cTimeDouble& dt1, const cTimeDouble& dt2);
-    friend bool operator>(const cTimeDouble& dt1, const cTimeDouble& dt2);
-    friend bool operator>=(const cTimeDouble& dt1, const cTimeDouble& dt2);
-    // friend bool operator == (const cTimeDouble& dt1, const cTimeDouble& dt2);
-    // friend bool operator != (const cTimeDouble& dt1, const cTimeDouble& dt2);
+    bool inline operator==(const cTimeDouble& dt2) const {
+        return this->m_dateTime == dt2.m_dateTime;
+    }
+    bool inline operator<(const cTimeDouble& dt2) const {
+        return this->m_dateTime < dt2.m_dateTime;
+    }
+    bool inline operator<=(const cTimeDouble& dt2) const {
+        return this->m_dateTime <= dt2.m_dateTime;
+    }
+    bool inline operator>(const cTimeDouble& dt2) const {
+        return this->m_dateTime > dt2.m_dateTime;
+    }
+    bool inline operator>=(const cTimeDouble& dt2) const {
+        return this->m_dateTime >= dt2.m_dateTime;
+    }
 
     cTimeFile GetAsFileTime() const noexcept;
     bool GetTimeUnits(OUT cTimeUnits& rTu, TZ_TYPE nTimeZone) const;
@@ -169,8 +161,7 @@ class GRAYCORE_LINK cTimeDouble {
     /// Get Total days as an integer.
     /// </summary>
     /// <returns></returns>
-    unsigned GetDate() const noexcept  /// Numeric date of date object
-    {
+    unsigned GetDate() const noexcept { /// Numeric date of date object
         return CastN(unsigned, m_dateTime);
     }
 
@@ -178,7 +169,7 @@ class GRAYCORE_LINK cTimeDouble {
     HRESULT SetTimeStr(const GChar_t* pszDateTime, TZ_TYPE nTimeZone = TZ_UTC);
     cString GetTimeFormStr(const GChar_t* pszFormat = nullptr, TZ_TYPE nTimeZone = TZ_LOCAL) const;
     cString GetTimeFormStr(TIMEFORMAT_t eFormat, TZ_TYPE nTimeZone = TZ_LOCAL) const {
-        return GetTimeFormStr(CastNumToPtr<const GChar_t>(static_cast<int>(eFormat)), nTimeZone);
+        return GetTimeFormStr(CastNumToPtrT<const GChar_t>(static_cast<int>(eFormat)), nTimeZone);
     }
 
     static cString GRAYCALL GetTimeSpanStr(double dDays, TIMEUNIT_t eUnitHigh = TIMEUNIT_t::_Day, int iUnitsDesired = 2, bool bShortText = false);
@@ -204,30 +195,5 @@ class GRAYCORE_LINK cTimeDouble {
         return -get_DaysTil();
     }
 };
-
-bool inline operator<(const cTimeDouble& dt1, const cTimeDouble& dt2) {
-    return dt1.m_dateTime < dt2.m_dateTime;
-}
-bool inline operator<=(const cTimeDouble& dt1, const cTimeDouble& dt2) {
-    return dt1.m_dateTime <= dt2.m_dateTime;
-}
-bool inline operator>(const cTimeDouble& dt1, const cTimeDouble& dt2) {
-    return dt1.m_dateTime > dt2.m_dateTime;
-}
-bool inline operator>=(const cTimeDouble& dt1, const cTimeDouble& dt2) {
-    return dt1.m_dateTime >= dt2.m_dateTime;
-}
-
-#if 0
-	bool inline operator == (const cTimeDouble& dt1, const cTimeDouble& dt2)
-	{
-		return dt1.m_dateTime == dt2.m_dateTime;
-	}
-	bool inline operator != (const cTimeDouble& dt1, const cTimeDouble& dt2)
-	{
-		return dt1.m_dateTime != dt2.m_dateTime;
-	}
-#endif
-
 }  // namespace Gray
 #endif  // _INC_cTimeDouble_H

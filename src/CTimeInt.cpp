@@ -205,7 +205,7 @@ bool cTimeInt::GetTimeUnits(OUT cTimeUnits& rTu, TZ_TYPE nTimeZone) const {
 //**************************************************************************
 // String formatting
 
-StrLen_t cTimeInt::GetTimeFormStr(cSpanX<GChar_t>& ret, const GChar_t* pszFormat, TZ_TYPE nTimeZone) const {
+StrLen_t cTimeInt::GetTimeFormStr(cSpanX<GChar_t> ret, const GChar_t* pszFormat, TZ_TYPE nTimeZone) const {
     // TODO look for %z or %Z to preserve timezone.
     //! MFC just calls this "Format"
     cTimeUnits Tu;

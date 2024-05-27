@@ -34,7 +34,6 @@ HRESULT_ENTRY( MK_E_SYNTAX,					FACILITY_ITF,		0x01E4L,		"Invalid syntax" )
 HRESULT_ENTRY( NTE_BAD_LEN,					FACILITY_SECURITY,	0x0004L,		"Bad Length" )
 HRESULT_ENTRY( NTE_BAD_DATA,				FACILITY_SECURITY,	0x0005L,		"Bad Data." )
 HRESULT_ENTRY( CERTSRV_E_PROPERTY_EMPTY,	FACILITY_SECURITY,	0x4004L,		"The requested property value is empty." )
-HRESULT_ENTRY( MSSIPOTF_E_TABLE_PADBYTES,	FACILITY_SECURITY,	0x700AL,		"Too many pad bytes between tables or pad bytes are not 0.")
 
 HRESULT_ENTRY( RPC_E_DISCONNECTED,          FACILITY_RPC,		0x0108L,		"The object invoked has disconnected from its clients." )
 HRESULT_ENTRY( RPC_E_INVALID_HEADER,        FACILITY_RPC,		0x0111L,		"OLE received a packet with an invalid header." )

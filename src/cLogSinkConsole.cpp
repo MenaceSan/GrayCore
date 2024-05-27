@@ -34,12 +34,10 @@ cLogSinkConsole* GRAYCALL cLogSinkConsole::AddSinkCheck(cLogNexus* pLogger, bool
     }
 
     cLogSink* pSink0 = pLogger->FindSinkType(typeid(cLogSinkConsole));
-    if (pSink0 != nullptr)  // already has this sink.
-        return static_cast<cLogSinkConsole*>(pSink0);
+    if (pSink0 != nullptr) return static_cast<cLogSinkConsole*>(pSink0);  // already has this sink.
 
     cAppConsole& ac = cAppConsole::I();
-    if (!ac.isConsoleMode())  // no console ?
-    {
+    if (!ac.isConsoleMode()) { // no console ?
         // Attach to parent console or create my own.
         if (!ac.AttachOrAllocConsole(bAttachElseAlloc)) return nullptr;
     }

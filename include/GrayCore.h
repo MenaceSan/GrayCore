@@ -118,6 +118,6 @@ namespace Gray {  /// The main namespace for all Core functions.
 #define CATTR_DEPRECATED
 #endif  // _WIN32 && MSVS2005
 
-extern GRAYCORE_LINK const va_list k_va_list_empty;  // For faking out the va_list. __GNUC__ doesn't allow a pointer to va_list. So use this to simulate nullptr.
+extern GRAYCORE_LINK va_list k_va_list_empty;  // For faking out the va_list. __GNUC__ doesn't allow a pointer to va_list. So use this to simulate nullptr.
 }  // namespace Gray
 #endif  // _INC_GRAYCORE

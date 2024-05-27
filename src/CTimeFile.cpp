@@ -11,9 +11,9 @@ namespace Gray {
 void cTimeFile::InitTimeNow() noexcept {
     //! Get current UTC time
 #ifdef UNDER_CE
-    ::GetCurrentFT(static_cast<FILETIME*>(this));
+    ::GetCurrentFT(static_cast<::FILETIME*>(this));
 #elif defined(_WIN32)
-    ::GetSystemTimeAsFileTime(static_cast<FILETIME*>(this));
+    ::GetSystemTimeAsFileTime(static_cast<::FILETIME*>(this));
 #else  // __linux__
     cTimeSpec tNow;
     tNow.InitTimeNow1();
@@ -22,9 +22,6 @@ void cTimeFile::InitTimeNow() noexcept {
 }
 
 cTimeFile GRAYCALL cTimeFile::GetTimeNow() noexcept {  // static
-    //! Get the current time with highest possible accuracy.
-    //!  FILETIME_t = 64-bit 100-nanosecond since January 1, 1601 GMT
-    //! @note GetCurrentTime() is "#define" by _WIN32 to GetTickCount() so i cant use that name!
     cTimeFile tNow;
     tNow.InitTimeNow();
     return tNow;
@@ -34,7 +31,7 @@ void cTimeFile::InitTimeUnits(const cTimeUnits& rTu) {
 #ifdef _WIN32
     ::SYSTEMTIME st;
     rTu.GetSys(st);
-    SetSys(st, (TZ_TYPE)rTu.m_nTZ);
+    SetSys(st, CastN(TZ_TYPE, rTu.m_nTZ));
 #else
     cTimeDouble ti(rTu);
     *this = ti.GetAsFileTime();
@@ -43,12 +40,12 @@ void cTimeFile::InitTimeUnits(const cTimeUnits& rTu) {
 bool cTimeFile::GetTimeUnits(OUT cTimeUnits& rTu, TZ_TYPE nTimeZone) const {
 #ifdef _WIN32
     ::SYSTEMTIME st;
-    bool bRet = GetSys(st, nTimeZone);
+    const bool bRet = GetSys(st, nTimeZone);
     rTu.SetSys(st);
-    rTu.m_nTZ = (TIMEVALU_t)nTimeZone;
+    rTu.m_nTZ = CastN(TIMEVALU_t, nTimeZone);
     return bRet;
 #else
-    cTimeDouble ti(*this);
+    const cTimeDouble ti(*this);
     return ti.GetTimeUnits(rTu, nTimeZone);
 #endif
 }
@@ -59,7 +56,7 @@ cString cTimeFile::GetTimeFormStr(const GChar_t* pszFormat, TZ_TYPE nTimeZone) c
     cTimeUnits Tu;
     if (!GetTimeUnits(Tu, nTimeZone)) return "";
 
-    GChar_t szBuffer[256];
+    GChar_t szBuffer[128];  // Max reasonable size.
     const StrLen_t iLenChars = Tu.GetFormStr(TOSPAN(szBuffer), pszFormat);
     if (iLenChars <= 0) return "";
 

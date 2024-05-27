@@ -10,9 +10,6 @@
 namespace Gray {
 
 #ifndef GRAY_STATICLIB  // force implementation/instantiate for DLL/SO.
-template class GRAYCORE_LINK cArray<cStringT<char>, const char*>;
-template class GRAYCORE_LINK cArray<cStringT<wchar_t>, const wchar_t*>;
-
 template struct GRAYCORE_LINK cArrayString<char>;
 template struct GRAYCORE_LINK cArrayString<wchar_t>;
 

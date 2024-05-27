@@ -9,8 +9,8 @@
 #include "cDebugAssert.h"  // THROW_IF()
 #include "cHeap.h"
 #include "cHeapObject.h"
-#include "cSpan.h"
 #include "cRefPtr.h"
+#include "cSpan.h"
 
 namespace Gray {
 /// <summary>
@@ -33,7 +33,7 @@ class cArrayHeadT : public cRefBase, public cHeapObject {
     // TYPE m_a[ m_nCount * sizeof(_TYPE) ];	/// dynamic heap allocated.
 
  public:
-    inline static ITERATE_t GetCountMalloc(ITERATE_t i) {
+    inline static ITERATE_t GetHeapCountChunk(ITERATE_t i) {
         //! over allocate to allow room to grow.
         return i + (i / 16);
     }
@@ -69,17 +69,17 @@ class cArrayHeadT : public cRefBase, public cHeapObject {
     /// Get a pointer to the payload array of TYPE. Stored in the space allocated after this class.
     /// </summary>
     /// <returns></returns>
-    const _TYPE* get_DataConst() const noexcept {
+    const _TYPE* get_PtrConst() const noexcept {
         return reinterpret_cast<const _TYPE*>(this + 1);
     }
-    _TYPE* get_DataWork() noexcept {
+    _TYPE* get_PtrWork() noexcept {
         return reinterpret_cast<_TYPE*>(this + 1);
     }
     const _TYPE* get_DataEnd() const noexcept {
-        return get_DataConst() + get_Count();
+        return get_PtrConst() + get_Count();
     }
-    _TYPE* get_DataEnd() noexcept { // NEVER write past end ! for support end()
-        return get_DataWork() + get_Count();
+    _TYPE* get_DataEnd() noexcept {  // NEVER write past end ! for support end()
+        return get_PtrWork() + get_Count();
     }
 
     /// <summary>
@@ -95,10 +95,10 @@ class cArrayHeadT : public cRefBase, public cHeapObject {
 
     /// Get the whole array as a span of memory.
     cSpan<_TYPE> get_Span() const noexcept {
-        return ToSpan(get_DataConst(), get_Count());
+        return ToSpan(get_PtrConst(), get_Count());
     }
     cSpanX<_TYPE> get_Span() noexcept {
-        return ToSpan(get_DataWork(), get_Count());
+        return ToSpan(get_PtrWork(), get_Count());
     }
 
     /// <summary>
@@ -109,7 +109,7 @@ class cArrayHeadT : public cRefBase, public cHeapObject {
     inline size_t get_BytesMalloc() const noexcept {
         return cHeap::GetSize(this) - sizeof(cArrayHeadT);
     }
-    inline ITERATE_t get_CountMalloc() const noexcept {
+    inline ITERATE_t get_HeapCount() const noexcept {
         return CastN(ITERATE_t, get_BytesMalloc() / sizeof(_TYPE));
     }
 
@@ -131,7 +131,7 @@ class cArrayHeadT : public cRefBase, public cHeapObject {
         THIS_t* pHead = new (nCount * sizeof(_TYPE)) THIS_t(nCount);  // allocate space and construct head only. HeapAlign ?? align_of ?
         ASSERT_NN(pHead);
         if (construct) {
-            _TYPE* pData = pHead->get_DataWork();
+            _TYPE* pData = pHead->get_PtrWork();
             cValSpan::ConstructElementsX(pData, nCount);
         }
         return pHead;
@@ -142,7 +142,7 @@ class cArrayHeadT : public cRefBase, public cHeapObject {
         ASSERT(nCountNew < m_nCount);  // assume change.
         if (destruct) {
             // destruct the deleted elements.
-            _TYPE* pData = get_DataWork();
+            _TYPE* pData = get_PtrWork();
             cValSpan::DestructElementsX<_TYPE>(&pData[nCountNew], m_nCount - nCountNew);
         }
         m_nCount = nCountNew;
@@ -158,7 +158,7 @@ class cArrayHeadT : public cRefBase, public cHeapObject {
         ASSERT(nCountNew > m_nCount);  // assume change.
 
         // allocate greater size if not the first time we have done this.
-        const ITERATE_t allocateCount = (m_nCount != 0) ? GetCountMalloc(nCountNew) : nCountNew;
+        const ITERATE_t allocateCount = (m_nCount != 0) ? GetHeapCountChunk(nCountNew) : nCountNew;
         const ITERATE_t nCountOld = m_nCount;
         m_nCount = nCountNew;
         m_HashCode = k_HASHCODE_CLEAR;  // invalidate hash.
@@ -168,7 +168,7 @@ class cArrayHeadT : public cRefBase, public cHeapObject {
 
         if (construct) {
             // construct new elements
-            cValSpan::ConstructElementsX<_TYPE>(pHeadNew->get_DataWork() + nCountOld, nCountNew - nCountOld);
+            cValSpan::ConstructElementsX<_TYPE>(pHeadNew->get_PtrWork() + nCountOld, nCountNew - nCountOld);
         }
         return pHeadNew;
     }
@@ -205,7 +205,7 @@ class cArrayT : public cRefPtr<cArrayHeadT<TYPE> > {
         HEAD_t* pNew = HEAD_t::CreateHead(nCountNew, true);
         ASSERT(pNew != nullptr || nCountNew == 0);
         if (pNew != nullptr && pOld != nullptr) {
-            cValSpan::CopyQty(pNew->get_DataWork(), pOld->get_DataConst(), cValT::Min(nCountNew, nCountOld));  // Copy from pOld
+            cValSpan::CopyQty(pNew->get_PtrWork(), pOld->get_PtrConst(), cValT::Min(nCountNew, nCountOld));  // Copy from pOld
         }
         this->put_Ptr(pNew);
     }
@@ -242,15 +242,15 @@ class cArrayT : public cRefPtr<cArrayHeadT<TYPE> > {
     }
 
     /// Get a pointer to the array.
-    inline TYPE* get_DataWork() const noexcept {
+    inline TYPE* get_PtrWork() const noexcept {
         HEAD_t* pHead = this->get_Ptr();
         if (pHead == nullptr) return nullptr;
-        return pHead->get_DataWork();
+        return pHead->get_PtrWork();
     }
-    inline const TYPE* get_DataConst() const noexcept {
+    inline const TYPE* get_PtrConst() const noexcept {
         HEAD_t* pHead = this->get_Ptr();
         if (pHead == nullptr) return nullptr;
-        return pHead->get_DataConst();
+        return pHead->get_PtrConst();
     }
 
     cSpanX<TYPE> get_Span() const noexcept {
@@ -258,21 +258,24 @@ class cArrayT : public cRefPtr<cArrayHeadT<TYPE> > {
         if (pHead == nullptr) return {};
         return pHead->get_Span();
     }
+    operator cSpan<TYPE>() const noexcept {  // auto convert to cSpan
+        return get_Span();
+    }
 
     inline const TYPE& GetAt(ITERATE_t nIndex) const noexcept {
         // I can make a const pointer from this and know what its life span is. NOT just a copy.
         DEBUG_CHECK(IsValidIndex(nIndex));
-        return this->get_Ptr()->get_DataConst()[nIndex];
+        return this->get_Ptr()->get_PtrConst()[nIndex];
     }
     inline TYPE& ElementAt(ITERATE_t nIndex) noexcept {
         DEBUG_CHECK(IsValidIndex(nIndex));
-        return this->get_Ptr()->get_DataWork()[nIndex];
+        return this->get_Ptr()->get_PtrWork()[nIndex];
     }
     inline void SetAt(ITERATE_t nIndex, const TYPE& newElement) noexcept {
         // If multiple refs to this then we should copy/split it ?
         // @note DANGER - this is a reference counted object. Any changes to it will make changes to all references !! Make a deep copy if required.
         DEBUG_CHECK(IsValidIndex(nIndex));
-        this->get_Ptr()->get_DataWork()[nIndex] = newElement;
+        this->get_Ptr()->get_PtrWork()[nIndex] = newElement;
     }
 
     void ThrowIfInvalidIndex(ITERATE_t nIndex) const {  // throw
@@ -281,19 +284,21 @@ class cArrayT : public cRefPtr<cArrayHeadT<TYPE> > {
     inline TYPE& operator[](ITERATE_t nIndex) {  // throw
         //! throw an exception if we are out of range.
         ThrowIfInvalidIndex(nIndex);
-        return this->get_Ptr()->get_DataWork()[nIndex];
+        return this->get_Ptr()->get_PtrWork()[nIndex];
     }
     inline const TYPE& operator[](ITERATE_t nIndex) const {  // throw
         //! throw an exception if we are out of range.
         ThrowIfInvalidIndex(nIndex);
-        return this->get_Ptr()->get_DataConst()[nIndex];
+        return this->get_Ptr()->get_PtrConst()[nIndex];
     }
 
-    ITERATE_t get_CountMalloc() const noexcept {
-        //! Get quantity of objects truly allocated. (may not be same as m_nSize or even properly aligned with TYPE)
-        //! like STL capacity()
+    /// <summary>
+    /// Get quantity of objects truly allocated. (may not be same as m_nSize or even properly aligned with TYPE)
+    /// like STL capacity()
+    /// </summary>
+    ITERATE_t get_HeapCount() const noexcept {
         if (!this->isValidPtr()) return 0;
-        return this->get_Ptr()->get_CountMalloc();
+        return this->get_Ptr()->get_HeapCount();
     }
 
     void SetCopy(const cArrayT<TYPE>& a) {
@@ -303,14 +308,14 @@ class cArrayT : public cRefPtr<cArrayHeadT<TYPE> > {
     }
 
     void SetEmpty() {
-        put_Ptr(nullptr);  // just release ref.
+        this->put_Ptr(nullptr);  // just release ref.
     }
 
     /// <summary>
     /// change size of array. realloc. Other refs will NOT see this change.
     /// </summary>
     void put_Count(ITERATE_t nCountNew) {
-        ASSERT(IS_INDEX_GOOD(nCountNew, cHeap::k_ALLOC_MAX));  // reasonable arbitrary limit.
+        ASSERT(IS_INDEX_GOOD(nCountNew, cMem::k_ALLOC_MAX));  // reasonable arbitrary limit.
 
         HEAD_t* pOld = this->get_Ptr();
         if (pOld == nullptr) {
@@ -321,8 +326,8 @@ class cArrayT : public cRefPtr<cArrayHeadT<TYPE> > {
         }
 
         const ITERATE_t nCountOld = pOld->get_Count();
-        if (nCountNew == nCountOld)  // no change.
-            return;
+        if (nCountNew == nCountOld) return;  // no change.
+
         if (nCountNew == 0) {
             SetEmpty();
             return;
@@ -350,8 +355,10 @@ class cArrayT : public cRefPtr<cArrayHeadT<TYPE> > {
         SetAt(nIndex, newElement);
     }
 
+    /// <summary>
+    /// Add to the end. AKA push_back()
+    /// </summary>
     ITERATE_t Add(const TYPE& newElement) {
-        //! Add to the end. AKA push_back()
         const ITERATE_t nCountOld = get_Count();
         put_Count(nCountOld + 1);  // Grow.
         SetAt(nCountOld, newElement);
@@ -366,7 +373,7 @@ class cArrayT : public cRefPtr<cArrayHeadT<TYPE> > {
             put_Count(nIndex + 1);  // grow it to new size
         } else {
             put_Count(nCountOld + 1);  // grow it to new size
-            TYPE* pData = this->get_Ptr()->get_DataWork();
+            TYPE* pData = this->get_Ptr()->get_PtrWork();
             cValSpan::MoveElement1(pData + nCountOld, pData + nIndex);  // make space.
         }
 
@@ -377,19 +384,20 @@ class cArrayT : public cRefPtr<cArrayHeadT<TYPE> > {
     /// <summary>
     /// Add array to the end. Like MFC CArray::Append() ?
     /// </summary>
-    void InsertArray(ITERATE_t i, const TYPE* pCopy, ITERATE_t countInsert) {
-        if (countInsert <= 0) return;
+    void InsertArray(ITERATE_t i, const cSpan<TYPE>& src) {
+        if (src.isEmpty()) return;
+        const ITERATE_t nSizeCopy = src.GetSize();
 
         HEAD_t* pNew = nullptr;
         HEAD_t* pOld = this->get_Ptr();
         if (pOld == nullptr) {
-            // i = 0;
-            this->put_Ptr(pNew = HEAD_t::CreateHead(countInsert, true));
+            // assume i = 0; or it doesnt matter anyhow.
+            this->put_Ptr(pNew = HEAD_t::CreateHead(nSizeCopy, true));
         } else {
-            const ITERATE_t nCountOld = pOld->get_Count();
-            if (i < 0 || i > nCountOld) i = nCountOld;
+            const ITERATE_t nSizePrev = pOld->get_Count();
+            if (IS_INDEX_BAD(i, nSizePrev)) i = nSizePrev;
 
-            ASSERT(!pOld->get_Span().IsInternalPtr(pCopy));  // append to self not supported.
+            ASSERT(!pOld->get_Span().IsInternalPtr(src));  // append to self not supported.
 
             const REFCOUNT_t iRefCounts = pOld->get_RefCount();
             if (iRefCounts != 1) {
@@ -397,24 +405,18 @@ class cArrayT : public cRefPtr<cArrayHeadT<TYPE> > {
                 ASSERT(0);
             }
 
-            ITERATE_t nCountNew = nCountOld + countInsert;  // new size.
+            const ITERATE_t nCountNew = nSizePrev + nSizeCopy;  // new size.
             pNew = pOld->GrowHead(nCountNew, false);
-            this->AttachPtr(pNew);  // replace realloced pointer. (if it changed at all) No ref count change.
+            this->AttachPtr(pNew);  // replace re-alloc-ed pointer. (if it changed at all) No ref count change.
 
-            TYPE* pData = pNew->get_DataWork();
+            TYPE* pData = pNew->get_PtrWork();
             // Move existing elements.
-            cMem::CopyOverlap(pData + i + countInsert, pData + i, (nCountOld - i) * sizeof(TYPE));
+            cMem::CopyOverlap(pData + i + nSizeCopy, pData + i, (nSizePrev - i) * sizeof(TYPE));
             // construct new elements at insert point.
-            cValSpan::ConstructElementsX<TYPE>(pData + i, countInsert);
+            cValSpan::ConstructElementsX<TYPE>(pData + i, nSizeCopy);
         }
 
-        if (pCopy != nullptr) {
-            // Copy new.
-            cValSpan::CopyQty(pNew->get_DataWork() + i, pCopy, countInsert);
-        }
-    }
-    void InsertArray(ITERATE_t i, const THIS_t& src) {
-        InsertArray(i, src.get_DataWork(), src.GetSize());
+        if (!src.isNull()) cValSpan::CopyQty(pNew->get_PtrWork() + i, src.get_PtrConst(), nSizeCopy);  // Copy over new.
     }
 
     void RemoveAt(ITERATE_t nIndex) {
@@ -424,11 +426,10 @@ class cArrayT : public cRefPtr<cArrayHeadT<TYPE> > {
         if (pHead == nullptr) return;
         const ITERATE_t nCount = pHead->get_Count();
         ITERATE_t nMoveCount = nCount - (nIndex + 1);
-        if (nMoveCount < 0)  // nIndex is out of range!
-            return;
-        TYPE* pData = pHead->get_DataWork();
+        if (nMoveCount < 0) return;  // nIndex is out of range!
+        TYPE* pData = pHead->get_PtrWork();
         cValSpan::DestructElementsX<TYPE>(pData + nIndex, 1);
-        if (nMoveCount > 0) { // not last.
+        if (nMoveCount > 0) {  // not last.
             cMem::CopyOverlap(pData + nIndex, pData + nIndex + 1, nMoveCount * sizeof(TYPE));
         }
         pHead->ShrinkHead(nCount - 1, false);
@@ -437,14 +438,14 @@ class cArrayT : public cRefPtr<cArrayHeadT<TYPE> > {
     typedef cIterator<TYPE> iterator;              // like STL
     typedef cIterator<const TYPE> const_iterator;  // like STL
     iterator begin() noexcept {
-        return iterator(get_DataWork());
+        return iterator(get_PtrWork());
     }
     iterator end() noexcept {
         HEAD_t* pHead = this->get_Ptr();
         return iterator((pHead == nullptr) ? nullptr : pHead->get_DataEnd());
     }
     const_iterator begin() const noexcept {
-        return const_iterator(get_DataWork());
+        return const_iterator(get_PtrWork());
     }
     const_iterator end() const noexcept {
         const HEAD_t* pHead = this->get_Ptr();

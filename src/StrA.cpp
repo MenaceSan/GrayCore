@@ -46,13 +46,7 @@ bool GRAYCALL StrA::IsBoolFalse(const char* pszStr, bool bHead) {
 }
 
 bool GRAYCALL StrA::IsPlural(const char* pszWord) {
-    //! is the word already plural?
-    //! but will typically appear as a single object. use with StrA::GetArticleAndSpace
-    //! TODO THIS NEEDS WORK
-    //! Similar to M$ System.Data.Entity.Design.PluralizationServices
-
-    ASSERT(pszWord != nullptr);
-
+    ASSERT_NN(pszWord);
     static const char* const k_Plurals[] = {
         // These are already plural so don't need another s.
         "boots", "cards", "eyes", "feet", "fish", "gloves", "hair", "leggings", "pants", "shoes", "sleeves",
@@ -62,7 +56,7 @@ bool GRAYCALL StrA::IsPlural(const char* pszWord) {
     ITERATE_t iRet = StrT::SpanFindHeadSorted(pszWord, TOSPAN(k_Plurals));
     if (iRet >= 0) return true;
 
-    const char* pStr = StrT::FindCharRev(pszWord, ' ');
+    const char* pStr = StrT::FindCharRev(StrT::ToSpanStr(pszWord), ' ');
     if (pStr != nullptr) {
         iRet = StrT::SpanFindHeadSorted(pStr + 1, TOSPAN(k_Plurals));
         if (iRet >= 0) return true;
@@ -80,6 +74,29 @@ const char* GRAYCALL StrA::GetArticleAndSpace(const char* pszWord) {
     if (StrA::IsPlural(pszWord)) return "";
     if (StrChar::IsVowel(pszWord[0])) return "an ";
     return "a ";
+}
+
+HRESULT GRAYCALL StrA::CheckSymName(const ATOMCHAR_t* pszTag, bool bAllowDots) {
+    if (StrT::IsNullOrEmpty(pszTag)) return HRESULT_WIN32_C(ERROR_EMPTY);
+
+    StrLen_t i = 0;
+    if (!bAllowDots) {
+        if (!StrChar::IsCSymF(pszTag[0])) return E_INVALIDARG; // first char of symbol is special.
+        i++;
+    }
+
+    STATIC_ASSERT(k_LEN_MAX_CSYM <= StrT::k_LEN_Default, "k_LEN_MAX_CSYM");
+
+    for (;; i++) {
+        if (i >= k_LEN_MAX_CSYM) return HRESULT_WIN32_C(ERROR_BAD_LENGTH);
+        const ATOMCHAR_t ch = pszTag[i];
+        if (ch == '\0') break;
+        if (bAllowDots && ch == '.') continue;
+        if (StrChar::IsCSym(ch)) continue;
+        return E_INVALIDARG;  // not a valid char!
+    }
+
+    return i;
 }
 
 INT_PTR GRAYCALL StrA::GetFixedIntRef(const char*& rpszExp, int nPlaces) {  // static
@@ -115,7 +132,7 @@ INT_PTR GRAYCALL StrA::GetFixedIntRef(const char*& rpszExp, int nPlaces) {  // s
 
 //***********************************************************
 
-StrLen_t GRAYCALL StrA::MakeNamedBitmask(cSpanX<char>& ret, UINT dwFlags, const char** ppszNames, COUNT_t iMaxNames, char chSep) {
+StrLen_t GRAYCALL StrA::MakeNamedBitmask(cSpanX<char> ret, UINT dwFlags, const char** ppszNames, COUNT_t iMaxNames, char chSep) {
     //! For each bit set in dwFlags, copy a ppszNames[bit number] string to the pszOut. separated by chSep (|)
     //! @return string length
 

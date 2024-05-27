@@ -9,6 +9,7 @@
 namespace Gray {
 void cList::SetEmptyList() {
     cListNode* pNodeLast = nullptr;
+    UNREFERENCED_PARAMETER(pNodeLast);  // _DEBUG only.
     for (;;) {  // iterate the list.
         cListNode* pNode = get_Head();
         if (pNode == nullptr) break;
@@ -20,9 +21,10 @@ void cList::SetEmptyList() {
     ClearList();  // this should not be needed. but just in case of leaks.
 }
 
-void cList::DisposeAll(void) {
+void cList::DisposeAll() {
     cListNode* pNodeLast = nullptr;
-    for (;;) {  // iterate the list.
+    UNREFERENCED_PARAMETER(pNodeLast);  // _DEBUG only.
+    for (;;) {                          // iterate the list.
         cListNode* pNode = get_Head();
         if (pNode == nullptr) break;
         ASSERT(pNodeLast != pNode);

@@ -20,7 +20,24 @@ struct GRAYCORE_LINK StrA { // : public StrT // static
     static bool GRAYCALL IsBoolFalse(const char* pszStr, bool bHead = false);
 
     static const char* GRAYCALL GetArticleAndSpace(const char* pszWords);
+
+    /// <summary>
+    /// is the word already plural?
+    /// but will typically appear as a single object. use with StrA::GetArticleAndSpace
+    /// TODO THIS NEEDS WORK
+    /// Similar to M$ System.Data.Entity.Design.PluralizationServices
+    /// </summary>
     static bool GRAYCALL IsPlural(const char* pszWord);
+
+    /// <summary>
+    /// Is this a valid formatted SymName?
+    /// Is this a simple 'c' style identifier/symbolic string? starts with a char and can have numbers.
+    /// @note JSON allows '.' as part of normal names ??
+    /// </summary>
+    /// <param name="pszTag">the identifier (valid char set).</param>
+    /// <param name="bAllowDots"></param>
+    /// <returns>length else -lt- 0 = HRESULT error.</returns>
+    static HRESULT GRAYCALL CheckSymName(const ATOMCHAR_t* pszTag, bool bAllowDots = false);
 
     /// <summary>
     /// Get a fixed point number from a string. (n nPlaces). Used for money CY ?
@@ -33,7 +50,7 @@ struct GRAYCORE_LINK StrA { // : public StrT // static
 
     //*****************************************************************************
     // String Modifying
-    static StrLen_t GRAYCALL MakeNamedBitmask(cSpanX<char>& ret, UINT dwFlags, const char** ppszNames, COUNT_t iMaxNames, char chSep = '\0');
+    static StrLen_t GRAYCALL MakeNamedBitmask(cSpanX<char> ret, UINT dwFlags, const char** ppszNames, COUNT_t iMaxNames, char chSep = '\0');
 };
 }  // namespace Gray
 #endif

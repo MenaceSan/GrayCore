@@ -24,7 +24,7 @@ HRESULT cOSHandleSet::WaitForObjects(TIMESYSD_t nMilliseconds, bool bWaitForAll)
     // FD_ISSET(0,&read_fd) to find out which ?
     return S_OK;  // One of these objects is signaled.
 #else
-    DWORD dwRet = ::WaitForMultipleObjects((DWORD)m_fds.GetSize(), m_fds.get_DataConst(), bWaitForAll, static_cast<DWORD>(nMilliseconds));
+    DWORD dwRet = ::WaitForMultipleObjects((DWORD)m_fds.GetSize(), m_fds.get_PtrConst(), bWaitForAll, static_cast<DWORD>(nMilliseconds));
     return HResult::FromWaitRet(dwRet);
 #endif
 }

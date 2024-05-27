@@ -10,24 +10,13 @@
 
 #include "cDebugAssert.h"
 
-namespace Gray {
-/// <summary>
-/// like ULongToPtr(). NOT ULongToHandle()
-/// </summary>
-template <typename T = void>
-static constexpr T* CastNumToPtr(UINT_PTR n) noexcept {
-    return PtrCast<T>((void*)n);
-}
+#ifndef UNDER_CE
+#include <typeinfo>  // type_info& typeid(class type) std::
+#endif
 
-/// <summary>
-/// Cast a pointer to a number big enough to hold the value.
-/// like PtrToUlong() or HandleToULong(). UINT_PTR, or size_t ? NOT ptrdiff_t, INT_PTR (signed)
-/// </summary>
-/// <param name="p"></param>
-/// <returns></returns>
-constexpr UINT_PTR PtrCastToNum(const VOLATILE void* p) noexcept {
-    return (UINT_PTR)p;
-}
+namespace Gray {
+
+    // TODO PtrNN<T> // like not_null<T> for M$
 
 /// <summary>
 /// Cast const void pointer to a const type*. Ignore C++ warnings.
@@ -35,19 +24,20 @@ constexpr UINT_PTR PtrCastToNum(const VOLATILE void* p) noexcept {
 /// @note: DANGER. use static_cast or dynamic_cast on complex casting.
 /// </summary>
 template <typename T>
-static constexpr const T* PtrCast(const void* p) noexcept {  // VOLATILE?
-    return reinterpret_cast<const T*>(p);
-    // return (const T*)p;
+constexpr const T* PtrCast(const void* p) {  // VOLATILE?
+    // return reinterpret_cast<const T*>(p);
+    return (const T*)p;
 }
+
 /// <summary>
 /// Cast void pointer to a type. Ignore C++ warnings.
 /// put C26493 - "don't use c-style casts". warning in one place.
 /// @note: DANGER. use static_cast or dynamic_cast on complex casting.
 /// </summary>
 template <typename T>
-static constexpr T* PtrCast(void* p) noexcept {  // VOLATILE?
-    return reinterpret_cast<T*>(p);
-    // return (T*)p;
+constexpr T* PtrCast(void* p) {  // VOLATILE?
+    // return reinterpret_cast<T*>(p);
+    return (T*)p;
 }
 
 #ifdef _CPPRTTI
@@ -71,8 +61,7 @@ bool IsTopType(_TYPE_FROM* p) noexcept {
 /// </summary>
 template <class _TYPE, class _TYPE_FROM>
 inline bool IsValidCast(_TYPE_FROM* p) noexcept {
-    if (p == nullptr)  // nullptr is always castable to nullptr.
-        return true;
+    if (p == nullptr) return true;  // nullptr is always castable to nullptr.
     _TYPE* p2 = dynamic_cast<_TYPE*>(p);
     return p2 != nullptr;
 }
@@ -103,5 +92,31 @@ inline _TYPE* PtrCastCheck(_TYPE_FROM* p) {
 #endif
     return static_cast<_TYPE*>(p);
 }
+
+/// <summary>
+/// Cast a pointer to a number big enough to hold the value.
+/// like PtrToUlong() or HandleToULong(). UINT_PTR, or size_t ? NOT ptrdiff_t, INT_PTR (signed)
+/// </summary>
+/// <param name="p"></param>
+/// <returns></returns>
+constexpr UINT_PTR CastPtrToNum(const void* p) {  // VOLATILE?
+    return (UINT_PTR)p;
+}
+constexpr UINT_PTR CastPtrToNumV(const VOLATILE void* p) {  // VOLATILE?
+    return (UINT_PTR)p;
+}
+
+/// <summary>
+/// like ULongToPtr(). NOT ULongToHandle()
+/// NOTE: Gcc does not allow constexpr !!!! https://stackoverflow.com/questions/54174694/reinterpret-castvolatile-uint8-t37-is-not-a-constant-expression
+/// </summary>
+inline void* CastNumToPtr(UINT_PTR n) {
+    return (void*)n;
+}
+template <typename T = void>
+inline T* CastNumToPtrT(UINT_PTR n) {
+    return PtrCast<T>(CastNumToPtr(n));
+}
+
 }  // namespace Gray
 #endif  // _INC_PtrCast_H

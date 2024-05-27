@@ -38,7 +38,7 @@ struct GRAYCORE_LINK StrU { // : public StrT // static
     /// </summary>
     /// <param name="pvU"></param>
     /// <returns></returns>
-    static bool GRAYCALL IsUTFLead(const void* pvU);
+    static bool GRAYCALL IsUTFLead(const void* pvU) noexcept;
 
     /// <summary>
     /// How big would this UNICODE char be as UTF8?
@@ -46,9 +46,9 @@ struct GRAYCORE_LINK StrU { // : public StrT // static
     /// </summary>
     /// <param name="wideChar">int (not wchar_t) just to allow any overflow to be detected.</param>
     /// <returns>The length in bytes (UTF8) i need to store the single char, 0=FAILED, k_UTF8_SIZE_MAX</returns>
-    static StrLen_t GRAYCALL UTF8SizeChar(int wideChar);
+    static StrLen_t GRAYCALL UTF8SizeChar(int wideChar) noexcept;
 
-    static StrLen_t inline UTF8StartBits(StrLen_t nSizeChar) {
+    static StrLen_t inline UTF8StartBits(StrLen_t nSizeChar) noexcept {
         return nSizeChar <= 1 ? 0 : (7 - nSizeChar);
     }
 
@@ -57,7 +57,7 @@ struct GRAYCORE_LINK StrU { // : public StrT // static
     /// </summary>
     /// <param name="firstByte">the first char/byte of the UTF8 sequence.</param>
     /// <returns>(le) StrU::k_UTF8_SIZE_MAX </returns>
-    static StrLen_t GRAYCALL UTF8SizeChar1(char firstChar);
+    static StrLen_t GRAYCALL UTF8SizeChar1(char firstChar) noexcept;
 
     /// <summary>
     /// Convert a single UTF8 encoded character (multi chars) to a single UNICODE char.
@@ -73,7 +73,7 @@ struct GRAYCORE_LINK StrU { // : public StrT // static
     /// <param name="pInp"></param>
     /// <param name="iSizeInpBytes"></param>
     /// <returns>The length used from input string. (lt) iSizeInpBytes, 0=FAILED. k_UTF8_SIZE_MAX</returns>
-    static StrLen_t GRAYCALL UTF8toUNICODEChar(OUT wchar_t& wChar, const char* pInp, StrLen_t iSizeInpBytes);
+    static StrLen_t GRAYCALL UTF8toUNICODEChar(OUT wchar_t& wChar, const char* pInp, StrLen_t iSizeInpBytes) noexcept;
 
     /// <summary>
     /// Convert a single UNICODE char to UTF8 encoded char (maybe using multi chars).
@@ -88,7 +88,7 @@ struct GRAYCORE_LINK StrU { // : public StrT // static
     /// <param name="iSizeOutMaxBytes"></param>
     /// <param name="wChar"></param>
     /// <returns>The length (lt) iSizeOutMaxBytes, 0=FAILED. k_UTF8_SIZE_MAX</returns>
-    static StrLen_t GRAYCALL UNICODEtoUTF8Char(char* pOut, StrLen_t iSizeOutMaxBytes, int wideChar);
+    static StrLen_t GRAYCALL UNICODEtoUTF8Char(char* pOut, StrLen_t iSizeOutMaxBytes, int wideChar) noexcept;
 
     /// <summary>
     /// How many UNICODE chars to store this UTF8 string ?
@@ -97,7 +97,7 @@ struct GRAYCORE_LINK StrU { // : public StrT // static
     /// <param name="pInp"></param>
     /// <param name="iSizeInpBytes"></param>
     /// <returns>Number of wide chars. not including null.</returns>
-    static StrLen_t GRAYCALL UTF8toUNICODELen(const cSpan<char>& src);
+    static StrLen_t GRAYCALL UTF8toUNICODELen(const cSpan<char>& src) noexcept;
 
     /// <summary>
     /// How many UTF8 bytes to store this UNICODE string ?
@@ -106,7 +106,7 @@ struct GRAYCORE_LINK StrU { // : public StrT // static
     /// <param name="pInp"></param>
     /// <param name="iSizeInpChars"></param>
     /// <returns>Number of bytes. (not including null)</returns>
-    static StrLen_t GRAYCALL UNICODEtoUTF8Size(const cSpan<wchar_t>& src);
+    static StrLen_t GRAYCALL UNICODEtoUTF8Size(const cSpan<wchar_t>& src) noexcept;
 
     /// <summary>
     /// Convert the CODEPAGE_t CP_UTF8 default text format to UNICODE
@@ -119,7 +119,7 @@ struct GRAYCORE_LINK StrU { // : public StrT // static
     /// <param name="pInp"></param>
     /// <param name="iSizeInpBytes">size of the input string. -1 = '\0' terminated.</param>
     /// <returns>Number of wide chars copied. not including '\0'.</returns>
-    static StrLen_t GRAYCALL UTF8toUNICODE(OUT cSpanX<wchar_t>& ret, const cSpan<char>& src);
+    static StrLen_t GRAYCALL UTF8toUNICODE(cSpanX<wchar_t> ret, const cSpan<char>& src) noexcept;
 
     /// <summary>
     /// convert CODEPAGE_t CP_UTF8 to UNICODE.
@@ -131,7 +131,7 @@ struct GRAYCORE_LINK StrU { // : public StrT // static
     /// <param name="pInp"></param>
     /// <param name="iSizeInpChars">limit UNICODE chars incoming. -1 = go to null.</param>
     /// <returns>Number of bytes. (not including null)</returns>
-    static StrLen_t GRAYCALL UNICODEtoUTF8(OUT cSpanX<char>& ret, const cSpan<wchar_t>& src);
+    static StrLen_t GRAYCALL UNICODEtoUTF8(cSpanX<char> ret, const cSpan<wchar_t>& src) noexcept;
 };
 }  // namespace Gray
 

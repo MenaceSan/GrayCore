@@ -7,9 +7,9 @@
 #pragma once
 #endif
 
+#include "ITextWriter.h"
 #include "cStreamStack.h"
 #include "cTextPos.h"
-#include "ITextWriter.h"
 
 namespace Gray {
 /// <summary>
@@ -31,18 +31,16 @@ class GRAYCORE_LINK cTextReaderStream : public cStreamStackInp {
     }
 
  protected:
-    HRESULT ReadX(void* pData, size_t nDataSize) noexcept override {
+    HRESULT ReadX(cMemSpan ret) noexcept override {
         // Use ReadStringLine instead. Prevent use of this.
         ASSERT(0);
-        UNREFERENCED_PARAMETER(pData);
-        UNREFERENCED_PARAMETER(nDataSize);
+        UNREFERENCED_PARAMETER(ret);
         return E_NOTIMPL;
     }
-    HRESULT WriteX(const void* pData, size_t nDataSize) override {
+    HRESULT WriteX(const cMemSpan& m) override {
         // Read ONLY. Prevent use of this.
         ASSERT(0);
-        UNREFERENCED_PARAMETER(pData);
-        UNREFERENCED_PARAMETER(nDataSize);
+        UNREFERENCED_PARAMETER(m);
         return E_NOTIMPL;
     }
 
@@ -62,7 +60,7 @@ class GRAYCORE_LINK cTextReaderStream : public cStreamStackInp {
     /// -lt- 0 = other error.</returns>
     HRESULT ReadStringLine(OUT const char** ppszLine);
 
-    HRESULT ReadStringLine(cSpanX<char>& ret) override;
+    HRESULT ReadStringLine(cSpanX<char> ret) override;
 
     HRESULT SeekX(STREAM_OFFSET_t iOffset, SEEK_t eSeekOrigin = SEEK_t::_Set) noexcept override;
 };

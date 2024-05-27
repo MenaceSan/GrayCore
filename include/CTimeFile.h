@@ -15,7 +15,7 @@
 #ifdef __linux__
 #include "cTimeVal.h"
 // from '#include <windef.h>'
-struct FILETIME { /// _WIN32 64-bit value representing the number of 100-nanosecond intervals since January 1, 1601.
+struct FILETIME {       /// _WIN32 64-bit value representing the number of 100-nanosecond intervals since January 1, 1601.
     UINT64 qwDateTime;  // FILETIME_t
 };
 #endif
@@ -30,6 +30,8 @@ typedef UINT64 FILETIME_t;  /// replace FILETIME for 64 bit math. Absolute 64-bi
 /// Similar to ATL/MFC CFileTime
 /// </summary>
 class GRAYCORE_LINK cTimeFile : public ::FILETIME {
+    typedef cTimeFile THIS_t;
+
  public:
     static const int k_nDaysDiffTimeInt = ((369 * 365) + 89);  /// days difference from FILETIME (1601) to cTimeInt (1970) bases = 134774
     static const int k_nFreq = 10 * 1000000;                   /// 100-nanosecond intervals per second = 10th of a micro second.
@@ -57,7 +59,7 @@ class GRAYCORE_LINK cTimeFile : public ::FILETIME {
         ASSERT(nTimeZone == TZ_LOCAL || nTimeZone == TZ_UTC);
     }
     bool GetSys(::SYSTEMTIME& st, TZ_TYPE nTimeZone) const {
-        FILETIME ftTmp = *this;
+        ::FILETIME ftTmp = *this;
         if (nTimeZone == TZ_LOCAL)  // adjust for TZ and DST
         {
             ::FileTimeToLocalFileTime(this, &ftTmp);
@@ -77,7 +79,7 @@ class GRAYCORE_LINK cTimeFile : public ::FILETIME {
         nTmp += tSpec.tv_nsec / 100;  // add nanoseconds.
         return nTmp;
     }
-    cTimeFile(const struct timespec& tSpec) {
+    cTimeFile(const struct ::timespec& tSpec) {
         // convert struct timespec/cTimeSpec to 64 bit FILETIME number.
         InitTime(CvtFileTime(tSpec));
     }
@@ -99,10 +101,13 @@ class GRAYCORE_LINK cTimeFile : public ::FILETIME {
         return *reinterpret_cast<const FILETIME_t*>(static_cast<const ::FILETIME*>(this));
     }
 
+    /// <summary>
+    /// get the time truncated to 2 second intervals for FAT32.
+    /// 2 second accurate for FAT32.
+    /// @note This is not really in proper FILETIME_t or FAT32/DosDate format. see cTimeUnits DosDate.
+    /// </summary>
+    /// <returns></returns>
     FILETIME_t get_FAT32() const noexcept {
-        //! get the time truncated to 2 second intervals for FAT32.
-        //! 2 second accurate for FAT32
-        //! @note This is not really in proper FILETIME_t or FAT32/DosDate format. see cTimeUnits DosDate.
         return get_Val() / (2 * k_nFreq);
     }
 
@@ -119,17 +124,26 @@ class GRAYCORE_LINK cTimeFile : public ::FILETIME {
     bool GetTimeUnits(OUT cTimeUnits& rTu, TZ_TYPE nTimeZone) const;
 
     cString GetTimeFormStr(const GChar_t* pszFormat, TZ_TYPE nTimeZone = TZ_LOCAL) const;
+    bool operator>(const THIS_t& t2) const noexcept {
+        return get_Val() > t2.get_Val();
+    }
 
     // ********************************************************
     // compare to GetTimeNow().
 
-    static cTimeFile GRAYCALL GetTimeNow() noexcept;
+    /// <summary>
+    /// Get the current time with highest possible accuracy.
+    ///  FILETIME_t = 64-bit 100-nanosecond since January 1, 1601 GMT
+    /// @note GetCurrentTime() is "#define" by _WIN32 to GetTickCount() so don't use that name!
+    /// </summary>
+    static THIS_t GRAYCALL GetTimeNow() noexcept;
+
     void InitTimeNow() noexcept;
     TIMESECD_t get_AgeSec() const noexcept;
 };
 
 template <>
-inline COMPARE_t cValT::Compare<cTimeFile>(const cTimeFile& t1, const cTimeFile& t2) {
+inline COMPARE_t cValT::Compare<cTimeFile>(const cTimeFile& t1, const cTimeFile& t2) noexcept {
     //! Overload/implementation of cValT::Compare
     //! Use cFileStatus::isSameChangeTime for FAT32 ~2 second
     //! like _WIN32 CompareFileTime() ?
@@ -141,7 +155,7 @@ inline COMPARE_t cValT::Compare<cTimeFile>(const cTimeFile& t1, const cTimeFile&
 /// Emulate the MFC CTime functionality
 /// </summary>
 struct GRAYCORE_LINK cTimeSpanFile {
-    INT64 m_nDiffUnits; /// in cTimeFile::k_nFreq units
+    INT64 m_nDiffUnits;  /// in cTimeFile::k_nFreq units
 
     cTimeSpanFile(INT64 nDiffUnits = 0) : m_nDiffUnits(nDiffUnits) {}
 

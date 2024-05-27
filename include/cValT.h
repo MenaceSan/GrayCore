@@ -9,18 +9,64 @@
 #endif
 
 #include "GrayCore.h"
-#include <utility>  // std::move
+#include <type_traits>  // std::is_pointer, std::is_reference, std::addressof
+#include <utility>      // std::move
+
+#if defined(_MSC_VER)
+namespace experimental {
+template <class AlwaysVoid, template <class...> class Op, class... Args>
+struct detector {
+    using value_t = std::false_type;
+};
+template <template <class...> class Op, class... Args>
+struct detector<std::void_t<Op<Args...>>, Op, Args...> {
+    using value_t = std::true_type;
+};
+template <template <class...> class Op, class... Args>
+using is_detected = typename detector<void, Op, Args...>::value_t;
+}  // namespace experimental
+#else
+#include <experimental/type_traits>
+#endif
 
 namespace Gray {
+
+// detect overload. https://stackoverflow.com/questions/49429546/check-whether-an-operator-is-overloaded-in-c and https://www.cppstories.com/2019/07/detect-overload-from-chars/
+template <class T>
+using equal_to_t = decltype(std::declval<T>() == std::declval<T>());
+template <class T>
+using less_than_t = decltype(std::declval<T>() < std::declval<T>());
+
+template <class TYPE>
+static constexpr bool has_equal_to() {
+    return ::experimental::is_detected<equal_to_t, TYPE>::value;
+}
+template <class TYPE>
+static constexpr bool has_less_than() {
+    return ::experimental::is_detected<less_than_t, TYPE>::value;
+}
+
 /// <summary>
-/// General return type from a compare. Similar to _WIN#2 VARCMP_GT
+/// General return type from a compare.
+/// Similar to _WIN#2 VARCMP_GT.
+/// Similar to the C++ (Three-way comparison, spaceship operator) https://en.cppreference.com/w/cpp/language/operator_comparison
 /// </summary>
-typedef int COMPARE_t;  /// result of compare. 0=same, 1=a>b, -1=a<b
-enum COMPARE_TYPE {
-    COMPARE_Less = -1,    /// VARCMP_LT
-    COMPARE_Equal = 0,    /// VARCMP_EQ
-    COMPARE_Greater = 1,  /// VARCMP_GT
+typedef int COMPARE_t;  /// result of "Three-way" compare. 0=same, 1=a>b, -1=a<b, COMPRET_t
+enum COMPRET_t {
+    COMPARE_Less = -1,    /// like VARCMP_LT
+    COMPARE_Equal = 0,    /// like VARCMP_EQ
+    COMPARE_Greater = 1,  /// like VARCMP_GT
 };
+
+/// Is exactly the same object?
+/// Similar to JavaScript ===. https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Strict_equality
+template <class TYPE>
+static inline bool IsEqual3(TYPE r1, TYPE r2) noexcept {
+    if constexpr (std::is_reference<TYPE>())
+        return std::addressof(r1) == std::addressof(r2);
+    else
+        return r1 == r2;  // scalar values or std::is_pointer
+}
 
 /// <summary>
 /// Helper functions for an arbitrary value/object type in memory. We may compare these.
@@ -28,30 +74,38 @@ enum COMPARE_TYPE {
 /// </summary>
 struct GRAYCORE_LINK cValT {  // static. Value/Object of some type in memory.
     /// <summary>
-    /// Implement cheapest possible compare for equality only.
+    /// Implement cheapest possible compare for equality only. default to cMem::Compare() if no native or overloaded operator for == ?
+    /// Like: std::equal_to()
     /// </summary>
     template <class TYPE>
     static constexpr bool IsEqual(const TYPE& a, const TYPE& b) {
-        return a == b;
+        if constexpr (has_equal_to<TYPE>())
+            return a == b;
+        else
+            return ::memcmp(&a, &b, sizeof(TYPE)) == 0;
     }
     template <class TYPE>
-    static inline bool IsEqualPtr(const TYPE* a, const TYPE* b) noexcept {
-        if (a == nullptr) {
-            if (b == nullptr) return COMPARE_Equal;
-            return COMPARE_Less;
-        }
-        if (b == nullptr) return COMPARE_Greater;
+    static inline bool IsEqual(const TYPE* a, const TYPE* b) noexcept {
+        if (a == nullptr) return b == nullptr;
+        if (b == nullptr) return false;
         return IsEqual(*a, *b);
     }
 
+    /// <summary>
+    /// use the native or overloaded operator for -lt- else default to cMem? like: std::less()
+    /// </summary>
+    /// <typeparam name="TYPE"></typeparam>
     template <class TYPE>
-    static constexpr bool IsGreater(const TYPE& a, const TYPE& b) {
-        return a > b;
+    static constexpr bool IsLess(const TYPE& a, const TYPE& b) {
+        if constexpr (has_less_than<TYPE>())
+            return a < b;
+        else
+            return ::memcmp(&a, &b, sizeof(TYPE)) < 0;
     }
 
     /// <summary>
-    /// Generic/default compare 2 TYPE values.
-    /// Overload this template for any specific TYPE Compare. ASSUME support operators > ==.
+    /// Generic/default compare 2 TYPE values. Similar to the C++ (Three-way comparison, spaceship operator) https://en.cppreference.com/w/cpp/language/operator_comparison
+    /// Overload this template for any specific TYPE Compare. ASSUME support operators -gt- ==.
     /// Similar to .NET IComparable but for any types.
     /// @note cMem::Compare() is a backwards numeric compare for USE_LITTLE_ENDIAN (Intel) machines.
     /// @note we need this because INT_MAX-INT_MIN is not positive !!! (and 0-0xFFFFFFFF is not negative)
@@ -60,12 +114,12 @@ struct GRAYCORE_LINK cValT {  // static. Value/Object of some type in memory.
     template <class TYPE>
     static inline COMPARE_t Compare(const TYPE& a, const TYPE& b) noexcept {
         if (IsEqual(a, b)) return COMPARE_Equal;  // is equal. 0. assume TYPE has -eq- operator.
-        if (IsGreater(a,b)) return COMPARE_Greater;  // is greater than. assume TYPE has -gt- operator.
-        return COMPARE_Less;                // must be less than.
+        if (IsLess(a, b)) return COMPARE_Less;    // is less than. assume TYPE has -lt- operator.
+        return COMPARE_Greater;                   // else must be greater than.
     }
 
     template <class TYPE>
-    static inline COMPARE_t ComparePtr(const TYPE* a, const TYPE* b) noexcept {
+    static inline COMPARE_t Compare(const TYPE* a, const TYPE* b) noexcept {
         if (a == nullptr) {
             if (b == nullptr) return COMPARE_Equal;
             return COMPARE_Less;
@@ -81,19 +135,19 @@ struct GRAYCORE_LINK cValT {  // static. Value/Object of some type in memory.
     /// <returns>larger of 2 values</returns>
     template <class TYPE>
     constexpr static TYPE Max(const TYPE& a, const TYPE& b) noexcept {
-        return IsGreater(a, b) ? a : b;
+        return IsLess(a, b) ? b : a;
     }
     /// <summary>
-    /// replace MIN() macro.
+    /// Replace MIN() macro.
     /// </summary>
     /// <returns>smaller of 2 values</returns>
     template <class TYPE>
     constexpr static TYPE Min(const TYPE& a, const TYPE& b) noexcept {
-        return IsGreater(a, b) ? b : a;
+        return IsLess(a, b) ? a : b;
     }
 
     /// <summary>
-    /// replace ABS(n) macro.
+    /// Replace ABS(n) macro.
     /// no conflict with 'math.h' abs()
     /// Does nothing for unsigned types of course.
     /// </summary>

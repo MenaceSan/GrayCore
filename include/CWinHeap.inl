@@ -39,9 +39,9 @@ class WINHEAPN(Handle) : public cMemSpan {
     }
     void UpdateHandle(void* p) noexcept {
         //! If i have the m_pData, make sure the m_hData matches.
-        if (get_DataC() == p) return;
+        if (GetTPtrC() == p) return;
         Free();
-        SetSpan2(p, get_DataSize());
+        SetSpan2(p, get_SizeBytes());
         if (isValidPtr()) {
             m_hData = WINHEAPF(Handle)(p);
         }
@@ -71,9 +71,9 @@ class WINHEAPN(Handle) : public cMemSpan {
         if (m_hData == HANDLE_NULL) return nullptr;
         if (!isValidPtr()) {
 #ifdef UNDER_CE
-            SetSpan((void*)(m_hData), get_DataSize());
+            SetSpan((void*)(m_hData), get_SizeBytes());
 #else
-            SetSpan2(WINHEAPF(Lock)(m_hData), get_DataSize());
+            SetSpan2(WINHEAPF(Lock)(m_hData), get_SizeBytes());
 #endif
 #ifdef _DEBUG
             if (!isValidPtr()) {
@@ -82,7 +82,7 @@ class WINHEAPN(Handle) : public cMemSpan {
             }
 #endif
         }
-        return get_DataW();
+        return GetTPtrW();
     }
     void Unlock() {
         if (isValidPtr()) {
@@ -90,7 +90,7 @@ class WINHEAPN(Handle) : public cMemSpan {
 #ifndef UNDER_CE
             WINHEAPF(Unlock)(m_hData);
 #endif
-            SetSpanConst(nullptr, get_DataSize());
+            SetSpanConst(nullptr, get_SizeBytes());
         }
     }
     /// <summary>
@@ -106,13 +106,13 @@ class WINHEAPN(Handle) : public cMemSpan {
             m_hData = WINHEAPF(ReAlloc)(m_hData, (SIZE_T)dwSize, dwFlags);
         else
             m_hData = WINHEAPF(Alloc)(dwFlags, (SIZE_T)dwSize);
-        put_DataSize(dwSize);
+        put_SizeBytes(dwSize);
         return m_hData;
     }
     void* ReAlloc(size_t dwSize, DWORD dwFlags = WINHEAPM(FIXED)) {
         Unlock();
         m_hData = WINHEAPF(ReAlloc)(m_hData, (SIZE_T)dwSize, dwFlags);
-        put_DataSize(dwSize);
+        put_SizeBytes(dwSize);
         return Lock();
     }
     /// <summary>
@@ -126,7 +126,7 @@ class WINHEAPN(Handle) : public cMemSpan {
         return Lock();
     }
     void* AllocSpan(const cMemSpan& src, DWORD dwFlags = WINHEAPM(FIXED)) {
-        void* pDst = AllocPtr2(src.get_DataSize(), dwFlags);
+        void* pDst = AllocPtr2(src.get_SizeBytes(), dwFlags);
         if (src.isNull()) {
             src.CopyTo(pDst);
         }
@@ -224,7 +224,7 @@ struct WINHEAPN(T) : public WINHEAPN(V) {
     WINHEAPN(T)(HANDLE_t hData = HANDLE_NULL) : SUPER_t(hData) {}
 
     _TYPE* operator->() noexcept {
-        return get_DataW<_TYPE>();
+        return GetTPtrW<_TYPE>();
     }
     static _TYPE* GRAYCALL AllocPtrX(size_t nSize, DWORD nFlags = 0) {
         return (_TYPE*)SUPER_t::AllocPtrX(nSize, nFlags);

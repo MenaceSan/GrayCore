@@ -45,7 +45,7 @@ HRESULT cTextReaderStream::ReadStringLine(OUT const char** ppszLine) {
     return i;  // length.
 }
 
-HRESULT cTextReaderStream::ReadStringLine(cSpanX<char>& ret) {  // override // virtual
+HRESULT cTextReaderStream::ReadStringLine(cSpanX<char> ret) {  // override // virtual
     //! @arg iSizeMax = Maximum number of characters to be copied into pszBuffer (including room for the the terminating '\0' character).
     //! @return
     //!  length of the string read in chars. (includes \r\n) (not including null). 0 = EOF
@@ -56,8 +56,8 @@ HRESULT cTextReaderStream::ReadStringLine(cSpanX<char>& ret) {  // override // v
     if (FAILED(hRes)) return hRes;
 
     const size_t nSizeCopy = cValT::Min<size_t>(hRes, ret.get_MaxLen() - 1);
-    cMem::Copy(ret.get_DataWork(), pszLine, nSizeCopy);
-    ret.get_DataWork()[nSizeCopy] = '\0';   // Just in case.
+    cMem::Copy(ret.get_PtrWork(), pszLine, nSizeCopy);
+    ret.get_PtrWork()[nSizeCopy] = '\0';   // Just in case.
     return (HRESULT)nSizeCopy;
 }
 

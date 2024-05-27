@@ -38,7 +38,7 @@ struct cStackStatic : public cSpanStatic<_QTY, TYPE> {
         return true;
     }
     cSpanX<TYPE> get_SpanUsed() const {
-        return ToSpan(_Data, m_nSizeUsed);
+        return ToSpan(this->_Data, m_nSizeUsed);
     }
 
     void SetZero() {
@@ -47,11 +47,11 @@ struct cStackStatic : public cSpanStatic<_QTY, TYPE> {
     }
     inline TYPE Pop() {
         ASSERT(m_nSizeUsed >= 1);
-        return m_Data[--m_nSizeUsed];
+        return this->m_Data[--m_nSizeUsed];
     }
     inline void Push(TYPE v) {
         ASSERT(m_nSizeUsed < _QTY);
-        m_Data[m_nSizeUsed++] = v;
+        this->m_Data[m_nSizeUsed++] = v;
     }
 };
 }  // namespace Gray

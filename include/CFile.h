@@ -119,8 +119,13 @@ class GRAYCORE_LINK cFile : public cObject, public cOSHandle, public cStream {
     /// </summary>
     const FILECHAR_t* get_FileName() const;
 
+    /// <summary>
+    /// get the EXTension including the .
+    /// Must replace the stupid MFC version of this.
+    /// </summary>
     const FILECHAR_t* get_FileExt() const;
-    bool IsFileNameExt(const FILECHAR_t* pszExt) const noexcept;
+
+    bool IsFileNameExt(const cSpan<FILECHAR_t>& ext) const noexcept;
 
     // File Mode stuff.
 
@@ -149,7 +154,7 @@ class GRAYCORE_LINK cFile : public cObject, public cOSHandle, public cStream {
 
     // File Open/Close
 #if defined(__linux__)
-    HRESULT GetStatusSys(OUT cFileStatusSys& statusSys);
+    HRESULT GetStatusSys(OUT cFileStatusSys& statusSys) const;
 #endif
 
     // MFC Open is BOOL return type.
@@ -157,7 +162,7 @@ class GRAYCORE_LINK cFile : public cObject, public cOSHandle, public cStream {
     virtual HRESULT OpenX(cStringF sFilePath = _FN(""), OF_FLAGS_t nOpenFlags = OF_READ | OF_SHARE_DENY_NONE);
     virtual void Close() noexcept;
 
-    HANDLE DetachHandle() noexcept;
+    ::HANDLE DetachHandle() noexcept;
 
     HRESULT OpenWait(cStringF sFilePath = _FN(""), OF_FLAGS_t nOpenFlags = OF_READ | OF_SHARE_DENY_NONE, TIMESYSD_t nWaitTime = 100);
     virtual HRESULT SetLength(STREAM_POS_t dwNewLen);
@@ -168,11 +173,20 @@ class GRAYCORE_LINK cFile : public cObject, public cOSHandle, public cStream {
     HRESULT GetFileStatus(OUT cFileStatus& attr) const;
 
     // cStream override
-    HRESULT ReadX(void* pData, size_t nDataSize) noexcept override;
-    HRESULT WriteX(const void* pData, size_t nDataSize) override;  
+    HRESULT ReadX(cMemSpan ret) noexcept override;
+
+    /// <summary>
+    /// Write a blob to the file. advance the current position.
+    /// </summary>
+    /// <param name="m"></param>
+    /// <returns>length written. -lt- 0 = FAILED. 
+    /// ERROR_INVALID_USER_BUFFER = too many async calls? wait.
+    /// ERROR_IO_PENDING = must wait!?</returns>
+    HRESULT WriteX(const cMemSpan& m) override;  
+
     HRESULT FlushX() override;
-    STREAM_POS_t GetPosition() const override;
-    STREAM_POS_t GetLength() const override;
+    STREAM_POS_t GetPosition() const noexcept override;
+    STREAM_POS_t GetLength() const noexcept override;
 
     HRESULT SeekX(STREAM_OFFSET_t nOffset, SEEK_t eSeekOrigin = SEEK_t::_Set) noexcept override {  // disambig
         return cOSHandle::SeekX(nOffset, eSeekOrigin);

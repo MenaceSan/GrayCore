@@ -74,6 +74,7 @@ System/OS Info.
 Ini file read/write for application configuration.
 Exceptions abstraction for STL or MFC exceptions.
 Mime type name manager.
+USE_CRT = 0 = minimize use of CRT MSVCRTD . remove or wrap -> sprintf, strtod, rand, malloc ...
 @endverbatim
 
 STYLE GUIDE:
@@ -105,6 +106,12 @@ https://www.menasoft.com/graydox/d8/df5/namespaceGray.html
 http://www.stack.nl/~dimitri/doxygen/commands.html#cmdfile
 use http://www.die.net for Linux man docs.
 
+Build for WSL: (Linux)
+sudo apt-get update
+cmake .
+cmake --build . -j8
+cmake --build . -j8 >> tmp1.err 2> tmp2.err
+
 Build for Linux:
 
 Needs dl, pthread
@@ -130,8 +137,6 @@ USE_CRT
 MFC
 
 @todo
-USE_CRT = 0 = minimize use of CRT MSVCRTD . remove or wrap -> sprintf, strtod, rand, malloc ?
-ThreadLock RW for RefPtr
 Better TextReader used as parser and read index ? Eqiv to ITextWriter
 Log message cache for details messages. Released if not needed.
 

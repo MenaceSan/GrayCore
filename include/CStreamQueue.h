@@ -23,23 +23,20 @@ class GRAYCORE_LINK cStreamQueue : public cStream, public cQueueBytes {
     typedef cQueueBytes SUPER_t;
 
  protected:
-    cStreamQueue(const cStreamQueue& a) noexcept {
-        //! do nothing!
-        UNREFERENCED_REFERENCE(a);
-    }
+    cStreamQueue(const cStreamQueue& a) = delete;  // noexcept { UNREFERENCED_REFERENCE(a); } // do nothing!
 
  public:
-    cStreamQueue(size_t nGrowSizeChunk = 4 * 1024, size_t nGrowSizeMax = cHeap::k_ALLOC_MAX) noexcept : SUPER_t(nGrowSizeChunk, nGrowSizeMax) {
+    cStreamQueue(size_t nGrowSizeChunk = 4 * 1024, size_t nGrowSizeMax = cMem::k_ALLOC_MAX) noexcept : SUPER_t(nGrowSizeChunk, nGrowSizeMax) {
         //! @arg nGrowSizeMax = 0 = not used. write only ?
     }
 
-    HRESULT WriteX(const void* pData, size_t nDataSize) override {
-        return SUPER_t::WriteX(pData, nDataSize);
+    HRESULT WriteX(const cMemSpan& m) override {
+        return SUPER_t::WriteX(m);
     }
-    HRESULT ReadX(void* pData, size_t nDataSize) noexcept override {
-        return SUPER_t::ReadX(pData, nDataSize);
+    HRESULT ReadX(cMemSpan ret) noexcept override {
+        return SUPER_t::ReadX(ret);
     }
-    HRESULT ReadPeek(cMemSpan& ret) override {
+    HRESULT ReadPeek(cMemSpan ret) noexcept override {
         return SUPER_t::ReadPeek(cSpanX<BYTE>(ret));
     }
     /// <summary>
@@ -56,10 +53,10 @@ class GRAYCORE_LINK cStreamQueue : public cStream, public cQueueBytes {
     HRESULT SeekX(STREAM_OFFSET_t offset, SEEK_t eSeekOrigin = SEEK_t::_Set) noexcept override {
         return SUPER_t::SeekQ(offset, eSeekOrigin);
     }
-    STREAM_POS_t GetPosition() const override {
+    STREAM_POS_t GetPosition() const noexcept override {
         return this->get_ReadIndex();
     }
-    STREAM_POS_t GetLength() const override {
+    STREAM_POS_t GetLength() const noexcept override {
         //! Get the full Seek-able length. line Seek(SEEK_END).
         return this->get_WriteIndex();  // get_ReadQty()
     }
@@ -87,27 +84,25 @@ struct GRAYCORE_LINK cStreamStatic : public cStream, public cQueueRW<BYTE> {
     /// <summary>
     /// do nothing! copy ??
     /// </summary>
-    cStreamStatic(const cStreamStatic& a) {
-        UNREFERENCED_REFERENCE(a);
-    }
+    cStreamStatic(const cStreamStatic& a) = delete;  // {        UNREFERENCED_REFERENCE(a);    }
 
-    HRESULT WriteX(const void* pData, size_t nDataSize) override {
-        return SUPER_t::WriteX(pData, nDataSize);
+    HRESULT WriteX(const cMemSpan& m) override {
+        return SUPER_t::WriteX(m);
     }
-    HRESULT ReadX(void* pData, size_t nDataSize) noexcept override {
-        return SUPER_t::ReadX(pData, nDataSize);
+    HRESULT ReadX(cMemSpan ret) noexcept override {
+        return SUPER_t::ReadX(ret);
     }
-    HRESULT ReadPeek(cMemSpan& ret) override {
+    HRESULT ReadPeek(cMemSpan ret) noexcept override {
         return SUPER_t::ReadPeek(cSpanX<BYTE>(ret));
     }
 
     HRESULT SeekX(STREAM_OFFSET_t offset, SEEK_t eSeekOrigin = SEEK_t::_Set) noexcept override {
         return this->SeekQ(offset, eSeekOrigin);
     }
-    STREAM_POS_t GetPosition() const override {
+    STREAM_POS_t GetPosition() const noexcept override {
         return this->get_ReadIndex();
     }
-    STREAM_POS_t GetLength() const override {
+    STREAM_POS_t GetLength() const noexcept override {
         //! Get the full Seek-able length. not just get_ReadQty() left to read. Assume Seek(0) read length.
         return this->get_WriteIndex();
     }

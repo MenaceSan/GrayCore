@@ -10,6 +10,7 @@
 #include "PtrCast.h"
 #include "Index.h"
 #include "cDebugAssert.h"
+#include "HResult.h"    // S_OK
 
 namespace Gray {
 /// <summary>

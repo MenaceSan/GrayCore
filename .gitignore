@@ -328,18 +328,17 @@ ASALocalRun/
 
 # MFractors (Xamarin productivity tool) working folder 
 .mfractor/
-/x64v141
-/x64v140
-/Win32v141
+
+.svn
 *.res
 *.idb
 *.tlog
-x64v142/DebugDLL/GrayCore.exp
-x64v142/DebugDLL/GrayCore.lib
-x64v142/DebugMFC/GrayCore16.vcxproj.FileListAbsolute.txt
-Win32v142
-x64v142
-.svn
-ARMv142/
-x64v143/
+Win32v140/
+Win32v141/
+Win32v142/
 Win32v143/
+x64v140/
+x64v141/
+x64v142/
+x64v143/
+ARMv142/

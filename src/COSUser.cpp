@@ -153,7 +153,7 @@ HRESULT cOSUserToken::GetIntegrityLevel() {
     }
 
     cBlob til((size_t)dwLengthNeeded);
-    ::TOKEN_MANDATORY_LABEL* pTIL = til.get_DataW<::TOKEN_MANDATORY_LABEL>();
+    ::TOKEN_MANDATORY_LABEL* pTIL = til.GetTPtrW<::TOKEN_MANDATORY_LABEL>();
     if (pTIL == nullptr) return E_OUTOFMEMORY;
 
     if (!::GetTokenInformation(get_Handle(), TokenIntegrityLevel, pTIL, dwLengthNeeded, &dwLengthNeeded)) {

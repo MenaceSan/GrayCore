@@ -41,8 +41,8 @@ cSystemInfo::cSystemInfo() : cSingleton<cSystemInfo>(this, typeid(cSystemInfo)) 
 
     cOSModule modNT;
     if (modNT.AttachModuleName(_FN("ntdll.dll"))) {
-        typedef LONG(WINAPI * tRtlGetVersion)(OSVERSIONINFOEXW*);
-        tRtlGetVersion pfRtlGetVersion = (tRtlGetVersion)modNT.GetSymbolAddress("RtlGetVersion");
+        typedef LONG(WINAPI * tRtlGetVersion)(::OSVERSIONINFOEXW*);
+        tRtlGetVersion pfRtlGetVersion = CastFPtrTo<tRtlGetVersion>(modNT.GetSymbolAddress("RtlGetVersion"));
         if (pfRtlGetVersion != nullptr) {  // This will never happen (all processes load ntdll.dll)
             LONG Status = pfRtlGetVersion(&m_OsInfo);
             if (Status != 0) {  // STATUS_SUCCESS;
@@ -103,8 +103,7 @@ cSystemInfo::cSystemInfo() : cSingleton<cSystemInfo>(this, typeid(cSystemInfo)) 
 
     ASSERT(get_PageSize() >= cMem::k_PageSizeMin);
 }
-
-cSystemInfo::~cSystemInfo() {}
+ 
 
 UINT cSystemInfo::get_NumberOfProcessors() const noexcept {
     //! Is SMP an issue? Do i need to worry about multiple processors ?
@@ -175,7 +174,7 @@ bool cSystemInfo::isVer3_17_plus() const noexcept {
 }
 #endif
 
-StrLen_t GRAYCALL cSystemInfo::GetSystemDir(cSpanX<FILECHAR_t>& ret) {  // static
+StrLen_t GRAYCALL cSystemInfo::GetSystemDir(cSpanX<FILECHAR_t> ret) {  // static
     //! Where does the OS keep its files. CSIDL_SYSTEM
     //! HRESULT hRes = _FNF(::SHGetFolderPath)( g_MainFrame.GetSafeHwnd(), CSIDL_SYSTEM, nullptr, 0, szPath );
 
@@ -184,7 +183,7 @@ StrLen_t GRAYCALL cSystemInfo::GetSystemDir(cSpanX<FILECHAR_t>& ret) {  // stati
 #elif defined(_WIN32)
     // GetWindowsDirectory() = "C:\Windows"
     // GetSystemDirectory() == "C:\Windows\System32"
-    return (StrLen_t)_FNF(::GetSystemDirectory)(ret.get_DataWork(), ret.get_MaxLen());  // "C:\Windows\System32"
+    return (StrLen_t)_FNF(::GetSystemDirectory)(ret.get_PtrWork(), ret.get_MaxLen());  // "C:\Windows\System32"
 #elif defined(__linux__)
     // NOT the same as GetEnv("topdir");
     return StrT::Copy(ret, _FN("/sbin"));
@@ -193,17 +192,16 @@ StrLen_t GRAYCALL cSystemInfo::GetSystemDir(cSpanX<FILECHAR_t>& ret) {  // stati
 #endif
 }
 
-HRESULT GRAYCALL cSystemInfo::GetSystemName(cSpanX<FILECHAR_t>& ret) {  // static
+HRESULT GRAYCALL cSystemInfo::GetSystemName(cSpanX<FILECHAR_t> ret) {  // static
     // HResult::GetLast() if this fails ?
-    ret.get_DataWork()[0] = '\0';
+    ret.get_PtrWork()[0] = '\0';
 #if defined(__linux__) || defined(UNDER_CE)
-    int iErrNo = ::gethostname(ret.get_DataWork(), ret.get_Count());
-    if (iErrNo != 0)  // SOCKET_ERROR
-        return HResult::FromPOSIX(iErrNo);
-    return StrT::Len(ret.get_DataConst());
+    int iErrNo = ::gethostname(ret.get_PtrWork(), ret.get_Count());
+    if (iErrNo != 0) return HResult::FromPOSIX(iErrNo);  // SOCKET_ERROR        
+    return StrT::Len(ret.get_PtrConst());
 #elif defined(_WIN32)
     DWORD dwSize = CastN(DWORD, ret.get_Count());                                                    // size in TCHARs
-    if (!_FNF(::GetComputerName)(ret.get_DataWork(), &dwSize)) return HResult::GetLastDef();
+    if (!_FNF(::GetComputerName)(ret.get_PtrWork(), &dwSize)) return HResult::GetLastDef();
     return CastN(StrLen_t, dwSize);
 #else
 #error NOOS
@@ -440,7 +438,7 @@ cStringF cSystemHelper::get_SystemName() {
     }
 
 #if defined(__linux__) || defined(UNDER_CE)
-    const StrLen_t kSizeSystemName = _MAX_PATH;
+    const StrLen_t kSizeSystemName = cFilePath::k_MaxLen;
 #elif defined(_WIN32)
     const StrLen_t kSizeSystemName = MAX_COMPUTERNAME_LENGTH;
 #else
@@ -461,7 +459,7 @@ cStringF cSystemHelper::get_SystemName() {
 cFilePath GRAYCALL cSystemHelper::get_SystemDir() {  // static
     //! Where does the OS keep its files. CSIDL_SYSTEM
     //! GetSystemDirectory() == "C:\Windows\System32" or "C:\Windows\SysWOW64" for 32 bit app on 64 bit OS.
-    FILECHAR_t szTmp[_MAX_PATH];
+    FILECHAR_t szTmp[cFilePath::k_MaxLen];
     cSystemInfo::GetSystemDir(TOSPAN(szTmp));
     return szTmp;
 }

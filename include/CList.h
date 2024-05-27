@@ -10,6 +10,8 @@
 #include "cHeapObject.h"
 
 namespace Gray {
+class cList;
+
 /// <summary>
 /// abstract base class for a single node/element in a Double linked cList.
 /// @NOTE Single owner = This item belongs to JUST ONE cList (m_pParent)
@@ -17,14 +19,14 @@ namespace Gray {
 /// NOT circular. Node head/prev and tail/next are nullptr.
 /// </summary>
 class GRAYCORE_LINK cListNode : public cHeapObject {
-    friend class cList;  // so m_pNext and m_pPrev can be manipulated directly.
+    friend cList;                  // so m_pNext and m_pPrev can be manipulated directly.
     cList* m_pParent = nullptr;    /// link me back to my parent object.
     cListNode* m_pNext = nullptr;  /// next sibling
     cListNode* m_pPrev = nullptr;  /// previous sibling
 
  protected:
     cListNode() noexcept : m_pParent(nullptr), m_pNext(nullptr), m_pPrev(nullptr) {}
-    virtual ~cListNode() noexcept {
+    virtual ~cListNode() {
         //! ASSUME: RemoveFromParent() was already called! (virtuals don't work in destruct!)
         DEBUG_CHECK(!hasParent());
     }
@@ -87,14 +89,13 @@ class GRAYCORE_LINK cListNode : public cHeapObject {
 /// </summary>
 class GRAYCORE_LINK cList {
     friend class cListNode;  // so it can call RemoveListNode() to remove self.
-    cListNode* m_pHead;      /// Head of my list.
-    cListNode* m_pTail;      /// Tail of my list.
+    cListNode* m_pHead = nullptr;      /// Head of my list.
+    cListNode* m_pTail = nullptr;  /// Tail of my list.
 
  protected:
-    ITERATE_t m_iCount;  /// how many children? nice to get read only direct access to this for scripting.
+    ITERATE_t m_iCount = 0;  /// how many children? nice to get read only direct access to this for scripting.
 
  protected:
-    cList() noexcept : m_iCount(0), m_pHead(nullptr), m_pTail(nullptr) {}
     virtual ~cList() {
         // @note virtuals do not work in destructor!
         // ASSUME: DisposeAll() or Empty() is called from higher levels

@@ -103,7 +103,7 @@ BOOL cExceptionHResult::GetErrorMessage(StrBuilder<GChar_t>& sb, UINT* pnHelpCon
         sb.AddStr(_GT("("));
         HResult::GetTextV(m_hResultCode, sb, k_va_list_empty);  // pnHelpContext
         sb.AddStr(_GT("), Desc="));
-        sb.AddStrQ(m_pszDescription);
+        sb.AddSpanQ(StrT::ToSpanStr(m_pszDescription));
         return true;
     }
     return SUPER_t::GetErrorMessage(sb, pnHelpContext);

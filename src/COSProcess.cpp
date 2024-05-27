@@ -92,7 +92,7 @@ HRESULT cOSProcess::CreateProcessX(const FILECHAR_t* pszExeName, const FILECHAR_
 
     // @note The Unicode version of this function, CreateProcessW, can modify the contents of lpCommandLine!?
     // https://msdn.microsoft.com/en-us/library/windows/desktop/ms682425(v=vs.85).aspx
-    FILECHAR_t sCommandLine[_MAX_PATH];
+    FILECHAR_t sCommandLine[cFilePath::k_MaxLen];
     sCommandLine[0] = '\0';
     if (!StrT::IsWhitespace(pszArgs)) {
         StrLen_t len = StrT::Copy(TOSPAN(sCommandLine), pszExeName);
@@ -137,7 +137,7 @@ HRESULT cOSProcess::CreateProcessX(const FILECHAR_t* pszExeName, const FILECHAR_
     if (m_nPid == 0) {
         // we ARE the new process now. replace with truly new process from disk.
 
-        char* args[k_ARG_ARRAY_MAX];  // arbitrary max.
+        const char* args[k_ARG_ARRAY_MAX];  // arbitrary max.
         char szTmp[StrT::k_LEN_Default];
         int iArgs = StrT::ParseArrayTmp<FILECHAR_t>(TOSPAN(szTmp), pszArgs, ToSpan(args + 1, _countof(args) - 2), " ", STRP_DEF);
         args[0] = (char*)pszExeName;
@@ -155,18 +155,17 @@ HRESULT cOSProcess::CreateProcessX(const FILECHAR_t* pszExeName, const FILECHAR_
     return S_OK;
 }
 
-cFilePath cOSProcess::get_ProcessPath() const {  // virtual
+cFilePath cOSProcess::get_ProcessPath() const {  // override
     //! Get the full file path for this process EXE. MUST be loaded by this process for _WIN32.
     //! e.g. "c:\Windows\System32\smss.exe" or "\Device\HarddiskVolume2\Windows\System32\smss.exe"
     //! @note _WIN32 must have the PROCESS_QUERY_INFORMATION and PROCESS_VM_READ access rights.
-    FILECHAR_t szProcessName[_MAX_PATH];
+    FILECHAR_t szProcessName[cFilePath::k_MaxLen];
 
 #ifdef _WIN32
     // NOTE: GetModuleFileName doesn't work for external processes. GetModuleFileNameEx does but its in psapi.dll
-    HINSTANCE hInst = (HINSTANCE)m_hProcess.get_Handle();
-    if (hInst == (HINSTANCE)-1)  // special case from GetCurrentProcess()
-        hInst = NULL;
-    DWORD dwRet = _FNF(::GetModuleFileName)(hInst, szProcessName, _countof(szProcessName));
+    ::HINSTANCE hInst = (::HINSTANCE)m_hProcess.get_Handle();
+    if (hInst == (::HINSTANCE)-1) hInst = NULL;  // special case from GetCurrentProcess()
+    const DWORD dwRet = _FNF(::GetModuleFileName)(hInst, szProcessName, _countof(szProcessName));
     if (dwRet <= 0) {
         // HRESULT hRes = HResult::GetLast(); // GetLastError is set.
         return "";  // I don't have PROCESS_QUERY_INFORMATION or PROCESS_VM_READ rights.
@@ -178,9 +177,9 @@ cFilePath cOSProcess::get_ProcessPath() const {  // virtual
         cFile file;
         HRESULT hRes = file.OpenX(sFileName);
         if (FAILED(hRes)) return _FN("");
-        hRes = file.ReadX(szProcessName, sizeof(szProcessName));
+        hRes = file.ReadX(TOSPAN(szProcessName));
         // TODO __linux__  chop args?
-        m_sPath = cStringF(szProcessName);
+        const_cast<cOSProcess*>(this)->m_sPath = cFilePath(szProcessName);
     }
     return m_sPath;
 #else
@@ -192,7 +191,7 @@ cStringF cOSProcess::get_ProcessName() const {
     //! Get a process name from a handle. like GetModuleBaseName()
     //! _WIN32 must have the PROCESS_QUERY_INFORMATION and PROCESS_VM_READ access rights.
     cFilePath sProcessPath = get_ProcessPath();
-    return cFilePath::GetFileName(sProcessPath);
+    return cFilePath::GetFileName(sProcessPath.get_SpanStr());
 }
 
 HRESULT cOSProcess::OpenProcessId(PROCESSID_t nProcessId, DWORD dwDesiredAccess, bool bInheritHandle) {
@@ -250,38 +249,35 @@ HRESULT cOSProcess::CreateRemoteThread(THREAD_FUNC_t pvFunc, const void* pvArgs,
     return S_OK;
 }
 
-HRESULT cOSProcess::GetProcessCommandLine(OUT wchar_t* pwText, _Inout_ size_t* pdwTextSize) const {
+HRESULT cOSProcess::GetProcessCommandLine(cSpanX<wchar_t> ret) const {
     //! Get the command line that invoked this process. "App.exe Args"
     //! http://www.codeproject.com/threads/CmdLine.asp
     //! ReadProcessMemory(); GetCommandLine()
     //! ASSUME: PROCESS_QUERY_INFORMATION | PROCESS_VM_READ access AND cOSUserToken with SE_DEBUG_NAME
 
     SIZE_T dwSize = 0;
-    _PROCESS_BASIC_INFORMATION pbi;
-    pbi.PebBaseAddress = (__PEB*)0x7ffdf000;  // Default for most process?
+    ::_PROCESS_BASIC_INFORMATION pbi;
+    pbi.PebBaseAddress = CastNumToPtrT<::__PEB>(0x7ffdf000);  // Default for most process?
 
     // we'll default to the above address, but newer OSs might have a different
     // base address for the PEB
     cOSModule hLibrary(_FN("ntdll.dll"), cOSModule::k_Load_NoRefCount | cOSModule::k_Load_ByName);
     if (hLibrary.isValidModule()) {
-        NTQIP_t* lpfnNtQueryInformationProcess = (NTQIP_t*)hLibrary.GetSymbolAddress("ZwQueryInformationProcess");
+        NTQIP_t* lpfnNtQueryInformationProcess = CastFPtrTo<NTQIP_t*>(hLibrary.GetSymbolAddress("ZwQueryInformationProcess"));
         if (nullptr != lpfnNtQueryInformationProcess) {
             (*lpfnNtQueryInformationProcess)(get_ProcessHandle(), ProcessBasicInformation, &pbi, sizeof(pbi), &dwSize);
         }
     }
 
-    __PEB PEB;
-    HRESULT hRes = ReadProcessMemory(pbi.PebBaseAddress, &PEB, sizeof(PEB));
+    ::__PEB peb;
+    HRESULT hRes = ReadProcessMemory(pbi.PebBaseAddress, TOSPANT(peb));
     if (FAILED(hRes)) return hRes;
 
-    __INFOBLOCK Block;
-    hRes = ReadProcessMemory((LPVOID)PEB.dwInfoBlockAddress, &Block, sizeof(Block));
+    ::__INFOBLOCK block;
+    hRes = ReadProcessMemory(CastNumToPtr(peb.dwInfoBlockAddress), TOSPANT(block));
     if (FAILED(hRes)) return hRes;
 
-    hRes = ReadProcessMemory((LPVOID)Block.dwCmdLineAddress, pwText, cValT::Min<size_t>(Block.wMaxLength, *pdwTextSize));
-    if (FAILED(hRes)) return hRes;
-    *pdwTextSize = hRes;
-    return S_OK;
+    return ReadProcessMemory(CastNumToPtr(block.dwCmdLineAddress), ret.GetSizeBytesMax(block.wMaxLength));
 }
 #endif
 
@@ -290,9 +286,8 @@ cStringF cOSProcess::get_CommandLine() const {
     //! "App.exe Args"
     //! like _WIN32 "::GetCommandLine()"
 #ifdef _WIN32
-    wchar_t szCmdLine[_MAX_PATH * 2];
-    size_t dwSize = sizeof(szCmdLine);
-    HRESULT hRes = GetProcessCommandLine(szCmdLine, &dwSize);
+    wchar_t szCmdLine[cFilePath::k_MaxLen * 2];
+    HRESULT hRes = GetProcessCommandLine(TOSPAN(szCmdLine));
     if (FAILED(hRes)) return "";  // Failed to get command line for some reason.
 
 #elif defined(__linux__)
@@ -302,7 +297,7 @@ cStringF cOSProcess::get_CommandLine() const {
     if (FAILED(hRes)) return "";
 
     // Read it.
-    char szCmdLine[_MAX_PATH * 2];
+    char szCmdLine[cFilePath::k_MaxLen * 2];
     hRes = file.ReadSpan(TOSPAN(szCmdLine));
 #endif
     return szCmdLine;
@@ -318,8 +313,8 @@ HRESULT cOSProcess::WaitForProcessExit(TIMESYSD_t nTimeWait, APP_EXITCODE_t* pnE
 
 #ifdef _WIN32
     // Wait for the app to complete?
-    HRESULT hRes = m_hProcess.WaitForSingleObject(nTimeWait);  // wait until its done!
-    if (FAILED(hRes)) return hRes;                             // i waited too long? handles are still open tho?
+    const HRESULT hRes = m_hProcess.WaitForSingleObject(nTimeWait);  // wait until its done!
+    if (FAILED(hRes)) return hRes;                                   // i waited too long? handles are still open tho?
 
     // app has exited.
     // Get the exit code from the app
@@ -340,7 +335,7 @@ HRESULT cOSProcess::WaitForProcessExit(TIMESYSD_t nTimeWait, APP_EXITCODE_t* pnE
     if (!WIFEXITED(iStatus)) return E_FAIL;
 
     if (pnExitCode != nullptr) {
-        *pnExitCode = WEXITSTATUS(iStatus);
+        *pnExitCode = (APP_EXITCODE_t)WEXITSTATUS(iStatus);
     }
 #endif
     return S_OK;
@@ -370,7 +365,7 @@ HWND cOSProcess::FindWindowForProcessID(PROCESSID_t nProcessId, DWORD dwStyleFla
     for (; hWnd != WINHANDLE_NULL; hWnd = ::GetWindow(hWnd, GW_HWNDNEXT)) {
         // does it have the PID?
         PROCESSID_t nProcessIdTest = kPROCESSID_BAD;
-        THREADID_t dwThreadID = ::GetWindowThreadProcessId(hWnd, &nProcessIdTest);
+        const THREADID_t dwThreadID = ::GetWindowThreadProcessId(hWnd, &nProcessIdTest);
         UNREFERENCED_PARAMETER(dwThreadID);
         if (nProcessIdTest != nProcessId) continue;
 
@@ -380,21 +375,21 @@ HWND cOSProcess::FindWindowForProcessID(PROCESSID_t nProcessId, DWORD dwStyleFla
             if (!(dwStyle & dwStyleFlags)) continue;
         }
         if (pszClassName != nullptr) {  // must be class name.
-            GChar_t szClassNameTmp[_MAX_PATH];
+            GChar_t szClassNameTmp[cFilePath::k_MaxLen];
             const int iLen = _GTN(::GetClassName)(hWnd, szClassNameTmp, _countof(szClassNameTmp));
             if (iLen <= 0) continue;
-            if (StrT::CmpI(szClassNameTmp, pszClassName))  // MatchRegEx?
-                continue;
+            if (StrT::CmpI(szClassNameTmp, pszClassName)) continue;  // MatchRegEx?
+                
         }
 
         // See if this window has a parent. If not,
         // it is a top-level window.
         int iScore = -1;
-        const HWND hWndParent = ::GetParent(hWnd);
+        const ::HWND hWndParent = ::GetParent(hWnd);
         if (hWndParent == HWND_DESKTOP) {
             iScore = -2;
         } else {
-            RECT rect;
+            ::RECT rect;
             if (::GetWindowRect(hWnd, &rect)) {
                 iScore = (rect.right - rect.left) * (rect.bottom - rect.top);  // Biggest.
             }

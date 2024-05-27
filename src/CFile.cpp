@@ -134,7 +134,7 @@ HRESULT cFile::OpenCreate2(cFilePath sFilePath, OF_FLAGS_t nOpenFlags, ::_SECURI
     if (nOpenFlags & OF_CACHE_SEQ) {
         uFlags |= O_DIRECT;
     }
-    m_hFile.OpenHandle(sFilePath, uFlags, uMode);
+    this->OpenHandle(sFilePath, uFlags, uMode);
 #else
 #error NOOS
 #endif
@@ -185,12 +185,12 @@ HRESULT cFile::OpenWait(cStringF sFilePath, OF_FLAGS_t nOpenFlags, TIMESYSD_t nT
     //! Try to open the file. Wait for a bit if it fails to open.
     //! If the file is locked because 'access is denied' then just wait and keep trying.
 
-    cTimeSys tStart(cTimeSys::GetTimeNow());
+    const cTimeSys tStart(cTimeSys::GetTimeNow());
     for (int iTries = 0;; iTries++) {
         HRESULT hRes = OpenX(sFilePath, nOpenFlags);  // use OpenX which is the virtual.
         if (hRes == S_OK) break;
 
-        // failed to open
+        // failed to open for some other reason?
         if (hRes != HRESULT_WIN32_C(ERROR_ACCESS_DENIED)) {  // E_ACCESSDENIED
             return hRes;
         }
@@ -208,7 +208,7 @@ HRESULT cFile::OpenWait(cStringF sFilePath, OF_FLAGS_t nOpenFlags, TIMESYSD_t nT
         }
 
         // maybe its just being synced by the system? wait a bit.
-        TIMESYSD_t nTimeWaitInt = cValT::Min<TIMESYSD_t>(100, nTimeWait);
+        const TIMESYSD_t nTimeWaitInt = cValT::Min<TIMESYSD_t>(100, nTimeWait);
         cThreadId::SleepCurrent(nTimeWaitInt);
     }
     return S_OK;
@@ -231,36 +231,34 @@ HANDLE cFile::DetachHandle() noexcept {
 }
 
 const FILECHAR_t* cFile::get_FileName() const {
-    return cFilePath::GetFileName(get_FilePath());
+    return cFilePath::GetFileName(get_FilePath().get_SpanStr());
 }
 
 const FILECHAR_t* cFile::get_FileExt() const {
-    //! get the EXTension including the .
-    //! Must replace the stupid MFC version of this.
-    return cFilePath::GetFileNameExt(get_FilePath(), get_FilePath().GetLength());
+    return cFilePath::GetFileNameExt(get_FilePath().get_SpanStr());
 }
 
-bool cFile::IsFileNameExt(const FILECHAR_t* pszExt) const noexcept {
+bool cFile::IsFileNameExt(const cSpan<FILECHAR_t>& ext) const noexcept {
     //! is the pszExt a match? MIME
-    return cFilePath::IsFileNameExt(get_FilePath(), pszExt);
+    return cFilePath::IsFileNameExt(get_FilePath().get_SpanStr(), ext);
 }
 
-STREAM_POS_t cFile::GetPosition() const {  // virtual
+STREAM_POS_t cFile::GetPosition() const noexcept {  // virtual
     //! Get the current read position in the file.
     if (!isValidHandle()) return k_STREAM_POS_ERR;
     return SeekRaw(0, SEEK_t::_Cur);
 }
 
 #if defined(__linux__)
-HRESULT CFile::GetStatusSys(OUT cFileStatusSys& statusSys) {
+HRESULT cFile::GetStatusSys(OUT cFileStatusSys& statusSys) const {
     // https://man7.org/linux/man-pages/man2/stat.2.html
-    int iRet = ::fstat(m_hFile, &statusSys);
+    int iRet = ::fstat(get_Handle(), &statusSys);
     if (iRet != 0) return HResult::GetPOSIXLastDef(E_HANDLE);
     return S_OK;
 }
 #endif
 
-STREAM_POS_t cFile::GetLength() const {  // virtual
+STREAM_POS_t cFile::GetLength() const noexcept {  // virtual
     //! Get the size of the open file in bytes. like MFC
     //! @return <0 = error. (or directory?)
     if (!isValidHandle()) return k_STREAM_POS_ERR;  // E_HANDLE
@@ -276,7 +274,7 @@ STREAM_POS_t cFile::GetLength() const {  // virtual
 
 #elif defined(__linux__)
     cFileStatusSys statusSys;
-    HRESULT hRes = GetStatusSys(statusSys);
+    const HRESULT hRes = GetStatusSys(statusSys);
     if (FAILED(hRes)) return k_STREAM_POS_ERR;
     return statusSys.st_size;
 #endif
@@ -286,7 +284,7 @@ HRESULT cFile::SetLength(STREAM_POS_t dwNewLen) {  // virtual
     //! Grow/Shrink the file.
     //! Since MFC has void return use HResult::GetLast()
     ASSERT(isValidHandle());
-    HRESULT hRes = S_OK;   
+    HRESULT hRes = S_OK;
 #ifdef _WIN32
     SeekRaw(dwNewLen, SEEK_t::_Set);      // SetFilePointer() . maybe beyond end ?
     if (!::SetEndOfFile(get_Handle())) {  // truncate to this length
@@ -295,10 +293,10 @@ HRESULT cFile::SetLength(STREAM_POS_t dwNewLen) {  // virtual
         DEBUG_ERR(("cFile::SetLength %d ERR='%s'", dwNewLen, LOGERR(hRes)));
         // CFileException::ThrowOsError( hRes, m_strFileName);
     } else {
-        ::SetLastError(NO_ERROR);   // Why is this my job ? 
+        ::SetLastError(NO_ERROR);  // Why is this my job ?
     }
 #elif defined(__linux__)
-    if (::ftruncate(m_hFile, dwNewLen) < 0) {
+    if (::ftruncate(get_Handle(), dwNewLen) < 0) {
         // PosixError
         hRes = HResult::GetLast();
         DEBUG_ERR(("cFile::SetLength %d ERR='%s'", dwNewLen, LOGERR(hRes)));
@@ -336,7 +334,7 @@ bool cFile::SetFileTime(const cTimeFile* lpCreationTime, const cTimeFile* lpAcce
 
     if (lpLastWriteTime != nullptr) tv[1] = lpLastWriteTime->get_TimeVal();
 
-    if (::futimes(m_hFile, tv) == -1) return false;  // HResult::GetPOSIXLast(); ?
+    if (::futimes(get_Handle(), tv) == -1) return false;  // HResult::GetPOSIXLast(); ?
 
     return true;
 #endif
@@ -388,55 +386,50 @@ HRESULT cFile::GetFileStatus(OUT cFileStatus& attr) const {
     return S_OK;
 }
 
-HRESULT cFile::ReadX(void* pData, size_t nDataSize) noexcept {  // virtual  
+HRESULT cFile::ReadX(cMemSpan ret) noexcept {  // virtual
     //! Read a blob from the stream. advance the current position.
     //! @return
     //!  length of the read data. 0 or HRESULT_WIN32_C(ERROR_HANDLE_EOF) = end of file.
 
-    if (nDataSize <= 0) return 0;
-    if (pData == nullptr) {
+    if (ret.isEmpty()) return 0;
+    if (ret.isNull()) {
         // just skip it.
-        STREAM_POS_t nPosStart = GetPosition();
-        HRESULT hRes = cOSHandle::SeekX(nDataSize, SEEK_t::_Cur);
+        const STREAM_POS_t nPosStart = GetPosition();
+        const HRESULT hRes = cOSHandle::SeekX(ret.get_SizeBytes(), SEEK_t::_Cur);
         if (FAILED(hRes)) return hRes;
 
-        STREAM_POS_t nPosCur = GetPosition();
+        const STREAM_POS_t nPosCur = GetPosition();
         return CastN(HRESULT, nPosCur - nPosStart);  // <= nDataSize
     }
 
-    return cOSHandle::ReadX(pData, nDataSize);
+    return cOSHandle::ReadX(ret);
 }
 
-HRESULT cFile::WriteX(const void* pData, size_t nDataSize) {  // virtual 
-    //! Write a blob to the stream. advance the current position.
-    //! @arg
-    //!  pData == nullptr = just test if i could write this much.
-    //! @return
-    //!  length written.
-    //!  <0 = FAILED
-    //!   ERROR_INVALID_USER_BUFFER = too many async calls ?? wait
-    //!   ERROR_IO_PENDING = must wait!?
-
-    if (nDataSize == 0) return 0;  // nothing to do.        
-    if (pData == nullptr) {
-        DEBUG_ASSERT(pData != nullptr, "Data null");
+HRESULT cFile::WriteX(const cMemSpan& m) {  // virtual
+    if (m.isEmpty()) return 0;              // nothing to do.
+    if (m.isNull()) {
+        DEBUG_ASSERT(!m.isNull(), "Data null");
         return E_POINTER;
     }
-
-    HRESULT hResLengthWritten = cOSHandle::WriteX(pData, nDataSize);
+    const HRESULT hResLengthAll = CastN(HRESULT, m.get_SizeBytes());
+    const HRESULT hResLengthWritten = cOSHandle::WriteX(m);
     if (FAILED(hResLengthWritten)) {
         if (hResLengthWritten == E_HANDLE) {  // handle is junk!! No idea why. Clear it.
             Close();
         }
-        DEBUG_ASSERT(hResLengthWritten == CastN(HRESULT, nDataSize), "Write");
+        DEBUG_ASSERT(hResLengthWritten == hResLengthAll, "Write err");  // may be ok ? out of space ?
+    } else if (hResLengthWritten != hResLengthAll) {
+        DEBUG_ASSERT(hResLengthWritten == hResLengthAll, "Write short");  // out of space ? partial is not ok!
+        // return HRESULT_WIN32_C(ERROR_WRITE_FAULT);  // couldn't write it all! FAIL!?
     }
-    return CastN(HRESULT, hResLengthWritten);
+
+    return hResLengthWritten;
 }
 
 HRESULT cFile::FlushX() {  // virtual
     //! synchronous flush of write data to file.
     if (!isValidHandle()) return S_OK;
-    HRESULT hRes = cOSHandle::FlushX();
+    const HRESULT hRes = cOSHandle::FlushX();
     if (FAILED(hRes)) {
         DEBUG_WARN(("File Flush failed"));
         // CFileException::ThrowOsError( HResult::GetLast(), m_strFileName);
@@ -457,8 +450,7 @@ HRESULT GRAYCALL cFile::DeletePath(const FILECHAR_t* pszFilePath) {  // static
 #ifdef _WIN32
     if (!::DeleteFileW(cFilePath::GetFileNameLongW(pszFilePath)))
 #else
-    // same as ::unlink(). ENOENT or EACCES
-    if (::remove(pszFilePath) != 0)
+    if (::remove(pszFilePath) != 0)  // same as ::unlink(). ENOENT or EACCES
 #endif
     {
         HRESULT hRes = HResult::GetLastDef(HRESULT_WIN32_C(ERROR_FILE_NOT_FOUND));

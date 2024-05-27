@@ -131,7 +131,7 @@ bool cTimeUnits::InitTimeNow(TZ_TYPE nTimeZone) {
     return t.GetTimeUnits(*this, nTimeZone);
 }
 
-COMPARE_TYPE cTimeUnits::Compare(cTimeUnits& b) const {
+COMPRET_t cTimeUnits::Compare(cTimeUnits& b) const {
     //! Compare relevant parts of 2 times.
 
     if (b.m_nTZ != this->m_nTZ) {
@@ -420,8 +420,10 @@ void cTimeUnits::AddSeconds(TIMESECD_t nSeconds) {
         goto do_days;
     }
 
-    int iTicksA = cValT::Abs(nSeconds2);
+    const int iTicksA = cValT::Abs(nSeconds2);
     ASSERT(iTicksA < k_nSecondsPerDay);
+    UNREFERENCED_PARAMETER(iTicksA);
+
     int iUnitDiv = 60 * 60;
 
     for (int i = static_cast<int>(TIMEUNIT_t::_Hour); i <= static_cast<int>(TIMEUNIT_t::_Second); i++) {
@@ -453,7 +455,7 @@ void cTimeUnits::AddTZ(TZ_TYPE nTimeZone) {
 
 //******************************************************************
 
-StrLen_t cTimeUnits::GetTimeSpanStr(cSpanX<GChar_t>& ret, TIMEUNIT_t eUnitHigh, int iUnitsDesired, bool bShortText) const {
+StrLen_t cTimeUnits::GetTimeSpanStr(cSpanX<GChar_t>  ret, TIMEUNIT_t eUnitHigh, int iUnitsDesired, bool bShortText) const {
     //! A delta/span time string. from years to milliseconds.
     //! Get a text description of amount of time span (delta)
     //! @arg
@@ -506,9 +508,9 @@ StrLen_t cTimeUnits::GetTimeSpanStr(cSpanX<GChar_t>& ret, TIMEUNIT_t eUnitHigh, 
     return sb.get_Length();
 }
 
-StrLen_t cTimeUnits::GetFormStr(cSpanX<GChar_t>& ret, const GChar_t* pszFormat) const {
-    if (PtrCastToNum(pszFormat) < static_cast<int>(TIMEFORMAT_t::_QTY)) {  // IS_INTRESOURCE()
-        pszFormat = k_StrFormats[PtrCastToNum(pszFormat)];
+StrLen_t cTimeUnits::GetFormStr(cSpanX<GChar_t> ret, const GChar_t* pszFormat) const {
+    if (CastPtrToNum(pszFormat) < static_cast<int>(TIMEFORMAT_t::_QTY)) {  // IS_INTRESOURCE()
+        pszFormat = k_StrFormats[CastPtrToNum(pszFormat)];
     }
 
     GChar_t szTmp[2];
@@ -649,7 +651,7 @@ StrLen_t cTimeUnits::GetFormStr(cSpanX<GChar_t>& ret, const GChar_t* pszFormat) 
             // right padded number.
             GChar_t* pszOutCur = sb.GetWritePrep(iValWidth);
             cSpanX<GChar_t> spanMSD = StrNum::ULtoARev(wVal, pszOutCur, iValWidth, 10, 'A');
-            GChar_t* pszMSD = spanMSD.get_DataWork();
+            GChar_t* pszMSD = spanMSD.get_PtrWork();
             while (pszMSD > pszOutCur) {
                 *(--pszMSD) = '0';
             }
@@ -761,7 +763,7 @@ HRESULT cTimeParser::ParseString(const GChar_t* pszTimeString, const GChar_t* ps
     StrLen_t i = 0;
     for (;;) {
         StrLen_t iStart = i;
-        i += StrT::GetNonWhitespaceI(pszTimeString + i);
+        i += StrT::GetNonWhitespaceN(pszTimeString + i);
         GChar_t ch = pszTimeString[i];
         pszSepFind = StrT::FindChar(pszSeparators, ch);
         if (pszSepFind != nullptr) {  // its a legal separator char?
@@ -815,7 +817,7 @@ HRESULT cTimeParser::ParseString(const GChar_t* pszTimeString, const GChar_t* ps
             const GChar_t* pszEnd = nullptr;
             m_Unit[m_iUnitsParsed].m_nValue = (TIMEVALU_t)StrT::toI(pszStart, &pszEnd, 10);
             if (pszStart >= pszEnd || pszEnd == nullptr) break;
-            i += StrT::Diff(pszEnd, pszStart);
+            i += cValSpan::Diff(pszEnd, pszStart);
             bNeedSep = true;
             continue;
 
@@ -940,7 +942,7 @@ void cTimeParser::SetUnitFormats(const GChar_t* pszFormat) {
         m_iUnitsParsed++;
         if (ch == '\0') break;
         i += 3;
-        i += StrT::GetNonWhitespaceI(pszFormat + i);
+        i += StrT::GetNonWhitespaceN(pszFormat + i);
     }
 }
 

@@ -152,7 +152,7 @@ class cLogNexus;
 /// <summary>
 /// abstract base class. Build/submit a log message cLogEvent to be submitted to the log system. Source or Sink.
 /// </summary>
-struct GRAYCORE_LINK cLogProcessor : public ILogProcessor {  // for WriteString raw dump messages into the system.
+struct GRAYCORE_LINK cLogProcessor : public ILogProcessor, public ITextWriter {  // for WriteString raw dump messages into the system.
     virtual ~cLogProcessor() {}
 
     /// Is this a cLogNexus or just a cLogProcessor ? like dynamic_cast
@@ -239,6 +239,11 @@ struct GRAYCORE_LINK cLogProcessor : public ILogProcessor {  // for WriteString 
         va_end(vargs);
         return hRes;
     }
+
+    /// <summary>
+    /// Someone wants to dump raw text at the logger. Translate to single log events. ITextWriter
+    /// </summary>
+    HRESULT WriteString(const char* pszStr) override;
 };
 
 /// <summary>
@@ -246,7 +251,7 @@ struct GRAYCORE_LINK cLogProcessor : public ILogProcessor {  // for WriteString 
 /// Messages can be routed to several different places depending on filtering, app config, etc.
 /// overload these to implement which messages go here.
 /// </summary>
-struct GRAYCORE_LINK cLogSink : public IUnknown, public cLogProcessor {
+struct GRAYCORE_LINK cLogSink : public ::IUnknown, public cLogProcessor {
     friend class cLogNexus;
 
     /// <summary>
@@ -261,13 +266,13 @@ struct GRAYCORE_LINK cLogSink : public IUnknown, public cLogProcessor {
 /// Send logged messages out to the debug system. OutputDebugString()
 /// No filter and take default formatted string
 /// </summary>
-class GRAYCORE_LINK cLogSinkDebug : public cLogSink, public cRefBase, public ITextWriter {
-    mutable cThreadLockCount m_Lock;  // prevent multi thread mixing of messages.
+class GRAYCORE_LINK cLogSinkDebug : public cLogSink, public cRefBase {
+    mutable cThreadLockableX m_Lock;  // prevent multi thread mixing of messages.
  public:
     static HRESULT GRAYCALL AddSinkCheck(cLogNexus* pLogger = nullptr);
     HRESULT WriteString(const LOGCHAR_t* pszMsg) override;
     HRESULT addEvent(cLogEvent& rEvent) noexcept override;
-    IUNKNOWN_DISAMBIG(cRefBase);
+    IUNKNOWN_DISAMBIG(cRefBase)
 };
 
 /// <summary>
