@@ -22,7 +22,7 @@ struct cHeapStats {
     size_t _Total = 0;  /// Keep running count of current total memory allocated.
     size_t _Max = 0;    /// max observed _Total
 #endif
-    void Alloc(size_t size = 1) {
+    void Alloc(size_t size = 1) noexcept {
         _Ops++;
         _Allocs++;
 #ifdef USE_HEAP_STATS
@@ -135,9 +135,9 @@ struct cHeapAlignHeader;
 struct GRAYCORE_LINK cHeapAlign : public cHeapCommon {  // static
 #ifdef _DEBUG
 #if (_MSC_VER < 1400)
-    static const DWORD kTailGap = 0xBDBDBDBD;  /// Fills the m_TailGap _DEBUG ONLY
+    static const DWORD kTailGap = 0xBDBDBDBD;  /// Fills the TailGap _DEBUG ONLY
 #else
-    static const DWORD kTailGap = 0xEDEDEDED;  /// Fills the m_TailGap _DEBUG ONLY
+    static const DWORD kTailGap = 0xEDEDEDED;  /// Fills the TailGap _DEBUG ONLY
 #endif
 #endif
     static const size_t k_SizeAlignMax = 128;  /// max reasonable size for alignment. Why would you align to more than this ?

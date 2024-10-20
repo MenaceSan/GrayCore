@@ -22,11 +22,15 @@ namespace Gray {
 struct cSpanUnk : public cMemSpan {
     const size_t _Stride;  /// each element is of this size. AKA pitch. Known at run time.
 
-    cSpanUnk(const cMemSpan& m, size_t stride) : cMemSpan(m), _Stride(stride) {
-        ASSERT(stride > 0);  // do we allow misalignment ? extra bytes ? GetOverflow
+    cSpanUnk(const cMemSpan& m, size_t stride) noexcept : cMemSpan(m), _Stride(stride) {
+        DEBUG_CHECK(stride > 0);  // do we allow misalignment ? extra bytes ? GetOverflow
     }
-    cSpanUnk(const void* p, COUNT_t count, size_t stride) : cSpanUnk(cMemSpan(p, count * stride), stride) {}
+    cSpanUnk(const void* p, COUNT_t count, size_t stride) noexcept : cSpanUnk(cMemSpan(p, count * stride), stride) {}
 
+    /// <summary>
+    /// Is this array bigger that whole element of _Stride?
+    /// </summary>
+    /// <returns></returns>
     size_t get_Overflow() const noexcept {
         return this->get_SizeBytes() % _Stride;
     }
@@ -37,17 +41,22 @@ struct cSpanUnk : public cMemSpan {
     constexpr ITERATE_t GetSize() const noexcept {  // for cArray
         return CastN(ITERATE_t, get_Count());       // AKA Count
     }
-    inline bool IsValidIndex(COUNT_t i) const noexcept {
-        return IS_INDEX_GOOD(i, get_Count());
+
+    constexpr size_t GetBytesOffset(ITERATE_t i) const noexcept {
+        return i * _Stride;
+    }
+    inline bool IsValidIndex(ITERATE_t i) const noexcept {
+        return IS_INDEX_GOOD(GetBytesOffset(i), get_SizeBytes());
     }
 
     inline const void* GetElemV(ITERATE_t i) const {
         ASSERT(!isNull());
         ASSERT(IsValidIndex(i));
-        return GetTPtrC<BYTE>() + (i * _Stride);
+        return GetTPtrC<BYTE>() + GetBytesOffset(i);
     }
 
-    // String searching. const
+    /// get type cast element. e.g. String searching. const
+    /// @note sizeof(T) > _Stride is intentionally allowed!
     template <typename T>
     inline const T* GRAYCALL GetElemT(ITERATE_t i) const {
         return PtrCast<T>(GetElemV(i));
@@ -60,15 +69,16 @@ struct cSpanUnk : public cMemSpan {
 };
 
 /// <summary>
-/// A Span of some known TYPE. Probably read only.
+/// A Span of some known TYPE. Probably read only. like std::span.
 /// </summary>
 /// <typeparam name="TYPE"></typeparam>
 template <typename TYPE>
 struct cSpan : public cMemSpan {
     typedef cMemSpan SUPER_t;
     typedef cSpan<TYPE> THIS_t;
-
     typedef TYPE ELEM_t;
+
+    // static const size_t k_Stride = sizeof(TYPE);
 
     constexpr cSpan() noexcept {}
     constexpr cSpan(const TYPE* pData, COUNT_t nCount) noexcept : SUPER_t(pData, nCount * sizeof(TYPE)) {}
@@ -86,13 +96,17 @@ struct cSpan : public cMemSpan {
         return CastN(ITERATE_t, get_Count());       // AKA Count
     }
 
-    const TYPE* get_PtrConst() const {
+    constexpr TYPE* get_PtrW() noexcept {
+        return GetTPtrW<TYPE>();
+    }
+    constexpr const TYPE* get_PtrConst() const noexcept {
         return GetTPtrC<TYPE>();
     }
     operator const TYPE*() const noexcept {
         return get_PtrConst();
     }
 
+    /// Get a dynamic/unknown span from this static/known span.
     cSpanUnk get_SpanUnk() const {
         return cSpanUnk(*this, sizeof(TYPE));
     }
@@ -100,8 +114,11 @@ struct cSpan : public cMemSpan {
         return get_SpanUnk();
     }
 
-    inline bool IsValidIndex(COUNT_t i) const noexcept {
-        return IS_INDEX_GOOD(i, get_Count());
+    constexpr size_t GetBytesOffset(ITERATE_t i) const noexcept {
+        return i * sizeof(TYPE);
+    }
+    inline bool IsValidIndex(ITERATE_t i) const noexcept {
+        return IS_INDEX_GOOD(GetBytesOffset(i), get_SizeBytes());
     }
     ptrdiff_t GetIndexIn(const TYPE* p) const noexcept {
         // ASSERT(IsInternalPtr(p));
@@ -156,6 +173,10 @@ struct cSpan : public cMemSpan {
         return const_iterator(GetTPtrC<TYPE>() + get_Count());
     }
 
+    /// Advance the span and shrink it.
+    inline void SetSkip(ITERATE_t nSize) {
+        SetSkipBytes(nSize * sizeof(TYPE));
+    }
     THIS_t GetSkip(ITERATE_t nSize) const {
         ASSERT(nSize <= GetSize());
         return THIS_t(get_PtrConst() + nSize, GetSize() - nSize);
@@ -226,11 +247,13 @@ struct cSpanX : public cSpan<TYPE> {
         this->get_PtrWork()[nIndex] = newElement;  // may call a copy constructor.
     }
     void SetCopyAll(const TYPE* pData) noexcept {
-        if (!this->isNull()) cValSpan::CopyQty(get_PtrWork(), pData, this->GetSize());
+        if (this->isNull()) return;
+        cValSpan::CopyQty(get_PtrWork(), pData, this->GetSize());
     }
     ITERATE_t SetCopyQty(const TYPE* pData, ITERATE_t nQty) {
         nQty = cValT::Min(this->GetSize(), nQty);
-        if (!this->isNull()) cValSpan::CopyQty(get_PtrWork(), pData, nQty);
+        if (this->isNull() || pData == nullptr) return nQty;  // how much might i write if not null.
+        cValSpan::CopyQty(get_PtrWork(), pData, nQty);
         return nQty;
     }
     ITERATE_t SetCopySpan(const cSpan<TYPE>& src) {
@@ -238,7 +261,7 @@ struct cSpanX : public cSpan<TYPE> {
     }
 
     void Swap(ITERATE_t i, ITERATE_t j) {
-        //! like cMemT::Swap(). dangerous for types that have pointers to themselves. self referenced.
+        //! like cMem::SwapT(). dangerous for types that have pointers to themselves. self referenced.
         if (i == j) return;
         ASSERT(this->IsValidIndex(i));
         ASSERT(this->IsValidIndex(j));
@@ -251,17 +274,17 @@ struct cSpanX : public cSpan<TYPE> {
     /// Similar to Swap() but only one element is moved. (sort of)
     /// dangerous for types that have internal pointers !
     /// </summary>
-    void MoveElement(ITERATE_t iFrom, ITERATE_t iTo) {  // throw
+    void ShiftElements(ITERATE_t iFrom, ITERATE_t iTo) {  // throw
         ASSERT(this->IsValidIndex(iFrom));
         ASSERT(this->IsValidIndex(iTo));
         TYPE* p = this->get_PtrWork();
-        cValSpan::MoveElement1(&p[iFrom], &p[iTo]);
+        cValSpan::ShiftElements(&p[iFrom], &p[iTo]);
     }
 
     /// <summary>
     /// reverse the order of an array of a TYPE. similar to cMem::ReverseArrayBlocks but iBlockSize==sizeof(TYPE)
     /// TYPE = BYTE = reverse bytes in a block. similar to htonl(), etc.
-    /// Use ReverseType<> if TYPE = BYTE and nArraySizeBytes <= largest intrinsic type size?
+    /// Use ReverseBytes if TYPE = BYTE and nArraySizeBytes <= largest intrinsic type size?
     /// </summary>
     /// <typeparam name="TYPE"></typeparam>
     /// <param name="pArray"></param>
@@ -270,7 +293,7 @@ struct cSpanX : public cSpan<TYPE> {
         TYPE* pMemBS = this->get_PtrWork();
         TYPE* pMemBE = pMemBS + (this->GetSize() - 1);
         for (; pMemBS < pMemBE; pMemBS++, pMemBE--) {
-            cValT::Swap<TYPE>(*pMemBS, *pMemBE);
+            cMem::SwapT<TYPE>(*pMemBS, *pMemBE);
         }
     }
 
@@ -307,7 +330,7 @@ struct cSpanSearchable : public cSpanX<TYPE, ARG_TYPE> {
     /// <param name="Data2"></param>
     /// <returns></returns>
     virtual COMPARE_t CompareElems(ARG_TYPE data1, ARG_TYPE data2) const noexcept {
-        return cValT::Compare(data1, data2);
+        return cValT::Compare(data1, data2);  // default type based compare.
     }
 
     /// <summary>
@@ -479,22 +502,22 @@ constexpr cSpanX<T> ToSpan(T* p, ITERATE_t count) noexcept {
 }
 template <typename T>
 constexpr cSpan<T> ToSpanStr(const cStrConst& c) noexcept {
-    return cSpan<T>(c.GetT<T>(), c._Len);
+    return cSpan<T>(c.get_T<T>(), c._Len);
 }
 template <typename T>
 constexpr cSpan<T> ToSpanZ(const cStrConst& c) noexcept {
-    return cSpan<T>(c.GetT<T>(), c._Len + 1);
+    return cSpan<T>(c.get_T<T>(), c._Len + 1);
 }
 
 #define TOSPAN(s) ToSpanSize((s), sizeof(s))  // Assume an array. AKA TOSPANA() ? NOT cSpanUnk.
 #define TOSPANT(v) cMemSpan(&(v), sizeof(v))  // Assume typed value NOT an array.
 
-// Convert a literal string to (read only) cMemSpan at compile time.
-//! @note ONLY works for literal "static string", or BYTE[123] you cannot use a 'BYTE* x' here!
+/// Convert a literal string to (read only) cMemSpan at compile time.
+/// @note ONLY works for literal "static string", or BYTE[123] you cannot use a 'BYTE* x' here!
 #define TOSPAN_LIT(s) ToSpan(s, STRMAX(s))
 
 /// <summary>
-/// Store an inline/static blob/block/span of memory of a specific known size. _COUNT in qty.
+/// Store an inline/static blob/block/span of memory of a specific known (at compile time) size. _COUNT in qty.
 /// Act as union placeholder for the proper size of the dynamic element. (like arrays,blobs,etc). So we won't engage construct/destruct logic in union.
 /// Like: stl::array
 /// </summary>
@@ -537,13 +560,13 @@ class cSpanStatic {
     /// <summary>
     /// Get hex string. ASSUME pszHexString output is big enough! GetHexDigestSize()
     /// </summary>
-    /// <param name="pszHexString"></param>
+    /// <param name="hexStr"></param>
     /// <returns></returns>
-    StrLen_t GetHexDigest(OUT char* pszHexString) const {
-        return this->get_SpanMax().GetHexDigest(pszHexString);
+    StrLen_t GetHexDigest(cMemSpan hexStr) const {
+        return this->get_SpanMax().GetHexDigest(hexStr);
     }
-    HRESULT SetHexDigest(const char* pszHexString) {
-        return this->get_SpanMax().SetHexDigest(pszHexString);
+    HRESULT ReadHexDigest(const char* pszHexString) {
+        return this->get_SpanMax().ReadHexDigest(pszHexString);
     }
 };
 

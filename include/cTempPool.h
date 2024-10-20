@@ -15,12 +15,11 @@ namespace Gray {
 
 /// Temp string pool for a single thread.
 class GRAYCORE_LINK cTempPool1 {
-    static const int k_nBlocksMax = 16;  /// Assume nested functions won't use more than m_aBlocks in a single thread. (e.g. This is the max number of args on a single sprintf)
-    int m_nBlockCur;                     /// rotate this count to re-use buffers in m_aBlocks.
-    cArrayStruct<cBlob> m_aBlocks;       /// Temporary blocks to be used on a single thread.
+    static const int k_nBlocksMax = 16;  /// Assume nested functions won't use more than _aBlocks in a single thread. (e.g. This is the max number of args on a single sprintf)
+    int _nBlockCur = 0;                  /// rotate this count to re-use buffers in _aBlocks.
+    cArrayStruct<cBlob> _aBlocks;        /// Temporary blocks to be used on a single thread.
 
  public:
-    cTempPool1() noexcept : m_nBlockCur(0) {}
     virtual ~cTempPool1() {}
 
     /// <summary>
@@ -65,7 +64,7 @@ class GRAYCORE_LINK cTempPool {
     /// </summary>
     static cTempPool1* GRAYCALL GetTempPool();
     static void GRAYCALL FreeThreadManually();
- 
+
     /// <summary>
     /// Get thread local temp space.
     /// </summary>
@@ -77,7 +76,7 @@ class GRAYCORE_LINK cTempPool {
         return GetTempPool()->GetSpan<TYPE>(nLenNeed);
     }
     /// <summary>
-    /// Get thread local temp space.
+    /// Get thread local temp space and copy src into it.
     /// </summary>
     /// <typeparam name="TYPE"></typeparam>
     /// <param name="src">will add a space for '\0'</param>

@@ -26,7 +26,7 @@ template <typename _TYPE_CH = char>
 class GRAYCORE_LINK cStringHeadT final : public cArrayHeadT<_TYPE_CH> {
     typedef cArrayHeadT<_TYPE_CH> SUPER_t;
     typedef cStringHeadT<_TYPE_CH> THIS_t;
-    CHEAPOBJECT_IMPL;
+    DECLARE_cHeapObject(THIS_t);
 
  public:
     // SUPER_t and THIS_t are interchangeable! Since we declare no extra data or virtual methods.
@@ -50,7 +50,7 @@ class GRAYCORE_LINK cStringHeadT final : public cArrayHeadT<_TYPE_CH> {
     }
     static THIS_t* CreateStringSpan(const cSpan<char>& src) {
         THIS_t* p = CreateStringData(src.get_MaxLen());
-        StrT::CopyLen<_TYPE_CH>(p->get_PtrWork(), src.get_PtrConst(), src.get_MaxLen() + 1);
+        StrT::CopyPtr(p->get_Span(), src.get_PtrConst());
         return p;
     }
 
@@ -87,10 +87,10 @@ class GRAYCORE_LINK cStringHeadT final : public cArrayHeadT<_TYPE_CH> {
     HASHCODE32_t get_HashCode() const noexcept {
         const StrLen_t iLen = get_CharCount();
         if (iLen <= 0) return k_HASHCODE_CLEAR;
-        if (this->m_HashCode == k_HASHCODE_CLEAR) {
-            this->m_HashCode = StrT::GetHashCode32(get_SpanStr());  // Lazy populate this mutable value.
+        if (this->_HashCode == k_HASHCODE_CLEAR) {
+            this->_HashCode = StrT::GetHashCode32(get_SpanStr());  // Lazy populate this mutable value.
         }
-        return this->m_HashCode;
+        return this->_HashCode;
     }
 
     COMPARE_t CompareNoCase(const ATOMCHAR_t* pStr) const noexcept {
@@ -120,24 +120,24 @@ class GRAYCORE_LINK cStringT {
 
  protected:
     typedef cStringHeadT<_TYPE_CH> HEAD_t;
-    _TYPE_CH* m_pchData;  /// points offset into HEAD_t/cStringHeadT[1] like cRefPtr<>. NOT a direct heap pointer!
+    _TYPE_CH* _pchData;  /// points offset into HEAD_t/cStringHeadT[1] like cRefPtr<>. NOT a direct heap pointer!
 
  public:
     static const _TYPE_CH k_Nil;  /// '\0' Use this instead of nullptr. ala MFC. also like _afxDataNil. AKA cStrConst::k_Empty ?
 
  protected:
     void Init() noexcept {
-        m_pchData = const_cast<_TYPE_CH*>(&k_Nil);
+        _pchData = const_cast<_TYPE_CH*>(&k_Nil);
     }
     void SetEmptyValid() noexcept {
-        // ASSUME NOT m_Nil. Use m_Nil for empty.
+        // ASSUME NOT k_Nil. Use k_Nil for empty.
         DEBUG_CHECK(isValidString());
         get_Head()->DecRefCount();
         Init();
     }
 
     void AssignFirst(const THIS_t& s) noexcept {
-        m_pchData = s.m_pchData;
+        _pchData = s._pchData;
         if (IsEmpty()) return;
         get_Head()->IncRefCount();
         DEBUG_CHECK(isValidString());
@@ -190,7 +190,7 @@ class GRAYCORE_LINK cStringT {
     /// Move constructor
     /// </summary>
     cStringT(THIS_t&& ref) noexcept {
-        m_pchData = ref.m_pchData;
+        _pchData = ref._pchData;
         ref.Init();
     }
     ~cStringT() {
@@ -203,16 +203,16 @@ class GRAYCORE_LINK cStringT {
             Init();
         } else {
             pHead->IncRefCount();
-            m_pchData = pHead->get_PtrWork();
+            _pchData = pHead->get_PtrWork();
         }
         DEBUG_CHECK(isValidString());
     }
 
     /// <summary>
-    /// Is this string 0 length? like MFC.
+    /// Is this string 0 length? like MFC. _pchData should NEVER be nullptr !
     /// </summary>
     bool IsEmpty() const noexcept {
-        return m_pchData == &k_Nil;
+        return _pchData == &k_Nil;
     }
 
     bool isValidString1() const noexcept {
@@ -245,16 +245,16 @@ class GRAYCORE_LINK cStringT {
     /// <returns>NEVER nullptr</returns>
     const HEAD_t* get_Head() const noexcept {
         DEBUG_CHECK(!IsEmpty());
-        return HEAD_t::Cvt(m_pchData) - 1;  // the block before this pointer.
+        return HEAD_t::Cvt(_pchData) - 1;  // the block before this pointer.
     }
     HEAD_t* get_Head() noexcept {
         DEBUG_CHECK(!IsEmpty());
-        return HEAD_t::Cvt(m_pchData) - 1;  // the block before this pointer.
+        return HEAD_t::Cvt(_pchData) - 1;  // the block before this pointer.
     }
     const _TYPE_CH* get_CPtr() const noexcept {
         //! like MFC. GetString
         DEBUG_CHECK(isValidString());
-        return m_pchData;
+        return _pchData;
     }
 
     /// <summary>
@@ -304,14 +304,14 @@ class GRAYCORE_LINK cStringT {
     /// <returns></returns>
     _TYPE_CH GetAt(StrLen_t nIndex) const {  // 0 based
         ASSERT(nIndex <= GetLength());       // allow to get the '\0' char
-        return m_pchData[nIndex];
+        return _pchData[nIndex];
     }
 
     /// <summary>
     /// AKA SetEmpty
     /// </summary>
     void Empty() noexcept {
-        if (m_pchData == nullptr) return;  // certain off instances where it could be nullptr. arrays
+        if (_pchData == nullptr) return;  // certain off instances where it could be nullptr. arrays
         if (IsEmpty()) return;
         SetEmptyValid();
     }
@@ -325,7 +325,7 @@ class GRAYCORE_LINK cStringT {
     const _TYPE_CH& ReferenceAt(StrLen_t nIndex) const {  // 0 based
         // AKA ElementAt()
         ASSERT(nIndex <= GetLength());
-        return m_pchData[nIndex];
+        return _pchData[nIndex];
     }
 
     /// <summary>
@@ -336,7 +336,7 @@ class GRAYCORE_LINK cStringT {
     void SetAt(StrLen_t nIndex, _TYPE_CH ch) {
         ASSERT(IS_INDEX_GOOD(nIndex, GetLength()));
         CloneBeforeWrite();
-        m_pchData[nIndex] = ch;
+        _pchData[nIndex] = ch;
         ASSERT(isValidString());
     }
 
@@ -378,7 +378,7 @@ class GRAYCORE_LINK cStringT {
     /// Move assignment
     /// </summary>
     const THIS_t& operator=(THIS_t&& ref) {
-        m_pchData = ref.m_pchData;
+        _pchData = ref._pchData;
         ref.Init();
         return *this;
     }
@@ -386,7 +386,7 @@ class GRAYCORE_LINK cStringT {
     /// <summary>
     /// Copy src into this string.
     /// </summary>
-    /// <typeparam name="_TYPE_CH">max chars, not including '\0' ! NOT sizeof() or _countof() like StrT::CopyLen</typeparam>
+    /// <typeparam name="_TYPE_CH">max chars, not including '\0' ! NOT sizeof() or _countof() like StrT::Copy</typeparam>
     /// <param name="src">nullptr = just allocate and leave blank. Allow overlaps.</param>
     void AssignSpanT(const cSpan<_TYPE_CH>& src);
 
@@ -404,7 +404,7 @@ class GRAYCORE_LINK cStringT {
         return *this;
     }
 
-    void FormatV(const _TYPE_CH* pszFormat, va_list args);
+    void FormatV(const _TYPE_CH* pszFormat, ::va_list args);
     void _cdecl Format(const _TYPE_CH* pszFormat, ...) {
         //! format a string using the sprintf() style.
         //! @note Use StrArg<_TYPE_CH>(s) for safe "%s" args.
@@ -431,7 +431,7 @@ class GRAYCORE_LINK cStringT {
         const StrLen_t iLen = pHead->get_CharCount();
         ASSERT(pHead->IsValidInsideN(iLen * sizeof(_TYPE_CH)));
         ASSERT(pHead->get_RefCount() > 0);
-        return StrT::IsPrintable(m_pchData, iLen) && (m_pchData[iLen] == '\0');
+        return StrT::IsPrintable(_pchData, iLen) && (_pchData[iLen] == '\0');
     }
     bool isValidCheck() const noexcept {
         return isValidString();
@@ -512,7 +512,7 @@ class GRAYCORE_LINK cStringT {
     }
 
     void Assign(const THIS_t& str) {
-        if (m_pchData == str.get_CPtr()) return;  // already same.
+        if (_pchData == str.get_CPtr()) return;  // already same.
         Empty();
         AssignFirst(str);
     }
@@ -595,7 +595,7 @@ class GRAYCORE_LINK cStringT {
     }
     THIS_t substr(StrLen_t nFirst, StrLen_t nCount = cStrConst::k_LEN_MAX) const {
         // Like return this->Mid(nFirst, nCount)
-        if (nFirst >= this->GetLength()) return cStrConst::k_Empty.GetT<_TYPE_CH>();
+        if (nFirst >= this->GetLength()) return cStrConst::k_Empty.get_T<_TYPE_CH>();
         return ToSpan(this->get_CPtr() + nFirst, nCount);
     }
 #endif

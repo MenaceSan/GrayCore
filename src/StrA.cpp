@@ -154,7 +154,7 @@ StrLen_t GRAYCALL StrA::MakeNamedBitmask(cSpanX<char> ret, UINT dwFlags, const c
         iCount++;
     }
     if (iCount == 0 && bMath) {        
-        return StrT::Copy(ret, "0"); // No bits were set.
+        return StrT::CopyPtr(ret, "0");  // No bits were set.
     }
     return sb.get_Length();
 }

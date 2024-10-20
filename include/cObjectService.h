@@ -23,14 +23,14 @@ namespace Gray {
 /// like MFC CRuntimeClass. used to create cObject based objects by string name.
 /// </summary>
 class GRAYCORE_LINK cObjectService final : public cSingleton<cObjectService> {
-    SINGLETON_IMPL(cObjectService);
     cArraySortPtrName<cObjectFactory, ATOMCHAR_t> _Factories;  // all factories.
 
  protected:
-    cObjectService() noexcept : cSingleton<cObjectService>(this, typeid(cObjectService)) {}
+    cObjectService() noexcept : cSingleton<cObjectService>(this) {}
     void ReleaseModuleChildren(::HMODULE hMod) override;
 
  public:
+    DECLARE_cSingleton(cObjectService);
     bool RegisterFactory(cObjectFactory& factory) noexcept;
     bool RemoveFactory(cObjectFactory& factory) noexcept;
 

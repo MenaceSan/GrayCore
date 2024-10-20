@@ -27,15 +27,15 @@ class cQueueChunked : public cQueueIndex {
     ITERATE_t _nLastIndex = 0;   /// Arbitrary write index of the _pLast
 
     /// <summary>
-    /// Get offset of m_nReadIndex inside _pFirst
+    /// Get offset of _nReadIndex inside _pFirst
     /// </summary>
     ITERATE_t get_FirstReadIndex() const {
-        ASSERT(m_nReadIndex >= _nFirstIndex);
-        return m_nReadIndex - _nFirstIndex;
+        ASSERT(_nReadIndex >= _nFirstIndex);
+        return _nReadIndex - _nFirstIndex;
     }
     ITERATE_t GetReadChunkAvail(const ITERATE_t firstReadIndex) const {
         ASSERT(firstReadIndex <= _CHUNKGROW);
-        const ITERATE_t firstWriteIndex = cValT::Min<ITERATE_t>(m_nWriteIndex - _nFirstIndex, _CHUNKGROW);
+        const ITERATE_t firstWriteIndex = cValT::Min<ITERATE_t>(_nWriteIndex - _nFirstIndex, _CHUNKGROW);
         ASSERT(firstWriteIndex >= firstReadIndex && firstWriteIndex <= _CHUNKGROW);
         return firstWriteIndex - firstReadIndex;  // might be 0.
     }
@@ -46,11 +46,11 @@ class cQueueChunked : public cQueueIndex {
     }
 
     /// <summary>
-    /// Get offset of m_nWriteIndex inside _pLast
+    /// Get offset of _nWriteIndex inside _pLast
     /// </summary>
     ITERATE_t get_LastWriteIndex() const {
-        ASSERT(m_nWriteIndex >= _nLastIndex);
-        return m_nWriteIndex - _nLastIndex;
+        ASSERT(_nWriteIndex >= _nLastIndex);
+        return _nWriteIndex - _nLastIndex;
     }
     ITERATE_t get_WriteChunkAvail() const {
         const ITERATE_t lastWriteIndex = get_LastWriteIndex();
@@ -140,8 +140,9 @@ class cQueueChunked : public cQueueIndex {
         AdvanceRead(1);
         return val;
     }
+
+    /// copy data out.
     ITERATE_t ReadSpanQ(cSpanX<TYPE> ret) {
-        //! copy data out.
         ITERATE_t i = 0;
         TYPE* pBuf = ret.get_PtrWork();
         for (; !isEmptyQ() && i < ret.GetSize(); i++) {

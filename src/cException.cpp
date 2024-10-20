@@ -64,7 +64,7 @@ LOGLVL_t cExceptionHolder::get_Severity() const {
 }
 
 //*********************************************************************
-const LOGCHAR_t* cException::k_szDescriptionDefault = "Exception";
+const LOGCHAR_t cException::k_szDescriptionDefault[] = "Exception";
 
 IMPLEMENT_DYNAMIC(cException, cExceptionBase);
 
@@ -74,7 +74,7 @@ BOOL cException::GetErrorMessage(StrBuilder<GChar_t>& sb, UINT* pnHelpContext) {
     //! allow UNICODE version of this.
     CODEPROFILEFUNC();
     UNREFERENCED_PARAMETER(pnHelpContext);
-    sb.AddFormat(_GT("%s'%s'"), StrArg<GChar_t>(cLogLevel::GetPrefixStr(m_eSeverity)), StrArg<GChar_t>(m_pszDescription));
+    sb.AddFormat(_GT("%s'%s'"), StrArg<GChar_t>(cLogLevel::GetPrefixStr(_eSeverity)), StrArg<GChar_t>(_pszDescription));
     return true;
 }
 
@@ -94,16 +94,16 @@ BOOL cExceptionHResult::GetErrorMessage(StrBuilder<GChar_t>& sb, UINT* pnHelpCon
     CODEPROFILEFUNC();
     UNREFERENCED_PARAMETER(pnHelpContext);
 
-    if (m_hResultCode != S_OK) {
+    if (_hResultCode != S_OK) {
         // return the message defined by the system for the error code
         sb.AddStr(_GT("Error Pri="));
-        sb.AddUInt((UINT)m_eSeverity);
+        sb.AddUInt(CastN(UINT, _eSeverity));
         sb.AddStr(_GT(", Code="));
-        sb.AddUInt((UINT)m_hResultCode, 0x10);
+        sb.AddUInt(CastN(UINT, _hResultCode), 0x10);
         sb.AddStr(_GT("("));
-        HResult::GetTextV(m_hResultCode, sb, k_va_list_empty);  // pnHelpContext
+        HResult::GetTextV(_hResultCode, sb, k_va_list_empty);  // pnHelpContext
         sb.AddStr(_GT("), Desc="));
-        sb.AddSpanQ(StrT::ToSpanStr(m_pszDescription));
+        sb.AddSpanQ(StrT::ToSpanStr(_pszDescription));
         return true;
     }
     return SUPER_t::GetErrorMessage(sb, pnHelpContext);

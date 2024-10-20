@@ -11,7 +11,7 @@
 #include "cDebugAssert.h"  // ASSERT
 #include "cFloat.h"
 
-#if defined(__GNUC__) && (__GNUC__ > 4) 
+#if defined(__GNUC__) && (__GNUC__ > 4)
 __extension__ typedef __int128 int128;
 __extension__ typedef unsigned __int128 uint128;
 #endif
@@ -29,59 +29,55 @@ class GRAYCORE_LINK cFloatDeco {
     static const UINT32 k_Exp10[10];                                  /// Table of decimal digits to fit in 32 bit space.
     static const UINT64 k_MANT_MASK_X = CUINT64(00100000, 00000000);  /// Extra hidden bit. k_MANT_MASK+1
 
-    UINT64 m_uMant;  /// Hold Mantissa.
-    int m_iExp2;     /// Hold base 2 Biased Exponent
+    UINT64 _uMant = 0;  /// Hold Mantissa.
+    int _iExp2 = 0;     /// Hold base 2 Biased Exponent
 
  public:
-    cFloatDeco() noexcept : m_uMant(0), m_iExp2(0) {}
-
-    cFloatDeco(UINT64 uMan, int iExp2) noexcept : m_uMant(uMan), m_iExp2(iExp2) {}
+    cFloatDeco() noexcept {}
+    cFloatDeco(UINT64 uMan, int iExp2) noexcept : _uMant(uMan), _iExp2(iExp2) {}
 
     cFloatDeco(double d) noexcept {
         //! Decompose d.
         static const int k_DpExponentBias = 0x3FF + cFloat64::k_MANT_BITS;
-
-        cFloat64 u(d);
-
-        const int iExpBiased = (u.m_v.u_qw & cFloat64::k_EXP_MASK) >> cFloat64::k_MANT_BITS;
+        const cFloat64 u(d);
+        const int iExpBiased = (u._v.u_qw & cFloat64::k_EXP_MASK) >> cFloat64::k_MANT_BITS;
         const UINT64 nMantSig = u.get_Mantissa();
         if (iExpBiased != 0) {
-            m_uMant = nMantSig + k_MANT_MASK_X;
-            m_iExp2 = iExpBiased - k_DpExponentBias;
+            _uMant = nMantSig + k_MANT_MASK_X;
+            _iExp2 = iExpBiased - k_DpExponentBias;
         } else {
-            m_uMant = nMantSig;
-            m_iExp2 = 1 - k_DpExponentBias;
+            _uMant = nMantSig;
+            _iExp2 = 1 - k_DpExponentBias;
         }
     }
 
     cFloatDeco operator-(const cFloatDeco& rhs) const {
         //! Do math on decomposed number.
-        //! ASSUME same m_iExp2
-        ASSERT(m_iExp2 == rhs.m_iExp2);
-        ASSERT(m_uMant >= rhs.m_uMant);
-        return cFloatDeco(m_uMant - rhs.m_uMant, m_iExp2);
+        //! ASSUME same _iExp2
+        ASSERT(_iExp2 == rhs._iExp2);
+        ASSERT(_uMant >= rhs._uMant);
+        return cFloatDeco(_uMant - rhs._uMant, _iExp2);
     }
 
     cFloatDeco operator*(const cFloatDeco& rhs) const {
         //! Do math on decomposed numbers.
-
         UINT64 h;
 #if defined(_MSC_VER) && defined(_M_AMD64)
-        const UINT64 l = _umul128(m_uMant, rhs.m_uMant, &h);
+        const UINT64 l = _umul128(_uMant, rhs._uMant, &h);
         if (l & (UINT64{1} << 63))  // rounding
             h++;
 #elif (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && defined(__x86_64__)
-        uint128 p = static_cast<uint128>(m_uMant) * static_cast<uint128>(rhs.m_uMant);
+        uint128 p = static_cast<uint128>(_uMant) * static_cast<uint128>(rhs._uMant);
         h = p >> 64;
         UINT64 l = static_cast<UINT64>(p);
         if (l & (UINT64(1) << 63))  // rounding
             h++;
 #else
         const UINT64 M32 = 0xFFFFFFFF;
-        const UINT64 a = m_uMant >> 32;
-        const UINT64 b = m_uMant & M32;
-        const UINT64 c = rhs.m_uMant >> 32;
-        const UINT64 d = rhs.m_uMant & M32;
+        const UINT64 a = _uMant >> 32;
+        const UINT64 b = _uMant & M32;
+        const UINT64 c = rhs._uMant >> 32;
+        const UINT64 d = rhs._uMant & M32;
         const UINT64 ac = a * c;
         const UINT64 bc = b * c;
         const UINT64 ad = a * d;
@@ -90,22 +86,22 @@ class GRAYCORE_LINK cFloatDeco {
         tmp += 1U << 31;  /// mult_round
         h = ac + (ad >> 32) + (bc >> 32) + (tmp >> 32);
 #endif
-        return cFloatDeco(h, m_iExp2 + rhs.m_iExp2 + 64);
+        return cFloatDeco(h, _iExp2 + rhs._iExp2 + 64);
     }
 
     cFloatDeco Normalize() const {
-        //! Fix m_iExp2 by making m_uMant as large as possible.
+        //! Fix _iExp2 by making _uMant as large as possible.
         //! cBits::Highest1Bit<>
-        ASSERT(m_uMant != 0);
-        BIT_ENUM_t nBit = 64 - cBits::Highest1Bit(m_uMant);
-        return cFloatDeco(m_uMant << nBit, m_iExp2 - nBit);
+        ASSERT(_uMant != 0);
+        BIT_ENUM_t nBit = 64 - cBits::Highest1Bit(_uMant);
+        return cFloatDeco(_uMant << nBit, _iExp2 - nBit);
     }
 
     void NormalizedBoundaries(cFloatDeco* minus, cFloatDeco* plus) const {
-        cFloatDeco pl = cFloatDeco((m_uMant << 1) + 1, m_iExp2 - 1).Normalize();
-        cFloatDeco mi = (m_uMant == k_MANT_MASK_X) ? cFloatDeco((m_uMant << 2) - 1, m_iExp2 - 2) : cFloatDeco((m_uMant << 1) - 1, m_iExp2 - 1);
-        mi.m_uMant <<= mi.m_iExp2 - pl.m_iExp2;
-        mi.m_iExp2 = pl.m_iExp2;
+        cFloatDeco pl = cFloatDeco((_uMant << 1) + 1, _iExp2 - 1).Normalize();
+        cFloatDeco mi = (_uMant == k_MANT_MASK_X) ? cFloatDeco((_uMant << 2) - 1, _iExp2 - 2) : cFloatDeco((_uMant << 1) - 1, _iExp2 - 1);
+        mi._uMant <<= mi._iExp2 - pl._iExp2;
+        mi._iExp2 = pl._iExp2;
         *plus = pl;
         *minus = mi;
     }
@@ -114,7 +110,7 @@ class GRAYCORE_LINK cFloatDeco {
 	double get_Double() const {
 		//! re-compose double. Convert back to a double. for testing.
 		cFloat64 f(sdfsdf);
-		return f.m_v.u_d;
+		return f._v.u_d;
 	}
 #endif
 
@@ -162,5 +158,4 @@ class GRAYCORE_LINK cFloatDeco {
     static StrLen_t GRAYCALL FormatF(char* pszOut, StrLen_t nMantLength, int nExp10, int iDecPlacesWanted);
 };
 }  // namespace Gray
-
 #endif

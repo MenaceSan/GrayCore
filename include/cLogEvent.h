@@ -25,11 +25,11 @@ enum class LOG_FIELD_t {
 /// TODO store log event as (format,stringarg1,stringargN) and allow translation of the format but assume stringargs are always proper names (not translatable)
 /// </summary>
 struct GRAYCORE_LINK cLogEvent : public cLogEventParams, public cRefBase {
-    TIMESEC_t m_time = 0;                /// when did this happen? as cTimeInt. maybe not set until needed. ! isTimeValid()
-    const char* m_pszSubject = nullptr;  /// static allocated general subject matter tag. can be filled in by cLogSubject. Script source ?
-    cStringL m_sMsg;                     /// free form message text.
+    TIMESEC_t _nTimeSec = 0;            /// when did this happen? as cTimeInt. maybe not set until needed. ! isTimeValid()
+    const char* _pszSubject = nullptr;  /// static allocated general subject matter tag. can be filled in by cLogSubject. Script source ?
+    cStringL _sMsg;                     /// free form message text.
 
-    cLogEvent(LOG_ATTR_MASK_t uAttrMask, LOGLVL_t eLogLevel, cStringL sMsg) noexcept : cLogEventParams(uAttrMask, eLogLevel), m_time(0), m_pszSubject(nullptr), m_sMsg(sMsg) {}
+    cLogEvent(LOG_ATTR_MASK_t uAttrMask, LOGLVL_t eLogLevel, cStringL sMsg) noexcept : cLogEventParams(uAttrMask, eLogLevel), _sMsg(sMsg) {}
 
     /// take all my attributes and make a single string in normal/default format. adds FILE_EOL.
     void GetFormattedDefault(StrBuilder<LOGCHAR_t>& s) const;

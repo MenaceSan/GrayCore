@@ -10,6 +10,7 @@
 #include "cOSModule.h"
 #include "cSystemHelper.h"
 #include "cSystemInfo.h"  // class implemented
+#include "cThreadBase.h"  // SleepCurrent
 
 #ifdef __linux__
 #include <fcntl.h>
@@ -29,66 +30,70 @@
 #endif
 
 namespace Gray {
-cSystemInfo::cSystemInfo() : cSingleton<cSystemInfo>(this, typeid(cSystemInfo)) {
+cSingleton_IMPL(cSystemInfo);
+cSingleton_IMPL(cSystemHelper);
+
+cSystemInfo::cSystemInfo() : cSingleton<cSystemInfo>(this) {
 #ifdef _WIN32
     // In Windows 10 the M$ A*holes nerf GetVersionEx(). must call RtlGetVersion().
     // http://www.codeproject.com/Articles/678606/Part-Overcoming-Windows-s-deprecation-of-GetVe?msg=5080848#xx5080848xx
     // GetVersionEx was declared deprecated ?? M$ is crazy. recommended alternatives don't really do what we want.
     // same as ? HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion
 
-    cMem::Zero(&m_OsInfo, sizeof(m_OsInfo));
-    m_OsInfo.dwOSVersionInfoSize = sizeof(m_OsInfo);
+    cMem::Zero(&_OsInfo, sizeof(_OsInfo));
+    _OsInfo.dwOSVersionInfoSize = sizeof(_OsInfo);
 
     cOSModule modNT;
-    if (modNT.AttachModuleName(_FN("ntdll.dll"))) {
+    if (modNT.AttachModuleName(_FN("ntdll.dll"), cOSModule::k_Load_Normal)) {
         typedef LONG(WINAPI * tRtlGetVersion)(::OSVERSIONINFOEXW*);
         tRtlGetVersion pfRtlGetVersion = CastFPtrTo<tRtlGetVersion>(modNT.GetSymbolAddress("RtlGetVersion"));
         if (pfRtlGetVersion != nullptr) {  // This will never happen (all processes load ntdll.dll)
-            LONG Status = pfRtlGetVersion(&m_OsInfo);
+            const LONG Status = pfRtlGetVersion(&_OsInfo);
             if (Status != 0) {  // STATUS_SUCCESS;
                 // must be an old version of windows. win95 or win31 ? Should NOT happen!
                 pfRtlGetVersion = nullptr;
+                // DEBUG_WARN((""));
             }
         }
     }
 
-    ::GetSystemInfo(&m_SystemInfo);
+    ::GetSystemInfo(&_SystemInfo);
 
 #if !defined(USE_64BIT) && !defined(UNDER_CE)
     BOOL bWow6432 = false;
     ::IsWow64Process(::GetCurrentProcess(), &bWow6432);
-    m_bOS64Bit = bWow6432;
+    _isOS64Bit = bWow6432;
 #endif
 
 #elif defined(__linux__)
     // sysinfo()
 
-    int iRet = ::uname(&m_utsname);
+    int iRet = ::uname(&_UtsName);
     if (iRet < 0) {
         // invalid !
-        cMem::Zero(&m_utsname, sizeof(m_utsname));
+        cMem::Zero(&_UtsName, sizeof(_UtsName));
     }
 
-    // m_utsname.release = "4.4.3-201.fc22.x86_64"
-    m_nOSVer = (StrT::toU(m_utsname.release) << 8);
-    const char* pszVer2 = StrT::FindChar(m_utsname.release, '.');
+    // _UtsName.release = "4.4.3-201.fc22.x86_64"
+    _nOSVer = (StrT::toU(_UtsName.release) << 8);
+    const char* pszVer2 = StrT::FindChar(_UtsName.release, '.');
     if (pszVer2 != nullptr) {
-        m_nOSVer |= StrT::toU(pszVer2 + 1);
+        _nOSVer |= StrT::toU(pszVer2 + 1);
     }
 
-    m_nPageSize = cMem::k_PageSizeMin;
+    _nPageSize = cMem::k_PageSizeMin;
 
 #if !defined(USE_64BIT)
-    // file /sbin/init // uname -a // m_utsname.machine
-    m_bOS64Bit = (StrT::FindStrI(m_utsname.release, "x86_64") != nullptr);
+    // file /sbin/init // uname -a // _UtsName.machine
+    _isOS64Bit = (StrT::FindStrI(_UtsName.release, "x86_64") != nullptr);
 #endif
 
-    // m_utsname.version= "#1 SMP Sat Feb 27 11:53:28 UTC 2016"
+    // _UtsName.version= "#1 SMP Sat Feb 27 11:53:28 UTC 2016"
     // TODO: NR_CPUS Linux
     // num_online_cpus();
     // read /proc/cpuinfo
-    m_nNumberOfProcessors = ::sysconf(_SC_NPROCESSORS_ONLN);
-    // m_nNumberOfProcessors = (StrT::FindStrI(m_utsname.version, "SMP") != nullptr) ? 2 : 1;
+    _nNumberOfProcessors = ::sysconf(_SC_NPROCESSORS_ONLN);
+    // _nNumberOfProcessors = (StrT::FindStrI(_UtsName.version, "SMP") != nullptr) ? 2 : 1;
 
     // physical id : 0
     // core id : 1
@@ -103,15 +108,14 @@ cSystemInfo::cSystemInfo() : cSingleton<cSystemInfo>(this, typeid(cSystemInfo)) 
 
     ASSERT(get_PageSize() >= cMem::k_PageSizeMin);
 }
- 
 
 UINT cSystemInfo::get_NumberOfProcessors() const noexcept {
     //! Is SMP an issue? Do i need to worry about multiple processors ?
     //! Creating more worker threads than CPU's might not help you if its a CPU heavy task.
 #ifdef _WIN32
-    return m_SystemInfo.dwNumberOfProcessors;
+    return _SystemInfo.dwNumberOfProcessors;
 #else  // __linux__
-    return m_nNumberOfProcessors;
+    return _nNumberOfProcessors;
 #endif
 }
 
@@ -121,7 +125,7 @@ bool cSystemInfo::isOS64Bit() const noexcept {
 #ifdef USE_64BIT
     return true;  // I can only run on 64 bit OS so it must be.
 #else
-    return m_bOS64Bit;
+    return _isOS64Bit;
 #endif
 }
 
@@ -138,31 +142,31 @@ UINT cSystemInfo::get_OSVer() const noexcept {
     //! 6.2 = Windows 8 or Server 2012
 
 #ifdef _WIN32
-    return m_OsInfo.dwMajorVersion << 8 | m_OsInfo.dwMinorVersion;
+    return _OsInfo.dwMajorVersion << 8 | _OsInfo.dwMinorVersion;
 #else
-    return m_nOSVer;
+    return _nOSVer;
 #endif
 }
 
 size_t cSystemInfo::get_PageSize() const noexcept {
     // cMem::k_PageSizeMin
 #ifdef _WIN32
-    return m_SystemInfo.dwPageSize;
+    return _SystemInfo.dwPageSize;
 #else
-    return m_nPageSize;
+    return _nPageSize;
 #endif
 }
 
 #ifdef _WIN32
 bool cSystemInfo::isOSNTAble() const noexcept {
     //! Does this OS support NT services ? _WIN32 only of course.
-    if (m_OsInfo.dwPlatformId < VER_PLATFORM_WIN32_NT) return false;
+    if (_OsInfo.dwPlatformId < VER_PLATFORM_WIN32_NT) return false;
     return (this->get_OSVer() >= 0x400);
 }
 
 bool cSystemInfo::isOSXPAble() const noexcept {
     //! Does this OS have XP Dll's. _WIN32 only of course.
-    if (m_OsInfo.dwPlatformId < VER_PLATFORM_WIN32_NT) return false;
+    if (_OsInfo.dwPlatformId < VER_PLATFORM_WIN32_NT) return false;
     return (this->get_OSVer() >= 0x501);
 }
 #endif
@@ -175,7 +179,6 @@ bool cSystemInfo::isVer3_17_plus() const noexcept {
 #endif
 
 StrLen_t GRAYCALL cSystemInfo::GetSystemDir(cSpanX<FILECHAR_t> ret) {  // static
-    //! Where does the OS keep its files. CSIDL_SYSTEM
     //! HRESULT hRes = _FNF(::SHGetFolderPath)( g_MainFrame.GetSafeHwnd(), CSIDL_SYSTEM, nullptr, 0, szPath );
 
 #ifdef UNDER_CE
@@ -197,10 +200,10 @@ HRESULT GRAYCALL cSystemInfo::GetSystemName(cSpanX<FILECHAR_t> ret) {  // static
     ret.get_PtrWork()[0] = '\0';
 #if defined(__linux__) || defined(UNDER_CE)
     int iErrNo = ::gethostname(ret.get_PtrWork(), ret.get_Count());
-    if (iErrNo != 0) return HResult::FromPOSIX(iErrNo);  // SOCKET_ERROR        
+    if (iErrNo != 0) return HResult::FromPOSIX(iErrNo);  // SOCKET_ERROR
     return StrT::Len(ret.get_PtrConst());
 #elif defined(_WIN32)
-    DWORD dwSize = CastN(DWORD, ret.get_Count());                                                    // size in TCHARs
+    DWORD dwSize = CastN(DWORD, ret.get_Count());  // size in TCHARs
     if (!_FNF(::GetComputerName)(ret.get_PtrWork(), &dwSize)) return HResult::GetLastDef();
     return CastN(StrLen_t, dwSize);
 #else
@@ -208,7 +211,7 @@ HRESULT GRAYCALL cSystemInfo::GetSystemName(cSpanX<FILECHAR_t> ret) {  // static
 #endif
 }
 
-bool GRAYCALL cSystemInfo::SystemShutdown(bool bReboot) { // static
+bool GRAYCALL cSystemInfo::SystemShutdown(bool bReboot) {  // static
     //! Shut down or reboot the whole system. not just log off the user or close the app.
 
 #ifdef UNDER_CE
@@ -239,7 +242,7 @@ bool GRAYCALL cSystemInfo::SystemShutdown(bool bReboot) { // static
 #endif
 }
 
-void GRAYCALL cSystemInfo::SystemBeep() { // static
+void GRAYCALL cSystemInfo::SystemBeep() {  // static
     // like _WIN32 MessageBeep(), not Beep() (which can get redirected if RDP)
 #if defined(UNDER_CE)
     ::MessageBeep(0xFFFFFFFF);
@@ -286,7 +289,7 @@ void GRAYCALL cSystemInfo::SystemBeep() { // static
     cOSHandle hBeep;
     hBeep.OpenHandle("/dev/console", O_WRONLY);
     hBeep.IOCtl(KIOCSOUND, (int)(1193180 / k_nFrequency));
-    ::usleep(1000 * k_nDuration);
+    cThreadId::SleepCurrent(k_nDuration);
     hBeep.IOCtl(KIOCSOUND, 0);
 #else
 #error NOOS
@@ -295,7 +298,7 @@ void GRAYCALL cSystemInfo::SystemBeep() { // static
 
 //**********************************************
 
-cSystemHelper::cSystemHelper() : cSingleton<cSystemHelper>(this, typeid(cSystemHelper)), m_Info(cSystemInfo::I()) {}
+cSystemHelper::cSystemHelper() : cSingleton<cSystemHelper>(this), _SysInfo(cSystemInfo::I()) {}
 
 cString cSystemHelper::get_OSInfoStr() const {
     //! More detailed info about the actual OS we are running on.
@@ -307,9 +310,9 @@ cString cSystemHelper::get_OSInfoStr() const {
     cString sTmp;
 #ifdef _WIN32
     const GChar_t* pszCPU;
-    switch (m_Info.m_SystemInfo.wProcessorArchitecture) {
+    switch (_SysInfo._SystemInfo.wProcessorArchitecture) {
         case PROCESSOR_ARCHITECTURE_INTEL:
-            switch (LOBYTE(m_Info.m_SystemInfo.wProcessorLevel)) {
+            switch (LOBYTE(_SysInfo._SystemInfo.wProcessorLevel)) {
                 case 3:
                     pszCPU = _GT("i386");
                     break;
@@ -347,7 +350,7 @@ cString cSystemHelper::get_OSInfoStr() const {
 			pszCPU = _GT("PPC");
 			break;
 		case PROCESSOR_ARCHITECTURE_ALPHA:
-			switch (m_SystemInfo.wProcessorLevel)
+			switch (_SystemInfo.wProcessorLevel)
 			{
 			case 21064: pszCPU = _GT("Alpha 21064"); break;
 			case 21066: pszCPU = _GT("Alpha 21066"); break;
@@ -364,15 +367,15 @@ cString cSystemHelper::get_OSInfoStr() const {
     }
 
     const GChar_t* pszOS;
-    switch (m_Info.m_OsInfo.dwPlatformId) {
+    switch (_SysInfo._OsInfo.dwPlatformId) {
         case VER_PLATFORM_WIN32_NT:
             pszOS = _GT("NT?");
-            switch (m_Info.m_OsInfo.dwMajorVersion) {
+            switch (_SysInfo._OsInfo.dwMajorVersion) {
                 case 4:
                     pszOS = _GT("NT");
                     break;
                 case 5:
-                    switch (m_Info.m_OsInfo.dwMinorVersion) {
+                    switch (_SysInfo._OsInfo.dwMinorVersion) {
                         case 0:
                             pszOS = _GT("2000");
                             break;
@@ -386,7 +389,7 @@ cString cSystemHelper::get_OSInfoStr() const {
                     }
                     break;
                 case 6:
-                    switch (m_Info.m_OsInfo.dwMinorVersion) {
+                    switch (_SysInfo._OsInfo.dwMinorVersion) {
                         case 0:
                             pszOS = _GT("Vista");
                             break;
@@ -402,9 +405,8 @@ cString cSystemHelper::get_OSInfoStr() const {
                     }
                     break;
                 case 10:
-                    pszOS = _GT("10");
-                    break;
-                    break;
+                    pszOS = _GT("10");  // 11 is same ?
+                    break;                  
             }
             break;
         case VER_PLATFORM_WIN32_WINDOWS:
@@ -415,16 +417,16 @@ cString cSystemHelper::get_OSInfoStr() const {
             break;
     }
 
-    sTmp.Format(_GT("Windows %s %dbit v%d.%d.%d (%d %s CPU%s)"), StrArg<GChar_t>(pszOS), m_Info.isOS64Bit() ? 64 : 32, m_Info.m_OsInfo.dwMajorVersion, m_Info.m_OsInfo.dwMinorVersion, m_Info.m_OsInfo.dwBuildNumber, m_Info.get_NumberOfProcessors(),
-                StrArg<GChar_t>(pszCPU), StrArg<GChar_t>((m_Info.get_NumberOfProcessors() > 1) ? _GT("s") : _GT("")));
+    sTmp.Format(_GT("Windows %s %dbit v%d.%d.%d (%d %s CPU%s)"), StrArg<GChar_t>(pszOS), _SysInfo.isOS64Bit() ? 64 : 32, _SysInfo._OsInfo.dwMajorVersion, _SysInfo._OsInfo.dwMinorVersion, _SysInfo._OsInfo.dwBuildNumber, _SysInfo.get_NumberOfProcessors(),
+                StrArg<GChar_t>(pszCPU), StrArg<GChar_t>((_SysInfo.get_NumberOfProcessors() > 1) ? _GT("s") : _GT("")));
 #else  // __linux__
-    if (StrT::IsWhitespace(m_Info.m_utsname.sysname)) {
+    if (StrT::IsWhitespace(_SysInfo._UtsName.sysname)) {
         return _GT("Linux UNK VER!?");
     }
 
-    // NOTE: ignore m_utsname.nodename here since it is the same as SystemName
-    sTmp.Format(_GT("%s %dbit '%s' '%s' '%s'"), StrArg<GChar_t>(&m_Info.m_utsname.sysname[0]), m_Info.isOS64Bit() ? 64 : 32, StrArg<GChar_t>(&m_Info.m_utsname.release[0]), StrArg<GChar_t>(&m_Info.m_utsname.version[0]),
-                StrArg<GChar_t>(&m_Info.m_utsname.machine[0]));
+    // NOTE: ignore _UtsName.nodename here since it is the same as SystemName
+    sTmp.Format(_GT("%s %dbit '%s' '%s' '%s'"), StrArg<GChar_t>(&_SysInfo._UtsName.sysname[0]), _SysInfo.isOS64Bit() ? 64 : 32, StrArg<GChar_t>(&_SysInfo._UtsName.release[0]), StrArg<GChar_t>(&_SysInfo._UtsName.version[0]),
+                StrArg<GChar_t>(&_SysInfo._UtsName.machine[0]));
 #endif
     return sTmp;
 }
@@ -433,8 +435,8 @@ cStringF cSystemHelper::get_SystemName() {
     //! Get this computers station name.
     //! UNDER_CE -> "HKLM\Ident\Name"
 
-    if (!m_sSystemName.IsEmpty()) {
-        return m_sSystemName;
+    if (!_sSystemName.IsEmpty()) {
+        return _sSystemName;
     }
 
 #if defined(__linux__) || defined(UNDER_CE)
@@ -452,8 +454,8 @@ cStringF cSystemHelper::get_SystemName() {
         return "";
     }
 
-    m_sSystemName = szNodeName;
-    return m_sSystemName;
+    _sSystemName = szNodeName;
+    return _sSystemName;
 }
 
 cFilePath GRAYCALL cSystemHelper::get_SystemDir() {  // static

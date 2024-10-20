@@ -66,16 +66,16 @@ enum class APP_EXITCODE_t : int {
 /// </summary>
 class GRAYCORE_LINK cOSProcess {
  protected:
-    PROCESSID_t m_nPid;  /// Process ID, 0 = kPROCESSID_BAD = un-init.
+    PROCESSID_t _nPid;  /// Process ID, 0 = kPROCESSID_BAD = un-init.
 
 #ifdef _WIN32
-    cOSHandle m_hProcess;  /// open handle to the process. cOSModule
+    cOSHandle _hProcess;  /// open handle to the process. cOSModule
  public:
-    cThreadId m_ThreadId;  /// Main thread id for the process. Only if i launched this myself.
-    cOSHandle m_hThread;   /// may have this or not. Only if i launched this myself.
+    cThreadId _ThreadId;  /// Main thread id for the process. Only if i launched this myself.
+    cOSHandle _hThread;   /// primary thread handle. may have this or not. Only if i launched this myself.
 #elif defined(__linux__)
  protected:
-    cFilePath m_sPath;  /// cached file path for the EXE/ELF/etc file.
+    cFilePath _sFilePath;  /// cached file path for the EXE/ELF/etc file.
 #else
 #error NOOS
 #endif
@@ -85,11 +85,11 @@ class GRAYCORE_LINK cOSProcess {
     virtual ~cOSProcess();
 
 #ifdef _WIN32
-    cOSProcess(PROCESSID_t nPid, ::HANDLE hProc, ::HANDLE hThread) noexcept : m_nPid(nPid), m_hProcess(hProc), m_hThread(hThread) {
+    cOSProcess(PROCESSID_t nPid, ::HANDLE hProc, ::HANDLE hThread) noexcept : _nPid(nPid), _hProcess(hProc), _hThread(hThread) {
         //! _WIN32 = ::GetCurrentProcess() = 0xFFFFFFFF as a shortcut. HMODULE_CURPROC
     }
     ::HANDLE get_ProcessHandle() const noexcept {
-        return m_hProcess.get_Handle();
+        return _hProcess.get_Handle();
     }
     void CloseProcessHandle();
 #endif
@@ -107,14 +107,14 @@ class GRAYCORE_LINK cOSProcess {
     bool isValidProcess() const noexcept {
         //! Is the process in memory/valid/active now ?
 #ifdef _WIN32
-        return m_hProcess.isValidHandle();
+        return _hProcess.isValidHandle();
 #elif defined(__linux__)
-        return m_nPid != 0;
+        return _nPid != 0;
 #endif
     }
 
     PROCESSID_t get_ProcessId() const noexcept {
-        return m_nPid;
+        return _nPid;
     }
 
     virtual cFilePath get_ProcessPath() const;
@@ -132,17 +132,17 @@ class GRAYCORE_LINK cOSProcess {
         //! I represent the current process. No need to close this handle!
 #ifdef _WIN32
         // 0xFFFFFFFF = current process. https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getcurrentprocess
-        m_nPid = ::GetCurrentProcessId();  // cAppState::get_CurrentProcessId();
-        m_hProcess.AttachHandle(::GetCurrentProcess());
-        m_ThreadId.InitCurrentId();
+        _nPid = ::GetCurrentProcessId();  // cAppState::get_CurrentProcessId();
+        _hProcess.AttachHandle(::GetCurrentProcess());
+        _ThreadId.InitCurrentId();
 #elif defined(__linux__)
-        m_nPid = ::getpid();
+        _nPid = ::getpid();
 #endif
     }
 
     HRESULT TerminateProcess(APP_EXITCODE_t uExitCode) const noexcept {
         //! Hard terminate some process. inject uExitCode. May not save work.
-        //! m_nPid may be invalid after this!
+        //! _nPid may be invalid after this!
         //! in _WIN32 Is would be more polite to call CloseProcess() first. send ::PostThreadMessage(WM_CLOSE) and wait for a bit, to allow programs to save.
 
         if (!isValidProcess()) return S_FALSE;

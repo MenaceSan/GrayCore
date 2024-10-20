@@ -21,23 +21,23 @@ namespace Gray {
 /// <typeparam name="_TYPE"></typeparam>
 template <class _TYPE>
 class cArrayHeadT : public cRefBase, public cHeapObject {
-    CHEAPOBJECT_IMPL;  /// Get the top level "new" pointer in the case of multiple inheritance.
     typedef cArrayHeadT<_TYPE> THIS_t;
+    DECLARE_cHeapObject(THIS_t);  /// Get the top level "new" pointer in the case of multiple inheritance.
 
  protected:
-    ITERATE_t m_nCount = 0;  /// Number of _TYPE elements (upperBound - 1). m_pData MUST hold at least this many
+    ITERATE_t _nCount = 0;  /// Number of _TYPE elements (upperBound - 1). _pData MUST hold at least this many
     /// <summary>
     /// Some hash code of the data to follow. 0 = not yet calculated or empty. same as ATOMCODE_t.
     /// </summary>
-    mutable HASHCODE32_t m_HashCode;
-    // TYPE m_a[ m_nCount * sizeof(_TYPE) ];	/// dynamic heap allocated.
+    mutable HASHCODE32_t _HashCode = k_HASHCODE_CLEAR;
+    // TYPE _a[ _nCount * sizeof(_TYPE) ];	/// dynamic heap allocated.
 
  public:
-    inline static ITERATE_t GetHeapCountChunk(ITERATE_t i) {
+    constexpr static ITERATE_t GetHeapCountChunk(ITERATE_t i) {
         //! over allocate to allow room to grow.
         return i + (i / 16);
     }
-    inline static size_t GetMallocSize(ITERATE_t i) {
+    constexpr static size_t GetMallocSize(ITERATE_t i) {
         return sizeof(THIS_t) + (i * sizeof(_TYPE));
     }
 
@@ -52,7 +52,7 @@ class cArrayHeadT : public cRefBase, public cHeapObject {
         ASSERT(stAllocateBlock == sizeof(cArrayHeadT));
         return cHeap::AllocPtr(stAllocateBlock + sizePayload);
     }
-    cArrayHeadT(ITERATE_t nCount) noexcept : m_nCount(nCount), m_HashCode(k_HASHCODE_CLEAR) {}
+    cArrayHeadT(ITERATE_t nCount) noexcept : _nCount(nCount), _HashCode(k_HASHCODE_CLEAR) {}
 
  public:
     static void operator delete(void* pObj, size_t sizePayload) {
@@ -87,10 +87,10 @@ class cArrayHeadT : public cRefBase, public cHeapObject {
     /// </summary>
     /// <returns></returns>
     inline ITERATE_t get_Count() const noexcept {
-        return m_nCount;
+        return _nCount;
     }
     inline size_t get_BytesSize() const noexcept {
-        return m_nCount * sizeof(_TYPE);
+        return _nCount * sizeof(_TYPE);
     }
 
     /// Get the whole array as a span of memory.
@@ -102,7 +102,7 @@ class cArrayHeadT : public cRefBase, public cHeapObject {
     }
 
     /// <summary>
-    /// Get size of quantity of objects truly allocated. (may not be same as m_nSize or even properly aligned with TYPE)
+    /// Get size of quantity of objects truly allocated. (may not be same as GetSize() or even properly aligned with TYPE)
     /// like STL capacity()
     /// </summary>
     /// <returns></returns>
@@ -114,11 +114,11 @@ class cArrayHeadT : public cRefBase, public cHeapObject {
     }
 
     inline bool IsHashCodeSet() const noexcept {
-        return m_HashCode != k_HASHCODE_CLEAR && m_nCount > 0;
+        return _HashCode != k_HASHCODE_CLEAR && _nCount > 0;
     }
     inline HASHCODE32_t get_HashCode() const {
         // hides get_HashCode() implemented by cRefBase
-        return m_HashCode;
+        return _HashCode;
     }
 
     /// <summary>
@@ -139,14 +139,14 @@ class cArrayHeadT : public cRefBase, public cHeapObject {
 
     void ShrinkHead(ITERATE_t nCountNew, bool destruct) noexcept {
         // shrinking. it fits. don't shrink the allocated array. we may expand again some day.
-        ASSERT(nCountNew < m_nCount);  // assume change.
+        ASSERT(nCountNew < _nCount);  // assume change.
         if (destruct) {
             // destruct the deleted elements.
             _TYPE* pData = get_PtrWork();
-            cValSpan::DestructElementsX<_TYPE>(&pData[nCountNew], m_nCount - nCountNew);
+            cValSpan::DestructElementsX<_TYPE>(&pData[nCountNew], _nCount - nCountNew);
         }
-        m_nCount = nCountNew;
-        m_HashCode = k_HASHCODE_CLEAR;  // invalidate hash.
+        _nCount = nCountNew;
+        _HashCode = k_HASHCODE_CLEAR;  // invalidate hash.
     }
 
     /// <summary>
@@ -155,13 +155,13 @@ class cArrayHeadT : public cRefBase, public cHeapObject {
     /// MFC will heuristically determine growth when nGrowBy == 0 (this avoids heap fragmentation in many situations)
     /// </summary>
     THIS_t* GrowHead(ITERATE_t nCountNew, bool construct) noexcept {
-        ASSERT(nCountNew > m_nCount);  // assume change.
+        ASSERT(nCountNew > _nCount);  // assume change.
 
         // allocate greater size if not the first time we have done this.
-        const ITERATE_t allocateCount = (m_nCount != 0) ? GetHeapCountChunk(nCountNew) : nCountNew;
-        const ITERATE_t nCountOld = m_nCount;
-        m_nCount = nCountNew;
-        m_HashCode = k_HASHCODE_CLEAR;  // invalidate hash.
+        const ITERATE_t allocateCount = (_nCount != 0) ? GetHeapCountChunk(nCountNew) : nCountNew;
+        const ITERATE_t nCountOld = _nCount;
+        _nCount = nCountNew;
+        _HashCode = k_HASHCODE_CLEAR;  // invalidate hash.
 
         THIS_t* pHeadNew = PtrCast<THIS_t>(cHeap::ReAllocPtr(this, GetMallocSize(allocateCount)));
         ASSERT_NN(pHeadNew);
@@ -174,7 +174,7 @@ class cArrayHeadT : public cRefBase, public cHeapObject {
     }
 
     THIS_t* ResizeHead(ITERATE_t nCountNew, bool construct) noexcept {
-        if (nCountNew > m_nCount) {
+        if (nCountNew > _nCount) {
             return GrowHead(nCountNew, construct);
         } else {
             ShrinkHead(nCountNew, construct);
@@ -293,7 +293,7 @@ class cArrayT : public cRefPtr<cArrayHeadT<TYPE> > {
     }
 
     /// <summary>
-    /// Get quantity of objects truly allocated. (may not be same as m_nSize or even properly aligned with TYPE)
+    /// Get quantity of objects truly allocated. (may not be same as GetSize() or even properly aligned with TYPE)
     /// like STL capacity()
     /// </summary>
     ITERATE_t get_HeapCount() const noexcept {
@@ -374,7 +374,7 @@ class cArrayT : public cRefPtr<cArrayHeadT<TYPE> > {
         } else {
             put_Count(nCountOld + 1);  // grow it to new size
             TYPE* pData = this->get_Ptr()->get_PtrWork();
-            cValSpan::MoveElement1(pData + nCountOld, pData + nIndex);  // make space.
+            cValSpan::ShiftElements(pData + nCountOld, pData + nIndex);  // make space.
         }
 
         // insert new value in the gap
@@ -419,20 +419,25 @@ class cArrayT : public cRefPtr<cArrayHeadT<TYPE> > {
         if (!src.isNull()) cValSpan::CopyQty(pNew->get_PtrWork() + i, src.get_PtrConst(), nSizeCopy);  // Copy over new.
     }
 
-    void RemoveAt(ITERATE_t nIndex) {
-        //! NOTE: Any destructor effecting the array MAY be reentrant ?!
-        if (nIndex < 0) return;
+    void RemoveAt(ITERATE_t nIndex, ITERATE_t iQty = 1) {
+        // NOTE: destructor effecting the array MAY be reentrant ?!
+        if (iQty <= 0 || nIndex < 0) return;
         HEAD_t* pHead = this->get_Ptr();
         if (pHead == nullptr) return;
-        const ITERATE_t nCount = pHead->get_Count();
-        ITERATE_t nMoveCount = nCount - (nIndex + 1);
-        if (nMoveCount < 0) return;  // nIndex is out of range!
-        TYPE* pData = pHead->get_PtrWork();
-        cValSpan::DestructElementsX<TYPE>(pData + nIndex, 1);
-        if (nMoveCount > 0) {  // not last.
-            cMem::CopyOverlap(pData + nIndex, pData + nIndex + 1, nMoveCount * sizeof(TYPE));
+        const ITERATE_t nCountPrev = pHead->get_Count();
+        if (nIndex >= nCountPrev) return;
+        ITERATE_t nAfterCount = nCountPrev - (nIndex + iQty);
+        if (nAfterCount < 0) {  // iQty beyond the end!
+            nAfterCount = 0;    // to Last element.
+            iQty = nCountPrev - nIndex;
         }
-        pHead->ShrinkHead(nCount - 1, false);
+        // remove a range
+        TYPE* pData = pHead->get_PtrWork();
+        cValSpan::DestructElementsX<TYPE>(pData + nIndex, iQty);
+        if (nAfterCount > 0) {  // not last.
+            cMem::CopyOverlap(pData + nIndex, pData + nIndex + iQty, nAfterCount * sizeof(TYPE));
+        }
+        pHead->ShrinkHead(nCountPrev - iQty, false);
     }
 
     typedef cIterator<TYPE> iterator;              // like STL

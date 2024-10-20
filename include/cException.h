@@ -25,23 +25,24 @@ typedef cStringT<LOGCHAR_t> cStringL;  /// Log string.
 /// ONLY useful because MFC passes all exceptions by pointer and STL does not.
 /// </summary>
 class GRAYCORE_LINK cExceptionHolder : public cPtrFacade<cExceptionBase> {
+    typedef cPtrFacade<cExceptionBase> SUPER_t;
+
  public:
     static const StrLen_t k_MSG_MAX_SIZE = 1024;  /// arbitrary max message size.
  private:
-    bool m_bDeleteEx;  /// i must delete this. Always true for MFC ? IsOwned
+    bool _isDeleteReq = false;  /// i must delete this. Always true for MFC ? IsOwned
 
  public:
-    cExceptionHolder() noexcept : m_bDeleteEx(false) {}
+    cExceptionHolder() noexcept {}
     /// Normal usage for _MFC_VER.
-    explicit cExceptionHolder(cExceptionBase* pEx, bool bDeleteEx = true) noexcept : cPtrFacade<cExceptionBase>(pEx), m_bDeleteEx(bDeleteEx) {
-    }
+    explicit cExceptionHolder(cExceptionBase* pEx, bool bDeleteEx = true) noexcept : cPtrFacade<cExceptionBase>(pEx), _isDeleteReq(bDeleteEx) {}
     /// Normal STL usage.
-    explicit cExceptionHolder(cExceptionBase& ex) noexcept : cPtrFacade<cExceptionBase>(&ex), m_bDeleteEx(false) {
-    }
+    explicit cExceptionHolder(cExceptionBase& ex) noexcept : cPtrFacade<cExceptionBase>(&ex) {}
+
     /// basically an auto_ptr
     ~cExceptionHolder() noexcept {
-        if (m_bDeleteEx && this->isValidPtr()) { // make sure DetachException() wasn't called.
-#ifdef _MFC_VER  // using _MFC_VER Exceptions.
+        if (_isDeleteReq && this->isValidPtr()) {  // make sure DetachException() wasn't called.
+#ifdef _MFC_VER                                    // using _MFC_VER Exceptions.
             get_Ptr()->Delete();
 #else
             delete get_Ptr();
@@ -51,8 +52,9 @@ class GRAYCORE_LINK cExceptionHolder : public cPtrFacade<cExceptionBase> {
     void AttachException(cExceptionBase* pEx, bool bDeleteEx) {
         ASSERT(!this->isValidPtr());
         AttachPtr(pEx);
-        m_bDeleteEx = bDeleteEx;
+        _isDeleteReq = bDeleteEx;
     }
+    using SUPER_t::DetachPtr;  // dangerous but allow this.
 
     /// <summary>
     /// Get the cException version of the exception if it is based on it. Use dynamic_cast.
@@ -71,20 +73,20 @@ class GRAYCORE_LINK cExceptionHolder : public cPtrFacade<cExceptionBase> {
 /// uses GRAY_THROW macro to hide STL vs MFC differences. MFC uses base name CException.
 /// </summary>
 struct GRAYCORE_LINK cException : public cExceptionBase {
-    const LOGLVL_t m_eSeverity;      /// how bad is this ?
-    const LOGCHAR_t* m_pszDescription;  /// this pointer should be to something static !?
-    static const LOGCHAR_t* k_szDescriptionDefault;
+    const LOGLVL_t _eSeverity;         /// how bad is this ?
+    const LOGCHAR_t* _pszDescription;  /// this pointer should be to something static !?
+    static const LOGCHAR_t k_szDescriptionDefault[];
 
     cException(const LOGCHAR_t* pszDescription, LOGLVL_t eLogLevel = LOGLVL_t::_ERROR) noexcept
-        : m_eSeverity(eLogLevel),
+        : _eSeverity(eLogLevel),
 #if !defined(_MFC_VER) && defined(_MSC_VER) && defined(_CPPUNWIND)  // not using _MFC_VER.
           cExceptionBase(pszDescription),
 #endif
-          m_pszDescription((pszDescription == nullptr) ? k_szDescriptionDefault : pszDescription) {
+          _pszDescription((pszDescription == nullptr) ? k_szDescriptionDefault : pszDescription) {
     }
 
     LOGLVL_t get_Severity() const noexcept {
-        return m_eSeverity;
+        return _eSeverity;
     }
 
     DECLARE_DYNAMIC(cException);  // For MFC support.
@@ -97,7 +99,7 @@ struct GRAYCORE_LINK cException : public cExceptionBase {
 #ifndef _MFC_VER  // using _MFC_VER.
     const char* what() const noexcept override {
         //! for STL. store the GetErrorMessage string some place ?
-        return m_pszDescription;
+        return _pszDescription;
     }
 #endif  // ! _MFC_VER
 
@@ -109,12 +111,12 @@ struct GRAYCORE_LINK cException : public cExceptionBase {
 /// </summary>
 struct GRAYCORE_LINK cExceptionHResult : public cException {
     typedef cException SUPER_t;
-    HRESULT m_hResultCode;  /// HRESULT S_OK=0, "winerror.h" code. 0x20000000 = start of custom codes. E_FAIL = unknown error
+    HRESULT _hResultCode;  /// HRESULT S_OK=0, "winerror.h" code. 0x20000000 = start of custom codes. E_FAIL = unknown error
 
-    cExceptionHResult(HRESULT hResultCode = E_FAIL, const LOGCHAR_t* pszDescription = nullptr, LOGLVL_t eSeverity = LOGLVL_t::_ERROR) THROW_DEF : SUPER_t(pszDescription, eSeverity), m_hResultCode(hResultCode) {}
+    cExceptionHResult(HRESULT hResultCode = E_FAIL, const LOGCHAR_t* pszDescription = nullptr, LOGLVL_t eSeverity = LOGLVL_t::_ERROR) THROW_DEF : SUPER_t(pszDescription, eSeverity), _hResultCode(hResultCode) {}
 
     HRESULT get_HResultCode() const noexcept {
-        return m_hResultCode;
+        return _hResultCode;
     }
     BOOL GetErrorMessage(StrBuilder<GChar_t>& sb, UINT* pnHelpContext) override;
 };

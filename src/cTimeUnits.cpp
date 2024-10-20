@@ -3,22 +3,22 @@
 // clang-format off
 #include "pch.h"
 // clang-format on
+#include "StrBuilder.h"
 #include "StrChar.h"
 #include "StrT.h"
 #include "cBits.h"
 #include "cTimeInt.h"
 #include "cTimeUnits.h"
 #include "cTimeZone.h"
-#include "StrBuilder.h"
 #ifdef __linux__
 #include "cTimeVal.h"
 #endif
 
 namespace Gray {
 // Stock date time string formats.
-const GChar_t cTimeUnits::k_SepsAll[8] = _GT("/ :T.,-");  // All/Any separator that might occur in k_StrFormats.
+const GChar_t cTimeUnits::k_SepsAll[8] = _GT("/ :T.,-");  // All/Any separator that might occur in k_aStrFormats.
 
-const GChar_t* cTimeUnits::k_StrFormats[static_cast<int>(TIMEFORMAT_t::_QTY) + 1] = {
+const GChar_t* const cTimeUnits::k_aStrFormats[static_cast<int>(TIMEFORMAT_t::_QTY) + 1] = {
     //! strftime() type string formats.
     //! @todo USE k_TimeSeparator
 
@@ -37,39 +37,39 @@ const GChar_t* cTimeUnits::k_StrFormats[static_cast<int>(TIMEFORMAT_t::_QTY) + 1
     nullptr,
 };
 
-const cTimeUnit cTimeUnits::k_Units[static_cast<int>(TIMEUNIT_t::_Ignore)] = {
-    {_GT("year"), _GT("Y"), 1, 3000, 12, 365 * 24 * 60 * 60, 365.25},  // approximate, depends on leap year.
-    {_GT("month"), _GT("M"), 1, 12, 30, 30 * 24 * 60 * 60, 30.43},     // approximate, depends on month
-    {_GT("day"), _GT("d"), 1, 31, 24, 24 * 60 * 60, 1.0},
-    {_GT("hour"), _GT("h"), 0, 23, 60, 60 * 60, 1.0 / (24.0)},
-    {_GT("minute"), _GT("m"), 0, 59, 60, 60, 1.0 / (24.0 * 60.0)},
-    {_GT("second"), _GT("s"), 0, 59, 1000, 1, 1.0 / (24.0 * 60.0 * 60.0)},
-    {_GT("millisec"), _GT("ms"), 0, 999, 1000, 0, 1.0 / (24.0 * 60.0 * 60.0 * 1000.0)},
-    {_GT("microsec"), _GT("us"), 0, 999, 0, 0, 1.0 / (24.0 * 60.0 * 60.0 * 1000.0 * 1000.0)},
-    {_GT("TZ"), _GT("TZ"), -24 * 60, 24 * 60, 0, 0, 1.0},  // TIMEUNIT_t::_TZ
-    {_GT("DOW"), _GT("DOW"), 0, 7, 0},                     // TIMEDOW_t::_QTY
+const cTimeUnit cTimeUnits::k_aUnits[static_cast<int>(TIMEUNIT_t::_Ignore)] = {
+    {_GT("year"), _GT("Y"), {1, 3000}, 12, 365 * 24 * 60 * 60, 365.25},  // approximate, depends on leap year.
+    {_GT("month"), _GT("M"), {1, 12}, 30, 30 * 24 * 60 * 60, 30.43},     // approximate, depends on month
+    {_GT("day"), _GT("d"), {1, 31}, 24, 24 * 60 * 60, 1.0},
+    {_GT("hour"), _GT("h"), {0, 23}, 60, 60 * 60, 1.0 / (24.0)},
+    {_GT("minute"), _GT("m"), {0, 59}, 60, 60, 1.0 / (24.0 * 60.0)},
+    {_GT("second"), _GT("s"), {0, 59}, 1000, 1, 1.0 / (24.0 * 60.0 * 60.0)},
+    {_GT("millisec"), _GT("ms"), {0, 999}, 1000, 0, 1.0 / (24.0 * 60.0 * 60.0 * 1000.0)},
+    {_GT("microsec"), _GT("us"), {0, 999}, 0, 0, 1.0 / (24.0 * 60.0 * 60.0 * 1000.0 * 1000.0)},
+    {_GT("TZ"), _GT("TZ"), {-24 * 60, 24 * 60}, 0, 0, 1.0},  // TIMEUNIT_t::_TZ
+    {_GT("DOW"), _GT("DOW"), {0, 7}, 0},                     // TIMEDOW_t::_QTY
 };
 
-const BYTE cTimeUnits::k_MonthDays[2][static_cast<int>(TIMEMONTH_t::_QTY)] = {
+const BYTE cTimeUnits::k_aMonthDays[2][static_cast<int>(TIMEMONTH_t::_QTY)] = {
     {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31},  // normal year // Jan=0
     {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}   // leap year
 };
 
-const WORD cTimeUnits::k_MonthDaySums[2][static_cast<int>(TIMEMONTH_t::_QTY) + 1] = {
+const WORD cTimeUnits::k_aMonthDaySums[2][static_cast<int>(TIMEMONTH_t::_QTY) + 1] = {
     {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365},  // normal year // Jan=0
     {0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335, 366}   // leap year
 };
 
-const GChar_t* const cTimeUnits::k_MonthName[static_cast<int>(TIMEMONTH_t::_QTY)] = {  // Jan=0
+const GChar_t* const cTimeUnits::k_aMonthName[static_cast<int>(TIMEMONTH_t::_QTY)] = {  // Jan=0
     _GT("January"), _GT("February"), _GT("March"), _GT("April"), _GT("May"), _GT("June"), _GT("July"), _GT("August"), _GT("September"), _GT("October"), _GT("November"), _GT("December")};
 
-const GChar_t* const cTimeUnits::k_MonthAbbrev[static_cast<int>(TIMEMONTH_t::_QTY)] = {_GT("Jan"), _GT("Feb"), _GT("Mar"), _GT("Apr"), _GT("May"), _GT("Jun"), _GT("Jul"), _GT("Aug"), _GT("Sep"), _GT("Oct"), _GT("Nov"), _GT("Dec")};
+const GChar_t* const cTimeUnits::k_aMonthAbbrev[static_cast<int>(TIMEMONTH_t::_QTY)] = {_GT("Jan"), _GT("Feb"), _GT("Mar"), _GT("Apr"), _GT("May"), _GT("Jun"), _GT("Jul"), _GT("Aug"), _GT("Sep"), _GT("Oct"), _GT("Nov"), _GT("Dec")};
 
-const GChar_t* const cTimeUnits::k_DayName[static_cast<int>(TIMEDOW_t::_QTY) ] = {  // Sun=0
-    _GT("Sunday"), _GT("Monday"), _GT("Tuesday"), _GT("Wednesday"), _GT("Thursday"), _GT("Friday"), _GT("Saturday") };
+const GChar_t* const cTimeUnits::k_aDayName[static_cast<int>(TIMEDOW_t::_QTY)] = {  // Sun=0
+    _GT("Sunday"), _GT("Monday"), _GT("Tuesday"), _GT("Wednesday"), _GT("Thursday"), _GT("Friday"), _GT("Saturday")};
 
-const GChar_t* const cTimeUnits::k_DayAbbrev[static_cast<int>(TIMEDOW_t::_QTY) ] = {  // Sun=0
-    _GT("Sun"), _GT("Mon"), _GT("Tue"), _GT("Wed"), _GT("Thu"), _GT("Fri"), _GT("Sat") };
+const GChar_t* const cTimeUnits::k_aDayAbbrev[static_cast<int>(TIMEDOW_t::_QTY)] = {  // Sun=0
+    _GT("Sun"), _GT("Mon"), _GT("Tue"), _GT("Wed"), _GT("Thu"), _GT("Fri"), _GT("Sat")};
 
 const GChar_t cTimeUnits::k_Seps[3] = _GT("/:");  // Normal date string separators. "/:"
 
@@ -80,47 +80,47 @@ bool cTimeUnits::sm_time24Mode = false;
 
 #ifdef _WIN32
 cTimeUnits::cTimeUnits(const SYSTEMTIME& sysTime)
-    : m_wYear(sysTime.wYear),
-      m_wMonth(sysTime.wMonth),  // 1 based.
-      m_wDay(sysTime.wDay),
-      m_wHour(sysTime.wHour),
-      m_wMinute(sysTime.wMinute),
-      m_wSecond(sysTime.wSecond),
-      m_wMillisecond(sysTime.wMilliseconds),
-      m_wMicrosecond(0),
-      m_nTZ(0) {
+    : _wYear(sysTime.wYear),
+      _wMonth(sysTime.wMonth),  // 1 based.
+      _wDay(sysTime.wDay),
+      _wHour(sysTime.wHour),
+      _wMinute(sysTime.wMinute),
+      _wSecond(sysTime.wSecond),
+      _wMillisecond(sysTime.wMilliseconds),
+      _wMicrosecond(0),
+      _nTZ(0) {
     ASSERT(isValidTimeUnits());
 }
 
 bool cTimeUnits::GetSys(SYSTEMTIME& sysTime) const noexcept {
-    sysTime.wYear = m_wYear;
-    sysTime.wMonth = m_wMonth;             // 1 based.
+    sysTime.wYear = _wYear;
+    sysTime.wMonth = _wMonth;              // 1 based.
     sysTime.wDayOfWeek = (WORD)get_DOW();  // Sunday - [0,6] TIMEDOW_t
-    sysTime.wDay = m_wDay;
-    sysTime.wHour = m_wHour;
-    sysTime.wMinute = m_wMinute;
-    sysTime.wSecond = m_wSecond;
-    sysTime.wMilliseconds = m_wMillisecond;
+    sysTime.wDay = _wDay;
+    sysTime.wHour = _wHour;
+    sysTime.wMinute = _wMinute;
+    sysTime.wSecond = _wSecond;
+    sysTime.wMilliseconds = _wMillisecond;
     return true;
 }
 void cTimeUnits::SetSys(const SYSTEMTIME& sysTime) {
-    m_wYear = sysTime.wYear;
-    m_wMonth = sysTime.wMonth;  // 1 based.
-    m_wDay = sysTime.wDay;
-    m_wHour = sysTime.wHour;
-    m_wMinute = sysTime.wMinute;
-    m_wSecond = sysTime.wSecond;
-    m_wMillisecond = sysTime.wMilliseconds;
-    m_wMicrosecond = 0;
+    _wYear = sysTime.wYear;
+    _wMonth = sysTime.wMonth;  // 1 based.
+    _wDay = sysTime.wDay;
+    _wHour = sysTime.wHour;
+    _wMinute = sysTime.wMinute;
+    _wSecond = sysTime.wSecond;
+    _wMillisecond = sysTime.wMilliseconds;
+    _wMicrosecond = 0;
     ASSERT(isValidTimeUnits());
 }
 #endif
 
 void cTimeUnits::SetZeros() {
-    cMem::Zero(&m_wYear, static_cast<int>(TIMEUNIT_t::_DOW) * sizeof(m_wYear));
-    m_wYear = 1;  // m_uMin
-    m_wMonth = 1;
-    m_wDay = 1;
+    cMem::Zero(&_wYear, static_cast<int>(TIMEUNIT_t::_DOW) * sizeof(_wYear));
+    _wYear = 1;  // _nMin
+    _wMonth = 1;
+    _wDay = 1;
 }
 
 bool cTimeUnits::InitTimeNow(TZ_TYPE nTimeZone) {
@@ -134,7 +134,7 @@ bool cTimeUnits::InitTimeNow(TZ_TYPE nTimeZone) {
 COMPRET_t cTimeUnits::Compare(cTimeUnits& b) const {
     //! Compare relevant parts of 2 times.
 
-    if (b.m_nTZ != this->m_nTZ) {
+    if (b._nTZ != this->_nTZ) {
         //! @note TODO DOES NOT FACTOR TIMEUNIT_t::_TZ
     }
 
@@ -150,7 +150,7 @@ COMPRET_t cTimeUnits::Compare(cTimeUnits& b) const {
 
 bool cTimeUnits::isTimeFuture() const {
     cTimeUnits tNow;
-    tNow.InitTimeNow((TZ_TYPE)m_nTZ);
+    tNow.InitTimeNow((TZ_TYPE)_nTZ);
     return Compare(tNow) >= COMPARE_Greater;
 }
 
@@ -162,35 +162,25 @@ bool cTimeUnits::isValidTimeUnits() const {
     //! Are the values in valid range ? like GetUnitDef(i).IsInRange().
     //! @note If we are just using this for time math values may go out of range ?
     if (!isValidMonth()) return false;
-    if (m_wDay < 1 || m_wDay > get_DaysInMonth()) return false;
-    if (m_wHour > 23) return false;
-    if (m_wMinute > 59) return false;
-    if (m_wSecond > 59) return false;
+    if (_wDay < 1 || _wDay > get_DaysInMonth()) return false;
+    if (_wHour > 23) return false;
+    if (_wMinute > 59) return false;
+    if (_wSecond > 59) return false;
     return true;
 }
 
 bool cTimeUnits::isReasonableTimeUnits() const {
     //! Is this data reasonable for most purposes?
-    if (m_wYear < 1900) return false;
-    if (m_wYear > 2500) return false;
+    if (_wYear < 1900) return false;
+    if (_wYear > 2500) return false;
     return isValidTimeUnits();
 }
 
 int GRAYCALL cTimeUnits::IsLeapYear(TIMEVALU_t wYear) {  // static
-    //! 0 or 1 NOT Boolean - for array access.
-    //! Every year divisible by 4 is a leap year.
-    //! But every year divisible by 100 is NOT a leap year
-    //! Unless the year is also divisible by 400, then it is still a leap year.
-
-    if ((wYear & 3) != 0)  // not multiple of 4 = not leap year.
-        return 0;
-    if ((wYear % 100) == 0)  // multiple of 100. i.e. 1900 is not a leap year.
-    {
-        if ((wYear % 400) == 0)  // multiple of 400. i.e. 2000 is a leap year.
-            return 1;
-        return 0;
-    }
-    return 1;
+    if (wYear & 3) return 0;                             // not multiple of 4 = not leap year.
+    if (wYear % 100) return 1;                           // multiple of 4 but not multiple of 100 = is leap year.
+    if (wYear % 400) return 0;                           // multiple of 100 but not 400 = NOT. i.e. 1900 is not a leap year.
+    return 1;                                            // multiple of 400. i.e. 2000 is a leap year.
 }
 
 int GRAYCALL cTimeUnits::GetLeapYearsSince2K(TIMEVALU_t wYear) {  // static
@@ -218,7 +208,7 @@ TIMEDOW_t GRAYCALL cTimeUnits::GetDOW(TIMEVALU_t wYear, TIMEVALU_t wMonth, TIMEV
     ASSERT(wDay > 0);
     int iDays = (wYear - 2000);           // should be *365 but since (364%7)==0 we can omit that.
     iDays += GetLeapYearsSince2K(wYear);  // can be negative if wYear < 2000
-    iDays += k_MonthDaySums[IsLeapYear(wYear)][wMonth - 1];
+    iDays += k_aMonthDaySums[IsLeapYear(wYear)][wMonth - 1];
     iDays += (wDay - 1) + static_cast<int>(TIMEDOW_t::_Sat);  // (Jan 1 2000 = Sat)
     iDays %= static_cast<int>(TIMEDOW_t::_QTY);               // mod 7
     if (iDays < 0) {
@@ -232,7 +222,7 @@ int GRAYCALL cTimeUnits::GetDOY(TIMEVALU_t wYear, TIMEVALU_t wMonth, TIMEVALU_t 
     //! wMonth = 1 based
     //! wDay = 1 based.
     ASSERT(wMonth > 0 && wMonth <= 12);
-    return k_MonthDaySums[IsLeapYear(wYear)][wMonth - 1] + wDay - 1;
+    return k_aMonthDaySums[IsLeapYear(wYear)][wMonth - 1] + wDay - 1;
 }
 
 bool cTimeUnits::isInDST1() const {
@@ -254,7 +244,7 @@ bool cTimeUnits::isInDST1() const {
 
     TIMEVALU_t wMonthLo;
     TIMEVALU_t wMonthHi;
-    if (m_wYear >= 2007) {
+    if (_wYear >= 2007) {
         // New US idiot rules.
         wMonthLo = 3;
         wMonthHi = 11;
@@ -264,20 +254,20 @@ bool cTimeUnits::isInDST1() const {
     }
 
     // If the month is before April or after October, then we know immediately it can't be DST.
-    if (m_wMonth < wMonthLo || m_wMonth > wMonthHi) return false;
+    if (_wMonth < wMonthLo || _wMonth > wMonthHi) return false;
     // If the month is after April and before October then we know immediately it must be DST.
-    if (m_wMonth > wMonthLo && m_wMonth < wMonthHi) return true;
+    if (_wMonth > wMonthLo && _wMonth < wMonthHi) return true;
 
     // Month is April or October see if date falls between appropriate Sundays.
-    bool bLow = (m_wMonth < 6);
+    bool bLow = (_wMonth < 6);
 
     // What day (of the month) is the Sunday of interest?
     TIMEVALU_t wHour;
     int iSunday;
-    if (m_wYear < 1987) {
+    if (_wYear < 1987) {
         iSunday = 3;  // always last Sunday
         wHour = (bLow) ? 2 : 1;
-    } else if (m_wYear < 2007) {
+    } else if (_wYear < 2007) {
         iSunday = (bLow) ? 1 : 3;  // first or last.
         wHour = (bLow) ? 2 : 1;
     } else {                       // >= 2007
@@ -294,17 +284,17 @@ bool cTimeUnits::isInDST1() const {
             iDayMin = 8;
             break;
         default:  // Last Sunday in month
-            iDayMin = k_MonthDays[IsLeapYear(m_wYear)][m_wMonth - 1] - 6;
+            iDayMin = k_aMonthDays[IsLeapYear(_wYear)][_wMonth - 1] - 6;
             break;
     }
 
-    TIMEDOW_t eDOW = GetDOW(m_wYear, m_wMonth, (TIMEVALU_t)iDayMin);  // sun = 0
-    iSunday = iDayMin + ((7 - static_cast<int>(eDOW)) % 7);           // the next Sunday.
+    TIMEDOW_t eDOW = GetDOW(_wYear, _wMonth, (TIMEVALU_t)iDayMin);  // sun = 0
+    iSunday = iDayMin + ((7 - static_cast<int>(eDOW)) % 7);         // the next Sunday.
 
     if (bLow) {
-        return (m_wDay > iSunday || (m_wDay == iSunday && m_wHour >= wHour));
+        return (_wDay > iSunday || (_wDay == iSunday && _wHour >= wHour));
     } else {
-        return (m_wDay < iSunday || (m_wDay == iSunday && m_wHour < wHour));
+        return (_wDay < iSunday || (_wDay == iSunday && _wHour < wHour));
     }
 }
 
@@ -323,32 +313,32 @@ void cTimeUnits::put_DosDate(UINT32 ulDosDate) {
     //  11-15 =Hour (0-23 on a 24-hour clock)
     WORD wFatTime = LOWORD(ulDosDate);
 
-    this->m_wSecond = (TIMEVALU_t)(2 * (wFatTime & 0x1f));  // 2 second accurate.
-    this->m_wMinute = (TIMEVALU_t)((wFatTime >> 5) & 0x3f);
-    this->m_wHour = (TIMEVALU_t)((wFatTime >> 11));
+    this->_wSecond = (TIMEVALU_t)(2 * (wFatTime & 0x1f));  // 2 second accurate.
+    this->_wMinute = (TIMEVALU_t)((wFatTime >> 5) & 0x3f);
+    this->_wHour = (TIMEVALU_t)((wFatTime >> 11));
 
-    this->m_wDay = (TIMEVALU_t)(wFatDate & 0x1f);
-    this->m_wMonth = (TIMEVALU_t)((wFatDate >> 5) & 0x0f);
-    this->m_wYear = (TIMEVALU_t)(1980 + (wFatDate >> 9));  // up to 2043
+    this->_wDay = (TIMEVALU_t)(wFatDate & 0x1f);
+    this->_wMonth = (TIMEVALU_t)((wFatDate >> 5) & 0x0f);
+    this->_wYear = (TIMEVALU_t)(1980 + (wFatDate >> 9));  // up to 2043
 }
 
 UINT32 cTimeUnits::get_DosDate() const {
     //! get/pack a 32 bit DOS date format. for ZIP files. and old FAT file system.
     //! ASSUME isValidTimeUnits().
-    UINT32 year = (UINT32)this->m_wYear;  // 1980 to 2043
+    UINT32 year = (UINT32)this->_wYear;  // 1980 to 2043
     if (year > 1980)
         year -= 1980;
     else if (year > 80)
         year -= 80;
-    return (UINT32)(((this->m_wDay) + (32 * (this->m_wMonth)) + (512 * year)) << 16) | ((this->m_wSecond / 2) + (32 * this->m_wMinute) + (2048 * (UINT32)this->m_wHour));
+    return (UINT32)(((this->_wDay) + (32 * (this->_wMonth)) + (512 * year)) << 16) | ((this->_wSecond / 2) + (32 * this->_wMinute) + (2048 * (UINT32)this->_wHour));
 }
 
 void cTimeUnits::AddMonths(int iMonths) {
     //! Add months to this structure. months are not exact time measures, but there are always 12 per year.
     //! @arg iMonths = 0 based. Can be <0
-    iMonths += m_wMonth - 1;
-    m_wMonth = (TIMEVALU_t)(1 + (iMonths % 12));
-    m_wYear = (TIMEVALU_t)(m_wYear + (iMonths / 12));  // adjust years.
+    iMonths += _wMonth - 1;
+    _wMonth = (TIMEVALU_t)(1 + (iMonths % 12));
+    _wYear = (TIMEVALU_t)(_wYear + (iMonths / 12));  // adjust years.
 }
 
 void cTimeUnits::AddDays(int iDays) {
@@ -363,35 +353,35 @@ void cTimeUnits::AddDays(int iDays) {
         if (iDays2 >= iDaysInYear) {  // advance to next year.
             ASSERT(iDays > 0);
             iDays -= iDaysInYear - iDayOfYear;
-            m_wYear++;
-            m_wMonth = 1;
-            m_wDay = 1;
+            _wYear++;
+            _wMonth = 1;
+            _wDay = 1;
         } else if (iDays2 < 0) {  // previous year.
             ASSERT(iDays < 0);
             iDays += iDaysInYear;
-            m_wYear--;
-            m_wMonth = 12;
-            m_wDay = 31;
+            _wYear--;
+            _wMonth = 12;
+            _wDay = 31;
         } else
             break;
     }
     // Do we cross months?
     for (;;) {
-        int iDayOfMonth = (m_wDay - 1);
+        int iDayOfMonth = (_wDay - 1);
         int iDaysInMonth = get_DaysInMonth();
         int iDays2 = iDayOfMonth + iDays;
         if (iDays2 >= iDaysInMonth) {  // next month.
             ASSERT(iDays > 0);
             iDays -= iDaysInMonth - iDayOfMonth;
-            m_wMonth++;
-            m_wDay = 1;
+            _wMonth++;
+            _wDay = 1;
         } else if (iDays2 < 0) {  // previous month
             ASSERT(iDays < 0);
             iDays += iDayOfMonth;
-            m_wMonth--;
-            m_wDay = get_DaysInMonth();
+            _wMonth--;
+            _wDay = get_DaysInMonth();
         } else {
-            m_wDay += (TIMEVALU_t)iDays;
+            _wDay += (TIMEVALU_t)iDays;
             break;
         }
     }
@@ -444,7 +434,7 @@ void cTimeUnits::AddTZ(TZ_TYPE nTimeZone) {
         offset = cTimeZoneMgr::GetLocalMinutesWest();
     }
 
-    m_nTZ = offset;
+    _nTZ = offset;
     if (nTimeZone == TZ_UTC) return;  // adjust for timezone and DST, TZ_GMT = 0
 
     if (isInDST1()) offset -= 60;  // subtract hour.
@@ -455,7 +445,7 @@ void cTimeUnits::AddTZ(TZ_TYPE nTimeZone) {
 
 //******************************************************************
 
-StrLen_t cTimeUnits::GetTimeSpanStr(cSpanX<GChar_t>  ret, TIMEUNIT_t eUnitHigh, int iUnitsDesired, bool bShortText) const {
+StrLen_t cTimeUnits::GetTimeSpanStr(cSpanX<GChar_t> ret, TIMEUNIT_t eUnitHigh, int iUnitsDesired, bool bShortText) const {
     //! A delta/span time string. from years to milliseconds.
     //! Get a text description of amount of time span (delta)
     //! @arg
@@ -467,7 +457,7 @@ StrLen_t cTimeUnits::GetTimeSpanStr(cSpanX<GChar_t>  ret, TIMEUNIT_t eUnitHigh, 
     if (iUnitsDesired < 1) {
         iUnitsDesired = 1;  // must have at least 1.
     }
-    if (IS_INDEX_BAD_ARRAY(eUnitHigh, cTimeUnits::k_Units)) {
+    if (IS_INDEX_BAD_ARRAY(eUnitHigh, cTimeUnits::k_aUnits)) {
         eUnitHigh = TIMEUNIT_t::_Day;  // days is highest unit by default. months is not accurate!
     }
 
@@ -475,7 +465,7 @@ StrLen_t cTimeUnits::GetTimeSpanStr(cSpanX<GChar_t>  ret, TIMEUNIT_t eUnitHigh, 
     UINT64 nUnits = 0;
     int i = static_cast<int>(TIMEUNIT_t::_Year);  // 0
     for (; i < static_cast<int>(eUnitHigh); i++) {
-        nUnits = (nUnits + GetUnit0((TIMEUNIT_t)i)) * k_Units[i].m_uSubRatio;
+        nUnits = (nUnits + GetUnit0((TIMEUNIT_t)i)) * k_aUnits[i]._uSubRatio;
     }
 
     StrBuilder<GChar_t> sb(ret);
@@ -485,14 +475,14 @@ StrLen_t cTimeUnits::GetTimeSpanStr(cSpanX<GChar_t>  ret, TIMEUNIT_t eUnitHigh, 
         if (!nUnits) continue;  // just skip empty units.
 
         sb.AddSep(' ');  // " and ";
-         
+
         if (bShortText) {
-            sb.Printf(_GT("%u%s"), (int)nUnits, StrArg<GChar_t>(cTimeUnits::k_Units[i].m_pszUnitNameS));
+            sb.Printf(_GT("%u%s"), (int)nUnits, StrArg<GChar_t>(cTimeUnits::k_aUnits[i]._pszUnitNameS));
         } else if (nUnits == 1) {
             sb.AddStr(_GT("1 "));
-            sb.AddStr(cTimeUnits::k_Units[i].m_pszUnitNameL);
+            sb.AddStr(cTimeUnits::k_aUnits[i]._pszUnitNameL);
         } else {
-            sb.Printf(_GT("%u %ss"), (int)nUnits, cTimeUnits::k_Units[i].m_pszUnitNameL);
+            sb.Printf(_GT("%u %ss"), (int)nUnits, cTimeUnits::k_aUnits[i]._pszUnitNameL);
         }
 
         if (++iUnitsPrinted >= iUnitsDesired)  // only print iUnitsDesired most significant units of time
@@ -502,7 +492,7 @@ StrLen_t cTimeUnits::GetTimeSpanStr(cSpanX<GChar_t>  ret, TIMEUNIT_t eUnitHigh, 
 
     if (iUnitsPrinted == 0) {
         // just 0
-        return StrT::Copy(ret, bShortText ? _GT("0s") : _GT("0 seconds"));
+        return StrT::CopyPtr(ret, bShortText ? _GT("0s") : _GT("0 seconds"));
     }
 
     return sb.get_Length();
@@ -510,7 +500,7 @@ StrLen_t cTimeUnits::GetTimeSpanStr(cSpanX<GChar_t>  ret, TIMEUNIT_t eUnitHigh, 
 
 StrLen_t cTimeUnits::GetFormStr(cSpanX<GChar_t> ret, const GChar_t* pszFormat) const {
     if (CastPtrToNum(pszFormat) < static_cast<int>(TIMEFORMAT_t::_QTY)) {  // IS_INTRESOURCE()
-        pszFormat = k_StrFormats[CastPtrToNum(pszFormat)];
+        pszFormat = k_aStrFormats[CastPtrToNum(pszFormat)];
     }
 
     GChar_t szTmp[2];
@@ -545,37 +535,37 @@ StrLen_t cTimeUnits::GetFormStr(cSpanX<GChar_t> ret, const GChar_t* pszFormat) c
                 break;
 
             case 'y':  // Year without century, as decimal number (00 to 99)
-                wVal = m_wYear % 100;
+                wVal = _wYear % 100;
                 iValWidth = 2;
                 break;
             case 'Y':  // Year with century, as decimal number
-                wVal = m_wYear;
+                wVal = _wYear;
                 iValWidth = 0;
                 break;
 
             case 'b':  // Abbreviated month name
             case 'h':
-                if (m_wMonth == 0) break;
-                pszVal = k_MonthAbbrev[m_wMonth - 1];
+                if (_wMonth == 0) break;
+                pszVal = k_aMonthAbbrev[_wMonth - 1];
                 break;
             case 'B':  // Full month name
-                if (m_wMonth == 0) break;
-                pszVal = k_MonthName[m_wMonth - 1];
+                if (_wMonth == 0) break;
+                pszVal = k_aMonthName[_wMonth - 1];
                 break;
             case 'm':  // Month as decimal number (01 to 12)
-                wVal = m_wMonth;
+                wVal = _wMonth;
                 iValWidth = 2;
                 break;
             case 'd':  // Day of month as decimal number (01 to 31)
-                wVal = m_wDay;
+                wVal = _wDay;
                 iValWidth = 2;
                 break;
 
             case 'a':
-                pszVal = k_DayAbbrev[static_cast<int>(get_DOW())];
+                pszVal = k_aDayAbbrev[static_cast<int>(get_DOW())];
                 break;
             case 'A':
-                pszVal = k_DayName[static_cast<int>(get_DOW())];
+                pszVal = k_aDayName[static_cast<int>(get_DOW())];
                 break;
             case 'w':  // Weekday as decimal number (0 to 6; Sunday is 0)
                 wVal = static_cast<WORD>(get_DOW());
@@ -587,34 +577,34 @@ StrLen_t cTimeUnits::GetFormStr(cSpanX<GChar_t> ret, const GChar_t* pszFormat) c
                 break;
 
             case 'H':  // Hour in 24-hour format (00 to 23)
-                wVal = m_wHour;
+                wVal = _wHour;
                 iValWidth = 2;
                 break;
             case 'k':
-                wVal = m_wHour;
+                wVal = _wHour;
                 iValWidth = 0;
                 break;
             case 'I':  // Hour in 12-hour format (01 to 12)
-                wVal = (m_wHour % 12);
+                wVal = (_wHour % 12);
                 iValWidth = 2;
                 if (!wVal) wVal = 12;
                 break;
             case 'p':  // Current locale's A.M./P.M. indicator for 12-hour clock
-                pszVal = (m_wHour < 12) ? _GT("AM") : _GT("PM");
+                pszVal = (_wHour < 12) ? _GT("AM") : _GT("PM");
                 break;
             case 'M':  // Minute as decimal number (00 to 59)
-                wVal = m_wMinute;
+                wVal = _wMinute;
                 iValWidth = 2;
                 break;
             case 'S':  // Second as decimal number (00 to 59)
-                wVal = m_wSecond;
+                wVal = _wSecond;
                 iValWidth = 2;
                 break;
 
             case 'Z': {  // Either the time-zone name or time zone abbreviation, depending on registry settings; no characters if time zone is unknown
-                const cTimeZone* pTZ = cTimeZoneMgr::FindTimeZone((TZ_TYPE)m_nTZ);
+                const cTimeZone* pTZ = cTimeZoneMgr::FindTimeZone((TZ_TYPE)_nTZ);
                 if (pTZ != nullptr) {
-                    pszVal = pTZ->m_pszTimeZoneName;
+                    pszVal = pTZ->_pszTimeZoneName;
                 } else {
                     pszVal = _GT("");  // +00 for timezone.
                 }
@@ -622,9 +612,9 @@ StrLen_t cTimeUnits::GetFormStr(cSpanX<GChar_t> ret, const GChar_t* pszFormat) c
             }
 
             case 'z': {
-                const cTimeZone* pTZ = cTimeZoneMgr::FindTimeZone((TZ_TYPE)m_nTZ);
+                const cTimeZone* pTZ = cTimeZoneMgr::FindTimeZone((TZ_TYPE)_nTZ);
                 if (pTZ != nullptr) {
-                    pszVal = pTZ->m_pszTimeZoneName;
+                    pszVal = pTZ->_pszTimeZoneName;
                 } else {
                     pszVal = _GT("");
                 }
@@ -685,9 +675,9 @@ HRESULT cTimeUnits::SetTimeStr(const GChar_t* pszDateTime, TZ_TYPE nTimeZone) {
     hRes = parser.TestMatches();  // try all formats i know.
     if (FAILED(hRes)) return hRes;
 
-    m_nTZ = (TIMEVALU_t)nTimeZone;  // allowed to be overridden by cTimeParser.GetTimeUnits
+    _nTZ = (TIMEVALU_t)nTimeZone;  // allowed to be overridden by cTimeParser.GetTimeUnits
     hRes = parser.GetTimeUnits(*this);
-    if (m_nTZ == TZ_LOCAL) m_nTZ = cTimeZoneMgr::GetLocalMinutesWest();
+    if (_nTZ == TZ_LOCAL) _nTZ = cTimeZoneMgr::GetLocalMinutesWest();
 
     return hRes;
 }
@@ -695,51 +685,53 @@ HRESULT cTimeUnits::SetTimeStr(const GChar_t* pszDateTime, TZ_TYPE nTimeZone) {
 //******************************************************************************************
 
 StrLen_t cTimeParser::ParseNamedUnit(const GChar_t* pszName) {
+    auto& unitX = _Unit[_nUnitsParsed];
+
     // Get values for named units. TIMEUNIT_t::_Year to TIMEUNIT_t::_TZ
-    ITERATE_t iStart = StrT::SpanFindHead(pszName, TOSPAN(cTimeUnits::k_MonthName));
+    ITERATE_t iStart = StrT::SpanFindHead(pszName, TOSPAN(cTimeUnits::k_aMonthName));
     if (iStart >= 0) {
-        m_Unit[m_iUnitsParsed].m_Type = TIMEUNIT_t::_Month;
-        m_Unit[m_iUnitsParsed].m_nValue = (TIMEVALU_t)(iStart + 1);
-        return StrT::Len(cTimeUnits::k_MonthName[iStart]);
+        unitX._eType = TIMEUNIT_t::_Month;
+        unitX._nValue = (TIMEVALU_t)(iStart + 1);
+        return StrT::Len(cTimeUnits::k_aMonthName[iStart]);
     }
-    iStart = StrT::SpanFindHead(pszName, TOSPAN(cTimeUnits::k_MonthAbbrev));
+    iStart = StrT::SpanFindHead(pszName, TOSPAN(cTimeUnits::k_aMonthAbbrev));
     if (iStart >= 0) {
-        m_Unit[m_iUnitsParsed].m_Type = TIMEUNIT_t::_Month;
-        m_Unit[m_iUnitsParsed].m_nValue = (TIMEVALU_t)(iStart + 1);
-        return StrT::Len(cTimeUnits::k_MonthAbbrev[iStart]);
+        unitX._eType = TIMEUNIT_t::_Month;
+        unitX._nValue = (TIMEVALU_t)(iStart + 1);
+        return StrT::Len(cTimeUnits::k_aMonthAbbrev[iStart]);
     }
 
-    iStart = StrT::SpanFindHead(pszName, TOSPAN(cTimeUnits::k_DayName));
+    iStart = StrT::SpanFindHead(pszName, TOSPAN(cTimeUnits::k_aDayName));
     if (iStart >= 0) {
-        m_Unit[m_iUnitsParsed].m_Type = TIMEUNIT_t::_DOW;  // Temporary for DOW
-        m_Unit[m_iUnitsParsed].m_nValue = (TIMEVALU_t)iStart;
-        return StrT::Len(cTimeUnits::k_DayName[iStart]);
+        unitX._eType = TIMEUNIT_t::_DOW;  // Temporary for DOW
+        unitX._nValue = (TIMEVALU_t)iStart;
+        return StrT::Len(cTimeUnits::k_aDayName[iStart]);
     }
-    iStart = StrT::SpanFindHead(pszName, TOSPAN(cTimeUnits::k_DayAbbrev));
+    iStart = StrT::SpanFindHead(pszName, TOSPAN(cTimeUnits::k_aDayAbbrev));
     if (iStart >= 0) {
-        m_Unit[m_iUnitsParsed].m_Type = TIMEUNIT_t::_DOW;  // Temporary for DOW
-        m_Unit[m_iUnitsParsed].m_nValue = (TIMEVALU_t)iStart;
-        return StrT::Len(cTimeUnits::k_DayAbbrev[iStart]);
+        unitX._eType = TIMEUNIT_t::_DOW;  // Temporary for DOW
+        unitX._nValue = (TIMEVALU_t)iStart;
+        return StrT::Len(cTimeUnits::k_aDayAbbrev[iStart]);
     }
 
     const cTimeZone* pTZ = cTimeZoneMgr::FindTimeZoneHead(pszName);
     if (pTZ != nullptr) {
-        m_Unit[m_iUnitsParsed].m_Type = TIMEUNIT_t::_TZ;
-        m_Unit[m_iUnitsParsed].m_nValue = (TIMEVALU_t)(pTZ->m_nTimeZoneOffset);
-        return StrT::Len(pTZ->m_pszTimeZoneName);
+        unitX._eType = TIMEUNIT_t::_TZ;
+        unitX._nValue = (TIMEVALU_t)(pTZ->_nTimeZoneOffset);
+        return StrT::Len(pTZ->_pszTimeZoneName);
     }
 
     // AM / PM
     if (!StrT::CmpHeadI(_GT("PM"), pszName)) {
         // Add 12 hours.
-        m_Unit[m_iUnitsParsed].m_Type = TIMEUNIT_t::_Hour;
-        m_Unit[m_iUnitsParsed].m_nValue = 12;
+        unitX._eType = TIMEUNIT_t::_Hour;
+        unitX._nValue = 12;
         return 2;
     }
     if (!StrT::CmpHeadI(_GT("AM"), pszName)) {
         // Add 0 hours.
-        m_Unit[m_iUnitsParsed].m_Type = TIMEUNIT_t::_Hour;
-        m_Unit[m_iUnitsParsed].m_nValue = 0;
+        unitX._eType = TIMEUNIT_t::_Hour;
+        unitX._nValue = 0;
         return 2;
     }
 
@@ -749,32 +741,31 @@ StrLen_t cTimeParser::ParseNamedUnit(const GChar_t* pszName) {
 HRESULT cTimeParser::ParseString(const GChar_t* pszTimeString, const GChar_t* pszSeparators) {
     //! parse the pszTimeString to look for things that look like a date time.
     //! parse 3 types of things: Separators, numbers and unit names (e.g. Sunday).
-    //! @return m_iUnitsParsed
+    //! @return _nUnitsParsed
     //! @todo parse odd time zone storage .  (-03:00)
 
     if (pszTimeString == nullptr) return E_POINTER;
 
     const GChar_t* pszSepFind = nullptr;
     bool bNeedSep = false;
-    m_iUnitsParsed = 0;
+    _nUnitsParsed = 0;
 
     if (pszSeparators == nullptr) pszSeparators = cTimeUnits::k_SepsAll;
 
     StrLen_t i = 0;
     for (;;) {
-        StrLen_t iStart = i;
+        const StrLen_t iStart = i;
         i += StrT::GetNonWhitespaceN(pszTimeString + i);
         GChar_t ch = pszTimeString[i];
         pszSepFind = StrT::FindChar(pszSeparators, ch);
         if (pszSepFind != nullptr) {  // its a legal separator char?
         do_sep:
-            m_Unit[m_iUnitsParsed].m_iOffsetSep = i;
-            m_Unit[m_iUnitsParsed].m_Separator = ch;
+            _Unit[_nUnitsParsed].SetSep(i, ch);
             if (!bNeedSep) break;  // Was just empty!? NOT ALLOWED.
 
             bNeedSep = false;
-            m_iUnitsParsed++;
-            if (m_iUnitsParsed >= (int)_countof(m_Unit)) break;
+            _nUnitsParsed++;
+            if (_nUnitsParsed >= (int)_countof(_Unit)) break;
             if (ch == '\0') break;  // done.
 
             i++;
@@ -791,8 +782,7 @@ HRESULT cTimeParser::ParseString(const GChar_t* pszTimeString, const GChar_t* ps
                 // Check for terminating TZ with no separator.
                 const cTimeZone* pTZ = cTimeZoneMgr::FindTimeZoneHead(pszTimeString + i);
                 if (pTZ != nullptr) {
-                    // Insert fake separator.
-                    ch = ' ';
+                    ch = ' ';  // Insert fake separator.
                     i--;
                     goto do_sep;
                 }
@@ -800,29 +790,28 @@ HRESULT cTimeParser::ParseString(const GChar_t* pszTimeString, const GChar_t* ps
             }
 
             // Was whitespace separator.
-            m_Unit[m_iUnitsParsed].m_iOffsetSep = iStart;
-            m_Unit[m_iUnitsParsed].m_Separator = ' ';
+            _Unit[_nUnitsParsed].SetSep(iStart, ' ');
             bNeedSep = false;
-            m_iUnitsParsed++;
-            if (m_iUnitsParsed >= (int)_countof(m_Unit)) break;
+            _nUnitsParsed++;
+            if (_nUnitsParsed >= (int)_countof(_Unit)) break;
         }
         if (ch == '\0') break;  // done.
 
-        m_Unit[m_iUnitsParsed].Init();
+        _Unit[_nUnitsParsed].InitUnit();
         const GChar_t* pszStart = pszTimeString + i;
 
         if (StrChar::IsDigitA(ch)) {
             // We found a number. good. use it.
-            m_Unit[m_iUnitsParsed].m_Type = TIMEUNIT_t::_Numeric;  // this just means its a number. don't care what kind yet. resolve later.
+            _Unit[_nUnitsParsed]._eType = TIMEUNIT_t::_Numeric;  // this just means its a number. don't care what kind yet. resolve later.
             const GChar_t* pszEnd = nullptr;
-            m_Unit[m_iUnitsParsed].m_nValue = (TIMEVALU_t)StrT::toI(pszStart, &pszEnd, 10);
+            _Unit[_nUnitsParsed]._nValue = (TIMEVALU_t)StrT::toI(pszStart, &pszEnd, 10);
             if (pszStart >= pszEnd || pszEnd == nullptr) break;
             i += cValSpan::Diff(pszEnd, pszStart);
             bNeedSep = true;
             continue;
 
         } else if (StrChar::IsAlpha(ch)) {  // specific named units . DOW, TZ, Month.
-            int iLen = ParseNamedUnit(pszStart);
+            const int iLen = ParseNamedUnit(pszStart);
             if (iLen <= 0) break;
             i += iLen;
             bNeedSep = true;
@@ -839,33 +828,33 @@ HRESULT cTimeParser::ParseString(const GChar_t* pszTimeString, const GChar_t* ps
     int iYearFound = -1;
     int iMonthFound = -1;
 
-    for (i = 0; i < m_iUnitsParsed; i++) {
-        if (iMonthFound < 0 && m_Unit[i].m_Type == TIMEUNIT_t::_Month) {
+    for (i = 0; i < _nUnitsParsed; i++) {
+        if (iMonthFound < 0 && _Unit[i]._eType == TIMEUNIT_t::_Month) {
             iMonthFound = i;
         }
-        if (iYearFound < 0 && m_Unit[i].m_Type == TIMEUNIT_t::_Numeric && m_Unit[i].m_nValue > 366) {
+        if (iYearFound < 0 && _Unit[i]._eType == TIMEUNIT_t::_Numeric && _Unit[i]._nValue > 366) {
             // This must be the year.
             iYearFound = i;
-            m_Unit[i].m_Type = TIMEUNIT_t::_Year;
+            _Unit[i]._eType = TIMEUNIT_t::_Year;
         }
-        if (iHourFound < 0 && m_Unit[i].m_Type == TIMEUNIT_t::_Numeric && m_Unit[i].m_Separator == ':') {
+        if (iHourFound < 0 && _Unit[i]._eType == TIMEUNIT_t::_Numeric && _Unit[i]._chSeparator == ':') {
             iHourFound = i;
-            m_Unit[i].m_Type = TIMEUNIT_t::_Hour;
+            _Unit[i]._eType = TIMEUNIT_t::_Hour;
             i++;
-            m_Unit[i].m_Type = TIMEUNIT_t::_Minute;
-            if (i + 1 < m_iUnitsParsed && m_Unit[i + 1].m_Type == TIMEUNIT_t::_Numeric && m_Unit[i].m_Separator == ':') {
+            _Unit[i]._eType = TIMEUNIT_t::_Minute;
+            if (i + 1 < _nUnitsParsed && _Unit[i + 1]._eType == TIMEUNIT_t::_Numeric && _Unit[i]._chSeparator == ':') {
                 i++;
-                m_Unit[i].m_Type = TIMEUNIT_t::_Second;
-                if (i + 1 < m_iUnitsParsed && m_Unit[i + 1].m_Type == TIMEUNIT_t::_Numeric && m_Unit[i].m_Separator == '.') {
+                _Unit[i]._eType = TIMEUNIT_t::_Second;
+                if (i + 1 < _nUnitsParsed && _Unit[i + 1]._eType == TIMEUNIT_t::_Numeric && _Unit[i]._chSeparator == '.') {
                     i++;
-                    m_Unit[i].m_Type = TIMEUNIT_t::_Millisecond;
+                    _Unit[i]._eType = TIMEUNIT_t::_Millisecond;
                 }
             }
         }
-        if (iHourFound >= 0 && m_Unit[i].m_Type == TIMEUNIT_t::_Hour) {  // PM ?
-            m_Unit[i].m_Type = TIMEUNIT_t::_Ignore;                      // Ignore this from now on.
-            if (m_Unit[iHourFound].m_nValue < 12) {
-                m_Unit[iHourFound].m_nValue += m_Unit[i].m_nValue;  // Add 'PM'
+        if (iHourFound >= 0 && _Unit[i]._eType == TIMEUNIT_t::_Hour) {  // PM ?
+            _Unit[i]._eType = TIMEUNIT_t::_Ignore;                      // Ignore this from now on.
+            if (_Unit[iHourFound]._nValue < 12) {
+                _Unit[iHourFound]._nValue += _Unit[i]._nValue;  // Add 'PM'
             }
         }
     }
@@ -874,8 +863,8 @@ HRESULT cTimeParser::ParseString(const GChar_t* pszTimeString, const GChar_t* ps
     // Find day if month is found ?
 
     // We are not reading a valid time/date anymore. done. stop.
-    m_Unit[m_iUnitsParsed].m_Type = TIMEUNIT_t::_QTY2;  // end
-    return m_iUnitsParsed;
+    _Unit[_nUnitsParsed]._eType = TIMEUNIT_t::_QTY2;  // end
+    return _nUnitsParsed;
 }
 
 TIMEUNIT_t GRAYCALL cTimeParser::GetTypeFromFormatCode(GChar_t ch) {  // static
@@ -917,29 +906,28 @@ TIMEUNIT_t GRAYCALL cTimeParser::GetTypeFromFormatCode(GChar_t ch) {  // static
 
 int cTimeParser::FindType(TIMEUNIT_t t) const {
     // is this TIMEUNIT_t already used ?
-    for (int i = 0; i < m_iUnitsParsed; i++) {
-        if (m_Unit[i].m_Type == t) return i;
+    for (int i = 0; i < _nUnitsParsed; i++) {
+        if (_Unit[i]._eType == t) return i;
     }
     return -1;  // TIMEUNIT_t not used.
 }
 
 void cTimeParser::SetUnitFormats(const GChar_t* pszFormat) {
     //! Similar to ParseString but assumes we just want to set units from a format string.
-    m_iUnitsParsed = 0;
+    _nUnitsParsed = 0;
     int i = 0;
     for (;;) {  // TIMEUNIT_t::_QTY2
         GChar_t ch = pszFormat[i];
         if (ch == '\0') break;
         if (ch != '%') break;
         const TIMEUNIT_t eType = GetTypeFromFormatCode(pszFormat[i + 1]);
-        m_Unit[m_iUnitsParsed].m_Type = eType;
-        if (IS_INDEX_BAD(eType, TIMEUNIT_t::_Numeric))  // this should not happen ?! bad format string!
-            break;
-        m_Unit[m_iUnitsParsed].m_nValue = -1;  // set later.
-        m_Unit[m_iUnitsParsed].m_iOffsetSep = i + 2;
+        _Unit[_nUnitsParsed]._eType = eType;
+        if (IS_INDEX_BAD(eType, TIMEUNIT_t::_Numeric)) break;  // this should not happen ?! bad format string!
+
+        _Unit[_nUnitsParsed]._nValue = -1;  // set later.
         ch = pszFormat[i + 2];
-        m_Unit[m_iUnitsParsed].m_Separator = ch;
-        m_iUnitsParsed++;
+        _Unit[_nUnitsParsed].SetSep(i + 2, ch);
+        _nUnitsParsed++;
         if (ch == '\0') break;
         i += 3;
         i += StrT::GetNonWhitespaceN(pszFormat + i);
@@ -947,76 +935,76 @@ void cTimeParser::SetUnitFormats(const GChar_t* pszFormat) {
 }
 
 bool GRAYCALL cTimeParser::TestMatchUnit(const cTimeParserUnit& u, TIMEUNIT_t t) {  // static
-    ASSERT(IS_INDEX_GOOD(u.m_Type, TIMEUNIT_t::_QTY2));
+    ASSERT(IS_INDEX_GOOD(u._eType, TIMEUNIT_t::_QTY2));
     ASSERT(IS_INDEX_GOOD(t, TIMEUNIT_t::_Numeric));
-    if (!cTimeUnits::GetUnitDef(t).IsInRange(u.m_nValue)) return false;
-    if (t == u.m_Type) return true;  // exact type match is good.
+    if (!cTimeUnits::GetUnitDef(t).IsInRange(u._nValue)) return false;
+    if (t == u._eType) return true;  // exact type match is good.
     // TIMEUNIT_t::_Numeric is parsed wildcard (i don't know yet) type.
     // known types must match. TIMEUNIT_t::_Month or TIMEUNIT_t::_DOW
-    if (u.m_Type == TIMEUNIT_t::_Numeric) return true;  // It looks like a match ? I guess.
+    if (u._eType == TIMEUNIT_t::_Numeric) return true;  // It looks like a match ? I guess.
     return false;                                       // not a match.
 }
 
 bool cTimeParser::TestMatchFormat(const cTimeParser& parserFormat, bool bTrimJunk) {
-    //! Does parserFormat fit with data in m_Units ?
-    //! Does this contain compatible units with parserFormat? if so fix m_Unit types!
+    //! Does parserFormat fit with data in _Unit ?
+    //! Does this contain compatible units with parserFormat? if so fix _Unit types!
     //! @arg bTrimJunk = any unrecognized stuff beyond parserFormat can just be trimmed.
 
-    ASSERT(m_iUnitsParsed <= (int)_countof(m_Unit));
-    if (m_iUnitsParsed <= 1) return false;
+    ASSERT(_nUnitsParsed <= (int)_countof(_Unit));
+    if (_nUnitsParsed <= 1) return false;
 
     int iUnitsMatched = 0;
-    for (; iUnitsMatched < m_iUnitsParsed && iUnitsMatched < parserFormat.m_iUnitsParsed; iUnitsMatched++) {  // TIMEUNIT_t::_QTY2
-        if (!TestMatchUnit(m_Unit[iUnitsMatched], parserFormat.m_Unit[iUnitsMatched].m_Type))                 // not all parserFormat matched.
+    for (; iUnitsMatched < _nUnitsParsed && iUnitsMatched < parserFormat._nUnitsParsed; iUnitsMatched++) {  // TIMEUNIT_t::_QTY2
+        if (!TestMatchUnit(_Unit[iUnitsMatched], parserFormat._Unit[iUnitsMatched]._eType))                 // not all parserFormat matched.
             return false;
     }
 
-    // All m_iUnitsParsed matches parserFormat, but is there more ?
+    // All _nUnitsParsed matches parserFormat, but is there more ?
 
-    if (m_iUnitsParsed > parserFormat.m_iUnitsParsed) {
+    if (_nUnitsParsed > parserFormat._nUnitsParsed) {
         // More arguments than the template supplies . is this OK?
         // As long as the extra units are assigned and not duplicated we are good.
-        for (; iUnitsMatched < m_iUnitsParsed; iUnitsMatched++) {
-            TIMEUNIT_t t = m_Unit[iUnitsMatched].m_Type;
+        for (; iUnitsMatched < _nUnitsParsed; iUnitsMatched++) {
+            TIMEUNIT_t t = _Unit[iUnitsMatched]._eType;
             if (t == TIMEUNIT_t::_Numeric) {  // cant determine type.
                 if (bTrimJunk) break;
                 return false;
             }
-            if (parserFormat.FindType(t) >= 0)  // duped.
-                return false;
-            if (FindType(t) < iUnitsMatched)  // duped.
-                return false;
+            if (parserFormat.FindType(t) >= 0) return false;  // duped.
+                 
+            if (FindType(t) < iUnitsMatched) return false;  // duped.
+                
         }
     }
 
-    if (iUnitsMatched < parserFormat.m_iUnitsParsed) {
-        if (parserFormat.m_iUnitsParsed <= 3)  // must have at least 3 parsed units to be valid.
+    if (iUnitsMatched < parserFormat._nUnitsParsed) {
+        if (parserFormat._nUnitsParsed <= 3)  // must have at least 3 parsed units to be valid.
             return false;
         if (iUnitsMatched < 3) return false;
-        // int iLeft = parserFormat.m_iUnitsParsed - m_iUnitsParsed;
+        // int iLeft = parserFormat._nUnitsParsed - _nUnitsParsed;
     }
 
     // Its a match, so fix the ambiguous types.
-    for (int i = 0; i < iUnitsMatched && i < parserFormat.m_iUnitsParsed; i++) {
-        if (m_Unit[i].m_Type == TIMEUNIT_t::_Numeric) m_Unit[i].m_Type = parserFormat.m_Unit[i].m_Type;
+    for (int i = 0; i < iUnitsMatched && i < parserFormat._nUnitsParsed; i++) {
+        if (_Unit[i]._eType == TIMEUNIT_t::_Numeric) _Unit[i]._eType = parserFormat._Unit[i]._eType;
     }
-    m_iUnitsMatched = iUnitsMatched;
+    _nUnitsMatched = iUnitsMatched;
     return true;  // its compatible!
 }
 
 bool cTimeParser::TestMatch(const GChar_t* pszFormat) {
-    //! Does pszFormat fit with data in m_Units ?
+    //! Does pszFormat fit with data in _Unit ?
     if (pszFormat == nullptr) return false;
-    if (m_iUnitsParsed <= 1) return false;
+    if (_nUnitsParsed <= 1) return false;
     cTimeParser t1;
     t1.SetUnitFormats(pszFormat);
     return TestMatchFormat(t1);
 }
 
-HRESULT cTimeParser::TestMatches(const GChar_t** ppStrFormats) {
-    //! Try standard k_StrFormats to match.
-    if (m_iUnitsParsed <= 1) return false;
-    if (ppStrFormats == nullptr) ppStrFormats = cTimeUnits::k_StrFormats;
+HRESULT cTimeParser::TestMatches(const GChar_t* const* ppStrFormats) {
+    //! Try standard k_aStrFormats to match.
+    if (_nUnitsParsed <= 1) return false;
+    if (ppStrFormats == nullptr) ppStrFormats = cTimeUnits::k_aStrFormats;
 
     for (int i = 0; ppStrFormats[i] != nullptr; i++) {
         if (TestMatch(ppStrFormats[i])) return i;  // does it match this format ?
@@ -1029,9 +1017,10 @@ HRESULT cTimeParser::TestMatches(const GChar_t** ppStrFormats) {
 HRESULT cTimeParser::GetTimeUnits(OUT cTimeUnits& tu) const {
     //! Make a valid cTimeUnits class from what we already parsed. If i can.
     if (!isMatched()) return MK_E_SYNTAX;
-    for (int i = 0; i < m_iUnitsMatched; i++) {              // <TIMEUNIT_t::_QTY2
-        if (m_Unit[i].m_Type >= TIMEUNIT_t::_DOW) continue;  // TIMEUNIT_t::_DOW, TIMEUNIT_t::_Ignore ignored.
-        tu.SetUnit(m_Unit[i].m_Type, m_Unit[i].m_nValue);
+    ASSERT(_nUnitsMatched <= _countof(_Unit));
+    for (int i = 0; i < _nUnitsMatched; i++) {              // <TIMEUNIT_t::_QTY2
+        if (_Unit[i]._eType >= TIMEUNIT_t::_DOW) continue;  // TIMEUNIT_t::_DOW, TIMEUNIT_t::_Ignore ignored.
+        tu.SetUnit(_Unit[i]._eType, _Unit[i]._nValue);
     }
     return GetMatchedLength();
 }

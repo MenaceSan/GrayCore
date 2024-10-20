@@ -61,11 +61,11 @@ enum class FILEATTR_t : UINT32 {
 struct GRAYCORE_LINK cFileStatus {
     typedef cFileStatus THIS_t;
 
-    cTimeFile m_timeCreate;        /// m_ctime  = (may not be supported by file system).
-    cTimeFile m_timeChange;        /// m_mtime = real world time/date of last modification. (FAT32 only accurate to 2 seconds) // All OS support this.
-    cTimeFile m_timeLastAccess;    /// m_atime = time of last access/Open. (For Caching). (may not be supported by file system)
-    FILE_SIZE_t m_Size;            /// file size in bytes. size_t. not always accurate for directories. (-1)
-    cBitmask<FILEATTR_t,UINT32> m_Attributes;  /// cBitmask of file attribute bits. FILEATTR_None
+    cTimeFile _timeChange;                          /// m_mtime = real world time/date of last modification. (FAT32 only accurate to 2 seconds) // All OS support this.
+    cTimeFile _timeCreate;                          /// m_ctime  = (may not be supported by file system).
+    cTimeFile _timeLastAccess;    /// m_atime = time of last access/Open. (For Caching). (may not be supported by file system)
+    FILE_SIZE_t _nSize = CastN(FILE_SIZE_t,-1);     /// file size in bytes. size_t. not always accurate for directories. (-1 = invalid size)
+    cBitmask<FILEATTR_t, UINT32> _AttributeFlags = FILEATTR_t::_None;  /// cBitmask of file attribute bits. FILEATTR_None
 
     cFileStatus() noexcept;
     cFileStatus(const FILECHAR_t* pszFilePath);
@@ -85,7 +85,7 @@ struct GRAYCORE_LINK cFileStatus {
     bool UpdateLinuxHidden(const FILECHAR_t* pszName) noexcept {
         //! Is this a __linux__ (NFS) hidden file name ? starts with dot.
         if (IsLinuxHidden(pszName)) {
-            m_Attributes.SetMask(FILEATTR_t::_Hidden);
+            _AttributeFlags.SetMask(FILEATTR_t::_Hidden);
             return true;
         }
         return false;
@@ -97,16 +97,16 @@ struct GRAYCORE_LINK cFileStatus {
     /// </summary>
     /// <returns>false = bad (or not a) file like 'com1:' 'lpt:' etc.</returns>
     bool isFileValid() const noexcept {
-        return m_timeChange.isValid();
+        return _timeChange.isValid();
     }
 
-    static COMPARE_t GRAYCALL CompareChangeFileTime(const cTimeFile& t1, const cTimeFile& t2) {  //! (accurate to 2 seconds)
+    static COMPARE_t GRAYCALL CompareChangeFileTime(const cTimeFile& t1, const cTimeFile& t2) noexcept {  //! (accurate to 2 seconds)
         //! ~2 sec accurate for FAT32
         return cValT::Compare(t1.get_FAT32(), t2.get_FAT32());
     }
     bool IsSameChangeFileTime(const cTimeFile& t2) const noexcept {  //! (accurate to 2 seconds)
         //! ~2 sec accurate for FAT32
-        return cValT::Compare(m_timeChange.get_FAT32(), t2.get_FAT32()) == COMPARE_Equal;
+        return cValT::Compare(_timeChange.get_FAT32(), t2.get_FAT32()) == COMPARE_Equal;
     }
     static constexpr TIMESEC_t MakeFatTime(TIMESEC_t tTime) noexcept {
         //! (accurate to 2 seconds)
@@ -119,13 +119,13 @@ struct GRAYCORE_LINK cFileStatus {
         return cValT::Compare(MakeFatTime(t1.GetTime()), MakeFatTime(t2.GetTime()));
     }
     bool IsSameChangeTime(const cTimeInt& t2) const noexcept {
-        return CompareChangeTime(m_timeChange, t2) == COMPARE_Equal;
+        return CompareChangeTime(_timeChange, t2) == COMPARE_Equal;
     }
 
     bool IsFileEqualTo(const THIS_t& rFileStatus) const noexcept {
-        if (cValT::Compare(m_timeCreate.get_Val(), rFileStatus.m_timeCreate.get_Val()) != COMPARE_Equal) return false;
-        if (!IsSameChangeFileTime(rFileStatus.m_timeChange)) return false;
-        if (m_Size != rFileStatus.m_Size) return false;
+        if (cValT::Compare(_timeCreate.get_Val(), rFileStatus._timeCreate.get_Val()) != COMPARE_Equal) return false;
+        if (!IsSameChangeFileTime(rFileStatus._timeChange)) return false;
+        if (_nSize != rFileStatus._nSize) return false;
         return true;
     }
     bool IsFileEqualTo(const THIS_t* pFileStatus) const noexcept {
@@ -137,7 +137,7 @@ struct GRAYCORE_LINK cFileStatus {
     /// have this attribute? e.g. FILEATTR_t::_ReadOnly
     /// </summary>
     bool IsAttrMask(FILEATTR_t dwAttrMask = FILEATTR_t::_ReadOnly) const noexcept {
-        return m_Attributes.HasAny(dwAttrMask);
+        return _AttributeFlags.HasAny(dwAttrMask);
     }
     bool isAttrDir() const noexcept {
         return IsAttrMask(FILEATTR_t::_Directory);
@@ -151,16 +151,26 @@ struct GRAYCORE_LINK cFileStatus {
     /// </summary>
     /// <returns>-1 = size not available for directories.</returns>
     FILE_SIZE_t GetFileLength() const noexcept {
-        return m_Size;
+        return _nSize;
     }
 
     static HRESULT GRAYCALL WriteFileAttributes(const FILECHAR_t* pszFilePath, FILEATTR_t dwAttributes);
     static HRESULT GRAYCALL WriteFileTimes(const FILECHAR_t* pszFilePath, const cTimeFile* pTimeCreate, const cTimeFile* pTimeChange = nullptr);
     static HRESULT GRAYCALL WriteFileTimes(const FILECHAR_t* pszFilePath, const cFileStatus& rFileStatus);
+
+    /// <summary>
+    /// get info/attributes/status on a single file or dir. like OF_EXIST ?
+    /// Similar to the MFC CFileFind. Are wildcards allowed ??
+    /// @note cFilePath::IsFilePathRoot will fail.
+    /// </summary>
+    /// <param name="pszFilePath"></param>
+    /// <param name="pFileStatus">is allowed to be nullptr</param>
+    /// <param name="bFollowLink"></param>
+    /// <returns>S_OK</returns>
     static HRESULT GRAYCALL ReadFileStatus2(const FILECHAR_t* pszFilePath, cFileStatus* pFileStatus = nullptr, bool bFollowLink = false);
 
     static bool GRAYCALL Exists(const FILECHAR_t* pszFilePath) {
-        //! boolean true if this file exists? I can read it. Does not mean I can write to it.
+        //! boolean true if this file exists? I can read it. Does not mean I can write to it. like OF_EXISTS
         const HRESULT hRes = ReadFileStatus2(pszFilePath, nullptr, true);
         return SUCCEEDED(hRes);
     }

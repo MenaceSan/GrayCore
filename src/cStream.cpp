@@ -4,38 +4,41 @@
 #include "pch.h"
 // clang-format on
 #include "StrT.h"
+#include "cRandom.h"
 #include "cStack.h"  // include this some palce just to compile.
 #include "cStream.h"
 #include "cThreadLock.h"
+#include "cUnitTest.h"
 #include "cValT.h"
 
 namespace Gray {
+cSingletonStatic_IMPL(cStreamNull);
 
 cStreamTransaction ::cStreamTransaction(cStreamInput* pInp) : cStreamReader(pInp) {
-    ASSERT_NN(m_pInp);
-    m_lPosStart = m_pInp->GetPosition();
-    if (CastN(UINT_PTR, m_lPosStart) > CastN(STREAM_POS_t, cMem::k_ALLOC_MAX)) {
-        m_lPosStart = k_STREAM_POS_ERR;  // Rollback not allowed!
+    ASSERT_NN(_pInp);
+    _nPosStart = _pInp->GetPosition();
+    if (CastN(UINT_PTR, _nPosStart) > CastN(STREAM_POS_t, cMem::k_ALLOC_MAX)) {
+        _nPosStart = k_STREAM_POS_ERR;  // Rollback not allowed!
         return;
     }
-    m_nSeekSizeMinPrev = m_pInp->SetReadCommitSize(0);  // Don't use AutoReadCommit inside cStreamTransaction.
-    ASSERT(m_nSeekSizeMinPrev >= 0 && m_nSeekSizeMinPrev <= cMem::k_ALLOC_MAX);
+    _nSeekSizeMinPrev = _pInp->SetReadCommitSize(0);  // Don't use AutoReadCommit inside cStreamTransaction.
+    ASSERT(_nSeekSizeMinPrev >= 0 && _nSeekSizeMinPrev <= cMem::k_ALLOC_MAX);
     ASSERT(isTransactionActive());
 }
 cStreamTransaction ::~cStreamTransaction() {
     //! if we didn't say it was a success, do a rollback on destruct.
-    if (m_pInp == nullptr) return;
+    if (_pInp == nullptr) return;
     if (isTransactionActive()) {  // We failed ! didn't call SetTransactionComplete or SetTransactionFailed()
         TransactionRollback();
     }
     // Restore commit ability
-    m_pInp->SetReadCommitSize(m_nSeekSizeMinPrev);  // Complete. we can now commit reads. e.g. toss data we have declared read.
+    _pInp->SetReadCommitSize(_nSeekSizeMinPrev);  // Complete. we can now commit reads. e.g. toss data we have declared read.
 }
 HRESULT cStreamTransaction ::TransactionRollback() {
-    // Roll back to m_lPosStart
-    const STREAM_POS_t lPosCur = m_pInp->GetPosition();
-    if (lPosCur == m_lPosStart) return S_OK;  // SetTransactionPartial was full success.
-    return m_pInp->SeekX(CastN(STREAM_OFFSET_t, m_lPosStart), SEEK_t::_Set);
+    // Roll back to _nPosStart
+    const STREAM_POS_t lPosCur = _pInp->GetPosition();
+    if (lPosCur == _nPosStart) return S_OK;  // SetTransactionPartial was full success.
+    return _pInp->SeekX(CastN(STREAM_OFFSET_t, _nPosStart), SEEK_t::_Set);
 }
 
 STREAM_POS_t cStreamBase::GetLength() const noexcept {  // virtual // default impl
@@ -202,5 +205,96 @@ HRESULT cStreamInput::ReadPeek(cMemSpan ret) noexcept {  // virtual
     const HRESULT hResSeek = SeekX(-hResRead, SEEK_t::_Cur);  // back up.
     if (FAILED(hResSeek)) return hResSeek;                    // ERROR.
     return hResRead;
+}
+
+//*******************************************
+
+bool GRAYCALL cStreamTester::TestWrites(cStreamOutput& testfile1) {  // static
+    for (ITERATE_t i = 0; i < _countof(cUnitTests::k_asTextLines); i++) {
+        HRESULT hRes = testfile1.WriteString(cUnitTests::k_asTextLines[i].get_CPtr());
+        ASSERT(SUCCEEDED(hRes));
+        hRes = testfile1.WriteString(_GT(STR_NL));
+    }
+    return true;
+}
+
+bool GRAYCALL cStreamTester::TestReads(cStreamInput& stmIn, bool bString) {  // static
+    GChar_t szTmp[256];
+
+    for (ITERATE_t j = 0; j < _countof(cUnitTests::k_asTextLines); j++) {
+        const GChar_t* pszLine = cUnitTests::k_asTextLines[j];
+        const StrLen_t iLenStr = StrT::Len(pszLine);
+        ASSERT(iLenStr == cUnitTests::k_asTextLines[j]._Len);
+        ASSERT(iLenStr < (StrLen_t)STRMAX(szTmp));
+        const size_t nSizeBytes = (iLenStr + 1) * sizeof(GChar_t);
+        const HRESULT hResRead = bString ? stmIn.ReadStringLine(TOSPAN(szTmp)) : stmIn.ReadX(cMemSpan(szTmp, nSizeBytes));
+        ASSERT(hResRead == (HRESULT)(bString ? (iLenStr + 1) : nSizeBytes));
+        ASSERT(cMem::IsEqual(szTmp, pszLine, iLenStr * sizeof(GChar_t)));  // pszLine has no newline.
+        ASSERT(szTmp[iLenStr] == '\n');
+    }
+
+    // Check for proper read past end of file.
+    HRESULT hResRead = stmIn.ReadX(TOSPAN(szTmp));
+    ASSERT(hResRead == 0);
+    hResRead = stmIn.ReadX(TOSPAN(szTmp));
+    ASSERT(hResRead == 0);
+    return true;
+}
+
+bool GRAYCALL cStreamTester::TestReadsAndWrites(cStreamOutput& stmOut, cStreamInput& stmIn, size_t nSizeTotal, TIMESECD_t timeMax) {  //    static
+    size_t iSizeBlock = g_Rand.GetRandUX(1024) + 100;                                                                                 // TODO Make random range bigger !! 2k ?
+    cBlob blobWrite(iSizeBlock * 2);
+    g_Rand.GetNoise(cMemSpan(blobWrite, iSizeBlock));
+    cMem::Copy(blobWrite.GetTPtrW<BYTE>() + iSizeBlock, blobWrite.GetTPtrC(), iSizeBlock);  // double it.
+
+    size_t iSizeWriteTotal = 0;
+    size_t iSizeReadTotal = 0;
+
+    HRESULT hRes;
+    cBlob blobRead(iSizeBlock);
+    const cTimeSys tStart(cTimeSys::GetTimeNow());
+    size_t nSizeReal;
+
+    int i = 0;
+    for (;; i++) {
+        ASSERT(iSizeReadTotal <= iSizeWriteTotal);
+
+        if (iSizeWriteTotal < nSizeTotal) {  // write more?
+            size_t iSizeWriteBlock = g_Rand.GetRandUX(CastN(UINT, iSizeBlock - 1)) + 1;
+            if (iSizeWriteTotal + iSizeWriteBlock > nSizeTotal) iSizeWriteBlock = nSizeTotal - iSizeWriteTotal;
+            ASSERT(iSizeWriteBlock <= iSizeBlock);
+            hRes = stmOut.WriteX(cMemSpan(blobWrite.GetTPtrC<BYTE>() + (iSizeWriteTotal % iSizeBlock), iSizeWriteBlock));
+            ASSERT(SUCCEEDED(hRes));
+            nSizeReal = CastN(size_t, hRes);
+            ASSERT(nSizeReal <= iSizeWriteBlock);
+            iSizeWriteTotal += nSizeReal;
+            ASSERT(iSizeWriteTotal <= nSizeTotal);
+        }
+
+        ASSERT(iSizeReadTotal <= iSizeWriteTotal);
+
+        const size_t iSizeReadBlock = g_Rand.GetRandUX((UINT)(iSizeBlock - 1)) + 1;
+        ASSERT(iSizeReadBlock <= iSizeBlock);
+        BYTE* pRead = blobRead.GetTPtrW();
+        hRes = stmIn.ReadX(cMemSpan(pRead, iSizeReadBlock));
+        ASSERT(SUCCEEDED(hRes));
+        nSizeReal = (size_t)hRes;
+        ASSERT(nSizeReal <= iSizeReadBlock);
+
+        // Make sure i read correctly.
+        const BYTE* pWrite = blobWrite.GetTPtrC<BYTE>() + (iSizeReadTotal % iSizeBlock);
+        const bool isEqual = cMem::IsEqual(pWrite, pRead, nSizeReal);
+        ASSERT(isEqual);
+        iSizeReadTotal += nSizeReal;
+        ASSERT(iSizeReadTotal <= iSizeWriteTotal);
+
+        if (iSizeReadTotal >= nSizeTotal) break;  // done?
+
+        if (tStart.get_AgeSec() > timeMax) {
+            ASSERT(false);
+            return false;
+        }
+    }
+    return true;
 }
 }  // namespace Gray

@@ -7,10 +7,10 @@
 #pragma once
 #endif
 
-#include "PtrCast.h"
+#include "HResult.h"  // S_OK
 #include "Index.h"
+#include "PtrCast.h"
 #include "cDebugAssert.h"
-#include "HResult.h"    // S_OK
 
 namespace Gray {
 /// <summary>
@@ -19,9 +19,9 @@ namespace Gray {
 /// same as enum tagSTREAM_SEEK
 /// </summary>
 enum class SEEK_t {
-    _Set = 0,        /// SEEK_SET = FILE_BEGIN = STREAM_SEEK_SET = 0 = relative to the start of the file. (default)
-    _Cur = 1,        /// SEEK_CUR = FILE_CURRENT = STREAM_SEEK_CUR = 1 = relative to the current position.
-    _End = 2,        /// SEEK_END = FILE_END = STREAM_SEEK_END = 2 = relative to the end of the file.
+    _Set = 0,  /// SEEK_SET = FILE_BEGIN = STREAM_SEEK_SET = 0 = relative to the start of the file. (default)
+    _Cur = 1,  /// SEEK_CUR = FILE_CURRENT = STREAM_SEEK_CUR = 1 = relative to the current position.
+    _End = 2,  /// SEEK_END = FILE_END = STREAM_SEEK_END = 2 = relative to the end of the file.
 };
 
 #if defined(_MFC_VER) && (_MFC_VER > 0x0600)
@@ -43,33 +43,33 @@ constexpr STREAM_POS_t k_STREAM_POS_ERR = CastN(STREAM_POS_t, -1);  // like INVA
 /// <typeparam name="TYPE"></typeparam>
 template <typename TYPE = STREAM_POS_t>
 struct cStreamProgressT {
-    TYPE m_nAmount;  /// How far the stream has progressed toward m_nTotal.
-    TYPE m_nTotal;   /// Total size of the stream. 0 = i have no idea how big the total is.
+    TYPE _nCurrent;  /// How far the stream has progressed toward _nTotal. Current Value.
+    TYPE _nTotal;    /// Total/Max size of the stream. 0 = i have no idea how big the total is.
 
-    cStreamProgressT(TYPE nAmount = 0, TYPE nTotal = 0) noexcept : m_nAmount(nAmount), m_nTotal(nTotal) {}
+    cStreamProgressT(TYPE nCurrent = 0, TYPE nTotal = 0) noexcept : _nCurrent(nCurrent), _nTotal(nTotal) {}
     bool isComplete() const noexcept {
-        if (m_nTotal == 0) return true;  // no idea.            
-        if (m_nAmount >= m_nTotal) return true;
+        if (_nTotal == 0) return true;  // no idea.
+        if (_nCurrent >= _nTotal) return true;
         return false;
     }
     float get_PercentFloat() const noexcept {
         //! Get percent of total.
         //! @return 0.0f to 1.0f
-        if (m_nTotal == 0) return 0;  // no idea.            
-        return CastN(float, ((double)m_nAmount) / ((double)m_nTotal));
+        if (_nTotal == 0) return 0;  // no idea.
+        return CastN(float, CastN(double, _nCurrent) / CastN(double, _nTotal));
     }
     int get_PercentInt() const noexcept {
         //! @return From 0 to 100. MULDIV
-        if (m_nTotal == 0) return 0;  // no idea.
-        return CastN(int, (m_nAmount * 100) / m_nTotal);
+        if (_nTotal == 0) return 0;  // no idea.
+        return CastN(int, (_nCurrent * 100) / _nTotal);
     }
     bool isValidPercent() const noexcept {
-        if (m_nTotal <= 0) return false;  // no idea.            
-        return m_nAmount <= m_nTotal;
+        if (_nTotal <= 0) return false;  // no idea.
+        return _nCurrent <= _nTotal;
     }
     void InitZero() noexcept {
-        m_nAmount = 0;
-        m_nTotal = 0;  // 0 = i have no idea how big the total is.
+        _nCurrent = 0;
+        _nTotal = 0;  // 0 = i have no idea how big the total is.
     }
 };
 typedef cStreamProgressT<STREAM_POS_t> cStreamProgress;
@@ -78,8 +78,8 @@ typedef cStreamProgressT<STREAM_POS_t> cStreamProgress;
 /// We are descending into nested tasks we have not fully measured.
 /// i.e. enumerating subdirectories i have not yet counted.
 /// TODO This can be a used as a time throbber. the task time is just an estimate. we should never actually reach it.
-/// m_nTotal = Estimated Value of the directory we are processing. (1.0=total of all files)
-/// m_nAmount = Current progress 0 to 1.0 (m_nTotal)
+/// _nTotal = Estimated Value of the directory we are processing. (1.0=total of all files)
+/// _nCurrent = Current progress 0 to 1.0 (_nTotal)
 /// </summary>
 struct GRAYCORE_LINK cStreamProgressF : cStreamProgressT<float> {
     friend class cStreamProgressChunk;
@@ -88,19 +88,19 @@ struct GRAYCORE_LINK cStreamProgressF : cStreamProgressT<float> {
         InitPercent();
     }
     void InitPercent() noexcept {
-        m_nTotal = 1.0f;  // of everything.
-        m_nAmount = 0.0f;
+        _nTotal = 1.0f;  // of everything.
+        _nCurrent = 0.0f;
     }
 #if 0
 	void put_PercentComplete(float fComplete = 1.0f) noexcept {
-		m_nAmount = fComplete;	// indicate we are done.
+		_nCurrent = fComplete;	// indicate we are done.
 	}
 #endif
     float get_PercentComplete() const noexcept {
-        return m_nAmount;  // return value <= 1.0f
+        return _nCurrent;  // return value <= 1.0f. ASSUME _nTotal = 1.
     }
     float get_PercentChunk() const noexcept {
-        return m_nTotal;
+        return _nTotal;
     }
 };
 
@@ -108,41 +108,41 @@ struct GRAYCORE_LINK cStreamProgressF : cStreamProgressT<float> {
 /// Track nested work load. Processing a tree.
 /// </summary>
 class GRAYCORE_LINK cStreamProgressChunk {
-    cStreamProgressF& m_Prog;
-    cStreamProgressF m_ProgPrev;  /// m_Prog at start.
-    int m_iChunk;                 /// What chunk are we on ?
-    int m_iChunks;                /// how many chunks is this supposed to be ?
+    cStreamProgressF& _rProg;
+    cStreamProgressF _ProgPrev;  /// _rProg at start.
+    int _nChunk = 0;                /// What chunk are we on ?
+    int _nChunks;               /// how many chunks is this supposed to be ?
 
  public:
-    cStreamProgressChunk(cStreamProgressF& prog, int iSubChunks, int iParentChunks = 1) : m_Prog(prog), m_iChunk(0), m_iChunks(iSubChunks) {
+    cStreamProgressChunk(cStreamProgressF& prog, int iSubChunks, int iParentChunks = 1) : _rProg(prog), _nChunks(iSubChunks) {
         //! Start a sub-chunk of the task. expect iChunks in this task. IncChunk() will be called.
-        //! iParentChunks = the number of m_nTotal we represent.
+        //! iParentChunks = the number of _nTotal we represent.
         //! ASSUME caller will IncChunk(iParentChunks) after this is destructed.
-        m_ProgPrev = m_Prog;
+        _ProgPrev = _rProg;
         ASSERT(iSubChunks >= 0);
-        if (m_iChunks == 0) {
-            prog.m_nTotal = 0;
+        if (_nChunks == 0) {
+            prog._nTotal = 0;
         } else {
-            prog.m_nTotal = (((float)iParentChunks) * prog.m_nTotal) / ((float)m_iChunks);  // MULDIV
+            prog._nTotal = (CastN(float, iParentChunks) * prog._nTotal) / CastN(float, _nChunks);  // MULDIV
         }
     }
     ~cStreamProgressChunk() noexcept {
         //! complete the task.
-        if (m_ProgPrev.m_nTotal >= 1.0f) {
-            m_Prog.m_nTotal = m_Prog.m_nAmount = 1.0f;  // i have no parent. we are done.
+        if (_ProgPrev._nTotal >= 1.0f) {
+            _rProg._nTotal = _rProg._nCurrent = 1.0f;  // i have no parent. we are done.
         } else {
-            m_Prog = m_ProgPrev;  // back out my changes and assume IncChunk() will be called from my parent.
+            _rProg = _ProgPrev;  // back out my changes and assume IncChunk() will be called from my parent.
         }
     }
     void IncChunk(int iChunks = 1) noexcept {
         //! We are making some progress at the current task.
-        //! ASSERT(prog.m_nTotal);
-        m_iChunk += iChunks;
-        if (m_iChunk > m_iChunks) {
+        //! ASSERT(prog._nTotal);
+        _nChunk += iChunks;
+        if (_nChunk > _nChunks) {
             // this really shouldn't happen!
-            m_iChunk = m_iChunks;
+            _nChunk = _nChunks;
         }
-        m_Prog.m_nAmount += iChunks * m_Prog.m_nTotal;
+        _rProg._nCurrent += iChunks * _rProg._nTotal;
     }
 };
 

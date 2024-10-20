@@ -125,7 +125,7 @@ HRESULT GRAYCALL cFileCopier::RenamePath(const FILECHAR_t* lpszOldName, const FI
 }
 
 HRESULT cFileCopier::RequestFile(const FILECHAR_t* pszSrcRemote, const FILECHAR_t* pszDestLocal, IStreamProgressCallback* pProgress, FILE_SIZE_t nOffsetStart, FILE_SIZE_t* pnRequestSizeEst) {  // virtual
-    //! Request a file from a m_sRemoteRoot/pszSrcName (file system) to be brought back to me at local pszDestPath.
+    //! Request a file from a _sRemoteRoot/pszSrcName (file system) to be brought back to me at local pszDestPath.
     //! @arg pnRequestSizeEst = unused/unnecessary for local file system copy.
 
     cStringF sSrcRemote = MakeRemotePath(pszSrcRemote);
@@ -152,7 +152,7 @@ HRESULT cFileCopier::RequestFile(const FILECHAR_t* pszSrcRemote, const FILECHAR_
 }
 
 HRESULT cFileCopier::SendFile(const FILECHAR_t* pszSrcLocal, const FILECHAR_t* pszDestRemote, IStreamProgressCallback* pProgress, FILE_SIZE_t nOffsetStart, FILE_SIZE_t nSize) {  // override virtual
-    //! Send a local file to a m_sRemoteRoot/pszDestName from local pszSrcPath storage
+    //! Send a local file to a _sRemoteRoot/pszDestName from local pszSrcPath storage
     //! @note I cannot set the modification time stamp for the file here.
 
     UNREFERENCED_PARAMETER(nSize);
@@ -175,7 +175,7 @@ HRESULT cFileCopier::SendFile(const FILECHAR_t* pszSrcLocal, const FILECHAR_t* p
     HRESULT hRes = cFileCopier::CopyFileX(pszSrcLocal, sDestRemote, pProgress, false);
     if (hRes == HRESULT_WIN32_C(ERROR_PATH_NOT_FOUND)) {
         // Need to create the path first
-        hRes = cFileDir::CreateDirForFileX(sDestRemote, m_sRemoteRoot.GetLength());
+        hRes = cFileDir::CreateDirForFileX(sDestRemote, _sRemoteRoot.GetLength());
         if (FAILED(hRes)) return hRes;
         hRes = cFileCopier::CopyFileX(pszSrcLocal, sDestRemote, pProgress, false);  // try again.
     }
@@ -190,9 +190,9 @@ HRESULT cFileCopier::SendAttr(const FILECHAR_t* pszDestName, cTimeFile timeChang
 
 HRESULT cFileCopier::RequestDirectory(const FILECHAR_t* pszDir, OUT cArrayStruct<cFileDirEntry>& dirRet) {  // override;
     cFileDir dir(pszDir);
-    HRESULT hRes = dir.ReadDir();
+    const HRESULT hRes = dir.ReadDir();
     if (FAILED(hRes)) return hRes;
-    dirRet = dir.m_aFiles;
+    dirRet = dir._aFiles;
     return hRes;
 }
 }  // namespace Gray

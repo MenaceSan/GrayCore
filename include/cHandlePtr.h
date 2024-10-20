@@ -40,21 +40,21 @@ struct cHandlePtr : protected cNonCopyable {
     typedef cHandlePtr<_TYPE_HAND, _CLOSER> THIS_t;
 
  protected:
-    _TYPE_HAND m_h;  /// nullptr or HANDLEPTR_NULL. A pointer of some sort.
+    _TYPE_HAND _h;  /// nullptr or HANDLEPTR_NULL. A pointer of some sort.
 
  public:
-    explicit inline cHandlePtr(_TYPE_HAND h = HANDLEPTR_NULL) noexcept : m_h(h) {}
-    cHandlePtr(THIS_t&& s) noexcept : m_h(s.m_h) {
-        s.m_h = HANDLEPTR_NULL;  // move.
+    explicit inline cHandlePtr(_TYPE_HAND h = HANDLEPTR_NULL) noexcept : _h(h) {}
+    cHandlePtr(THIS_t&& s) noexcept : _h(s._h) {
+        s._h = HANDLEPTR_NULL;  // move.
     }
 
     inline bool isValidHandle() const noexcept {
-        return m_h != HANDLEPTR_NULL;
+        return _h != HANDLEPTR_NULL;
     }
     void CloseHandle() noexcept {
         if (!isValidHandle()) return;
-        _TYPE_HAND h = m_h;
-        m_h = HANDLEPTR_NULL;
+        _TYPE_HAND h = _h;
+        _h = HANDLEPTR_NULL;
         _CLOSER(h);
     }
 
@@ -63,26 +63,26 @@ struct cHandlePtr : protected cNonCopyable {
     }
 
     void AttachHandle(_TYPE_HAND h) noexcept {
-        if (m_h == h) return;
+        if (_h == h) return;
         CloseHandle();
-        m_h = h;
+        _h = h;
     }
     _TYPE_HAND DetachHandle() noexcept {
-        _TYPE_HAND h = m_h;
-        m_h = HANDLEPTR_NULL;
+        _TYPE_HAND h = _h;
+        _h = HANDLEPTR_NULL;
         return h;
     }
 
     inline operator _TYPE_HAND() const noexcept {
-        return m_h;
+        return _h;
     }
     inline _TYPE_HAND get_Handle() const noexcept {
-        return m_h;
+        return _h;
     }
 
     /// DANGER. Expect the caller to modify the handle. It is responsible if it leaks an old value !
     inline _TYPE_HAND& ref_Handle() noexcept {
-        return m_h;
+        return _h;
     }
 };
 }  // namespace Gray

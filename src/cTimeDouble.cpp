@@ -35,7 +35,7 @@ cTimeDouble GRAYCALL cTimeDouble::EncodeDate(short wYear, short wMonth, short wD
     if (wMonth < 1 || wMonth > 12) return 0.0;   // "Invalid month in the date";
 
     const int nLeapYear = cTimeUnits::IsLeapYear(wYear);
-    if (wDay < 1 || wDay > cTimeUnits::k_MonthDays[nLeapYear][wMonth - 1]) {
+    if (wDay < 1 || wDay > cTimeUnits::k_aMonthDays[nLeapYear][wMonth - 1]) {
         return 0.0;  // "Invalid day in the date";
     }
 
@@ -45,7 +45,7 @@ cTimeDouble GRAYCALL cTimeDouble::EncodeDate(short wYear, short wMonth, short wD
     // like cTimeUnits::GetLeapYearsSince2K
     iDays += (iYear / 4) + (iYear / 400) - (iYear / 100);  // years compensated for leaps.
     iDays -= 693594L;                                      // Offset so that midnight 12/30/1899 is 0, midnight 12/31/1899 = 1
-    iDays += cTimeUnits::k_MonthDaySums[nLeapYear][wMonth - 1];
+    iDays += cTimeUnits::k_aMonthDaySums[nLeapYear][wMonth - 1];
     iDays += wDay;  // of month
 
     return cTimeDouble((double)iDays);
@@ -109,15 +109,15 @@ void cTimeDouble::DecodeDate(OUT cTimeUnits& rTu, double dblDate) {  // static
     }
 
     // n4Day is now 0-based day of year. Save 1-based day of year, year number
-    rTu.m_wYear = (WORD)(n400Years * 400 + n400Century * 100 + n4Years * 4 + n4Yr);
+    rTu._wYear = (WORD)(n400Years * 400 + n400Century * 100 + n4Years * 4 + n4Yr);
 
     // Handle leap year: before, on, and after Feb. 29.
     if (n4Yr == 0 && bLeap4) {
         // Leap Year
         if (n4Day == 59) {
             // Feb. 29
-            rTu.m_wMonth = 2;
-            rTu.m_wDay = 29;
+            rTu._wMonth = 2;
+            rTu._wDay = 29;
             return;
         }
 
@@ -130,11 +130,11 @@ void cTimeDouble::DecodeDate(OUT cTimeUnits& rTu, double dblDate) {  // static
     ++n4Day;
 
     // Month number always >= n/32, so save some loop time
-    rTu.m_wMonth = (WORD)((n4Day >> 5) + 1);
-    for (; n4Day > cTimeUnits::k_MonthDaySums[0][rTu.m_wMonth]; rTu.m_wMonth++) {
+    rTu._wMonth = (WORD)((n4Day >> 5) + 1);
+    for (; n4Day > cTimeUnits::k_aMonthDaySums[0][rTu._wMonth]; rTu._wMonth++) {
     }
 
-    rTu.m_wDay = (WORD)(n4Day - cTimeUnits::k_MonthDaySums[0][rTu.m_wMonth - 1]);
+    rTu._wDay = (WORD)(n4Day - cTimeUnits::k_aMonthDaySums[0][rTu._wMonth - 1]);
 }
 
 bool cTimeDouble::GetTimeUnits(OUT cTimeUnits& rTu, TZ_TYPE nTimeZone) const {
@@ -145,21 +145,21 @@ bool cTimeDouble::GetTimeUnits(OUT cTimeUnits& rTu, TZ_TYPE nTimeZone) const {
     //!  month = 1-12
     //!  day =
 
-    double dTime = m_dateTime;
+    double dTime = _dTimeDays;
 
     DecodeDate(rTu, dTime);
 
     // DecodeTime
-    dTime -= ((int)m_dateTime);  // get time portion only.
+    dTime -= ((int)_dTimeDays);  // get time portion only.
 
     int secs = int(dTime * cTimeUnits::k_nSecondsPerDay + 0.5);
-    rTu.m_wHour = short(secs / (60 * 60));
+    rTu._wHour = short(secs / (60 * 60));
     secs = secs % (60 * 60);
-    rTu.m_wMinute = short(secs / 60);
-    rTu.m_wSecond = short(secs % 60);
+    rTu._wMinute = short(secs / 60);
+    rTu._wSecond = short(secs % 60);
 
-    rTu.m_wMillisecond = 0;  // lost milliseconds ???
-    rTu.m_wMicrosecond = 0;
+    rTu._wMillisecond = 0;  // lost milliseconds ???
+    rTu._wMicrosecond = 0;
 
     rTu.AddTZ(nTimeZone);
     return true;
@@ -168,19 +168,19 @@ bool cTimeDouble::GetTimeUnits(OUT cTimeUnits& rTu, TZ_TYPE nTimeZone) const {
 bool cTimeDouble::InitTimeUnits(const cTimeUnits& rTu) {
     if (!rTu.isValidTimeUnits()) return false;
 
-    m_dateTime = EncodeDate(rTu.m_wYear, rTu.m_wMonth, rTu.m_wDay);
+    _dTimeDays = EncodeDate(rTu._wYear, rTu._wMonth, rTu._wDay);
     if (isTimeValid()) {
-        m_dateTime += EncodeTime(rTu.m_wHour, rTu.m_wMinute, rTu.m_wSecond, rTu.m_wMillisecond).get_Double();
+        _dTimeDays += EncodeTime(rTu._wHour, rTu._wMinute, rTu._wSecond, rTu._wMillisecond).get_Double();
     }
-    if (rTu.m_nTZ != TZ_UTC) {
+    if (rTu._nTZ != TZ_UTC) {
         // adjust timezone.
-        TIMEVALU_t nTimeZoneOffset = rTu.m_nTZ;
+        TIMEVALU_t nTimeZoneOffset = rTu._nTZ;
         if (nTimeZoneOffset > TZ_MAX) {
             nTimeZoneOffset = cTimeZoneMgr::GetLocalMinutesWest();
         }
-        m_dateTime += (nTimeZoneOffset / (double)cTimeUnits::k_nMinutesPerDay);
+        _dTimeDays += (nTimeZoneOffset / (double)cTimeUnits::k_nMinutesPerDay);
         if (rTu.isInDST1()) {
-            m_dateTime -= (1.0 / 24.0);  // remove added hour.
+            _dTimeDays -= (1.0 / 24.0);  // remove added hour.
         }
     }
     return true;
@@ -191,7 +191,7 @@ bool cTimeDouble::InitTimeUnits(const cTimeUnits& rTu) {
 cTimeFile cTimeDouble::GetAsFileTime() const noexcept {
     //! convert double time to file system time
     //!  cTimeFile = 64-bit 100-nanosec since January 1, 1601 GMT
-    double nTmp = m_dateTime;
+    double nTmp = _dTimeDays;
     nTmp += 109205;            // magic offset number = 109205 days = 94353120000000000
     nTmp *= (864000000000.0);  // days to .1uSec , 10M*60*60*24
     return cTimeFile((FILETIME_t)nTmp);
@@ -235,13 +235,13 @@ cTimeDouble cTimeDouble::GetTimeFromSec(TIMESEC_t nTimeSec) noexcept {  // stati
 }
 
 void cTimeDouble::InitTimeNow() {
-    m_dateTime = GetTimeNow();
+    _dTimeDays = GetTimeNow();
 }
 
 TIMEDOW_t cTimeDouble::get_DayOfWeek() const {
     //! Sunday is 0, TIMEDOW_t
     //! MFC does (sun=1) but we don't
-    const int idays = (int)m_dateTime;
+    const int idays = (int)_dTimeDays;
     return CastN(TIMEDOW_t, (idays - 1) % static_cast<int>(TIMEDOW_t::_QTY));
 }
 
@@ -259,22 +259,22 @@ HRESULT cTimeDouble::SetTimeStr(const GChar_t* pszDateTime, TZ_TYPE nTimeZone) {
         return 3;
     }
     if (!StrT::CmpI(pszDateTime, _GT("today"))) {
-        m_dateTime = Date();  // Sets the current date
+        _dTimeDays = Date();  // Sets the current date
         return 5;
     }
     if (!StrT::CmpI(pszDateTime, _GT("time"))) {
-        m_dateTime = Time();  // Sets the current time
+        _dTimeDays = Time();  // Sets the current time
         return 4;
     }
 
     cTimeUnits Tu;
     const HRESULT hRes = Tu.SetTimeStr(pszDateTime, nTimeZone);
     if (hRes <= 0) {
-        m_dateTime = 0;
+        _dTimeDays = 0;
         return 0;
     }
 
-    m_dateTime = cTimeDouble(Tu);
+    _dTimeDays = cTimeDouble(Tu);
     return hRes;
 }
 
@@ -301,8 +301,8 @@ cString GRAYCALL cTimeDouble::GetTimeSpanStr(double dDays, TIMEUNIT_t eUnitHigh,
     if (dDays <= 0) return bShortText ? _GT("0s") : _GT("0 seconds");
     if (iUnitsDesired < 1) iUnitsDesired = 1;  // must have at least 1.
 
-    static constexpr int kUnitMax = _countof(cTimeUnits::k_Units) - 1;  // Skip TIMEUNIT_TZ of course.
-    if (IS_INDEX_BAD(eUnitHigh, kUnitMax)) {
+    static constexpr UINT kUnitMax = CastN(int, TIMEUNIT_t::_Millisecond); 
+    if (IS_INDEX_BAD(eUnitHigh, kUnitMax+1)) {
         eUnitHigh = TIMEUNIT_t::_Day;  // days is highest unit by default. // Just take a default.
     }
 
@@ -312,26 +312,26 @@ cString GRAYCALL cTimeDouble::GetTimeSpanStr(double dDays, TIMEUNIT_t eUnitHigh,
 
     bool bMostSignificantFound = false;
     UINT i = CastN(UINT, eUnitHigh);
-    for (; i < kUnitMax - 1; i++) {
-        const double dUnits = cTimeUnits::k_Units[i].m_dUnitDays;
+    for (; i <= kUnitMax; i++) {
+        const double dUnits = cTimeUnits::k_aUnits[i]._dUnitDays;
         if (!bMostSignificantFound) {
             if (dDays < dUnits) continue;
             bMostSignificantFound = true;
         }
 
-        if (i >= static_cast<int>(TIMEUNIT_t::_Second)) break;  // sub seconds print as a decimal.
+        if (i >= static_cast<int>(TIMEUNIT_t::_Second)) break;  // sub seconds print as a decimal _Millisecond.
 
         const int nQtyOfUnit = (int)(dDays / dUnits);  // same as ::floor()
 
         sb.AddSep(' ');  // " and ";
 
         if (bShortText) {
-            sb.Printf(_GT("%u%s"), nQtyOfUnit, StrArg<GChar_t>(cTimeUnits::k_Units[i].m_pszUnitNameS));
+            sb.Printf(_GT("%u%s"), nQtyOfUnit, StrArg<GChar_t>(cTimeUnits::k_aUnits[i]._pszUnitNameS));
         } else if (nQtyOfUnit == 1) {
             sb.AddStr(_GT("1 "));
-            sb.AddStr(cTimeUnits::k_Units[i].m_pszUnitNameL);
+            sb.AddStr(cTimeUnits::k_aUnits[i]._pszUnitNameL);
         } else {
-            sb.Printf(_GT("%u %ss"), nQtyOfUnit, StrArg<GChar_t>(cTimeUnits::k_Units[i].m_pszUnitNameL));
+            sb.Printf(_GT("%u %ss"), nQtyOfUnit, StrArg<GChar_t>(cTimeUnits::k_aUnits[i]._pszUnitNameL));
         }
 
         if (++iUnitsPrinted >= iUnitsDesired) break;  // only print iUnitsDesired most significant units of time
@@ -341,8 +341,8 @@ cString GRAYCALL cTimeDouble::GetTimeSpanStr(double dDays, TIMEUNIT_t eUnitHigh,
     }
 
     if (iUnitsDesired > 0 && iUnitsPrinted < iUnitsDesired && dDays > 0 && i >= static_cast<int>(TIMEUNIT_t::_Second)) {
-        // remainder is always decimal.
-        sb.Printf(_GT(" %g %s%s"), dDays / cTimeUnits::k_Units[i].m_dUnitDays, bShortText ? cTimeUnits::k_Units[i].m_pszUnitNameS : cTimeUnits::k_Units[i].m_pszUnitNameL,
+        // remainder is always decimal _Millisecond.
+        sb.Printf(_GT(" %g %s%s"), dDays / cTimeUnits::k_aUnits[i]._dUnitDays, bShortText ? cTimeUnits::k_aUnits[i]._pszUnitNameS : cTimeUnits::k_aUnits[i]._pszUnitNameL,
                   bShortText ? "" : "s"  // plural.
         );
     }

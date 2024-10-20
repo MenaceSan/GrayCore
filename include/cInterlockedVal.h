@@ -415,11 +415,11 @@ class GRAYCORE_LINK cInterlockedVal {
     typedef cInterlockedVal<TYPE> THIS_t;
 
  protected:
-    TYPE VOLATILE m_nValue;  /// This MUST be sizeof(TYPE) aligned?! __DECL_ALIGN(sizeof(TYPE)).
+    TYPE VOLATILE _nValue;  /// This MUST be sizeof(TYPE) aligned?! __DECL_ALIGN(sizeof(TYPE)).
 
  public:
-    cInterlockedVal(TYPE nValue = 0) noexcept : m_nValue(nValue) {
-        ASSERT((CastPtrToNumV(&m_nValue) % sizeof(TYPE)) == 0);  // must be aligned!!
+    cInterlockedVal(TYPE nValue = 0) noexcept : _nValue(nValue) {
+        ASSERT((CastPtrToNumV(&_nValue) % sizeof(TYPE)) == 0);  // must be aligned!!
     }
 
     /// <summary>
@@ -427,20 +427,20 @@ class GRAYCORE_LINK cInterlockedVal {
     /// </summary>
     /// <returns>post increment value. e.g. NEVER 0</returns>
     TYPE Inc() noexcept {
-        return InterlockedN::Increment(&m_nValue);
+        return InterlockedN::Increment(&_nValue);
     }
     void IncV() noexcept {
-        InterlockedN::Increment(&m_nValue);
+        InterlockedN::Increment(&_nValue);
     }
     /// <summary>
     /// decrement.
     /// </summary>
     /// <returns>post decrement value</returns>
     TYPE Dec() noexcept {
-        return InterlockedN::Decrement(&m_nValue);
+        return InterlockedN::Decrement(&_nValue);
     }
     void DecV() noexcept {
-        InterlockedN::Decrement(&m_nValue);
+        InterlockedN::Decrement(&_nValue);
     }
 
     /// <summary>
@@ -449,17 +449,17 @@ class GRAYCORE_LINK cInterlockedVal {
     /// <param name="nValue">previous value.</param>
     /// <returns>pre-add value</returns>
     TYPE AddX(TYPE nValue) noexcept {
-        // DEBUG_ASSERT(!cBits::HasAny<TYPE>(m_nValue, nValue), "AddX");
-        return InterlockedN::ExchangeAdd(&m_nValue, nValue);
+        // DEBUG_ASSERT(!cBits::HasAny<TYPE>(_nValue, nValue), "AddX");
+        return InterlockedN::ExchangeAdd(&_nValue, nValue);
     }
     TYPE Exchange(TYPE nValue) noexcept {
-        return InterlockedN::Exchange(&m_nValue, nValue);
+        return InterlockedN::Exchange(&_nValue, nValue);
     }
 
     TYPE CompareExchange(TYPE nValue, TYPE lComparand = 0) noexcept {
-        //! only if current m_nValue is lComparand set the new m_nValue to nValue
+        //! only if current _nValue is lComparand set the new _nValue to nValue
         //! @return previous value.
-        return InterlockedN::CompareExchange(&m_nValue, nValue, lComparand);
+        return InterlockedN::CompareExchange(&_nValue, nValue, lComparand);
     }
     bool SetIfEqual(TYPE nValue, TYPE lComparand = 0) noexcept {
         return lComparand == CompareExchange(nValue, lComparand);
@@ -476,13 +476,13 @@ class GRAYCORE_LINK cInterlockedVal {
         return Dec();
     }
     TYPE get_Value() const noexcept {
-        return m_nValue;
+        return _nValue;
     }
     void put_Value(TYPE nVal) noexcept {
-        m_nValue = nVal;
+        _nValue = nVal;
     }
     operator TYPE() const noexcept {
-        return m_nValue;
+        return _nValue;
     }
     const THIS_t& operator=(TYPE nValNew) noexcept {
         Exchange(nValNew);
@@ -513,14 +513,13 @@ typedef __DECL_ALIGN(_SIZEOF_PTR) cInterlockedVal<INT_PTR> cInterlockedIntPtr;  
 /// Cast it as needed. INT_PTR = INT32 for 32 bit, INT64 for 64 bit.
 /// </summary>
 template <typename TYPE = void>
-class GRAYCORE_LINK __DECL_ALIGN(_SIZEOF_PTR) cInterlockedPtr : protected cInterlockedVal<UINT_PTR> {
- public:
+struct GRAYCORE_LINK __DECL_ALIGN(_SIZEOF_PTR) cInterlockedPtr : protected cInterlockedVal<UINT_PTR> {
     cInterlockedPtr(TYPE* pVal) noexcept : cInterlockedVal<UINT_PTR>(CastPtrToNum(pVal)) {}
     operator TYPE*() noexcept {
-        return CastNumToPtrT<TYPE>(this->m_nValue);
+        return CastNumToPtrT<TYPE>(this->_nValue);
     }
     operator const TYPE*() const noexcept {
-        return CastNumToPtrT<TYPE>(this->m_nValue);
+        return CastNumToPtrT<TYPE>(this->_nValue);
     }
 
     const cInterlockedPtr<TYPE>& operator=(TYPE* pValNew) {
@@ -539,20 +538,20 @@ typedef cInterlockedPtr<void> cInterlockedPtrV;  // void pointer.
 /// define an instance of this on the stack. ALWAYS STACK BASED
 /// </summary>
 class GRAYCORE_LINK cInterlockedInc {
-    cInterlockedInt& m_rCount;  /// pointer to the 'static' count.
-    int m_nCount;               /// the thread stable value of the count (post increment)
+    cInterlockedInt& _rCount;  /// pointer to the 'static' count.
+    int _nCount;               /// the thread stable value of the count (post increment)
  public:
-    cInterlockedInc(cInterlockedInt& count) noexcept : m_rCount(count), m_nCount(count.Inc()) {}
+    cInterlockedInc(cInterlockedInt& count) noexcept : _rCount(count), _nCount(count.Inc()) {}
     ~cInterlockedInc() noexcept {
-        m_rCount.Dec();
+        _rCount.Dec();
     }
     int get_Count() const noexcept {
-        return m_nCount;  /// get the count as it was when we created this.
+        return _nCount;  /// get the count as it was when we created this.
     }
 };
 
 #ifndef GRAY_STATICLIB  // force implementation/instantiate for DLL/SO.
-template class GRAYCORE_LINK cInterlockedPtr<>;
+template struct GRAYCORE_LINK cInterlockedPtr<>;
 template class GRAYCORE_LINK cInterlockedVal<long>;
 template class GRAYCORE_LINK cInterlockedVal<ULONG>;
 #endif

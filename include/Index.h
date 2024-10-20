@@ -27,7 +27,7 @@ constexpr HASHCODE_t k_HASHCODE_CLEAR = 0;  /// not a valid index.
 #if (_MFC_VER > 0x0600)
 typedef INT_PTR ITERATE_t;  /// MFC 6 uses INT_PTR for array indexes.
 #else
-typedef int ITERATE_t;  /// like size_t but signed
+typedef int ITERATE_t;  /// like size_t but signed like ptrdiff_t
 #endif
 constexpr ITERATE_t k_ITERATE_BAD = -1;
 constexpr ITERATE_t k_ARG_ARRAY_MAX = 256;  // arbitrary Max number of arguments in user entered array.

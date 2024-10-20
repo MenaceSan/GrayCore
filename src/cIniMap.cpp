@@ -8,7 +8,7 @@
 namespace Gray {
 HRESULT cIniKeyValue::GetValInt(int* piValue) const {
     ASSERT_NN(piValue);
-    const char* pszVal = m_sVal.get_CPtr();
+    const char* pszVal = _sVal.get_CPtr();
     const char* pszEnd = nullptr;
     *piValue = StrT::toI(pszVal, &pszEnd);
     if (pszEnd == nullptr || pszEnd <= pszVal) return HRESULT_WIN32_C(ERROR_DATATYPE_MISMATCH);
@@ -16,7 +16,7 @@ HRESULT cIniKeyValue::GetValInt(int* piValue) const {
 }
 HRESULT cIniKeyValue::GetValDouble(double* pdValue) const {
     ASSERT_NN(pdValue);
-    const char* pszVal = m_sVal.get_CPtr();
+    const char* pszVal = _sVal.get_CPtr();
     const char* pszEnd = nullptr;
     *pdValue = StrT::toDouble(pszVal, &pszEnd);
     if (pszEnd == nullptr || pszEnd <= pszVal) return HRESULT_WIN32_C(ERROR_DATATYPE_MISMATCH);
@@ -35,7 +35,7 @@ const IniChar_t* cIniMap::GetVal(const IniChar_t* pszPropTag) const {
     //! get the value of a named attribute.
     const ITERATE_t i = Find(pszPropTag);
     if (i < 0) return nullptr;
-    return GetAt(i).m_sVal;
+    return GetAt(i)._sVal;
 }
 
 HRESULT cIniMap::SetVal(const IniChar_t* pszPropTag, cStringI sValue) {
@@ -49,7 +49,7 @@ HRESULT cIniMap::PropGet(const IniChar_t* pszPropTag, OUT cStringI& rsValue) con
     //! IIniBaseGetter
     const ITERATE_t i = Find(pszPropTag);
     if (i < 0) return HRESULT_WIN32_C(ERROR_UNKNOWN_PROPERTY);
-    rsValue = GetAt(i).m_sVal;
+    rsValue = GetAt(i)._sVal;
     return (HRESULT)i;
 }
 
@@ -67,17 +67,17 @@ HRESULT cIniMap::PropGetEnum(PROPIDX_t ePropIdx, OUT cStringI& rsValue, OUT cStr
     if (!this->IsValidIndex(ePropIdx)) return HRESULT_WIN32_C(ERROR_UNKNOWN_PROPERTY);
     const cIniKeyValue& val = GetAt(ePropIdx);
     if (psKey != nullptr) {
-        *psKey = val.m_aKey;
+        *psKey = val._aKey;
     }
-    rsValue = val.m_sVal;
-    return (HRESULT)ePropIdx;
+    rsValue = val._sVal;
+    return CastN(HRESULT, ePropIdx);
 }
 
 void cIniMap::SetCopy(const cIniMap& rAttribs) {
     //! Copy the attributes from rAttribs to this.
     ASSERT(&rAttribs != this);
     for (const cIniKeyValue& e : rAttribs) {
-        this->AddSort(cIniKeyValue(e.m_aKey, e.m_sVal), 1);
+        this->AddSort(cIniKeyValue(e._aKey, e._sVal), 1);
     }
 }
 

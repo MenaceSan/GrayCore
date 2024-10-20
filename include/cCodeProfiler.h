@@ -20,8 +20,8 @@ namespace Gray {
 class GRAYCORE_LINK cCodeProfileFunc {
     friend class cCodeProfilerControl;
 
-    const cDebugSourceLine m_src;  /// Record source location of this function.
-    const cTimePerf m_nTimeStart;  /// Function enter Start time in system clock ticks
+    const cDebugSourceLine _Src;  /// Record source location of this function.
+    const cTimePerf _nTimeStart;  /// Function enter Start time in system clock ticks
 
     static bool sm_bActive;  /// are we actively measuring? Thread Safe read.
 
@@ -29,7 +29,7 @@ class GRAYCORE_LINK cCodeProfileFunc {
     void StopTime() noexcept;
 
  public:
-    cCodeProfileFunc(cDebugSourceLine src) noexcept : m_src(src), m_nTimeStart(sm_bActive) {  // Cheat a little and burn off 4 instructions inside counted function time.
+    cCodeProfileFunc(cDebugSourceLine src) noexcept : _Src(src), _nTimeStart(sm_bActive) {  // Cheat a little and burn off 4 instructions inside counted function time.
         //! record Start/Record cycle count on object construct.
     }
     ~cCodeProfileFunc() {

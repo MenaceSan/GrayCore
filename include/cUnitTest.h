@@ -31,7 +31,7 @@ struct cLogProcessor;
 /// </summary>
 enum class UNITTEST_LEVEL_t {
     _None = 0,
-    _Crit,    /// 1=critical tests. usually stuff i want to debug now.
+    _Crit,    /// 1=usually stuff i want to debug now. or should always run.
     _Core,    /// 2=only the most basic tests.
     _Lib,     /// 3
     _Common,  /// 4 = Common or application level tests.
@@ -48,13 +48,13 @@ class cUnitTestRegister;
 /// Assume we compile in the same environment as we unit test.
 /// </summary>
 struct GRAYCORE_LINK cUnitTestCur {        // static
-    static int sm_nCreatedUnitTests;       /// Count the cUnitTest objects I have created. NOT just m_aUnitTests
-    static const FILECHAR_t* k_TestFiles;  // a sub directory under m_sTestOutDir containing all the test files.
+    static int sm_nCreatedUnitTests;       /// Count the cUnitTest objects I have created. NOT just _aUnitTests
+    static const FILECHAR_t k_TestFiles[];  // a sub directory under _sTestOutDir containing all the test files.
 
     // Sample Test const data.
-    static const StrLen_t k_TEXTBLOB_LEN = 566;                 /// StrT::Len(k_sTextBlob) = 0x236
-    static const cStrConst k_sTextBlob;                         /// a large test string
-    static const cStrConst k_asTextLines[18];  /// nullptr terminated array of lines of text.
+    static const StrLen_t k_TEXTBLOB_LEN = 566;  /// StrT::Len(k_sTextBlob) = 0x236
+    static const cStrConst k_sTextBlob;          /// a large test string
+    static const cStrConst k_asTextLines[18];    /// nullptr terminated array of lines of text.
 
     static bool GRAYCALL TestTypes();
 };
@@ -82,9 +82,9 @@ struct GRAYCORE_LINK cUnitTest : public cObject, public cUnitTestCur {
 /// </summary>
 class GRAYCORE_LINK cUnitTestRegister : public cObjectFactory {
  public:
-    const UNITTEST_LEVEL_t m_nTestLevel;  /// at what level does this test run?
+    const UNITTEST_LEVEL_t _eTestLevel;  /// at what level does this test run?
  protected:
-    cUnitTestRegister(const TYPEINFO_t& rTypeInfo, UNITTEST_LEVEL_t nTestLevel = UNITTEST_LEVEL_t::_Core);
+    cUnitTestRegister(const TYPEINFO_t& rTypeInfo, UNITTEST_LEVEL_t eTestLevel = UNITTEST_LEVEL_t::_Core);
     ~cUnitTestRegister() override;
 
  public:
@@ -94,13 +94,15 @@ class GRAYCORE_LINK cUnitTestRegister : public cObjectFactory {
 
 /// <summary>
 /// a singleton to register a unit test for a specific type of thing. Allow creation of its cUnitTest based implementation class.
-/// ALWAYS constructed in 'C' static init code. cSingletonStatic< cUnitTestRegisterT<T> >
+/// ALWAYS constructed in 'C' static init code. cSingletonType cUnitTestRegisterT
 /// Assume static init is NOT multi threaded so no thread locking is required.
 /// </summary>
 /// <typeparam name="T"></typeparam>
 template <class T = cUnitTest>
-struct cUnitTestRegisterT : public cUnitTestRegister, public cSingletonStatic<cUnitTestRegisterT<T> > {
-    cUnitTestRegisterT(const TYPEINFO_t& tid, UNITTEST_LEVEL_t nTestLevel = UNITTEST_LEVEL_t::_Core) : cUnitTestRegister(tid, nTestLevel), cSingletonStatic<cUnitTestRegisterT<T> >(this) {}
+struct cUnitTestRegisterT final : public cUnitTestRegister, public cSingletonStatic<cUnitTestRegisterT<T> > {
+    typedef cUnitTestRegisterT<T> THIS_t;
+    cUnitTestRegisterT(const TYPEINFO_t& tid, UNITTEST_LEVEL_t nTestLevel = UNITTEST_LEVEL_t::_Core) : cUnitTestRegister(tid, nTestLevel), cSingletonStatic<THIS_t>(this) {}
+
     /// <summary>
     /// create a derived version of cUnitTest
     /// Never create pure virtual cUnitTest directly (of course).
@@ -121,19 +123,19 @@ struct cUnitTestRegisterT : public cUnitTestRegister, public cSingletonStatic<cU
 /// e.g. cUnitTestAppState inmain;
 /// </summary>
 class GRAYCORE_LINK cUnitTestAppState {
-    cAppState& m_AppState;         /// Fast access to this.
-    APPSTATE_t m_eAppStatePrev;    /// Restore the true state of the app if we need to.
-    THREADID_t m_nMainThreadPrev;  /// The thread we started with. main().
+    cAppState& _AppState;         /// Fast access to this.
+    APPSTATE_t _eAppStatePrev;    /// Restore the true state of the app if we need to.
+    // THREADID_t _nMainThreadPrev;  /// The thread we started with. main().
 
  public:
-    cUnitTestAppState() : m_AppState(cAppState::I()) {
+    cUnitTestAppState() : _AppState(cAppState::I()) {
         // called for M$ tests.
-        m_eAppStatePrev = m_AppState.get_AppState();
-        m_AppState.put_AppState(APPSTATE_t::_Run);
+        _eAppStatePrev = _AppState.get_AppState();
+        _AppState.put_AppState(APPSTATE_t::_Run);
     }
 
     ~cUnitTestAppState() noexcept {
-        m_AppState.put_AppState(m_eAppStatePrev);  // destructors should be called next.
+        _AppState.put_AppState(_eAppStatePrev);  // destructor should be called next.
     }
 };
 
@@ -142,31 +144,32 @@ class GRAYCORE_LINK cUnitTestAppState {
 /// MUST use cSingleton and not cSingletonStatic to prevent C runtime load order problems.
 /// </summary>
 class GRAYCORE_LINK cUnitTests final : public cSingleton<cUnitTests>, public cUnitTestCur {
-    SINGLETON_IMPL(cUnitTests);
     friend class cUnitTestRegister;
 
  public:
-    cArrayPtr<cUnitTestRegister> m_aUnitTests;        /// list of all registered unit tests. Register as they get instantiate by C runtime static loader.
+    DECLARE_cSingleton(cUnitTests);
+
+    cArrayPtr<cUnitTestRegister> _aUnitTests;        /// list of all registered unit tests. Register as they get instantiate by C runtime static loader.
     static AssertCallback_t UnitTest_AssertCallback;  /// redirect assert here for test failure. requires _DEBUG or _DEBUG_FAST.
-    AssertCallback_t* m_pAssertOrig = nullptr;        /// restore the original assert.
+    AssertCallback_t* _pAssertOrig = nullptr;        /// restore the original assert.
 
-    UNITTEST_LEVEL_t m_nTestLevel = UNITTEST_LEVEL_t::_Common;  /// The current global test level for UnitTests(). throttle tests at run time.
-    cArrayString<LOGCHAR_t> m_aTestNames;  /// just run these tests.
+    UNITTEST_LEVEL_t _eTestLevel = UNITTEST_LEVEL_t::_Common;  /// The current global test level for UnitTests(). throttle tests at run time.
+    cArrayString<LOGCHAR_t> _aTestNames;                       /// just run these tests.
 
-    cFilePath m_sTestInpDir;  /// root for source of test input files. might change based on cOSModImpl?
-    cFilePath m_sTestOutDir;  /// global config for input files.
+    cFilePath _sTestInpDir;  /// root for source of test input files. might change based on cOSModImpl?
+    cFilePath _sTestOutDir;  /// global config for input files.
 
-    cLogProcessor* m_pLog = nullptr;  /// cLogMgr::I() for output of tests.	Why not just use DEBUG_MSG ??
+    cLogProcessor* _pLog = nullptr;  /// cLogMgr::I() for output of tests.	Why not just use DEBUG_MSG ??
 
-    bool m_bRunning = false;  /// We are actively running in the Gray test framework. Not in M$ framework.
-    int m_iFailures = 0;      /// Count total unit test failures.
+    bool _isRunning = false;  /// We are actively running in the Gray test framework. Not in M$ framework.
+    int _nFailures = 0;      /// Count total unit test failures.
 
  protected:
     cUnitTests();
     void ReleaseModuleChildren(::HMODULE hMod) override;
+    static HRESULT GRAYCALL CopyTestFiles(const cStringF& srcDir, const cStringF& dstDir);
 
  public:
-    HRESULT InitTestOutDir();
     bool RegisterUnitTest(cUnitTestRegister* pTest);
 
     void SetTestLevel(UNITTEST_LEVEL_t nTestLevel);
@@ -174,10 +177,22 @@ class GRAYCORE_LINK cUnitTests final : public cSingleton<cUnitTests>, public cUn
 
     cUnitTestRegister* FindUnitTest(const char* pszName) const;
 
+    /// <summary>
+    /// is a user expected to interact with or verify the output of the tests ?
+    /// </summary>
+    /// <returns></returns>
     bool IsTestInteractive() const noexcept;
+
     bool TestInteractivePrompt(const char* pszMsg) noexcept;
 
+    /// <summary>
+    /// Get directory of files for tests that need source files. e.g. "C:\Dennis\Source\Gray\" or "C:\Dennis\Source\bin\x64v142"
+    /// </summary>
     const FILECHAR_t* get_TestInpDir() const;
+
+    /// <summary>
+    /// Get a temporary directory for use by UnitTests write files.
+    /// </summary>
     const FILECHAR_t* get_TestOutDir() const;
 
     void RunInitialize();
@@ -187,7 +202,7 @@ class GRAYCORE_LINK cUnitTests final : public cSingleton<cUnitTests>, public cUn
     HRESULT RunUnitTests(UNITTEST_LEVEL_t nTestLevel = UNITTEST_LEVEL_t::_Common, const LOGCHAR_t* pszTestNameMatch = nullptr);
 };
 
-#define UNITTEST_TRUE(x) ASSERTA(x)     // UNITTEST_TRUE is different from a normal ASSERT ? ::Microsoft::VisualStudio::CppUnitTestFramework::Assert::IsTrue(x)
+#define UNITTEST_TRUE(x) ASSERTA(x)      // UNITTEST_TRUE is different from a normal ASSERT ? ::Microsoft::VisualStudio::CppUnitTestFramework::Assert::IsTrue(x)
 #define UNITTEST_TRUE2(x, d) ASSERTA(x)  // UNITTEST_TRUE with a description
 
 // declare a global exposed cUnitTest. Don't use this directly but use UNITTEST2_* to  support M$ test.

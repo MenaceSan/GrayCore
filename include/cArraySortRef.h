@@ -32,15 +32,11 @@ class cArraySortRef : public cArraySortFacade<cRefPtr<TYPE>, TYPE*, TYPE_KEY> {
         ITERATE_t iSize = this->GetSize();
         for (ITERATE_t i = iSize - 1; i >= 0; i--) {  // reverse order they got added. might be faster?
             cRefPtr<TYPE> pObj = this->GetAt(i);
-            if (pObj != nullptr) {
-                pObj->DisposeThis();
-            }
-            // DisposeThis might remove itself from the list?
+            if (pObj != nullptr) pObj->DisposeThis();
+
+            // DisposeThis might remove itself (and children) from the list? So the list might get shorter.
             const ITERATE_t iSize2 = this->GetSize();
-            if (iSize2 != iSize) {
-                iSize = iSize2;
-                if (i != iSize) i = iSize;  // start over.
-            }
+            if (iSize2 != iSize) i = iSize = iSize2;  // start over.
         }
         this->RemoveAll();
     }

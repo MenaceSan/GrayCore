@@ -11,6 +11,7 @@
 #include "cSingleton.h"
 
 namespace Gray {
+cSingleton_IMPL(cObjectService);
 
 HRESULT cObject::Serialize(cArchive& a) {  // virtual
     // Emulate MFC method. cArchive = CArchive
@@ -26,10 +27,10 @@ const void* const* cObject::GetVTable() const {
 }
 
 cObjectFactory::cObjectFactory(const TYPEINFO_t& rTypeInfo, const ATOMCHAR_t* pszTypeName) noexcept
-    : m_pszTypeName(pszTypeName ? pszTypeName : cTypeInfo::GetSymName(rTypeInfo.name())), _HashCode(StrT::GetHashCode32(StrT::ToSpanStr(m_pszTypeName))), m_TypeInfo((const cTypeInfo&)rTypeInfo) {
-    // register this m_TypeInfo typeid(TYPE) with cObjectService
+    : _pszTypeName(pszTypeName ? pszTypeName : cTypeInfo::GetSymName(rTypeInfo.name())), _HashCode(StrT::GetHashCode32(StrT::ToSpanStr(_pszTypeName))), _TypeInfo((const cTypeInfo&)rTypeInfo) {
+    // register this _TypeInfo typeid(TYPE) with cObjectService
     ASSERT(_HashCode != k_HASHCODE_CLEAR);
-    ASSERT(StrA::CheckSymName(m_pszTypeName) > 2);
+    ASSERT(StrA::CheckSymName(_pszTypeName) > 2);
     cObjectService& service = cObjectService::I();
     service.RegisterFactory(*this);
 }
@@ -40,7 +41,7 @@ cObjectFactory::~cObjectFactory() {
     service.RemoveFactory(*this);
 }
 ::HMODULE cObjectFactory::get_HModule() const noexcept {
-    return cOSModule::GetModuleHandleForAddr(&m_TypeInfo);
+    return cOSModule::GetModuleHandleForAddr(&_TypeInfo);
 }
 
 //**************************************

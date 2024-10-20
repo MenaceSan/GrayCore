@@ -17,13 +17,13 @@ namespace Gray {
 /// allow to scroll through them using arrows.
 /// </summary>
 class GRAYCORE_LINK cCmdInput {
-    ITERATE_t m_nCurCommandIndex = 0;  /// current command.
+    ITERATE_t _nCurCommandIndex = 0;  /// current command.
 
  public:
-    cString m_sCmd;                       /// The current working command line. AddInputKey
-    bool m_bCmdComplete = false;          /// m_sCmd is ready.
-    ITERATE_t m_iMaxCommandQty = 32;      /// arbitrary limit to store this many.
-    cArrayString<GChar_t> m_aCmdHistory;  /// History of commands.
+    cString _sCmd;                       /// The current working command line. AddInputKey
+    bool _isCmdComplete = false;          /// _sCmd is ready.
+    ITERATE_t _iMaxCommandQty = 32;      /// arbitrary limit to store this many.
+    cArrayString<GChar_t> _aCmdHistory;  /// History of commands.
 
 #ifdef _WIN32
     static const WORD kKeyPrefix = 0xe000;  // Read as 2 bytes. 224 + Another Byte.
@@ -38,15 +38,15 @@ class GRAYCORE_LINK cCmdInput {
  public:
     /// How many commands in memory queue?
     ITERATE_t get_CmdQty() const noexcept {
-        return m_aCmdHistory.GetSize();
+        return _aCmdHistory.GetSize();
     }
     cString GetCmdAt(ITERATE_t i) const {
-        return m_aCmdHistory.GetAtCheck(i);
+        return _aCmdHistory.GetAtCheck(i);
     }
     void RemoveAllCmds() {
-        m_sCmd = "";
-        m_aCmdHistory.RemoveAll();
-        m_nCurCommandIndex = 0;
+        _sCmd = "";
+        _aCmdHistory.RemoveAll();
+        _nCurCommandIndex = 0;
     }
 
     /// <summary>
@@ -55,7 +55,7 @@ class GRAYCORE_LINK cCmdInput {
     void AddCmd(const GChar_t* pszCmd);
 
     /// <summary>
-    /// scroll m_nCurCommandIndex up/down.
+    /// scroll _nCurCommandIndex up/down.
     /// </summary>
     /// <param name="iKey">kKeyUp, kKeyDown, ASCII_t::_ESC</param>
     /// <returns></returns>

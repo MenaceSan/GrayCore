@@ -85,7 +85,7 @@ namespace Gray {  /// The main namespace for all Core functions.
 #define IGNORE_WARN_ABSTRACT(c) \
     virtual ~c() {}  // quiet this warning for abstract base classes
 
-// a structure should be byte packed and not aligned ? use #pragma pack(push,1) as well
+// a structure should be byte packed and not aligned? for serialization. use #pragma pack(push,1) as well
 #if defined(__MINGW32__)
 #define CATTR_PACKED __attribute__((packed))  // MING compiler uses this to indicate structure packing required.
 #else
@@ -118,6 +118,6 @@ namespace Gray {  /// The main namespace for all Core functions.
 #define CATTR_DEPRECATED
 #endif  // _WIN32 && MSVS2005
 
-extern GRAYCORE_LINK va_list k_va_list_empty;  // For faking out the va_list. __GNUC__ doesn't allow a pointer to va_list. So use this to simulate nullptr.
+extern GRAYCORE_LINK ::va_list k_va_list_empty;  // For faking out the va_list. __GNUC__ doesn't allow a pointer to va_list. So use this to simulate nullptr.
 }  // namespace Gray
 #endif  // _INC_GRAYCORE

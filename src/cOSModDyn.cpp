@@ -5,34 +5,36 @@
 // clang-format on
 #include "cAppState.h"
 #include "cExceptionBase.h"
-#include "cOSModDyn.h"
 #include "cLogMgr.h"
+#include "cOSModDyn.h"
 
 namespace Gray {
 HRESULT cOSModDynImpl::RegisterModule(::IUnknown* pContainer) {
     // ASSUME *Core DLL is the correct version and struct packing is correct.
-    if (m_pContainer != nullptr) return S_FALSE;  // Already called this! Don't call it again!
+    if (pContainer == nullptr) return E_HANDLE;
+    if (_pContainer != nullptr) return S_FALSE;  // Already called this! Don't call it again!
     const HRESULT hRes = cAppState::CheckValidSignatureX();
     if (FAILED(hRes)) return hRes;
-    m_pContainer = pContainer;
+    _pContainer = pContainer;
     ASSERT(IsLoaded());
     return S_OK;  // We are good
 }
 
 bool cOSModDynImpl::UnRegisterModule() {
-    // Try to release my singletons in proper order.
-    m_pContainer.ReleasePtr();
-    return true; // safe to unload i guess.
+    _pContainer.ReleasePtr();
+    return true;  // safe to unload i guess.
 }
 
 void cOSModDynImpl::OnProcessDetach() {
-    const bool isSafe = UnRegisterModule();  // always make sure we call this before unload. call again here just to be safe.
-    ASSERT(isSafe || cAppState::I().isInCExit());   // this is bad!
-    UNREFERENCED_PARAMETER(isSafe); // _DEBUG
+    const bool isSafe = UnRegisterModule();        // always make sure we call this before unload. call again here just to be safe.
+    ASSERT(isSafe || cAppState::I().isInCExit());  // this is bad!
+    UNREFERENCED_PARAMETER(isSafe);                // _DEBUG
     SUPER_t::OnProcessDetach();
 }
 
 HRESULT cOSModDyn::LoadAndRegisterModule(const FILECHAR_t* pszPath, ::IUnknown* pContainer, UINT32 nLibVer) {
+    if (pContainer == nullptr) return E_HANDLE;  // Must have some mechanism to inc its use count.
+
     const ITERATE_t nAllocCountPrev = cHeap::g_Stats._Allocs;  // must be the same if we skip/unload the DLL !
     UNREFERENCED_PARAMETER(nAllocCountPrev);
 
@@ -51,7 +53,8 @@ HRESULT cOSModDyn::LoadAndRegisterModule(const FILECHAR_t* pszPath, ::IUnknown* 
         return hRes;
     }
 
-    hRes = HRESULT_WIN32_C(ERROR_UNSUPPORTED_TYPE);  // should not happen!
+    // Already loaded so dont register it again!
+    if (hRes != S_OK) hRes = HRESULT_WIN32_C(ERROR_UNSUPPORTED_TYPE);  // should not happen!
     RegisterModuleF_t pRegisterModule = CastFPtrTo<RegisterModuleF_t>(_h.GetSymbolAddress(_RegisterModuleS));
     if (pRegisterModule != nullptr) {
         GRAY_TRY {
@@ -73,7 +76,7 @@ HRESULT cOSModDyn::LoadAndRegisterModule(const FILECHAR_t* pszPath, ::IUnknown* 
 
 bool cOSModDyn::Unload() {
     if (_pImpl != nullptr) {
-        bool isSafe = _pImpl->UnRegisterModule();
+        const bool isSafe = _pImpl->UnRegisterModule();
         if (!isSafe && !cAppState::I().isInCExit()) {
             // This is bad! Don't unload it or we will crash!
             cLogMgr::I().addEventF(LOG_ATTR_0, LOGLVL_t::_CRIT, "Unload of module '%s' is NOT safe!", LOGSTR(_pImpl->get_Name()));

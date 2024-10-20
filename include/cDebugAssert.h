@@ -28,10 +28,10 @@ namespace Gray {
 /// like M$ CppUnitTestFramework.__LineInfo
 /// </summary>
 struct cDebugSourceLine {
-    const char* m_pszFile;      /// name of the source file. static text. __FILE__
-    const char* m_pszFunction;  /// name of the source function. __func__, __FUNCTION__, __FUNCDNAME__, and __FUNCSIG__. static text.
-    WORD m_uLine;               /// line number in the source m_pszFile. (1 based) __LINE__
-    cDebugSourceLine(const char* pszFile = "", const char* pszFunction = "", WORD uLine = 0) noexcept : m_pszFile(pszFile), m_pszFunction(pszFunction), m_uLine(uLine) {}
+    const char* _pszFile;      /// name of the source file. static text. __FILE__
+    const char* _pszFunction;  /// name of the source function. __func__, __FUNCTION__, __FUNCDNAME__, and __FUNCSIG__. static text.
+    WORD _uLine;               /// line number in the source _pszFile. (1 based) __LINE__
+    cDebugSourceLine(const char* pszFile = "", const char* pszFunction = "", WORD uLine = 0) noexcept : _pszFile(pszFile), _pszFunction(pszFunction), _uLine(uLine) {}
 };
 
 //! __FILE__ is valid for __GNUC__ and _MSC_VER.

@@ -11,6 +11,9 @@
 #endif
 
 namespace Gray {
+cSingleton_IMPL(cRandomPerf);
+cSingleton_IMPL(cRandomOS);
+
 static const cRandomDef::RAND_t k_Seed1 = CastN(cRandomDef::RAND_t, 0xECC440A96968484AULL);  /// a random seed. Truncated in 32 bit mode.
 GRAYCORE_LINK cRandomDef g_Rand;                                                          //! the default random number generator. NOT Thread Safe!
 
@@ -75,7 +78,7 @@ bool cRandomBase::GetNoise(cMemSpan ret) {  // override
 }
 
 //*************************************************************
-cRandomPerf::cRandomPerf() : cSingleton<cRandomPerf>(this, typeid(cRandomPerf)) {}
+cRandomPerf::cRandomPerf() : cSingleton<cRandomPerf>(this ) {}
 
 void GRAYCALL cRandomPerf::GetNoisePerf(cMemSpan ret) {  // static
     //! Get noise via low bits of cTimePerf
@@ -84,7 +87,7 @@ void GRAYCALL cRandomPerf::GetNoisePerf(cMemSpan ret) {  // static
     size_t iSizeLeft = ret.get_SizeBytes();
     while (iSizeLeft > 0) {
         cTimePerf tStart(true);                            // the low bits of high performance timer should be random-ish.
-        UINT32 uVal = (UINT32)(tStart.m_nTime ^ k_Seed1);  // use default XOR pattern
+        UINT32 uVal = (UINT32)(tStart._nTimePerf ^ k_Seed1);  // use default XOR pattern
         if (iSizeLeft < sizeof(uVal)) {
             // running out of room.
             cMem::Copy(puData, &uVal, iSizeLeft);
@@ -98,7 +101,7 @@ void GRAYCALL cRandomPerf::GetNoisePerf(cMemSpan ret) {  // static
 
 //*************************************************************
 
-cRandomOS::cRandomOS() : cSingleton<cRandomOS>(this, typeid(cRandomOS)) {}
+cRandomOS::cRandomOS() : cSingleton<cRandomOS>(this ) {}
 
 HRESULT GRAYCALL cRandomOS::GetNoiseOS(cMemSpan ret) {  // static. fill array with random. return # filled.
     //! Try to use the OS supplied noise generator. It may not work.
@@ -156,23 +159,20 @@ cRandomDef::RAND_t cRandomOS::get_RandUns() {  // virtual
 
 //*************************************************************
 
-cRandomDef::cRandomDef(RAND_t nSeed) : m_nSeed(nSeed) {
+cRandomDef::cRandomDef(RAND_t nSeed) : _nSeed(nSeed) {
     //! like ::srand()
     //! http://stackoverflow.com/questions/4768180/rand-implementation
 }
 
 void cRandomDef::InitSeed(const cMemSpan& seed) {  // override
-    //! Start a repeatable series of pseudo random numbers
-    //! like ::srand()
-    m_nSeed = k_Seed1;  // Clear any under flow.
-    TOSPANT(m_nSeed).SetCopySpan(seed);
+    _nSeed = k_Seed1;  // Clear any under flow.
+    TOSPANT(_nSeed).SetCopySpan(seed);
 }
 
 cRandomDef::RAND_t cRandomDef::get_RandUns() {
-    // https://stackoverflow.com/questions/18969783/how-can-i-get-the-sourcecode-for-rand-c
-    m_nSeed = (m_nSeed * CastN(RAND_t, 1103515245)) + CastN(RAND_t, 12345);
+    _nSeed = (_nSeed * CastN(RAND_t, 1103515245)) + CastN(RAND_t, 12345);
     // Low bits tend to oscillate. so swap.
-    m_nSeed = cMemT::ReverseType(m_nSeed);
-    return m_nSeed;
+    _nSeed = cValT::ReverseBytes(_nSeed);
+    return _nSeed;
 }
 }  // namespace Gray

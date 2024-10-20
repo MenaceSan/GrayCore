@@ -138,24 +138,24 @@ struct GRAYCORE_LINK cAtomRef : public cRefPtr<cStringHeadT<ATOMCHAR_t>> {
     /// Find the atom in the atom table ONLY if it exists. DO NOT CREATE!
     /// </summary>
     /// <param name="pszText"></param>
-    /// <returns>m_aEmpty atom if not found.</returns>
+    /// <returns>Empty atom if not found.</returns>
     static cAtomRef GRAYCALL FindAtomStr(const ATOMCHAR_t* pszText);
 
     /// <summary>
     /// Get this hash id if a valid atom hash exists. DO NOT CREATE!
     /// </summary>
     /// <param name="idAtom"></param>
-    /// <returns>m_aEmpty atom if not found.</returns>
+    /// <returns>Empty atom if not found.</returns>
     static cAtomRef GRAYCALL FindAtomHashCode(ATOMCODE_t idAtomCode);
 
     /// <summary>
     /// Filter the string and make a legal symbolic name using only valid symbol characters.
     /// </summary>
-    /// <param name="pszTag">OUT the identifier (valid char set) out to this buffer. ASSUME k_LEN_MAX_CSYM</param>
+    /// <param name="symName">OUT the identifier (valid char set) out to this buffer. ASSUME k_LEN_MAX_CSYM</param>
     /// <param name="pszExp">source string</param>
     /// <param name="bAllowDots">allow dots and stuff to follow them. JSON</param>
     /// <returns>Length of the tag + args. 0 = nothing here worth doing anything with. -lt- 0 = error.</returns>
-    static StrLen_t GRAYCALL MakeSymName(OUT ATOMCHAR_t* pszTag, const ATOMCHAR_t* pszExp, bool bAllowDots = false);
+    static StrLen_t GRAYCALL MakeSymName(cSpan<ATOMCHAR_t> symName, const ATOMCHAR_t* pszExp, bool bAllowDots = false);
 
 #ifdef _DEBUG
     /// <summary>

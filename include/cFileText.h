@@ -27,28 +27,28 @@ class GRAYCORE_LINK cFileTextBase : public cFile {
 
 /// <summary>
 /// read text lines from a file stream.
-/// Try to use this instead of cFileText/USE_CRT below.
+/// @note Try to use this instead of cFileText/USE_CRT below.
 /// Replace the FILE* streaming file i/o reader fread() with something more under our control.
 /// </summary>
 class GRAYCORE_LINK cFileTextReader : public cFileTextBase {
     typedef cFileTextBase SUPER_t;
 
  public:
-    cTextReaderStream m_Reader;
+    cTextReaderStream _Reader;
 
  public:
-    cFileTextReader(size_t nSizeLineMax = cStream::k_FILE_BLOCK_SIZE * 2) noexcept : m_Reader(*this, nSizeLineMax) {}
+    cFileTextReader(size_t nSizeLineMax = cStream::k_FILE_BLOCK_SIZE * 2) noexcept : _Reader(*this, nSizeLineMax) {}
     ~cFileTextReader() override {}
 
     inline ITERATE_t get_CurrentLineNumber() const noexcept {
-        return m_Reader.get_CurrentLineNumber();
+        return _Reader.get_CurrentLineNumber();
     }
     cTextPos get_TextPos() const {
-        return cTextPos(GetPosition(), m_Reader.get_CurrentLineNumber(), 0);
+        return cTextPos(GetPosition(), _Reader.get_CurrentLineNumber(), 0);
     }
 
     HRESULT ReadStringLine(cSpanX<char> ret) override {
-        return m_Reader.ReadStringLine(ret);
+        return _Reader.ReadStringLine(ret);
     }
 };
 
@@ -56,7 +56,8 @@ class GRAYCORE_LINK cFileTextReader : public cFileTextBase {
 
 /// <summary>
 /// A file stream read/writer with special processing for detecting and converting text "\r\n" chars
-/// Most useful text file for reading. dont bother if write only. cFile is fine.
+/// dont bother if file is write only. cFile is fine.
+/// @note use cFileTextReader instead.
 /// like MFC CStdioFile. Compatible with C standard FILE,stdin,stdout,stderr.
 /// like cTextReaderStream
 /// use OF_TEXT_A or OF_TEXT_W for format ??
@@ -64,10 +65,10 @@ class GRAYCORE_LINK cFileTextReader : public cFileTextBase {
 class GRAYCORE_LINK cFileText : public cFileTextBase { // Try to be compatible with MFC CStdioFile
     typedef cFileTextBase SUPER_t;
  protected:
-    ::FILE* m_pStream = nullptr;  /// the current open script/text type file. named as MFC CStdioFile.
+    ::FILE* _pStream = nullptr;  /// the open CRT script/text type file. named as MFC CStdioFile.
 
  private:
-    ITERATE_t m_iLineNumCur = 0;  /// track the line number we are on currently. (0 based) (for cTextPos)
+    ITERATE_t _iLineNumCur = 0;  /// track the line number we are on currently. (0 based) (for cTextPos)
 
  private:
     HRESULT OpenCreate(cStringF sFilePath, OF_FLAGS_t nOpenFlags = OF_CREATE | OF_WRITE, _SECURITY_ATTRIBUTES* pSa = nullptr) {
@@ -88,7 +89,7 @@ class GRAYCORE_LINK cFileText : public cFileTextBase { // Try to be compatible w
     ~cFileText() noexcept override;
 
     inline ITERATE_t get_CurrentLineNumber() const noexcept {
-        return m_iLineNumCur;
+        return _iLineNumCur;
     }
 
     bool isEOF() const;
@@ -107,8 +108,8 @@ class GRAYCORE_LINK cFileText : public cFileTextBase { // Try to be compatible w
     HRESULT SeekX(STREAM_OFFSET_t nOffset = 0, SEEK_t eSeekOrigin = SEEK_t::_Set) noexcept override;
 
     ::FILE* get_FileStream() const noexcept {
-        // operator FILE* () const { return m_pStream; }	// Dangerous.
-        return m_pStream;
+        // operator FILE* () const { return _pStream; }	// Dangerous.
+        return _pStream;
     }
     const FILECHAR_t* get_ModeCPtr() const;
     ::FILE* DetachFileStream() noexcept;
@@ -128,7 +129,7 @@ class GRAYCORE_LINK cFileText : public cFileTextBase { // Try to be compatible w
 
     bool put_TextPos(const cTextPos& rPos);
     cTextPos get_TextPos() const {
-        return cTextPos(GetPosition(), m_iLineNumCur, 0);
+        return cTextPos(GetPosition(), _iLineNumCur, 0);
     }
 };
 #endif

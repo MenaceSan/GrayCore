@@ -28,11 +28,11 @@ enum class TZ_DSTRULE_t {
 /// Similar to _WIN32 GetTimeZoneInformation(TIME_ZONE_INFORMATION)
 /// </summary>
 struct cTimeZone {
-    const GChar_t* m_pszTimeZoneName;  /// Short Name. EST, PST, etc.
-    const GChar_t* m_pszTimeZoneDesc;  /// Long name and description.
+    const GChar_t* _pszTimeZoneName;  /// Short Name. EST, PST, etc.
+    const GChar_t* _pszTimeZoneDesc;  /// Long name and description.
 
-    TIMEVALU_t m_nTimeZoneOffset;  /// offset from UTC/GMT in minutes. Pure geography, NOT DST.
-    TZ_DSTRULE_t m_eDSTRule;       /// does it have/use a DST calculation? needs cTimeUnits.
+    TIMEVALU_t _nTimeZoneOffset;  /// offset from UTC/GMT in minutes. Pure geography, NOT DST.
+    TZ_DSTRULE_t _eDSTRule;       /// does it have/use a DST calculation? needs cTimeUnits.
 };
 
 /// <summary>

@@ -18,7 +18,7 @@ namespace Gray {
 /// e.g. static const cAtomRef a_Root(CATOM_N(Root)); //
 /// </summary>
 struct GRAYCORE_LINK cAtomManager final : public cSingleton<cAtomManager> {
-    SINGLETON_IMPL(cAtomManager);
+    DECLARE_cSingleton(cAtomManager);
 
     friend struct cAtomRef;
     typedef cStringHeadT<ATOMCHAR_t> DATA_t;    // HEAD_t
@@ -27,10 +27,10 @@ struct GRAYCORE_LINK cAtomManager final : public cSingleton<cAtomManager> {
  private:
     static const int kRefsBase = 3;  // We only have 3 refs = we can be deleted. Magic number.
 
-    mutable cThreadLockableX m_Lock;               /// make it thread safe.
-    cHashTableName<DATA_t, 4> m_aName;             /// Sorted by ATOMCHAR_t Text. NO DUPES
-    cHashTableRef<DATA_t, ATOMCODE_t, 5> m_aHash;  /// Sorted by ATOMCODE_t GetHashCode32(s) DUPES?
-    cArraySortHash<DATA_t, ATOMCODE_t> m_aStatic;  /// Put atoms here to persist even with no refs. NO DUPES.
+    mutable cThreadLockableX _Lock;               /// make it thread safe.
+    cHashTableName<DATA_t, 4> _aNames;             /// Sorted by ATOMCHAR_t Text. NO DUPES
+    cHashTableRef<DATA_t, ATOMCODE_t, 5> _aHashes;  /// Sorted by ATOMCODE_t GetHashCode32(s) DUPES?
+    cArraySortHash<DATA_t, ATOMCODE_t> _aStatics;  /// Put atoms here to persist even with no refs. NO DUPES.
 
  protected:
     bool RemoveAtom(DATA_t* pDef);
@@ -67,7 +67,7 @@ struct GRAYCORE_LINK cAtomManager final : public cSingleton<cAtomManager> {
     cAtomRef FindorCreateAtom(const cSpan<ATOMCHAR_t>& src) noexcept;
 
     HRESULT DebugDumpFile(ITextWriter& o) const;
-    bool DebugTest() const;
+    bool DebugTestPoint() const;
 };
 }  // namespace Gray
 #endif

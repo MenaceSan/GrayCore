@@ -163,8 +163,8 @@ ITERATE_t cArraySorted<TYPE, TYPE_ARG, TYPE_KEY>::AddSort(TYPE_ARG pNew, int col
                 this->SetAt(index, pNew);  // replace the old one. keep new. // DestructElements is called automatically for previous.
                 return index;
             case 2:
-                DEBUG_CHECK(0); // should NEVER happen! DEBUG this!
-                break;  // we should fail if dupe!?
+                DEBUG_CHECK(0);  // should NEVER happen! DEBUG this!
+                break;           // we should fail if dupe!?
         }
         return k_ITERATE_BAD;  // failed to add ! Dupe. keep old. No idea what intent there is.
     }
@@ -240,7 +240,7 @@ class cArraySortStruct : public cArraySorted<TYPE, const TYPE&, const TYPE&> {
 
  protected:
     COMPARE_t CompareElems(ARG_t data1, ARG_t data2) const noexcept override {
-        return cMem::Compare(&data1, &data2, sizeof(TYPE));
+        return cValT::Compare(data1, data2);
     }
 
     /// <summary>
@@ -298,8 +298,10 @@ class cArraySortStructValue : public cArraySorted<TYPE, const TYPE&, TYPE_KEY> {
     typedef typename SUPER_t::KEY_t KEY_t;
 
  protected:
+    /// <summary>
+    /// Compare a data record to another data record.
+    /// </summary>
     COMPARE_t CompareElems(ARG_t data1, ARG_t data2) const noexcept override {
-        //! Compare a data record to another data record.
         const TYPE_KEY key1 = data1.get_SortValue();
         const TYPE_KEY key2 = data2.get_SortValue();
         const COMPARE_t iDiff = cValT::Compare(key1, key2);
@@ -384,18 +386,24 @@ class cArraySortFacade : public cArraySorted<TYPE, TYPE_PTR, TYPE_KEY> {
     /// default implementation = Binary compare the whole thing. @note: Big Endian numbers wont actually be comparing correctly but maybe we dont care.
     /// </summary>
     COMPARE_t CompareElems(ARG_t data1, ARG_t data2) const noexcept override {
-        return cMem::Compare(data1, data2, sizeof(TYPE));
+        return cValT::Compare(data1, data2);
     }
 
  public:
+    /// <summary>
+    /// Get TYPE wrapped pointer at index. NOT just the raw TYPE_PTR.
+    /// </summary>
+    /// <param name="nIndex"></param>
+    /// <returns></returns>
     TYPE GetAtCheck(ITERATE_t nIndex) const {
-        //! @note we should put the result in TYPE derived pointer. NOT just the pointer?
         if (!SUPER_t::IsValidIndex(nIndex)) return nullptr;
         return this->GetAt(nIndex);
     }
-    bool IsValidIndex(ITERATE_t i) const noexcept {
-        //! @todo RENAME THIS. Don't overload IsValidIndex. Make IsValidAt() ?
-        return GetAtCheck(i) != nullptr;
+    /// <summary>
+    /// NOT the same as IsValidIndex()
+    /// </summary>
+    bool IsValidAt(ITERATE_t i) const noexcept {
+         return GetAtCheck(i) != nullptr;
     }
 
     TYPE_PTR FindArgForKey(TYPE_KEY key1) const noexcept {

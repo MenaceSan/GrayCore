@@ -17,35 +17,35 @@ namespace Gray {
 /// i.e. store and retrieve a particular structure can use the same code.
 /// </summary>
 class GRAYCORE_LINK cArchive {
-    const bool m_bStoring;         /// What mode is this in? true = writing to the m_pStream cStreamOutput. else reading cStreamInput.
-    cStreamBase* const m_pStream;  /// cStreamInput or cStreamOutput depending on m_bStoring
+    const bool _isStoring;         /// What mode is this in? true = writing to the _pStream cStreamOutput. else reading cStreamInput.
+    cStreamBase* const _pStream;  /// cStreamInput or cStreamOutput depending on _isStoring
 
  public:
-    cArchive(cStreamOutput& so) noexcept : m_bStoring(true), m_pStream(&so) {}
-    cArchive(cStreamInput& si) noexcept : m_bStoring(false), m_pStream(&si) {}
-    cArchive(cStream& s, bool bStoring) noexcept : m_bStoring(bStoring), m_pStream(bStoring ? static_cast<cStreamBase*>(static_cast<cStreamOutput*>(&s)) : static_cast<cStreamBase*>(static_cast<cStreamInput*>(&s))) {}
+    cArchive(cStreamOutput& so) noexcept : _isStoring(true), _pStream(&so) {}
+    cArchive(cStreamInput& si) noexcept : _isStoring(false), _pStream(&si) {}
+    cArchive(cStream& s, bool bStoring) noexcept : _isStoring(bStoring), _pStream(bStoring ? static_cast<cStreamBase*>(static_cast<cStreamOutput*>(&s)) : static_cast<cStreamBase*>(static_cast<cStreamInput*>(&s))) {}
 
     /// <summary>
     /// I am storing the object to the write archive cStreamOutput. like MFC cArchive
     /// </summary>
     inline bool IsStoring() const noexcept {
-        return m_bStoring;
+        return _isStoring;
     }
 
     /// <summary>
     /// I am loading the object from the read archive cStreamInput. like MFC cArchive
     /// </summary>
     inline bool IsLoading() const noexcept {
-        return !m_bStoring;
+        return !_isStoring;
     }
 
     cStreamOutput& ref_Out() {
         ASSERT(IsStoring());
-        return *static_cast<cStreamOutput*>(m_pStream);
+        return *static_cast<cStreamOutput*>(_pStream);
     }
     cStreamInput& ref_Inp() {
         ASSERT(IsLoading());
-        return *static_cast<cStreamInput*>(m_pStream);
+        return *static_cast<cStreamInput*>(_pStream);
     }
 
     /// Serialize Base Types

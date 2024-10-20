@@ -40,18 +40,7 @@
 namespace Gray {
 const LOGCHAR_t cFileDir::k_szCantMoveFile[] = "Can't Move File ";  /// MoveDirFiles failed for this.
 
-cFileDevice::cFileDevice() : m_eType(FILESYS_t::_DEFAULT), m_nSerialNumber(0), m_dwMaximumComponentLength(0), m_bCaseSensitive(0) {}
-
-cFileDevice::~cFileDevice() {}
-
-bool cFileDevice::isCaseSensitive() const {
-    //! The file system is case sensitive ? __linux__ = true, _WIN32 = false
-    //! A network mounted SAMBA share will use whatever rules the native OS/FileSystem uses.
-    //! m_sTypeName = "FAT","NTFS" system = non case sensitive. "NFS" = case sensitive.
-    return m_bCaseSensitive;
-}
-
-const char* cFileDevice::k_FileSysName[static_cast<int>(FILESYS_t::_QTY)] = {
+const char* const cFileDevice::k_FileSysName[static_cast<int>(FILESYS_t::_QTY)] = {
     "",       // FILESYS_t::_DEFAULT
     "FAT",    // FILESYS_t::_FAT
     "FAT32",  // FILESYS_t::_FAT32
@@ -60,16 +49,12 @@ const char* cFileDevice::k_FileSysName[static_cast<int>(FILESYS_t::_QTY)] = {
 };
 
 HRESULT cFileDevice::UpdateInfo(const FILECHAR_t* pszDeviceId) {
-    //! @arg pszDeviceId = nullptr = use the current dir/path for the app.
-    //! pszDeviceId can be from _WIN32 GetLogicalDriveStrings()
-    //! some drives won't be ready (if removable). Thats OK. HRESULT_WIN32_C(ERROR_NOT_READY)
-
 #ifdef UNDER_CE
-    m_sVolumeName = pszDeviceId;
-    m_nSerialNumber = 1;
-    m_sTypeName = "NTFS";  // "NTFS" or "FAT"
-    m_eType = FILESYS_t::_NTFS;
-    m_bCaseSensitive = false;
+    _sVolumeName = pszDeviceId;
+    _nSerialNumber = 1;
+    _sTypeName = "NTFS";  // "NTFS" or "FAT"
+    _eSysType = FILESYS_t::_NTFS;
+    _isCaseSensitive = false;
 
 #elif defined(_WIN32)
     FILECHAR_t szVolumeNameBuffer[cFilePath::k_MaxLen];
@@ -77,16 +62,16 @@ HRESULT cFileDevice::UpdateInfo(const FILECHAR_t* pszDeviceId) {
     FILECHAR_t szFileSystemNameBuffer[cFilePath::k_MaxLen];
     szFileSystemNameBuffer[0] = '\0';
     DWORD dwFlags = 0;
-    m_nSerialNumber = 0;
+    _nSerialNumber = 0;
 
-    bool bRet = _FNF(::GetVolumeInformation)(pszDeviceId, szVolumeNameBuffer, STRMAX(szVolumeNameBuffer), (DWORD*)(void*)&m_nSerialNumber, &m_dwMaximumComponentLength, &dwFlags, szFileSystemNameBuffer, STRMAX(szFileSystemNameBuffer));
+    const bool bRet = _FNF(::GetVolumeInformation)(pszDeviceId, szVolumeNameBuffer, STRMAX(szVolumeNameBuffer), (DWORD*)(void*)&_nSerialNumber, &_nMaximumComponentLength, &dwFlags, szFileSystemNameBuffer, STRMAX(szFileSystemNameBuffer));
     if (!bRet) return HResult::GetDef(HResult::GetLast(), E_FAIL);
 
-    m_sVolumeName = szVolumeNameBuffer;
-    m_sTypeName = szFileSystemNameBuffer;  // "NTFS" or "FAT"
-    m_eType = (FILESYS_t)StrT::SpanFindHead(szFileSystemNameBuffer, TOSPAN(k_FileSysName));
-    if (m_eType < FILESYS_t::_DEFAULT) m_eType = FILESYS_t::_NTFS;
-    m_bCaseSensitive = (dwFlags & FILE_CASE_SENSITIVE_SEARCH);
+    _sVolumeName = szVolumeNameBuffer;
+    _sTypeName = szFileSystemNameBuffer;  // "NTFS" or "FAT"
+    _eSysType = (FILESYS_t)StrT::SpanFindHead(szFileSystemNameBuffer, TOSPAN(k_FileSysName));
+    if (_eSysType < FILESYS_t::_DEFAULT) _eSysType = FILESYS_t::_NTFS;
+    _isCaseSensitive = (dwFlags & FILE_CASE_SENSITIVE_SEARCH);
 
 #if 0  // 0
        // szPath without trailing backslash and FILEDEVICE_PREFIX
@@ -94,7 +79,7 @@ HRESULT cFileDevice::UpdateInfo(const FILECHAR_t* pszDeviceId) {
        //  FILEDEVICE_PREFIX "PhysicalDrive0"
        //  "\\\\\?\\Volume{433619ed-c6ea-11d9-a3b2-806d6172696f}
 
-		cOSHandle hDevice(_FNF(::CreateFile)(pszDeviceId, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0, HANDLE_NULL));
+		cOSHandle hDevice(_FNF(::CreateFile)(pszDeviceId, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0, cOSHandle::kNULL));
 		if (hDevice.isValidHandle())
 		{
 			DWORD dwOutBytes = 0;           // IOCTL output length
@@ -124,8 +109,8 @@ HRESULT cFileDevice::UpdateInfo(const FILECHAR_t* pszDeviceId) {
 
 #elif defined(__linux__)
     if (pszDeviceId == nullptr) {
-        m_sVolumeName = cAppState::get_CurrentDir();
-        pszDeviceId = m_sVolumeName;
+        _sVolumeName = cAppState::get_CurrentDir();
+        pszDeviceId = _sVolumeName;
     }
 #ifdef USE_64BIT
     struct statfs64 fs;
@@ -137,24 +122,21 @@ HRESULT cFileDevice::UpdateInfo(const FILECHAR_t* pszDeviceId) {
     if (iRet < 0) {
         return HResult::GetPOSIXLastDef(E_FAIL);
     }
-    m_dwMaximumComponentLength = fs.f_bsize;
-    m_sVolumeName = "/";
+    _nMaximumComponentLength = fs.f_bsize;
+    _sVolumeName = "/";
     switch (fs.f_type) {
-        default:                  // NFS_SUPER_MAGIC
-            m_sTypeName = "NFS";  // "NTFS" or "FAT"
-            m_eType = FILESYS_t::_NFS;
+        default:                 // NFS_SUPER_MAGIC
+            _sTypeName = "NFS";  // "NTFS" or "FAT"
+            _eSysType = FILESYS_t::_NFS;
             break;
     }
-    cMem::Copy(&m_nSerialNumber, (void*)&fs.f_fsid, sizeof(m_nSerialNumber));  // 64 bits.
-    m_bCaseSensitive = (m_eType == FILESYS_t::_NFS);
+    cMem::Copy(&_nSerialNumber, (void*)&fs.f_fsid, sizeof(_nSerialNumber));  // 64 bits.
+    _isCaseSensitive = (_eSysType == FILESYS_t::_NFS);
 #endif
     return S_OK;
 }
 
 UINT GRAYCALL cFileDevice::GetDeviceType(const FILECHAR_t* pszDeviceId) {
-    //! Determines whether a disk drive is a removable, fixed, CD-ROM, RAM disk, or network drive.
-    //! https://msdn.microsoft.com/en-us/library/windows/desktop/aa364939(v=vs.85).aspx
-    //! @return 0 =DRIVE_UNKNOWN, 1=DRIVE_NO_ROOT_DIR, 2=DRIVE_REMOVABLE, 3=DRIVE_FIXED, 4=DRIVE_REMOTE, 5=DRIVE_CDROM, 6=DRIVE_RAMDISK
 #ifdef _WIN32
     return _FNF(::GetDriveType)(pszDeviceId);
 #elif defined(__linux__)
@@ -218,7 +200,7 @@ HRESULT GRAYCALL cFileDevice::GetSystemDeviceList(cArrayString<FILECHAR_t>& a) {
     cFileDir fdr;
     HRESULT hRes1 = fdr.ReadDir(FILESTR_DirSep "dev" FILESTR_DirSep "disk");
     if (FAILED(hRes1)) return hRes1;
-    for (const cFileDirEntry& fileEntry : fdr.m_aFiles) {
+    for (const cFileDirEntry& fileEntry : fdr._aFiles) {
         a.Add(fileEntry.get_Name());
     }
 #else
@@ -229,23 +211,13 @@ HRESULT GRAYCALL cFileDevice::GetSystemDeviceList(cArrayString<FILECHAR_t>& a) {
 
 //*******************************************************
 
-cFileFind::cFileFind(cStringF sDir, DWORD nFileFlags) noexcept
-    : m_sDirPath(sDir),
-      m_nFileFlags(nFileFlags),
-#ifdef _WIN32
-      m_hContext(INVALID_HANDLE_VALUE)
-#elif defined(__linux__)
-      m_bReadStats(true),
-      m_hContext(nullptr)
-#endif
-{
-}
+cFileFind::cFileFind(cStringF sDir, DWORD nFileFlags) noexcept : _sDirPath(sDir), _nFileFlags(nFileFlags) {}
 
 bool cFileFind::isContextOpen() const {
 #ifdef _WIN32
-    if (m_hContext == INVALID_HANDLE_VALUE) return false;
+    if (_hContext == INVALID_HANDLE_VALUE) return false;
 #elif defined(__linux__)
-    if (m_hContext == nullptr) return false;
+    if (_hContext == nullptr) return false;
 #endif
     return true;
 }
@@ -253,110 +225,95 @@ bool cFileFind::isContextOpen() const {
 void cFileFind::CloseContext() {
     if (!isContextOpen()) return;
 #ifdef _WIN32
-    ::FindClose(m_hContext);
-    m_hContext = INVALID_HANDLE_VALUE;
+    ::FindClose(_hContext);
+    _hContext = INVALID_HANDLE_VALUE;
 #elif defined(__linux__)
-    ::closedir(m_hContext);
-    m_hContext = nullptr;
+    ::closedir(_hContext);
+    _hContext = nullptr;
 #endif
 }
 
 HRESULT cFileFind::FindFileNext(bool bFirst) {
-    //! Read the next file in the directory list.
-    //! ASSUME cFileFind::FindFile() was called.
-    //! @return
-    //!  HRESULT_WIN32_C(ERROR_NO_MORE_ITEMS) = no more files
-    //! @note UNICODE files are converted to '?' chars if calling the non UNICODE version.
-    if (!isContextOpen()) {
-        return HRESULT_WIN32_C(ERROR_NO_MORE_ITEMS);
-    }
+    if (!isContextOpen()) return HRESULT_WIN32_C(ERROR_NO_MORE_ITEMS);
 
 #ifdef _WIN32
     if (!bFirst) {
-        if (!::FindNextFileW(m_hContext, &m_FindInfo)) {
+        if (!::FindNextFileW(_hContext, &_FindInfo)) {
             return HRESULT_WIN32_C(ERROR_NO_MORE_ITEMS);
         }
     }
 
-    m_FileEntry.m_sFileName = m_FindInfo.cFileName;  // How should we deal with USE_UNICODE_FN names ? Use UTF8
+    _FileEntry._sFileName = _FindInfo.cFileName;  // How should we deal with USE_UNICODE_FN names ? Use UTF8
 
-    if (!cBits::HasAny<DWORD>(m_nFileFlags, FOF_X_WantDots) && isDots()) {  // ignore the . and .. that old systems can give us.
+    if (!cBits::HasAny<DWORD>(_nFileFlags, FOF_X_WantDots) && isDots()) {  // ignore the . and .. that old systems can give us.
         return FindFileNext(false);
     }
 
-    if (cBits::HasAny<DWORD>(m_nFileFlags, FOF_X_FollowLinks) && cBits::HasAny<DWORD>(m_FindInfo.dwFileAttributes, FILE_ATTRIBUTE_REPARSE_POINT)) {
+    if (cBits::HasAny<DWORD>(_nFileFlags, FOF_X_FollowLinks) && cBits::HasAny<DWORD>(_FindInfo.dwFileAttributes, FILE_ATTRIBUTE_REPARSE_POINT)) {
     }
 
-    m_FileEntry.InitFileStatus(m_FindInfo);
+    _FileEntry.InitFileStatus(_FindInfo);
 
 #ifdef _DEBUG
-    // NOTE: m_Size for FILE_ATTRIBUTE_DIRECTORY is NOT accurate!
-    if (m_FileEntry.isAttrDir()) {
-        ASSERT(m_FindInfo.nFileSizeLow == 0);
+    // NOTE: _nSize for FILE_ATTRIBUTE_DIRECTORY is NOT accurate!
+    if (_FileEntry.isAttrDir()) {
+        ASSERT(_FindInfo.nFileSizeLow == 0);
     }
 #endif
 
 #elif defined(__linux__)
 
-    struct dirent* pFileInfo = ::readdir(m_hContext);
+    struct dirent* pFileInfo = ::readdir(_hContext);
     if (pFileInfo == nullptr) return HRESULT_WIN32_C(ERROR_NO_MORE_ITEMS);
 
-    m_FileEntry.m_sFileName = pFileInfo->d_name;
+    _FileEntry._sFileName = pFileInfo->d_name;
     if (isDots()) {
-        if (!(this->m_nFileFlags & FOF_X_WantDots)) {
+        if (!(this->_nFileFlags & FOF_X_WantDots)) {
             return FindFileNext(false);
         }
     }
 
-    // filter on m_sWildcardFilter
-    else if (!m_sWildcardFilter.IsEmpty() && StrT::MatchRegEx<FILECHAR_t>(m_FileEntry.m_sFileName, m_sWildcardFilter, false) > 0) {  // IgnoreCase ?
-        return FindFileNext(false);                                                                                                  // Skip
+    // filter on _sWildcardFilter
+    else if (!_sWildcardFilter.IsEmpty() && StrT::MatchRegEx<FILECHAR_t>(_FileEntry._sFileName, _sWildcardFilter, false) > 0) {  // IgnoreCase ?
+        return FindFileNext(false);                                                                                                // Skip
     }
 
     // Match
 
-    if (m_bReadStats) {  // some dirs don't have stat() ability. e.g. "/proc"
+    if (_HasStats) {  // some dirs don't have stat() ability. e.g. "/proc"
         // dirent() doesn't have this stuff...it's in stat()
         cFileStatusSys statusSys;
-        const HRESULT hRes = cFileStatus::GetStatusSys(statusSys, get_FilePath(), this->m_nFileFlags & FOF_X_FollowLinks);
+        const HRESULT hRes = cFileStatus::GetStatusSys(statusSys, get_FilePath(), this->_nFileFlags & FOF_X_FollowLinks);
         if (FAILED(hRes)) return hRes;
-        m_FileEntry.InitFileStatus(statusSys);
+        _FileEntry.InitFileStatus(statusSys);
     }
 #endif
 
-    m_FileEntry.UpdateLinuxHidden(m_FileEntry.m_sFileName);
+    _FileEntry.UpdateLinuxHidden(_FileEntry._sFileName);
     return S_OK;
 }
 
 HRESULT cFileFind::FindOpen(const FILECHAR_t* pszDirPath, const FILECHAR_t* pszWildcardFile) {
-    //! start a sequential read of the files in a list of possible matches.
-    //! @arg pszWildcardFile = "*.ext". if pszDirPath is empty, full path can be in pszWildcardFile
-    //! @note pszWildcardFile can NOT have multiple "*.ext1;*.ext2"
-    //! @return
-    //!  HRESULT_WIN32_C(ERROR_NO_MORE_ITEMS) = no files.
-
     CloseContext();
     ASSERT(!isContextOpen());
 
     // Combine pszDirPath and pszWildcardFile
-    if (pszDirPath != nullptr) {
-        m_sDirPath = pszDirPath;  // store this. but may already be set.
-    }
+    if (pszDirPath != nullptr) _sDirPath = pszDirPath;  // store this. but may already be set.
+
     cStringF sWildcardFile;  // if it is part of directory?
-    if (m_sDirPath.IsEmpty()) {
+    if (_sDirPath.IsEmpty()) {
         // full path can be in pszWildcardFile. break it up.
-        if (StrT::IsNullOrEmpty(pszWildcardFile)) {
-            return HRESULT_WIN32_C(ERROR_PATH_NOT_FOUND);
-        }
-        m_sDirPath = cFilePath::GetFileDir(pszWildcardFile);
+        if (StrT::IsNullOrEmpty(pszWildcardFile)) return HRESULT_WIN32_C(ERROR_PATH_NOT_FOUND);
+
+        _sDirPath = cFilePath::GetFileDir(pszWildcardFile);
         pszWildcardFile = cFilePath::GetFileName(StrT::ToSpanStr(pszWildcardFile));  // this specific file. or may have wildcards.
     } else if (StrT::IsNullOrEmpty(pszWildcardFile)) {                               // NOTE: NT doesn't need this but 98 does ?
-        // ASSUME m_sDirPath is just a directory path. Find all files in this path.
-        if (cFilePath::HasTitleWildcards(m_sDirPath.get_SpanStr())) {
+        // ASSUME _sDirPath is just a directory path. Find all files in this path.
+        if (cFilePath::HasTitleWildcards(_sDirPath.get_SpanStr())) {
             // NOTE: we should have put this in pszWildcardFile! This is wrong. avoid ambiguous queries.
-            sWildcardFile = cFilePath::GetFileName(m_sDirPath.get_SpanStr());
+            sWildcardFile = cFilePath::GetFileName(_sDirPath.get_SpanStr());
             pszWildcardFile = sWildcardFile;
-            m_sDirPath = cFilePath::GetFileDir(m_sDirPath);
+            _sDirPath = cFilePath::GetFileDir(_sDirPath);
         } else {
             pszWildcardFile = _FN("*");  // All files in this directory = default.
         }
@@ -364,18 +321,18 @@ HRESULT cFileFind::FindOpen(const FILECHAR_t* pszDirPath, const FILECHAR_t* pszW
 
 #ifdef _WIN32
     // in _WIN32 wildcard filter is built in.
-    cMem::Zero(&m_FindInfo, sizeof(m_FindInfo));
-    m_FindInfo.dwFileAttributes = FILE_ATTRIBUTE_NORMAL;  // docs say this is not needed
+    cMem::Zero(&_FindInfo, sizeof(_FindInfo));
+    _FindInfo.dwFileAttributes = FILE_ATTRIBUTE_NORMAL;  // docs say this is not needed
 
     cStringF sFilePath = GetFilePath(pszWildcardFile);
-    m_hContext = ::FindFirstFileW(cFilePath::GetFileNameLongW(sFilePath), &m_FindInfo);
+    _hContext = ::FindFirstFileW(cFilePath::GetFileNameLongW(sFilePath), &_FindInfo);
 
 #elif defined(__linux__)
     // in Linux wildcard filter is done later/manually.
-    m_sWildcardFilter = pszWildcardFile;
+    _sWildcardFilter = pszWildcardFile;
 
     // Need to strip out the *.EXT part. just need the dir name here.
-    m_hContext = ::opendir(m_sDirPath.get_CPtr());
+    _hContext = ::opendir(_sDirPath.get_CPtr());
 #endif
 
     if (!isContextOpen()) {
@@ -421,7 +378,7 @@ HRESULT GRAYCALL cFileDir::RemoveDirectory1(const FILECHAR_t* pszDirName) {  // 
 #ifdef _WIN32
     if (!::RemoveDirectoryW(cFilePath::GetFileNameLongW(pszDirName)))
 #elif defined(__linux__)
-    if (::rmdir(pszDirName) != 0)        // mode_t
+    if (::rmdir(pszDirName) != 0)  // mode_t
 #endif
     {
         return HResult::GetLastDef(HRESULT_WIN32_C(ERROR_FILE_NOT_FOUND));
@@ -443,10 +400,10 @@ HRESULT cFileDir::ReadDir(const FILECHAR_t* pszDirPath, const FILECHAR_t* pszWil
     //!  number of files.
 
     if (pszDirPath != nullptr) {
-        m_sDirPath = pszDirPath;  // store this
+        _sDirPath = pszDirPath;  // store this
     }
 
-    cFileFind state(m_sDirPath, bFollowLink);
+    cFileFind state(_sDirPath, bFollowLink);
     HRESULT hRes = state.FindFile(nullptr, pszWildcardFile);
     if (FAILED(hRes)) {
         if (hRes == HRESULT_WIN32_C(ERROR_NO_MORE_ITEMS) || hRes == HRESULT_WIN32_C(ERROR_FILE_NOT_FOUND))  // no files.
@@ -454,10 +411,10 @@ HRESULT cFileDir::ReadDir(const FILECHAR_t* pszDirPath, const FILECHAR_t* pszWil
         return hRes;
     }
 
-    m_sDirPath = state.get_DirPath();  // in case real path is in pszWildcardFile
+    _sDirPath = state.get_DirPath();  // in case real path is in pszWildcardFile
     ITERATE_t iFiles = 0;
     while (iFiles < iFilesMax) {
-        hRes = AddFileDirEntry(state.m_FileEntry);
+        hRes = AddFileDirEntry(state._FileEntry);
         if (FAILED(hRes)) continue;
         iFiles++;
         hRes = state.FindFileNext();
@@ -493,12 +450,12 @@ HRESULT cFileDir::ReadDirPreferredExt(const FILECHAR_t* pszFilePath, const cSpan
     cFileDirEntry* aEntries[k_ExtMax];  // sorted by extension.
     cMem::Zero(aEntries, sizeof(aEntries));
     for (int i = 0; i < (int)hFiles; i++) {
-        const FILECHAR_t* pszExt = cFilePath::GetFileNameExt(m_aFiles.GetAt(i).get_Name().get_SpanStr());
+        const FILECHAR_t* pszExt = cFilePath::GetFileNameExt(_aFiles.GetAt(i).get_Name().get_SpanStr());
         if (pszExt == nullptr) continue;
         const ITERATE_t iExt = StrT::SpanFind(pszExt, exts);
         if (IS_INDEX_BAD_ARRAY(iExt, aEntries)) continue;
         if (iExt >= (ITERATE_t)_countof(aEntries)) continue;  // overflow !
-        aEntries[iExt] = &m_aFiles[i];
+        aEntries[iExt] = &_aFiles[i];
         iFound++;
     }
 
@@ -509,8 +466,8 @@ HRESULT cFileDir::ReadDirPreferredExt(const FILECHAR_t* pszFilePath, const cSpan
 
     for (UINT i = 0; i < _countof(aEntries); i++) {
         if (aEntries[i] == nullptr) continue;
-        m_aFiles[0] = *aEntries[i];
-        m_aFiles.SetSize(1);
+        _aFiles[0] = *aEntries[i];
+        _aFiles.SetSize(1);
         return i;  // what entry in pszExtTable
     }
 
@@ -578,7 +535,7 @@ HRESULT GRAYCALL cFileDir::MovePathToTrash(const FILECHAR_t* pszPath, bool bDir)
 #error UNDER_CE
 #elif defined(_WIN32)
     FILECHAR_t szPath[cFilePath::k_MaxLen];
-    cAppState::GetFolderPath(CSIDL_BITBUCKET, szPath); 
+    cAppState::GetFolderPath(CSIDL_BITBUCKET, szPath);
     sDirTrash = szPath;
 #elif defined(__linux__)
     // https://www.freedesktop.org/wiki/Specifications/trash-spec/
@@ -638,7 +595,7 @@ HRESULT GRAYCALL cFileDir::DirFileOps(FILEOP_t eOp, const FILECHAR_t* pszDirSrc,
     }
 
     int iErrors = 0;
-    for (const cFileDirEntry& fileEntry : fileDir.m_aFiles) {
+    for (const cFileDirEntry& fileEntry : fileDir._aFiles) {
         // Move each of the files.
         if (nFileFlags & FOF_FILESONLY) {
             if (fileEntry.isAttrDir()) continue;

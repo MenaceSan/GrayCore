@@ -23,14 +23,16 @@ GRAYCORE_LINK void CloseHandleType(::HMODULE h) noexcept {
 #endif
 }
 
-cOSModule::cOSModule(::HMODULE hModule, UINT32 uFlags) : m_hModule(hModule), m_uFlags(uFlags) {
+cOSModule::cOSModule() {}
+
+cOSModule::cOSModule(::HMODULE hModule, UINT32 uFlags) : _hModule(hModule), _uFlags(uFlags) {
     //! @arg bHaveRefCount = Must call FreeModuleLast()
 }
-cOSModule::cOSModule(cOSModule&& m) : m_hModule(m.m_hModule), m_uFlags(m.m_uFlags) {
+cOSModule::cOSModule(cOSModule&& m) : _hModule(m._hModule), _uFlags(m._uFlags), _modulePath(m._modulePath) {
     m.ClearModule();
 }
 
-cOSModule::cOSModule(const FILECHAR_t* pszModuleName, UINT32 uFlags) : m_hModule(HMODULE_NULL), m_uFlags(k_Load_Normal) {
+cOSModule::cOSModule(const FILECHAR_t* pszModuleName, UINT32 uFlags) {
     //! Use isValidModule()
     AttachModuleName(pszModuleName, uFlags);
 }
@@ -38,13 +40,21 @@ cOSModule::~cOSModule() {
     FreeModuleLast();
 }
 
+void cOSModule::DebugTestPoint() const {
+#ifdef _DEBUG
+    if (get_Name().EndsWithI(TOSPAN(_FN("GrayCodec.Tests")))) {
+        DEBUG_MSG(("GrayCodec.Tests"));
+    }
+#endif
+}
+
 StrLen_t cOSModule::GetModulePath(cSpanX<FILECHAR_t> ret) const {
     ASSERT(isValidModule());
 #ifdef _WIN32
-    const bool isApp = m_hModule == cAppState::get_HModule();
-    const DWORD uRet = _FNF(::GetModuleFileName)(isApp ? HMODULE_NULL : m_hModule, ret.GetTPtrW<FILECHAR_t>(), (DWORD)ret.get_MaxLen());
+    const bool isApp = _hModule == cAppState::get_HModule();
+    const DWORD uRet = _FNF(::GetModuleFileName)(isApp ? HMODULE_NULL : _hModule, ret.GetTPtrW<FILECHAR_t>(), (DWORD)ret.get_MaxLen());
     if (uRet <= 0) {
-        ret.get_PtrWork()[0] = '\0';
+        ret.SetAt(0, '\0');
         const HRESULT hRes = HResult::GetLastDef(E_FAIL);
         if (hRes == HRESULT_WIN32_C(ERROR_MOD_NOT_FOUND) && cAppState::isInCExit()) return 0;  // this can happen when unloading.
         DEBUG_WARN(("cOSModule::GetModulePath ERR='%s'", LOGERR(hRes)));
@@ -56,19 +66,20 @@ StrLen_t cOSModule::GetModulePath(cSpanX<FILECHAR_t> ret) const {
 #endif
 }
 
-cStringF cOSModule::get_Name() const {
+cStringF cOSModule::get_ModulePath() const {
+    if (!_modulePath.IsEmpty()) return _modulePath;
 #ifdef _WIN32
     FILECHAR_t szModuleName[cFilePath::k_MaxLen];
     const StrLen_t dwLen = GetModulePath(TOSPAN(szModuleName));
     if (dwLen <= 0) return "";
+    _modulePath = szModuleName;
     return szModuleName;
 #else
-    if (!m_sModuleName.IsEmpty()) return m_sModuleName;
-    if (m_hModule == cAppState::get_HModule()) return cAppState::get_AppFilePath();  // Get the apps module name.
+    if (_hModule == cAppState::get_HModule()) return cAppState::get_AppFilePath();  // Get the apps module name.
 
     ::Dl_info info;
-    int iRet = ::dladdr(m_hModule, &info);  // TODO: TEST THIS __linux__. MIGHT NOT WORK !
-    if (iRet == 0) return "";               // I didn't load this and i don't know its name.
+    int iRet = ::dladdr(_hModule, &info);  // TODO: TEST THIS __linux__. MIGHT NOT WORK !
+    if (iRet == 0) return "";              // I didn't load this and i don't know its name.
 
     return info.dli_fname;  // the file name.
 #endif
@@ -76,11 +87,12 @@ cStringF cOSModule::get_Name() const {
 
 void cOSModule::FreeModuleLast() {
     if (!isValidModule()) return;
-    if (m_uFlags & cOSModule::k_Load_NoRefCount) return;  // Don't free. I didnt load this.
-    if (!(m_uFlags & cOSModule::k_Load_Preload) && !(m_uFlags & cOSModule::k_Load_ByName)) {
-        DEBUG_MSG(("FreeModule('%s')", LOGSTR(get_Name())));    // Log this.
+    DebugTestPoint();
+    if (_uFlags & cOSModule::k_Load_NoRefCount) return;  // Don't free. I didnt load this.
+    if (!(_uFlags & cOSModule::k_Load_Preload) && !(_uFlags & cOSModule::k_Load_ByName)) {
+        DEBUG_MSG(("FreeModule('%s')", LOGSTR(get_Name())));  // Log this.
     }
-    CloseHandleType<::HMODULE>(m_hModule);
+    CloseHandleType<::HMODULE>(_hModule);
 }
 
 void cOSModule::FreeThisModule() {
@@ -90,28 +102,23 @@ void cOSModule::FreeThisModule() {
     DetachModule();
 }
 
-MIME_t GRAYCALL cOSModule::CheckModuleTypeFile(const FILECHAR_t* pszPathName) {  // static
-    //! Does this file appear to be a module/PE type ?
-    //! @return 0 = MIME_t::_UNKNOWN, 3=MIME_t::_EXE, 2=MIME_t::_DLL.
-    //! @todo __linux__ must check the MIME type on the actual file.
-
-    static const FILECHAR_t* k_Exts[] = {
+MIME_t GRAYCALL cOSModule::CheckModuleTypeFile(const cSpan<FILECHAR_t>& path) {  // static
+    static const FILECHAR_t* const k_Exts[] = {
         // alternate names.
         _FN(MIME_EXT_dll),  // MIME_t::_DLL
         _FN(MIME_EXT_exe),  // MIME_t::_EXE
         _FN(MIME_EXT_ocx),
         _FN(MIME_EXT_so),  // Linux
     };
-    const FILECHAR_t* pszExt = cFilePath::GetFileNameExt(StrT::ToSpanStr(pszPathName));
+    const FILECHAR_t* pszExt = cFilePath::GetFileNameExt(path);
     if (pszExt == nullptr) return MIME_t::_UNKNOWN;  // not true for __linux__. use MIME type.
 
-    ITERATE_t i = StrT::SpanFind(pszExt, TOSPAN(k_Exts));
+    const ITERATE_t i = StrT::SpanFind(pszExt, TOSPAN(k_Exts));
     if (i < 0) return MIME_t::_UNKNOWN;  // no = MIME_t::_UNKNOWN
 
     return (i == 1) ? MIME_t::_EXE : MIME_t::_Dll;
 }
 
-#ifndef UNDER_CE
 ::HMODULE GRAYCALL cOSModule::GetModuleHandleForAddr(const void* pAddr) {  // static
     if (pAddr == nullptr) return HMODULE_NULL;
 
@@ -121,80 +128,52 @@ MIME_t GRAYCALL cOSModule::CheckModuleTypeFile(const FILECHAR_t* pszPathName) { 
     return hModule;
 #else
     Dl_info info;
-    int iRet = ::dladdr(pAddr, &info);
+    const int iRet = ::dladdr(pAddr, &info);
     if (iRet == 0) return HMODULE_NULL;
     return info.dli_fbase;
 #endif
 }
-#endif
 
 FUNCPTR_t cOSModule::GetSymbolAddress(const char* pszSymbolName) const {
     ASSERT(isValidModule());
 #ifdef UNDER_CE
-    return ::GetProcAddressA(m_hModule, pszSymbolName);
+    return ::GetProcAddressA(_hModule, pszSymbolName);
 #elif defined(_WIN32)
-    return ::GetProcAddress(m_hModule, pszSymbolName);
+    return ::GetProcAddress(_hModule, pszSymbolName);
 #elif defined(__linux__)
     // add an _ to the front of the name ?
-    return (FUNCPTR_t)::dlsym(m_hModule, pszSymbolName);
+    return (FUNCPTR_t)::dlsym(_hModule, pszSymbolName);
 #endif
 }
 
 bool cOSModule::AttachModuleName(const FILECHAR_t* pszModuleName, UINT32 uFlags) {
-    //! is the DLL/SO already loaded? Find it by name.
-    //! Full Path is NOT necessary
-    //! @arg uFlags = cOSModule::k_Load_NoRefCount
-
     FreeThisModule();
 
 #ifdef _WIN32
-#if !defined(UNDER_CE)
-    if (!_FNF(::GetModuleHandleEx)((uFlags & k_Load_NoRefCount) ? GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT : 0, pszModuleName, &m_hModule)) {
+    if (!_FNF(::GetModuleHandleEx)((uFlags & k_Load_NoRefCount) ? GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT : 0, pszModuleName, &_hModule)) {
         ClearModule();
         return false;
     }
     if (!isValidModule()) return false;
-
-#else
-    m_hModule = _FNF(::GetModuleHandle)(pszModuleName);  // no ref count.
-    if (!isValidModule()) return false;
-
-    if (!(uFlags & k_Load_NoRefCount)) {
-        // get a new ref by loading it by its name.
-#ifndef UNDER_CE
-        ::SetErrorMode(SEM_FAILCRITICALERRORS);
-#endif
-        ::HMODULE const hMod2 = _FNF(::LoadLibrary)(get_Name());
-        if (hMod2 == HMODULE_NULL) {
-            uFlags |= k_Load_NoRefCount;  // I didn't get a ref for some reason. though it is loaded.
-        } else {
-            m_hModule = hMod2;
-        }
-    }
-#endif
 #elif defined(__linux__)
-    m_hModule = ::dlopen(pszModuleName, (uFlags & k_Load_OSMask) | RTLD_NOLOAD);  //  (since glibc 2.2)
+    _hModule = ::dlopen(pszModuleName, (uFlags & k_Load_OSMask) | RTLD_NOLOAD);  //  (since glibc 2.2)
     if (!isValidModule()) return false;
     if (!(uFlags & k_Load_NoRefCount)) {
-        ::HMODULE const hMod2 = ::dlopen(get_Name(), uFlags & k_Load_OSMask);
+        ::HMODULE const hMod2 = ::dlopen(get_Name(), uFlags & k_Load_OSMask);  // get ref
         if (hMod2 == HMODULE_NULL) {
             uFlags |= k_Load_NoRefCount;  // I didn't get a ref for some reason. though it is loaded.
         } else {
-            m_hModule = hMod2;
+            _hModule = hMod2;  // i have a ref for this.
         }
     }
 #endif
-    m_uFlags = uFlags;  // found the handle. Do i need to unload it?
+    _modulePath = pszModuleName;
+    _uFlags = uFlags;  // found the handle. Do i need to unload it?
+    DebugTestPoint();
     return true;
 }
 
 HRESULT cOSModule::LoadModule(const FILECHAR_t* pszModuleName, UINT32 uFlags) {
-    //! @arg uFlags =
-    //!  k_Load_ByName = find if its already loaded first. full path isn't important.
-    //!  LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS | LOAD_LIBRARY_AS_IMAGE_RESOURCE
-    //! @note
-    //!  We should use cAppStateModuleLoad with this.
-
     FreeThisModule();
 
     if (cBits::HasAny(uFlags, cOSModule::k_Load_ByName)) {
@@ -212,15 +191,17 @@ HRESULT cOSModule::LoadModule(const FILECHAR_t* pszModuleName, UINT32 uFlags) {
 #ifndef UNDER_CE
     ::SetErrorMode(SEM_FAILCRITICALERRORS);  // no error dialog.
 #endif
-    m_hModule = _FNF(::LoadLibraryEx)(pszModuleName, nullptr, uFlags & k_Load_OSMask);  // file name of module
+    _hModule = _FNF(::LoadLibraryEx)(pszModuleName, nullptr, uFlags & k_Load_OSMask);  // file name of module
 #elif defined(__linux__)
     // Linux requires the file extension.
-    m_sModuleName = pszModuleName;
-    m_hModule = ::dlopen(pszModuleName, uFlags & k_Load_OSMask);  // RTLD_NOW or RTLD_LAZY
+    _modulePath = pszModuleName;
+    _hModule = ::dlopen(pszModuleName, uFlags & k_Load_OSMask);  // RTLD_NOW or RTLD_LAZY
 #endif
     if (!isValidModule()) return GetLastErrorDef();
 
-    m_uFlags = uFlags;  // I'm responsible to unload this when I'm done.
+    _modulePath = pszModuleName;
+    _uFlags = uFlags;  // I'm responsible to unload this when I'm done.
+    DebugTestPoint();
     return S_OK;
 }
 
@@ -238,7 +219,7 @@ HRESULT cOSModule::LoadModuleWithSymbol(const FILECHAR_t* pszModuleName, const c
 		hRes = LoadModule(get_Name(), k_Load_Normal);
 	}
 #else
-    HRESULT hRes = LoadModule(pszModuleName, k_Load_ByName);
+    const HRESULT hRes = LoadModule(pszModuleName, k_Load_ByName);
     if (FAILED(hRes)) return hRes;
     FUNCPTR_t pAddr = GetSymbolAddress(pszSymbolName);
     if (pAddr == nullptr) {

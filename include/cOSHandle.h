@@ -24,7 +24,6 @@ typedef void* HINSTANCE;
 #endif
 
 namespace Gray {
-#define HANDLE_NULL NULL     /// Invalid OS handle for _WIN32. Not invalid OS handle for __linux__.
 #define WINHANDLE_NULL NULL  /// HWND, HPEN, etc are NOT OS Handles. like HWND_DESKTOP. like HANDLEPTR_NULL. This is a WINAPI void* handle via DECLARE_HANDLE like HWND, HPEN, HINSTANCE, etc. can't call CloseHandle() on it.
 
 /// <summary>
@@ -36,24 +35,25 @@ namespace Gray {
 /// </summary>
 class GRAYCORE_LINK cOSHandle : protected cNonCopyable {
  public:
-    ::HANDLE m_h;   /// The OS assigned handle to some object.
+    ::HANDLE _h;  /// The OS assigned handle to some object.
+    static constexpr ::HANDLE kNULL = NULL;  /// Invalid OS handle for _WIN32. Not invalid OS handle for __linux__?
 
  protected:
     void CloseHandleLast() noexcept {
-        // Assume destruction or my caller will clear m_h
+        // Assume destruction or my caller will clear _h
         if (!isValidHandle()) return;
-        CloseHandle(m_h);
+        CloseHandle(_h);
     }
 
  public:
-    explicit inline cOSHandle(::HANDLE h = INVALID_HANDLE_VALUE) noexcept : m_h(h) {}
-    cOSHandle(const cOSHandle& h) noexcept : m_h(h.Duplicate()) {}
-    cOSHandle(cOSHandle&& h) noexcept : m_h(h.m_h) {
-        h.m_h = INVALID_HANDLE_VALUE;
+    explicit inline cOSHandle(::HANDLE h = INVALID_HANDLE_VALUE) noexcept : _h(h) {}
+    cOSHandle(const cOSHandle& h) noexcept : _h(h.Duplicate()) {}
+    cOSHandle(cOSHandle&& h) noexcept : _h(h._h) {
+        h._h = INVALID_HANDLE_VALUE;
     }
 
     cOSHandle& operator=(const cOSHandle& Handle) {
-        if (m_h != Handle.m_h) {
+        if (_h != Handle._h) {
             AttachHandle(Handle.Duplicate());
         }
         return *this;
@@ -64,13 +64,13 @@ class GRAYCORE_LINK cOSHandle : protected cNonCopyable {
     }
 
     operator ::HANDLE() const noexcept {
-        return m_h;
+        return _h;
     }
     ::HANDLE get_Handle() const noexcept {
-        return m_h;
+        return _h;
     }
     ::HANDLE& ref_Handle() noexcept {
-        return m_h;
+        return _h;
     }
 
     /// <summary>
@@ -81,12 +81,12 @@ class GRAYCORE_LINK cOSHandle : protected cNonCopyable {
     /// <returns></returns>
     static bool inline IsValidHandle(::HANDLE h) noexcept {
 #ifdef _WIN32
-        if (h == HANDLE_NULL) return false;  /// 0 is never a valid handle value for _WIN32. (0=stdin for __linux__)
+        if (h == kNULL) return false;  /// 0 is never a valid handle value for _WIN32. (0=stdin for __linux__)
 #endif
         return h != INVALID_HANDLE_VALUE;  //  -1
     }
     bool isValidHandle() const noexcept {
-        return IsValidHandle(m_h);
+        return IsValidHandle(_h);
     }
 
     /// <summary>
@@ -107,8 +107,8 @@ class GRAYCORE_LINK cOSHandle : protected cNonCopyable {
     }
     void CloseHandle() noexcept {
         if (!isValidHandle()) return;
-        ::HANDLE h = m_h;
-        m_h = INVALID_HANDLE_VALUE;
+        ::HANDLE h = _h;
+        _h = INVALID_HANDLE_VALUE;
         CloseHandle(h);
     }
 
@@ -122,19 +122,19 @@ class GRAYCORE_LINK cOSHandle : protected cNonCopyable {
     /// <param name="uMode"></param>
     void OpenHandle(const char* pszPath, UINT uFlags, UINT uMode = 0) {
         CloseHandleLast();
-        m_h = ::open(pszPath, uFlags, uMode);
+        _h = ::open(pszPath, uFlags, uMode);
     }
 #endif
 
     void AttachHandle(::HANDLE h) noexcept {
-        if (m_h != h) {
+        if (_h != h) {
             CloseHandleLast();
-            m_h = h;
+            _h = h;
         }
     }
     ::HANDLE DetachHandle() noexcept {
-        ::HANDLE h = m_h;
-        m_h = INVALID_HANDLE_VALUE;
+        ::HANDLE h = _h;
+        _h = INVALID_HANDLE_VALUE;
         return h;
     }
 
@@ -150,20 +150,20 @@ class GRAYCORE_LINK cOSHandle : protected cNonCopyable {
         if (m.isEmpty()) return S_OK;  // Do nothing.
 #if defined(_WIN32)
         DWORD nLengthWritten = 0;
-        const bool bRet = ::WriteFile(m_h, m, (DWORD)m.get_SizeBytes(), &nLengthWritten, nullptr);
+        const bool bRet = ::WriteFile(_h, m, (DWORD)m.get_SizeBytes(), &nLengthWritten, nullptr);
         if (!bRet)
 #elif defined(__linux__)
-        const int nLengthWritten = ::write(m_h, m.GetTPtrC<char>(), (long)m.get_SizeBytes());
+        const int nLengthWritten = ::write(_h, m.GetTPtrC<char>(), (long)m.get_SizeBytes());
         if (nLengthWritten <= 0)
 #endif
         {
-            return HResult::GetLastDef(HRESULT_WIN32_C(ERROR_WRITE_FAULT));  // E_HANDLE = file handle m_h is bad.
+            return HResult::GetLastDef(HRESULT_WIN32_C(ERROR_WRITE_FAULT));  // E_HANDLE = file handle _h is bad.
         }
         return CastN(HRESULT, nLengthWritten);
     }
 
     /// <summary>
-    /// Low level read from the OS file handle m_h.
+    /// Low level read from the OS file handle _h.
     /// </summary>
     /// <param name="m">max amount of data to read</param>
     /// <returns>-lt- 0 = error. 0=might be EOF?, length of data read lt nDataSize</returns>
@@ -173,10 +173,10 @@ class GRAYCORE_LINK cOSHandle : protected cNonCopyable {
         if (ret.isEmpty()) return S_OK;
 #ifdef _WIN32
         DWORD nLengthRead = 0;
-        const bool bRet = ::ReadFile(m_h, ret.get_BytePtrW(), CastN(DWORD, ret.get_SizeBytes()), &nLengthRead, nullptr);
+        const bool bRet = ::ReadFile(_h, ret.get_BytePtrW(), CastN(DWORD, ret.get_SizeBytes()), &nLengthRead, nullptr);
         if (!bRet)
 #elif defined(__linux__)
-        const int nLengthRead = ::read(m_h, ret.GetTPtrW<char>(), CastN(long, ret.get_SizeBytes()));
+        const int nLengthRead = ::read(_h, ret.GetTPtrW<char>(), CastN(long, ret.get_SizeBytes()));
         if (nLengthRead < 0)
 #endif
         {
@@ -184,15 +184,15 @@ class GRAYCORE_LINK cOSHandle : protected cNonCopyable {
         }
         return CastN(HRESULT, nLengthRead);
     }
- 
+
     /// <summary>
     /// synchronous flush of write data to file.
     /// </summary>
     HRESULT FlushX() const noexcept {
 #ifdef _WIN32
-        if (!::FlushFileBuffers(m_h))
+        if (!::FlushFileBuffers(_h))
 #elif defined(__linux__)
-        int iRet = ::fsync(m_h);
+        int iRet = ::fsync(_h);
         if (iRet != 0)
 #endif
         {
@@ -213,18 +213,18 @@ class GRAYCORE_LINK cOSHandle : protected cNonCopyable {
 #ifdef USE_FILE_POS64
         ::LARGE_INTEGER NewFilePointer;
         NewFilePointer.QuadPart = nOffset;
-        if (!::SetFilePointerEx(m_h, NewFilePointer, &NewFilePointer, CastN(DWORD, eSeekOrigin))) {
+        if (!::SetFilePointerEx(_h, NewFilePointer, &NewFilePointer, CastN(DWORD, eSeekOrigin))) {
             return k_STREAM_POS_ERR;  // HResult::GetLast()
         }
         return NewFilePointer.QuadPart;
 #else
-        DWORD dwRet = ::SetFilePointer(m_h, CastN(LONG, nOffset), nullptr, CastN(DWORD, eSeekOrigin));
+        DWORD dwRet = ::SetFilePointer(_h, CastN(LONG, nOffset), nullptr, CastN(DWORD, eSeekOrigin));
         if (dwRet == INVALID_SET_FILE_POINTER) return k_STREAM_POS_ERR;  // HResult::GetLast()
         return dwRet;
 #endif  // USE_FILE_POS64
 #else
-        //! Use return _tell( m_hFile ) for __linux__ ? off_t
-        return CastN(STREAM_POS_t, ::lseek(m_h, nOffset, (int)eSeekOrigin));
+        //! Use return _tell( _h ) for __linux__ ? off_t
+        return CastN(STREAM_POS_t, ::lseek(_h, nOffset, CastN(int, eSeekOrigin)));
 #endif
     }
 
@@ -239,7 +239,7 @@ class GRAYCORE_LINK cOSHandle : protected cNonCopyable {
         if (!isValidHandle()) return E_HANDLE;
         const STREAM_POS_t nPos = SeekRaw(nOffset, eSeekOrigin);
         if (nPos == k_STREAM_POS_ERR) return HResult::GetLastDef();
-        return CastN(HRESULT, (INT32)nPos);  // truncated ?
+        return CastN(HRESULT, CastN(INT32, nPos));  // truncated ?
     }
 
     HRESULT WaitForSingleObject(TIMESYSD_t dwMilliseconds) const;
@@ -254,14 +254,14 @@ class GRAYCORE_LINK cOSHandle : protected cNonCopyable {
         //! @return HANDLE_FLAG_INHERIT | HANDLE_FLAG_PROTECT_FROM_CLOSE
         ASSERT(isValidHandle());
         DWORD dwHandleInfo = 0;
-        if (!::GetHandleInformation(m_h, &dwHandleInfo)) {
+        if (!::GetHandleInformation(_h, &dwHandleInfo)) {
             return 0;
         }
         return dwHandleInfo;
     }
     bool SetInformation(DWORD dwMask, DWORD dwFlags) const {
         ASSERT(isValidHandle());
-        const bool bRet = ::SetHandleInformation(m_h, dwMask, dwFlags);
+        const bool bRet = ::SetHandleInformation(_h, dwMask, dwFlags);
         return bRet;
     }
 #endif
@@ -280,14 +280,14 @@ class GRAYCORE_LINK cOSHandle : protected cNonCopyable {
         HANDLE hNewHandle = INVALID_HANDLE_VALUE;
         HANDLE hCurrentProcess = ::GetCurrentProcess();
         if (hTargetProcess == INVALID_HANDLE_VALUE) hTargetProcess = hCurrentProcess;
-        const bool bRet = ::DuplicateHandle(hCurrentProcess, m_h, hTargetProcess, &hNewHandle, dwDesiredAccess, bInheritHandle, dwOptions);
+        const bool bRet = ::DuplicateHandle(hCurrentProcess, _h, hTargetProcess, &hNewHandle, dwDesiredAccess, bInheritHandle, dwOptions);
         UNREFERENCED_PARAMETER(bRet);
         return hNewHandle;
     }
 #elif defined(__linux__)
     ::HANDLE Duplicate() const {
         // http://linux.about.com/library/cmd/blcmdl2_dup.htm
-        return ::dup(m_h);
+        return ::dup(_h);
     }
 #endif
 };

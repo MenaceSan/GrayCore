@@ -21,7 +21,7 @@ class cArrayRef : public cArrayFacade<cSpanX<cRefPtr<TYPE>, TYPE*>> {
 
  public:
     /// <summary>
-    /// Similar to RemoveAll() except it calls DisposeThis() to try to dereference all the entries.
+    /// Similar to RemoveAll() except it calls DisposeThis() to try to dereference all the entries. Reverse Order!
     /// ASSUME TYPE supports DisposeThis(); like cXObject
     /// @note often DisposeThis() has the effect of removing itself from the list. Beware of this.
     /// </summary>

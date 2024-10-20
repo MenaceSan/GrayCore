@@ -22,23 +22,25 @@
 #include <fcntl.h>  // _O_RDONLY
 
 namespace Gray {
-cAppConsole::cAppConsole() : cSingleton<cAppConsole>(this, typeid(cAppConsole)), m_bKeyEchoMode(true), m_bKeyEnterMode(true), m_eConsoleType(AppCon_t::_Unknown), m_bConsoleParent(false), m_iAllocConsoleCount(0) {
+cSingleton_IMPL(cAppConsole);
+
+cAppConsole::cAppConsole() : cSingleton<cAppConsole>(this) {
 #ifdef _WIN32
     for (int i = 0; i < static_cast<int>(AppStd_t::_QTY); i++) {
-        m_hStd[i] = INVALID_HANDLE_VALUE;
+        _hStd[i] = INVALID_HANDLE_VALUE;
     }
 #endif
 }
 
 cAppConsole::~cAppConsole() {
-    // Is m_iAllocConsoleCount = 0 ?
+    // Is _iAllocConsoleCount = 0 ?
 }
 
 void cAppConsole::CheckConsoleMode() noexcept {
-    if (m_eConsoleType != AppCon_t::_Unknown) return;
+    if (_eConsoleType != AppCon_t::_Unknown) return;
 
     cStringF sPrompt = cAppState::GetEnvironStr(_FN("PROMPT"));  // Good for Linux and Windows.
-    m_bConsoleParent = !sPrompt.IsEmpty();
+    _isConsoleParent = !sPrompt.IsEmpty();
 
 #if defined(_WIN32)
     HWND hWnd = ::GetConsoleWindow();
@@ -47,10 +49,10 @@ void cAppConsole::CheckConsoleMode() noexcept {
     if (stdout != nullptr)  // TODO: detect if Linux app is in a console!?
 #endif
     {
-        m_eConsoleType = AppCon_t::_Proc;  // My parent is build using _CONSOLE
+        _eConsoleType = AppCon_t::_Proc;  // My parent is build using _CONSOLE
         AttachConsoleSync();
     } else {
-        m_eConsoleType = AppCon_t::_None;  // i have no console. Assume I'm a GUI app or headless service.
+        _eConsoleType = AppCon_t::_None;  // i have no console. Assume I'm a GUI app or headless service.
     }
 }
 
@@ -62,7 +64,7 @@ bool cAppConsole::AttachConsoleSync() {
     ASSERT(isConsoleMode());
 
 #if defined(_WIN32)
-    for (int i = 0; i < _countof(m_hStd); i++) {
+    for (int i = 0; i < _countof(_hStd); i++) {
         // redirect un-buffered STDOUT to the console
         DWORD nStdHandle;
         switch ((AppStd_t)i) {
@@ -79,13 +81,13 @@ bool cAppConsole::AttachConsoleSync() {
                 ASSERT(0);
                 return false;
         }
-        m_hStd[i] = ::GetStdHandle(nStdHandle);
+        _hStd[i] = ::GetStdHandle(nStdHandle);
     }
 
 #if USE_CRT
-    if (m_eConsoleType != AppCon_t::_Proc) {
+    if (_eConsoleType != AppCon_t::_Proc) {
         // redirect un-buffered STDOUT to the console
-        for (int i = 0; i < _countof(m_hStd); i++) {
+        for (int i = 0; i < _countof(_hStd); i++) {
             ::FILE* pFileDest;
             OF_FLAGS_t nFileFlags = OF_WRITE | OF_TEXT;
             switch ((AppStd_t)i) {
@@ -105,14 +107,14 @@ bool cAppConsole::AttachConsoleSync() {
             }
             // Now attach it to the appropriate std FILE*,  USE_CRT
             cFileText fileStd;
-            HRESULT hRes = fileStd.OpenFileHandle(m_hStd[i], nFileFlags);
+            const HRESULT hRes = fileStd.OpenFileHandle(_hStd[i], nFileFlags);
             if (FAILED(hRes)) return false;
             *pFileDest = *fileStd.DetachFileStream();  // copy ::FILE struct contents! NOT Just pointer.
         }
     }
 #endif
 
-    if (m_eConsoleType != AppCon_t::_Proc) {
+    if (_eConsoleType != AppCon_t::_Proc) {
         // set the screen buffer to be big enough to let us scroll text
         ::CONSOLE_SCREEN_BUFFER_INFO coninfo;
         if (!::GetConsoleScreenBufferInfo(GetStd(AppStd_t::_stdout), &coninfo)) {
@@ -134,19 +136,13 @@ bool cAppConsole::AttachConsoleSync() {
 }
 
 bool cAppConsole::AttachOrAllocConsole(bool bAttachElseAlloc) {
-    //! 1. Do i already have a console. use it. if _CONSOLE app.
-    //! 2. Attach to my parents console if there is one.
-    //! 3. allocate a new console for this app.
-    //! http://stackoverflow.com/questions/493536/can-one-executable-be-both-a-console-and-gui-application/494000#494000
-    //! https://www.tillett.info/2013/05/13/how-to-create-a-windows-program-that-works-as-both-as-a-gui-and-console-application/
-
     if (isConsoleMode()) {       // I'm already in a console.
-        m_iAllocConsoleCount++;  // Must have same number of closes with ReleaseConsole().
+        _iAllocConsoleCount++;  // Must have same number of closes with ReleaseConsole().
         return true;
     }
 
-    ASSERT(m_iAllocConsoleCount == 0);
-    ASSERT(m_eConsoleType == AppCon_t::_Unknown || m_eConsoleType == AppCon_t::_None);
+    ASSERT(_iAllocConsoleCount == 0);
+    ASSERT(_eConsoleType == AppCon_t::_Unknown || _eConsoleType == AppCon_t::_None);
 
 #if defined(_WIN32)
 
@@ -156,14 +152,14 @@ bool cAppConsole::AttachOrAllocConsole(bool bAttachElseAlloc) {
 
     // HasConsoleParent()
     if (::AttachConsole(ATTACH_PARENT_PROCESS)) {  // try to use my parents console.
-        m_eConsoleType = AppCon_t::_Attach;
+        _eConsoleType = AppCon_t::_Attach;
     } else {
         if (!bAttachElseAlloc) return false;
         if (!::AllocConsole()) {  // Make my own private console.
             // Failed to get or create a console. i probably already have one?
             return false;
         }
-        m_eConsoleType = AppCon_t::_Create;
+        _eConsoleType = AppCon_t::_Create;
     }
 
 #ifdef _DEBUG
@@ -174,12 +170,12 @@ bool cAppConsole::AttachOrAllocConsole(bool bAttachElseAlloc) {
     ASSERT(hWnd != WINHANDLE_NULL);
 #endif
 
-    m_iAllocConsoleCount = 1;
+    _iAllocConsoleCount = 1;
 
 #if USE_CRT
     if (!AttachConsoleSync()) {
-        m_iAllocConsoleCount = 0;
-        m_eConsoleType = AppCon_t::_None;
+        _iAllocConsoleCount = 0;
+        _eConsoleType = AppCon_t::_None;
         return false;
     }
 #endif
@@ -193,12 +189,12 @@ bool cAppConsole::AttachOrAllocConsole(bool bAttachElseAlloc) {
 }
 
 void cAppConsole::ReleaseConsole() {
-    m_iAllocConsoleCount--;
+    _iAllocConsoleCount--;
 #if defined(_WIN32)
-    if (m_iAllocConsoleCount <= 0 && m_eConsoleType > AppCon_t::_Proc) {
+    if (_iAllocConsoleCount <= 0 && _eConsoleType > AppCon_t::_Proc) {
         // I called AllocConsole
         ::FreeConsole();
-        m_eConsoleType = AppCon_t::_None;
+        _eConsoleType = AppCon_t::_None;
     }
 #endif
 }
@@ -206,6 +202,7 @@ void cAppConsole::ReleaseConsole() {
 #if defined(_WIN32)
 HRESULT cAppConsole::WriteStrH(::HANDLE h, const char* pszText) {
     // @note we must do this to get the dual windows/console stuff to work.
+    // @note we can halt forever here if the console is blocking this!!!
     DWORD dwLengthWritten;
     const DWORD dwDataSize = StrT::Len(pszText);
     const bool bRet = ::WriteFile(h, pszText, dwDataSize, &dwLengthWritten, nullptr);
@@ -230,7 +227,7 @@ HRESULT cAppConsole::WriteStrH(::FILE* pFile, const char* pszText) {
 
 HRESULT cAppConsole::WriteStrErr(const char* pszText) {
     if (!isConsoleMode()) return S_OK;
-    const auto guard(m_Lock.Lock());
+    const auto guard(_Lock.Lock());
 #if defined(_WIN32)
     return WriteStrH(GetStd(AppStd_t::_stderr), pszText);
 #else  // POSIX
@@ -240,7 +237,7 @@ HRESULT cAppConsole::WriteStrErr(const char* pszText) {
 
 HRESULT cAppConsole::WriteStrOut(const char* pszText) {
     if (!isConsoleMode()) return S_OK;
-    const auto guard(m_Lock.Lock());
+    const auto guard(_Lock.Lock());
 #if defined(_WIN32)
     return WriteStrH(GetStd(AppStd_t::_stdout), pszText);
 #else  // POSIX
@@ -291,8 +288,8 @@ HRESULT cAppConsole::SetKeyModes(bool bEchoMode, bool bEnterMode) {
     if (iRet < 0) return HResult::GetLastDef();
 
 #endif
-    m_bKeyEchoMode = bEchoMode;
-    m_bKeyEnterMode = bEnterMode;
+    _isKeyEchoMode = bEchoMode;
+    _isKeyEnterMode = bEnterMode;
     return S_OK;
 }
 
@@ -317,8 +314,8 @@ int cAppConsole::ReadKeyRaw() const {
 #ifdef _WIN32
     // NOTE: _WIN32 fgetc(stdin) will block until the ENTER key is pressed ! then feed chars until it runs out.
 #if USE_CRT
-    if (!m_bKeyEnterMode) {
-        if (m_bKeyEchoMode) return ::_getche();
+    if (!_isKeyEnterMode) {
+        if (_isKeyEchoMode) return ::_getche();
         return ::_getch();  // don't wait for ENTER. return as we get them.
     }
     return ::getchar();  // buffer chars and returns when ENTER is pressed for a whole line.
@@ -361,7 +358,7 @@ HRESULT cAppConsole::ReadStringLine(cSpanX<char> ret) {
         HRESULT hRes = _CmdInput.AddInputKey(iKey, this, true);
         if (FAILED(hRes)) return hRes;
         if (hRes == 2) {  // done
-            StrT::Copy<char>(ret, _CmdInput.m_sCmd.get_SpanStr());
+            StrT::CopyStr<char>(ret, _CmdInput._sCmd.get_SpanStr());
             return 2;
         }
     }

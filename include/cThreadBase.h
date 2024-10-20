@@ -52,20 +52,20 @@ typedef THREAD_EXITCODE_t(_stdcall* THREAD_FUNC_t)(void*);  // entry point for a
 /// </summary>
 class GRAYCORE_LINK cThreadId {
  protected:
-    THREADID_t m_dwThreadId;  /// unique thread id. i.e. stack base pointer. (Use the MFC name m_dwThreadId)
+    THREADID_t _nThreadId;  /// unique thread id. i.e. stack base pointer. (Use the MFC name _nThreadId)
 
  public:
     static const THREADID_t k_NULL = 0;  /// Not a valid thread Id. 1 might be reserved as well. see cThreadLockRW
 
  public:
-    cThreadId(THREADID_t nThreadId = k_NULL) noexcept : m_dwThreadId(nThreadId) {}
+    cThreadId(THREADID_t nThreadId = k_NULL) noexcept : _nThreadId(nThreadId) {}
 
     /// <summary>
     /// Get thread id.  Similar to the MFC CWorkerThread call.
-    /// __linux__ use pthread. don't use the old fashioned gettid(). Also (m_hThread == THREADID_t)
+    /// __linux__ use pthread. don't use the old fashioned gettid(). Also (_hThread == THREADID_t)
     /// </summary>
     THREADID_t GetThreadId() const noexcept {
-        return m_dwThreadId;
+        return _nThreadId;
     }
 
     /// <summary>
@@ -73,22 +73,22 @@ class GRAYCORE_LINK cThreadId {
     /// </summary>
     /// <returns></returns>
     THREADID_t get_HashCode() const noexcept {
-        return m_dwThreadId;
+        return _nThreadId;
     }
     /// <summary>
     /// Is this the current running thread?
     /// </summary>
     bool isCurrentThread() const noexcept {
-        return IsEqualId(m_dwThreadId, GetCurrentId());
+        return IsEqualId(_nThreadId, GetCurrentId());
     }
     bool isValidId() const noexcept {
-        return IsValidId(m_dwThreadId);
+        return IsValidId(_nThreadId);
     }
     /// <summary>
     /// set equal to the current thread id.
     /// </summary>
     void InitCurrentId() noexcept {
-        m_dwThreadId = GetCurrentId();
+        _nThreadId = GetCurrentId();
     }
 
     /// <summary>
@@ -137,38 +137,36 @@ class GRAYCORE_LINK cThreadId {
 /// </summary>
 class GRAYCORE_LINK cThreadState {
  protected:
-    bool m_bThreadRunning;            /// called CreateThread() onThreadCreate(), and inside Run(), until onThreadExit()
-    VOLATILE bool m_bThreadStopping;  /// trying to stop the thread nicely. Do this before TerminateThread()
+    bool _isThreadRunning = false;            /// called CreateThread() onThreadCreate(), and inside Run(), until onThreadExit()
+    VOLATILE bool _isThreadStopping = false;  /// trying to stop the thread nicely. Do this before TerminateThread()
 
  public:
-    cThreadState() noexcept : m_bThreadRunning(false), m_bThreadStopping(false) {}
-
     /// <summary>
     /// is Running? though may be stopping/sleeping/suspended/etc.
     /// </summary>
     bool isThreadRunning() const noexcept {
-        return m_bThreadRunning;
+        return _isThreadRunning;
     }
     /// <summary>
     /// Thread MUST periodically check this !
     /// </summary>
     /// <returns></returns>
     bool isThreadStopping() const noexcept {
-        return m_bThreadStopping;
+        return _isThreadStopping;
     }
 
     virtual bool WaitForThreadExit(TIMESYSD_t iTimeMSec) noexcept;
 
     virtual bool RequestStopThread(bool bWillWait = false) noexcept {
         UNREFERENCED_PARAMETER(bWillWait);
-        m_bThreadStopping = true;
+        _isThreadStopping = true;
         return isThreadRunning();
     }
 };
 
 #ifdef _WIN32
 typedef HANDLE THREADHANDLE_t;  // cOSHandle in WIN32 but not in __linux__
-static const THREADHANDLE_t THREADHANDLE_NULL = HANDLE_NULL;
+static const THREADHANDLE_t THREADHANDLE_NULL = cOSHandle::kNULL;
 #elif defined(__linux__)
 typedef THREADID_t THREADHANDLE_t;  // same as THREADID_t pthread_t
 static const THREADHANDLE_t THREADHANDLE_NULL = cThreadId::k_NULL;
@@ -187,10 +185,10 @@ typedef CWorkerThread<> cThreadBase;  // GetThreadId
 /// </summary>
 class GRAYCORE_LINK cThreadBase : public cObject, public cThreadId {
  protected:
-    THREADHANDLE_t m_hThread;  /// there may be many handles to the same THREADID_t in _WIN32. I must call CloseThread() on this. _WIN32 same as cOSHandle.
+    THREADHANDLE_t _hThread;  /// there may be many handles to the same THREADID_t in _WIN32. I must call CloseThread() on this. _WIN32 same as cOSHandle.
 
  public:
-    cThreadBase() noexcept : m_hThread(THREADHANDLE_NULL) {}
+    cThreadBase() noexcept : _hThread(THREADHANDLE_NULL) {}
     ~cThreadBase() override {}
 };
 #endif  // _MFC_VER
@@ -204,7 +202,7 @@ class GRAYCORE_LINK cThreadBase : public cObject, public cThreadId {
 /// </summary>
 class GRAYCORE_LINK cThreadRef : public cThreadBase, public cRefBase, public cThreadState {
  protected:
-    THREAD_EXITCODE_t m_nExitCode = THREAD_EXITCODE_OK;  /// __linux__ doesn't seem to have a way to query this after thread close. so we have to store it.
+    THREAD_EXITCODE_t _nExitCode = THREAD_EXITCODE_OK;  /// __linux__ doesn't seem to have a way to query this after thread close. so we have to store it.
 
  protected:
     virtual void onThreadCreate();                           /// OnCreate for MFC
@@ -248,14 +246,14 @@ class GRAYCORE_LINK cThreadRef : public cThreadBase, public cRefBase, public cTh
     /// </summary>
     /// <returns></returns>
     bool isValidThreadHandle() const noexcept {
-        return this->m_hThread != THREADHANDLE_NULL;
+        return this->_hThread != THREADHANDLE_NULL;
     }
 
     /// <summary>
     /// Get a unique hash code for the thread. disambiguate.
     /// </summary>
     THREADID_t get_HashCode() const noexcept {
-        return this->m_dwThreadId;
+        return this->_nThreadId;
     }
 
     virtual HRESULT CreateThread(void* pArgs = nullptr, THREAD_FUNC_t pEntryProc = EntryProc, DWORD dwCreationFlags = 0);

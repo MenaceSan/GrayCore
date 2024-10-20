@@ -14,25 +14,26 @@ bool GRAYCALL StrU::IsUTFLead(const void* pvU) noexcept {  // static
     if (pvU == nullptr) return false;
     const BYTE* pU = reinterpret_cast<const BYTE*>(pvU);
     if (pU[0] != StrU::UTFLead_0) return false;
-    if (pU[1] == StrU::UTFLead_1 && pU[2] == StrU::UTFLead_2) return true;
+    if (pU[1] == StrU::UTFLead_1 && pU[2] == StrU::UTFLead_2) return true;  // normal.
     if (pU[1] == StrU::UTFLead_2 && pU[2] == StrU::UTFLead_X) return true;
     if (pU[1] == StrU::UTFLead_2 && pU[2] == StrU::UTFLead_2) return true;
     return false;
 }
 
-StrLen_t GRAYCALL StrU::UTF8SizeChar(int wideChar) noexcept {  // static
-#if 0
-    if( !wideChar ) return 1;
-	static const StrLen_t kWidth[32] = { 1 , 1 , 1 , 1 , 1 , 1 , 1 , 2 , 2 , 2 , 2 , 3 , 3 , 3 , 3 , 3 , 4 , 4 , 4 , 4 , 4 , 5 , 5 , 5 , 5 , 5 , 6 , 6 , 6 , 6 , 6 , 7 };
-    return kWidth[ cBits::Highest1Bit( wideChar ) ];
-#endif
-    if (wideChar < 0x80) return 1;  // needs NO special UTF8 encoding.
-    if (wideChar < cBits::Mask1<int>(11)) return 2;
-    if (wideChar < cBits::Mask1<int>(16)) return 3;  // wchar_t UNICODE IS 16 Bits TOTAL!
-    if (wideChar < cBits::Mask1<int>(21)) return 4;  // StrU::k_UTF8_SIZE_MAX // UNICODE can have 21 bits of info?
-    if (wideChar <= 0x3FFFFFF) return 5;
-    if (wideChar <= 0x7FFFFFFF) return 6;
+StrLen_t GRAYCALL StrU::UTF8SizeChar(UINT32 wideChar) noexcept {  // static
+#if 0                                                            
+    if( !wideChar ) return 1;  // test this! k_UTF8_SIZE_MAX
+	static const StrLen_t kWidthBits[32] = { 1 , 1 , 1 , 1 , 1 , 1 , 1 , 2 , 2 , 2 , 2 , 3 , 3 , 3 , 3 , 3 , 4 , 4 , 4 , 4 , 4 , 5 , 5 , 5 , 5 , 5 , 6 , 6 , 6 , 6 , 6 , 7 };
+    return kWidthBits[ cBits::Highest1Bit( wideChar ) ];
+#else
+    if (wideChar < 0x80) return 1;  // 7, needs NO special UTF8 encoding.
+    if (wideChar < cBits::Mask1<UINT32>(11)) return 2;
+    if (wideChar < cBits::Mask1<UINT32>(16)) return 3;  // wchar_t UNICODE IS 16 Bits TOTAL!
+    if (wideChar < cBits::Mask1<UINT32>(21)) return 4;  // StrU::k_UTF8_SIZE_MAX ?? // UNICODE can have 21 bits of info?
+    if (wideChar < 0x4000000) return 5;
+    if (wideChar < 0x80000000) return 6;
     return 7;
+#endif
 }
 
 StrLen_t GRAYCALL StrU::UTF8SizeChar1(char firstChar) noexcept {  // static
@@ -45,7 +46,7 @@ StrLen_t GRAYCALL StrU::UTF8SizeChar1(char firstChar) noexcept {  // static
 }
 
 StrLen_t GRAYCALL StrU::UTF8toUNICODEChar(OUT wchar_t& wChar, const char* pInp, StrLen_t iSizeInpBytes) noexcept {  // static
-    if (iSizeInpBytes <= 0) return 0;                                                                      // FAILED
+    if (iSizeInpBytes <= 0) return 0;                                                                               // FAILED
 
     const StrLen_t iSizeChar = UTF8SizeChar1(*pInp);
     if (iSizeChar == 1) {  // needs NO special UTF8 decoding.
@@ -137,7 +138,7 @@ StrLen_t GRAYCALL StrU::UTF8toUNICODE(cSpanX<wchar_t> ret, const cSpan<char>& sr
     if (pwOut == nullptr) return UTF8toUNICODELen(src);
 
     if (src.isEmpty() || src.isNull()) {
-        pwOut[0] = '\0';
+        StrT::SetIfSafe(pwOut);
         return 0;
     }
     const StrLen_t iSizeOutMaxChars = ret.GetSize() - 1;
@@ -166,7 +167,7 @@ StrLen_t GRAYCALL StrU::UTF8toUNICODE(cSpanX<wchar_t> ret, const cSpan<char>& sr
         iOut++;
     }
 
-    pwOut[iOut] = '\0';
+    StrT::SetIfSafe(pwOut + iOut);  // make sure it's '\0' terminated
     return iOut;
 }
 
@@ -180,7 +181,7 @@ StrLen_t GRAYCALL StrU::UNICODEtoUTF8(cSpanX<char> ret, const cSpan<wchar_t>& sr
     if (pOut == nullptr) return UNICODEtoUTF8Size(src);
 
     if (src.isEmpty() || src.isNull()) {
-        pOut[0] = '\0';
+        StrT::SetIfSafe(pOut);
         return 0;
     }
 
@@ -188,9 +189,7 @@ StrLen_t GRAYCALL StrU::UNICODEtoUTF8(cSpanX<char> ret, const cSpan<wchar_t>& sr
     StrLen_t iOut = 0;
 
     // Win95 or __linux__ = just assume its really ASCII
-    for (StrLen_t iInp = 0; iInp < src.GetSize(); iInp++) {
-        // Flip all from network order.
-        const wchar_t wChar = src[iInp];
+    for (const wchar_t wChar : src) {
         if (wChar == '\0') break;
         if (iOut >= iSizeOutMaxBytes) break;
         if (wChar >= 0x80) {  // needs special UTF8 encoding.
@@ -201,11 +200,11 @@ StrLen_t GRAYCALL StrU::UNICODEtoUTF8(cSpanX<char> ret, const cSpan<wchar_t>& sr
             }
             iOut += iOutTmp;
         } else {
-            pOut[iOut++] = (char)wChar;
+            pOut[iOut++] = CastN(char, wChar);
         }
     }
 
-    pOut[iOut] = '\0';  // make sure it's null terminated
+    StrT::SetIfSafe(pOut + iOut);  // make sure it's '\0' terminated
     return iOut;
 }
 }  // namespace Gray

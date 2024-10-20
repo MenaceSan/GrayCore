@@ -39,11 +39,12 @@ constexpr StrLen_t k_LEN_MAX_CSYM = 128;  /// arbitrary max size of (Symbolic/Sy
 
 /// <summary>
 /// Produce a string constant of either UNICODE or UTF8. For use inside templates.
+/// @note use ToSpanStr(*this)
 /// </summary>
 struct cStrConst {
-    const char* m_A;     /// a UTF8 string.
-    const wchar_t* m_W;  /// the UNICODE version of m_A;
-    StrLen_t _Len;       /// STRMAX
+    const char* const _A;  /// a UTF8 string.
+    const wchar_t* const _W;  /// the UNICODE version of _A;
+    StrLen_t const _Len;      /// STRMAX for ToSpanStr, ToSpanZ, cSpan
 
     static const StrLen_t k_TabSize = 4;      /// default desired spaces for a tab.
     static const StrLen_t k_LEN_MAX = 15000;  /// arbitrary max size for Format() etc. NOTE: _MSC_VER says stack frame should be at least 16384
@@ -55,54 +56,48 @@ struct cStrConst {
     GRAYCORE_LINK static const cStrConst k_CrLf;   /// STR_CRLF
 
     cStrConst(const cStrConst& s) = default;
-    cStrConst(const char* a, const wchar_t* w, StrLen_t len) noexcept : m_A(a), m_W(w), _Len(len) {}
+    cStrConst(const char* a, const wchar_t* w, StrLen_t len) noexcept : _A(a), _W(w), _Len(len) {}
 
     inline bool isNull() const noexcept {
-        return m_A == nullptr;
+        return _A == nullptr;
     }
 
-    inline operator const char*() const noexcept {
-        // Implied type
-        return m_A;
+    inline operator const char*() const noexcept {        
+        return _A; // Implied type
     }
-    inline operator const wchar_t*() const noexcept {
-        // Implied type
-        return m_W;
+    inline operator const wchar_t*() const noexcept {        
+        return _W; // Implied type
     }
-    inline const char* get_StrA() const noexcept {
-        // Explicit type
-        return m_A;
+    inline const char* get_StrA() const noexcept {        
+        return _A; // Explicit type
     }
-    inline const wchar_t* get_StrW() const noexcept {
-        // Explicit type
-        return m_W;
+    inline const wchar_t* get_StrW() const noexcept {        
+        return _W; // Explicit type
     }
     /// <summary>
     /// Get the default GChar_t type. Explicit type
     /// </summary>
     inline const GChar_t* get_CPtr() const noexcept {
 #if USE_UNICODE
-        return m_W;
+        return _W;
 #else
-        return m_A;
+        return _A;
 #endif
     }
 
     // template derived type
     template <typename TYPE>
-    const TYPE* GetT() const noexcept;
+    const TYPE* get_T() const noexcept;
 };
 
 template <>
-inline const char* cStrConst::GetT() const noexcept {
-    return m_A;
+inline const char* cStrConst::get_T() const noexcept {
+    return _A;
 }
 template <>
-inline const wchar_t* cStrConst::GetT() const noexcept {
-    return m_W;
+inline const wchar_t* cStrConst::get_T() const noexcept {
+    return _W;
 }
-
 }  // namespace Gray
-
 #define CSTRCONST(t) ::Gray::cStrConst(__TOA(t), __TOW(t), STRMAX(t))  /// define a const for both Unicode and UTF8 in templates. used at run-time not just compile time.
 #endif

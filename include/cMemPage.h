@@ -21,24 +21,24 @@ class GRAYCORE_LINK cMemPage : public cRefBase {
     friend class cMemPageMgr;
 
  public:
-    UINT_PTR m_nPageStart;             /// Pointer as number. Always aligned to dwPageSize.
-    size_t m_nPageSize;                /// SystemInfo::dwPageSize
-    DWORD m_dwOldProtectionFlags = 0;  /// original flags used/returned by _WIN32 VirtualProtect()
-    REFCOUNT_t m_nRefCount2 = 1;       /// ProtectPages count.
+    const UINT_PTR _nPageStart;       /// Pointer as number. Always aligned to _nPageSize. cMemSpan
+    const size_t _nPageSize;          /// from cSystemInfo::dwPageSize
+    DWORD _dwOldProtectionFlags = 0;  /// original flags used/returned by _WIN32 VirtualProtect()
+    REFCOUNT_t _nRefCount2 = 1;       /// ProtectPages count.
 
  public:
-    cMemPage(UINT_PTR nPageStart, size_t nPageSize) : m_nPageStart(nPageStart), m_nPageSize(nPageSize) {
+    cMemPage(UINT_PTR nPageStart, size_t nPageSize) : _nPageStart(nPageStart), _nPageSize(nPageSize) {
         ASSERT(get_SortValue() != 0);
-        ASSERT((get_SortValue() % m_nPageSize) == 0);
+        ASSERT((get_SortValue() % _nPageSize) == 0);
     }
     virtual ~cMemPage() {}
 
     UINT_PTR get_SortValue() const noexcept {
-        return m_nPageStart;
+        return _nPageStart;
     }
     bool IsOverlapped(UINT_PTR p, size_t n) const noexcept {
-        if ((p + n) <= m_nPageStart) return false;
-        if ((m_nPageStart + m_nPageSize) <= p) return false;
+        if ((p + n) <= _nPageStart) return false;
+        if ((_nPageStart + _nPageSize) <= p) return false;
         return true;
     }
     bool SetProtect(bool bProtect) noexcept;
@@ -49,57 +49,20 @@ typedef cRefPtr<cMemPage> cMemPagePtr;
 /// Track my protected memory pages.
 /// _WIN32 ONLY allocates whole pages at a time, not just specified range of bytes. Pool these locked blocks.
 /// </summary>
-class cMemPageMgr final : public cSingleton<cMemPageMgr> {
-    SINGLETON_IMPL(cMemPageMgr);
-
+class GRAYCORE_LINK cMemPageMgr final : public cSingleton<cMemPageMgr> {
  public:
-    DWORD m_dwPageSize;
-    cArraySortValue<cMemPage, UINT_PTR> m_aPages;
+    DECLARE_cSingleton(cMemPageMgr);
+    DWORD _dwPageSize = 0;                        /// from cSystemInfo::dwPageSize
+    cArraySortValue<cMemPage, UINT_PTR> _aPages;  // Protected pages.
 
  protected:
-    cMemPageMgr() noexcept : cSingleton<cMemPageMgr>(this, typeid(cMemPageMgr)), m_dwPageSize(0) {}
+    cMemPageMgr() noexcept : cSingleton<cMemPageMgr>(this) {}
 
  public:
-    HRESULT ProtectPages(const cMemSpan& m, bool bProtect) {
-        //! Protect or un-protect these pages.
-        if (m_dwPageSize == 0) {
-            m_dwPageSize = CastN(DWORD, cSystemInfo::I().get_PageSize());
-        }
-
-        const UINT_PTR nStart = CastPtrToNum(m);
-        const UINT_PTR nEnd = nStart + m.get_SizeBytes();
-        const UINT_PTR nPageOver = nStart % m_dwPageSize;
-        UINT_PTR nPageStart = nStart - nPageOver;
-        for (; nPageStart < nEnd; nPageStart += m_dwPageSize) {
-            cMemPagePtr pPage = m_aPages.FindArgForKey(nPageStart);
-            if (bProtect) {
-                if (pPage == nullptr) {
-                    // odd
-                    // DEBUG_ERR(("ProtectPages bProtect = nullptr"));
-                    continue;
-                }
-                if (--pPage->m_nRefCount2) continue;
-                m_aPages.RemoveArg(pPage);
-                if (!pPage->SetProtect(true)) {
-                    // DEBUG_ERR(("ProtectPages SetProtect true"));
-                    return E_FAIL;
-                }
-            } else {
-                if (pPage == nullptr) {
-                    pPage = new cMemPage(nPageStart, m_dwPageSize);
-                    ASSERT(pPage);
-                    if (!pPage->SetProtect(false)) {
-                        // DEBUG_ERR(("ProtectPages SetProtect false"));
-                        return E_FAIL;
-                    }
-                    m_aPages.AddSort(pPage, 1);
-                } else {
-                    pPage->m_nRefCount2++;
-                }
-            }
-        }
-        return S_OK;
-    }
+    /// <summary>
+    /// Protect or un-protect pages overlapping cMemSpan.
+    /// </summary>
+    HRESULT ProtectPages(const cMemSpan& m, bool bProtect);
 };
 }  // namespace Gray
 #endif

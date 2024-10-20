@@ -9,7 +9,7 @@ namespace Gray {
 /// Wrap the HANDLE_t heap/memory object for lock/unlock of an instance. (HLOCAL or HGLOBAL)
 /// manage lock and unlock. yes i know lock/unlock doesn't do anything in _WIN32
 /// Does NOT free on destruct. just unlock.
-/// m_pData = Locked pointer. GlobalHandle(m_pData)==m_hData
+/// _pData = Locked pointer. GlobalHandle(_pData)==_hData
 /// </summary>
 class WINHEAPN(Handle) : public cMemSpan {
     typedef cMemSpan SUPER_t;
@@ -18,12 +18,12 @@ class WINHEAPN(Handle) : public cMemSpan {
     typedef WINHEAPH HANDLE_t;
 
  protected:
-    HANDLE_t m_hData;
+    HANDLE_t _hData;
 
  public:
     WINHEAPN(Handle)
-    (HANDLE_t hData = HANDLE_NULL, void* pData = nullptr, size_t nSize = 0) noexcept
-        : m_hData(hData),
+    (HANDLE_t hData = cOSHandle::kNULL, void* pData = nullptr, size_t nSize = 0) noexcept
+        : _hData(hData),
           SUPER_t(PtrCast<BYTE>(pData), nSize)  // size may not be known? Already Locked?
     {
         //! Attach existing handle to this class.
@@ -32,18 +32,18 @@ class WINHEAPN(Handle) : public cMemSpan {
         Unlock();
     }
     bool isAlloc() const noexcept {
-        return m_hData != HANDLE_NULL;
+        return _hData != cOSHandle::kNULL;
     }
     HANDLE_t get_Handle() const noexcept {
-        return m_hData;
+        return _hData;
     }
     void UpdateHandle(void* p) noexcept {
-        //! If i have the m_pData, make sure the m_hData matches.
+        //! If i have the _pData, make sure the _hData matches.
         if (GetTPtrC() == p) return;
         Free();
         SetSpan2(p, get_SizeBytes());
         if (isValidPtr()) {
-            m_hData = WINHEAPF(Handle)(p);
+            _hData = WINHEAPF(Handle)(p);
         }
     }
 
@@ -51,34 +51,34 @@ class WINHEAPN(Handle) : public cMemSpan {
     /// Attach existing handle (and/or pointer) to this class. put_Handle()
     /// </summary>
     void AttachHandle(HANDLE_t hData, size_t nSize, void* pData = nullptr) noexcept {
-        // ASSERT( m_hData == HANDLE_NULL );
-        m_hData = hData;
+        // ASSERT( _hData == cOSHandle::kNULL );
+        _hData = hData;
         SetSpan2(pData, nSize);
     }
 
     /// <summary>
-    /// Get the allocated size. not same as m_nSize ?
+    /// Get the allocated size. not same as requested size ?
     /// </summary>
     /// <returns></returns>
     SIZE_T GetSize() const noexcept {
-        return WINHEAPF(Size)(m_hData);
+        return WINHEAPF(Size)(_hData);
     }
     UINT GetFlags() const noexcept {
-        return WINHEAPF(Flags)(m_hData);
+        return WINHEAPF(Flags)(_hData);
     }
     LPVOID Lock() noexcept {
         //! this actually does nothing on _WIN32 systems? only used for WIN16
-        if (m_hData == HANDLE_NULL) return nullptr;
+        if (_hData == cOSHandle::kNULL) return nullptr;
         if (!isValidPtr()) {
 #ifdef UNDER_CE
-            SetSpan((void*)(m_hData), get_SizeBytes());
+            SetSpan((void*)(_hData), get_SizeBytes());
 #else
-            SetSpan2(WINHEAPF(Lock)(m_hData), get_SizeBytes());
+            SetSpan2(WINHEAPF(Lock)(_hData), get_SizeBytes());
 #endif
 #ifdef _DEBUG
             if (!isValidPtr()) {
                 const HRESULT hRes = HResult::GetLastDef();
-                DEBUG_ERR(("Heap Lock ERR='%s' for h=0%x", LOGERR(hRes), m_hData));
+                DEBUG_ERR(("Heap Lock ERR='%s' for h=0%x", LOGERR(hRes), _hData));
             }
 #endif
         }
@@ -86,9 +86,9 @@ class WINHEAPN(Handle) : public cMemSpan {
     }
     void Unlock() {
         if (isValidPtr()) {
-            ASSERT(m_hData != HANDLE_NULL);
+            ASSERT(_hData != cOSHandle::kNULL);
 #ifndef UNDER_CE
-            WINHEAPF(Unlock)(m_hData);
+            WINHEAPF(Unlock)(_hData);
 #endif
             SetSpanConst(nullptr, get_SizeBytes());
         }
@@ -102,16 +102,16 @@ class WINHEAPN(Handle) : public cMemSpan {
     /// <returns></returns>
     HANDLE_t AllocHandle(size_t dwSize, DWORD dwFlags = WINHEAPM(MOVEABLE)) {
         Unlock();
-        if (m_hData != HANDLE_NULL)
-            m_hData = WINHEAPF(ReAlloc)(m_hData, (SIZE_T)dwSize, dwFlags);
+        if (_hData != cOSHandle::kNULL)
+            _hData = WINHEAPF(ReAlloc)(_hData, (SIZE_T)dwSize, dwFlags);
         else
-            m_hData = WINHEAPF(Alloc)(dwFlags, (SIZE_T)dwSize);
+            _hData = WINHEAPF(Alloc)(dwFlags, (SIZE_T)dwSize);
         put_SizeBytes(dwSize);
-        return m_hData;
+        return _hData;
     }
     void* ReAlloc(size_t dwSize, DWORD dwFlags = WINHEAPM(FIXED)) {
         Unlock();
-        m_hData = WINHEAPF(ReAlloc)(m_hData, (SIZE_T)dwSize, dwFlags);
+        _hData = WINHEAPF(ReAlloc)(_hData, (SIZE_T)dwSize, dwFlags);
         put_SizeBytes(dwSize);
         return Lock();
     }
@@ -134,22 +134,22 @@ class WINHEAPN(Handle) : public cMemSpan {
     }
     void Free() {
         /// Unlock and free. NOT done automatically on destruct of this class.
-        if (m_hData != HANDLE_NULL) {
+        if (_hData != cOSHandle::kNULL) {
             Unlock();  // only unlock if needed.
             FreeHandle();
         }
     }
     HANDLE_t DetachHandle() noexcept {
         // Assume unlocked?
-        const HANDLE_t hTmp = m_hData;
-        m_hData = HANDLE_NULL;
+        const HANDLE_t hTmp = _hData;
+        _hData = cOSHandle::kNULL;
         SetSpanNull();
         return hTmp;
     }
 
  protected:
     HANDLE_t FreeHandleLast() {
-        return WINHEAPF(Free)(m_hData);
+        return WINHEAPF(Free)(_hData);
     }
     void FreeHandle() {
         HANDLE_t hFail = FreeHandleLast();
@@ -159,7 +159,7 @@ class WINHEAPN(Handle) : public cMemSpan {
             DEBUG_ERR(("GlobalFree ERR='%s'", LOGERR(hRes)));
         }
 #endif
-        m_hData = HANDLE_NULL;
+        _hData = cOSHandle::kNULL;
     }
 };
 
@@ -174,16 +174,16 @@ class WINHEAPN(V) : public WINHEAPN(Handle) {
     typedef WINHEAPN(Handle) SUPER_t;
 
  public:
-    WINHEAPN(V)(HANDLE_t hData = HANDLE_NULL) : SUPER_t(hData) {}
+    WINHEAPN(V)(HANDLE_t hData = cOSHandle::kNULL) : SUPER_t(hData) {}
     ~WINHEAPN(V)() {
-        if (m_hData != HANDLE_NULL) {
+        if (_hData != cOSHandle::kNULL) {
             Unlock();
             FreeHandleLast();
         }
     }
     void AttachHandle(HANDLE_t hData, size_t nSize, void* pData = nullptr) {
-        if (m_hData != HANDLE_NULL) {
-            if (hData == m_hData) return;
+        if (_hData != cOSHandle::kNULL) {
+            if (hData == _hData) return;
             Unlock();
             FreeHandleLast();
         }
@@ -195,7 +195,7 @@ class WINHEAPN(V) : public WINHEAPN(Handle) {
     HANDLE_t* get_PPtrHandle() {
         //! @note Make sure you call Lock() after this.
         Free();
-        return &m_hData;
+        return &_hData;
     }
     static LPVOID GRAYCALL AllocPtrX(size_t nSize, DWORD nFlags = 0) {
         //! like _WIN32 GlobalAllocPtr( UINT, SIZE_T ) or GlobalAlloc
@@ -221,7 +221,7 @@ class WINHEAPN(V) : public WINHEAPN(Handle) {
 template <class _TYPE>
 struct WINHEAPN(T) : public WINHEAPN(V) {
     typedef WINHEAPN(V) SUPER_t;
-    WINHEAPN(T)(HANDLE_t hData = HANDLE_NULL) : SUPER_t(hData) {}
+    WINHEAPN(T)(HANDLE_t hData = cOSHandle::kNULL) : SUPER_t(hData) {}
 
     _TYPE* operator->() noexcept {
         return GetTPtrW<_TYPE>();

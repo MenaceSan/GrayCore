@@ -12,7 +12,7 @@ namespace Gray {
 typedef const FILECHAR_t* const* APP_ARGS_t;  /// the args passed to main() nullptr terminated array. const
 
 /// <summary>
-/// Parse and store command line args used to start an app. Handle Windows and POSIX/DOS formats.
+/// Parse and store command line args/commands used to start an app. Handle Windows and POSIX/DOS formats.
 /// Use FILECHAR_t. see k_ARG_ARRAY_MAX
 /// Like MFC CCommandLineInfo
 /// </summary>
@@ -22,19 +22,19 @@ class GRAYCORE_LINK cAppArgs {
     /// <summary>
     /// The unparsed raw command line arguments. NOT including 'appname.exe'. Maybe generated as needed in get_ArgsStr(). if main() style entry.
     /// </summary>
-    cStringF m_sArguments;
+    cStringF _sArguments;
 
     /// <summary>
-    /// Const Array of parsed m_sArguments. [0]=appname.exe, [1]=first arg. NOT nullptr terminated like APP_ARGS_t. Honors quoted text.
+    /// Const Array of parsed _sArguments. [0]=appname.exe, [1]=first arg. NOT nullptr terminated like APP_ARGS_t. Honors quoted text.
     /// TODO cArrayPtr into cBlob? like cIniSectionData?
     /// </summary>
-    cArrayString<FILECHAR_t> m_aArgs;
+    cArrayString<FILECHAR_t> _aArgs;
 
  protected:
-     void InitArgsArray(ITERATE_t argc, APP_ARGS_t ppszArgs, bool sepEquals);
+    void InitArgsArray(ITERATE_t argc, APP_ARGS_t ppszArgs, bool sepEquals);
 
  public:
-    cAppArgs() {}
+    cAppArgs() noexcept {}
     cAppArgs(const FILECHAR_t* p);
 
     /// <summary>
@@ -59,7 +59,7 @@ class GRAYCORE_LINK cAppArgs {
     /// Does not contain App.exe name.
     /// </summary>
     cStringF get_ArgsStr() const noexcept {
-        return m_sArguments;
+        return _sArguments;
     }
 
     /// <summary>
@@ -78,7 +78,7 @@ class GRAYCORE_LINK cAppArgs {
     cStringF GetArgEnum(ITERATE_t i) const;  /// command line arg.
 
     /// <summary>
-    /// set (unparsed) m_sArguments and parse pszCommandArgs to m_aArgs. Windows WinMain() style init.
+    /// set (unparsed) _sArguments and parse pszCommandArgs to _aArgs. Windows WinMain() style init.
     /// Similar to _WIN32  CommandLineToArgvW()
     /// Honor quotes.
     /// </summary>
@@ -97,13 +97,21 @@ class GRAYCORE_LINK cAppArgs {
     /// <summary>
     /// For debug
     /// </summary>
-    ITERATE_t AppendArg(const FILECHAR_t* pszCmd, bool sepEquals); 
+    ITERATE_t AppendArg(const FILECHAR_t* pszCmd, bool sepEquals);
 
     /// <summary>
     /// Find a command line arg as regex or ignoring case.
     /// bRegex = Search for a wildcard prefix.
     /// </summary>
     ITERATE_t FindCommandArg(const FILECHAR_t* pszCommandArg, bool bRegex = true, bool bIgnoreCase = true) const;
+
+    /// <summary>
+    /// Find one of several possible command line args maybe ignoring case. nullptr terminated list.
+    /// </summary>
+    /// <param name="bIgnoreCase"></param>
+    /// <param name="pszCommandArgFind"></param>
+    /// <param name=""></param>
+    /// <returns>index of the first one.</returns>
     ITERATE_t _cdecl FindCommandArgs(bool bIgnoreCase, const FILECHAR_t* pszCommandArgFind, ...) const;
 
     /// <summary>

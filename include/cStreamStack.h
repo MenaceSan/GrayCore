@@ -38,24 +38,24 @@ class GRAYCORE_LINK cStreamStackInp : public cStreamQueue, public cStreamReader 
 
 /// <summary>
 /// Stack of output streams. Acts like a codec, compressor, cipher, etc.
-/// This output stream will process data and push it along to another output stream via m_pOut->WriteX().
+/// This output stream will process data and push it along to another output stream via _pOut->WriteX().
 /// @note WriteX() MUST take all data passed to it and cQueueRW it up if it cant process immediately.
 /// ASSUME derived class overrides WriteX and calls WriteFlush
 /// </summary>
 class GRAYCORE_LINK cStreamStackOut : public cStreamQueue { // cStreamOutput, protected cStreamStack
  protected:
-    cStreamOutput* m_pStreamOut;  /// End result output stream. called by WriteFlush()
+    cStreamOutput* _pStreamOut;  /// End result output stream. called by WriteFlush()
  protected:
     HRESULT WriteFlush();
  public:
-    cStreamStackOut(cStreamOutput* pStreamOut = nullptr, size_t nSizeBuffer = cStream::k_FILE_BLOCK_SIZE) noexcept : cStreamQueue(8 * 1024, nSizeBuffer), m_pStreamOut(pStreamOut) {}
+    cStreamStackOut(cStreamOutput* pStreamOut = nullptr, size_t nSizeBuffer = cStream::k_FILE_BLOCK_SIZE) noexcept : cStreamQueue(8 * 1024, nSizeBuffer), _pStreamOut(pStreamOut) {}
     HRESULT WriteX(const cMemSpan& m) override = 0;  // cStreamOutput override calls WriteFlush() // MUST be overridden
 };
 
 /// <summary>
 /// Stream out to a cStreamOutput that might not take anything but whole packets.
-/// call m_pStreamOut->WriteX() multiple times for multiple whole packets.
-/// save unfinished packets in m_buffer.
+/// call _pStreamOut->WriteX() multiple times for multiple whole packets.
+/// save unfinished packets in buffer.
 /// nSizeBuffer = the size of the largest possible whole packet.
 /// </summary>
 struct GRAYCORE_LINK cStreamStackPackets : public cStreamStackOut {

@@ -29,11 +29,11 @@ cTimeInt::cTimeInt(const cTimeFile& fileTime) noexcept {
     FILETIME_t nTmp = fileTime.get_Val();
     nTmp /= cTimeFile::k_nFreq;  // convert to seconds.
     nTmp -= (cTimeFile::k_nDaysDiffTimeInt * (UINT64)cTimeUnits::k_nSecondsPerDay);
-    m_time = (TIMESEC_t)nTmp;
+    _nTimeSec = CastN(TIMESEC_t, nTmp);
 }
 
 TIMESEC_t GRAYCALL cTimeInt::GetTimeFromDays(double dTimeDays) noexcept {  // static
-    return (TIMESEC_t)((dTimeDays - cTimeDouble::k_nDaysDiffTimeInt) * cTimeUnits::k_nSecondsPerDay);
+    return CastN(TIMESEC_t, (dTimeDays - cTimeDouble::k_nDaysDiffTimeInt) * cTimeUnits::k_nSecondsPerDay);
 }
 
 cTimeInt GRAYCALL cTimeInt::GetTimeNow() noexcept {  // static
@@ -60,7 +60,7 @@ cTimeFile cTimeInt::GetAsFileTime() const noexcept {
 
 void cTimeInt::InitTime(TIMESEC_t itime) noexcept {
     //! @arg itime <= 0 = invalid time.
-    m_time = itime;
+    _nTimeSec = itime;
 }
 
 void cTimeInt::InitTimeNow() noexcept {
@@ -93,36 +93,36 @@ bool cTimeInt::InitTimeUnits(const cTimeUnits& rTu) {
         return false;
     }
 
-    if (rTu.m_wYear < 1970)  // Can't be represented by int.
+    if (rTu._wYear < 1970)  // Can't be represented by int.
         return false;
 
     // Calculate elapsed days since base date (midnight, 1/1/70, UTC)
     // 365 days for each elapsed year since 1970, plus one more day for
     // each elapsed leap year. no danger of overflow because of the range
     // check (above) on tmptm1.
-    TIMESEC_t nUnits = (rTu.m_wYear - 1970) * 365;
-    nUnits += (cTimeUnits::GetLeapYearsSince2K(rTu.m_wYear) + 7);
+    TIMESEC_t nUnits = (rTu._wYear - 1970) * 365;
+    nUnits += (cTimeUnits::GetLeapYearsSince2K(rTu._wYear) + 7);
 
     // elapsed days to current month (still no possible overflow)
     // Calculate days elapsed minus one, in the given year, to the given
     // month. Check for leap year and adjust if necessary.
-    nUnits += cTimeUnits::k_MonthDaySums[cTimeUnits::IsLeapYear(rTu.m_wYear)][rTu.m_wMonth - 1];
+    nUnits += cTimeUnits::k_aMonthDaySums[cTimeUnits::IsLeapYear(rTu._wYear)][rTu._wMonth - 1];
 
     // elapsed days to current date.
-    nUnits += rTu.m_wDay - 1;
+    nUnits += rTu._wDay - 1;
 
     // elapsed hours since base date
-    nUnits = (nUnits * 24) + rTu.m_wHour;
+    nUnits = (nUnits * 24) + rTu._wHour;
 
     // elapsed minutes since base date
-    nUnits = (nUnits * 60) + rTu.m_wMinute;
+    nUnits = (nUnits * 60) + rTu._wMinute;
 
     // elapsed seconds since base date
-    nUnits = (nUnits * 60) + rTu.m_wSecond;
+    nUnits = (nUnits * 60) + rTu._wSecond;
 
-    if (rTu.m_nTZ != TZ_UTC) {
+    if (rTu._nTZ != TZ_UTC) {
         // adjust
-        TIMEVALU_t nTimeZone = rTu.m_nTZ;
+        TIMEVALU_t nTimeZone = rTu._nTZ;
         if (nTimeZone == TZ_LOCAL) {
             nTimeZone = cTimeZoneMgr::GetLocalMinutesWest();
         }
@@ -157,25 +157,25 @@ bool cTimeInt::GetTimeUnits(OUT cTimeUnits& rTu, TZ_TYPE nTimeZone) const {
 
     // If we have under-flowed the __time64_t range (i.e., if nSeconds < 0),
     // back up one year, adjusting the correction if necessary.
-    int islpyr;  // is-current-year-a-leap-year flag
+    int isLpYr;  // is-current-year-a-leap-year flag
     if (nSeconds < 0) {
         nSeconds += k_YEAR_SEC;
         nYears--;
-        islpyr = cTimeUnits::IsLeapYear(nYears);
-        if (islpyr > 0) {
+        isLpYr = cTimeUnits::IsLeapYear(nYears);
+        if (isLpYr > 0) {
             nSeconds += cTimeUnits::k_nSecondsPerDay;
         }
     } else {
-        islpyr = cTimeUnits::IsLeapYear(nYears);
+        isLpYr = cTimeUnits::IsLeapYear(nYears);
     }
 
     // nYears now holds the value for tm_year. nSeconds now holds the
     // number of elapsed seconds since the beginning of that year.
-    rTu.m_wYear = nYears;
+    rTu._wYear = nYears;
 
     // Determine days since January 1 (0 - 365). This is the nDayOfYear value.
     // Leave nSeconds with number of elapsed seconds in that day.
-    int nDayOfYear = (int)(nSeconds / cTimeUnits::k_nSecondsPerDay);
+    const int nDayOfYear = (int)(nSeconds / cTimeUnits::k_nSecondsPerDay);
     if (nDayOfYear > 366) {
         ASSERT(0);
         return false;
@@ -183,20 +183,20 @@ bool cTimeInt::GetTimeUnits(OUT cTimeUnits& rTu, TZ_TYPE nTimeZone) const {
     nSeconds -= (TIMESEC_t)(nDayOfYear)*cTimeUnits::k_nSecondsPerDay;
 
     // Determine months since January (0 - 11) and day of month (1 - 31)
-    const WORD* pnDays = cTimeUnits::k_MonthDaySums[islpyr];
+    const WORD* pnDays = cTimeUnits::k_aMonthDaySums[isLpYr];
     WORD nMonth = 1;
     for (; pnDays[nMonth] <= nDayOfYear; nMonth++)
         ;
 
-    rTu.m_wMonth = nMonth;
-    rTu.m_wDay = (WORD)(1 + (nDayOfYear - pnDays[nMonth - 1]));
+    rTu._wMonth = nMonth;
+    rTu._wDay = (WORD)(1 + (nDayOfYear - pnDays[nMonth - 1]));
 
     //  Determine hours since midnight (0 - 23), minutes after the hour
     //  (0 - 59), and seconds after the minute (0 - 59).
-    rTu.m_wHour = (WORD)(nSeconds / 3600);
-    nSeconds -= (TIMESEC_t)rTu.m_wHour * 3600L;
-    rTu.m_wMinute = (WORD)(nSeconds / 60);
-    rTu.m_wSecond = (WORD)(nSeconds - (rTu.m_wMinute * 60));
+    rTu._wHour = (WORD)(nSeconds / 3600);
+    nSeconds -= (TIMESEC_t)rTu._wHour * 3600L;
+    rTu._wMinute = (WORD)(nSeconds / 60);
+    rTu._wSecond = (WORD)(nSeconds - (rTu._wMinute * 60));
 
     rTu.AddTZ(nTimeZone);  // adjust for timezone and DST, TZ_GMT = 0
     return true;
@@ -234,9 +234,6 @@ HRESULT cTimeInt::SetTimeStr(const GChar_t* pszDateTime, TZ_TYPE nTimeZone) {
     //! @arg nTimeZone = (seconds) what TZ was this recorded in (_timezone) (typically TZ_EST)
     //!    ?? we have no idea is our local offset for DST is the same as encoded!
     //!	did the creator of pszDateTime adjust for DST ? tm_isdst
-    //! @return
-    //!  m_time = the number of seconds elapsed since midnight (00:00:00), January 1, 1970, coordinated universal time (UTC), according to the system clock
-    //!  true = OK
     //! e.g. "Sat, 07 Aug 2004 01:20:20", ""
 
     if (pszDateTime == nullptr) return E_POINTER;
@@ -247,7 +244,7 @@ HRESULT cTimeInt::SetTimeStr(const GChar_t* pszDateTime, TZ_TYPE nTimeZone) {
     }
 
     cTimeUnits Tu;
-    HRESULT hRes = Tu.SetTimeStr(pszDateTime, nTimeZone);
+    const HRESULT hRes = Tu.SetTimeStr(pszDateTime, nTimeZone);
     if (hRes <= 0) return 0;
 
     InitTimeUnits(Tu);

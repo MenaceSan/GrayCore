@@ -25,7 +25,7 @@ struct ITextWriter {
     /// </summary>
     /// <returns>-lt- 0 = error. else number of chars written</returns>
     template <typename _CH>
-    HRESULT VPrintf(const _CH* pszFormat, va_list args) {
+    HRESULT VPrintf(const _CH* pszFormat, ::va_list args) {
         ASSERT_NN(pszFormat);
         _CH szTemp[StrT::k_LEN_Default];
         const StrLen_t iLenRet = StrT::vsprintfN(TOSPAN(szTemp), pszFormat, args);
@@ -45,7 +45,7 @@ struct ITextWriter {
     template <typename _CH>
     HRESULT _cdecl Printf(const _CH* pszFormat, ...) {
         ASSERT_NN(pszFormat);
-        va_list vargs;
+        ::va_list vargs;
         va_start(vargs, pszFormat);
         const HRESULT hResLen = VPrintf(pszFormat, vargs);
         va_end(vargs);

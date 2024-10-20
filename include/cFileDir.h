@@ -28,30 +28,46 @@ struct cLogProcessor;
 /// <summary>
 /// Info for a particular Disk/Device/Volume. e.g. 'C:\'
 /// </summary>
-class GRAYCORE_LINK cFileDevice {
- public:
-    static const char* k_FileSysName[static_cast<int>(FILESYS_t::_QTY)];  /// File system types i might support.
+struct GRAYCORE_LINK cFileDevice {
+    static const char* const k_FileSysName[static_cast<int>(FILESYS_t::_QTY)];  /// File system types i might support.
 
     // _WIN32 Info from GetVolumeInformation();
-    cStringF m_sVolumeName;            /// can be empty.
-    cStringF m_sTypeName;              /// File system format/type e.g. "NTFS", "FAT"
-    FILESYS_t m_eType;                 /// Enumerate known types for m_sTypeName (file system type)
-    UINT64 m_nSerialNumber;            /// Volume serial number (time stamp of last format) e.g. 0x0ca0e613 for _WIN32.
-    DWORD m_dwMaximumComponentLength;  /// block size? e.g. 255 bytes
-    bool m_bCaseSensitive;             /// e.g. 0x03e700ff, FILE_CASE_SENSITIVE_SEARCH. else IgnoreCase
+    cStringF _sVolumeName;                      /// can be empty.
+    cStringF _sTypeName;                        /// File system format/type e.g. "NTFS", "FAT"
+    FILESYS_t _eSysType = FILESYS_t::_DEFAULT;  /// Enumerate known types for _sTypeName (file system type)
+    UINT64 _nSerialNumber = 0;                  /// Volume serial number (time stamp of last format) e.g. 0x0ca0e613 for _WIN32.
+    DWORD _nMaximumComponentLength = 0;         /// block size? e.g. 255 bytes
+    bool _isCaseSensitive = false;              /// e.g. 0x03e700ff, FILE_CASE_SENSITIVE_SEARCH. else IgnoreCase
 
- public:
-    cFileDevice();
-    ~cFileDevice();
-
+    /// <summary>
+    /// Read info about device.
+    //! pszDeviceId can be from _WIN32 GetLogicalDriveStrings()
+    //! some drives won't be ready (if removable). Thats OK. HRESULT_WIN32_C(ERROR_NOT_READY)
+    /// </summary>
+    /// <param name="pszDeviceId">nullptr = use the current dir/path for the app.</param>
     HRESULT UpdateInfo(const FILECHAR_t* pszDeviceId = nullptr);
 
     FILESYS_t get_FileSysType() const noexcept {
-        return m_eType;
+        return _eSysType;
     }
-    bool isCaseSensitive() const;
 
+    /// <summary>
+    /// The file system is case sensitive ? __linux__ = true, _WIN32 = false
+    /// A network mounted SAMBA share will use whatever rules the native OS/FileSystem uses.
+    /// _sTypeName = "FAT","NTFS" system = non case sensitive. "NFS" = case sensitive.
+    /// </summary>
+    bool isCaseSensitive() const noexcept {
+        return _isCaseSensitive;
+    }
+
+    /// <summary>
+    /// Determines whether a disk drive is a removable, fixed, CD-ROM, RAM disk, or network drive.
+    /// https://msdn.microsoft.com/en-us/library/windows/desktop/aa364939(v=vs.85).aspx
+    /// </summary>
+    /// <param name="pszDeviceId"></param>
+    /// <returns>0 =DRIVE_UNKNOWN, 1=DRIVE_NO_ROOT_DIR, 2=DRIVE_REMOVABLE, 3=DRIVE_FIXED, 4=DRIVE_REMOTE, 5=DRIVE_CDROM, 6=DRIVE_RAMDISK</returns>
     static UINT GRAYCALL GetDeviceType(const FILECHAR_t* pszDeviceId);
+
     static FILE_SIZE_t GRAYCALL GetDeviceFreeSpace(const FILECHAR_t* pszDeviceId = nullptr);
     static HRESULT GRAYCALL GetSystemDeviceList(cArrayString<FILECHAR_t>& a);
 };
@@ -66,24 +82,24 @@ class GRAYCORE_LINK cFileDirEntry : public cFileStatus {
     friend class cFileFind;
 
  protected:
-    cStringF m_sFileName;  /// relative file title. (NOT FULL PATH) if FILECHAR_t is NOT USE_UNICODE_FN then is UTF8.
+    cStringF _sFileName;  /// relative file title. (NOT FULL PATH) if FILECHAR_t is NOT USE_UNICODE_FN then is UTF8.
 
  public:
     cFileDirEntry() noexcept {
         InitFileStatus();
     }
-    explicit cFileDirEntry(const FILECHAR_t* pszFileName) : m_sFileName(pszFileName) {
+    explicit cFileDirEntry(const FILECHAR_t* pszFileName) : _sFileName(pszFileName) {
         InitFileStatus();
     }
-    cFileDirEntry(const FILECHAR_t* pszFileName, const cFileStatus& status) : SUPER_t(status), m_sFileName(pszFileName) {}
+    cFileDirEntry(const FILECHAR_t* pszFileName, const cFileStatus& status) : SUPER_t(status), _sFileName(pszFileName) {}
 
     inline cStringF get_Name() const noexcept {
-        return m_sFileName;
+        return _sFileName;
     }
 
     bool IsFileEqualTo(const THIS_t& rEntry) const noexcept {
         // Does file system use case ?
-        if (!m_sFileName.IsEqualNoCase(rEntry.m_sFileName)) return false;
+        if (!_sFileName.IsEqualNoCase(rEntry._sFileName)) return false;
         return SUPER_t::IsFileEqualTo(rEntry);
     }
     bool IsFileEqualTo(const THIS_t* pEntry) const noexcept {
@@ -94,21 +110,21 @@ class GRAYCORE_LINK cFileDirEntry : public cFileStatus {
     bool operator==(const THIS_t& rEntry) const noexcept {
         return IsFileEqualTo(rEntry);
     }
-    bool operator!=(const THIS_t& rEntry) const {
+    bool operator!=(const THIS_t& rEntry) const noexcept {
         return !IsFileEqualTo(rEntry);
     }
 
     inline bool isDot() const {
-        if (m_sFileName[0] != '.') return false;
-        if (m_sFileName[1] == '\0') return true;
+        if (_sFileName[0] != '.') return false;
+        if (_sFileName[1] == '\0') return true;
         return false;
     }
     inline bool isDots() const noexcept {
         //! ignore the . and .. that old systems can give us.
-        if (m_sFileName[0] != '.') return false;
-        if (m_sFileName[1] == '\0') return true;
-        if (m_sFileName[1] != '.') return false;
-        if (m_sFileName[2] == '\0') return true;
+        if (_sFileName[0] != '.') return false;
+        if (_sFileName[1] == '\0') return true;
+        if (_sFileName[1] != '.') return false;
+        if (_sFileName[2] == '\0') return true;
         return false;
     }
 };
@@ -120,20 +136,20 @@ class GRAYCORE_LINK cFileDirEntry : public cFileStatus {
 /// </summary>
 class GRAYCORE_LINK cFileFind {
  public:
-    cFileDirEntry m_FileEntry;  /// The current entry. by calls to FindFile() and FindFileNext()
+    cFileDirEntry _FileEntry;  /// The current entry. by calls to FindFile() and FindFileNext()
 
  private:
-    cStringF m_sDirPath;  /// Assume it ends with k_DirSep
-    DWORD m_nFileFlags;   /// FILEOPF_t Options such as follow the links in the directory. Act as though these are regular files.
+    cStringF _sDirPath;  /// Assume it ends with k_DirSep
+    DWORD _nFileFlags = 0;   /// FILEOPF_t Options such as follow the links in the directory. Act as though these are regular files.
 #ifdef _WIN32
-    ::WIN32_FIND_DATAW m_FindInfo;  /// Always UNICODE as base.
-    ::HANDLE m_hContext;            /// Handle for my search. NOT cOSHandle, uses FindClose()
+    ::WIN32_FIND_DATAW _FindInfo;  /// Always UNICODE as base.
+    ::HANDLE _hContext = INVALID_HANDLE_VALUE;  /// Handle for my search. NOT cOSHandle, uses FindClose()
 #elif defined(__linux__)
-    cStringF m_sWildcardFilter;  /// Need to perform wildcard (strip out the *.EXT part) later/manually in Linux.
+    cStringF _sWildcardFilter;  /// Need to perform wildcard (strip out the *.EXT part) later/manually in Linux.
  public:
-    bool m_bReadStats;  /// e.g. "/proc" directory has no extra stats. don't read them.
+    bool _HasStats = true;  /// e.g. "/proc" directory has no extra stats. don't read them.
  private:
-    ::DIR* m_hContext;  /// Handle for my search/enum.
+    ::DIR* _hContext = nullptr;  /// Handle for my search/enum.
 #else
 #error NOOS
 #endif
@@ -145,26 +161,42 @@ class GRAYCORE_LINK cFileFind {
     }
 
     cStringF get_DirPath() const noexcept {
-        return m_sDirPath;
+        return _sDirPath;
     }
     /// <summary>
     /// Create a full file path with directory and file name/title.
     /// </summary>
     cStringF GetFilePath(const FILECHAR_t* pszFileTitle) const {
-        return cFilePath::CombineFilePathX(m_sDirPath, pszFileTitle);
+        return cFilePath::CombineFilePathX(_sDirPath, pszFileTitle);
     }
     /// <summary>
     /// Get Full file path. like MFC CFileFind::GetFilePath()
     /// </summary>
     cStringF get_FilePath() const {
-        return GetFilePath(m_FileEntry.get_Name());
+        return GetFilePath(_FileEntry.get_Name());
     }
     bool isDots() const noexcept {
-        return m_FileEntry.isDots();
+        return _FileEntry.isDots();
     }
 
+    /// <summary>
+    /// start a sequential read of the files in a list of possible matches.
+    /// @note pszWildcardFile can NOT have multiple "*.ext1;*.ext2"
+    /// </summary>
+    /// <param name="pszDirPath"></param>
+    /// <param name="pszWildcardFile">"*.ext". if pszDirPath is empty, full path can be in pszWildcardFile</param>
+    /// <returns>HRESULT_WIN32_C(ERROR_NO_MORE_ITEMS) = no files.</returns>
     HRESULT FindOpen(const FILECHAR_t* pszDirPath = nullptr, const FILECHAR_t* pszWildcardFile = nullptr);
+
     HRESULT FindFile(const FILECHAR_t* pszDirPath = nullptr, const FILECHAR_t* pszWildcardFile = nullptr);
+
+    /// <summary>
+    /// Read the next file in the directory list.
+    /// ASSUME cFileFind::FindFile() was called.
+    /// @note UNICODE files are converted to '?' chars if calling the non UNICODE version.
+    /// </summary>
+    /// <param name="bFirst"></param>
+    /// <returns>HRESULT_WIN32_C(ERROR_NO_MORE_ITEMS) = no more files</returns>
     HRESULT FindFileNext(bool bFirst = false);
 
     bool isContextOpen() const;
@@ -181,10 +213,10 @@ class GRAYCORE_LINK cFileDir {
     static const int k_FilesMax = 64 * 1024;
     static const LOGCHAR_t k_szCantMoveFile[];  /// if MoveDirFiles failed for this.
 
-    cArrayStruct<cFileDirEntry> m_aFiles;  /// Array of the files we found matching the ReadDir criteria.
+    cArrayStruct<cFileDirEntry> _aFiles;  /// Array of the files we found matching the ReadDir criteria.
 
  protected:
-    cStringF m_sDirPath;  /// Does NOT include the wild card.
+    cStringF _sDirPath;  /// Does NOT include the wild card.
 
  protected:
     /// <summary>
@@ -192,13 +224,13 @@ class GRAYCORE_LINK cFileDir {
     /// </summary>
     virtual HRESULT AddFileDirEntry(cFileDirEntry& fileEntry) {
         if (!fileEntry.isDots()) {
-            m_aFiles.Add(fileEntry);
+            _aFiles.Add(fileEntry);
         }
         return S_OK;
     }
 
  public:
-    explicit cFileDir(cStringF sDirPath = _FN("")) : m_sDirPath(sDirPath) {}
+    explicit cFileDir(cStringF sDirPath = _FN("")) : _sDirPath(sDirPath) {}
     virtual ~cFileDir() {}
 
     static HRESULT GRAYCALL RemoveDirectory1(const FILECHAR_t* pszDirName);
@@ -231,10 +263,10 @@ class GRAYCORE_LINK cFileDir {
     static HRESULT GRAYCALL DeletePathX(const FILECHAR_t* pszPath, FILEOPF_t nFileFlags = FILEOPF_t::_None);
 
     cStringF get_DirPath() const noexcept {
-        return m_sDirPath;
+        return _sDirPath;
     }
     void put_DirPath(cStringF sDirPath) {
-        m_sDirPath = sDirPath;
+        _sDirPath = sDirPath;
         // clear list only if changed?
         RemoveAll();
     }
@@ -243,25 +275,25 @@ class GRAYCORE_LINK cFileDir {
     /// rebuild Full path.
     /// </summary>
     cStringF GetFilePath(const FILECHAR_t* pszTitle) const {
-        return cFilePath::CombineFilePathX(m_sDirPath, pszTitle);
+        return cFilePath::CombineFilePathX(_sDirPath, pszTitle);
     }
     cStringF GetFilePath(const cFileDirEntry& f) const {
         return GetFilePath(f.get_Name());
     }
 
-    const cFileDirEntry& GetEnumFile(ITERATE_t i) const {
-        return m_aFiles.GetAt(i);
+    const cFileDirEntry& GetEnumFile(ITERATE_t i) const noexcept {
+        return _aFiles.GetAt(i);
     }
     /// <summary>
     /// Get the full path for the file i.
     /// </summary>
     cStringF GetEnumPath(ITERATE_t i) const {
-        return GetFilePath(m_aFiles.GetAt(i));
+        return GetFilePath(_aFiles.GetAt(i));
     }
 
     void RemoveAll() {
         //! Dispose of my data.
-        m_aFiles.RemoveAll();
+        _aFiles.RemoveAll();
     }
 
     HRESULT ReadDir(const FILECHAR_t* pszDirPath = nullptr, const FILECHAR_t* pszWildcardFile = nullptr, ITERATE_t iFilesMax = k_FilesMax, bool bFollowLink = false);

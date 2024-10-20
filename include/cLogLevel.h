@@ -19,7 +19,7 @@ typedef char LOGCHAR_t;                                                  /// alw
 /// </summary>
 enum class LOGLVL_t : BYTE {
 #define LOGLEVELDEF(a, b, c, d) _##a,
-#include "cLogLevel.tbl"
+#include "cLogLevel.tbl"    // e.g. INFO
 #undef LOGLEVELDEF
     _QTY,  /// 8= Filter everything. i want to see nothing.
 };

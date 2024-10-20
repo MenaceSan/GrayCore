@@ -10,20 +10,33 @@
 
 #include "Index.h"
 #include "PtrCast.h"
-#include "cDebugAssert.h"
-#include "cValT.h"  // COMPARE_t
+#include <utility>  // std::move
 
 namespace Gray {
 
 /// <summary>
+/// General return type from a compare.
+/// Similar to _WIN#2 VARCMP_GT.
+/// Similar to the C++ (Three-way comparison, spaceship operator) https://en.cppreference.com/w/cpp/language/operator_comparison
+/// </summary>
+typedef int COMPARE_t;  /// result of "Three-way" compare. 0=same, 1=a>b, -1=a<b, COMPRET_t
+enum COMPRET_t {
+    COMPARE_Less = -1,    /// like VARCMP_LT
+    COMPARE_Equal = 0,    /// like VARCMP_EQ
+    COMPARE_Greater = 1,  /// like VARCMP_GT
+};
+
+/// <summary>
 /// static helpers for dealing with memory blocks. test bytes, Move memory bytes around.
 /// May be on heap, const memory space or static in stack. do NOT assume. use cHeap.
+/// Try to use cMemSpan intead of these calls directly.
 /// </summary>
 struct GRAYCORE_LINK cMem {                          // static cSingleton
     static VOLATILE uintptr_t sm_bDontOptimizeOut0;  /// static global byte to fool the optimizer into preserving this data.
     static VOLATILE uintptr_t sm_bDontOptimizeOutX;  /// static global byte to fool the optimizer into preserving this data.
-    static const size_t k_PageSizeMin = 64;          /// Minimum page size for architecture. Usually More like 4K ?
-    static const size_t k_ALLOC_MAX = 0x2000000;     /// (arbitrary) largest reasonable single malloc/object/span. e.g. Single frame allocation of big screen
+
+    static const size_t k_PageSizeMin = 64;       /// Minimum page size for architecture. Usually More like 4K ?
+    static const size_t k_ALLOC_MAX = 0x2000000;  /// (arbitrary) largest reasonable single malloc/object/span. e.g. Single frame allocation of big screen
 
     static const BYTE kFillAllocStack = 0xCC;   /// allocated on the stack in debug mode.
     static const BYTE kFillUnusedStack = 0xFE;  /// _DEBUG vsnprintf fills unused space with this.
@@ -31,6 +44,23 @@ struct GRAYCORE_LINK cMem {                          // static cSingleton
 #if !defined(UNDER_CE) && (!defined(_DEBUG) || !defined(_MSC_VER))
     static void __cdecl IsValidFailHandler(int nSig);  // JMP_t
 #endif
+
+    /// <summary>
+    /// swap 2 values. similar to std::swap(). but uses the intrinsic = operator.
+    /// dangerous for complex struct that has pointers and such. may not do a 'deep' copy.
+    /// assume TYPE has a safe overloaded = operator. like std::swap()
+    /// Overload this template for any specific TYPE Swaps.
+    /// </summary>
+    template <class TYPE>
+    static constexpr void SwapT(TYPE& a, TYPE& b) noexcept {
+#if 1
+        std::swap<TYPE>(a, b);
+#else
+        TYPE tmp = std::move(a);  // use the std::move operator.
+        a = std::move(b);
+        b = std::move(tmp);
+#endif
+    }
 
     /// <summary>
     /// Get pointer difference in bytes. signed. Caller must check if its a reasonable sized block.
@@ -72,7 +102,7 @@ struct GRAYCORE_LINK cMem {                          // static cSingleton
 
     static inline bool IsZeros(const void* pData, size_t nSize) noexcept {
         //! Is all zeros ? nSize = 0 = true.
-        if (!IsValidApp(pData)) return true;  // nullptr or corrupt?            
+        if (!IsValidApp(pData)) return true;  // nullptr or corrupt?
         const BYTE* pB = static_cast<const BYTE*>(pData);
         for (size_t i = 0; i < nSize; i++) {
             if (pB[i] != 0) return false;
@@ -116,6 +146,7 @@ struct GRAYCORE_LINK cMem {                          // static cSingleton
     static inline COMPARE_t CompareSecure(const void* p1, const void* p2, size_t nSizeBlock) noexcept {
         const BYTE* pB1 = PtrCast<BYTE>(p1);
         const BYTE* pB2 = PtrCast<BYTE>(p2);
+        if (pB1 == nullptr || pB2 == nullptr) return CastN(COMPARE_t, pB1 - pB2);
         BYTE nDiff = 0;
         for (size_t i = 0; i < nSizeBlock; i++) {
             nDiff |= pB1[i] ^ pB2[i];
@@ -175,8 +206,14 @@ struct GRAYCORE_LINK cMem {                          // static cSingleton
         while (nSizeBlock--) *p2++ = 0;
     }
 
+    /// <summary>
+    /// Xor pDst with self.
+    /// </summary>
+    /// <param name="pDst"></param>
+    /// <param name="pSrc"></param>
+    /// <param name="nBlockSize"></param>
+    /// <returns></returns>
     static inline void Xor(BYTE* pDst, const BYTE* pSrc, size_t nBlockSize) noexcept {
-        // Xor pDst with self.
         for (size_t i = 0; i < nBlockSize; i++) pDst[i] ^= pSrc[i];
     }
 
@@ -187,6 +224,7 @@ struct GRAYCORE_LINK cMem {                          // static cSingleton
     /// <summary>
     /// Copy a block of memory. same as CopyMemory(), RtlCopyMemory, memcpy().
     /// @note: Some older architectures needed versions of this to do 'huge' memory copies.
+    /// @note: exact duplicate is fine but overlap is not.
     /// </summary>
     /// <param name="pDst"></param>
     /// <param name="pSrc"></param>
@@ -210,7 +248,7 @@ struct GRAYCORE_LINK cMem {                          // static cSingleton
 #endif
     }
 
-    /// Does overlap require a reverse copy?
+    /// Does overlap require a reverse copy? NOT same as IsOverlap
     static constexpr bool IsOverlapRev(const void* pDst, const void* pSrc, size_t nSizeBlock) noexcept {
         const auto diff = cMem::Diff(pDst, pSrc);
         return diff > 0 && diff < CastN(ptrdiff_t, nSizeBlock);
@@ -247,23 +285,26 @@ struct GRAYCORE_LINK cMem {                          // static cSingleton
     /// <summary>
     /// like ReverseSpan
     /// </summary>
-    static inline void ReverseBytes(void* pDst, size_t nSizeBlock) noexcept {
+    static constexpr void ReverseBytes(void* pDst, size_t nSizeBlock) noexcept {
+        if (pDst == nullptr) return;
         BYTE* pSrcB = PtrCast<BYTE>(pDst);
         BYTE* pDstB = pSrcB + nSizeBlock - 1;
         nSizeBlock /= 2;
         while (nSizeBlock--) {
-            cValT::Swap(*pSrcB++, *pDstB--);
+            SwapT<BYTE>(*pSrcB++, *pDstB--);
         }
     }
 
     /// <summary>
     /// Copy a block of memory BYTEs reversed. e.g. {3,2,1} = {1,2,3}, nSizeBlock = 3
     /// </summary>
-    static inline void CopyReverse(void* pDst, const void* pSrc, size_t nSizeBlock) noexcept {
+    static constexpr void CopyReverse(void* pDst, const void* pSrc, size_t nSizeBlock) noexcept {
         if (pDst == pSrc) {
             ReverseBytes(pDst, nSizeBlock);
         } else {
+            if (pDst == nullptr) return;
             BYTE* pDstB = PtrCast<BYTE>(pDst) + nSizeBlock - 1;
+            if (pSrc == nullptr) return;
             const BYTE* pSrcB = PtrCast<BYTE>(pSrc);
             while (nSizeBlock--) {
                 *pDstB-- = *pSrcB++;
@@ -307,22 +348,22 @@ struct GRAYCORE_LINK cMem {                          // static cSingleton
     }
 
     /// <summary>
-    /// swap copy 2 blocks of memory by bytes. like cMemT::Swap() but for 2 arbitrary sized blocks.
+    /// swap copy 2 blocks of memory by bytes. like cMem::SwapT() but for 2 arbitrary sized blocks.
     /// swap them byte by byte.
-    /// use cMemT::Swap instead if possible for intrinsic types.
+    /// use cMem::SwapT instead if possible for intrinsic types.
     /// @arg nBlockSize = size in bytes.
     /// @note
-    ///  DO NOT Use this for complex types that need special copiers. have internal pointers and such. use cMemT::Swap()
+    ///  DO NOT Use this for complex types that need special copiers. have internal pointers and such. use cMem::SwapT()
     /// </summary>
     /// <param name="pvMem1"></param>
     /// <param name="pvMem2"></param>
     /// <param name="nBlockSize"></param>
     static inline void Swap(void* pvMem1, void* pvMem2, size_t nBlockSize) noexcept {
-        if (pvMem1 == pvMem2) return;  // no change.            
+        if (pvMem1 == pvMem2) return;  // no change.
         BYTE* pMem1 = PtrCast<BYTE>(pvMem1);
         BYTE* pMem2 = PtrCast<BYTE>(pvMem2);
         for (; nBlockSize--; pMem1++, pMem2++) {
-            cValT::Swap(*pMem1, *pMem2);
+            SwapT(*pMem1, *pMem2);
         }
     }
 };
@@ -335,16 +376,15 @@ struct GRAYCORE_LINK cMem {                          // static cSingleton
 /// </summary>
 template <UINT32 _SIGVALID>
 class DECLSPEC_NOVTABLE cMemSignature {
+    UINT32 _nSignature = _SIGVALID;  /// Hold bytes of known value.
  public:
     static const UINT32 k_INVALID = 0xDEADBEA7;  /// Mark as NOT valid when freed! Don't use this pattern for anything else.
- private:
-    UINT32 m_nSignature = _SIGVALID;  /// Hold bytes of known value.
  public:
     void put_Valid() {
-        m_nSignature = _SIGVALID;
+        _nSignature = _SIGVALID;
     }
     void put_Invalid() {
-        m_nSignature = k_INVALID;
+        _nSignature = k_INVALID;
     }
     cMemSignature() noexcept {
         static_assert(k_INVALID != _SIGVALID && 0 != _SIGVALID, "cMemSignature");
@@ -355,234 +395,11 @@ class DECLSPEC_NOVTABLE cMemSignature {
     }
     bool inline isValidSig() const noexcept {
         // assumes pointer is good.
-        return m_nSignature == _SIGVALID;
+        return _nSignature == _SIGVALID;
     }
     bool inline isValidSignature() const noexcept {
         return cMem::IsValidApp(this) && isValidSig();
     }
 };
-
-/// <summary>
-/// collection of templates to handle An arbitrary value type in memory. cValT in heap, const or stack.
-/// Deal with it as an array of bytes.
-/// </summary>
-struct GRAYCORE_LINK cMemT : public cValT {  // Value of some type in memory.
-    /// <summary>
-    /// Reverse the byte order in an intrinsic type.
-    /// Like __GNUC__ __builtin_bswap16(), __builtin_bswap32, etc
-    /// Similar to: ntohl(), htonl(), ntohs(), htons().
-    /// </summary>
-    template <class TYPE>
-    static inline TYPE ReverseType(TYPE nVal) noexcept {
-        cMem::CopyReverse(&nVal, &nVal, sizeof(nVal));
-        return nVal;
-    }
-    template <typename TYPE>
-    static inline TYPE HtoN(TYPE nVal) noexcept {
-        //! Host byte order to network order (big endian). like htonl() htons()
-#ifdef USE_LITTLE_ENDIAN
-        //! Assume bytes are correct bit order but larger types are not ordered correctly.
-        return ReverseType(nVal);
-#else
-        return nVal;  // no change needed.
-#endif
-    }
-    template <typename TYPE>
-    static inline TYPE NtoH(TYPE nVal) noexcept {
-        //! Network byte order (big endian) to host order. like ntohl() ntohs()
-        //! Network order = BigEndian = High order comes first = Not Intel.
-#ifdef USE_LITTLE_ENDIAN
-        //! Assume bytes are correct bit order but larger types are not ordered correctly.
-        return ReverseType(nVal);
-#else
-        return nVal;  // no change needed.
-#endif
-    }
-
-    template <typename TYPE>
-    static inline TYPE HtoLE(TYPE nVal) noexcept {
-        //! Host byte order to little endian. (Intel)
-#ifdef USE_LITTLE_ENDIAN
-        return nVal;  // no change needed.
-#else
-        //! Assume bytes are correct bit order but larger types are not ordered correctly.
-        return ReverseType(nVal);
-#endif
-    }
-    template <typename TYPE>
-    static inline TYPE LEtoH(TYPE nVal) noexcept {
-        //! Little Endian (Intel) to host byte order.
-#ifdef USE_LITTLE_ENDIAN
-        return nVal;  // no change needed.
-#else
-        //! Assume bytes are correct bit order but larger types are not ordered correctly.
-        return ReverseType(nVal);
-#endif
-    }
-
-    /// <summary>
-    /// Get a data TYPE value from an unaligned TYPE pointer.
-    /// Like the _WIN32 UNALIGNED macro.
-    /// @note some architectures will crash if you try to access unaligned data. (PowerPC)
-    /// In this case we need to memcpy() to a temporary buffer first.
-    /// </summary>
-    /// <typeparam name="TYPE"></typeparam>
-    /// <param name="pData"></param>
-    /// <returns></returns>
-    template <typename TYPE>
-    static inline TYPE GetUnaligned(const void* pData) noexcept {
-#ifdef _MSC_VER
-        return *((const UNALIGNED TYPE*)pData);
-#else
-        return *((const TYPE*)pData);
-#endif
-    }
-
-    /// <summary>
-    /// Set data value from an unknown unaligned TYPE pointer.
-    /// Like the _WIN32 UNALIGNED macro.
-    /// @note some architectures will crash if you try to access unaligned data. (PowerPC)
-    /// In this case we need to memcpy() to a temporary buffer first.
-    /// </summary>
-    template <typename TYPE>
-    static inline void SetUnaligned(void* pData, TYPE nVal) noexcept {
-#ifdef _MSC_VER
-        *((UNALIGNED TYPE*)pData) = nVal;
-#else
-        *((TYPE*)pData) = nVal;
-#endif
-    }
-
-    /// <summary>
-    /// Get bytes packed as LE (Intel). ( Not "Network order" which is big endian.)
-    /// </summary>
-    template <typename TYPE>
-    static inline TYPE GetLEtoH(const void* pData) noexcept {
-        return LEtoH(GetUnaligned<TYPE>(pData));
-    }
-    /// <summary>
-    /// Set bytes packed as LE (Intel). ( Not "Network order" which is big endian.)
-    /// </summary>
-    template <typename TYPE>
-    static inline void SetHtoLE(void* pData, TYPE nVal) noexcept {
-        return SetUnaligned(pData, HtoLE(nVal));
-    }
-    /// <summary>
-    /// Get bytes packed as BE (Network order, Not Intel). similar to CopyNtoH()
-    /// </summary>
-    /// <typeparam name="TYPE"></typeparam>
-    /// <param name="pData"></param>
-    /// <returns></returns>
-    template <typename TYPE>
-    static inline TYPE GetNtoH(const void* pData) noexcept {
-        return NtoH(GetUnaligned<TYPE>(pData));
-    }
-    /// <summary>
-    /// Set bytes packed as BE (Network order, Not Intel). similar to CopyHtoN()
-    /// </summary>
-    template <typename TYPE>
-    static inline void SetHtoN(void* pData, TYPE nVal) noexcept {
-        return SetUnaligned(pData, HtoN(nVal));
-    }
-
-    /// <summary>
-    /// Get 3 (Network order, Big Endian) BYTEs as a host value.
-    /// opposite of SetHtoN3()
-    /// </summary>
-    static inline UINT32 GetNtoH3(const BYTE* p) noexcept {
-        return ((UINT32)p[0]) << 16 | ((UINT32)p[1]) << 8 | p[2];
-    }
-
-    /// <summary>
-    /// Set 3 (Network order, Big Endian) BYTEs from host value.
-    /// opposite of GetNtoH3()
-    /// </summary>
-    static inline void SetHtoN3(BYTE* p, UINT nVal) noexcept {
-        p[0] = (BYTE)((nVal >> 16) & 0xFF);
-        p[1] = (BYTE)((nVal >> 8) & 0xFF);  // HIBYTE
-        p[2] = (BYTE)((nVal)&0xFF);         // LOBYTE
-    }
-};
-
-template <>
-inline WORD cMemT::ReverseType<WORD>(WORD nVal) noexcept {  // static
-    //! Reverse the bytes in an intrinsic 16 bit type WORD. e.g. 0x1234 = 0x3412
-    //! like ntohs(),htons(), MAKEWORD()
-    return (WORD)((nVal >> 8) | (nVal << 8));
-}
-template <>
-inline UINT32 cMemT::ReverseType<UINT32>(UINT32 nVal) noexcept {  // static
-    //! Reverse the bytes in an intrinsic 32 bit type UINT32.
-    //! like ntohl(),htonl()
-    nVal = (nVal >> 16) | (nVal << 16);
-    return ((nVal & 0xff00ff00UL) >> 8) | ((nVal & 0x00ff00ffUL) << 8);
-}
-
-#ifdef USE_INT64
-template <>
-inline UINT64 cMemT::ReverseType<UINT64>(UINT64 nVal) noexcept {  // static
-    //! Reverse the bytes in an intrinsic 64 bit type UINT64.
-    nVal = (nVal >> 32) | (nVal << 32);
-    nVal = ((nVal & 0xff00ff00ff00ff00ULL) >> 8) | ((nVal & 0x00ff00ff00ff00ffULL) << 8);
-    return ((nVal & 0xffff0000ffff0000ULL) >> 16) | ((nVal & 0x0000ffff0000ffffULL) << 16);
-}
-#endif
-#ifndef USE_LONG_AS_INT64
-template <>
-inline ULONG cMemT::ReverseType<ULONG>(ULONG nVal) noexcept {  // static
-    //! ULONG may be equiv to UINT32 or UINT64
-    // return ReverseType<UINT64>(nVal);
-    return ReverseType<UINT32>(nVal);
-}
-#endif
-
-#if 0  // USE_LITTLE_ENDIAN
-	template <>
-	inline UINT32 cMemT::GetNtoH<UINT32>(const void* pData)	{
-		const BYTE* p = (const BYTE*)pData;
-		return ((UINT32)p[0] << 24)
-			| ((UINT32)p[1] << 16)
-			| ((UINT32)p[2] << 8)
-			| ((UINT32)p[3]);
-	}
-	template <>
-	inline void cMemT::SetHtoN<UINT32>(void* pData, UINT32 nVal) {
-		BYTE* p = (BYTE*)pData;
-		p[0] = (BYTE)(nVal >> 24);
-		p[1] = (BYTE)(nVal >> 16);
-		p[2] = (BYTE)(nVal >> 8);
-		p[3] = (BYTE)(nVal);
-	}
-
-	template <>
-	inline UINT64 cMemT::GetNtoH<UINT64>(const void* pData)	{
-		const BYTE* p = (const BYTE*)pData;
-		return ((UINT64)p[0] << 56)
-			| ((UINT64)p[1] << 48)
-			| ((UINT64)p[2] << 40)
-			| ((UINT64)p[3] << 32)
-			| ((UINT64)p[4] << 24)
-			| ((UINT64)p[5] << 16)
-			| ((UINT64)p[6] << 8)
-			| ((UINT64)p[7]);
-	}
-	template <>
-	inline void cMemT::SetHtoN<UINT64>(void* pData, UINT64 nVal) {
-		BYTE* p = (BYTE*)pData;
-		p[0] = (BYTE)(nVal >> 56);
-		p[1] = (BYTE)(nVal >> 48);
-		p[2] = (BYTE)(nVal >> 40);
-		p[3] = (BYTE)(nVal >> 32);
-		p[4] = (BYTE)(nVal >> 24);
-		p[5] = (BYTE)(nVal >> 16);
-		p[6] = (BYTE)(nVal >> 8);
-		p[7] = (BYTE)(nVal);
-	}
-#endif
-
-/// Create a compare operator for some structure as compare of bytes
-#define COMPARE_MEM_IMPL(TYPE) \
-    inline bool operator==(const TYPE& m2) const noexcept { return cMem::IsEqual(this, &m2, sizeof(TYPE)); };
-
 }  // namespace Gray
 #endif

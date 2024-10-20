@@ -19,6 +19,8 @@ namespace Gray {
 /// No filter and take default formatted string
 /// </summary>
 class GRAYCORE_LINK cLogSinkConsole : public cLogSink, public cRefBase {
+    typedef cLogSink SUPER_t;
+
  protected:
     cLogSinkConsole() {}
  
@@ -30,6 +32,7 @@ class GRAYCORE_LINK cLogSinkConsole : public cLogSink, public cRefBase {
     /// <param name="pszMsg"></param>
     /// <returns>StrLen_t</returns>
     HRESULT WriteString(const LOGCHAR_t* pszMsg) override;
+    HRESULT FlushLogs() override;
 
     HRESULT addEvent(cLogEvent& rEvent) noexcept override;
 
@@ -43,18 +46,16 @@ class GRAYCORE_LINK cLogSinkConsole : public cLogSink, public cRefBase {
 /// <summary>
 /// Just put the log messages in an array of strings in memory.
 /// </summary>
-class GRAYCORE_LINK cLogSinkTextArray : public cLogSink, public cRefBase {
- public:
-    cArrayString<LOGCHAR_t> m_aMsgs;
-    const ITERATE_t m_iMax;  /// Store max this many messages.
+struct GRAYCORE_LINK cLogSinkTextArray : public cLogSink, public cRefBase {
+    cArrayString<LOGCHAR_t> _aMsgs;
+    const ITERATE_t _nMaxMsgs = SHRT_MAX;  /// Store max this many messages.
 
- public:
-    cLogSinkTextArray(ITERATE_t iMax = SHRT_MAX) noexcept : m_iMax(iMax) {}
+    cLogSinkTextArray(ITERATE_t nMaxMsgs = SHRT_MAX) noexcept : _nMaxMsgs(nMaxMsgs) {}
  
     HRESULT WriteLine(const LOGCHAR_t* pszMsg) {
         if (StrT::IsNullOrEmpty(pszMsg)) return 0;
-        if (m_aMsgs.GetSize() >= m_iMax) return 0;
-        m_aMsgs.Add(pszMsg);
+        if (_aMsgs.GetSize() >= _nMaxMsgs) return 0;
+        _aMsgs.Add(pszMsg);
         return 1;
     }
     IUNKNOWN_DISAMBIG(cRefBase)

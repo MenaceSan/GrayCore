@@ -28,8 +28,8 @@ class GRAYCORE_LINK cExceptionSystem : public cException {
 #endif
 
  protected:
-    SYSCODE_t m_nSystemErrorCode;  /// _WIN32 STATUS_ACCESS_VIOLATION uNTStatus code or iSignal POSIX signal
-    void* m_pAddress;              /// source address in the code.
+    SYSCODE_t _nSystemErrorCode;  /// _WIN32 STATUS_ACCESS_VIOLATION uNTStatus code or iSignal POSIX signal
+    void* _pAddress = nullptr;              /// source address in the code.
 
  public:
 #ifdef _WIN32

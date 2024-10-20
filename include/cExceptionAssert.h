@@ -15,8 +15,8 @@ namespace Gray {
 /// </summary>
 class GRAYCORE_LINK cExceptionAssert : public cException {
  protected:
-    const LOGCHAR_t* const m_pExp;
-    const cDebugSourceLine m_Src;  // DEBUGSOURCELINE __FILE__ __LINE__
+    const LOGCHAR_t* const _pExp;
+    const cDebugSourceLine _Src;  // DEBUGSOURCELINE __FILE__ __LINE__
  public:
     cExceptionAssert(const LOGCHAR_t* pExp, LOGLVL_t eSeverity, const cDebugSourceLine& src);
     ~cExceptionAssert() THROW_DEF override;

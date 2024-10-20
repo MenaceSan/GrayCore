@@ -19,22 +19,22 @@ MIME_t GRAYCALL cMime::FindMimeTypeForExt(const RESCHAR_t* pszExt, MIME_t eMimeT
     //! @note we could check for text files vs binary files ?
 
     for (COUNT_t i = 0; i < _countof(k_Type); i++) {
-        if (StrT::CmpI(pszExt, k_Type[i].m_pExt)) return CastN(MIME_t, i);
-        if (StrT::CmpI(pszExt, k_Type[i].m_pExt2)) return CastN(MIME_t, i);
+        if (StrT::CmpI(pszExt, k_Type[i]._pExt1)) return CastN(MIME_t, i);
+        if (StrT::CmpI(pszExt, k_Type[i]._pExt2)) return CastN(MIME_t, i);
     }
     return eMimeTypeDefault;
 }
 
 const RESCHAR_t* GRAYCALL cMime::GetMimeTypeName(MIME_t eMimeType) {  // static
     if (IS_INDEX_BAD(eMimeType, static_cast<int>(MIME_t::_QTY))) eMimeType = MIME_t::_TEXT;
-    return k_Type[static_cast<int>(eMimeType)].m_pszName;
+    return k_Type[static_cast<int>(eMimeType)]._pszName;
 }
 
 MIME_t GRAYCALL cMime::FindMimeTypeName(const RESCHAR_t* pszName) {  // static
     //! NOT exactly the same as Str_TableFindHead() ?
     if (pszName == nullptr) return MIME_t::_UNKNOWN;
     for (COUNT_t i = 0; i < _countof(k_Type); i++) {
-        const char* pszNamePrefix = k_Type[i].m_pszName;
+        const char* pszNamePrefix = k_Type[i]._pszName;
         if (StrT::StartsWithI(pszName, pszNamePrefix)) return CastN(MIME_t, i);
     }
     return MIME_t::_UNKNOWN;

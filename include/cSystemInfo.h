@@ -46,23 +46,25 @@ namespace Gray {
 /// lower level than cSystemHelper. does not use cString.
 /// </summary>
 class GRAYCORE_LINK cSystemInfo final : public cSingleton<cSystemInfo> {
-    SINGLETON_IMPL(cSystemInfo);
-
  public:
+    DECLARE_cSingleton(cSystemInfo);
+
 #ifdef _WIN32
-    ::SYSTEM_INFO m_SystemInfo;   /// Cached info.  _MSC_VER <= 1200
-    ::OSVERSIONINFOEXW m_OsInfo;  /// always use *W version and call RtlGetVersion() to overcome M$ nerf. OSVERSIONINFOEXW
+    ::SYSTEM_INFO _SystemInfo;   /// Cached info.  _MSC_VER <= 1200
+    BYTE _Padding1[64];          // Can SYSTEM_INFO change size ?
+    ::OSVERSIONINFOEXW _OsInfo;  /// always use *W version and call RtlGetVersion() to overcome M$ nerf. OSVERSIONINFOEXW
+    BYTE _Padding2[64];          // Can OSVERSIONINFOEXW change size ?
 #elif defined(__linux__)
-    struct utsname m_utsname;  /// output from uname() on __linux__.
+    struct ::utsname _UtsName;  /// output from uname() on __linux__.
  protected:
-    UINT m_nOSVer;               /// Major << 8 | minor
-    UINT m_nNumberOfProcessors;  /// should we worry about SMP issues ?
-    size_t m_nPageSize;          /// cMem::k_PageSizeMin
+    UINT _nOSVer = 0;               /// Major << 8 | minor
+    UINT _nNumberOfProcessors = 0;  /// should we worry about SMP issues ?
+    size_t _nPageSize = 0;          /// cMem::k_PageSizeMin
 #else
 #error NOOS
 #endif
 #ifndef USE_64BIT
-    bool m_bOS64Bit;  /// Is OS 64 bit? maybe a 32 bit app under a 64 bit OS. _WIN32 WOW ?
+    bool _isOS64Bit = false;  /// Is OS 64 bit? maybe a 32 bit app under a 64 bit OS. _WIN32 WOW ?
 #endif
 
  protected:
@@ -83,6 +85,11 @@ class GRAYCORE_LINK cSystemInfo final : public cSingleton<cSystemInfo> {
     bool isVer3_17_plus() const noexcept;
 #endif
 
+    /// <summary>
+    /// Where does the OS keep its files? like: CSIDL_SYSTEM.
+    /// </summary>
+    /// <param name="ret"></param>
+    /// <returns>string length</returns>
     static StrLen_t GRAYCALL GetSystemDir(cSpanX<FILECHAR_t> ret);
     static HRESULT GRAYCALL GetSystemName(cSpanX<FILECHAR_t> ret);
 

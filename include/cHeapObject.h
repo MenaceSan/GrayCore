@@ -9,6 +9,7 @@
 
 #include "IUnknown.h"  // DECLARE_INTERFACE
 #include "cHeap.h"
+#include "cTypeInfo.h"
 
 #if defined(_DEBUG) || defined(_DEBUG_FAST)
 #define USE_HEAPSIG
@@ -23,6 +24,7 @@ namespace Gray {
 DECLARE_INTERFACE(IHeapObject) {
     IGNORE_WARN_INTERFACE(IHeapObject);
     virtual const void* get_HeapPtr() const noexcept = 0;  /// Get the top level (outermost, free-able) class pointer. I can delete get_HeapPtr().
+    virtual const TYPEINFO_t& get_TypeInfo() const noexcept = 0;
 };
 
 //*************************************************
@@ -42,24 +44,28 @@ class GRAYCORE_LINK cHeapObject : public IHeapObject {
 #endif
 
     // Add this to each IHeapObject rooted object to get the base heap allocation pointer. Avoids problems with multiple inheritance and heap allocated objects.
-#define CHEAPOBJECT_IMPL \
-    const void* get_HeapPtr() const noexcept override { return this; }
+#define DECLARE_cHeapObject(T)                                 \
+    const void* get_HeapPtr() const noexcept override {        \
+        return this;                                           \
+    }                                                          \
+    const TYPEINFO_t& get_TypeInfo() const noexcept override { \
+        return typeid(T);                                      \
+    }
 
  public:
     /// <summary>
     /// @note virtuals do not work in destructor ! get_HeapPtr? so isValidCheck() not possible here !
     /// </summary>
     virtual ~cHeapObject() {
-        ASSERT(_Sig.isValidSignature());
+#ifdef USE_HEAPSIG
+        DEBUG_CHECK(_Sig.isValidSignature());
+#endif
     }
 
     /// <summary>
-    /// Get the top level "new" pointer in the case of multiple inheritance. CHEAPOBJECT_IMPL;
+    /// Get the top level "new" pointer in the case of multiple inheritance. DECLARE_cHeapObject(T);
     /// </summary>
-    /// <returns></returns>
-    const void* get_HeapPtr() const noexcept override {
-        return this;
-    }
+    DECLARE_cHeapObject(cHeapObject);
 
     /// Is index a valid offset inside this object?
     bool IsValidInsideN(INT_PTR index) const noexcept {
@@ -94,23 +100,27 @@ class GRAYCORE_LINK cHeapObject : public IHeapObject {
     }
     virtual bool isValidCheck() const noexcept {
         //! @note can't call this in a destructor since get_HeapPtr() is virtual.
-        if (!cMem::IsValidApp(this))  // NOT be based on nullptr ? sanity check.
-            return false;
+        if (!cMem::IsValidApp(this)) return false;  // NOT be based on nullptr ? sanity check.
 #ifdef USE_HEAPSIG
         if (!_Sig.isValidSignature()) return false;
 #endif
-        if (!cHeapAlign::IsValidHeap(get_HeapPtr()))  // might be aligned.
-            return false;
+        if (!cHeapAlign::IsValidHeap(get_HeapPtr())) return false;  // might be aligned.
+
         return true;
     }
 };
 
 // Create an ^2 aligned pool for allocation of these objects. C++17 doesnt need this? It has std::align_val_t that is honored by new ?
 // Used with __DECL_ALIGN(_SIZEOF_PTR) like XM_ALIGNED_DATA,
-#define DECLARE_HEAP_ALIGNED_ALLOC(_CLASS)                                                                         \
- public:                                                                                                           \
-    static void* operator new(size_t sizeOfClass) { return cHeapAlign::AllocPtr(sizeOfClass, __alignof(_CLASS)); } \
-    static void operator delete(void* pData) { cHeapAlign::FreePtr(pData); }
+#define DECLARE_HEAP_ALIGNED_ALLOC(_CLASS)                           \
+ public:                                                             \
+    DECLARE_cHeapObject(_CLASS);                                     \
+    static void* operator new(size_t sizeOfClass) {                  \
+        return cHeapAlign::AllocPtr(sizeOfClass, __alignof(_CLASS)); \
+    }                                                                \
+    static void operator delete(void* pData) {                       \
+        cHeapAlign::FreePtr(pData);                                  \
+    }
 }  // namespace Gray
 
 #endif  // _INC_cHeapObject_H

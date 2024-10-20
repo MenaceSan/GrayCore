@@ -8,6 +8,7 @@
 #include "cLogMgr.h"
 #include "cPair.h"
 #include "cFilePath.h"
+#include "cFileText.h"
 
 #ifndef UNDER_CE
 #include <errno.h>
@@ -30,12 +31,12 @@ const HResult::Facility_t HResult::k_Facility[] = {
     Facility_t((FACILITY_TYPE)FACILITY_SECURITY, _GT("Security")),
     Facility_t((FACILITY_TYPE)FACILITY_COMPLUS, _GT("ComPlus")),
 
-    Facility_t((FACILITY_TYPE)FACILITY_NULL, nullptr),
+    Facility_t((FACILITY_TYPE)FACILITY_NULL, nullptr),  // end
 };
 
 int HResultCode::FindCode(HRESULT hRes) const {
-    for (int i = 0; this[i].m_pszMsg != nullptr; i++) {
-        if (this[i].m_code == hRes) return i;
+    for (int i = 0; this[i]._pszMsg != nullptr; i++) {
+        if (this[i]._nCode == hRes) return i;
     }
     return k_ITERATE_BAD;
 }
@@ -117,7 +118,7 @@ HRESULT GRAYCALL HResult::GetLast() noexcept {  // static
     //! Get the last system error recorded for this thread.
     //! match against HRESULT_WIN32_C(x)
 #ifdef _WIN32
-    DWORD dwLastError = ::GetLastError();  // Maybe FACILITY_WIN32 or already HRESULT
+    const DWORD dwLastError = ::GetLastError();  // Maybe FACILITY_WIN32 or already HRESULT
     return FromWin32(dwLastError);
 #elif defined(__linux__)
     // errno = EAGAIN, etc.
@@ -185,9 +186,9 @@ HRESULT GRAYCALL HResult::AddCodesText(const char* pszText) {  // static
 }
 
 HRESULT GRAYCALL HResult::AddCodesFile(const FILECHAR_t* pszFilePath) {  // static
-    //! add a block of codes (and text) from a text file.
-    //! Lines of comma separated text.
-    UNREFERENCED_PARAMETER(pszFilePath);
+    cFileTextReader fileReader;
+    const HRESULT hRes = fileReader.OpenX(pszFilePath, OF_READ | OF_TEXT | OF_CACHE_SEQ);
+    if (FAILED(hRes)) return hRes;
 
     // TODO
 
@@ -204,9 +205,9 @@ const char* GRAYCALL HResult::GetTextBase(HRESULT hRes) {  // static
     HResult::AddCodesDefault();  // Since we load this anyhow make sure we are using HResult::AddCodesDefault();
 #endif
 
-    for (int i = 0; i < s_HResult_CodeSets.GetSize(); i++) {
-        const int j = s_HResult_CodeSets[i]->FindCode(hRes);
-        if (j >= 0) return s_HResult_CodeSets[i][j].m_pszMsg;
+    for (const HResultCode* pCodes : s_HResult_CodeSets) {
+        const int j = pCodes->FindCode(hRes);
+        if (j >= 0) return pCodes[j]._pszMsg;
     }
 
 #if defined(__linux__)
@@ -249,16 +250,18 @@ bool GRAYCALL HResult::GetTextSys(HRESULT hRes, StrBuilder<GChar_t>& sb, const v
     }
 #endif
 
-    // Not a system known code?
+    // Not a system known code? check k_Facility.
     const FACILITY_TYPE eFacility = GetFacility(hRes);
     const DWORD dwErrorCode = GetCode(hRes);  // LSTATUS/error_status_t
-    const GChar_t* pszErrorFacility;
-    if (k_Facility->FindARetB(eFacility, &pszErrorFacility)) {
-        // show the (known) facility name and sub code (in facility).
-        sb.AddStr(pszErrorFacility);
-        sb.AddStr(_GT(" Code "));
-        sb.AddInt(dwErrorCode);
-        return true;
+
+    for (const HResult::Facility_t& fac : k_Facility) {
+        if (fac.get_A() == eFacility) {
+            // show the (known) facility name and sub code (in facility).
+            sb.AddStr(fac.get_B());
+            sb.AddStr(_GT(" Code "));
+            sb.AddInt(dwErrorCode);
+            return true;
+        }
     }
 
     return false;  // no system code description avail.

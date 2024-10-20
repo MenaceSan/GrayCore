@@ -15,12 +15,12 @@ namespace Gray {
 /// <summary>
 /// Implement a DLL/SO that may be dynamically loadable. Loaded into a process to support some plugin functionality.
 /// Exposes RegisterModule()
-/// similar to cSingletonStatic. BUT NOT really unique in process space. unique in its DLL space only.
+/// similar to cSingleton . BUT NOT really unique in process space. unique in its DLL space only.
 /// This object is ALWAYS statically allocated inside the loaded DLL.
 /// </summary>
 class GRAYCORE_LINK cOSModDynImpl : public cOSModImpl {
     typedef cOSModImpl SUPER_t;
-    cIUnkPtr<> m_pContainer;  /// Keep a reference to my container (cXObjModule) to prevent unload until Proper unload of the DLL.
+    cIUnkPtr<> _pContainer;  /// Keep a reference to my container (cXObjModule or other) to prevent unload until proper unload of the DLL.
 
  public:
     cOSModDynImpl(const char* pszModuleName) noexcept : cOSModImpl(pszModuleName) {}
@@ -31,7 +31,7 @@ class GRAYCORE_LINK cOSModDynImpl : public cOSModImpl {
     /// Make sure EXE and DLL/SO/Module agree on structures and packing.
     /// </summary>
     /// <param name="pContainer">my container (e.g cXObjModule) if we care.</param>
-    /// <returns></returns>
+    /// <returns>S_FALSE = already called this.</returns>
     virtual HRESULT RegisterModule(::IUnknown* pContainer);
 
     /// <summary>
@@ -64,9 +64,9 @@ class GRAYCORE_LINK cOSModDynImpl : public cOSModImpl {
 /// Ideally we dont load it unless we already know it exposes RegisterModuleF_t.!
 /// </summary>
 struct GRAYCORE_LINK cOSModDyn {
-    typedef HRESULT(GRAYCALL* RegisterModuleF_t)(UINT32 nLibVer, cOSModDynImpl** ppModImpl, ::IUnknown* pContainer);    // like FUNCPTR_t
+    typedef HRESULT(GRAYCALL* RegisterModuleF_t)(UINT32 nLibVer, OUT cOSModDynImpl** ppModImpl, ::IUnknown* pContainer);    // like FUNCPTR_t
     cOSModule _h;                     /// the handle to the open DLL/SO/Module can be kept here. for _pImpl
-    cOSModDynImpl* _pImpl = nullptr;  /// the (in process) DLL implementation. returned via RegisterModule()
+    cOSModDynImpl* _pImpl = nullptr;  /// the (in process) DLL implementation. returned via RegisterModule() / RegisterModuleF_t
 
     HRESULT LoadAndRegisterModule(const FILECHAR_t* pszPath, ::IUnknown* pContainer, UINT32 nLibVer = _INC_cOSModDyn_H);
 

@@ -3,6 +3,7 @@
 // clang-format off
 #include "pch.h"
 // clang-format on
+#include "StrBuilder.h"
 #include "cAppImpl.h"
 #include "cAtom.h"
 #include "cLogMgr.h"
@@ -17,55 +18,52 @@ namespace Gray {
 bool cAppCommand::IsMatch(const ATOMCHAR_t* p) const {
     // assume switch prefix (-/) has already been stripped.
     ASSERT_NN(p);
-    if (m_pszAbbrev != nullptr) {                        // optional
-        if (StrT::Cmp(m_pszAbbrev, p) == COMPARE_Equal)  // case Sensitive.
-            return true;
+    if (_pszAbbrev != nullptr) {                                     // optional
+        if (StrT::Cmp(_pszAbbrev, p) == COMPARE_Equal) return true;  // case Sensitive.
     }
-    return StrT::CmpI(m_pszName, p) == COMPARE_Equal;
+    return StrT::CmpI(_pszName, p) == COMPARE_Equal;
 }
 
-cString cAppCommand::get_HelpText() const {
-    cString sHelp;
-    if (m_pszAbbrev != nullptr) {
-        sHelp += _GT("-");
-        sHelp += StrArg<GChar_t>(m_pszAbbrev);
-        sHelp += _GT(", ");
+void cAppCommand::GetHelpText(StrBuilder<GChar_t>& sb) const {
+    if (_pszAbbrev != nullptr) {
+        sb.AddSpan(TOSPAN_LIT(_GT("-")));
+        sb.WriteString(_pszAbbrev);
+        sb.AddSpan(TOSPAN_LIT(_GT(", ")));
     }
 
-    sHelp += _GT("-");
-    sHelp += StrArg<GChar_t>(m_pszName);
-    sHelp += _GT(", ");
+    sb.AddSpan(TOSPAN_LIT(_GT("-")));
+    sb.WriteString(_pszName);
+    sb.AddSpan(TOSPAN_LIT(_GT(", ")));
 
-    if (m_pszHelpArgs != nullptr) {
-        sHelp += StrArg<GChar_t>(m_pszHelpArgs);
-        sHelp += _GT(", ");
+    if (_pszHelpArgs != nullptr) {
+        sb.WriteString(_pszHelpArgs);
+        sb.AddSpan(TOSPAN_LIT(_GT(", ")));
     }
 
-    sHelp += StrArg<GChar_t>(m_pszHelp);
-    return sHelp;
+    sb.WriteString(_pszHelp);
 }
 
 cAppCommand* cAppCommands::RegisterCommand(cAppCommand& cmd) {
-    for (auto pCmd2 : m_a) {  // collision?
-        if (StrT::CmpI(pCmd2->m_pszName, cmd.m_pszName) == COMPARE_Equal) {
-            // collide, replace ?
-            DEBUG_WARN(("RegisterCommand name collision '%s'", LOGSTR(cmd.m_pszName)));
+    for (auto* pCmd2 : _a) {  // collision?
+        if (StrT::CmpI(pCmd2->_pszName, cmd._pszName) == COMPARE_Equal) {
+            // collide => replace ?
+            DEBUG_WARN(("RegisterCommand name collision '%s'", LOGSTR(cmd._pszName)));
             return pCmd2;
         }
-        // allow collide m_pszAbbrev ?
+        // allow collide _pszAbbrev ?
     }
-    m_a.Add(&cmd);
+    _a.Add(&cmd);
     return &cmd;
 }
 
 cAppCommand* cAppCommands::GetCommand(CommandId_t id) const {  // override;
     // IAppCommands
-    return m_a.GetAt(id);
+    return _a.GetAt(id);
 }
 
 cAppCommand* cAppCommands::FindCommand(const ATOMCHAR_t* pszCmd) const {  // override;
     // IAppCommands
-    for (auto pCmd2 : m_a) {  // find handler for this type of command.
+    for (auto* pCmd2 : _a) {  // find handler for this type of command.
         if (pCmd2->IsMatch(pszCmd)) return pCmd2;
     }
     return nullptr;
@@ -117,15 +115,8 @@ struct cAppCmdWaitForDebug final : public cAppCommand {
     }
 };
 
-cAppImpl::cAppImpl(const FILECHAR_t* pszAppName)
-    : cSingletonStatic<cAppImpl>(this),
-      cDependRegister(typeid(cAppImpl)),
-      m_nMainThreadId(cThreadId::k_NULL),
-      m_pszAppName(pszAppName),  // from module file name ?
-      m_nMinTickTime(10),  // mSec for OnTickApp
-      m_State(cAppState::I()),
-      m_bCloseSignal(false) {
-    DEBUG_CHECK(!StrT::IsWhitespace(m_pszAppName));
+cAppImpl::cAppImpl(const FILECHAR_t* pszAppName) : cSingletonType<cAppImpl>(this), cDependRegister(typeid(cAppImpl)), _pszAppName(pszAppName) {
+    DEBUG_CHECK(!StrT::IsWhitespace(_pszAppName));
     static cAppCmdHelp k_Help;  /// basic help command.
     _Commands.RegisterCommand(k_Help);
     static cAppCmdWaitForDebug k_WaitForDebug;  /// wait for the debugger to attach.
@@ -133,28 +124,29 @@ cAppImpl::cAppImpl(const FILECHAR_t* pszAppName)
 }
 
 cString cAppImpl::get_HelpText() const {  // override
-    cString sHelp;
-    for (auto pCmd : _Commands.m_a) {
-        if (pCmd->m_pszHelp != nullptr) {  // not hidden
-            sHelp += pCmd->get_HelpText();
-            sHelp += _GT(STR_NL);
+    StrBuilder<GChar_t> sb;
+    for (const auto* pCmd : _Commands._a) {
+        if (pCmd->_pszHelp != nullptr) {  // not hidden
+            pCmd->GetHelpText(sb);
+            sb.AddSpan(TOSPAN_LIT(_GT(STR_NL)));
         }
     }
-    return sHelp;
+    return sb.get_SpanStr();
 }
 
 void cAppImpl::SetArgValid(ITERATE_t i) {
-    m_ArgsValid.SetBit((BIT_ENUM_t)i);
+    _ArgsValid.SetBit((BIT_ENUM_t)i);
 }
 
 cStringF cAppImpl::get_InvalidArgs() const {
-    //! Get a list of args NOT marked as valid. Not IN m_ValidArgs
+    //! Get a list of args NOT marked as valid. Not IN _ArgsValid
     cStringF sInvalidArgs;
-    const ITERATE_t iArgsQty = m_State.m_Args.get_ArgsQty();
+    const auto& rState = cAppState::I();
+    const ITERATE_t iArgsQty = rState._Args.get_ArgsQty();
     for (ITERATE_t i = 1; i < iArgsQty; i++) {
-        if (m_ArgsValid.IsSet((BIT_ENUM_t)i)) continue;
+        if (_ArgsValid.IsSet(CastN(BIT_ENUM_t, i))) continue;
         if (!sInvalidArgs.IsEmpty()) sInvalidArgs += _FN(",");
-        sInvalidArgs += m_State.GetArgEnum(i);
+        sInvalidArgs += rState.GetArgEnum(i);
     }
     return sInvalidArgs;
 }
@@ -166,55 +158,52 @@ BOOL cAppImpl::InitInstance() {  // virtual
     //! @return true = OK. false = exit now.
 
     // AttachToCurrentThread();
-    m_nMainThreadId = cThreadId::GetCurrentId();
+    _nMainThreadId = cThreadId::GetCurrentId();
     return true;  // Run() will be called.
 }
 
 bool cAppImpl::OnTickApp() {  // virtual
     //! Override this to make the application do something. Main loop of main thread.
     //! @return false = exit
-    return !m_bCloseSignal && m_State.isAppStateRun();  // just keep going. not APPSTATE_t::_Exit
+    const auto& rState = cAppState::I();
+    return !_isCloseSignaled && rState.isAppStateRun();  // just keep going. not APPSTATE_t::_Exit
 }
 
 void cAppImpl::ReleaseModuleChildren(::HMODULE hMod) {  // override;
-    for (ITERATE_t i = _Commands.m_a.GetSize(); i;) {
-        const cAppCommand* p = _Commands.m_a.GetAtCheck(--i);
+    for (ITERATE_t i = _Commands._a.GetSize(); i;) {
+        const cAppCommand* p = _Commands._a.GetAtCheck(--i);
         if (p == nullptr || p->get_HModule() != hMod) continue;
-        _Commands.m_a.RemoveAt(i);
+        _Commands._a.RemoveAt(i);
     }
 }
 
 HRESULT cAppImpl::RunCommand(const cAppArgs& args, int i) {
     const FILECHAR_t* pszCmd = args.GetArgEnum(i);
-    while (cAppArgs::IsArgSwitch(pszCmd[0])) {
-        pszCmd++;
-    }
+    while (cAppArgs::IsArgSwitch(pszCmd[0])) pszCmd++;
 
     cAppCommand* pCmd = FindCommand(pszCmd);
     if (pCmd == nullptr) return E_INVALIDARG;  // no idea how to process this switch. might be an error. just skip this.
 
-    return pCmd->DoCommand(args, i+1);
+    return pCmd->DoCommand(args, i + 1);
 }
 
 HRESULT cAppImpl::RunCommandN(ITERATE_t i) {
-    if (m_ArgsValid.IsSet(CastN(BIT_ENUM_t, i)))  // already processed this argument? (out of order ?). don't process it again. no double help.
-        return i;
+    if (_ArgsValid.IsSet(CastN(BIT_ENUM_t, i))) return i;  // already processed this argument? (out of order ?). don't process it again. no double help.
 
-    const FILECHAR_t* pszCmd = m_State.m_Args.GetArgEnum(i);
-    while (cAppArgs::IsArgSwitch(pszCmd[0])) {
-        pszCmd++;
-    }
+    const auto& rState = cAppState::I();
+    const FILECHAR_t* pszCmd = rState._Args.GetArgEnum(i);
+    while (cAppArgs::IsArgSwitch(pszCmd[0])) pszCmd++;
 
     cAppCommand* pCmd = FindCommand(pszCmd);
     if (pCmd == nullptr) return i;  // no idea how to process this switch. might be an error. just skip this.
 
-    m_ArgsValid.SetBit(i);  // found it anyhow. block this from re-entrancy.
+    _ArgsValid.SetBit(i);  // found it anyhow. block this from re-entrancy.
 
-    HRESULT hRes = pCmd->DoCommand(m_State.m_Args, i + 1);
+    const HRESULT hRes = pCmd->DoCommand(rState._Args, i + 1);
     if (FAILED(hRes)) {
         // Stop processing. report error.
         if (hRes == HRESULT_WIN32_C(ERROR_INVALID_STATE)) {
-            m_ArgsValid.ClearBit(i);  // try again later ?
+            _ArgsValid.ClearBit(i);  // try again later ?
             return i;
         }
         LOGF((LOG_ATTR_INIT, LOGLVL_t::_CRIT, "Command line '%s' failed '%s'", LOGSTR(pszCmd), LOGERR(hRes)));
@@ -224,16 +213,17 @@ HRESULT cAppImpl::RunCommandN(ITERATE_t i) {
     // How many extra args did we consume?
     const int j = i + hRes;
     for (; i < j; i++) {
-        m_ArgsValid.SetBit(i + 1);  // consumed
+        _ArgsValid.SetBit(i + 1);  // consumed
     }
 
     return j;
 }
 
 HRESULT cAppImpl::RunCommands() {
-    // NOTE: some commands may be run ahead of this. They effect init. checks m_ArgsValid
+    // NOTE: some commands may be run ahead of this. They effect init. checks _ArgsValid
+    const auto& rState = cAppState::I();
+    const ITERATE_t nQty = rState._Args.get_ArgsQty();
     ITERATE_t i = 1;
-    const ITERATE_t nQty = m_State.m_Args.get_ArgsQty();
     for (; i < nQty; i++) {
         const HRESULT hRes = RunCommandN(i);
         if (FAILED(hRes)) return hRes;  // Stop processing. report error.
@@ -243,37 +233,37 @@ HRESULT cAppImpl::RunCommands() {
 }
 
 APP_EXITCODE_t cAppImpl::Run() {  // virtual
-    HRESULT hRes = RunCommands();
+    const HRESULT hRes = RunCommands();
     if (FAILED(hRes)) {
-        m_bCloseSignal = true;
+        _isCloseSignaled = true;
         return APP_EXITCODE_t::_FAIL;
     }
 
     // Log a message if there were command line arguments that did nothing. unknown.
     cStringF sInvalidArgs = get_InvalidArgs();
     if (!sInvalidArgs.IsEmpty()) {
-        // Check m_ArgsValid. Show Error for any junk/unused arguments.
+        // Check _ArgsValid. Show Error for any junk/unused arguments.
         cLogMgr::I().addEventF(LOG_ATTR_INIT, LOGLVL_t::_CRIT, "Unknown command line args. '%s'", LOGSTR(sInvalidArgs));
         // return APP_EXITCODE_t::_FAIL;
     }
 
     for (;;) {
         const TIMESYS_t tStart = cTimeSys::GetTimeNow();  // start of tick.
-        if (!OnTickApp())                           // ProcessMessages()
-            break;
-        if (m_nMinTickTime > 0) {
+        if (!OnTickApp()) break;                          // ProcessMessages()
+
+        if (_nMinTickTime > 0) {
             // if actual Tick time is less than minimum then wait.
             const TIMESYS_t tNow = cTimeSys::GetTimeNow();
             TIMESYSD_t iDiff = tNow - tStart;
-            if (iDiff < m_nMinTickTime) {
+            if (iDiff < _nMinTickTime) {
                 // Sleep to keep from taking over the CPU when i have nothing to do.
                 if (iDiff < 0) iDiff = 0;
-                cThreadId::SleepCurrent(m_nMinTickTime - iDiff);
+                cThreadId::SleepCurrent(_nMinTickTime - iDiff);
             }
         }
     }
 
-    m_bCloseSignal = true;
+    _isCloseSignaled = true;
     return APP_EXITCODE_t::_OK;
 }
 
@@ -282,9 +272,11 @@ APP_EXITCODE_t cAppImpl::ExitInstance() {  // virtual
 }
 
 APP_EXITCODE_t cAppImpl::Main(::HMODULE hInstance) {
+    auto& rState = cAppState::I();
+
 #ifdef _DEBUG
-    DEBUG_MSG(("cAppImpl::Main '%s'", LOGSTR(m_pszAppName)));
-    const APPSTATE_t eAppState = cAppState::I().get_AppState();
+    DEBUG_MSG(("cAppImpl::Main '%s'", LOGSTR(_pszAppName)));
+    const APPSTATE_t eAppState = rState.get_AppState();
     ASSERT(eAppState == APPSTATE_t::_Run);  // Assume cAppStateMain
 #endif
 
@@ -295,7 +287,7 @@ APP_EXITCODE_t cAppImpl::Main(::HMODULE hInstance) {
     }
 #endif
 
-    m_State.put_AppState(APPSTATE_t::_RunInit);
+    rState.put_AppState(APPSTATE_t::_RunInit);
 
 #ifdef _MFC_VER
     // Probably calls AfxWinInit() and assume will call InitInstance()
@@ -304,15 +296,15 @@ APP_EXITCODE_t cAppImpl::Main(::HMODULE hInstance) {
     APP_EXITCODE_t iRet = APP_EXITCODE_t::_FAIL;
     if (InitInstance()) {
         // Run loop until told to stop.
-        m_State.put_AppState(APPSTATE_t::_Run);
+        rState.put_AppState(APPSTATE_t::_Run);
         iRet = (APP_EXITCODE_t)Run();
-        m_State.put_AppState(APPSTATE_t::_RunExit);
+        rState.put_AppState(APPSTATE_t::_RunExit);
         const APP_EXITCODE_t iRetExit = ExitInstance();
-        if (iRet == APP_EXITCODE_t::_OK) iRet = iRetExit;  // allow exit to make this fail.            
+        if (iRet == APP_EXITCODE_t::_OK) iRet = iRetExit;  // allow exit to make this fail.
     }
 
     // Exit.
-    m_State.put_AppState(APPSTATE_t::_Exit);
+    rState.put_AppState(APPSTATE_t::_Exit);
     return iRet;
 #endif
 }

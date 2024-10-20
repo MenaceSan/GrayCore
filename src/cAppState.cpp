@@ -22,23 +22,27 @@
 #endif
 
 namespace Gray {
+cSingletonStatic_IMPL(cAppExitCatcher);
+cSingleton_IMPL(cAppState);
+
 #ifdef _WIN32
 inline void CloseHandleType_Sid(::PSID h) noexcept {
     ::FreeSid(h);
 }
 #endif
 
-::HMODULE cAppState::sm_hInstance = HMODULE_NULL;  /// the current applications HINSTANCE handle/base address. _IMAGE_DOS_HEADER
+::HMODULE cAppState::sm_hInstance = HMODULE_NULL;
+bool cAppState::sm_IsInAppExit = false;
 
 cAppArgs::cAppArgs(const FILECHAR_t* p) {
     InitArgsLine(p, " ");
 }
 
 ITERATE_t cAppArgs::get_ArgsQty() const noexcept {
-    return m_aArgs.GetSize();
+    return _aArgs.GetSize();
 }
 cStringF cAppArgs::GetArgEnum(ITERATE_t i) const {  // command line arg.
-    return m_aArgs.GetAtCheck(i);
+    return _aArgs.GetAtCheck(i);
 }
 ITERATE_t cAppArgs::AppendArg(const FILECHAR_t* pszCmd, bool sepEquals) {
     if (sepEquals) {
@@ -46,30 +50,30 @@ ITERATE_t cAppArgs::AppendArg(const FILECHAR_t* pszCmd, bool sepEquals) {
         // args can come from parse for = sign else get from the next arg in sequence (that isn't starting with IsSwitch(-/))
         const FILECHAR_t* pszArgEq = StrT::FindChar<FILECHAR_t>(pszCmd, '=');
         if (pszArgEq != nullptr) {
-            cStringF sCmd2(ToSpan(pszCmd, cValSpan::Diff(pszArgEq, pszCmd)));
-            m_aArgs.Add(sCmd2);
+            const cStringF sCmd2(ToSpan(pszCmd, cValSpan::Diff(pszArgEq, pszCmd)));
+            _aArgs.Add(sCmd2);
             pszCmd = pszArgEq + 1;
         }
     }
-    return m_aArgs.Add(pszCmd);
+    return _aArgs.Add(pszCmd);
 }
 
 void cAppArgs::InitArgsArray(ITERATE_t argc, APP_ARGS_t ppszArgs, bool sepEquals) {
-    //! set pre-parsed arguments m_aArgs like normal 'c' main()
-    //! m_aArgs[0] = app name.
-    m_aArgs.RemoveAll();
+    //! set pre-parsed arguments _aArgs like normal 'c' main()
+    //! _aArgs[0] = app name.
+    _aArgs.RemoveAll();
     for (ITERATE_t i = 0; i < argc; i++) {
         AppendArg(ppszArgs[i], sepEquals);
     }
 }
 
 void cAppArgs::InitArgsPosix(int argc, APP_ARGS_t ppszArgs) {
-    // build raw m_sArguments from APP_ARGS_t ppszArgs.
+    // build raw _sArguments from APP_ARGS_t ppszArgs.
     ASSERT_NN(ppszArgs);
-    m_sArguments.Empty();
+    _sArguments.Empty();
     for (int i = 1; i < argc; i++) {
-        if (i > 1) m_sArguments += _FN(" ");
-        m_sArguments += ppszArgs[i];
+        if (i > 1) _sArguments += _FN(" ");
+        _sArguments += ppszArgs[i];
     }
     InitArgsArray(argc, ppszArgs, true);
 }
@@ -77,7 +81,7 @@ void cAppArgs::InitArgsPosix(int argc, APP_ARGS_t ppszArgs) {
 void cAppArgs::InitArgsLine(const FILECHAR_t* pszCommandArgs, const FILECHAR_t* pszSep) {
     if (pszCommandArgs == nullptr) return;
 
-    m_sArguments = pszCommandArgs;  // Raw unparsed.
+    _sArguments = pszCommandArgs;  // Raw unparsed.
 
     const FILECHAR_t* apszArgs[k_ARG_ARRAY_MAX];  // arbitrary max.
     FILECHAR_t szNull[1];
@@ -87,7 +91,7 @@ void cAppArgs::InitArgsLine(const FILECHAR_t* pszCommandArgs, const FILECHAR_t* 
         pszSep = _FN("\t ");
         iSkip = 1;
         szNull[0] = '\0';
-        apszArgs[0] = szNull;  // app name to be filled in later. from cAppState, cAppImpl etc.
+        apszArgs[0] = szNull;  // app name to be filled in later. from cAppState::InitArgsWin, cAppImpl etc.
     }
 
     // skip first argument as it is typically the name of my app EXE.
@@ -100,7 +104,7 @@ void cAppArgs::InitArgsLine(const FILECHAR_t* pszCommandArgs, const FILECHAR_t* 
 ITERATE_t cAppArgs::FindCommandArg(const FILECHAR_t* pszCommandArgFind, bool bRegex, bool bIgnoreCase) const {
     const ITERATE_t iArgsQty = get_ArgsQty();
     for (ITERATE_t i = 0; i < iArgsQty; i++) {
-        cStringF sArg = GetArgEnum(i);
+        const cStringF sArg = GetArgEnum(i);
         const FILECHAR_t* pszArg = sArg;
         while (IsArgSwitch(*pszArg)) pszArg++;
 
@@ -108,21 +112,18 @@ ITERATE_t cAppArgs::FindCommandArg(const FILECHAR_t* pszCommandArgFind, bool bRe
         if (bRegex) {
             if (StrT::MatchRegEx(pszArg, pszCommandArgFind, bIgnoreCase) > 0) return i;
         } else if (bIgnoreCase) {
-            if (StrT::CmpI(pszArg, pszCommandArgFind) == 0) return i;  // match all.
+            if (StrT::CmpI(pszArg, pszCommandArgFind) == COMPARE_Equal) return i;  // match all.
         } else {
-            if (StrT::Cmp(pszArg, pszCommandArgFind) == 0) return i;  // match all.
+            if (StrT::Cmp(pszArg, pszCommandArgFind) == COMPARE_Equal) return i;  // match all.
         }
     }
     return k_ITERATE_BAD;
 }
 
 ITERATE_t cAppArgs::FindCommandArgs(bool bIgnoreCase, const FILECHAR_t* pszCommandArgFind, ...) const {
-    //! Find one of several possible command line args maybe ignoring case. nullptr terminated list.
-    //! @return index of the first one.
-
     const ITERATE_t iArgsQty = get_ArgsQty();
     for (ITERATE_t i = 0; i < iArgsQty; i++) {
-        cStringF sArg = GetArgEnum(i);
+        const cStringF sArg = GetArgEnum(i);
         const FILECHAR_t* pszArg = sArg.get_CPtr();
         while (cAppArgs::IsArgSwitch(pszArg[0])) pszArg++;
 
@@ -133,11 +134,9 @@ ITERATE_t cAppArgs::FindCommandArgs(bool bIgnoreCase, const FILECHAR_t* pszComma
         for (;;) {
             if (StrT::IsNullOrEmpty(pszFind)) break;
             if (bIgnoreCase) {
-                if (StrT::CmpI(pszArg, pszFind) == 0)  // match all.
-                    return i;
+                if (StrT::CmpI(pszArg, pszFind) == COMPARE_Equal) return i;  // match all.
             } else {
-                if (StrT::Cmp(pszArg, pszFind) == 0)  // match all.
-                    return i;
+                if (StrT::Cmp(pszArg, pszFind) == COMPARE_Equal) return i;  // match all.
             }
             pszFind = va_arg(vargs, const FILECHAR_t*);  // next
         }
@@ -150,9 +149,9 @@ ITERATE_t cAppArgs::FindCommandArgs(bool bIgnoreCase, const FILECHAR_t* pszComma
 
 const FILECHAR_t k_EnvironName[] = _FN(GRAY_NAMES) _FN("Core");
 
-cAppState::cAppState() : cSingleton<cAppState>(this, typeid(cAppState)), _Sig(_INC_GrayCore_H, sizeof(cAppState)), m_eAppState(APPSTATE_t::_Init), m_bTempDirWritable(false) {
+cAppState::cAppState() : cSingleton<cAppState>(this), _Sig(_INC_GrayCore_H, sizeof(cAppState)) {
     //! Cache the OS params for this process/app ?
-    ASSERT(m_ModuleLoading.isInit());
+    ASSERT(_ModuleLoading.isInit());
 
     if (GetEnvironStr(k_EnvironName).IsEmpty()) {
         // MUST not already exist in this process space! Checks for DLL hell.
@@ -193,8 +192,8 @@ cFilePath GRAYCALL cAppState::get_AppFilePath() {  // static
 #ifdef _WIN32
     FILECHAR_t szPath[cFilePath::k_MaxLen];
     const DWORD dwRetLen = _FNF(::GetModuleFileName)(HMODULE_NULL, szPath, STRMAX(szPath));
-    if (dwRetLen <= 0) return cStrConst::k_Empty.GetT<FILECHAR_t>();
-    return cStringF(ToSpan(szPath, dwRetLen));
+    if (dwRetLen <= 0) return {};
+    return cFilePath(ToSpan(szPath, dwRetLen));
 #elif defined(__linux__)
     return I().GetArgEnum(0);  // The name of the current app.
 #else
@@ -243,22 +242,25 @@ APPSTATE_t GRAYCALL cAppState::GetAppState() noexcept {  // static
     if (SUPER_t::isSingleCreated()) {
         return I().get_AppState();
     } else {
-        return APPSTATE_t::_Exit;
+        return APPSTATE_t::_Exit;  // isInCExit()
     }
 }
 
+void cAppState::put_AppState(APPSTATE_t eAppState) noexcept {
+    _eAppState = eAppState;
+    sm_IsInAppExit |= eAppState == APPSTATE_t::_Exit;   // isInCExit()
+}
+
 GRAYCORE_LINK bool GRAYCALL cAppState::isInCInit() noexcept {  // static
-    //! Indicate the process/app is currently initializing static variables. not yet reached main()
-    //! Also set for a thread loading a DLL/SO.
     const cAppState& app = I();
-    const APPSTATE_t eAppState = app.m_eAppState;
+    const APPSTATE_t eAppState = app._eAppState;
     if (eAppState == APPSTATE_t::_Init) return true;
-    if (app.m_ModuleLoading.GetData() != nullptr) return true;  // this thread is in init loading a DLL/SO.
+    if (app._ModuleLoading.GetData() != nullptr) return true;  // this thread is in init loading a DLL/SO.
     return false;
 }
 
 GRAYCORE_LINK bool GRAYCALL cAppState::isAppRunning() noexcept {  // static
-    const APPSTATE_t eAppState = I().m_eAppState;
+    const APPSTATE_t eAppState = I()._eAppState;
     return eAppState == APPSTATE_t::_RunInit || eAppState == APPSTATE_t::_Run || eAppState == APPSTATE_t::_RunExit;
 }
 
@@ -266,19 +268,8 @@ GRAYCORE_LINK bool GRAYCALL cAppState::isAppRunning() noexcept {  // static
 /// the process/app is in APPSTATE_t::_Run? Use cAppStateMain inmain;
 /// </summary>
 GRAYCORE_LINK bool GRAYCALL cAppState::isAppStateRun() noexcept {  // static
-    APPSTATE_t eAppState = I().m_eAppState;
+    const APPSTATE_t eAppState = I()._eAppState;
     return eAppState == APPSTATE_t::_Run;
-}
-
-/// <summary>
-/// is the app exiting right now ? outside main() . e.g. Static exit.
-/// extern "C" int _C_Termination_Done; // undocumented C runtime variable - set to true during auto-finalization
-/// _C_Termination_Done symbol is not good in DLL.
-/// </summary>
-GRAYCORE_LINK bool GRAYCALL cAppState::isInCExit() noexcept {  // static
-    if (!SUPER_t::isSingleCreated()) return true;
-    APPSTATE_t eAppState = I().m_eAppState;
-    return eAppState == APPSTATE_t::_Exit;
 }
 
 StrLen_t GRAYCALL cAppState::GetEnvironStr(const FILECHAR_t* pszVarName, cSpanX<FILECHAR_t> ret) noexcept {  // static
@@ -287,9 +278,7 @@ StrLen_t GRAYCALL cAppState::GetEnvironStr(const FILECHAR_t* pszVarName, cSpanX<
     return 0;  // no such thing.
 #elif defined(_WIN32)
     const DWORD nReturnSize = _FNF(::GetEnvironmentVariable)(pszVarName, ret.get_PtrWork(), ret.get_MaxLen());
-    if (nReturnSize == 0) {
-        return 0;  // HResult::GetLast() to get real error.
-    }
+    if (nReturnSize == 0) return 0;  // HResult::GetLast() to get real error.
     return nReturnSize;
 #elif defined(__linux__)
     return StrT::Copy(ret, ::getenv(pszVarName));
@@ -314,10 +303,6 @@ cStringF cAppState::ExpandEnvironmentString() {
 #endif
 
 ITERATE_t GRAYCALL cAppState::GetEnvironArray(cArrayString<FILECHAR_t>& a) {  // static
-    //! Get the full block of environ strings for this process.
-    //! similar to cVarMap or cIniSectionData
-    //! Each entry is in the form "Var1=Value1"
-    //! http://linux.die.net/man/7/environ
     ITERATE_t i = 0;
 
 #ifdef UNDER_CE
@@ -346,8 +331,6 @@ ITERATE_t GRAYCALL cAppState::GetEnvironArray(cArrayString<FILECHAR_t>& a) {  //
 }
 
 bool cAppState::SetEnvironStr(const FILECHAR_t* pszVarName, const FILECHAR_t* pszVal) noexcept {  // static
-    //! ASSUME pszVarName is valid format.
-    //! @arg pszVal = nullptr = (or "") to erase it.
 #ifdef UNDER_CE
     ASSERT(0);
     return false;  // no such thing
@@ -366,11 +349,6 @@ bool cAppState::SetEnvironStr(const FILECHAR_t* pszVarName, const FILECHAR_t* ps
 }
 
 StrLen_t GRAYCALL cAppState::GetCurrentDir(cSpanX<FILECHAR_t> ret) {  // static
-    //! return the current directory for the process.
-    //! In __linux__ and _WIN32 the Process has a current/default directory. UNDER_CE does not.
-    //! @note Windows services start with current directory = windows system directory.
-    //! @return Length of the directory string.
-
     if (ret.isEmpty()) return 0;
 #if defined(UNDER_CE)
     ret.get_PtrWork()[0] = '\0';
@@ -388,7 +366,6 @@ StrLen_t GRAYCALL cAppState::GetCurrentDir(cSpanX<FILECHAR_t> ret) {  // static
 }
 
 cFilePath GRAYCALL cAppState::get_CurrentDir() {  // static
-    //! @return the current directory path for the process.
     FILECHAR_t szPath[cFilePath::k_MaxLen];
     const StrLen_t iLen = GetCurrentDir(TOSPAN(szPath));
     if (iLen <= 0) return "";
@@ -410,14 +387,12 @@ bool GRAYCALL cAppState::SetCurrentDir(const FILECHAR_t* pszDir) {  // static
 }
 
 cFilePath cAppState::get_TempDir() {
-    //! Get a directory i can place temporary files. ends with '\'
+    //! Get a directory i can write temporary files. ends with '\'
     //! This is decided based on the OS,User,App,
     //! Similar to _FNF(::SHGetFolderPath)(CSIDL_INTERNET_CACHE)
     //! Assume cInstallDir::IsInstallDirRestricted()
 
-    if (!m_sTempDir.IsEmpty()) {
-        return m_sTempDir;  // cached value.
-    }
+    if (!_sTempDir.IsEmpty()) return _sTempDir;  // cached value.
 
     FILECHAR_t szTmp[cFilePath::k_MaxLen];
 #ifdef UNDER_CE
@@ -447,8 +422,8 @@ cFilePath cAppState::get_TempDir() {
     cFilePath::AddFileDirSep(TOSPAN(szTmp), iLen);
 #endif
 
-    m_sTempDir = szTmp;  // cache this.
-    return m_sTempDir;
+    _sTempDir = szTmp;  // cache this.
+    return _sTempDir;
 }
 
 cFilePath cAppState::GetTempFile(const FILECHAR_t* pszFileTitle) {
@@ -464,12 +439,12 @@ cFilePath cAppState::GetTempFile(const FILECHAR_t* pszFileTitle) {
         constexpr StrLen_t lenHex = cMemSpan::GetHexDigestSize(sizeof(noise));
         FILECHAR_t* pTmp = sTmp.GetBuffer(lenHex + 1);
         pTmp[0] = 'T';
-        TOSPAN(noise).GetHexDigest(pTmp + 1);
+        TOSPAN(noise).GetHexDigest(cMemSpan(pTmp + 1, lenHex + 1));
         sTmp.ReleaseBuffer(lenHex + 1);
         pszFileTitle = sTmp;
     }
 
-    // TODO: m_bTempDirWritable = Test if we can really write to get_TempDir?
+    // TODO: _isTempDirWritable = Test if we can really write to get_TempDir?
     return cFilePath::CombineFilePathX(get_TempDir(), pszFileTitle);
 }
 
@@ -491,33 +466,28 @@ void cAppState::InitArgsWin(const FILECHAR_t* pszCommandArgs) {
     if (pszCommandArgs == nullptr) {
         // Get command line from the OS ?
 #ifdef _WIN32
-        m_Args.InitArgsLine(_FNF(::GetCommandLine)());
+        _Args.InitArgsLine(_FNF(::GetCommandLine)());
 #elif defined(__linux__)
         // We should not get here. InitArgsPosix
         // Use "/proc/self/cmdline"?
         return;
 #endif
     } else {
-        m_Args.InitArgsLine(pszCommandArgs);
+        _Args.InitArgsLine(pszCommandArgs);
     }
 
-    m_Args.m_aArgs.SetAt(0, sAppPath);
+    _Args._aArgs.SetAt(0, sAppPath);
 }
 
 void cAppState::InitArgsPosix(int argc, APP_ARGS_t argv) {
     //! POSIX main() style init.
     //! If called by ServiceMain this might be redundant.
-    m_Args.InitArgsPosix(argc, argv);
+    _Args.InitArgsPosix(argc, argv);
 }
 
 void GRAYCALL cAppState::AbortApp(APP_EXITCODE_t uExitCode) {  // static
-    //! Abort the application from some place other than the main() or WinMain() fall through.
-    //! Call this instead of abort() or exit() to preclude naughty libraries from exiting badly.
-    //! @arg uExitCode = APP_EXITCODE_t like return from "int main()"
-    //!		APP_EXITCODE_t::_ABORT = 3 = like abort()
     if (SUPER_t::isSingleCreated()) {
-        // cAppExitCatcher should not block this now.
-        I().put_AppState(APPSTATE_t::_Exit);
+        I().put_AppState(APPSTATE_t::_Exit);  // cAppExitCatcher should not block this now.
     }
 #ifdef _WIN32
     ::ExitProcess((UINT)uExitCode);
@@ -583,18 +553,11 @@ void GRAYCALL cAppState::SetExecutionState(bool bActiveCPU, bool bActiveGUI) {  
 #endif
 }
 
-cString GRAYCALL cAppState::GetCurrentUserName(bool bForce) {  // static
-    //! Get the current system user name for the process/app.
-    //! @note Can't call this "GetUserName" because _WIN32 has a "#define" on that.
-    //! @arg bForce = Read the UserName from the OS, It may change by impersonation.
-    //! (i have this users accounts privs)
-
+cString GRAYCALL cAppState::GetCurrentUserName(bool bForceRead) {  // static
     cAppState* pThis = cAppState::get_Single();
     ASSERT_NN(pThis);
-    if (!bForce && !pThis->m_sUserName.IsEmpty())  // cached name,.
-    {
-        return pThis->m_sUserName;
-    }
+    if (!bForceRead && !pThis->_sUserName.IsEmpty())  // cached name,.
+        return pThis->_sUserName;
 
 #if defined(_WIN32)
     GChar_t szUserName[256];
@@ -607,14 +570,14 @@ cString GRAYCALL cAppState::GetCurrentUserName(bool bForce) {  // static
     {
         return _GT("");
     }
-    pThis->m_sUserName = szUserName;
+    pThis->_sUserName = szUserName;
 #elif defined(__linux__)
     // getlogin() = the session/desktop user.
     // cuserid() in <stdio.h> for the current process user.
     // GetEnvironStr("LOGNAME"); similar to GetEnvironStr("uid")
-    pThis->m_sUserName = ::getlogin();
+    pThis->_sUserName = ::getlogin();
 #endif
-    return pThis->m_sUserName;
+    return pThis->_sUserName;
 }
 
 bool GRAYCALL cAppState::isCurrentUserAdmin() {  // static
@@ -637,7 +600,7 @@ bool GRAYCALL cAppState::isCurrentUserAdmin() {  // static
     if (!b) {
         return false;
     }
-    if (!::CheckTokenMembership(HANDLE_NULL, AdministratorsGroup, &b)) {
+    if (!::CheckTokenMembership(cOSHandle::kNULL, AdministratorsGroup, &b)) {
         b = false;
     }
     return b;
@@ -651,9 +614,9 @@ bool GRAYCALL cAppState::isCurrentUserAdmin() {  // static
 
 #if defined(_WIN32)
 StrLen_t GRAYCALL cAppState::GetFolderPath(int csidl, FILECHAR_t* pszPath) {  // static
-    // hRes = _FNF(::SHGetFolderPathAndSubDir)( HANDLE_NULL, CSIDL_LOCAL_APPDATA|CSIDL_FLAG_CREATE, NULL, 0, pszSubFolder, szPath);
+    // hRes = _FNF(::SHGetFolderPathAndSubDir)( WINHANDLE_NULL, CSIDL_LOCAL_APPDATA|CSIDL_FLAG_CREATE, NULL, 0, pszSubFolder, szPath);
     pszPath[0] = '\0';
-    const HRESULT hRes = _FNF(::SHGetFolderPath)(WINHANDLE_NULL, csidl, HANDLE_NULL, SHGFP_TYPE_CURRENT, pszPath);  // ASSUME _MAX_PATH, cFilePath::k_MaxLen
+    const HRESULT hRes = _FNF(::SHGetFolderPath)(WINHANDLE_NULL, csidl, cOSHandle::kNULL, SHGFP_TYPE_CURRENT, pszPath);  // ASSUME _MAX_PATH, cFilePath::k_MaxLen
     if (FAILED(hRes)) return 0;
     return StrT::Len(pszPath);
 }
@@ -709,17 +672,13 @@ bool cAppState::GetStatTimes(::FILETIME* pKernelTime, ::FILETIME* pUserTime) con
 //*******************************************************************
 
 #if USE_CRT
-cAppExitCatcher::cAppExitCatcher() : cSingletonStatic<cAppExitCatcher>(this) {
+cAppExitCatcher::cAppExitCatcher() : SUPER_t(this) {
     ::atexit(ExitCatchProc);
     // Register for SIGABRT ?? for abort() ?
 }
 
 void cAppExitCatcher::ExitCatch() {  // virtual
-    //! Someone (library) called "exit()" that should not have? Does not catch "abort()".
-    //! The SQL driver calls "exit()" sometimes. bastards.
-    //! but this is also called legit at the application termination.
-
-    APPSTATE_t eAppState = cAppState::GetAppState();
+    const APPSTATE_t eAppState = cAppState::GetAppState();
     if (eAppState >= APPSTATE_t::_Exit) {
         // Legit exit.
         DEBUG_MSG(("cAppExitCatcher::ExitCatch() OK", eAppState));
@@ -741,19 +700,19 @@ void __cdecl cAppExitCatcher::ExitCatchProc() {  // static
 //*******************************************************************
 
 #if defined(_WIN32)
-cAppStateMain::cAppStateMain(HINSTANCE hInstance, const FILECHAR_t* pszCommandArgs) : m_AppState(cAppState::I()) {
+cAppStateMain::cAppStateMain(HINSTANCE hInstance, const FILECHAR_t* pszCommandArgs) : _AppState(cAppState::I()) {
     //! WinMain()
     //! Current state should be APPSTATE_t::_Init
-    ASSERT(m_AppState.m_eAppState == APPSTATE_t::_Init);  //! Only call this once.
-    m_AppState.put_AppState(APPSTATE_t::_Run);
-    m_AppState.InitArgsWin(pszCommandArgs);
+    ASSERT(_AppState._eAppState == APPSTATE_t::_Init);  //! Only call this once.
+    _AppState.put_AppState(APPSTATE_t::_Run);
+    _AppState.InitArgsWin(pszCommandArgs);
     ASSERT(hInstance == cAppState::get_HModule());
     cAppState::sm_hInstance = hInstance;
 }
 #endif
-cAppStateMain::cAppStateMain(int argc, APP_ARGS_t argv) : m_AppState(cAppState::I()) {
-    ASSERT(m_AppState.m_eAppState == APPSTATE_t::_Init);  //! Only call this once.
-    m_AppState.put_AppState(APPSTATE_t::_Run);
-    m_AppState.InitArgsPosix(argc, argv);
+cAppStateMain::cAppStateMain(int argc, APP_ARGS_t argv) : _AppState(cAppState::I()) {
+    ASSERT(_AppState._eAppState == APPSTATE_t::_Init);  //! Only call this once.
+    _AppState.put_AppState(APPSTATE_t::_Run);
+    _AppState.InitArgsPosix(argc, argv);
 }
 }  // namespace Gray

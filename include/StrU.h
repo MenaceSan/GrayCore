@@ -14,10 +14,10 @@
 
 namespace Gray {
 /// <summary>
-/// A bunch of functions for UNICODE strings and UTF8. Might be named StrW ? Opposite of StrA.
+/// A bunch of functions for UNICODE strings and UTF8 conversions. Might be named StrW ? Opposite of StrA.
 /// </summary>
 struct GRAYCORE_LINK StrU { // : public StrT // static
-    static const StrLen_t k_UTF8_SIZE_MAX = 4;  /// Max of 4 UTF8 BYTEs to encode any UNICODE char.
+    static const StrLen_t k_UTF8_SIZE_MAX = 4;  /// Max of 4 UTF8 BYTEs to encode any UNICODE char. might be 6?
 
     /// <summary>
     /// http://www.unicode.org/faq/utf_bom.html
@@ -26,7 +26,7 @@ struct GRAYCORE_LINK StrU { // : public StrT // static
     /// ef bf be
     /// ef bf bf
     /// </summary>
-    enum UTFLead_TYPE {
+    enum UTFLead_TYPE : WORD {
         UTFLead_0 = 0xefU,  // Might be the first part of a UTF8 sequence or a special M$ signal.
         UTFLead_1 = 0xbbU,
         UTFLead_2 = 0xbfU,
@@ -46,7 +46,7 @@ struct GRAYCORE_LINK StrU { // : public StrT // static
     /// </summary>
     /// <param name="wideChar">int (not wchar_t) just to allow any overflow to be detected.</param>
     /// <returns>The length in bytes (UTF8) i need to store the single char, 0=FAILED, k_UTF8_SIZE_MAX</returns>
-    static StrLen_t GRAYCALL UTF8SizeChar(int wideChar) noexcept;
+    static StrLen_t GRAYCALL UTF8SizeChar(UINT32 wideChar) noexcept;
 
     static StrLen_t inline UTF8StartBits(StrLen_t nSizeChar) noexcept {
         return nSizeChar <= 1 ? 0 : (7 - nSizeChar);
@@ -56,7 +56,7 @@ struct GRAYCORE_LINK StrU { // : public StrT // static
     /// How many more bytes in this UTF8 sequence? estimated from the first byte of a UTF sequence. decode UTF8StartBits()
     /// </summary>
     /// <param name="firstByte">the first char/byte of the UTF8 sequence.</param>
-    /// <returns>(le) StrU::k_UTF8_SIZE_MAX </returns>
+    /// <returns>(-le-) StrU::k_UTF8_SIZE_MAX </returns>
     static StrLen_t GRAYCALL UTF8SizeChar1(char firstChar) noexcept;
 
     /// <summary>
@@ -96,7 +96,7 @@ struct GRAYCORE_LINK StrU { // : public StrT // static
     /// </summary>
     /// <param name="pInp"></param>
     /// <param name="iSizeInpBytes"></param>
-    /// <returns>Number of wide chars. not including null.</returns>
+    /// <returns>Number of wide chars. not including '\0'.</returns>
     static StrLen_t GRAYCALL UTF8toUNICODELen(const cSpan<char>& src) noexcept;
 
     /// <summary>
@@ -105,7 +105,7 @@ struct GRAYCORE_LINK StrU { // : public StrT // static
     /// </summary>
     /// <param name="pInp"></param>
     /// <param name="iSizeInpChars"></param>
-    /// <returns>Number of bytes. (not including null)</returns>
+    /// <returns>Number of bytes. (not including '\0')</returns>
     static StrLen_t GRAYCALL UNICODEtoUTF8Size(const cSpan<wchar_t>& src) noexcept;
 
     /// <summary>
@@ -126,10 +126,8 @@ struct GRAYCORE_LINK StrU { // : public StrT // static
     /// similar to _WIN32 ::WideCharToMultiByte().
     /// @note This need not be a properly terminated string.
     /// </summary>
-    /// <param name="pOut"></param>
-    /// <param name="iSizeOutMaxBytes">max output size in bytes (MUST HAVE ROOM FOR '\0')</param>
-    /// <param name="pInp"></param>
-    /// <param name="iSizeInpChars">limit UNICODE chars incoming. -1 = go to null.</param>
+    /// <param name="ret">max output size in bytes (MUST HAVE ROOM FOR '\0')</param>
+    /// <param name="src">limit UNICODE chars incoming.</param>
     /// <returns>Number of bytes. (not including null)</returns>
     static StrLen_t GRAYCALL UNICODEtoUTF8(cSpanX<char> ret, const cSpan<wchar_t>& src) noexcept;
 };

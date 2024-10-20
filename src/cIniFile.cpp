@@ -13,15 +13,16 @@
 namespace Gray {
 const IniChar_t cIniFile::k_SectionDefault[1] = "";  // static "" = default section name for tags not in a section.
 
-HRESULT cIniFile::ReadIniStream(cStreamInput& s, bool bStripComments) {
+HRESULT cIniFile::ReadIniStream(cStreamInput& s, bool isStripComments) {
     cRefPtr<cIniSectionEntry> pSection;
-    int iLine = 0;
+    cTextPos pos = cTextPos::k_Zero;
     for (;;) {
         IniChar_t szBuffer[cIniSection::k_LINE_LEN_MAX];
-        // read string strips new lines.
+        // read strips new line chars.
         const HRESULT hRes = s.ReadStringLine(TOSPAN(szBuffer));
         if (FAILED(hRes) || hRes == 0) return hRes;  // 0 = normal end.
-        iLine++;
+        pos.IncLine(hRes);
+
         // is [Section header]?
         if (cIniReader::IsSectionHeader(szBuffer)) {
             if (pSection != nullptr) pSection->AllocComplete();  // complete the previous section.
@@ -31,12 +32,12 @@ HRESULT cIniFile::ReadIniStream(cStreamInput& s, bool bStripComments) {
             if (pszBlockEnd == nullptr || pszBlockEnd[0] != ']') break;  // error. bad line format.
 
             *pszBlockEnd = '\0';
-            pSection = AddSection(szBuffer + 1, bStripComments, iLine);
+            pSection = AddSection(szBuffer + 1, isStripComments, pos);
         } else {
-            if (pSection == nullptr) pSection = AddSection(k_SectionDefault, bStripComments);  // add root/null section at the top.
+            if (pSection == nullptr) pSection = AddSection(k_SectionDefault, isStripComments);  // add root/null section at the top.
 
             IniChar_t* pszLine = szBuffer;
-            if (bStripComments) {
+            if (isStripComments) {
                 pszLine = StrT::GetNonWhitespace(pszLine);  // skip starting whitespace.
                 StrLen_t iLen = cIniReader::FindScriptLineEnd(pszLine);
                 pszLine[iLen] = '\0';
@@ -47,7 +48,7 @@ HRESULT cIniFile::ReadIniStream(cStreamInput& s, bool bStripComments) {
     return HRESULT_WIN32_C(ERROR_BAD_FORMAT);  // error. bad line format. terminate read.
 }
 
-HRESULT cIniFile::ReadIniFile(const FILECHAR_t* pszFilePath, bool bStripComments) {
+HRESULT cIniFile::ReadIniFile(const FILECHAR_t* pszFilePath, bool isStripComments) {
     CODEPROFILEFUNC();
     if (pszFilePath == nullptr) return E_POINTER;
 
@@ -55,7 +56,7 @@ HRESULT cIniFile::ReadIniFile(const FILECHAR_t* pszFilePath, bool bStripComments
     const HRESULT hRes = fileReader.OpenX(pszFilePath, OF_READ | OF_TEXT | OF_CACHE_SEQ);
     if (FAILED(hRes)) return hRes;
 
-    return ReadIniStream(fileReader, bStripComments);
+    return ReadIniStream(fileReader, isStripComments);
 }
 
 HRESULT cIniFile::WriteIniFile(const FILECHAR_t* pszFilePath) const {
@@ -65,7 +66,7 @@ HRESULT cIniFile::WriteIniFile(const FILECHAR_t* pszFilePath) const {
     cFile file;
     HRESULT hRes = file.OpenX(pszFilePath, OF_CREATE | OF_WRITE);  // OF_WRITE|OF_TEXT
     if (FAILED(hRes)) return hRes;
-    for (auto section : m_aSections) {
+    for (auto section : _aSections) {
         ASSERT(section.isValidPtr());
         hRes = section->WriteSection(file);
         if (FAILED(hRes)) return hRes;
@@ -87,7 +88,7 @@ cRefPtr<cIniSectionEntry> cIniFile::FindSection(const IniChar_t* pszSectionTitle
     const StrLen_t iLen = StrT::Len(pszSectionTitle);
     if (iLen >= k_LEN_MAX_CSYM) return nullptr;  // not a valid name ! // or truncate it?
 
-    for (const cIniSectionEntry* pSection : m_aSections) {
+    for (const cIniSectionEntry* pSection : _aSections) {
         ASSERT_NN(pSection);
         const IniChar_t* pszLine = pSection->get_SectionTitle();
         if (StrT::CmpIN(pszLine, pszSectionTitle, iLen)) continue;  // NO match ?
@@ -97,10 +98,10 @@ cRefPtr<cIniSectionEntry> cIniFile::FindSection(const IniChar_t* pszSectionTitle
     return nullptr;
 }
 
-cRefPtr<cIniSectionEntry> cIniFile::AddSection(const IniChar_t* pszSectionTitle, bool bStripComments, int iLine) {  // virtual
+cRefPtr<cIniSectionEntry> cIniFile::AddSection(const IniChar_t* pszSectionTitle, bool isStripComments, const cTextPos& pos) {  // virtual
     if (pszSectionTitle == nullptr) pszSectionTitle = k_SectionDefault;
-    cRefPtr<cIniSectionEntry> pSection = new cIniSectionEntry(pszSectionTitle, bStripComments, iLine);
-    m_aSections.Add(pSection);
+    cRefPtr<cIniSectionEntry> pSection = new cIniSectionEntry(pszSectionTitle, isStripComments, pos);
+    _aSections.Add(pSection);
     return pSection;
 }
 

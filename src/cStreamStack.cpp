@@ -7,16 +7,16 @@
 
 namespace Gray {
 HRESULT cStreamStackInp::ReadFill() {
-    //! Fill to a cStreamQueue / cQueueBytes / cQueueRW from an upstream input source. m_pInp
+    //! Fill to a cStreamQueue / cQueueBytes / cQueueRW from an upstream input source. _pInp
     //! called by ReadX()
     //! @return how much i got.
 
     cMemSpan spanWrite = GetSpanWrite(this->get_GrowSizeChunk());
-    if (spanWrite.isEmpty()) return 0;       // no room.
-    if (m_pInp == nullptr) return E_HANDLE;  // must supply input stream
+    if (spanWrite.isEmpty()) return 0;      // no room.
+    if (_pInp == nullptr) return E_HANDLE;  // must supply input stream
 
     // Read all i have room for.
-    const HRESULT hRes = m_pInp->ReadX(spanWrite);
+    const HRESULT hRes = _pInp->ReadX(spanWrite);
     if (FAILED(hRes)) return hRes;
 
     if (hRes == 0) return 0;  // return HRESULT_WIN32_C(ERROR_HANDLE_EOF);
@@ -26,7 +26,7 @@ HRESULT cStreamStackInp::ReadFill() {
 }
 
 HRESULT cStreamStackInp::ReadFillAligned(size_t nSizeBlockAlign) {
-    //! Fill to a cStreamQueue / cQueueBytes / cQueueRW from an upstream input source. m_pInp
+    //! Fill to a cStreamQueue / cQueueBytes / cQueueRW from an upstream input source. _pInp
     //! @arg nSizeBlockAlign = I must get at least this amount. else get nothing.
     //! called by ReadX()
     //! @return how much i got.
@@ -41,10 +41,10 @@ HRESULT cStreamStackInp::ReadFillAligned(size_t nSizeBlockAlign) {
 
     nWriteQty -= nWriteQty % nSizeBlockAlign;  // Remove remainder.
 
-    if (m_pInp == nullptr) return E_HANDLE;
+    if (_pInp == nullptr) return E_HANDLE;
 
-    cStreamTransaction trans(m_pInp);
-    HRESULT hRes = m_pInp->ReadX(cMemSpan(spanWrite.GetTPtrW(), nWriteQty));
+    cStreamTransaction trans(_pInp);
+    HRESULT hRes = _pInp->ReadX(cMemSpan(spanWrite.GetTPtrW(), nWriteQty));
     if (FAILED(hRes)) {
         trans.SetTransactionFailed();
         return hRes;
@@ -60,13 +60,13 @@ HRESULT cStreamStackInp::ReadFillAligned(size_t nSizeBlockAlign) {
     // Only get data on block alignments.
     const ITERATE_t nSizeOver = iWriteActual % nSizeBlockAlign;
     if (nSizeOver > 0) {  // must back out the unaligned part.
-        hRes = m_pInp->SeekX(-nSizeOver, SEEK_t::_Cur);
+        hRes = _pInp->SeekX(-nSizeOver, SEEK_t::_Cur);
         if (FAILED(hRes)) {
             trans.SetTransactionFailed();  // roll back.
             return hRes;
         }
         iWriteActual -= nSizeOver;
-        DEBUG_CHECK(trans.m_lPosStart + iWriteActual == m_pInp->GetPosition());
+        DEBUG_CHECK(trans._nPosStart + iWriteActual == _pInp->GetPosition());
     }
 
     trans.SetTransactionComplete();
@@ -76,17 +76,17 @@ HRESULT cStreamStackInp::ReadFillAligned(size_t nSizeBlockAlign) {
 
 //***********************************
 
-HRESULT cStreamStackOut::WriteFlush() {  // virtual
-    //! Push the compressed data from m_buffer cQueueRW out to a down stream/file. m_pStreamOut
+HRESULT cStreamStackOut::WriteFlush() {
+    //! Push the compressed data from buffer cQueueRW out to a down stream/file. _pStreamOut
     //! called by WriteX()
 
     const ITERATE_t iReadQty = get_ReadQty();
     if (iReadQty <= 0) return 0;
-    if (m_pStreamOut == nullptr) return 0;  // just let the data sit in the buffer until read some other way ?
+    if (_pStreamOut == nullptr) return 0;  // just let the data sit in the buffer until read some other way ?
 
-    const HRESULT hRes = m_pStreamOut->WriteX(get_SpanRead());
+    const HRESULT hRes = _pStreamOut->WriteX(get_SpanRead());
     if (SUCCEEDED(hRes) && hRes > 0) {
-        // m_nStreamTotal += hRes;
+        // _nStreamTotal += hRes;
         AdvanceRead(hRes);
         ReadCommitCheck();
     }
@@ -94,15 +94,15 @@ HRESULT cStreamStackOut::WriteFlush() {  // virtual
 }
 
 HRESULT cStreamStackPackets::WriteX(const cMemSpan& m) {  // virtual
-    //! Take all pData written to me and store in m_buffer.
+    //! Take all pData written to me and store in buffer.
     //! @arg pData = nullptr = just test if it has enough room.
 
     const ITERATE_t nWriteQty = this->WriteSpanQ(cSpan<BYTE>(m), true);
-    if ((size_t)nWriteQty < m.get_SizeBytes()) {
+    if (CastN(size_t, nWriteQty) < m.get_SizeBytes()) {
         return HRESULT_WIN32_C(WSAEWOULDBLOCK);  // Just wait for the full packet.
     }
 
-    // Push all the data from the m_buffer to m_pStreamOut
+    // Push all the data from the buffer m to _pStreamOut
     for (;;) {
         const HRESULT hRes = this->WriteFlush();
         if (FAILED(hRes)) return hRes;

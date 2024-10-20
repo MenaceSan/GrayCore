@@ -17,7 +17,7 @@
 
 namespace Gray {
 /// <summary>
-/// quotes/brackets and parenthesis must be matched.
+/// define a type of block. quotes/brackets and parenthesis must be matched.
 /// string block types. see k_szBlockStart[] and k_szBlockEnd[]
 /// ignore single quotes (may be unmatched apostrophe), commas ?
 /// </summary>
@@ -25,20 +25,21 @@ enum class STR_BLOCK_t {
     _NONE = -1,
 
     // Symmetric
-    _QUOTE = 0,  /// "X" double quotes, Text
-    // DO %X% percent pairs. ala DOS batch scripts for environment variables.
+    _QUOTE = 0,  /// "X" double quotes, used to define a block of text that might have odd characters or spaces.
 
     // Asymmetric
-    _CURLY,   /// {X} curly braces. map. k_MapOpen
-    _SQUARE,  /// [X] brackets, array. k_ArrayOpen
-    _PAREN,   /// (X) parenthesis. expression.
+    _CURLY,   /// {X} curly braces. used for map of fields. k_MapOpen
+    _SQUARE,  /// [X] brackets, used for array. k_ArrayOpen
+    _PAREN,   /// (X) parenthesis. used for expressions.
 
+    // Weird substitution/replacement blocks?
+    // DO %X% percent pairs. ala DOS batch scripts for environment variables.
     // DO <?X?> XML/HTML type blocks ? use StrT::ReplaceX()
     _QTY,
 };
 
 /// <summary>
-/// string token/separator parsing options.
+/// string token/separator parsing options. bitmask.
 /// </summary>
 typedef UINT32 STRP_MASK_t;  /// bit mask of STRP_TYPE_
 enum STRP_TYPE_ : STRP_MASK_t {
@@ -63,7 +64,7 @@ enum STRP_TYPE_ : STRP_MASK_t {
 /// similar to char_traits &lt;TYPE&gt; for STL
 /// </summary>
 struct GRAYCORE_LINK StrT {                      // static /// namespace for string templates for UTF8 and UNICODE
-    static const StrLen_t k_LEN_Default = 8096;  /// default size for allocation of buffers.
+    static const StrLen_t k_LEN_Default = 8096;  /// default size for allocation of buffers. -lt- cStrConst::k_LEN_MAX
 
     static const char k_szBlockStart[static_cast<int>(STR_BLOCK_t::_QTY) + 1];  /// array of STR_BLOCK_t	"\"{[("
     static const char k_szBlockEnd[static_cast<int>(STR_BLOCK_t::_QTY) + 1];
@@ -79,6 +80,12 @@ struct GRAYCORE_LINK StrT {                      // static /// namespace for str
     static inline char GetBlockEnd(STR_BLOCK_t b) {
         ASSERT(IS_INDEX_GOOD_ARRAY(b, k_szBlockEnd));
         return k_szBlockEnd[static_cast<int>(b)];
+    }
+
+    template <typename TYPE>
+    static void SetIfSafe(TYPE* pszStr, TYPE ch = CastN(TYPE, '\0')) {
+        if (pszStr == nullptr) return;  // dont set if nullptr.
+        if (*pszStr != ch) *pszStr = ch;
     }
 
     /// <summary>
@@ -204,18 +211,29 @@ struct GRAYCORE_LINK StrT {                      // static /// namespace for str
     GRAYCORE_LINK static COMPARE_t GRAYCALL CmpHeadI(const TYPE* pszFindHead, const TYPE* pszTableElem);
     template <typename TYPE>
     GRAYCORE_LINK static bool GRAYCALL StartsWithI(const TYPE* pszStr1, const TYPE* pszPrefix);
+
+    /// <summary>
+    /// Compare the end of str with postFix. Similar to .NET EndsWith()
+    /// Look for a postFix ignoring case.
+    /// </summary>
     template <typename TYPE>
     GRAYCORE_LINK static bool GRAYCALL EndsWithI(const cSpan<TYPE>& str, const cSpan<TYPE>& postFix) noexcept;
 
+    /// <summary>
+    /// TESTING. a constexpr string hasher. See https://www.reddit.com/r/cpp/comments/jkw84k/strings_in_switch_statements_using_constexp/
+    /// </summary>
+    /// <typeparam name="TYPE"></typeparam>
+    /// <param name="str"></param>
+    /// <returns>HASHCODE32_t. Never return 0 except for empty string. k_HASHCODE_CLEAR.</returns>
     template <typename TYPE>
     constexpr static HASHCODE32_t Hash32c(const cSpan<TYPE>& str) noexcept {
-        // See https://www.reddit.com/r/cpp/comments/jkw84k/strings_in_switch_statements_using_constexp/
+        constexpr UINT64 p = 131;
+        constexpr HASHCODE32_t m = 4294967291;  // 2^32 - 5 = largest 32 bit prime
         HASHCODE32_t nHash = 0;
-        const UINT64 p = 131;
-        const HASHCODE32_t m = 4294967291;  // 2^32 - 5, largest 32 bit prime
         UINT64 current_multiplier = 1;
-        for (int i = 0; i < str.get_MaxLen(); ++i) {
-            nHash = (nHash + current_multiplier * str[i]) % m;
+        for (const TYPE chRaw : str) {
+            ASSERT(chRaw != '\0');  // never '\0'
+            nHash = (nHash + current_multiplier * StrChar::ToUpper(chRaw)) % m;
             current_multiplier = (current_multiplier * p) % m;
         }
         return nHash;
@@ -225,7 +243,7 @@ struct GRAYCORE_LINK StrT {                      // static /// namespace for str
     /// Get a HASHCODE32_t for the string. Ignore case.
     /// based on http://www.azillionmonkeys.com/qed/hash.html super fast hash.
     /// </summary>
-    /// <return>HASHCODE32_t. Never return 0 except for empty string. k_HASHCODE_CLEAR</return>
+    /// <return>HASHCODE32_t. Never return 0 except for empty string. k_HASHCODE_CLEAR.</return>
     template <typename TYPE>
     constexpr static HASHCODE32_t Hash32i(const cSpan<TYPE>& str) noexcept {
         HASHCODE32_t nHash = 0;
@@ -259,7 +277,7 @@ struct GRAYCORE_LINK StrT {                      // static /// namespace for str
     }
 
     /// <summary>
-    /// Get a HASHCODE32_t for the string. Ignore case.
+    /// Get a HASHCODE32_t for the string. Ignore case. NOT constexpr.
     /// Need not be truly unique. Just most likely unique. Low chance of collision in random set.
     /// Even distribution preferred. Simple CRC32 does not produce good distribution?
     /// Others: http://sites.google.com/site/murmurhash/, boost string_hash(), Knuth
@@ -401,10 +419,36 @@ struct GRAYCORE_LINK StrT {                      // static /// namespace for str
     /// <returns>-1 = no match. k_ITERATE_BAD</returns>
     template <typename TYPE>
     GRAYCORE_LINK static ITERATE_t GRAYCALL TableFind(const TYPE* pszFindThis, const cSpanUnk& t);
+
+    /// <summary>
+    /// Find a string in a table. Ignores case. unsorted table.
+    /// Use rules for StrT::CmpHeadI for compare. compare only up to the CSYM values.
+    /// </summary>
+    /// <typeparam name="TYPE"></typeparam>
+    /// <param name="pszFindHead"></param>
+    /// <param name="t"></param>
+    /// <returns>-1 = no match. k_ITERATE_BAD</returns>
     template <typename TYPE>
     GRAYCORE_LINK static ITERATE_t GRAYCALL TableFindHead(const TYPE* pszFindHead, const cSpanUnk& t);
+
+    /// <summary>
+    /// Find a string in a sorted table. Do a binary search (un-cased) on a sorted table.
+    /// </summary>
+    /// <typeparam name="TYPE"></typeparam>
+    /// <param name="pszFindThis"></param>
+    /// <param name="t"></param>
+    /// <returns>-1 = not found k_ITERATE_BAD</returns>
     template <typename TYPE>
     GRAYCORE_LINK static ITERATE_t GRAYCALL TableFindSorted(const TYPE* pszFindThis, const cSpanUnk& t);
+
+    /// <summary>
+    /// Find a string in a table. Do a binary search (un-cased) on a sorted table.
+    //! Use rules for StrT::CmpHeadI for compare. compare only up to the CSYM values.
+    /// </summary>
+    /// <typeparam name="TYPE"></typeparam>
+    /// <param name="pszFindHead"></param>
+    /// <param name="t"></param>
+    /// <returns>-1 = not found k_ITERATE_BAD</returns>
     template <typename TYPE>
     GRAYCORE_LINK static ITERATE_t GRAYCALL TableFindHeadSorted(const TYPE* pszFindHead, const cSpanUnk& t);
 
@@ -423,6 +467,15 @@ struct GRAYCORE_LINK StrT {                      // static /// namespace for str
     template <typename TYPE_CH, class TYPE_ELEM>
     static ITERATE_t SpanFindHeadSorted(const TYPE_CH* k, const cSpan<TYPE_ELEM>& t) {
         return TableFindHeadSorted(k, t.get_SpanUnk());
+    }
+
+    template <typename TYPE>
+    static bool HasRegEx(const TYPE* p) noexcept {
+        if (p == nullptr) return false;
+        for (StrLen_t i = 0; p[i] != '\0'; i++) {
+            if (StrChar::IsRegEx(p[i])) return true;
+        }
+        return false;
     }
 
     /// <summary>
@@ -456,11 +509,11 @@ struct GRAYCORE_LINK StrT {                      // static /// namespace for str
     GRAYCORE_LINK static StrLen_t GRAYCALL CopyLen(TYPE* pszDst, const TYPE* pSrc, StrLen_t iLenCharsMax) noexcept;  // iLenCharsMax includes room for '\0'
 
     template <typename TYPE>
-    inline static StrLen_t GRAYCALL Copy(cSpanX<TYPE> ret, const cSpan<TYPE>& src) noexcept {  // cSpanX includes room for '\0'
+    inline static StrLen_t GRAYCALL CopyStr(cSpanX<TYPE> ret, const cSpan<TYPE>& src) noexcept {  // cSpanX includes room for '\0', src DOES NOT!
         return CopyLen(ret.get_PtrWork(), src.get_PtrConst(), cValT::Min(ret.GetSize(), src.GetSize()));
     }
     template <typename TYPE>
-    inline static StrLen_t GRAYCALL Copy(cSpanX<TYPE> ret, const TYPE* pSrc) noexcept {  // cSpanX includes room for '\0'
+    inline static StrLen_t GRAYCALL CopyPtr(cSpanX<TYPE> ret, const TYPE* pSrc) noexcept {  // cSpanX includes room for '\0'
         return CopyLen(ret.get_PtrWork(), pSrc, ret.GetSize());
     }
 
@@ -501,8 +554,7 @@ struct GRAYCORE_LINK StrT {                      // static /// namespace for str
     /// Format a string with variadic arguments. Truncate at iLenOutMax if necessary.
     /// </summary>
     /// <typeparam name="TYPE"></typeparam>
-    /// <param name="pszOut"></param>
-    /// <param name="iLenOutMax">max output size in characters. (Not Bytes) Must allow space for '\0'</param>
+    /// <param name="ret">output size in characters. (Not Bytes) Must allow space for '\0'</param>
     /// <param name="pszFormat"></param>
     /// <param name=""></param>
     /// <returns>size in characters. -1 = too small. (NOT CONSISTENT WITH LINUX!)</returns>
@@ -537,6 +589,15 @@ struct GRAYCORE_LINK StrT {                      // static /// namespace for str
     /// <returns>the consumed length of pStrIn. NOT the length of ret.</returns>
     template <typename TYPE>
     GRAYCORE_LINK static StrLen_t GRAYCALL EscSeqDecode(cSpanX<TYPE> ret, const TYPE* pStrIn, StrLen_t iLenInMax = cStrConst::k_LEN_MAX);
+
+    /// <summary>
+    /// Remove the opening and closing quotes. Put enclosed string (decoded) into ret.
+    /// </summary>
+    /// <typeparam name="TYPE"></typeparam>
+    /// <param name="ret"></param>
+    /// <param name="pStrIn"></param>
+    /// <param name="iLenInMax"></param>
+    /// <returns>the consumed length of pStrIn. NOT the length of ret.</returns>
     template <typename TYPE>
     GRAYCORE_LINK static StrLen_t GRAYCALL EscSeqDecodeQ(cSpanX<TYPE> ret, const TYPE* pStrIn, StrLen_t iLenInMax = cStrConst::k_LEN_MAX);
 
@@ -547,8 +608,15 @@ struct GRAYCORE_LINK StrT {                      // static /// namespace for str
     template <typename TYPE>
     GRAYCORE_LINK static StrLen_t GRAYCALL EscSeqAddQ(cSpanX<TYPE> ret, const TYPE* pStrIn);
 
+    /// <summary>
+    /// Trim any whitespace off the end of the string.
+    /// </summary>
+    /// <typeparam name="TYPE"></typeparam>
+    /// <param name="ret"></param>
+    /// <returns>new length of the line. (without whitespace and comments)</returns>
     template <typename TYPE>
     GRAYCORE_LINK static StrLen_t GRAYCALL TrimWhitespaceEnd(cSpanX<TYPE> ret);
+
     template <typename TYPE>
     GRAYCORE_LINK static TYPE* GRAYCALL TrimWhitespace(TYPE* pStr, StrLen_t iLenMax = cStrConst::k_LEN_MAX);
 
@@ -642,7 +710,7 @@ struct GRAYCORE_LINK StrT {                      // static /// namespace for str
 
     /// <summary>
     /// Write bytes out to a string as comma separated base 10 number values.
-    /// Not efficient! Try to use SetHexDigest() instead?
+    /// Not efficient! Try to use ReadHexDigest() instead?
     /// opposite of cMemSpan::ReadFromCSV().
     /// @note using hex or Base64 would be better?
     /// </summary>

@@ -86,21 +86,21 @@ const cTimeZone* GRAYCALL cTimeZoneMgr::FindTimeZone(TZ_TYPE nTimeZone) {  // st
     //! Get a block describing the time zone. (by offset)
     //! geographic timezone does not include offset for DST.
     for (UINT i = 0; i < _countof(k_TimeZones) - 1; i++) {
-        if (nTimeZone == k_TimeZones[i].m_nTimeZoneOffset) return &k_TimeZones[i];
+        if (nTimeZone == k_TimeZones[i]._nTimeZoneOffset) return &k_TimeZones[i];
     }
     return nullptr;
 }
 const cTimeZone* GRAYCALL cTimeZoneMgr::FindTimeZone(const GChar_t* pszName) {  // static
     //! Get a block describing the time zone. (by name)
     for (UINT i = 0; i < _countof(k_TimeZones) - 1; i++) {
-        if (!StrT::CmpI(pszName, k_TimeZones[i].m_pszTimeZoneName)) return &k_TimeZones[i];
+        if (!StrT::CmpI(pszName, k_TimeZones[i]._pszTimeZoneName)) return &k_TimeZones[i];
     }
     return nullptr;
 }
 const cTimeZone* GRAYCALL cTimeZoneMgr::FindTimeZoneHead(const GChar_t* pszName) {  // static
     // like FindTimeZone() but doesn't have to be a full string.
     for (UINT i = 0; i < _countof(k_TimeZones); i++) {
-        if (!StrT::CmpHeadI(pszName, k_TimeZones[i].m_pszTimeZoneName)) return &k_TimeZones[i];
+        if (!StrT::CmpHeadI(pszName, k_TimeZones[i]._pszTimeZoneName)) return &k_TimeZones[i];
     }
     return nullptr;
 }

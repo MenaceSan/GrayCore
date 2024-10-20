@@ -21,7 +21,7 @@ namespace Gray {
 /// Block C++ usage of default copy constructor. base a class on this with protected type.
 /// Similar to use of C++11 delete -> IS_DELETE
 /// http://stackoverflow.com/questions/4172722/what-is-the-rule-of-three
-/// @note don't use inheritance for templates defined in DLL/SO that might have statics. Use the NonCopyable_IMPL instead.
+/// @note don't use inheritance for templates defined in DLL/SO that might have statics. Use the DECLARE_cNonCopyable instead.
 /// also avoid GRAYCORE_LINK for templates.
 /// movable may be implemented for parent.
 /// </summary>
@@ -33,12 +33,12 @@ class GRAYCORE_LINK cNonCopyable {
     /// Restrict the copy constructor and assignment operator
     /// __GNUC__ - defaulted and deleted functions only available with -std=c++11 or -std=gnu++11
     /// Make this a macro to avoid linkage inconsistency with use in DLL/SO and templates.
-#define NonCopyable_IMPL(_TYPE)           \
+#define DECLARE_cNonCopyable(_TYPE)       \
  private:                                 \
     inline _TYPE(const _TYPE&) IS_DELETE; \
     inline const _TYPE& operator=(const _TYPE&) IS_DELETE;
 
-    NonCopyable_IMPL(cNonCopyable)
+    DECLARE_cNonCopyable(cNonCopyable);
 };
 }  // namespace Gray
 #endif  // cNonCopyable

@@ -19,7 +19,7 @@ namespace Gray {
 /// Allows initial data keys without [SECTIONTYPE Sectionnamedata] (unlike windows)
 /// </summary>
 class GRAYCORE_LINK cIniFile : public IIniBaseEnumerator { // enumerate the sections.
-    cArrayRef<cIniSectionEntry> m_aSections;  /// store all my sections. not sorted, dupes allowed.
+    cArrayRef<cIniSectionEntry> _aSections;  /// store all my sections. not sorted, dupes allowed.
 
  public:
     static const IniChar_t k_SectionDefault[1];  /// "" = default section name for tags not in a section.
@@ -31,10 +31,10 @@ class GRAYCORE_LINK cIniFile : public IIniBaseEnumerator { // enumerate the sect
     /// Was this read ?
     /// </summary>
     ITERATE_t get_SectionsQty() const noexcept {
-        return m_aSections.GetSize();
+        return _aSections.GetSize();
     }
     cRefPtr<cIniSectionEntry> EnumSection(ITERATE_t i = 0) const {
-        return m_aSections.GetAtCheck(i);
+        return _aSections.GetAtCheck(i);
     }
 
     /// <summary>
@@ -42,21 +42,21 @@ class GRAYCORE_LINK cIniFile : public IIniBaseEnumerator { // enumerate the sect
     /// @todo USE cIniSectionData::ReadSectionData() ??
     /// </summary>
     /// <param name="s"></param>
-    /// <param name="bStripComments">strip comments and whitespace. else preserve them.</param>
+    /// <param name="isStripComments">strip comments and whitespace. else preserve them.</param>
     /// <returns></returns>
-    HRESULT ReadIniStream(cStreamInput& s, bool bStripComments = false);
+    HRESULT ReadIniStream(cStreamInput& s, bool isStripComments = false);
 
     /// <summary>
     /// Open and read a whole INI file.
     /// @note we need to read a file before writing it. (gets all the comments etc)
     /// </summary>
     /// <param name="pszFilePath"></param>
-    /// <param name="bStripComments">strip comments from the file.</param>
+    /// <param name="isStripComments">strip comments from the file.</param>
     /// <returns></returns>
-    HRESULT ReadIniFile(const FILECHAR_t* pszFilePath, bool bStripComments = false);
+    HRESULT ReadIniFile(const FILECHAR_t* pszFilePath, bool isStripComments = false);
 
     /// <summary>
-    /// Write the whole INI file. preserve line comments (if the didn't get stripped via bStripComments).
+    /// Write the whole INI file. preserve line comments (if the didn't get stripped via isStripComments).
     /// </summary>
     /// <param name="pszFilePath"></param>
     /// <returns></returns>
@@ -92,10 +92,10 @@ class GRAYCORE_LINK cIniFile : public IIniBaseEnumerator { // enumerate the sect
     /// Don't care if the key exists or not. dupes are OK.
     /// </summary>
     /// <param name="pszSectionTitle">"SECTIONTYPE SECTIONNAME" (ASSUME already stripped []). "" = k_SectionDefault;</param>
-    /// <param name="bStripComments"></param>
+    /// <param name="isStripComments"></param>
     /// <param name="iLine"></param>
     /// <returns></returns>
-    virtual cRefPtr<cIniSectionEntry> AddSection(const IniChar_t* pszSectionTitle = nullptr, bool bStripComments = false, int iLine = 0);
+    virtual cRefPtr<cIniSectionEntry> AddSection(const IniChar_t* pszSectionTitle = nullptr, bool isStripComments = false, const cTextPos& pos = cTextPos::k_Invalid);
 
     /// <summary>
     /// Set

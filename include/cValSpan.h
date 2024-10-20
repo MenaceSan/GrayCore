@@ -136,11 +136,11 @@ struct GRAYCORE_LINK cValSpan {  // static. array/span of some TYPE.
     /// dangerous for types that have internal pointers !
     /// </summary>
     template <class TYPE>
-    static void GRAYCALL MoveElement1(TYPE* pFrom, TYPE* pTo) {  // throw
+    static void GRAYCALL ShiftElements(TYPE* pFrom, TYPE* pTo) {  // throw
         ptrdiff_t iQty = pTo - pFrom;
         if (iQty == 0) return;
 #if 1
-        // faster
+        // faster. simple byte mover. no destruct/construct.
         BYTE tmp[sizeof(TYPE)];
         cMem::Copy(tmp, pFrom, sizeof(TYPE));
         // shift old data to fill gap. destroys old pFrom location.

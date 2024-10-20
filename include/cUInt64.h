@@ -8,9 +8,9 @@
 #endif
 
 #include "StrArg.h"
+#include "StrBuilder.h"
 #include "cBits.h"
 #include "cString.h"
-#include "StrBuilder.h"
 #include "cTypes.h"
 
 namespace Gray {
@@ -38,31 +38,22 @@ class GRAYCORE_LINK CATTR_PACKED cUInt64 {
  private:
     // don't use cUnion64 so we can use CUINT64(h,l) for init.
 #ifdef USE_INT64  // native support for UINT 64 bit.
-    UNIT_t m_u;
+    UNIT_t _nVal = 0;
 #elif defined(USE_LITTLE_ENDIAN)
-    UNIT_t m_uLo;
-    UNIT_t m_uHi;
+    UNIT_t _nLo = 0;
+    UNIT_t _nHi = 0;
 #else
-    UNIT_t m_uHi;
-    UNIT_t m_uLo;
+    UNIT_t _nHi = 0;
+    UNIT_t _nLo = 0;
 #endif
 
  public:
-    cUInt64()
-#ifdef USE_INT64
-        : m_u(0)
-#else
-        : m_uLo(0),
-          m_uHi(0)
-#endif
-    {
-    }
+    cUInt64() {}
     cUInt64(UNIT_t n)
 #ifdef USE_INT64
-        : m_u(n)
+        : _nVal(n)
 #else
-        : m_uLo(n),
-          m_uHi(0)
+        : _nLo(n)
 #endif
     {
     }
@@ -73,36 +64,37 @@ class GRAYCORE_LINK CATTR_PACKED cUInt64 {
     // Test Operators
     bool isZero() const {
 #ifdef USE_INT64
-        return m_u == 0;
+        return _nVal == 0;
 #else
-        return m_uLo == 0 && m_uHi == 0;
+        return _nLo == 0 && _nHi == 0;
 #endif
     }
     bool isOdd() const {
 #ifdef USE_INT64
-        return m_u & 1;
+        return _nVal & 1;
 #else
-        return m_uLo & 1;
+        return _nLo & 1;
 #endif
     }
+    /// <summary>
+    /// Gets the state of the enumerated bit. which has value 2^nBit.
+    /// Bits beyond range are considered to be 0.
+    /// </summary>
     bool IsSet(BIT_ENUM_t nBit) const {
-        //! Gets the state of the enumerated bit.
-        //! which has value 2^nBit.
-        //! Bits beyond m_nBlksUse are considered to be 0.
 #ifdef USE_INT64
-        return cBits::IsSet(m_u, nBit);
+        return cBits::IsSet(_nVal, nBit);
 #else
         if (nBit < k_UNIT_BITS)
-            return cBits::IsSet(m_uLo, nBit);
+            return cBits::IsSet(_nLo, nBit);
         else
-            return cBits::IsSet(m_uHi, nBit - k_UNIT_BITS);
+            return cBits::IsSet(_nHi, nBit - k_UNIT_BITS);
 #endif
     }
     bool operator==(const cUInt64& n) const {
 #ifdef USE_INT64
-        return m_u == n.m_u;
+        return _nVal == n._nVal;
 #else
-        return m_uLo == n.m_uLo && m_uHi == n.m_uHi;
+        return _nLo == n._nLo && _nHi == n._nHi;
 #endif
     }
     bool operator!=(const cUInt64& n) const {
@@ -110,41 +102,41 @@ class GRAYCORE_LINK CATTR_PACKED cUInt64 {
     }
     bool operator==(UNIT_t n) const {
 #ifdef USE_INT64
-        return m_u == n;
+        return _nVal == n;
 #else
-        return m_uLo == n;
+        return _nLo == n;
 #endif
     }
     bool operator>(const cUInt64& n) const {
 #ifdef USE_INT64
-        return m_u > n.m_u;
+        return _nVal > n._nVal;
 #else
-        if (m_uHi == n.m_uHi)
-            return m_uLo > n.m_uLo;
+        if (_nHi == n._nHi)
+            return _nLo > n._nLo;
         else
-            return m_uHi > n.m_uHi;
+            return _nHi > n._nHi;
 #endif
     }
 
     bool operator<(const cUInt64& n) const {
 #ifdef USE_INT64
-        return m_u < n.m_u;
+        return _nVal < n._nVal;
 #else
-        if (m_uHi == n.m_uHi)
-            return m_uLo < n.m_uLo;
+        if (_nHi == n._nHi)
+            return _nLo < n._nLo;
         else
-            return m_uHi < n.m_uHi;
+            return _nHi < n._nHi;
 #endif
     }
 
     bool operator<=(const cUInt64& n) const {
 #ifdef USE_INT64
-        return m_u <= n.m_u;
+        return _nVal <= n._nVal;
 #else
-        if (m_uHi == n.m_uHi)
-            return m_uLo <= n.m_uLo;
+        if (_nHi == n._nHi)
+            return _nLo <= n._nLo;
         else
-            return m_uHi < n.m_uHi;
+            return _nHi < n._nHi;
 #endif
     }
 
@@ -152,7 +144,7 @@ class GRAYCORE_LINK CATTR_PACKED cUInt64 {
     TYPE get_Val() const {
         //! just default to assume TYPE is unsigned.
 #ifdef USE_INT64
-        return (TYPE)m_u;
+        return (TYPE)_nVal;
 #else
         ASSERT(0);
         return 0;
@@ -162,12 +154,12 @@ class GRAYCORE_LINK CATTR_PACKED cUInt64 {
     // Math Action Operators
     void operator++() {
 #ifdef USE_INT64
-        m_u++;
+        _nVal++;
 #else
-        UNIT_t n = m_uLo;
-        m_uLo++;
-        if (m_uLo < n)  // carry bit.
-            m_uHi++;
+        const UNIT_t n = _nLo;
+        _nLo++;
+        if (_nLo < n)  // carry bit.
+            _nHi++;
 #endif
     }
     void operator++(int) {
@@ -177,12 +169,12 @@ class GRAYCORE_LINK CATTR_PACKED cUInt64 {
 
     void operator--() {
 #ifdef USE_INT64
-        m_u--;
+        _nVal--;
 #else
-        UNIT_t n = m_uLo;
-        m_uLo--;
-        if (m_uLo > n)  // carry bit.
-            m_uHi--;
+        const UNIT_t n = _nLo;
+        _nLo--;
+        if (_nLo > n)  // carry bit.
+            _nHi--;
 #endif
     }
     void operator--(int) {
@@ -192,18 +184,18 @@ class GRAYCORE_LINK CATTR_PACKED cUInt64 {
 
     cUInt64& operator+=(const cUInt64& n) {
 #ifdef USE_INT64
-        m_u += n.m_u;
+        _nVal += n._nVal;
 #else
-        m_uLo += n.m_uLo;
-        if (m_uLo < n.m_uLo)  // carry bit.
-            m_uHi++;
-        m_uHi += n.m_uHi;
+        _nLo += n._nLo;
+        if (_nLo < n._nLo)  // carry bit.
+            _nHi++;
+        _nHi += n._nHi;
 #endif
         return *this;
     }
     cUInt64& operator-=(const cUInt64& n) {
 #ifdef USE_INT64
-        m_u -= n.m_u;
+        _nVal -= n._nVal;
 #else
         ASSERT(0);
 #endif
@@ -212,7 +204,7 @@ class GRAYCORE_LINK CATTR_PACKED cUInt64 {
     cUInt64& operator*=(const cUInt64& x) {
         cUInt64 ans;
 #ifdef USE_INT64
-        m_u *= x.m_u;
+        _nVal *= x._nVal;
 #else
         ASSERT(0);
 #endif
@@ -221,7 +213,7 @@ class GRAYCORE_LINK CATTR_PACKED cUInt64 {
     cUInt64 operator*(const cUInt64& x) const {
         cUInt64 ans;
 #ifdef USE_INT64
-        ans.m_u = m_u * x.m_u;
+        ans._nVal = _nVal * x._nVal;
 #else
         ASSERT(0);
 #endif
@@ -230,7 +222,7 @@ class GRAYCORE_LINK CATTR_PACKED cUInt64 {
     void operator%=(const cUInt64& x) {
         //! Modulus *this by x.
 #ifdef USE_INT64
-        m_u %= x.m_u;
+        _nVal %= x._nVal;
 #else
         ASSERT(0);
 #endif
@@ -239,56 +231,56 @@ class GRAYCORE_LINK CATTR_PACKED cUInt64 {
     // Bit Action Operators
     void SetBit(BIT_ENUM_t uiBit) {
 #ifdef USE_INT64
-        m_u |= ((UNIT_t)1) << uiBit;
+        _nVal |= ((UNIT_t)1) << uiBit;
 #else
         if (uiBit < k_UNIT_BITS) {
-            m_uLo |= ((UNIT_t)1) << uiBit;
+            _nLo |= ((UNIT_t)1) << uiBit;
         } else {
-            m_uHi |= ((UNIT_t)1) << (uiBit - k_UNIT_BITS);
+            _nHi |= ((UNIT_t)1) << (uiBit - k_UNIT_BITS);
         }
 #endif
     }
 
     cUInt64& operator|=(const cUInt64& n) {
 #ifdef USE_INT64
-        m_u |= n.m_u;
+        _nVal |= n._nVal;
 #else
-        m_uLo |= n.m_uLo;
-        m_uHi |= n.m_uHi;
+        _nLo |= n._nLo;
+        _nHi |= n._nHi;
 #endif
         return *this;
     }
 
     cUInt64& operator&=(const cUInt64& n) {
 #ifdef USE_INT64
-        m_u &= n.m_u;
+        _nVal &= n._nVal;
 #else
-        m_uLo &= n.m_uLo;
-        m_uHi &= n.m_uHi;
+        _nLo &= n._nLo;
+        _nHi &= n._nHi;
 #endif
         return *this;
     }
 
     cUInt64& operator^=(const cUInt64& n) {
 #ifdef USE_INT64
-        m_u ^= n.m_u;
+        _nVal ^= n._nVal;
 #else
-        m_uLo ^= n.m_uLo;
-        m_uHi ^= n.m_uHi;
+        _nLo ^= n._nLo;
+        _nHi ^= n._nHi;
 #endif
         return *this;
     }
 
     cUInt64& operator<<=(BIT_ENUM_t uiBits) {
 #ifdef USE_INT64
-        m_u <<= uiBits;
+        _nVal <<= uiBits;
 #else
         if (uiBits < k_UNIT_BITS) {
-            (m_uHi <<= uiBits) |= (m_uLo >> (k_UNIT_BITS - uiBits));
-            m_uLo <<= uiBits;
+            (_nHi <<= uiBits) |= (_nLo >> (k_UNIT_BITS - uiBits));
+            _nLo <<= uiBits;
         } else {
-            m_uHi = m_uLo << (uiBits - k_UNIT_BITS);
-            m_uLo = 0;
+            _nHi = _nLo << (uiBits - k_UNIT_BITS);
+            _nLo = 0;
         }
 #endif
         return *this;
@@ -296,14 +288,14 @@ class GRAYCORE_LINK CATTR_PACKED cUInt64 {
 
     cUInt64& operator>>=(BIT_ENUM_t uiBits) {
 #ifdef USE_INT64
-        m_u >>= uiBits;
+        _nVal >>= uiBits;
 #else
         if (uiBits < k_UNIT_BITS) {
-            (m_uLo >>= uiBits) |= (m_uHi << (k_UNIT_BITS - uiBits));
-            m_uHi >>= uiBits;
+            (_nLo >>= uiBits) |= (_nHi << (k_UNIT_BITS - uiBits));
+            _nHi >>= uiBits;
         } else {
-            m_uLo = m_uHi >> (uiBits - k_UNIT_BITS);
-            m_uHi = 0;
+            _nLo = _nHi >> (uiBits - k_UNIT_BITS);
+            _nHi = 0;
         }
 #endif
         return *this;
@@ -363,5 +355,4 @@ inline cUInt64 operator>>(const cUInt64& n, BIT_ENUM_t uiBits) {
     return temp;
 }
 }  // namespace Gray
-
 #endif

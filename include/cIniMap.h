@@ -21,13 +21,13 @@ namespace Gray {
 struct GRAYCORE_LINK cIniKeyValue {
     typedef cIniKeyValue THIS_t;
 
-    cAtomRef m_aKey;  /// property key name.
-    cStringI m_sVal;  /// property value as a string.
+    cAtomRef _aKey;  /// property key name.
+    cStringI _sVal;  /// property value as a string.
 
     cIniKeyValue() noexcept {}
-    cIniKeyValue(cAtomRef aKey, cStringI sVal) noexcept : m_aKey(aKey), m_sVal(sVal) {}
+    cIniKeyValue(cAtomRef aKey, cStringI sVal) noexcept : _aKey(aKey), _sVal(sVal) {}
     ATOMCODE_t get_HashCode() const noexcept {
-        return m_aKey.get_HashCode();
+        return _aKey.get_HashCode();
     }
     bool operator==(const THIS_t& e) const noexcept {
         return get_HashCode() == e.get_HashCode();

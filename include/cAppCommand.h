@@ -22,45 +22,38 @@ typedef HRESULT(GRAYCALL* AppCommandF_t)(const cAppArgs& args, int iArgN);
 /// typically static allocated. Correlates to a CommandId_t.
 /// </summary>
 struct GRAYCORE_LINK cAppCommand : public cObject {
-    const ATOMCHAR_t* m_pszName;    /// symbolic name for -command or /command (case insensitive). MUST be unique. MUST be first so we can sort.
-    const ATOMCHAR_t* m_pszAbbrev;  /// optional abbreviated -command or /command (case sensitive), nullptr allowed
-    const GChar_t* m_pszHelpArgs;   /// describe any extra args this function might take. "[optional arg]. nullptr = takes none.
-    const GChar_t* m_pszHelp;       /// verbose help description. (tool tip)
-    AppCommandF_t m_pCommand;       /// optional function pointer to implement else we can override DoCommand().
+    const ATOMCHAR_t* _pszName;    /// symbolic name for -command or /command (case insensitive). MUST be unique. MUST be first so we can sort.
+    const ATOMCHAR_t* _pszAbbrev;  /// optional abbreviated -command or /command (case sensitive), nullptr allowed
+    const GChar_t* _pszHelpArgs;   /// describe any extra args this function might take. "[optional arg]. nullptr = takes none.
+    const GChar_t* _pszHelp;       /// verbose help description. (tool tip)
+    AppCommandF_t _pCommand;       /// optional function pointer to implement else we can override DoCommand().
 
  public:
-    cAppCommand(const ATOMCHAR_t* pszAbbrev, const ATOMCHAR_t* pszName, const GChar_t* pszHelpArgs, const GChar_t* pszHelp,
-                AppCommandF_t pCommand = nullptr) noexcept
-        : m_pszName(pszName), m_pszAbbrev(pszAbbrev), m_pszHelpArgs(pszHelpArgs), m_pszHelp(pszHelp), m_pCommand(pCommand) {
-        ASSERT_NN(m_pszName);
+    cAppCommand(const ATOMCHAR_t* pszAbbrev, const ATOMCHAR_t* pszName, const GChar_t* pszHelpArgs = nullptr, const GChar_t* pszHelp = nullptr, AppCommandF_t pCommand = nullptr) noexcept
+        : _pszName(pszName), _pszAbbrev(pszAbbrev), _pszHelpArgs(pszHelpArgs), _pszHelp(pszHelp), _pCommand(pCommand) {
+        ASSERT_NN(_pszName);
     }
     virtual ~cAppCommand() {}
 
     bool IsMatch(const ATOMCHAR_t* p) const;
-    cString get_HelpText() const;
+    void GetHelpText(StrBuilder<GChar_t>& sb) const;
 
-    virtual const ATOMCHAR_t* get_Title() const { // allow override	for more friendly short title for the command
-        return m_pszName;
+    virtual const ATOMCHAR_t* get_Title() const {  // allow override	for more friendly short title for the command
+        return _pszName;
     }
- 
+
     /// <summary>
     /// Execute a command via function pointer or override this to exec in some other way.
-    /// Default (non override) behavior is exec the command via m_pCommand function pointer.
+    /// Default (non override) behavior is exec the command via _pCommand function pointer.
     /// @note check return. it can consume more arguments (or not).
     /// </summary>
     /// <param name="iArgN">index in args for next.</param>
     /// <returns># of EXTRA args consumed. or -lt- 0 = error.</returns>
     virtual HRESULT DoCommand(const cAppArgs& args, int iArgN = 0) {
-        if (m_pCommand == nullptr) return E_NOTIMPL;
-        return m_pCommand(args, iArgN);
+        if (_pCommand == nullptr) return E_NOTIMPL;
+        return _pCommand(args, iArgN);
     }
 };
-
-#if 0
-template <class T>
-class cAppCommandT : public cAppCommand, public cSingletonStatic<T> {
-};
-#endif
 
 /// <summary>
 /// Interface to manage a list of possible cAppCommand(s)
@@ -77,7 +70,7 @@ struct GRAYCORE_LINK cAppCommands : public IAppCommands {
     /// <summary>
     /// built a list of possible commands. Dynamically add new command handlers to the app. to process cAppArgs.
     /// </summary>
-    cArrayPtr<cAppCommand> m_a;
+    cArrayPtr<cAppCommand> _a;
 
     /// <summary>
     /// Add or override existing cAppCommand. ASSUME static allocation of cAppCommand.

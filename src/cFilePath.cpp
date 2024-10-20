@@ -20,66 +20,43 @@ namespace Gray {
 #ifdef _WIN32
 const FILECHAR_t cFilePath::k_NamePrefix[5] = _FN("\\\\?\\");  /// pre-pend "\\?\" to the path to extend this limit to 32,767 on NTFS.
 #endif
+const char cFilePath::k_szBadChars[] = "<>\"|";              // chars NEVER allowed.
+const char cFilePath::k_szAllowedDOS[] = "^$~!#%&-{}()@'`";  // old DOS names allowed.
 
 FILECHR_MASK_t GRAYCALL cFilePath::GetFileCharType(wchar_t ch, FILESYS_t eSys) NOEXCEPT {  // static
-    //! Is the char valid for a filename on FILECHR_MASK_t?
-    //! The valid characters for a filename in DOS manual (DOS 5: page 72)
-    //! Known Valid:
-    //!	 A..Z 0..9 and k_pszAllowedDOS = "_ ^ $ ~ ! # % & - {} () @ ' `"
-    //! Known Unvalid:
-    //!	 "<>:"|" and "/\?*"
-    //! Unknown: (I've seen used but should not be valid?)
-    //!  []
-    //!  other chars from 128 to 255 may be valid but we may want to filter FILECHR_Name3
-    //! http://msdn.microsoft.com/en-us/library/aa365247%28VS.85%29.aspx
-    //! http://en.wikipedia.org/wiki/Filename
-
-    static const char* k_pszBadChars = "<>\"|";              // chars NEVER allowed.
-    static const char* k_pszAllowedDOS = "^$~!#%&-{}()@'`";  // old DOS names allowed.
-
     if (ch < 255) {
-        if (ch == '\0')  // never allowed chars.
-            return FILECHR_Invalid;
-        if (ch < ' ') return FILECHR_Invalid;  // UTF8 UNICODE?
-        if (StrChar::IsAlNum(ch))              // ASCII letter or number is always ok.
-            return FILECHR_Name;
-        if (IsCharWildcard(ch)) return FILECHR_Wildcard;
-#if USE_UNICODE_FN
-        if (ch <= 255)  // NOT UNICODE char
-#endif
-        {
-            if (StrT::HasChar(k_pszBadChars, (char)ch))  // never allowed as name
-                return FILECHR_Invalid;
-            if (StrT::HasChar(k_pszAllowedDOS, (char)ch))  // old DOS names allowed chars.
-                return FILECHR_Name2;                      // May need escape container.
-        }
-    }
+        if (ch < ' ') return FILECHR_Invalid;           // UTF8 UNICODE? or '\0'
+        if (StrChar::IsAlNum(ch)) return FILECHR_Name;  // ASCII letter or number is always ok.
+        if (StrChar::IsRegEx(ch)) return FILECHR_Wildcard;
+        if (StrT::HasChar(k_szBadChars, (char)ch)) return FILECHR_Invalid;  // never allowed as name
+        if (StrT::HasChar(k_szAllowedDOS, (char)ch)) return FILECHR_Name2;  // old DOS names allowed chars. // May need escape container.
 
-    switch (ch) {
-        case '_':  // always allowed non escaped.
-            return FILECHR_Name;
-        case '/':  // IsCharDirSep(ch)
-            if (eSys == FILESYS_t::_FAT) return FILECHR_Invalid;
-            return FILECHR_Dirs;
-        case '\\':
-            if (eSys == FILESYS_t::_NFS) return FILECHR_Name;
-            return FILECHR_Dirs;
-        case ':':
-            return FILECHR_Device;
-        case '.':
-            // NFS first char uses this to hide files.
-            return FILECHR_Ext;
-        case '+':  // reserved for FAT32
-        case '[':  // reserved for FAT32
-        case ']':  // reserved for FAT32
-            if (eSys == FILESYS_t::_NFS || eSys == FILESYS_t::_NTFS) return FILECHR_Name2;
-            return FILECHR_Invalid;
-        case ' ':
-        case ',':
-            if (eSys == FILESYS_t::_FAT) return FILECHR_Invalid;
-            return FILECHR_Name2;
-        case 0xA5:  // Yen symbol. Its a FILECHR_Dirs symbol in Japan ?? http://msdn.microsoft.com/en-us/library/windows/desktop/dd317748%28v=vs.85%29.aspx
-            return FILECHR_Invalid;
+        switch (ch) {
+            case '_':  // always allowed non escaped.
+                return FILECHR_Name;
+            case '/':  // IsCharDirSep(ch)
+                if (eSys == FILESYS_t::_FAT) return FILECHR_Invalid;
+                return FILECHR_Dirs;
+            case '\\':
+                if (eSys == FILESYS_t::_NFS) return FILECHR_Name;
+                return FILECHR_Dirs;
+            case ':':
+                return FILECHR_Device;
+            case '.':
+                // NFS first char uses this to hide files.
+                return FILECHR_Ext;
+            case '+':  // reserved for FAT32
+            case '[':  // reserved for FAT32
+            case ']':  // reserved for FAT32
+                if (eSys == FILESYS_t::_NFS || eSys == FILESYS_t::_NTFS) return FILECHR_Name2;
+                return FILECHR_Invalid;
+            case ' ':
+            case ',':
+                if (eSys == FILESYS_t::_FAT) return FILECHR_Invalid;
+                return FILECHR_Name2;
+            case 0xA5:  // Yen symbol. Its a FILECHR_Dirs symbol in Japan ?? http://msdn.microsoft.com/en-us/library/windows/desktop/dd317748%28v=vs.85%29.aspx
+                return FILECHR_Invalid;
+        }
     }
 
     if (eSys == FILESYS_t::_FAT) return FILECHR_Invalid;  // everything else is bad for old DOS FAT.
@@ -88,28 +65,20 @@ FILECHR_MASK_t GRAYCALL cFilePath::GetFileCharType(wchar_t ch, FILESYS_t eSys) N
 }
 
 bool GRAYCALL cFilePath::IsFileNameValid(const FILECHAR_t* pszName, FILECHR_MASK_t uCharMask, FILESYS_t eSys) {  // static
-    //! Is this a valid file name? Maybe UTF8.
-    //! Do not end a file or directory name with a space or a period.
-    //! @arg eSys = FILESYS_t::_FAT = enforce the DOS 8.3 rules.
-    //! @note CANNOT have names the same as system devices. e.g. CLOCK$ CON PRN AUX NUL COM# LPT#. Check for those here ?
-
     if (pszName == nullptr) return false;
-
     StrLen_t i = 0;
     for (; pszName[i] != '\0'; i++) {
         const FILECHAR_t ch = pszName[i];
         if (!(uCharMask & GetFileCharType(ch, eSys))) return false;
     }
-    if (i > 0) {
-        // Do not end a file or directory name with a space or a period
-        FILECHAR_t ch = pszName[i - 1];
+    if (i > 0) {    // Do not end a file or directory name with a space or a period        
+        const FILECHAR_t ch = pszName[i - 1];
         if (ch == '.' || ch == ' ') return false;
     }
     return true;
 }
 
 bool GRAYCALL cFilePath::IsFilePathTitle(const FILECHAR_t* pszName) {  // static
-    //! Does this NOT have path/dir indicators?
     if (pszName == nullptr) return false;
     for (StrLen_t i = 0;; i++, pszName++) {
         if (i > cFilePath::k_MaxLen - 1) break;  // weird.
@@ -122,9 +91,6 @@ bool GRAYCALL cFilePath::IsFilePathTitle(const FILECHAR_t* pszName) {  // static
 }
 
 bool GRAYCALL cFilePath::HasFilePathRelatives(const FILECHAR_t* pszName, bool bOrDevices) {  // static
-    //! Does the file have any relative components. like ..
-    //! Get rid of them with MakeProperPath()
-
     if (pszName == nullptr) return false;
     for (StrLen_t i = 0;; i++, pszName++) {
         if (i > cFilePath::k_MaxLen - 1) break;  // weird.
@@ -160,11 +126,7 @@ StrLen_t GRAYCALL cFilePath::GetFilePathDeviceLen(const FILECHAR_t* pszName) {  
 }
 
 bool GRAYCALL cFilePath::IsFileDeviceRemote(const FILECHAR_t* pszPath) {  // static
-    //! Is the file based on some remote device/service? e.g. HTTP, HTTPS, FTP, RTP, RTMP etc.
-    //! GetFilePathDeviceLen
-    //! like NETSERVICE_TYPE
-
-    if (!StrT::CmpIN(pszPath, _FN("file:"), 5)) return false;  // local file system.
+    if (!StrT::CmpIN(pszPath, _FN("file:"), 5)) return false;             // local file system.
     const StrLen_t nLenDev = GetFilePathDeviceLen(pszPath);
     if (nLenDev <= 2) return false;  // just a local drive letter. Rooted. or no protocol.
     return true;                     // must be a remote protocol.
@@ -244,12 +206,12 @@ cFilePath GRAYCALL cFilePath::ReplaceFileExt(const FILECHAR_t* pszFilePath, cons
     if (pszFilePath == nullptr) return "";
 
     FILECHAR_t szTemp[cFilePath::k_MaxLen];
-    StrLen_t iLen = StrT::Copy(TOSPAN(szTemp), pszFilePath);
+    StrLen_t iLen = StrT::CopyPtr(TOSPAN(szTemp), pszFilePath);
     const FILECHAR_t* pszExt = GetFileNameExt(ToSpan(szTemp, iLen));
     if (pszExt != nullptr) {
         iLen = cValSpan::Diff(pszExt, szTemp);
     }
-    StrT::Copy(TOSPAN(szTemp).GetSkip(iLen), pszExtNew);
+    StrT::CopyPtr(TOSPAN(szTemp).GetSkip(iLen), pszExtNew);
     return szTemp;
 }
 
@@ -273,29 +235,23 @@ FILECHAR_t* GRAYCALL cFilePath::GetFileName(const cSpan<FILECHAR_t>& path) {  //
 bool GRAYCALL cFilePath::HasTitleWildcards(const cSpan<FILECHAR_t>& path) {  // static
     //! Any wildcards ?* in this title ?
     //! Use StrT::MatchRegEx and cFileDir to evaluate these.
-
-    if (path.isNull()) return false;
-    FILECHAR_t* pszTitle = GetFileName(path);
-    if (pszTitle == nullptr) return false;
-    for (StrLen_t i = 0; pszTitle[i] != '\0'; i++) {
-        if (IsCharWildcard(pszTitle[i])) return true;
-    }
-    return false;
+    return StrT::HasRegEx(GetFileName(path));
 }
 
 cFilePath GRAYCALL cFilePath::GetFileNameNE(const cSpan<FILECHAR_t>& path, bool bMultiDot) {  // static
     // Title, GetFileTitle()
     FILECHAR_t szTmp[cFilePath::k_MaxLen];
-    const StrLen_t iLenTmp = StrT::Copy(TOSPAN(szTmp), GetFileName(path));
+    const StrLen_t iLenTmp = StrT::CopyPtr(TOSPAN(szTmp), GetFileName(path));
     StripFileExt(ToSpan(szTmp, iLenTmp), bMultiDot);
     return szTmp;
 }
 
-StrLen_t GRAYCALL cFilePath::MakeSymName(ATOMCHAR_t* pszOut, const FILECHAR_t* pszPath, ATOMCHAR_t chSub, BYTE flags) {  // static
+StrLen_t GRAYCALL cFilePath::MakeSymName(cSpan<ATOMCHAR_t> symName, const FILECHAR_t* pszPath, ATOMCHAR_t chSub, BYTE flags) {  // static
     // like cAtomRef::MakeSymName
-    ASSERT_NN(pszOut);
+    ASSERT(!symName.isNull());
+    ATOMCHAR_t* pszSymOut = symName.get_PtrW();
     if (pszPath == nullptr) {
-        *pszOut = '\0';
+        *pszSymOut = '\0';
         return 0;
     }
 
@@ -331,20 +287,20 @@ StrLen_t GRAYCALL cFilePath::MakeSymName(ATOMCHAR_t* pszOut, const FILECHAR_t* p
         } else if (!StrChar::IsAlpha(ch) && ch != chSub) {  // IsCSym
             ch = chSub;                                     // not a valid symbolic char!
         }
-        if (ch == '\0') continue;                // just skip it.
-        pszOut[iLen++] = CastN(ATOMCHAR_t, ch);  // only a valid symbolic char
+        if (ch == '\0') continue;                   // just skip it.
+        pszSymOut[iLen++] = CastN(ATOMCHAR_t, ch);  // only a valid symbolic char
     }
 
     if (iLenLastDot > 0 && !(flags & FILECHR_Ext)) {  // strip extension.
         iLen = iLenLastDot;                           // just the last ext. other dots in the name are OK.
     }
-    pszOut[iLen] = '\0';
+    pszSymOut[iLen] = '\0';
     return iLen;
 }
 
 cStringA GRAYCALL cFilePath::MakeSymNameStr(const FILECHAR_t* pszPath, ATOMCHAR_t chSub, BYTE flags) {  // static
     ATOMCHAR_t szTmp[k_LEN_MAX_CSYM];
-    const StrLen_t iLen = MakeSymName(szTmp, pszPath, chSub, flags);
+    const StrLen_t iLen = MakeSymName(TOSPAN(szTmp), pszPath, chSub, flags);
     return ToSpan(szTmp, iLen);
 }
 
@@ -401,9 +357,8 @@ StrLen_t GRAYCALL cFilePath::MakeFullPath(cSpanX<FILECHAR_t> ret, const FILECHAR
     //! If this is a relative path (to app current dir) make this an absolute (rooted) path
     //! @return Length
 
-    if (IsFilePathRooted(pszFileInp)) {
-        // its already rooted. leave it.
-        return StrT::Copy(ret, pszFileInp);
+    if (IsFilePathRooted(pszFileInp)) {        
+        return StrT::CopyPtr(ret, pszFileInp); // its already rooted. leave it.
     }
 
     // Was relative to the apps current dir. Get true full path.
@@ -413,9 +368,8 @@ StrLen_t GRAYCALL cFilePath::MakeFullPath(cSpanX<FILECHAR_t> ret, const FILECHAR
 cFilePath GRAYCALL cFilePath::MakeFullPathX(const FILECHAR_t* pszFileInp, FILECHAR_t chSep) {  // static
     //! If this is a relative path (to app current dir) make this an absolute (rooted) path
 
-    if (IsFilePathRooted(pszFileInp)) {
-        // its already rooted. leave it.
-        return pszFileInp;
+    if (IsFilePathRooted(pszFileInp)) {        
+        return pszFileInp;  // its already rooted. leave it.
     }
 
     // Was relative to the apps current directory. Get true full path.
@@ -426,11 +380,6 @@ cFilePath GRAYCALL cFilePath::MakeFullPathX(const FILECHAR_t* pszFileInp, FILECH
 }
 
 StrLen_t GRAYCALL cFilePath::AddFileDirSep(cSpanX<FILECHAR_t> ret, StrLen_t iLenZ, FILECHAR_t chSep) {
-    //! Add the / or \ to the end to make this a directory.
-    //! ASSUME pszOut >= cFilePath::k_MaxLen
-    //! Might be LINUX
-    //! @return Length
-
     ASSERT(!ret.isNull());
     if (ret.isEmpty()) return 0;  // DONT make root.
 
@@ -457,10 +406,6 @@ cFilePath GRAYCALL cFilePath::RemoveFileDirSep(const cStringF& sDir) {
 }
 
 StrLen_t GRAYCALL cFilePath::CombineFilePathA(cSpanX<FILECHAR_t> ret, StrLen_t iLenZ, const FILECHAR_t* pszName, FILECHAR_t chSep) {  // static
-    //! Append file/subdir pszName to existing pszFilePath path.
-    //! @arg chSep = k_DirSep default.
-    //! @return New total Length
-
     if (pszName == nullptr) return iLenZ;
     ASSERT(iLenZ <= ret.get_MaxLen());
 
@@ -487,16 +432,12 @@ StrLen_t GRAYCALL cFilePath::CombineFilePath(cSpanX<FILECHAR_t> ret, const FILEC
 
     // TODO Test if pszName already starts with pszDir ? and is rooted ?
 
-    StrLen_t iLenZ = (pszDir == nullptr) ? StrT::Len2<FILECHAR_t>(ret) : StrT::Copy(ret, pszDir);
+    StrLen_t iLenZ = (pszDir == nullptr) ? StrT::Len2<FILECHAR_t>(ret) : StrT::CopyPtr(ret, pszDir);
     iLenZ = CombineFilePathA(ret, iLenZ, pszName, chSep);
     return MakeProperPath(ret, ret, chSep);
 }
 
 cFilePath GRAYCALL cFilePath::CombineFilePathX(const FILECHAR_t* pszDir, const FILECHAR_t* pszName, FILECHAR_t chSep) {  // static
-    //! Merge path and file name. MakeProperPath.
-    //! Similar to Shell PathAppend()
-    //! .NET System.IO.Path.Combine
-    //! @arg chSep = k_DirSep default.
     FILECHAR_t szFilePath[cFilePath::k_MaxLen];
     CombineFilePath(TOSPAN(szFilePath), pszDir, pszName, chSep);
     return szFilePath;
@@ -508,18 +449,18 @@ cFilePath _cdecl cFilePath::CombineFilePathF(FILECHAR_t chSep, const FILECHAR_t*
     //! @arg pszBase = first entry in the list. nullptr terminated list.
 
     FILECHAR_t szFilePath[cFilePath::k_MaxLen];
-    StrLen_t iLenZ = StrT::Copy(TOSPAN(szFilePath), pszBase);
+    StrLen_t iLenPath = StrT::CopyPtr(TOSPAN(szFilePath), pszBase);
 
     va_list vargs;
     va_start(vargs, pszBase);
     for (int iCount = 0; iCount < k_ARG_ARRAY_MAX; iCount++) {  // arbitrary max.
         const FILECHAR_t* pszPart = va_arg(vargs, const FILECHAR_t*);
         if (pszPart == nullptr) break;
-        iLenZ = CombineFilePathA(TOSPAN(szFilePath), iLenZ, pszPart, chSep);
+        iLenPath = CombineFilePathA(TOSPAN(szFilePath), iLenPath, pszPart, chSep);
     }
     va_end(vargs);
 
-    iLenZ = MakeProperPath(TOSPAN(szFilePath), nullptr, chSep);
+    iLenPath = MakeProperPath(TOSPAN(szFilePath), nullptr, chSep);
     return szFilePath;
 }
 
@@ -751,13 +692,11 @@ StrLen_t GRAYCALL cFilePath::ExtractDirCopy(OUT cSpanX<FILECHAR_t> ret, const FI
     //! @arg bTrailingSep = leave the trailing /
     //! @return
     //!  length of the new string.
-    const StrLen_t iLen = StrT::Copy(ret, pszFilePathSrc);
+    const StrLen_t iLen = StrT::CopyPtr(ret, pszFilePathSrc);
     return ExtractDir(cSpanX<FILECHAR_t>(ret, iLen), bTrailingSep);
 }
 
 cFilePath GRAYCALL cFilePath::GetFileDir(const FILECHAR_t* pszPath, bool bTrailingSep) {  // static
-    //! Extract the directory from a file path. include the trailing / k_DirSep if bTrailingSep is set.
-    //! @arg bTrailingSep = leave the trailing /
     FILECHAR_t szPath[cFilePath::k_MaxLen];
     const StrLen_t iLen = ExtractDirCopy(TOSPAN(szPath), pszPath, bTrailingSep);
     return ToSpan(szPath, iLen);
@@ -773,7 +712,7 @@ cFilePath GRAYCALL cFilePath::GetNameExtStar(const cSpan<FILECHAR_t>& path) {  /
     //!  "dir/Name.ext"
     //! @return
     //!  "Name.*"
-    static const FILECHAR_t* k_pszExt = _FN(".*");
+    static const FILECHAR_t k_pszExt[] = _FN(".*");
     return ReplaceFileExt(GetFileName(path), k_pszExt);
 }
 

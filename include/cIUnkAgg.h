@@ -19,28 +19,28 @@ namespace Gray {
 template <class TYPE = ::IUnknown>
 class DECLSPEC_NOVTABLE cIUnkAggBase {
  protected:
-    TYPE* m_pIAggOuter;  /// the outer object interface.
+    TYPE* _pIAggOuter;  /// the outer object interface.
 
  public:
-    cIUnkAggBase(TYPE* pIAggOuter) : m_pIAggOuter(pIAggOuter) {
+    cIUnkAggBase(TYPE* pIAggOuter) : _pIAggOuter(pIAggOuter) {
         ASSERT_NN(pIAggOuter);
     }
     virtual ~cIUnkAggBase() {}
     // Support IUnknown functions.
     HRESULT QueryInterface(const IID& riid, void** ppv) {
-        if (ppv == nullptr || m_pIAggOuter == nullptr) {
+        if (ppv == nullptr || _pIAggOuter == nullptr) {
             *ppv = nullptr;
             return E_POINTER;
         }
-        return m_pIAggOuter->QueryInterface(riid, ppv);
+        return _pIAggOuter->QueryInterface(riid, ppv);
     }
     ULONG AddRef() {
-        ASSERT_NN(m_pIAggOuter);
-        return m_pIAggOuter->AddRef();
+        ASSERT_NN(_pIAggOuter);
+        return _pIAggOuter->AddRef();
     }
     ULONG Release() {
-        ASSERT_NN(m_pIAggOuter);
-        return m_pIAggOuter->Release();
+        ASSERT_NN(_pIAggOuter);
+        return _pIAggOuter->Release();
     }
 };
 
@@ -52,28 +52,28 @@ class DECLSPEC_NOVTABLE cIUnkAgg : public cRefBase, public cIUnkAggBase<IUnknown
     cIUnkAgg(::IUnknown* pIAggOuter) : cIUnkAggBase((pIAggOuter == nullptr) ? this : pIAggOuter) {}
     // Support IUknown functions.
     STDMETHODIMP_(ULONG) AddRef() override {
-        if (m_pIAggOuter == this) {
+        if (_pIAggOuter == this) {
             IncRefCount();
             return CastN(ULONG, get_RefCount());
         }
-        ASSERT_NN(m_pIAggOuter);
-        return m_pIAggOuter->AddRef();
+        ASSERT_NN(_pIAggOuter);
+        return _pIAggOuter->AddRef();
     }
     STDMETHODIMP_(ULONG) Release() override {
-        if (m_pIAggOuter == this) {
+        if (_pIAggOuter == this) {
             DecRefCount();
             return CastN(ULONG, get_RefCount());
         }
-        ASSERT_NN(m_pIAggOuter);
-        return m_pIAggOuter->Release();
+        ASSERT_NN(_pIAggOuter);
+        return _pIAggOuter->Release();
     }
     STDMETHODIMP QueryInterface(const IID& riid, void** ppv) override {
         if (ppv == nullptr) return E_POINTER;
-        if (m_pIAggOuter == nullptr) {
+        if (_pIAggOuter == nullptr) {
             *ppv = nullptr;
             return E_POINTER;
         }
-        if (m_pIAggOuter == this) {
+        if (_pIAggOuter == this) {
             if (riid == __uuidof(IUnknown)) {
                 *ppv = this;
                 IncRefCount();
@@ -81,7 +81,7 @@ class DECLSPEC_NOVTABLE cIUnkAgg : public cRefBase, public cIUnkAggBase<IUnknown
             }
             return E_NOINTERFACE;
         }
-        return m_pIAggOuter->QueryInterface(riid, ppv);
+        return _pIAggOuter->QueryInterface(riid, ppv);
     }
 };
 }  // namespace Gray

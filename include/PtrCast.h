@@ -95,7 +95,7 @@ inline _TYPE* PtrCastCheck(_TYPE_FROM* p) {
 
 /// <summary>
 /// Cast a pointer to a number big enough to hold the value.
-/// like PtrToUlong() or HandleToULong(). UINT_PTR, or size_t ? NOT ptrdiff_t, INT_PTR (signed)
+/// like PtrToUlong(), PtrToInt or HandleToULong(). UINT_PTR, or size_t ? NOT ptrdiff_t, INT_PTR (signed)
 /// </summary>
 /// <param name="p"></param>
 /// <returns></returns>

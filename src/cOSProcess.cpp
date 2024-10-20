@@ -41,7 +41,7 @@ struct CATTR_PACKED _PROCESS_BASIC_INFORMATION {
 #endif
 
 namespace Gray {
-cOSProcess::cOSProcess() noexcept : m_nPid(kPROCESSID_BAD) {
+cOSProcess::cOSProcess() noexcept : _nPid(kPROCESSID_BAD) {
     // _WIN32 = ::GetCurrentProcess() = 0xFFFFFFFF as a shortcut.
 }
 
@@ -55,8 +55,8 @@ cOSProcess::~cOSProcess() {
 void cOSProcess::CloseProcessHandle() {
     //! The process may continue running of course.
     if (!isValidProcess()) return;
-    m_hThread.CloseHandle();
-    m_hProcess.CloseHandle();
+    _hThread.CloseHandle();
+    _hProcess.CloseHandle();
 }
 #endif
 
@@ -95,9 +95,10 @@ HRESULT cOSProcess::CreateProcessX(const FILECHAR_t* pszExeName, const FILECHAR_
     FILECHAR_t sCommandLine[cFilePath::k_MaxLen];
     sCommandLine[0] = '\0';
     if (!StrT::IsWhitespace(pszArgs)) {
-        StrLen_t len = StrT::Copy(TOSPAN(sCommandLine), pszExeName);
-        len += StrT::CopyLen<FILECHAR_t>(sCommandLine + len, _FN(" "), STRMAX(sCommandLine) - len);
-        StrT::CopyLen(sCommandLine + len, pszArgs, STRMAX(sCommandLine) - len);
+        cSpanX sp(TOSPAN(sCommandLine));
+        sp.SetSkip(StrT::CopyPtr(sp, pszExeName));
+        sp.SetSkip(StrT::CopyPtr(sp, _FN(" ")));
+        StrT::CopyPtr(sp, pszArgs);
         pszArgs = sCommandLine;
     }
 
@@ -120,11 +121,11 @@ HRESULT cOSProcess::CreateProcessX(const FILECHAR_t* pszExeName, const FILECHAR_
         return hRes;
     }
 
-    m_nPid = procInf.dwProcessId;
-    ASSERT(m_nPid > 0);
-    m_hProcess.AttachHandle(procInf.hProcess);
-    m_ThreadId = procInf.dwThreadId;
-    m_hThread.AttachHandle(procInf.hThread);  // procInf.dwThreadId
+    _nPid = procInf.dwProcessId;
+    ASSERT(_nPid > 0);
+    _hProcess.AttachHandle(procInf.hProcess);
+    _ThreadId = procInf.dwThreadId;
+    _hThread.AttachHandle(procInf.hThread);  // procInf.dwThreadId
 
 #elif defined(__linux__)
 
@@ -133,8 +134,8 @@ HRESULT cOSProcess::CreateProcessX(const FILECHAR_t* pszExeName, const FILECHAR_
     // http://linux.die.net/man/3/posix_spawn posix_spawnp
     //
 
-    m_nPid = ::fork();  // Split this process into 2 processes.
-    if (m_nPid == 0) {
+    _nPid = ::fork();  // Split this process into 2 processes.
+    if (_nPid == 0) {
         // we ARE the new process now. replace with truly new process from disk.
 
         const char* args[k_ARG_ARRAY_MAX];  // arbitrary max.
@@ -163,7 +164,7 @@ cFilePath cOSProcess::get_ProcessPath() const {  // override
 
 #ifdef _WIN32
     // NOTE: GetModuleFileName doesn't work for external processes. GetModuleFileNameEx does but its in psapi.dll
-    ::HINSTANCE hInst = (::HINSTANCE)m_hProcess.get_Handle();
+    ::HINSTANCE hInst = (::HINSTANCE)_hProcess.get_Handle();
     if (hInst == (::HINSTANCE)-1) hInst = NULL;  // special case from GetCurrentProcess()
     const DWORD dwRet = _FNF(::GetModuleFileName)(hInst, szProcessName, _countof(szProcessName));
     if (dwRet <= 0) {
@@ -172,16 +173,16 @@ cFilePath cOSProcess::get_ProcessPath() const {  // override
     }
     return cStringF(ToSpan(szProcessName, dwRet));
 #elif defined(__linux__)
-    if (m_sPath.IsEmpty()) {
+    if (_sFilePath.IsEmpty()) {
         cStringF sFileName = cStringF::GetFormatf(_FN("/proc/%d/cmdline"), this->get_ProcessId());
         cFile file;
         HRESULT hRes = file.OpenX(sFileName);
         if (FAILED(hRes)) return _FN("");
         hRes = file.ReadX(TOSPAN(szProcessName));
         // TODO __linux__  chop args?
-        const_cast<cOSProcess*>(this)->m_sPath = cFilePath(szProcessName);
+        const_cast<cOSProcess*>(this)->_sFilePath = cFilePath(szProcessName);
     }
-    return m_sPath;
+    return _sFilePath;
 #else
 #error NOOS
 #endif
@@ -201,20 +202,20 @@ HRESULT cOSProcess::OpenProcessId(PROCESSID_t nProcessId, DWORD dwDesiredAccess,
     if (nProcessId == kPROCESSID_BAD) return E_INVALIDARG;
     if (isValidProcess() && nProcessId == get_ProcessId()) return S_OK;
 
-    m_nPid = nProcessId;
+    _nPid = nProcessId;
 
 #ifdef _WIN32
-    m_hProcess.AttachHandle(::OpenProcess(dwDesiredAccess, bInheritHandle, nProcessId));
+    _hProcess.AttachHandle(::OpenProcess(dwDesiredAccess, bInheritHandle, nProcessId));
     if (!isValidProcess()) return HResult::GetLastDef(E_HANDLE);  // E_ACCESSDENIED
 
     // Validate PID.
-    PROCESSID_t nProcessId2 = ::GetProcessId(m_hProcess);
+    PROCESSID_t nProcessId2 = ::GetProcessId(_hProcess);
     if (nProcessId2 != nProcessId) return HResult::GetLastDef(E_HANDLE);  // this should not happen!!
 
 #else
     // Just make sure the PID is valid ?
-    m_sPath = get_ProcessPath();
-    if (m_sPath.IsEmpty()) return E_FAIL;
+    _sFilePath = get_ProcessPath();
+    if (_sFilePath.IsEmpty()) return E_FAIL;
 #endif
 
     return S_OK;
@@ -227,9 +228,9 @@ HRESULT cOSProcess::CloseProcess() {
     //! send ::PostThreadMessage(WM_CLOSE) and wait for a bit, to allow programs to save.
     //! https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-postthreadmessagea
 
-    if (!m_ThreadId.isValidId()) return E_HANDLE;  // Didnt get an id.
+    if (!_ThreadId.isValidId()) return E_HANDLE;  // Didnt get an id.
 
-    if (!_GTN(::PostThreadMessage)(m_ThreadId.GetThreadId(), WM_CLOSE, 0, 0)) {
+    if (!_GTN(::PostThreadMessage)(_ThreadId.GetThreadId(), WM_CLOSE, 0, 0)) {
         return HResult::GetLastDef(E_HANDLE);
     }
     return S_OK;
@@ -243,7 +244,7 @@ HRESULT cOSProcess::CreateRemoteThread(THREAD_FUNC_t pvFunc, const void* pvArgs,
 
     // Load our DLL
     DWORD dwThreadId = 0;
-    thread.AttachHandle(::CreateRemoteThread(m_hProcess, nullptr, 0, pvFunc, (LPVOID)pvArgs, 0, &dwThreadId));
+    thread.AttachHandle(::CreateRemoteThread(_hProcess, nullptr, 0, pvFunc, (LPVOID)pvArgs, 0, &dwThreadId));
     if (!thread.isValidHandle()) return HResult::GetLast();
 
     return S_OK;
@@ -277,7 +278,7 @@ HRESULT cOSProcess::GetProcessCommandLine(cSpanX<wchar_t> ret) const {
     hRes = ReadProcessMemory(CastNumToPtr(peb.dwInfoBlockAddress), TOSPANT(block));
     if (FAILED(hRes)) return hRes;
 
-    return ReadProcessMemory(CastNumToPtr(block.dwCmdLineAddress), ret.GetSizeBytesMax(block.wMaxLength));
+    return ReadProcessMemory(CastNumToPtr(block.dwCmdLineAddress), ret.GetSpanLimit(block.wMaxLength));
 }
 #endif
 
@@ -313,7 +314,7 @@ HRESULT cOSProcess::WaitForProcessExit(TIMESYSD_t nTimeWait, APP_EXITCODE_t* pnE
 
 #ifdef _WIN32
     // Wait for the app to complete?
-    const HRESULT hRes = m_hProcess.WaitForSingleObject(nTimeWait);  // wait until its done!
+    const HRESULT hRes = _hProcess.WaitForSingleObject(nTimeWait);  // wait until its done!
     if (FAILED(hRes)) return hRes;                                   // i waited too long? handles are still open tho?
 
     // app has exited.
@@ -408,8 +409,8 @@ PROCESSID_t cOSProcess::GetProcessIDFromHandle() {
 	//! Get the PROCESSID_t from a process handle.
 	//! The handle must have the PROCESS_QUERY_INFORMATION access right
 	//! 0 = invalid kPROCESSID_BAD
-	if (m_nPid == kPROCESSID_BAD && m_hProcess.isValidHandle()) {
-		m_nPid = ::GetProcessId(m_hProcess.get_Handle());	// XP SP1 Function.
+	if (_nPid == kPROCESSID_BAD && _hProcess.isValidHandle()) {
+		_nPid = ::GetProcessId(_hProcess.get_Handle());	// XP SP1 Function.
 	}
 }
 #endif

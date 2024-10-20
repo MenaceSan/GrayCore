@@ -18,22 +18,22 @@ namespace Gray {
 /// used to enumerate/iterate position in cHashTableT.
 /// </summary>
 struct cHashIterator {  // inline
-    ITERATE_t m_b;      /// Bucket number in the hash.
-    ITERATE_t m_j;      /// element inside Bucket m_b.
+    ITERATE_t _b;       /// Bucket number in the hash.
+    ITERATE_t _j;       /// element inside Bucket _b.
 
-    cHashIterator(ITERATE_t nBucketNum = 0, ITERATE_t jj = 0) noexcept : m_b(nBucketNum), m_j(jj) {}
+    cHashIterator(ITERATE_t nBucketNum = 0, ITERATE_t jj = 0) noexcept : _b(nBucketNum), _j(jj) {}
     /// <summary>
     /// We are iterating the hash, and we deleted something, go back.
     /// </summary>
     void SkipRemoved() noexcept {
-        m_j--;
+        _j--;
     }
     ITERATE_t get_BucketNum() const noexcept {
         //! use with GetBucketSize()
-        return m_b;
+        return _b;
     }
     bool isValid() const noexcept {
-        return m_j >= 0;
+        return _j >= 0;
     }
 };
 
@@ -45,8 +45,8 @@ struct cHashIterator {  // inline
 template <class TYPE>
 struct cHashIteratorT {  // inline
     bool isEnd() const noexcept {
-        return m_b > k_HASH_BUCKET_QTY; i.m_b++)
-            for (i.m_j = 0; i.m_j < h.GetBucketSize(i.m_b); i.m_j++)
+        return _b > k_HASH_BUCKET_QTY; i._b++)
+            for (i._j = 0; i._j < h.GetBucketSize(i._b); i._j++)
     
     }
 struct cHashIterator;
@@ -65,7 +65,7 @@ class cHashStorageT {
     typedef cHashIterator const_iterator;  // like STL
 
  protected:
-    _TYPE_BUCKET m_aBucket[k_HASH_BUCKET_QTY];  // array of buckets
+    _TYPE_BUCKET _aBucket[k_HASH_BUCKET_QTY];  // array of buckets
 
  public:
     inline bool IsValidBucketNum(ITERATE_t nBucketNum) const {
@@ -73,21 +73,21 @@ class cHashStorageT {
     }
     inline const _TYPE_BUCKET& GetBucket(ITERATE_t nBucketNum) const {
         DEBUG_CHECK(IsValidBucketNum(nBucketNum));
-        return m_aBucket[nBucketNum];
+        return _aBucket[nBucketNum];
     }
     inline _TYPE_BUCKET& RefBucket(ITERATE_t nBucketNum) {
         DEBUG_CHECK(IsValidBucketNum(nBucketNum));
-        return m_aBucket[nBucketNum];
+        return _aBucket[nBucketNum];
     }
     inline ITERATE_t GetBucketSize(ITERATE_t nBucketNum) const noexcept {
         // Get the current fill level of a particular bucket.
         DEBUG_CHECK(IsValidBucketNum(nBucketNum));
-        return m_aBucket[nBucketNum].GetSize();
+        return _aBucket[nBucketNum].GetSize();
     }
 
     bool IsEmpty() const noexcept {
         for (ITERATE_t nBucketNum = 0; nBucketNum < k_HASH_BUCKET_QTY; nBucketNum++) {
-            if (!m_aBucket[nBucketNum].isEmpty()) return false;
+            if (!_aBucket[nBucketNum].isEmpty()) return false;
         }
         return true;
     }
@@ -95,7 +95,7 @@ class cHashStorageT {
     ITERATE_t get_TotalCount() const noexcept {
         ITERATE_t iTotalCount = 0;
         for (ITERATE_t nBucketNum = 0; nBucketNum < k_HASH_BUCKET_QTY; nBucketNum++) {
-            iTotalCount += m_aBucket[nBucketNum].GetSize();
+            iTotalCount += _aBucket[nBucketNum].GetSize();
         }
         return iTotalCount;
     }
@@ -103,19 +103,19 @@ class cHashStorageT {
     void RemoveAll() {
         // AKA Empty()
         for (ITERATE_t nBucketNum = 0; nBucketNum < k_HASH_BUCKET_QTY; nBucketNum++) {
-            this->m_aBucket[nBucketNum].RemoveAll();
+            this->_aBucket[nBucketNum].RemoveAll();
         }
     }
     void RemoveAt(cHashIterator& i) {
-        ASSERT(IsValidBucketNum(i.m_b));
-        m_aBucket[i.m_b].RemoveAt(i.m_j);
+        ASSERT(IsValidBucketNum(i._b));
+        _aBucket[i._b].RemoveAt(i._j);
         i.SkipRemoved();
     }
 
     const ELEM_t& GetAtHash(const cHashIterator& i) const {
         //! get from hash table. i must exist.
-        ASSERT(IS_INDEX_GOOD_ARRAY(i.m_b, this->m_aBucket));
-        return this->m_aBucket[i.m_b].GetAt(i.m_j);
+        ASSERT(IS_INDEX_GOOD_ARRAY(i._b, this->_aBucket));
+        return this->_aBucket[i._b].GetAt(i._j);
     }
 };
 
@@ -141,15 +141,15 @@ struct cHashTableT : public cHashStorageT<_TYPE_BUCKET, TYPE_HASHBITS> {
 
     cHashIterator FindIForKey(TYPE_HASHCODE rid) const {
         const ITERATE_t nBucketNum = GetBucketNum(rid);
-        return cHashIterator(nBucketNum, this->m_aBucket[nBucketNum].FindIForKey(rid));
+        return cHashIterator(nBucketNum, this->_aBucket[nBucketNum].FindIForKey(rid));
     }
 
     bool DeleteKey(TYPE_HASHCODE rid) {
         //! delete it
-        return this->m_aBucket[GetBucketNum(rid)].RemoveKey(rid);
+        return this->_aBucket[GetBucketNum(rid)].RemoveKey(rid);
     }
     const ELEM_t& GetAt2(TYPE_HASHCODE rid, ITERATE_t index) const {
-        return this->m_aBucket[this->GetBucketNum(rid)].GetAt(index);
+        return this->_aBucket[this->GetBucketNum(rid)].GetAt(index);
     }
 };
 
@@ -167,12 +167,12 @@ class cHashTableStruct : public cHashTableT<cArraySortStructHash<TYPE, TYPE_HASH
  public:
     const TYPE* FindArgForKey(TYPE_HASHCODE rid) const {
         const ITERATE_t nBucketNum = this->GetBucketNum(rid);
-        return this->m_aBucket[nBucketNum].FindArgForKey(rid);
+        return this->_aBucket[nBucketNum].FindArgForKey(rid);
     }
     const TYPE& Add(ARG_t rNew) {
         const ITERATE_t nBucketNum = this->GetBucketNum(rNew.get_HashCode());
-        const ITERATE_t index = this->m_aBucket[nBucketNum].AddSort(rNew, 0);
-        return this->m_aBucket[nBucketNum].GetAt(index);
+        const ITERATE_t index = this->_aBucket[nBucketNum].AddSort(rNew, 0);
+        return this->_aBucket[nBucketNum].GetAt(index);
     }
     /// <summary>
     /// Add only new hash node.
@@ -182,13 +182,13 @@ class cHashTableStruct : public cHashTableT<cArraySortStructHash<TYPE, TYPE_HASH
     TYPE* AddSpecial(ARG_t rNew) {
         const ITERATE_t nBucketNum = this->GetBucketNum(rNew.get_HashCode());
         COMPARE_t iCompareRes;
-        ITERATE_t index = this->m_aBucket[nBucketNum].FindINearS(rNew, OUT iCompareRes);
+        ITERATE_t index = this->_aBucket[nBucketNum].FindINearS(rNew, OUT iCompareRes);
         if (iCompareRes == COMPARE_Equal) {
             // duplicated.
-            return &this->m_aBucket[nBucketNum].ElementAt(index);  // special return that says it already was here.
+            return &this->_aBucket[nBucketNum].ElementAt(index);  // special return that says it already was here.
         }
         // not duplicate. must add
-        index = this->m_aBucket[nBucketNum].AddPresorted(index, iCompareRes, rNew);
+        index = this->_aBucket[nBucketNum].AddPresorted(index, iCompareRes, rNew);
         return nullptr;  // special return that says i added it.
     }
 };
@@ -208,15 +208,15 @@ class cHashTableRef : public cHashTableT<cArraySortHash<TYPE, TYPE_HASHCODE>, TY
  public:
     const TYPE* FindArgForKey(TYPE_HASHCODE rid) const {
         const ITERATE_t nBucketNum = this->GetBucketNum(rid);
-        return this->m_aBucket[nBucketNum].FindArgForKey(rid);
+        return this->_aBucket[nBucketNum].FindArgForKey(rid);
     }
     ITERATE_t Add(TYPE* pNew) {
         ASSERT_NN(pNew);
-        return this->m_aBucket[this->GetBucketNum(pNew->get_HashCode())].AddSort(pNew, 1);
+        return this->_aBucket[this->GetBucketNum(pNew->get_HashCode())].AddSort(pNew, 1);
     }
     bool DeleteArg(TYPE* pObj) {
         if (pObj == nullptr) return false;
-        return this->m_aBucket[this->GetBucketNum(pObj->get_HashCode())].RemoveArgKey(pObj);
+        return this->_aBucket[this->GetBucketNum(pObj->get_HashCode())].RemoveArgKey(pObj);
     }
 
     /// <summary>
@@ -225,7 +225,7 @@ class cHashTableRef : public cHashTableT<cArraySortHash<TYPE, TYPE_HASHCODE>, TY
     /// </summary>
     void DisposeAll() {
         for (ITERATE_t nBucketNum = 0; nBucketNum < SUPER_t::k_HASH_BUCKET_QTY; nBucketNum++) {
-            this->m_aBucket[nBucketNum].DisposeAll();
+            this->_aBucket[nBucketNum].DisposeAll();
         }
     }
 };
@@ -249,41 +249,41 @@ class cHashTableName : public cHashStorageT<cArraySortName<TYPE, char>, TYPE_HAS
 
     REF_t FindArgForKey(KEY_t pszName) const {
         const ITERATE_t nBucketNum = this->GetBucketNum(pszName);
-        return this->m_aBucket[nBucketNum].FindArgForKey(pszName);
+        return this->_aBucket[nBucketNum].FindArgForKey(pszName);
     }
 
     cHashIterator FindINearKey(KEY_t pszName, OUT COMPARE_t& iCompareRes) const {
         const ITERATE_t nBucketNum = GetBucketNum(pszName);
-        return cHashIterator(nBucketNum, this->m_aBucket[nBucketNum].FindINearKey(pszName, iCompareRes));
+        return cHashIterator(nBucketNum, this->_aBucket[nBucketNum].FindINearKey(pszName, iCompareRes));
     }
 
     ITERATE_t InsertAt(const cHashIterator& index, COMPARE_t iCompareRes, TYPE* pNew) {
         ASSERT_NN(pNew);
         const ITERATE_t nBucketNum = GetBucketNum(pNew->get_Name());
-        return this->m_aBucket[nBucketNum].AddPresorted(index.m_j, iCompareRes, pNew);
+        return this->_aBucket[nBucketNum].AddPresorted(index._j, iCompareRes, pNew);
     }
     ITERATE_t Add(TYPE* pNew) {
         ASSERT_NN(pNew);
-        return this->m_aBucket[this->GetBucketNum(pNew->get_Name())].AddSort(pNew);
+        return this->_aBucket[this->GetBucketNum(pNew->get_Name())].AddSort(pNew);
     }
 
     bool DeleteArg(TYPE* pObj) {
         if (pObj == nullptr) return false;
-        return this->m_aBucket[this->GetBucketNum(pObj->get_Name())].RemoveArgKey(pObj);
+        return this->_aBucket[this->GetBucketNum(pObj->get_Name())].RemoveArgKey(pObj);
     }
     bool isHashSorted() const {
         // No Dupes.
         for (ITERATE_t nBucketNum = 0; nBucketNum < SUPER_t::k_HASH_BUCKET_QTY; nBucketNum++) {
-            if (!this->m_aBucket[nBucketNum].isSpanSortedND()) return false;
+            if (!this->_aBucket[nBucketNum].isSpanSortedND()) return false;
         }
         return true;
     }
 };
 
 // Iterate through all members. iterator i; 	// similar to BOOST_FOREACH()
-#define FOREACH_HASH_TABLE(h, i)                                \
-    for (cHashIterator i; i.m_b < h.k_HASH_BUCKET_QTY; i.m_b++) \
-        for (i.m_j = 0; i.m_j < h.GetBucketSize(i.m_b); i.m_j++)
+#define FOREACH_HASH_TABLE(h, i)                              \
+    for (cHashIterator i; i._b < h.k_HASH_BUCKET_QTY; i._b++) \
+        for (i._j = 0; i._j < h.GetBucketSize(i._b); i._j++)
 }  // namespace Gray
 
 #endif  // _INC_CHASH_H

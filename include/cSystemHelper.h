@@ -17,13 +17,13 @@ namespace Gray {
 /// Higher level than cSystemInfo
 /// </summary>
 class GRAYCORE_LINK cSystemHelper final : public cSingleton<cSystemHelper> {
-    SINGLETON_IMPL(cSystemHelper);
 
  protected:
-    cStringF m_sSystemName;  /// Cached (or overridden for debug purposes) system name.
+    cStringF _sSystemName;  /// Cached (or overridden for debug purposes) system name.
 
  public:
-    cSystemInfo& m_Info;
+    DECLARE_cSingleton(cSystemHelper);
+    cSystemInfo& _SysInfo;
 
  protected:
     cSystemHelper();

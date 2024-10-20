@@ -15,6 +15,7 @@ namespace Gray {
 /// Bitmask to describe a native data type. used for type metadata. Fit in BYTE.
 /// </summary>
 enum CTYPE_FLAG_TYPE_ : BYTE {
+    CTYPE_FLAG_Unsigned = 0x01,
     CTYPE_FLAG_Numeric = 0x01,    /// A numeric value of some sort. (maybe time, float or int)
     CTYPE_FLAG_NumSigned = 0x02,  /// a signed numeric value. float or int. CTYPE_FLAG_Numeric
     CTYPE_FLAG_Float = 0x04,      /// Floating point. double or float. also CTYPE_FLAG_NumSigned|CTYPE_FLAG_Numeric
@@ -48,11 +49,11 @@ union CATTR_PACKED cUnion16 {
     }
     struct {
 #ifdef USE_LITTLE_ENDIAN
-        BYTE m_Lo;  // LowPart
-        BYTE m_Hi;  // HighPart
+        BYTE _Lo;  // LowPart
+        BYTE _Hi;  // HighPart
 #else
-        BYTE m_Hi;
-        BYTE m_Lo;
+        BYTE _Hi;
+        BYTE _Lo;
 #endif
     } u2;
 };
@@ -81,11 +82,11 @@ union CATTR_PACKED cUnion32 {
 
     struct {
 #ifdef USE_LITTLE_ENDIAN
-        cUnion16 m_Lo;  // LowPart
-        cUnion16 m_Hi;  // HighPart
+        cUnion16 _Lo;  // LowPart
+        cUnion16 _Hi;  // HighPart
 #else
-        cUnion16 m_Hi;
-        cUnion16 m_Lo;
+        cUnion16 _Hi;
+        cUnion16 _Lo;
 #endif
     } u2;
 };
@@ -121,11 +122,11 @@ union CATTR_PACKED cUnion64 {
 
     struct {
 #ifdef USE_LITTLE_ENDIAN
-        cUnion32 m_Lo;  // LowPart
-        cUnion32 m_Hi;  // HighPart
+        cUnion32 _Lo;  // LowPart
+        cUnion32 _Hi;  // HighPart
 #else
-        cUnion32 m_Hi;
-        cUnion32 m_Lo;
+        cUnion32 _Hi;
+        cUnion32 _Lo;
 #endif
     } u2;
 };

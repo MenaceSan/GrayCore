@@ -49,21 +49,21 @@ void cList::RemoveListNode(cListNode* pNodeRemove) {  // virtual Override this =
     cListNode* pNodePrev = pNodeRemove->get_Prev();
 
     if (pNodeNext != nullptr) {
-        // ASSUME pNodeNext->m_pPrev was pointing at this.
-        pNodeNext->m_pPrev = pNodePrev;
+        // ASSUME pNodeNext->_pPrev was pointing at this.
+        pNodeNext->_pPrev = pNodePrev;
     } else {
-        m_pTail = pNodePrev;
+        _pTail = pNodePrev;
     }
     if (pNodePrev != nullptr) {
-        // ASSUME pNodePrev->m_pNext was pointing at this.
-        pNodePrev->m_pNext = pNodeNext;
+        // ASSUME pNodePrev->_pNext was pointing at this.
+        pNodePrev->_pNext = pNodeNext;
     } else {
-        m_pHead = pNodeNext;
+        _pHead = pNodeNext;
     }
 
-    m_iCount--;
-    pNodeRemove->m_pNext = nullptr;
-    pNodeRemove->m_pPrev = nullptr;
+    _nCount--;
+    pNodeRemove->_pNext = nullptr;
+    pNodeRemove->_pPrev = nullptr;
     pNodeRemove->OnChangeListParent(nullptr);  // officially removed from list. may be virtual. may delete object!
 }
 
@@ -84,23 +84,23 @@ void cList::InsertListNode(cListNode* pNodeNew, cListNode* pNodePrev) {  // virt
     if (pNodePrev != nullptr) {  // put after some other node?
         DEBUG_CHECK(IsMyChild(pNodePrev));
         pNodeNext = pNodePrev->get_Next();
-        pNodePrev->m_pNext = pNodeNew;
+        pNodePrev->_pNext = pNodeNew;
     } else {
         pNodeNext = get_Head();  // put at head.
-        m_pHead = pNodeNew;
+        _pHead = pNodeNew;
     }
 
-    pNodeNew->m_pPrev = pNodePrev;
+    pNodeNew->_pPrev = pNodePrev;
 
     if (pNodeNext != nullptr) {
         DEBUG_CHECK(IsMyChild(pNodeNext));
-        pNodeNext->m_pPrev = pNodeNew;
+        pNodeNext->_pPrev = pNodeNew;
     } else {
-        m_pTail = pNodeNew;
+        _pTail = pNodeNew;
     }
 
-    m_iCount++;
-    pNodeNew->m_pNext = pNodeNext;
+    _nCount++;
+    pNodeNew->_pNext = pNodeNext;
     pNodeNew->OnChangeListParent(this);
     DEBUG_CHECK(pNodeNew->hasParent());
 }
@@ -117,7 +117,7 @@ void cList::MoveListNodes(cList* pListSrc, cListNode* pNodePrev) {
     }
 }
 
-cListNode* cList::GetAt(ITERATE_t index) const {
+cListNode* cList::GetAt(ITERATE_t index) const noexcept {
     if (IS_INDEX_BAD(index, get_Count())) return nullptr;
     cListNode* pNode = get_Head();
     while (index-- > 0 && pNode != nullptr) {

@@ -107,6 +107,7 @@ http://www.stack.nl/~dimitri/doxygen/commands.html#cmdfile
 use http://www.die.net for Linux man docs.
 
 Build for WSL: (Linux)
+cd /dennis/source/Gray/GrayCore
 sudo apt-get update
 cmake .
 cmake --build . -j8

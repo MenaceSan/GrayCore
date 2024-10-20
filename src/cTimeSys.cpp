@@ -43,13 +43,13 @@ void cTimePerf::InitTimeNow() noexcept {
     //! QueryPerformanceCounter() is better than 'rdtsc' for multi core.
     //! available >= Windows 2000
 #ifdef _WIN32
-    if (!::QueryPerformanceCounter(reinterpret_cast<LARGE_INTEGER*>(&m_nTime))) {
-        m_nTime = cTimeSys::GetTimeNow();
+    if (!::QueryPerformanceCounter(reinterpret_cast<LARGE_INTEGER*>(&_nTimePerf))) {
+        _nTimePerf = cTimeSys::GetTimeNow();
     }
 #else  // __linux__
     cTimeSpec tNow;
     tNow.InitTimeNow();
-    m_nTime = tNow.get_nSec();  // nano-sec.
+    _nTimePerf = tNow.get_nSec();  // nano-sec.
 #endif
 }
 
@@ -80,8 +80,8 @@ unsigned long GRAYCALL cTimeSys::WaitSpin(TIMESYSD_t nmSecs) {  // static
     VOLATILE unsigned long i = 0;  // for busy-waiting
     VOLATILE unsigned long j = 0;  // to prevent optimization
 
-    cTimeSys t(cTimeSys::GetTimeNow());
-    while (t.get_AgeSys() < nmSecs) {
+    const cTimeSys tNow(cTimeSys::GetTimeNow());
+    while (tNow.get_AgeSys() < nmSecs) {
         i++;
     }
 
@@ -90,22 +90,22 @@ unsigned long GRAYCALL cTimeSys::WaitSpin(TIMESYSD_t nmSecs) {  // static
 }
 
 bool cTimerSys::OnTickCheck(TIMESYS_t now) noexcept {
-    const TIMESYSD_t diff = CastN(TIMESYSD_t, m_TimeSys - now);
+    const TIMESYSD_t diff = CastN(TIMESYSD_t, _TimeSys - now);
     if (diff < 0)  // wait
         return false;
-    if (m_TimeSys == k_CLEAR || m_TimeSys == k_INF)  // invalid!
+    if (_TimeSys == k_CLEAR || _TimeSys == k_INF)  // invalid!
         return false;
     if (_Freq == 0) {
-        m_TimeSys = k_INF;
+        _TimeSys = k_INF;
         return true;  // trigger now but never again.
     }
     if (diff <= _Freq) {
         // schedule again for the future.
-        m_TimeSys += _Freq;
+        _TimeSys += _Freq;
         return true;
     }
     // Missed multiple ticks!?? go again ASAP!
-    m_TimeSys = now + 1;
+    _TimeSys = now + 1;
     return true;
 }
 }  // namespace Gray

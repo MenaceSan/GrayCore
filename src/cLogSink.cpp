@@ -25,17 +25,18 @@ void cLogEvent::GetFormattedDefault(StrBuilder<LOGCHAR_t>& s) const {
         s.AddStr("!");
     }
 #endif
-    if (m_pszSubject != nullptr) {
+    if (_pszSubject != nullptr) {
         // Show subject as Prefix?
-        s.AddStr(m_pszSubject);
+        s.AddStr(_pszSubject);
         s.AddChar(':');
     }
 
-    s.AddStr(m_sMsg);
-    StrLen_t iLen = m_sMsg.GetLength();
+    s.AddStr(_sMsg);
+    const StrLen_t iLen = _sMsg.GetLength();
     ASSERT(iLen > 0);
 
-    bool bHasCRLF = (m_sMsg[iLen - 1] == '\r' || m_sMsg[iLen - 1] == '\n');  // FILE_EOL ?
+    const LOGCHAR_t chLast = _sMsg[iLen - 1];
+    const bool bHasCRLF = (chLast == '\r' || chLast == '\n');  // FILE_EOL ?
     if (!bHasCRLF && !IsLogAttrMask(LOG_ATTR_NOCRLF)) {
         s.AddStr(FILE_EOL);
     }
@@ -50,7 +51,7 @@ cStringL cLogEvent::get_FormattedDefault() const {
 
 //**************************************************************
 
-cLogThrottle::cLogThrottle() noexcept : m_fLogThrottle(2000.0f), m_TimeLogLast(cTimeSys::k_CLEAR), m_nQtyLogLast(0) {}
+cLogThrottle::cLogThrottle() noexcept : _fLogThrottle(2000.0f), _TimeLogLast(cTimeSys::k_CLEAR), _nQtyLogLast(0) {}
 
 //************************************************************************
 
@@ -90,12 +91,14 @@ bool cLogSink::RemoveSinkThis() {
 HRESULT cLogSinkDebug::WriteString(const LOGCHAR_t* pszText) {  // override
     //! Do NOT assume new line.
 #ifdef _WIN32
-    const auto guard(m_Lock.Lock());
+    const auto guard(_Lock.Lock());
 #ifdef UNDER_CE
     ::OutputDebugStringW(StrArg<wchar_t>(pszText));
 #else
     ::OutputDebugStringA(pszText);
 #endif
+#elif defined(__linux__)
+    // ::syslog()
 #endif
     return S_OK;
 }

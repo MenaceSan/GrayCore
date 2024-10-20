@@ -22,7 +22,7 @@ class GRAYCORE_LINK cThreadLockRW : public cThreadLockableFast {
     friend struct cThreadGuardRead;
     typedef cThreadLockableFast SUPER_t;
     static const THREADID_t kReaderThreadId = 1;  // shared unique thread id for all readers.
-    cThreadLockableFast m_ReaderLock;                 // Since this is shared with multiple threads it must be locked from itself.
+    cThreadLockableFast _ReaderLock;                 // Since this is shared with multiple threads it must be locked from itself.
     /// <summary>
     /// lock this for Read
     /// </summary>
@@ -32,7 +32,7 @@ class GRAYCORE_LINK cThreadLockRW : public cThreadLockableFast {
             SUPER_t::IncLockCount();
             return;
         }
-        auto guard(m_ReaderLock.Lock());
+        auto guard(_ReaderLock.Lock());
         LockThread(kReaderThreadId, cTimeSys::k_INF);
         ASSERT(IsThreadLockOwner(kReaderThreadId));
     }
@@ -47,7 +47,7 @@ class GRAYCORE_LINK cThreadLockRW : public cThreadLockableFast {
             return;
         }
         // we may not be the same real thread that locked this originally!
-        auto guard(m_ReaderLock.Lock());
+        auto guard(_ReaderLock.Lock());
         ASSERT(IsThreadLockOwner(kReaderThreadId));
         UnlockThread();
     }

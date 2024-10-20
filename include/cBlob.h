@@ -16,16 +16,17 @@ namespace Gray {
 /// </summary>
 enum class MEMTYPE_t : BYTE {
     _Null = 0,     /// nullptr allocation.
-    _StaticConst,  /// Static const. No free, No write. Pointer lives forever.
-    _Static,       /// Static allocation of memory. No free but i might write to it. Pointer lives forever.
+    _StaticConst,  /// Static const data. No free, No write. Pointer lives forever. attempt to write => throw.
+    _Static,       /// Static allocation of data memory. No free but i might write to it. Pointer lives forever.
     _Temp,         /// Externally/unknown allocated. probably Stack based? Cannot preserve pointer.
 
     /// <summary>
     /// A cHeap allocated blob. Allow write, cHeap::FreePtr() on destruct.
-    /// heap allocated size might be more than cMemSpan m_nSize in __linux__ or Lazy allocations.
+    /// heap allocated size might be more than cMemSpan GetSize() in __linux__ or Lazy allocations.
     /// ASSUME pointer aligned to k_SizeAlignDef = 8 bytes on 32 bit systems, 16 bytes on 64 bit systems.
     /// </summary>
     _Heap,
+    // TODO. Windows GlobalHeap ? LocalHeap ?
 
     // TODO BitMask added to indicate alignment required.
     _A16 = 0x11,   /// 16 byte cHeapAlign. Used only for 32 bit since same as default for 64 bit.
@@ -33,23 +34,23 @@ enum class MEMTYPE_t : BYTE {
     _A64 = 0x13,   /// 64 byte cHeapAlign.
     _A128 = 0x14,  /// 128 byte cHeapAlign.
 
-    _Secret = 0x20,  /// Zero on Free
+    _Secret = 0x20,  /// Zero on Free. Bit Mask. TODO. FIXME
 };
 
 /// <summary>
 /// A cMemSpan managed according to MEMTYPE_t. Maybe heap, or static, etc.
+/// What type of memory is cMemSpan stored in? should we manage/free this cMemSpan?
 /// </summary>
 class GRAYCORE_LINK cBlob : public cMemSpan {
     typedef cBlob THIS_t;
     typedef cMemSpan SUPER_t;
 
-    MEMTYPE_t _MemType = MEMTYPE_t::_Null;  /// What type of memory is cMemSpan stored in? should we manage this cMemSpan?
-
     // Don't allow public access to some cMemSpan methods.
+    void put_SizeBytes(size_t nSize) = delete;
     void SetSpanNull() = delete;
     void SetSpanConst(const void* pData, size_t nSize) = delete;
-    void SetSpan2(void* pData, size_t nSize) = delete;
     void SetSpan(const SUPER_t& a) = delete;
+    void SetSpan2(void* pData, size_t nSize) = delete;
     void SetSkipBytes(size_t nSize) = delete;
 
     /// <summary>
@@ -57,16 +58,24 @@ class GRAYCORE_LINK cBlob : public cMemSpan {
     /// </summary>
     void FreeHeap() noexcept;
 
- public:
-    static const THIS_t k_EmptyBlob;
+    static constexpr size_t MakeSize(size_t nSize, MEMTYPE_t nUpperByte) {
+        ASSERT(nSize <= kLowerMask);
+        return nSize | (CastN(size_t, nUpperByte) << kUpperByteShift);
+    }
+    static constexpr size_t MakeSize(const cMemSpan& m, MEMTYPE_t nUpperByte) {
+        return MakeSize(m.get_SizeBytes(), nUpperByte);
+    }
 
-    constexpr cBlob() noexcept : SUPER_t(nullptr, 0), _MemType(MEMTYPE_t::_Null) {}
-    constexpr cBlob(const cMemSpan& m, bool isStaticWritable) noexcept : SUPER_t(m), _MemType(isStaticWritable ? MEMTYPE_t::_Static : MEMTYPE_t::_StaticConst) {}
+ public:
+    static const THIS_t k_Empty;
+
+    constexpr cBlob() noexcept {}
+    constexpr cBlob(const cMemSpan& m, bool isStaticWritable) noexcept : SUPER_t(m, MakeSize(m, isStaticWritable ? MEMTYPE_t::_Static : MEMTYPE_t::_StaticConst)) {}
 
     /// <summary>
     /// move constructor.
     /// </summary>
-    cBlob(THIS_t&& ref) noexcept : SUPER_t(ref), _MemType(ref._MemType) {
+    cBlob(THIS_t&& ref) noexcept : SUPER_t(ref) {
         ref.DetachBlob();
     }
     /// <summary>
@@ -93,9 +102,14 @@ class GRAYCORE_LINK cBlob : public cMemSpan {
         }
     }
 
+    /// How is the memory managed?
+    constexpr MEMTYPE_t get_MemType() const noexcept {
+        return CastN(MEMTYPE_t, SUPER_t::get_UpperByte());
+    }
+
     /// Can this grow?
     inline constexpr bool isHeap() const noexcept {
-        return _MemType >= MEMTYPE_t::_Heap;
+        return get_MemType() >= MEMTYPE_t::_Heap;
     }
 
     /// <summary>
@@ -104,7 +118,7 @@ class GRAYCORE_LINK cBlob : public cMemSpan {
     /// </summary>
     /// <returns></returns>
     inline constexpr bool isReadOnly() const noexcept {
-        return _MemType == MEMTYPE_t::_StaticConst;
+        return get_MemType() == MEMTYPE_t::_StaticConst;
     }
 
     /// <summary>
@@ -143,8 +157,8 @@ class GRAYCORE_LINK cBlob : public cMemSpan {
     /// Someone has copied this buffer. Clear without free.
     /// </summary>
     void DetachBlob() noexcept {
-        _MemType = MEMTYPE_t::_Null;
         SUPER_t::SetSpanNull();
+        DEBUG_CHECK(get_MemType() == MEMTYPE_t::_Null);
     }
 
     /// copy assignment operator. Allocate a new copy.
@@ -156,7 +170,6 @@ class GRAYCORE_LINK cBlob : public cMemSpan {
     /// move assignment operator
     THIS_t& operator=(THIS_t&& ref) noexcept {
         SUPER_t::SetSpan(ref);
-        _MemType = ref._MemType;
         ref.DetachBlob();
         return *this;
     }
@@ -175,7 +188,7 @@ class GRAYCORE_LINK cBlob : public cMemSpan {
     }
 
     /// <summary>
-    /// Allocate a NEW memory blob of size. assume m_pData points to uninitialized data.
+    /// Allocate a NEW memory blob of size. assume _pData points to uninitialized data.
     /// @note cHeap::AllocPtr(0) != nullptr ! maybe ?
     /// Some really old/odd code relies on AllocPtr(0) having/returning a real pointer? not well defined.
     /// @note why not prefer using ReAlloc() ?

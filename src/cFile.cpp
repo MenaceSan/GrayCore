@@ -31,7 +31,7 @@ HRESULT cFile::OpenSetup(cFilePath sFilePath, OF_FLAGS_t nOpenFlags) {
 
     if (sFilePath.IsEmpty() || get_FilePath().IsEqualNoCase(sFilePath)) {
         // Name is already set ? and already open ?
-        if (isValidHandle() && m_nOpenFlags == nOpenFlags) {
+        if (isValidHandle() && _nOpenFlags == nOpenFlags) {
             ASSERT(!get_FilePath().IsEmpty());
             return S_FALSE;
         }
@@ -40,12 +40,12 @@ HRESULT cFile::OpenSetup(cFilePath sFilePath, OF_FLAGS_t nOpenFlags) {
     Close();  // Make sure it's closed first. re-using this structure.
 
     if (!sFilePath.IsEmpty()) {
-        m_strFileName = sFilePath;
+        _strFileName = sFilePath;
     }
 
-    m_nOpenFlags = nOpenFlags;
+    _nOpenFlags = nOpenFlags;
 
-    // DEBUG_TRACE(( "Open file '%s' flags=0%x", LOGSTR(m_strFileName), nOpenFlags ));
+    // DEBUG_TRACE(( "Open file '%s' flags=0%x", LOGSTR(_strFileName), nOpenFlags ));
     return S_OK;
 }
 
@@ -118,7 +118,7 @@ HRESULT cFile::OpenCreate2(cFilePath sFilePath, OF_FLAGS_t nOpenFlags, ::_SECURI
         dwFlagsAndAttributes |= FILE_FLAG_SEQUENTIAL_SCAN;
     }
 
-    AttachHandle(::CreateFileW(cFilePath::GetFileNameLongW(sFilePath), dwDesiredAccess, dwShareMode, nullptr, dwCreationDisposition, dwFlagsAndAttributes, HANDLE_NULL));
+    AttachHandle(::CreateFileW(cFilePath::GetFileNameLongW(sFilePath), dwDesiredAccess, dwShareMode, nullptr, dwCreationDisposition, dwFlagsAndAttributes, cOSHandle::kNULL));
 
 #elif defined(__linux__)
     // http://linux.die.net/man/2/open
@@ -162,12 +162,12 @@ HRESULT cFile::OpenCreate(cStringF sFilePath, OF_FLAGS_t nOpenFlags, ::_SECURITY
     }
 
     ASSERT(!isValidHandle());
-    hRes = OpenCreate2(m_strFileName, nOpenFlags, nullptr);
+    hRes = OpenCreate2(_strFileName, nOpenFlags, nullptr);
     if (hRes == HRESULT_WIN32_C(ERROR_PATH_NOT_FOUND) && (nOpenFlags & OF_CREATE)) {
         // must create the stupid path first.
-        hRes = cFileDir::CreateDirForFileX(m_strFileName);
+        hRes = cFileDir::CreateDirForFileX(_strFileName);
         if (SUCCEEDED(hRes)) {
-            hRes = OpenCreate2(m_strFileName, nOpenFlags, nullptr);
+            hRes = OpenCreate2(_strFileName, nOpenFlags, nullptr);
         }
     }
     if (FAILED(hRes)) return hRes;
@@ -239,12 +239,10 @@ const FILECHAR_t* cFile::get_FileExt() const {
 }
 
 bool cFile::IsFileNameExt(const cSpan<FILECHAR_t>& ext) const noexcept {
-    //! is the pszExt a match? MIME
     return cFilePath::IsFileNameExt(get_FilePath().get_SpanStr(), ext);
 }
 
 STREAM_POS_t cFile::GetPosition() const noexcept {  // virtual
-    //! Get the current read position in the file.
     if (!isValidHandle()) return k_STREAM_POS_ERR;
     return SeekRaw(0, SEEK_t::_Cur);
 }
@@ -258,16 +256,21 @@ HRESULT cFile::GetStatusSys(OUT cFileStatusSys& statusSys) const {
 }
 #endif
 
-STREAM_POS_t cFile::GetLength() const noexcept {  // virtual
-    //! Get the size of the open file in bytes. like MFC
-    //! @return <0 = error. (or directory?)
+STREAM_POS_t cFile::GetLength() const noexcept {  // override
     if (!isValidHandle()) return k_STREAM_POS_ERR;  // E_HANDLE
 #ifdef _WIN32
-#ifdef USE_FILE_POS64
-    LARGE_INTEGER FileSize;
-    bool bRet = ::GetFileSizeEx(get_Handle(), &FileSize);
+#if defined(USE_FILE_POS64)
+#if (_WIN32_WINNT >= _WIN32_WINNT_VISTA)
+    ::FILE_STANDARD_INFO fileInfo; // DirectX 12 sample code prefers this.
+    const bool bRet = ::GetFileInformationByHandleEx(get_Handle(), FileStandardInfo, &fileInfo, sizeof(fileInfo));
+    if (!bRet) return k_STREAM_POS_ERR; // return HRESULT_FROM_WIN32(GetLastError());
+    return CastN(STREAM_POS_t, fileInfo.EndOfFile.QuadPart);
+#else
+    ::LARGE_INTEGER fileSize;
+    const bool bRet = ::GetFileSizeEx(get_Handle(), &fileSize);
     if (!bRet) return k_STREAM_POS_ERR;
-    return (STREAM_POS_t)FileSize.QuadPart;
+    return CastN(STREAM_POS_t, fileSize.QuadPart);
+#endif
 #else
     return ::GetFileSize(get_Handle(), nullptr);
 #endif
@@ -291,7 +294,7 @@ HRESULT cFile::SetLength(STREAM_POS_t dwNewLen) {  // virtual
         // ASSUME HResult::GetLast() set.
         hRes = HResult::GetLast();
         DEBUG_ERR(("cFile::SetLength %d ERR='%s'", dwNewLen, LOGERR(hRes)));
-        // CFileException::ThrowOsError( hRes, m_strFileName);
+        // CFileException::ThrowOsError( hRes, _strFileName);
     } else {
         ::SetLastError(NO_ERROR);  // Why is this my job ?
     }
@@ -368,11 +371,11 @@ HRESULT cFile::GetFileStatus(OUT cFileStatus& attr) const {
         return HResult::GetLastDef(E_HANDLE);
     }
 
-    attr.m_timeCreate = fi.ftCreationTime;                                         // m_ctime  = (may not be supported).
-    attr.m_timeChange = fi.ftLastWriteTime;                                        // m_mtime = real world time/date of last modification. (accurate to 2 seconds)
-    attr.m_timeLastAccess = fi.ftLastAccessTime;                                   // m_atime = time of last access/Open. (For Caching). (may not be supported)
-    attr.m_Size = fi.nFileSizeLow | (CastN(FILE_SIZE_t, fi.nFileSizeHigh) << 32);  // file size in bytes.
-    attr.m_Attributes = static_cast<FILEATTR_t>(fi.dwFileAttributes);              // Mask of ATTR_ attribute bits. ATTR_Normal
+    attr._timeCreate = fi.ftCreationTime;                                         // m_ctime  = (may not be supported).
+    attr._timeChange = fi.ftLastWriteTime;                                        // m_mtime = real world time/date of last modification. (accurate to 2 seconds)
+    attr._timeLastAccess = fi.ftLastAccessTime;                                   // m_atime = time of last access/Open. (For Caching). (may not be supported)
+    attr._nSize = fi.nFileSizeLow | (CastN(FILE_SIZE_t, fi.nFileSizeHigh) << 32);  // file size in bytes.
+    attr._AttributeFlags = static_cast<FILEATTR_t>(fi.dwFileAttributes);           // Mask of ATTR_ attribute bits. ATTR_Normal
 
 #elif defined(__linux__)
 
@@ -432,7 +435,7 @@ HRESULT cFile::FlushX() {  // virtual
     const HRESULT hRes = cOSHandle::FlushX();
     if (FAILED(hRes)) {
         DEBUG_WARN(("File Flush failed"));
-        // CFileException::ThrowOsError( HResult::GetLast(), m_strFileName);
+        // CFileException::ThrowOsError( HResult::GetLast(), _strFileName);
         return hRes;
     }
     return S_OK;

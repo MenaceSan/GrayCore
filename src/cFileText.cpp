@@ -52,77 +52,67 @@ cFileText::~cFileText() noexcept {
 const FILECHAR_t* cFileText::get_ModeCPtr() const {
     //! get the proper fopen() mode arguments.
     const UINT nOpenFlags = get_ModeFlags();
-
-    if (nOpenFlags & OF_READWRITE)  // "r+b"
-        return _FN("ab+");
+    if (nOpenFlags & OF_READWRITE) return _FN("ab+");  // "r+b"
 
     if (nOpenFlags & OF_CACHE_SEQ) {
         // Only used sequentially.
-        if (isModeWrite()) {
-            return _FN("wbS");
-        }
+        if (isModeWrite()) return _FN("wbS");
         return _FN("rbS");
     }
 
-    if (!(nOpenFlags & OF_TEXT)) {  // OF_BINARY
-        return isModeWrite() ? _FN("wb") : _FN("rb");
-    }
+    if (!(nOpenFlags & OF_TEXT))  return isModeWrite() ? _FN("wb") : _FN("rb"); // OF_BINARY
 
     // text modes. (Never do "\r\n" translation?! it messes up the ftell()
     if (nOpenFlags & OF_CREATE) return _FN("w");
-    if (isModeWrite())
-        return _FN("w");  // "wb+"
-    else
-        return _FN("r");
+    if (isModeWrite()) return _FN("w");  // "wb+"
+    return _FN("r");
 }
 
 HRESULT cFileText::OpenFileHandle(HANDLE h, OF_FLAGS_t nOpenFlags) {
     // Use _fdopen() to get the backing OSHandle.
-    m_nOpenFlags = nOpenFlags;
+    _nOpenFlags = nOpenFlags;
 
 #ifdef __GNUC__
-    m_pStream = ::fdopen((FILEDESC_t)h, StrArg<char>(get_ModeCPtr()));
+    _pStream = ::fdopen((FILEDESC_t)h, StrArg<char>(get_ModeCPtr()));
 #else
-    FILEDESC_t hConHandle = ::_open_osfhandle((intptr_t)h, O_TEXT);  // convert OS HANDLE to C file int handle. _O_TEXT
-    m_pStream = ::_fdopen(hConHandle, StrArg<char>(get_ModeCPtr()));
+    const FILEDESC_t hConHandle = ::_open_osfhandle((intptr_t)h, O_TEXT);  // convert OS HANDLE to C file int handle. _O_TEXT
+    _pStream = ::_fdopen(hConHandle, StrArg<char>(get_ModeCPtr()));
 #endif
-    if (m_pStream == nullptr) {
-        return HRESULT_WIN32_C(ERROR_INVALID_TARGET_HANDLE);  // Why ??
-    }
-    int iRet = ::setvbuf(m_pStream, nullptr, _IONBF, 0);  //
-    if (iRet != 0) {
-        // invalid mode parameter or to some other error allocating or assigning the buffer.
-        return HResult::GetPOSIXLastDef(E_FAIL);
-    }
+    if (_pStream == nullptr)  return HRESULT_WIN32_C(ERROR_INVALID_TARGET_HANDLE);  // Why ??
+
+    const int iRet = ::setvbuf(_pStream, nullptr, _IONBF, 0);
+    // invalid mode parameter or to some other error allocating or assigning the buffer.
+    if (iRet != 0) return HResult::GetPOSIXLastDef(E_FAIL);
+
     sm_iFilesOpen++;
     AttachHandle(h);
     return S_OK;
 }
 
 HRESULT cFileText::OpenX(cStringF sFilePath, OF_FLAGS_t nOpenFlags) {
-    m_iLineNumCur = 0;
+    _iLineNumCur = 0;
 
     HRESULT hRes = OpenSetup(sFilePath, nOpenFlags);
     if (FAILED(hRes)) return hRes;
 
-    ASSERT(m_pStream == nullptr);
+    ASSERT(_pStream == nullptr);
     const FILECHAR_t* pszMode = get_ModeCPtr();
 
     // _wfsopen() for wchar_t
 #if !defined(UNDER_CE) && (_MSC_VER >= 1400)
 #if USE_UNICODE_FN
-    errno_t eRet = ::_wfopen_s(&m_pStream, sFilePath, pszMode);
+    const errno_t eRet = ::_wfopen_s(&_pStream, sFilePath, pszMode);
 #else
-    errno_t eRet = ::fopen_s(&m_pStream, sFilePath, pszMode);
+    const errno_t eRet = ::fopen_s(&_pStream, sFilePath, pszMode);
 #endif
 #else
 #if USE_UNICODE_FN
-    m_pStream = ::_wfopen(sFilePath, pszMode);
+    _pStream = ::_wfopen(sFilePath, pszMode);
 #else
-    m_pStream = ::fopen(sFilePath, pszMode);
+    _pStream = ::fopen(sFilePath, pszMode);
 #endif
 #endif
-    if (m_pStream == nullptr) {
+    if (_pStream == nullptr) {
 #if !defined(UNDER_CE) && (_MSC_VER >= 1400)
         return HResult::FromPOSIX(eRet);
 #else
@@ -134,12 +124,12 @@ HRESULT cFileText::OpenX(cStringF sFilePath, OF_FLAGS_t nOpenFlags) {
     sm_iFilesOpen++;
     DEBUG_CHECK(sm_iFilesOpen >= 0);
 
-    // Get the low level handle for it. m_hFile cFile functions use it instead.
+    // Get the low level handle for it. _hFile cFile functions use it instead.
     // NOTE: the POSIX 'int' handle (low level file descriptor) is not the same as the OS HANDLE in windows.
 #if defined(_MSC_VER)
-    FILEDESC_t iFileNo = ::_fileno(m_pStream);
+    const FILEDESC_t iFileNo = ::_fileno(_pStream);
 #else
-    FILEDESC_t iFileNo = fileno(m_pStream);           // macro
+    const FILEDESC_t iFileNo = fileno(_pStream);  // macro
 #endif
 
 #if defined(__linux__) || defined(UNDER_CE)
@@ -155,12 +145,12 @@ void cFileText::Close() noexcept {  // virtual
     if (!isValidHandle()) return;
 
     if (isModeWrite()) {
-        ::fflush(m_pStream);
+        ::fflush(_pStream);
     }
-    bool bSuccess = (::fclose(m_pStream) == 0);
+    const bool bSuccess = (::fclose(_pStream) == 0);
     DEBUG_CHECK(bSuccess);
     UNREFERENCED_PARAMETER(bSuccess);
-    m_pStream = nullptr;
+    _pStream = nullptr;
 
     DetachHandle();
 }
@@ -173,22 +163,22 @@ HRESULT cFileText::SeekX(STREAM_OFFSET_t offset, SEEK_t eSeekOrigin) noexcept { 
     //!  <0 = FAILED
     //!  new file pointer position % int32.
     if (!isValidHandle()) return E_HANDLE;
-    if (::fseek(m_pStream, (long)offset, (int)eSeekOrigin) != 0) return HResult::GetLastDef();
+    if (::fseek(_pStream, (long)offset, (int)eSeekOrigin) != 0) return HResult::GetLastDef();
 
     if (eSeekOrigin == SEEK_t::_Set) {  // SEEK_SET = FILE_BEGIN
         if (offset == 0) {
-            m_iLineNumCur = 0;  // i actually know the line number for this position.
+            _iLineNumCur = 0;  // i actually know the line number for this position.
         }
-        return (HRESULT)offset;
+        return CastN(HRESULT, offset);
     }
-    m_iLineNumCur = k_ITERATE_BAD;  // invalid. no idea what the line number is now!
+    _iLineNumCur = k_ITERATE_BAD;  // invalid. no idea what the line number is now!
     return S_OK;
 }
 
 FILE* cFileText::DetachFileStream() noexcept {
-    FILE* pStream = m_pStream;
+    FILE* pStream = _pStream;
     DetachHandle();
-    m_pStream = nullptr;
+    _pStream = nullptr;
     return pStream;
 }
 
@@ -197,15 +187,14 @@ STREAM_POS_t cFileText::GetPosition() const noexcept {  // virtual
     //! @note end of line translation might be broken? ftell and fseek don't work correctly when you use it.
     //! @return -1 = error.
     if (!isValidHandle()) return k_STREAM_POS_ERR;
-    return ::ftell(m_pStream);
+    return ::ftell(_pStream);
 }
 
 HRESULT cFileText::FlushX() {  // virtual
     if (!isValidHandle()) return S_OK;
-    ASSERT(m_pStream != nullptr);
-    int iRet = ::fflush(m_pStream);
-    if (iRet != 0)  // EOF
-    {
+    ASSERT(_pStream != nullptr);
+    const int iRet = ::fflush(_pStream);
+    if (iRet != 0) {  // EOF
         return HResult::GetPOSIXLastDef(HRESULT_WIN32_C(ERROR_WRITE_FAULT));
     }
     return S_OK;
@@ -213,13 +202,13 @@ HRESULT cFileText::FlushX() {  // virtual
 
 bool cFileText::isEOF() const {
     if (!isValidHandle()) return true;
-    return ::feof(m_pStream) ? true : false;
+    return ::feof(_pStream) ? true : false;
 }
 
 HRESULT cFileText::GetStreamError() const {
     // errno in M$
     if (!isValidHandle()) return HRESULT_WIN32_C(ERROR_INVALID_TARGET_HANDLE);
-    return HResult::FromPOSIX(::ferror(m_pStream));
+    return HResult::FromPOSIX(::ferror(_pStream));
 }
 
 HRESULT cFileText::ReadX(cMemSpan ret) noexcept {  // virtual
@@ -233,12 +222,12 @@ HRESULT cFileText::ReadX(cMemSpan ret) noexcept {  // virtual
     if (!isValidHandle()) return HRESULT_WIN32_C(ERROR_INVALID_TARGET_HANDLE);
     if (isEOF()) return 0;  // LINUX will ASSERT if we read past end.
 
-    const size_t uRet = ::fread(ret.get_BytePtrW(), 1, ret.get_SizeBytes(), m_pStream);
+    const size_t uRet = ::fread(ret.get_BytePtrW(), 1, ret.get_SizeBytes(), _pStream);
     ASSERT(uRet >= 0);
     if (uRet > ret.get_SizeBytes()) {
         return HResult::GetDef(GetStreamError(), HRESULT_WIN32_C(ERROR_READ_FAULT));
     }
-    // m_iLineNumCur++; // no idea how many lines.
+    // _iLineNumCur++; // no idea how many lines.
     return CastN(HRESULT, uRet);  // size we got. 0 = end of file?
 }
 
@@ -250,12 +239,12 @@ HRESULT cFileText::WriteX(const cMemSpan& m) {  // virtual
     if (m.isNull()) return E_INVALIDARG;
 
     if (!isValidHandle()) return HRESULT_WIN32_C(ERROR_INVALID_TARGET_HANDLE);
-    size_t uRet = ::fwrite(m, m.get_SizeBytes(), 1, m_pStream);
+    size_t uRet = ::fwrite(m, m.get_SizeBytes(), 1, _pStream);
     if (uRet != 1) {
         return HResult::GetDef(GetStreamError(), HRESULT_WIN32_C(ERROR_WRITE_FAULT));
     }
 
-    m_iLineNumCur++;  // count lines ?? ASSUME it was just 1 line ???
+    _iLineNumCur++;  // count lines ?? ASSUME it was just 1 line ???
     return CastN(HRESULT, m.get_SizeBytes());
 }
 
@@ -270,11 +259,11 @@ HRESULT cFileText::WriteString(const char* pszStr) {  // virtual
     if (pszStr == nullptr) return E_INVALIDARG;
     if (!isValidHandle()) return HRESULT_WIN32_C(ERROR_INVALID_TARGET_HANDLE);
 
-    if (::fputs(pszStr, m_pStream) < 0) {
+    if (::fputs(pszStr, _pStream) < 0) {
         return HResult::GetDef(GetStreamError(), HRESULT_WIN32_C(ERROR_WRITE_FAULT));
     }
 
-    m_iLineNumCur++;  // count lines ??
+    _iLineNumCur++;  // count lines ??
     return 1;
 }
 
@@ -301,13 +290,13 @@ HRESULT cFileText::ReadStringLine(cSpanX<char> ret) {  // virtual
     if (!isValidHandle()) return HRESULT_WIN32_C(ERROR_INVALID_TARGET_HANDLE);
     if (isEOF()) return 0;  // __linux__ will ASSERT if we read past end.
 
-    char* pszRet = ::fgets(ret.get_PtrWork(), ret.get_MaxLen(), m_pStream);
+    char* pszRet = ::fgets(ret.get_PtrWork(), ret.get_MaxLen(), _pStream);
     if (pszRet == nullptr) {
         if (isEOF()) return 0;  // legit end of file
         return HResult::GetDef(GetStreamError(), HRESULT_WIN32_C(ERROR_READ_FAULT));
     }
 
-    if (m_iLineNumCur >= 0) m_iLineNumCur++;
+    if (_iLineNumCur >= 0) _iLineNumCur++;
     return StrT::Len(ret.get_PtrConst());  // Return length in chars.
 }
 
@@ -316,7 +305,7 @@ bool cFileText::put_TextPos(const cTextPos& rPos) {
     if (!rPos.isValidPos()) return false;
     const HRESULT hRes = SeekX(rPos.get_Offset(), SEEK_t::_Set);
     if (FAILED(hRes)) return false;
-    m_iLineNumCur = rPos.get_LineNum();
+    _iLineNumCur = rPos.get_LineNum();
     return true;
 }
 #endif

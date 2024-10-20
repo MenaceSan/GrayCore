@@ -24,7 +24,7 @@ typedef ::type_info TYPEINFO_t;  // Info from typeid(TYPE)
 typedef std::type_info TYPEINFO_t;  // Info from typeid(TYPE)
 #endif
 
-#define GETTYPEINFO(TYPE) ((const cTypeInfo&)typeid(TYPE))  //
+#define GETTYPEINFO(TYPE) ((const cTypeInfo&)typeid(TYPE))  // cast typeid() to my cTypeInfo.
 
 /// <summary>
 /// Get type info about a C++ class via typeid(TYPE)

@@ -762,4 +762,7 @@
     </Text>
     <Text Include="CMakeLists.txt" />
   </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="GrayCore.natvis" />
+  </ItemGroup>
 </Project>

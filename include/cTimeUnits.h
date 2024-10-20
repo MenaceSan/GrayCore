@@ -12,11 +12,12 @@
 #include "StrArg.h"
 #include "StrConst.h"
 #include "cDebugAssert.h"
+#include "cRange.h"
 #include "cSpan.h"
 #include <time.h>  // system time_t for count of seconds. int32 or int64.
 
 namespace Gray {
-// Base type used for cTimeInt Might be 64 bits ?? or _USE_32BIT_TIME_T
+// Base type used for cTimeInt Might be 64 or 32 bits?  
 typedef time_t TIMESEC_t;  /// absolute seconds since January 1, 1970. (GMT?)(signed?) NOTE: Changing to __time64_t just adds more range with same values. (>2038)
 typedef int TIMESECD_t;    /// signed delta seconds from some epoch. like: std::chrono::seconds
 
@@ -29,7 +30,7 @@ typedef short TIMEVALU_t;  /// Arbitrary time value of type TIMEUNIT_t. (e.g. nu
 /// e.g. 45 minutes TZ offset is possible.
 /// http://www.timeanddate.com/time/map/
 /// </summary>
-enum TZ_TYPE {
+enum TZ_TYPE : short {
     TZ_UTC = 0,  /// UTC = never use DST or any TZ offset.
     TZ_GMT = 0,  /// Greenwich mean time. similar to UTC
     TZ_AST = (4 * 60),
@@ -104,17 +105,15 @@ enum class TIMEMONTH_t {
 /// per TIMEUNIT_t Unit
 /// </summary>
 struct cTimeUnit {
-    const GChar_t* m_pszUnitNameL;  /// long unit name
-    const GChar_t* m_pszUnitNameS;  /// short abbreviated unit name
-    TIMEVALU_t m_uMin;
-    TIMEVALU_t m_uMax;
-
-    WORD m_uSubRatio;           /// How many sub units in this unit. (for absolute units. e.g. not months or years)
-    TIMESECD_t m_nUnitSeconds;  /// Total seconds for a unit. (for absolute units)
-    double m_dUnitDays;         /// Total days or fractions of a day for the unit. (for absolute units)
+    const GChar_t* _pszUnitNameL;  /// long unit name
+    const GChar_t* _pszUnitNameS;  /// short abbreviated unit name
+    cRangeT<TIMEVALU_t> _Range;    /// Min,Max valid values.
+    WORD _uSubRatio;           /// How many sub units in this unit. (for absolute units. e.g. not months or years)
+    TIMESECD_t _nUnitSeconds;  /// Total seconds for a unit. (for absolute units), 0 for variable sized units. e.g. months
+    double _dUnitDays;         /// Total days or fractions of a day for the unit. (for absolute units)
 
     bool IsInRange(TIMEVALU_t v) const {
-        return v >= m_uMin && v <= m_uMax;
+        return _Range.IsInsideI(v);
     }
 };
 
@@ -132,7 +131,7 @@ enum class TIMEUNIT_t {
     _Microsecond,  /// millionth of a second. (0<=x<=999)
     _TZ,           /// TZ + DST
     // used for parsing only.
-    _DOW,       /// Ignore this for units storage. its redundant.
+    _DOW,      /// Ignore this for units storage. its redundant.
     _Ignore,   /// Just ignore this duplicate. We have already dealt with it.
     _Numeric,  /// A numeric value of unknown type (parsing).
     _QTY2,     /// END of cTimeParser
@@ -145,43 +144,43 @@ enum class TIMEUNIT_t {
 /// like: TIMESTAMP_STRUCT for SQL_TIMESTAMP, SQL_C_TIMESTAMP, SQL_DATE
 /// </summary>
 struct GRAYCORE_LINK cTimeUnits {
-    TIMEVALU_t m_wYear;   /// Year valid for 1980 to 2043 at least. TIMEUNIT_t::_Year
-    TIMEVALU_t m_wMonth;  /// 1 based month of year. Jan=1, to 12=Dec, NOT 0 based like TIMEMONTH_t. TIMEUNIT_t::_Month
-    TIMEVALU_t m_wDay;    /// 1 based day of month. 1 to 31. TIMEUNIT_t::_Day
+    TIMEVALU_t _wYear;   /// Year valid for 1980 to 2043 at least. TIMEUNIT_t::_Year
+    TIMEVALU_t _wMonth;  /// 1 based month of year. Jan=1, to 12=Dec, NOT 0 based like TIMEMONTH_t. TIMEUNIT_t::_Month
+    TIMEVALU_t _wDay;    /// 1 based day of month. 1 to 31. TIMEUNIT_t::_Day
 
-    TIMEVALU_t m_wHour;    /// 0 to 23 for hour of day.
-    TIMEVALU_t m_wMinute;  /// 0 to 59
-    TIMEVALU_t m_wSecond;  /// 0 to 59
+    TIMEVALU_t _wHour;    /// 0 to 23 for hour of day.
+    TIMEVALU_t _wMinute;  /// 0 to 59
+    TIMEVALU_t _wSecond;  /// 0 to 59
 
-    TIMEVALU_t m_wMillisecond;  /// 1000th = thousandth. 0 to 1000
-    TIMEVALU_t m_wMicrosecond;  /// 1000000th = millionth. 0 to 1000. TIMEUNIT_t::_Microsecond
+    TIMEVALU_t _wMillisecond;  /// 1000th = thousandth. 0 to 1000
+    TIMEVALU_t _wMicrosecond;  /// 1000000th = millionth. 0 to 1000. TIMEUNIT_t::_Microsecond
 
-    TIMEVALU_t m_nTZ;  /// TZ_TYPE for m_wMinute offset. TIMEUNIT_t::_TZ
+    TIMEVALU_t _nTZ;  /// TZ_TYPE for _wMinute offset. TIMEUNIT_t::_TZ
 
     static const TIMESECD_t k_nSecondsPerDay = (24 * 60 * 60);  /// seconds in a day = 86400
     static const TIMESECD_t k_nSecondsPerHour = (60 * 60);      /// seconds in a hour = 3600
     static const int k_nMinutesPerDay = (24 * 60);              /// minutes in a day
     static const int k_nMicroSeconds = 1000000;                 /// millionth of a second.
 
-    static const cTimeUnit k_Units[static_cast<int>(TIMEUNIT_t::_Ignore)];  /// Metadata for time units.
+    static const cTimeUnit k_aUnits[static_cast<int>(TIMEUNIT_t::_Ignore)];  /// Metadata for time units.
 
-    static const StrLen_t k_FormStrMax = 256;                 // max reasonable size for time.
-    static const GChar_t* k_StrFormats[static_cast<int>(TIMEFORMAT_t::_QTY) + 1];  /// standard strftime() type formats.
+    static const StrLen_t k_FormStrMax = 256;                                      // max reasonable size for time.
+    static const GChar_t* const k_aStrFormats[static_cast<int>(TIMEFORMAT_t::_QTY) + 1];  /// standard strftime() type formats.
 
-    static const BYTE k_MonthDays[2][static_cast<int>(TIMEMONTH_t::_QTY)];         /// Jan=0
-    static const WORD k_MonthDaySums[2][static_cast<int>(TIMEMONTH_t::_QTY) + 1];  /// Jan=0
+    static const BYTE k_aMonthDays[2][static_cast<int>(TIMEMONTH_t::_QTY)];         /// Jan=0
+    static const WORD k_aMonthDaySums[2][static_cast<int>(TIMEMONTH_t::_QTY) + 1];  /// Jan=0
 
     // may change for language ?
-    static const GChar_t* const k_MonthName[static_cast<int>(TIMEMONTH_t::_QTY) ];  /// January=0
-    static const GChar_t* const k_MonthAbbrev[static_cast<int>(TIMEMONTH_t::_QTY)];  /// Jan=0
+    static const GChar_t* const k_aMonthName[static_cast<int>(TIMEMONTH_t::_QTY)];    /// January=0
+    static const GChar_t* const k_aMonthAbbrev[static_cast<int>(TIMEMONTH_t::_QTY)];  /// Jan=0
 
-    static const GChar_t* const k_DayName[static_cast<int>(TIMEDOW_t::_QTY) ];  /// Sunday=0
-    static const GChar_t* const k_DayAbbrev[static_cast<int>(TIMEDOW_t::_QTY) ];  /// Sun=0
+    static const GChar_t* const k_aDayName[static_cast<int>(TIMEDOW_t::_QTY)];    /// Sunday=0
+    static const GChar_t* const k_aDayAbbrev[static_cast<int>(TIMEDOW_t::_QTY)];  /// Sun=0
 
     // internationalization. regional
     static const GChar_t k_TimeSeparator = ':';  /// this is the same for all formats. e.g. 09:00 AM. NOT USED ?
     static const GChar_t k_Seps[3];              // Normal valid time/date string separators. "/:" = all sm_DateSeparator or sm_TimeSeparator
-    static const GChar_t k_SepsAll[8];           // All/Any separator that might occur in k_StrFormats.
+    static const GChar_t k_SepsAll[8];           // All/Any separator that might occur in k_aStrFormats.
 
     // May change for regional preferences ?
     static GChar_t sm_DateSeparator;  /// date separator to use for string creation = '\', '-', '.', but Time is always ':'
@@ -198,8 +197,8 @@ struct GRAYCORE_LINK cTimeUnits {
 
     COMPRET_t Compare(cTimeUnits& b) const;
     bool isTimeFuture() const;
-    bool isTimePast() const {        
-        return !isTimeFuture(); //! AKA Expired ?
+    bool isTimePast() const {
+        return !isTimeFuture();  //! AKA Expired ?
     }
 
     /// <summary>
@@ -207,21 +206,21 @@ struct GRAYCORE_LINK cTimeUnits {
     /// </summary>
     /// <returns>TIMEDOW_Sun = 0</returns>
     TIMEDOW_t get_DOW() const {
-        return GetDOW(m_wYear, m_wMonth, m_wDay);
+        return GetDOW(_wYear, _wMonth, _wDay);
     }
     /// <summary>
     /// Get Day of year.
     /// </summary>
     /// <returns>0 based</returns>
     int get_DOY() const {
-        return GetDOY(m_wYear, m_wMonth, m_wDay);
+        return GetDOY(_wYear, _wMonth, _wDay);
     }
     TIMEMONTH_t get_Month() const noexcept {
-        return static_cast<TIMEMONTH_t>(m_wMonth - 1);
+        return static_cast<TIMEMONTH_t>(_wMonth - 1);
     }
     static const cTimeUnit& GetUnitDef(TIMEUNIT_t i) {
-        ASSERT(IS_INDEX_GOOD_ARRAY(i, cTimeUnits::k_Units));
-        return k_Units[static_cast<int>(i)];
+        ASSERT(IS_INDEX_GOOD_ARRAY(i, cTimeUnits::k_aUnits));
+        return k_aUnits[static_cast<int>(i)];
     }
 
     bool IsValidUnit(TIMEUNIT_t i) const;
@@ -231,15 +230,15 @@ struct GRAYCORE_LINK cTimeUnits {
     TIMEVALU_t GetUnitVal(TIMEUNIT_t i) const {
         //! enumerate the time units.
         ASSERT(IS_INDEX_GOOD(i, static_cast<int>(TIMEUNIT_t::_DOW)));
-        return (&m_wYear)[static_cast<int>(i)];
+        return (&_wYear)[static_cast<int>(i)];
     }
     TIMEVALU_t GetUnit0(TIMEUNIT_t i) const {
         // Zero based units.
-        return GetUnitVal(i) - GetUnitDef(i).m_uMin;
+        return GetUnitVal(i) - GetUnitDef(i)._Range._Lo;
     }
     void SetUnit(TIMEUNIT_t i, TIMEVALU_t wVal) {
         ASSERT(IS_INDEX_GOOD(i, static_cast<int>(TIMEUNIT_t::_DOW)));
-        (&m_wYear)[static_cast<int>(i)] = wVal;
+        (&_wYear)[static_cast<int>(i)] = wVal;
     }
 
     bool operator==(const cTimeUnits& rTu) const {
@@ -273,41 +272,48 @@ struct GRAYCORE_LINK cTimeUnits {
     HRESULT SetTimeStr(const GChar_t* pszDateTime, TZ_TYPE nTimeZoneOffset);
     StrLen_t GetTimeSpanStr(cSpanX<GChar_t> ret, TIMEUNIT_t eUnitHigh = TIMEUNIT_t::_Day, int iUnitsDesired = 2, bool bShortText = false) const;
 
+    /// <summary>
+    /// Every year divisible by 4 is a leap year. But every year divisible by 100 is NOT a leap year.
+    /// Unless the year is also divisible by 400, then it is still a leap year.
+    /// </summary>
+    /// <param name="wYear"></param>
+    /// <returns>0 or 1 NOT Boolean - for array access.</returns>
     static int GRAYCALL IsLeapYear(TIMEVALU_t wYear);
+
     static int GRAYCALL GetLeapYearsSince2K(TIMEVALU_t wYear);
     static TIMEDOW_t GRAYCALL GetDOW(TIMEVALU_t wYear, TIMEVALU_t wMonth, TIMEVALU_t wDay);
     static int GRAYCALL GetDOY(TIMEVALU_t wYear, TIMEVALU_t wMonth, TIMEVALU_t wDay);
 
     TIMESECD_t get_SecondOfDay() const noexcept {
-        return m_wSecond + (m_wMinute * 60) + CastN(TIMESECD_t, m_wHour * 60 * 60);
+        return _wSecond + (_wMinute * 60) + CastN(TIMESECD_t, _wHour * 60 * 60);
     }
     bool isValidMonth() const noexcept {
-        return m_wMonth >= 1 && m_wMonth <= 12;
+        return _wMonth >= 1 && _wMonth <= 12;
     }
     TIMEVALU_t get_DaysInMonth() const {
-        // How many days in m_wMonth ?
+        // How many days in _wMonth ?
         if (!isValidMonth()) return 0;
-        const int iLeapYear = IsLeapYear(m_wYear);
-        return k_MonthDays[iLeapYear][m_wMonth - 1];
+        const int iLeapYear = IsLeapYear(_wYear);
+        return k_aMonthDays[iLeapYear][_wMonth - 1];
     }
     TIMEVALU_t get_DayOfYear() const {
-        // What day of m_wYear is this ?
+        // What day of _wYear is this ?
         if (!isValidMonth()) return 0;
-        const int iLeapYear = IsLeapYear(m_wYear);
-        return k_MonthDaySums[iLeapYear][m_wMonth - 1] + (m_wDay - 1);
+        const int iLeapYear = IsLeapYear(_wYear); // 0 or 1.
+        return k_aMonthDaySums[iLeapYear][_wMonth - 1] + (_wDay - 1);
     }
     /// <summary>
-    /// How many days in m_wYear ?
+    /// How many days in _wYear ?
     /// </summary>
     TIMEVALU_t get_DaysInYear() const {
-        return IsLeapYear(m_wYear) ? 366 : 365;
+        return IsLeapYear(_wYear) ? 366 : 365;
     }
 
     cTimeUnits() {
         SetZeros();  // a valid time?
     }
     cTimeUnits(TIMEVALU_t wYear, TIMEVALU_t wMonth, TIMEVALU_t wDay, TIMEVALU_t wHour = 0, TIMEVALU_t wMinute = 0, TIMEVALU_t wSecond = 0, TIMEVALU_t wMilliseconds = 0, TIMEVALU_t wMicroseconds = 0, TZ_TYPE nTZ = TZ_UTC)
-        : m_wYear(wYear), m_wMonth(wMonth), m_wDay(wDay), m_wHour(wHour), m_wMinute(wMinute), m_wSecond(wSecond), m_wMillisecond(wMilliseconds), m_wMicrosecond(wMicroseconds), m_nTZ((TIMEVALU_t)nTZ) {}
+        : _wYear(wYear), _wMonth(wMonth), _wDay(wDay), _wHour(wHour), _wMinute(wMinute), _wSecond(wSecond), _wMillisecond(wMilliseconds), _wMicrosecond(wMicroseconds), _nTZ((TIMEVALU_t)nTZ) {}
 };
 
 //*******************************************************
@@ -316,22 +322,26 @@ struct GRAYCORE_LINK cTimeUnits {
 /// Helper for parsing time units from string.
 /// </summary>
 struct cTimeParserUnit {
-    TIMEUNIT_t m_Type;   /// What type of field/unit does this look like. best guess. TIMEUNIT_t::_Sec
-    TIMEVALU_t m_nValue;    /// Value we read from the field.	<0 = null/omitted.
-    StrLen_t m_iOffsetSep;  /// End of the type info and start of the separator.
-    GChar_t m_Separator;    /// What sort of separator follows ? ":T /.,-"
+    TIMEUNIT_t _eType;     /// What type of field/unit does this look like. best guess. TIMEUNIT_t::_Sec
+    TIMEVALU_t _nValue;    /// Value we read from the field.	<0 = null/omitted.
+    StrLen_t _nOffsetSep;  /// End of the type info and start of the separator.
+    GChar_t _chSeparator;  /// What sort of separator follows ? ":T /.,-"
 
-    void Init() {
-        m_Type = TIMEUNIT_t::_QTY2;
-        m_nValue = -1;  // not set yet.
-        m_iOffsetSep = -1;
-        m_Separator = -1;  // not set yet.
+    void InitUnit() {
+        _eType = TIMEUNIT_t::_QTY2;
+        _nValue = -1;  // not set yet.
+        _nOffsetSep = -1;
+        _chSeparator = -1;  // not set yet.
+    }
+    void SetSep(StrLen_t nOffsetSep, GChar_t chSep) {
+        _nOffsetSep = nOffsetSep;
+        _chSeparator = chSep;
     }
     TIMEUNIT_t get_HashCode() const noexcept {  // should be only one of each type.
-        return m_Type;
+        return _eType;
     }
     TIMEVALU_t get_SortValue() const noexcept {
-        return m_nValue;
+        return _nValue;
     }
 };
 
@@ -341,9 +351,9 @@ struct cTimeParserUnit {
 /// </summary>
 class GRAYCORE_LINK cTimeParser {
  public:
-    cTimeParserUnit m_Unit[static_cast<int>(TIMEUNIT_t::_QTY2)];  /// space for parsed results.
-    int m_iUnitsParsed;                     /// m_Unit used. <TIMEUNIT_t::_QTY2
-    int m_iUnitsMatched;                    /// m_iUnitsMatched <= m_iUnitsParsed and all m_Type are set. No use of TIMEUNIT_t::_Numeric
+    cTimeParserUnit _Unit[static_cast<int>(TIMEUNIT_t::_QTY2)];  /// space for parsed results.
+    int _nUnitsParsed = 0;                                       /// _Unit used. <TIMEUNIT_t::_QTY2
+    int _nUnitsMatched = 0;                                      /// _nUnitsMatched <= _nUnitsParsed and all _eType are set. No use of TIMEUNIT_t::_Numeric
 
  public:
     /// <summary>
@@ -356,31 +366,38 @@ class GRAYCORE_LINK cTimeParser {
 
     StrLen_t ParseNamedUnit(const GChar_t* pszName);
     HRESULT ParseString(const GChar_t* pszTimeString, const GChar_t* pszSeparators = nullptr);
+
+    /// <summary>
+    /// any matches?
+    /// </summary>
     bool isMatched() const noexcept {
-        return m_iUnitsMatched > 0;
+        return _nUnitsMatched > 0;
     }
+
+    /// <summary>
+    /// How much of the parsed string was consumed by the match?
+    /// </summary>
     StrLen_t GetMatchedLength() const {
-        //! How much of the parsed string was consumed by the match?
-        ASSERT(m_iUnitsMatched <= m_iUnitsParsed);
-        if (m_iUnitsMatched <= 0) return 0;
-        int i = m_iUnitsMatched - 1;
-        ASSERT(IS_INDEX_GOOD_ARRAY(i, m_Unit));
-        return m_Unit[i].m_iOffsetSep;
+        ASSERT(_nUnitsMatched <= _nUnitsParsed);
+        if (_nUnitsMatched <= 0) return 0;
+        const int i = _nUnitsMatched - 1;
+        ASSERT(IS_INDEX_GOOD_ARRAY(i, _Unit));
+        return _Unit[i]._nOffsetSep;
     }
 
     bool TestMatchFormat(const cTimeParser& parserFormat, bool bTrimJunk = false);
     bool TestMatch(const GChar_t* pszFormat);
-    HRESULT TestMatches(const GChar_t** ppStrFormats = nullptr);
+    HRESULT TestMatches(const GChar_t* const* ppStrFormats = nullptr);
 
     HRESULT GetTimeUnits(OUT cTimeUnits& tu) const;
 
-    cTimeParser() : m_iUnitsParsed(0), m_iUnitsMatched(0) {
-        m_Unit[0].Init();
+    cTimeParser() {
+        _Unit[0].InitUnit();
     }
-    cTimeParser(const GChar_t* pszTimeString) : m_iUnitsParsed(0), m_iUnitsMatched(0) {
+    cTimeParser(const GChar_t* pszTimeString) {
         ParseString(pszTimeString);
     }
-    cTimeParser(const GChar_t* pszTimeString, const GChar_t** ppStrFormats) : m_iUnitsParsed(0), m_iUnitsMatched(0) {
+    cTimeParser(const GChar_t* pszTimeString, const GChar_t* const* ppStrFormats) {
         // Matches
         ParseString(pszTimeString);
         TestMatches(ppStrFormats);

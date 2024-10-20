@@ -15,7 +15,7 @@
 #define GRAY_COPYRIGHT "Copyright 1992 - 2023 Dennis Robinson (http://www.menasoft.com)"
 
 // NOTE: Obscure rule in .MSI forces use of versions >= 1.0.0
-#define GRAY_VERSION_N 106800       /// numeric version id. used for easy compares. ToVersionInt() X.2.3 digit format. Drop 4th digit.
+#define GRAY_VERSION_N 106800       /// numeric version id. used for easy compares. ToVersion32() X.2.3 digit format. Drop 4th digit.
 #define GRAY_VERSION_S "1.6.8.0"    /// share string version with all files. ToVersionStr()
 #define GRAY_VERSION_RC 1, 6, 8, 0  /// RC version id. *.rc FILEVERSION wants this format.
 

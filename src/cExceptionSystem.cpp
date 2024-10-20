@@ -19,7 +19,7 @@
 
 namespace Gray {
 #ifdef _WIN32
-cExceptionSystem::cExceptionSystem(SYSCODE_t uNTStatus, struct _EXCEPTION_POINTERS* pData) : cException("SystemException", LOGLVL_t::_CRIT), m_nSystemErrorCode(uNTStatus), m_pAddress(0) {
+cExceptionSystem::cExceptionSystem(SYSCODE_t uNTStatus, struct _EXCEPTION_POINTERS* pData) : cException("SystemException", LOGLVL_t::_CRIT), _nSystemErrorCode(uNTStatus) {
 #ifdef _DEBUG
     static const UINT_PTR k_dwCodeStart = 0;  // (UINT32)(BYTE *) &globalstartsymbol;	// used to sync up to my MAP file.
                                               // static const UINT_PTR k_dwCodeStart = 0x06d40; // (UINT32)(BYTE *) &globalstartsymbol;	// used to sync up to my MAP file.
@@ -28,27 +28,26 @@ cExceptionSystem::cExceptionSystem(SYSCODE_t uNTStatus, struct _EXCEPTION_POINTE
 #endif
     //	__asm mov k_dwCodeStart, CODE
 
-    if (m_nSystemErrorCode == 0) {
-        m_nSystemErrorCode = (pData) ? (pData->ExceptionRecord->ExceptionCode) : STATUS_NONCONTINUABLE_EXCEPTION;
+    if (_nSystemErrorCode == 0) {
+        _nSystemErrorCode = (pData) ? (pData->ExceptionRecord->ExceptionCode) : STATUS_NONCONTINUABLE_EXCEPTION;
     }
 
     PVOID pAddr = (pData) ? (pData->ExceptionRecord->ExceptionAddress) : 0;
-    UINT_PTR dwAddr = CastPtrToNum(pAddr);
-    dwAddr -= k_dwCodeStart;
-    m_pAddress = (PVOID)(dwAddr);
+    UINT_PTR nAddr = CastPtrToNum(pAddr);
+    nAddr -= k_dwCodeStart;
+    _pAddress = (PVOID)(nAddr);
 }
 #else
-cExceptionSystem::cExceptionSystem(SYSCODE_t iSignal) : cException("SystemException", LOGLVL_t::_CRIT), m_nSystemErrorCode(iSignal), m_pAddress(0) {
+cExceptionSystem::cExceptionSystem(SYSCODE_t iSignal) : cException("SystemException", LOGLVL_t::_CRIT), _nSystemErrorCode(iSignal) {
 #if 0
-		//! get a stack dump.
-		void* aStack[25];
-		int nSize = ::backtrace(aStack, _countof(aStack));
-		char** ppSymbols = ::backtrace_symbols(aStack, nSize);
-		for (int i = 0; i < nSize; i++)
-		{
-			cout << ppSymbols[i] << endl;
-		}
-		free(ppSymbols);
+	//! get a stack dump.
+	void* aStack[25];
+	int nSize = ::backtrace(aStack, _countof(aStack));
+	char** ppSymbols = ::backtrace_symbols(aStack, nSize);
+	for (int i = 0; i < nSize; i++) {
+		cout << ppSymbols[i] << endl;
+	}
+	::free(ppSymbols);
 #endif
 }
 #endif
@@ -57,8 +56,8 @@ cExceptionSystem::~cExceptionSystem() THROW_DEF {}
 
 BOOL cExceptionSystem::GetErrorMessage(StrBuilder<GChar_t>& sb, UINT* pnHelpContext) {  // virtual
     //! @note what module is this in ? in the case of a DLL
-    //! look up m_nSystemErrorCode codes ??
-    sb.AddFormat(_GT("Exception code=0%X, addr=0%p, context=%d"), m_nSystemErrorCode, CastPtrToNum(m_pAddress), (pnHelpContext != nullptr) ? pnHelpContext : 0);
+    //! look up _nSystemErrorCode codes ??
+    sb.AddFormat(_GT("Exception code=0%X, addr=0%p, context=%d"), _nSystemErrorCode, CastPtrToNum(_pAddress), (pnHelpContext != nullptr) ? pnHelpContext : 0);
     return true;
 }
 

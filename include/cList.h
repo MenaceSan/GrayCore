@@ -14,22 +14,18 @@ class cList;
 
 /// <summary>
 /// abstract base class for a single node/element in a Double linked cList.
-/// @NOTE Single owner = This item belongs to JUST ONE cList (m_pParent)
+/// @NOTE Single owner = This item belongs to JUST ONE cList (_pParent)
 /// derive a class from cListNode to be a node member in a cList.
 /// NOT circular. Node head/prev and tail/next are nullptr.
 /// </summary>
 class GRAYCORE_LINK cListNode : public cHeapObject {
-    friend cList;                  // so m_pNext and m_pPrev can be manipulated directly.
-    cList* m_pParent = nullptr;    /// link me back to my parent object.
-    cListNode* m_pNext = nullptr;  /// next sibling
-    cListNode* m_pPrev = nullptr;  /// previous sibling
+    friend cList;                  // so _pNext and _pPrev can be manipulated directly.
+    cList* _pParent = nullptr;    /// link me back to my parent object.
+    cListNode* _pNext = nullptr;  /// next sibling
+    cListNode* _pPrev = nullptr;  /// previous sibling
 
  protected:
-    cListNode() noexcept : m_pParent(nullptr), m_pNext(nullptr), m_pPrev(nullptr) {}
-    virtual ~cListNode() {
-        //! ASSUME: RemoveFromParent() was already called! (virtuals don't work in destruct!)
-        DEBUG_CHECK(!hasParent());
-    }
+    cListNode() noexcept {}
 
     /// <summary>
     /// I am being added to a list. (or nullptr = no list)
@@ -37,28 +33,32 @@ class GRAYCORE_LINK cListNode : public cHeapObject {
     /// </summary>
     /// <param name="pParent"></param>
     virtual void OnChangeListParent(cList* pParent) {
-        ASSERT(m_pParent == nullptr || pParent == nullptr || m_pParent == pParent);
-        m_pParent = pParent;  // link me to my list parent object.
+        ASSERT(_pParent == nullptr || pParent == nullptr || _pParent == pParent);
+        _pParent = pParent;  // link me to my list parent object.
     }
 
  public:
+    virtual ~cListNode() {
+        //! ASSUME: RemoveFromParent() was already called! (virtuals don't work in destruct!)
+        DEBUG_CHECK(!hasParent());
+    }
+
     cList* get_Parent() const noexcept {
-        return m_pParent;
+        return _pParent;
     }
     cListNode* get_Next() const noexcept {
-        return m_pNext;
+        return _pNext;
     }
     cListNode* get_Prev() const noexcept {
-        return m_pPrev;
+        return _pPrev;
     }
 
     /// <summary>
-    /// is this in a list?
+    /// is this in a list? If i have no parent i shouldn't have any siblings either.
     /// </summary>
     bool hasParent() const noexcept {
-        if (m_pParent != nullptr) return true;
-        // If i have no parent i shouldn't have any siblings either.
-        DEBUG_CHECK(m_pNext == nullptr && m_pPrev == nullptr);
+        if (_pParent != nullptr) return true;
+        DEBUG_CHECK(_pNext == nullptr && _pPrev == nullptr);
         return false;
     }
 
@@ -82,32 +82,25 @@ class GRAYCORE_LINK cListNode : public cHeapObject {
 
 /// <summary>
 /// generic Double linked list container. NOT circular. head and tail are nullptr.
-/// @note Lists are primarily used if inserts and deletes for large sets occurs frequently.
+/// @note Lists are primarily used where inserts and deletes for large sets occurs frequently.
 /// @note cListNode can ONLY belong to one single cList.
 /// Objects should remove themselves from the list when deleted.
 /// Similar to the MFC CList, or std::list(T), std::deque
 /// </summary>
 class GRAYCORE_LINK cList {
-    friend class cListNode;  // so it can call RemoveListNode() to remove self.
-    cListNode* m_pHead = nullptr;      /// Head of my list.
-    cListNode* m_pTail = nullptr;  /// Tail of my list.
+    friend class cListNode;        // so it can call RemoveListNode() to remove self.
+    cListNode* _pHead = nullptr;  /// Head of my list.
+    cListNode* _pTail = nullptr;  /// Tail of my list.
 
  protected:
-    ITERATE_t m_iCount = 0;  /// how many children? nice to get read only direct access to this for scripting.
+    ITERATE_t _nCount = 0;  /// how many children? nice to get read only direct access to this for scripting.
 
  protected:
-    virtual ~cList() {
-        // @note virtuals do not work in destructor!
-        // ASSUME: DisposeAll() or Empty() is called from higher levels
-        //  it is important for virtual RemoveListNode() callback
-        DEBUG_CHECK(isEmptyList());
-    }
-
     void ClearList() noexcept {
-        DEBUG_ASSERT(m_iCount == 0, "List not cleaned up properly!");
-        m_pHead = nullptr;
-        m_pTail = nullptr;
-        m_iCount = 0;
+        DEBUG_ASSERT(_nCount == 0, "List not cleaned up properly!");
+        _pHead = nullptr;
+        _pTail = nullptr;
+        _nCount = 0;
     }
 
     //! Override this to get called when an item is removed from this list.
@@ -115,17 +108,24 @@ class GRAYCORE_LINK cList {
     virtual void RemoveListNode(cListNode* pNode);  /// allow Override of this. called when child removed from list.
 
  public:
+    virtual ~cList() {
+        // @note virtuals do not work in destructor!
+        // ASSUME: DisposeAll() or Empty() is called from higher levels
+        //  it is important for virtual RemoveListNode() callback
+        DEBUG_CHECK(isEmptyList());
+    }
+
     cListNode* get_Head() const noexcept {
-        return m_pHead;
+        return _pHead;
     }
     cListNode* get_Tail() const noexcept {
-        return m_pTail;
+        return _pTail;
     }
     ITERATE_t get_Count() const noexcept {
-        return m_iCount;
+        return _nCount;
     }
     bool isEmptyList() const noexcept {
-        return get_Count() == 0;
+        return _nCount == 0;
     }
     bool IsMyChild(const cListNode* pNode) const noexcept {
         return pNode != nullptr && pNode->get_Parent() == this;
@@ -137,17 +137,20 @@ class GRAYCORE_LINK cList {
     /// </summary>
     /// <returns>nullptr = past end of list.</returns>
     /// <param name="index"></param>
-    cListNode* GetAt(ITERATE_t index) const;
+    cListNode* GetAt(ITERATE_t index) const noexcept;
 
-    //! Override this to check items being added.
-    //! pPrev = nullptr = first
+    /// <summary>
+    /// Override this to check for items being added.
+    /// </summary>
+    /// <param name="pNodeNew"></param>
+    /// <param name="pNodePrev">nullptr = first</param>
     virtual void InsertListNode(cListNode* pNodeNew, cListNode* pNodePrev = nullptr);
 
     /// <summary>
-    /// Transfer the contents of another list pListSrc into this one.
+    /// Transfer ALL the contents of another list pListSrc into this one.
     /// </summary>
     /// <param name="pListSrc"></param>
-    /// <param name="pNodePrev"></param>
+    /// <param name="pNodePrev">Node from THIS list</param>
     void MoveListNodes(cList* pListSrc, cListNode* pNodePrev = nullptr);
 
     /// <summary>
@@ -179,9 +182,9 @@ class GRAYCORE_LINK cList {
 //*************************************************
 
 inline void cListNode::RemoveFromParent() {
-    if (m_pParent == nullptr) return;
-    m_pParent->RemoveListNode(this);  // only call this from here !
-    // ASSERT( m_pParent != pParentPrev );	// We are now unlinked. (or deleted)
+    if (_pParent == nullptr) return;
+    _pParent->RemoveListNode(this);  // only call this from here !
+    // ASSERT( _pParent != pParentPrev );	// We are now unlinked. (or deleted)
 }
 
 //*************************************************

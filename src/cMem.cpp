@@ -29,7 +29,7 @@ void __cdecl cMem::IsValidFailHandler(int nSig) {  // SIGNAL_t static
 uintptr_t VOLATILE cMem::sm_bDontOptimizeOut0 = 0;  /// used to trick the optimizer. Always 0.
 uintptr_t VOLATILE cMem::sm_bDontOptimizeOutX = 1;  /// used to trick the optimizer. Unknown value.
 
-const cBlob cBlob::k_EmptyBlob;  // const static
+const cBlob cBlob::k_Empty;  // const static
 
 /// <summary>
 /// Is this pointer valid to read/write to ? On heap, stack or static const data space.
@@ -49,16 +49,12 @@ bool GRAYCALL cMem::IsCorruptApp(const void* pData, size_t nLen, bool bWriteAcce
         if (nLen == 0) return false;                                                            // This technically is ok.
         return true;
     }
-    if (!IsValidApp(pData)) {  // ASSUME memory in this range is never valid? Fail quickly. This is Kernel Space. <1G
-        return true;
-    }
+    if (!IsValidApp(pData)) return true;  // ASSUME memory in this range is never valid? Fail quickly. This is Kernel Space. <1G
 
-    // OS check for valid memory is not reliable??
+        // OS check for valid memory is not reliable??
 
 #if defined(UNDER_CE)
-    if (bWriteAccess) {
-        return ::IsBadWritePtr(const_cast<void*>(pData), nLen);
-    }
+    if (bWriteAccess) return ::IsBadWritePtr(const_cast<void*>(pData), nLen);
     return ::IsBadReadPtr(pData, nLen);
 #elif defined(_CPPUNWIND)
     // They say IsBadReadPtr() isn't as good as exceptions. So don't use it.
@@ -67,8 +63,8 @@ bool GRAYCALL cMem::IsCorruptApp(const void* pData, size_t nLen, bool bWriteAcce
         // NOTE: Aligned blocks might make this faster.
         sm_bDontOptimizeOut0 = 0;  // Always 0
         for (size_t i = 0; i < nLen; i += k_PageSizeMin) {
-            BYTE bVal = ((const BYTE*)pData)[i];  // Read it.
-            if (bWriteAccess) {                   // try to write it back.
+            const BYTE bVal = ((const BYTE*)pData)[i];  // Read it.
+            if (bWriteAccess) {                         // try to write it back.
                 ((BYTE*)pData)[i] = bVal | (BYTE)sm_bDontOptimizeOut0;
             }
         }
@@ -108,7 +104,7 @@ bool GRAYCALL cMem::IsCorruptApp(const void* pData, size_t nLen, bool bWriteAcce
 }
 
 size_t GRAYCALL cMem::CompareIndex(const void* p1, const void* p2, size_t nSizeBlock) {  // static
-    if (p1 == p2) return nSizeBlock;  // is equal.
+    if (p1 == p2) return nSizeBlock;                                                     // is equal.
     if (p1 == nullptr || p2 == nullptr) return 0;
 
     size_t i = 0;
@@ -169,28 +165,21 @@ size_t cMemSpan::ReadFromCSV(const char* pszSrc) {
     return i;
 }
 
-StrLen_t cMemSpan::GetHexDigest(OUT char* pszHexString) const {
-    //! Get the final hash as a pre-formatted string of hex digits. opposite of SetHexDigest
-    //! ASSUME sizeof(pszHexString) >= GetHexDigestSize()
-    //! @note using Base64 would be better.
+StrLen_t cMemSpan::GetHexDigest(cMemSpan hexString) const {
+    char* pszHexString = hexString.GetTPtrW<char>();
+    if (hexString.isEmpty()) return 0;
+    const StrLen_t iLenMax = CastN(StrLen_t, cValT::Min(get_SizeBytes(), hexString.get_SizeBytes() - 1));
     StrLen_t iLen = 0;
-    for (size_t i = 0; i < get_SizeBytes(); i++) {
+    for (size_t i = 0; i < iLenMax; i++) {
         const BYTE ch = GetTPtrC()[i];
         pszHexString[iLen++] = StrChar::U2Hex(ch >> 4);
         pszHexString[iLen++] = StrChar::U2Hex(ch & 0x0F);
     }
     pszHexString[iLen] = '\0';
-    return iLen;
+    return iLen;  // iLenMax
 }
 
-HRESULT cMemSpan::SetHexDigest(const char* pszHexString, bool testEnd) {
-    //! Set binary pDigest from string pszHexString
-    //! opposite of cMemSpan::GetHexDigest
-    //! @arg pszHexString = input hex string . ASSUME large enough.
-    //! @arg nSizeData = The number of expected output digits.
-    //! @note using Base64 would be better.
-    //! @return S_FALSE = was zero value.
-
+HRESULT cMemSpan::ReadHexDigest(const char* pszHexString, bool testEnd) {
     if (pszHexString == nullptr || isNull()) return E_POINTER;
 
     bool bNonZero = false;
@@ -203,12 +192,12 @@ HRESULT cMemSpan::SetHexDigest(const char* pszHexString, bool testEnd) {
         ch = *pszHexString++;
         const UINT bHex2 = StrChar::Hex2U(ch);
         if (bHex2 >= 0x10) return HRESULT_WIN32_C(ERROR_SXS_XML_E_INVALID_HEXIDECIMAL);
-        GetTPtrW()[i] = CastN(BYTE,(bHex1 * 0x10) + bHex2);
+        GetTPtrW()[i] = CastN(BYTE, (bHex1 * 0x10) + bHex2);
         if (GetTPtrW()[i] != 0) bNonZero = true;
     }
 
     if (testEnd) {
-        if (StrChar::IsDigitRadix(*pszHexString, 0x10)) return HRESULT_WIN32_C(ERROR_BUFFER_OVERFLOW);  // too long! or not terminated.            
+        if (StrChar::IsDigitRadix(*pszHexString, 0x10)) return HRESULT_WIN32_C(ERROR_BUFFER_OVERFLOW);  // too long! or not terminated.
     }
     if (bNonZero) return S_OK;
     return S_FALSE;  // zero

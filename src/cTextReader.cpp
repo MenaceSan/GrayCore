@@ -38,7 +38,7 @@ HRESULT cTextReaderStream::ReadStringLine(OUT const char** ppszLine) {
     AdvanceRead(i);
 
     // Found a line. return it.
-    m_iLineNumCur++;
+    _iLineNumCur++;
     if (ppszLine != nullptr) {
         *ppszLine = pData;
     }
@@ -63,11 +63,11 @@ HRESULT cTextReaderStream::ReadStringLine(cSpanX<char> ret) {  // override // vi
 
 HRESULT cTextReaderStream::SeekX(STREAM_OFFSET_t iOffset, SEEK_t eSeekOrigin) noexcept {  // override;
     //! Seek to a particular position in the file.
-    //! This will corrupt m_iLineNumCur. The caller must manage that themselves.
+    //! This will corrupt _iLineNumCur. The caller must manage that themselves.
     //! @arg eSeekOrigin = // SEEK_SET ?
     //! @return the New position, <0=FAILED
 
-    STREAM_POS_t nPosFile = m_rInp.GetPosition();  // WriteIndex
+    STREAM_POS_t nPosFile = _rInp.GetPosition();  // WriteIndex
     ITERATE_t iReadQty = this->get_ReadQty();      // what i have buffered.
 
     switch (eSeekOrigin) {
@@ -79,20 +79,20 @@ HRESULT cTextReaderStream::SeekX(STREAM_OFFSET_t iOffset, SEEK_t eSeekOrigin) no
             }
             // outside current buffer.
             this->SetEmptyQ();
-            return m_rInp.SeekX(nPosFile + iOffset - iReadQty, SEEK_t::_Set);
+            return _rInp.SeekX(nPosFile + iOffset - iReadQty, SEEK_t::_Set);
 
         case SEEK_t::_End:  // relative to end.
             if (iOffset > 0) break;
-            iOffset += m_rInp.GetLength();
+            iOffset += _rInp.GetLength();
 
             // Fall through.
 
         case SEEK_t::_Set:  // from beginning.
             // Are we inside the current buffer? then just reposition.
             if (iOffset == 0) {
-                m_iLineNumCur = 0;
+                _iLineNumCur = 0;
             } else {
-                m_iLineNumCur = -1;  // No idea.
+                _iLineNumCur = -1;  // No idea.
             }
             if (iOffset >= (STREAM_OFFSET_t)(nPosFile - get_WriteIndex()) && iOffset <= (STREAM_OFFSET_t)nPosFile) {
                 // Move inside buffer.
@@ -101,7 +101,7 @@ HRESULT cTextReaderStream::SeekX(STREAM_OFFSET_t iOffset, SEEK_t eSeekOrigin) no
             }
             // outside current buffer.
             this->SetEmptyQ();
-            return m_rInp.SeekX(iOffset, SEEK_t::_Set);
+            return _rInp.SeekX(iOffset, SEEK_t::_Set);
 
         default:
             break;

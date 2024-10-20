@@ -10,28 +10,28 @@
 namespace Gray {
 
 void cCmdInput::AddCmd(const GChar_t* pszCmd) {
-    const ITERATE_t iRet = m_aCmdHistory.AddUniqueMax(pszCmd, m_iMaxCommandQty);
+    const ITERATE_t iRet = _aCmdHistory.AddUniqueMax(pszCmd, _iMaxCommandQty);
     if (iRet < 0) return;
-    m_nCurCommandIndex = iRet;
+    _nCurCommandIndex = iRet;
 }
 
 cString cCmdInput::ScrollCmd(int iKey) {
-    const ITERATE_t iQty = m_aCmdHistory.GetSize();
+    const ITERATE_t iQty = _aCmdHistory.GetSize();
     if (iQty <= 0 || iKey == (char)ASCII_t::_ESC) {
-        m_nCurCommandIndex = iQty;
+        _nCurCommandIndex = iQty;
         return "";
     }
 
     if (iKey == kKeyUp) {
-        m_nCurCommandIndex--;
+        _nCurCommandIndex--;
     } else {
-        m_nCurCommandIndex++;  // kKeyDown
+        _nCurCommandIndex++;  // kKeyDown
     }
 
-    if (m_nCurCommandIndex >= iQty) m_nCurCommandIndex = iQty - 1;
-    if (m_nCurCommandIndex < 0) m_nCurCommandIndex = 0;
+    if (_nCurCommandIndex >= iQty) _nCurCommandIndex = iQty - 1;
+    if (_nCurCommandIndex < 0) _nCurCommandIndex = 0;
 
-    return m_aCmdHistory[m_nCurCommandIndex];
+    return _aCmdHistory[_nCurCommandIndex];
 }
 
 HRESULT cCmdInput::AddInputKey(int iKey, ITextWriter* pOut, bool bEcho) {
@@ -41,21 +41,21 @@ HRESULT cCmdInput::AddInputKey(int iKey, ITextWriter* pOut, bool bEcho) {
         if (bEcho && pOut != nullptr) {
             pOut->WriteString(FILE_EOL);
         }
-        this->AddCmd(m_sCmd);
-        m_bCmdComplete = true;
+        this->AddCmd(_sCmd);
+        _isCmdComplete = true;
         return 2;  // process line.
     }
 
-    if (m_bCmdComplete) {
-        m_sCmd = "";             // clear previous command.
-        m_bCmdComplete = false;  // New command.
+    if (_isCmdComplete) {
+        _sCmd = "";             // clear previous command.
+        _isCmdComplete = false;  // New command.
     }
 
-    const StrLen_t iLen = m_sCmd.GetLength();
+    const StrLen_t iLen = _sCmd.GetLength();
 
     // History.
     switch (iKey) {
-        case (char)ASCII_t::_ESC:  // INPUTKEY_ESCAPE = ASCII_t::_ESC = 27
+        case (char)ASCII_t::_ESC:  // INPUTKEY_t::_ESCAPE = ASCII_t::_ESC = 27
             if (iLen == 0) return HRESULT_WIN32_C(ERROR_CANCELLED);
             [[fallthrough]];
 
@@ -64,9 +64,9 @@ HRESULT cCmdInput::AddInputKey(int iKey, ITextWriter* pOut, bool bEcho) {
             if (pOut != nullptr) {
                 pOut->WriteCharRepeat('\b', iLen);  // clear whats on the line now.
             }
-            m_sCmd = this->ScrollCmd(iKey);
+            _sCmd = this->ScrollCmd(iKey);
             if (pOut != nullptr) {
-                pOut->WriteString(m_sCmd);
+                pOut->WriteString(_sCmd);
             }
             return 0;
         default:
@@ -82,7 +82,7 @@ HRESULT cCmdInput::AddInputKey(int iKey, ITextWriter* pOut, bool bEcho) {
     }
 
     if (iKey == '\b') {  // back space key
-        m_sCmd = cString(m_sCmd.Left(iLen - 1));
+        _sCmd = cString(_sCmd.Left(iLen - 1));
         return 1;
     }
 
@@ -93,7 +93,7 @@ HRESULT cCmdInput::AddInputKey(int iKey, ITextWriter* pOut, bool bEcho) {
         return HRESULT_WIN32_C(RPC_S_STRING_TOO_LONG);
     }
 
-    m_sCmd += CastN(char, iKey);
+    _sCmd += CastN(char, iKey);
     return 1;   // key added.
 }
 }  // namespace Gray

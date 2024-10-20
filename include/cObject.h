@@ -20,11 +20,11 @@ template <UINT32 _SIGVALID = 0xCA11AB1e>
 class DECLSPEC_NOVTABLE cObjectSignature : public cMemSignature<_SIGVALID> {
     typedef cMemSignature<_SIGVALID> SUPER_t;
 
-    const UINT32 m_nVer;         /// Must be agreed to by all users. e.g. _INC_GrayCore_H
+    const UINT32 _nVersion;       /// Must be agreed to by all users. e.g. _INC_GrayCore_H
     const size_t _nSizeOfParent;  /// Must be agreed to by all users. sizeof(PARENTCLASS) for checking alignments/packing of structures (ABI).
 
  public:
-    cObjectSignature(UINT32 nVer, size_t nSizeOfParent) : m_nVer(nVer), _nSizeOfParent(nSizeOfParent) {}
+    cObjectSignature(UINT32 nVer, size_t nSizeOfParent) : _nVersion(nVer), _nSizeOfParent(nSizeOfParent) {}
     ~cObjectSignature() {
         ASSERT(isValidSignature());
     }
@@ -39,7 +39,7 @@ class DECLSPEC_NOVTABLE cObjectSignature : public cMemSignature<_SIGVALID> {
     /// <returns></returns>
     bool inline IsValidSignature(UINT32 nVer, size_t nSizeOfParent) const noexcept {
         if (!SUPER_t::isValidSignature()) return false;
-        if (nVer != m_nVer || nSizeOfParent != _nSizeOfParent) return false;
+        if (nVer != _nVersion || nSizeOfParent != _nSizeOfParent) return false;
         return true;
     }
 };
@@ -64,6 +64,7 @@ class GRAYCORE_LINK CObject {
 #endif  // _MFC_VER
 
 /// <summary>
+/// Some complex object that may be dynamic, static or stack based.
 /// Similar to MFC CObject but with more function. isValidCheck.
 /// </summary>
 struct GRAYCORE_LINK cObject : public CObject {

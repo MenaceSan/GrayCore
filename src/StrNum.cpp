@@ -148,7 +148,7 @@ StrLen_t GRAYCALL StrNum::ULtoA(UINT64 uVal, cSpanX<char> ret, RADIX_t nRadixBas
     char* pDigits = spanDigits.get_PtrWork();
     const StrLen_t iStrMax = cValT::Min(ret.get_MaxLen(), STRMAX(szTmp));
 
-    if (nRadixBase == 16 && uVal != 0) {  // give hex a leading 0 if there is room. except if its 0 value. m_bLeadZero
+    if (nRadixBase == 16 && uVal != 0) {  // give hex a leading 0 if there is room. except if its 0 value. _isLeadZero
         if (spanDigits.get_MaxLen() < iStrMax) {
             *(--pDigits) = '0';  // prefix with 0 if room.
         }
@@ -165,7 +165,7 @@ StrLen_t GRAYCALL StrNum::ILtoA(INT64 nVal, cSpanX<char> ret, RADIX_t nRadixBase
     }
     char szTmp[StrNum::k_LEN_MAX_DIGITS_INT + 2];  // bits in int is all we really need max. (i.e. nRadixBase=2 + sign + '\0')
     cSpan<char> spanDigits = ULtoARev((UINT64)nVal, szTmp, STRMAX(szTmp), nRadixBase);
-    return StrT::Copy(ret, spanDigits.get_PtrConst());
+    return StrT::CopyPtr(ret, spanDigits.get_PtrConst());
 }
 
 //*************************************************************************************
@@ -229,7 +229,7 @@ StrLen_t GRAYCALL StrNum::DtoAG(double dVal, cSpanX<char> ret, int iDecPlacesWan
     }
     char szTmp[StrNum::k_LEN_MAX_DIGITS + 4];    // MUST allow at least this size.
     DtoAG2(dVal, szTmp, iDecPlacesWanted, chE);  // StrLen_t iStrLen =
-    return StrT::Copy(ret, szTmp);               // Copy to smaller buffer. truncate.
+    return StrT::CopyPtr(ret, szTmp);            // Copy to smaller buffer. truncate.
 }
 
 double GRAYCALL StrNum::toDouble(const char* pszInp, const char** ppszInpEnd) {  // static

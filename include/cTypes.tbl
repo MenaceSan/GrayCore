@@ -10,7 +10,8 @@
 CTYPE_DEF(Bool,		bool,				CTYPE_FLAG_Numeric,							"1",	false, true,		UINT,	"only value of first bit is used. not same as _WIN32 BOOL")
 
 CTYPE_DEF(Char,		char,				CTYPE_FLAG_Numeric|CTYPE_FLAG_NumSigned,	"1",	(-127 - 1), 127,	int,	"char (ASSUME same as signed char?)")	// _I8_MIN, _I8_MAX
-// omit 'signed char'
+// omit 'signed char', it should be the same as char ?? BUT c standard says its NOT!
+
 CTYPE_DEF(Byte,		unsigned char,		CTYPE_FLAG_Numeric,							"01",	0, 0xFF,			UINT,	"BYTE 1 byte. VT_UI1")
 
 #ifdef _NATIVE_WCHAR_T_DEFINED	// If compiler says wchar_t is a special/unique type

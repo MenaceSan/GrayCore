@@ -155,27 +155,27 @@ inline COMPARE_t cValT::Compare<cTimeFile>(const cTimeFile& t1, const cTimeFile&
 /// Emulate the MFC CTime functionality
 /// </summary>
 struct GRAYCORE_LINK cTimeSpanFile {
-    INT64 m_nDiffUnits;  /// in cTimeFile::k_nFreq units
+    INT64 _nDiffUnits = 0;  /// in cTimeFile::k_nFreq units
 
-    cTimeSpanFile(INT64 nDiffUnits = 0) : m_nDiffUnits(nDiffUnits) {}
+    cTimeSpanFile(INT64 nDiffUnits = 0) : _nDiffUnits(nDiffUnits) {}
 
-    cTimeSpanFile(int iDays, int iHours, int iMinutes, int iSeconds) : m_nDiffUnits(iDays) {
-        m_nDiffUnits *= 24;
-        m_nDiffUnits += iHours;
-        m_nDiffUnits *= 60;
-        m_nDiffUnits += iMinutes;
-        m_nDiffUnits *= 60;
-        m_nDiffUnits += iSeconds;
-        m_nDiffUnits *= cTimeFile::k_nFreq;
+    cTimeSpanFile(int iDays, int iHours, int iMinutes, int iSeconds) : _nDiffUnits(iDays) {
+        _nDiffUnits *= 24;
+        _nDiffUnits += iHours;
+        _nDiffUnits *= 60;
+        _nDiffUnits += iMinutes;
+        _nDiffUnits *= 60;
+        _nDiffUnits += iSeconds;
+        _nDiffUnits *= cTimeFile::k_nFreq;
     }
 
     /// in cTimeFile::k_nFreq units
     INT64 get_Val() const {
-        return m_nDiffUnits;
+        return _nDiffUnits;
     }
     INT64 GetTotalSeconds() const {
         // MFC like call.
-        return ((INT64)m_nDiffUnits) / cTimeFile::k_nFreq;
+        return ((INT64)_nDiffUnits) / cTimeFile::k_nFreq;
     }
 
     // cTimeUnits::GetTimeSpanStr

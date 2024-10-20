@@ -47,21 +47,21 @@ class cThreadLocalSys {
 #endif
 
  private:
-    TYPESLOT_t m_nTypeSlot;  /// id for the type of data stored per thread. if (_WIN32_WINNT >= 0x0600) ::FlsAlloc(), etc.
+    TYPESLOT_t _nTypeSlot;  /// id for the type of data stored per thread. if (_WIN32_WINNT >= 0x0600) ::FlsAlloc(), etc.
 
  public:
     /// <summary>
-    /// Allocate new (void*) to be stored for EACH thread. Associate this type with m_nTypeSlot
+    /// Allocate new (void*) to be stored for EACH thread. Associate this type with _nTypeSlot
     /// </summary>
     /// <param name="pDestruct">supply a destructor if i think i need one when a thread is destroyed. (e.g. delete)</param>
     cThreadLocalSys(::PFLS_CALLBACK_FUNCTION pDestruct = nullptr) noexcept {
 #ifdef _WIN32
         // Use (newer) ::FlsAlloc (has destructor) over old XP specific ::TlsAlloc. limited to 128 uses.
-        m_nTypeSlot = ::FlsAlloc(pDestruct);
+        _nTypeSlot = ::FlsAlloc(pDestruct);
 #elif defined(__linux__)
-        int iRet = ::pthread_key_create(&m_nTypeSlot, pDestruct);
+        int iRet = ::pthread_key_create(&_nTypeSlot, pDestruct);
         if (iRet != 0) {
-            m_nTypeSlot = TLS_OUT_OF_INDEXES;  // failed for some reason.
+            _nTypeSlot = TLS_OUT_OF_INDEXES;  // failed for some reason.
         }
 #endif
         DEBUG_CHECK(isInit());
@@ -70,9 +70,9 @@ class cThreadLocalSys {
     ~cThreadLocalSys() {
         DEBUG_CHECK(isInit());
 #ifdef _WIN32
-        ::FlsFree(m_nTypeSlot);
+        ::FlsFree(_nTypeSlot);
 #elif defined(__linux__)
-        int iRet = ::pthread_key_delete(m_nTypeSlot);
+        int iRet = ::pthread_key_delete(_nTypeSlot);
         ASSERT(iRet == 0);
         UNREFERENCED_PARAMETER(iRet);
 #endif
@@ -80,9 +80,9 @@ class cThreadLocalSys {
     bool isInit() const noexcept {
         //! Before static init?
 #ifdef _WIN32
-        if (m_nTypeSlot == 0) return false;
+        if (_nTypeSlot == 0) return false;
 #endif
-        if (m_nTypeSlot == TLS_OUT_OF_INDEXES) return false;
+        if (_nTypeSlot == TLS_OUT_OF_INDEXES) return false;
         return true;
     }
 
@@ -97,9 +97,9 @@ class cThreadLocalSys {
             return nullptr;  // Before static init!
         }
 #ifdef _WIN32
-        return ::FlsGetValue(m_nTypeSlot);
+        return ::FlsGetValue(_nTypeSlot);
 #elif defined(__linux__)
-        return ::pthread_getspecific(m_nTypeSlot);
+        return ::pthread_getspecific(_nTypeSlot);
 #endif
     }
 
@@ -107,9 +107,9 @@ class cThreadLocalSys {
         //! Store something unique to this thread. from LPVOID
         DEBUG_CHECK(isInit());  // Before static init!
 #ifdef _WIN32
-        return ::FlsSetValue(m_nTypeSlot, pData) ? true : false;
+        return ::FlsSetValue(_nTypeSlot, pData) ? true : false;
 #elif defined(__linux__)
-        int iRet = ::pthread_setspecific(m_nTypeSlot, pData);
+        int iRet = ::pthread_setspecific(_nTypeSlot, pData);
         return iRet == 0;
 #endif
     }
@@ -124,7 +124,7 @@ template <class TYPE>
 struct cThreadLocalSysT : public cThreadLocalSys {
     typedef cThreadLocalSys SUPER_t;
     cThreadLocalSysT(::PFLS_CALLBACK_FUNCTION pDestruct = nullptr) noexcept : cThreadLocalSys(pDestruct) {
-        STATIC_ASSERT(sizeof(TYPE*) <= sizeof(void*), cThreadLocalSysT);  // ?
+        STATIC_ASSERT(sizeof(TYPE*) <= sizeof(void*), cThreadLocalSysT);  // _SIZEOF_PTR ? 
     }
     TYPE* GetData() const noexcept {
         return PtrCast<TYPE>(SUPER_t::GetData());

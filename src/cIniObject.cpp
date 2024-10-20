@@ -11,20 +11,14 @@
 
 namespace Gray {
 HRESULT cIniObject::PropGet(const IniChar_t* pszPropTag, OUT cStringI& rsValue) const {  // override
-    //! IIniBaseGetter
-    //! Read a prop by its string name.
-    //! default implementation.
     return this->PropGetEnum(this->FindProp(pszPropTag), rsValue, nullptr);
 }
 
 HRESULT cIniObject::FileWriteN(ITextWriter& rOut, PROPIDX_t ePropIdx) const {
-    //! Write the prop out to the stream if _DirtyMask.
-    //! cStreamOutput
     CODEPROFILEFUNC();
-    if (!_DirtyMask.IsSet(ePropIdx))  // already written. or not changed?
-        return S_FALSE;
+    if (!_DirtyMask.IsSet(ePropIdx)) return S_FALSE;  // already written. or not changed?        
     cStringI sValue;
-    HRESULT hRes = this->PropGetEnum(ePropIdx, sValue);
+    const HRESULT hRes = this->PropGetEnum(ePropIdx, sValue);
     if (FAILED(hRes)) return hRes;
     _DirtyMask.ClearBit(ePropIdx);  // not dirty anymore.
     return cIniWriter(&rOut).WriteKeyUnk(this->get_PropName(ePropIdx), sValue);
@@ -44,9 +38,8 @@ HRESULT cIniObject::FileWriteAll(ITextWriter& rOut) {
     CODEPROFILEFUNC();
     const PROPIDX_t iQty = this->get_PropQty();
     for (PROPIDX_t i = 0; i < iQty; i++) {
-        if (!_DirtyMask.IsSet(i))  // was already written? or not changed?
-            continue;
-        HRESULT hRes = FileWriteN(rOut, i);
+        if (!_DirtyMask.IsSet(i)) continue;  // was already written? or not changed?
+        const HRESULT hRes = FileWriteN(rOut, i);
         _DirtyMask.ClearBit(i);
         if (FAILED(hRes)) return hRes;
     }

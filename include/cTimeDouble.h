@@ -23,7 +23,7 @@ namespace Gray {
 /// </summary>
 class GRAYCORE_LINK cTimeDouble {
  protected:
-    double m_dateTime;  /// DATE = days since (midnight, 30 December 1899 GMT), fraction = time of day
+    double _dTimeDays = 0;  /// DATE = days since (midnight, 30 December 1899 GMT), fraction = time of day
 
  public:
     static const int k_nDaysDiffTimeInt = 25569;  /// days difference from cTimeDouble (1899) to cTimeInt (1970) bases // similar to __linux__ SECS_1601_TO_1970 ?
@@ -36,18 +36,18 @@ class GRAYCORE_LINK cTimeDouble {
     static void DecodeDate(OUT cTimeUnits& rTu, double dblDays);
 
  public:
-    cTimeDouble(const cTimeDouble& dt) noexcept : m_dateTime(dt.m_dateTime) {}
-    cTimeDouble(const double dTime = k_nZero) noexcept : m_dateTime(dTime) {}
+    cTimeDouble(const cTimeDouble& dt) noexcept : _dTimeDays(dt._dTimeDays) {}
+    cTimeDouble(const double dTime = k_nZero) noexcept : _dTimeDays(dTime) {}
 
     static cTimeDouble GRAYCALL EncodeSeconds(double s) noexcept;
     static cTimeDouble GRAYCALL EncodeTime(short h, short m, short s, short ms = 0) noexcept;
     static cTimeDouble GRAYCALL EncodeDate(short year = 0, short month = 0, short day = 0) noexcept;
     static cTimeDouble GRAYCALL GetTimeFromSec(TIMESEC_t nTimeSec) noexcept;
 
-    cTimeDouble(const TIMESEC_t nTimeSec) noexcept : m_dateTime(GetTimeFromSec(nTimeSec)) {}
+    cTimeDouble(const TIMESEC_t nTimeSec) noexcept : _dTimeDays(GetTimeFromSec(nTimeSec)) {}
 
     static cTimeDouble GRAYCALL GetTimeFromFile(const cTimeFile& ft) noexcept;
-    cTimeDouble(const cTimeFile& ft) noexcept : m_dateTime(GetTimeFromFile(ft)) {}
+    cTimeDouble(const cTimeFile& ft) noexcept : _dTimeDays(GetTimeFromFile(ft)) {}
 
     static cTimeDouble GRAYCALL GetTimeFromStr(const GChar_t* pszDateTime, TZ_TYPE nTimeZone) {
         // Ignore HRESULT.
@@ -57,12 +57,12 @@ class GRAYCORE_LINK cTimeDouble {
     }
     cTimeDouble(const cTimeUnits& rTu) {
         //! like SystemTimeToVariantTime but it ASSUMES GMT
-        //!  m_dateTime = 1 = whole days since 1900
+        //!  _dTimeDays = 1 = whole days since 1900
         InitTimeUnits(rTu);
     }
 
     void InitTime(double dTime = k_nZero) noexcept {
-        m_dateTime = dTime;  /// dTime = 0 = clear to invalid time.
+        _dTimeDays = dTime;  /// dTime = 0 = clear to invalid time.
     }
     void InitTimeNow();
 
@@ -70,86 +70,90 @@ class GRAYCORE_LINK cTimeDouble {
         return dTime > k_nZero;
     }
     inline bool isTimeValid() const {
-        return IsTimeValid(m_dateTime);
+        return IsTimeValid(_dTimeDays);
     }
     double get_Double() const noexcept {
         //! Arbitrary units. same as days.
-        return m_dateTime;
+        return _dTimeDays;
     }
+    /// <summary>
+    /// Get total days since epoch.
+    /// </summary>
     double get_Days() const noexcept {
-        //! Get total days since epoch.
-        return m_dateTime;
+        return _dTimeDays;
     }
+    /// <summary>
+    /// Get total days since epoch.
+    /// </summary>
     operator double() const noexcept {
-        //! Get total days since epoch.
-        return m_dateTime;
+        return _dTimeDays;
     }
 
     cTimeDouble operator+(int i) noexcept {
         //! Add days.
-        return cTimeDouble(m_dateTime + i);
+        return cTimeDouble(_dTimeDays + i);
     }
     cTimeDouble operator-(int i) noexcept {
         //! Subtract days.
-        return cTimeDouble(m_dateTime - i);
+        return cTimeDouble(_dTimeDays - i);
     }
     cTimeDouble operator+(const cTimeDouble& dt) noexcept {
-        return cTimeDouble(m_dateTime + dt.m_dateTime);
+        return cTimeDouble(_dTimeDays + dt._dTimeDays);
     }
     cTimeDouble operator-(const cTimeDouble& dt) noexcept {
-        return cTimeDouble(m_dateTime - dt.m_dateTime);
+        return cTimeDouble(_dTimeDays - dt._dTimeDays);
     }
 
     cTimeDouble& operator+=(int idays) noexcept {  /// days
         //! Add days.
-        m_dateTime += idays;
+        _dTimeDays += idays;
         return *this;
     }
     cTimeDouble& operator-=(int idays) noexcept {  /// days
         //! Subtract days.
-        m_dateTime -= idays;
+        _dTimeDays -= idays;
         return *this;
     }
     cTimeDouble& operator+=(const cTimeDouble& dt) noexcept {
-        m_dateTime += dt.m_dateTime;
+        _dTimeDays += dt._dTimeDays;
         return *this;
     }
     cTimeDouble& operator-=(const cTimeDouble& dt) noexcept {
-        m_dateTime -= dt.m_dateTime;
+        _dTimeDays -= dt._dTimeDays;
         return *this;
     }
 
     cTimeDouble& operator++() noexcept {  /// Prefix increment
-        m_dateTime += 1;
+        _dTimeDays += 1;
         return *this;
     }
     cTimeDouble& operator++(int) noexcept {  /// Postfix increment
-        m_dateTime += 1;  // add a day
+        _dTimeDays += 1;  // add a day
         return *this;
     }
     cTimeDouble& operator--() noexcept { /// Prefix decrement
-        m_dateTime -= 1;
+        _dTimeDays -= 1;
         return *this;
     }
     cTimeDouble& operator--(int) noexcept { /// Postfix decrement
-        m_dateTime -= 1;
+        _dTimeDays -= 1;
         return *this;
     }
 
     bool inline operator==(const cTimeDouble& dt2) const {
-        return this->m_dateTime == dt2.m_dateTime;
+        return this->_dTimeDays == dt2._dTimeDays;
     }
     bool inline operator<(const cTimeDouble& dt2) const {
-        return this->m_dateTime < dt2.m_dateTime;
+        return this->_dTimeDays < dt2._dTimeDays;
     }
     bool inline operator<=(const cTimeDouble& dt2) const {
-        return this->m_dateTime <= dt2.m_dateTime;
+        return this->_dTimeDays <= dt2._dTimeDays;
     }
     bool inline operator>(const cTimeDouble& dt2) const {
-        return this->m_dateTime > dt2.m_dateTime;
+        return this->_dTimeDays > dt2._dTimeDays;
     }
     bool inline operator>=(const cTimeDouble& dt2) const {
-        return this->m_dateTime >= dt2.m_dateTime;
+        return this->_dTimeDays >= dt2._dTimeDays;
     }
 
     cTimeFile GetAsFileTime() const noexcept;
@@ -162,7 +166,7 @@ class GRAYCORE_LINK cTimeDouble {
     /// </summary>
     /// <returns></returns>
     unsigned GetDate() const noexcept { /// Numeric date of date object
-        return CastN(unsigned, m_dateTime);
+        return CastN(unsigned, _dTimeDays);
     }
 
     // to/from strings.
@@ -187,11 +191,12 @@ class GRAYCORE_LINK cTimeDouble {
         //! + = this is in the future.
         return get_Double() - GetTimeNow();
     }
+    /// <summary>
+    /// How old is this? (in days).  current time - this time.
+    /// + = this is in the past. - = this is in the future.
+    /// </summary>
+    /// <returns></returns>
     double get_DaysAge() const noexcept {
-        //! How old is this? (in days)
-        //! current time - this time.
-        //! + = this is in the past.
-        //! - = this is in the future.
         return -get_DaysTil();
     }
 };

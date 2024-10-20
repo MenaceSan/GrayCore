@@ -31,7 +31,7 @@ void StrBuilder<_TYPE_CH>::AddInt(INT64 iVal) {
 template <typename _TYPE_CH>
 void StrBuilder<_TYPE_CH>::AddUInt(UINT64 uVal, RADIX_t nRadix) {
     StrFormat<_TYPE_CH> f;
-    f.m_bLeadZero = nRadix >= 0x10;  // sm_nRadixForUnsignedToStr
+    f._isLeadZero = nRadix >= 0x10;  // sm_nRadixForUnsignedToStr
     f.RenderUInt(*this, nullptr, nRadix, 'A', uVal);
 }
 template <typename _TYPE_CH>
@@ -67,15 +67,15 @@ StrLen_t StrFormat<TYPE>::ParseParam(const TYPE* pszFormat) {
         TYPE ch = pszFormat[i];
         if (ch <= ' ' || ch >= 128) break;  // junk
 
-        m_nSpec = FindSpec((char)ch);
-        if (m_nSpec != '\0') {  // legit end.
+        _chSpec = FindSpec((char)ch);
+        if (_chSpec != '\0') {  // legit end.
             if (bHasDot)
-                m_nPrecision = nVal;
+                _nPrecision = nVal;
             else {
-                m_nWidthMin = nVal;
-                if (m_nPrecision < 0) {
-                    const char chSpecL = StrChar::ToLowerA(m_nSpec);
-                    if (chSpecL == 'e' || chSpecL == 'f' || chSpecL == 'g') m_nPrecision = 6;  // float default
+                _nWidthMin = nVal;
+                if (_nPrecision < 0) {
+                    const char chSpecL = StrChar::ToLowerA(_chSpec);
+                    if (chSpecL == 'e' || chSpecL == 'f' || chSpecL == 'g') _nPrecision = 6;  // float default
                 }
             }
             return i + 1;  // Display it.
@@ -87,30 +87,30 @@ StrLen_t StrFormat<TYPE>::ParseParam(const TYPE* pszFormat) {
                 break;                 // junk
             case '.':
                 bHasDot = true;
-                m_nWidthMin = nVal;  // next is m_nPrecision
+                _nWidthMin = nVal;  // next is _nPrecision
                 nVal = 0;
                 continue;
             case 'l':  // NOT 'L'
-                m_nLong++;
+                _eLongType++;
                 continue;
             case 'z':  // New standard for size_t. https://www.gnu.org/software/libc/manual/html_node/Integer-Conversions.html
 #ifdef USE_64BIT
-                m_nLong = 2;
+                _eLongType = 2;
 #else
-                m_nLong = 1;
+                _eLongType = 1;
 #endif
                 continue;
             case '-':
-                m_bAlignLeft = true;
+                _isAlignLeft = true;
                 continue;
             case '+':
-                m_bPlusSign = true;
+                _isPlusSign = true;
                 continue;
             case '*':  // Width is an argument.
-                m_bWidthArg = true;
+                _isWidthArg = true;
                 continue;
             case '#':  // add prefix. or forces the written output to contain a decimal point
-                m_bAddPrefix = true;
+                _isAddPrefix = true;
                 continue;
             case ' ':  // is this allowed??
                 break;
@@ -118,7 +118,7 @@ StrLen_t StrFormat<TYPE>::ParseParam(const TYPE* pszFormat) {
 
         if (StrChar::IsDigitA(ch)) {
             if (ch == '0' && nVal == 0) {
-                m_bLeadZero = true;
+                _isLeadZero = true;
                 continue;
             }
             nVal *= 10;
@@ -137,11 +137,11 @@ void StrFormat<TYPE>::RenderString(StrBuilder<TYPE>& out, const TYPE* pszParam, 
     if (nPrecision < 0 || nPrecision > nParamLen) nPrecision = (short)nParamLen;  // all
 
     // a truncated or shifted string.
-    short nWidth = m_nWidthMin;                   // Total width of what we place in pszOut
+    short nWidth = _nWidthMin;                   // Total width of what we place in pszOut
     if (nWidth == 0) nWidth = (short)nPrecision;  // all
 
     StrLen_t i = 0;
-    if (!m_bAlignLeft && nWidth > nPrecision) {  // pad left
+    if (!_isAlignLeft && nWidth > nPrecision) {  // pad left
         const StrLen_t nWidth2 = nWidth - nPrecision;
         out.AddCharRepeat(' ', nWidth2);
         i = nWidth2;
@@ -150,7 +150,7 @@ void StrFormat<TYPE>::RenderString(StrBuilder<TYPE>& out, const TYPE* pszParam, 
     out.AddSpan(ToSpan(pszParam, nPrecision));
     i += nPrecision;
 
-    if (m_bAlignLeft && nWidth > i) {  // pad right
+    if (_isAlignLeft && nWidth > i) {  // pad right
         out.AddCharRepeat(' ', nWidth - i);
     }
 }
@@ -164,12 +164,12 @@ void StrFormat<TYPE>::RenderUInt(StrBuilder<TYPE>& out, const TYPE* pszPrefix, R
     StrLen_t nDigits = (StrLen_t)spanDigits.get_Count();
     TYPE* pDigits = spanDigits.get_PtrWork();
 
-    StrLen_t nPrecision = m_nPrecision;  // We can increase this to include pad 0 and sign.
+    StrLen_t nPrecision = _nPrecision;  // We can increase this to include pad 0 and sign.
     if (nPrecision > nDigits) nPrecision = (short)nDigits;
 
-    if (m_bLeadZero) {
+    if (_isLeadZero) {
         // 0 pad as part of szTmp. Replaces ' ' padding.
-        StrLen_t nPad = (m_nWidthMin >= nDigits) ? (m_nWidthMin - nDigits) : uVal ? 1 : 0;
+        StrLen_t nPad = (_nWidthMin >= nDigits) ? (_nWidthMin - nDigits) : uVal ? 1 : 0;
         if (nPad + nDigits >= STRMAX(szTmp)) nPad = STRMAX(szTmp) - nDigits;
         pDigits -= nPad;
         cValSpan::FillQty<TYPE>(pDigits, nPad, '0');
@@ -196,11 +196,11 @@ void StrFormat<TYPE>::RenderFloat(StrBuilder<TYPE>& out, double dVal, char chE) 
 
     StrLen_t nLen;
     TYPE szTmp[StrNum::k_LEN_MAX_DIGITS + 4];
-    if (m_bPlusSign && dVal >= 0) {
+    if (_isPlusSign && dVal >= 0) {
         szTmp[0] = '+';                                                                                   // prefix.
-        nLen = 1 + StrT::DtoA<TYPE>(dVal, ToSpan(szTmp + 1, STRMAX(szTmp) - 1), m_nPrecision, chE);  // default = 6.
+        nLen = 1 + StrT::DtoA<TYPE>(dVal, ToSpan(szTmp + 1, STRMAX(szTmp) - 1), _nPrecision, chE);  // default = 6.
     } else {
-        nLen = StrT::DtoA<TYPE>(dVal, TOSPAN(szTmp), m_nPrecision, chE);  // default = 6.
+        nLen = StrT::DtoA<TYPE>(dVal, TOSPAN(szTmp), _nPrecision, chE);  // default = 6.
     }
 
     RenderString(out, szTmp, nLen, (short)nLen);
@@ -211,17 +211,17 @@ void StrFormat<TYPE>::RenderParam(StrBuilder<TYPE>& out, va_list* pvlist) const 
     RADIX_t nRadixBase = 10;
     char chRadixA = 'a';
     const TYPE* pszPrefix = nullptr;
-    BYTE nLong = m_nLong;
+    BYTE nLong = _eLongType;
 
-    switch (m_nSpec) {
+    switch (_chSpec) {
         case 'c': {  // char.
-            if (m_nWidthMin != 0 || m_bWidthArg) {
+            if (_nWidthMin != 0 || _isWidthArg) {
                 // repeat char!
             }
             TYPE szTmp[2];
             szTmp[0] = (TYPE)va_arg(*pvlist, int);
             szTmp[1] = '\0';
-            RenderString(out, szTmp, 1, m_nPrecision);
+            RenderString(out, szTmp, 1, _nPrecision);
             return;
         }
 
@@ -233,7 +233,7 @@ void StrFormat<TYPE>::RenderParam(StrBuilder<TYPE>& out, va_list* pvlist) const 
             } else if (cMem::IsCorruptApp(pszParam, 16, false)) {
                 pszParam = CSTRCONST("(ERR)");
             }
-            RenderString(out, pszParam, StrT::Len(pszParam), m_nPrecision);
+            RenderString(out, pszParam, StrT::Len(pszParam), _nPrecision);
             return;
         }
 
@@ -249,7 +249,7 @@ void StrFormat<TYPE>::RenderParam(StrBuilder<TYPE>& out, va_list* pvlist) const 
             if (nVal < 0) {
                 nVal = -nVal;
                 pszPrefix = CSTRCONST("-");
-            } else if (m_bPlusSign) {
+            } else if (_isPlusSign) {
                 pszPrefix = CSTRCONST("+");
             }
 
@@ -272,7 +272,7 @@ void StrFormat<TYPE>::RenderParam(StrBuilder<TYPE>& out, va_list* pvlist) const 
         case 'X':  // Upper case
             chRadixA = 'A';
             nRadixBase = 16;
-            if (m_bAddPrefix) {
+            if (_isAddPrefix) {
                 pszPrefix = CSTRCONST("0X");
             }
             goto do_num_uns;
@@ -288,19 +288,19 @@ void StrFormat<TYPE>::RenderParam(StrBuilder<TYPE>& out, va_list* pvlist) const 
 
         case 'x':  // int hex.
             nRadixBase = 16;
-            if (m_bAddPrefix) {
+            if (_isAddPrefix) {
                 pszPrefix = CSTRCONST("0x");
             }
             goto do_num_uns;
         case 'o':  // int octal.
             nRadixBase = 8;
-            if (m_bAddPrefix) {
+            if (_isAddPrefix) {
                 pszPrefix = CSTRCONST("0");
             }
             goto do_num_uns;
         case 'b':  // int binary
             nRadixBase = 2;
-            if (m_bAddPrefix) {
+            if (_isAddPrefix) {
                 pszPrefix = CSTRCONST("0");
             }
             goto do_num_uns;
@@ -312,7 +312,7 @@ void StrFormat<TYPE>::RenderParam(StrBuilder<TYPE>& out, va_list* pvlist) const 
             chRadixA = 'e';
             goto do_num_float;
         case 'F':  // Upper case. Decimal floating point, uppercase. default = 6
-        case 'f':  // Float precision = decimal places. default m_nPrecision = 6
+        case 'f':  // Float precision = decimal places. default _nPrecision = 6
             chRadixA = '\0';
         do_num_float:
             RenderFloat(out, va_arg(*pvlist, double), chRadixA);
@@ -374,15 +374,15 @@ void GRAYCALL StrFormat<TYPE>::V(StrBuilder<TYPE>& out, const TYPE* pszFormat, v
             StrFormat<TYPE> paramx;
             iLenForm += paramx.ParseParam(pszFormat + iLenForm);
 
-            if (paramx.m_nSpec != '\0') {
+            if (paramx._chSpec != '\0') {
                 // Render param for int.
-                if (paramx.m_bWidthArg) {
+                if (paramx._isWidthArg) {
                     int iVal = va_arg(vlist, int);
                     if (iVal < 0) {
                         iVal = -iVal;
-                        paramx.m_bAlignLeft = true;
+                        paramx._isAlignLeft = true;
                     }
-                    paramx.m_nWidthMin = (BYTE)iVal;
+                    paramx._nWidthMin = (BYTE)iVal;
                 }
 
                 // may use k_va_list_empty
@@ -431,7 +431,7 @@ StrLen_t GRAYCALL StrTemplate::ReplaceTemplateBlock(StrBuilder<IniChar_t>& out, 
     }
 
     for (; i < cStrConst::k_LEN_MAX; i++) {
-        char ch = pszInp[i];
+        const char ch = pszInp[i];
         if (ch == '\0') break;
 
         // just copy the text to pszOut.
@@ -450,7 +450,7 @@ StrLen_t GRAYCALL StrTemplate::ReplaceTemplateBlock(StrBuilder<IniChar_t>& out, 
 
         if (ch == '<' && pszInp[i + 1] == '?') {  // found recursive start block.
             out.AdvanceWrite(-1);                 // back up.
-            StrLen_t iLen = ReplaceTemplateBlock(out, pszInp + i, pBlockReq, true);
+            const StrLen_t iLen = ReplaceTemplateBlock(out, pszInp + i, pBlockReq, true);
             i += iLen;  // skip.
             continue;
         }

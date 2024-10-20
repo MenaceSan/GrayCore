@@ -12,10 +12,11 @@
 
 namespace Gray {
 TIMESECD_t cLogMgr::sm_TimePrevException;  /// doesn't actually matter what this value is at init time.
+cSingleton_IMPL(cLogMgr);
 
 //************************************************************************
 
-cLogNexus::cLogNexus(LOG_ATTR_MASK_t uAttrMask, LOGLVL_t eLogLevel) : m_LogFilter(uAttrMask, eLogLevel) {}
+cLogNexus::cLogNexus(LOG_ATTR_MASK_t uAttrMask, LOGLVL_t eLogLevel) : _LogFilter(uAttrMask, eLogLevel) {}
 
 HRESULT cLogNexus::addEvent(cLogEvent& rEvent) noexcept {  // virtual
     CODEPROFILEFUNC();
@@ -26,9 +27,9 @@ HRESULT cLogNexus::addEvent(cLogEvent& rEvent) noexcept {  // virtual
     if (!IsLogged(rEvent.get_LogAttrMask(), rEvent.get_LogLevel())) {  // I don't care about these ?
         return HRESULT_WIN32_C(ERROR_EMPTY);                           // no sinks care about this.
     }
-    if (rEvent.m_sMsg.IsEmpty()) return E_INVALIDARG;
+    if (rEvent._sMsg.IsEmpty()) return E_INVALIDARG;
 
-    m_LogThrottle.m_nQtyLogLast++;
+    _LogThrottle._nQtyLogLast++;
 
     int iUsed = 0;
     cLogEventPtr pEventHolder(&rEvent);  // one more reference on this.
@@ -37,8 +38,8 @@ HRESULT cLogNexus::addEvent(cLogEvent& rEvent) noexcept {  // virtual
     for (int i = 0;; i++) {
         cLogSink* pSink;
         {
-            const auto guard(m_LockLog.Lock());  // sync multiple threads.
-            pSink = m_aSinks.GetAtCheck(i);
+            const auto guard(_LockLog.Lock());  // sync multiple threads.
+            pSink = EnumSinks(i);
             if (pSink == nullptr) break;
         }
         hResAdd = pSink->addEvent(rEvent);
@@ -57,9 +58,8 @@ HRESULT cLogNexus::addEvent(cLogEvent& rEvent) noexcept {  // virtual
 }
 
 HRESULT cLogNexus::FlushLogs() {  // virtual
-    const auto guard(m_LockLog.Lock());
-    for (ITERATE_t i = 0;; i++) {
-        cLogSink* pSink = EnumSinks(i);
+    const auto guard(_LockLog.Lock());
+    for (cLogSink* pSink : _aSinks) {
         if (pSink == nullptr) break;
         pSink->FlushLogs();
     }
@@ -68,35 +68,35 @@ HRESULT cLogNexus::FlushLogs() {  // virtual
 
 bool cLogNexus::HasSink(cLogSink* pSinkFind, bool bDescend) const {
     if (pSinkFind == nullptr) return false;
-    const auto guard(m_LockLog.Lock());
-    for (ITERATE_t i = 0;; i++) {
-        const cLogSink* pSink = EnumSinks(i);
-        if (pSink == nullptr) return false;  // end marker ?
+    const auto guard(_LockLog.Lock());
+    for (const cLogSink* pSink : _aSinks) {
+        if (pSink == nullptr) break;
         if (pSinkFind == pSink) return true;
         if (bDescend) {
             const cLogNexus* pLogNexus = pSink->get_ThisLogNexus();
             if (pLogNexus != nullptr && pLogNexus->HasSink(pSinkFind, true)) return true;
         }
     }
+    return false;
 }
 
 HRESULT cLogNexus::AddSink(cLogSink* pSinkAdd) {
     if (pSinkAdd == nullptr) return E_POINTER;
+    const auto guard(_LockLog.Lock());
     if (HasSink(pSinkAdd, true)) return S_FALSE;  // no dupes.
-    const auto guard(m_LockLog.Lock());
-    m_aSinks.AddHead(pSinkAdd);
+    _aSinks.AddHead(pSinkAdd);
     return S_OK;
 }
 
 bool cLogNexus::RemoveSink(cLogSink* pSinkRemove, bool bDescend) {
     if (pSinkRemove == nullptr) return false;
     bool bRemoved = false;
-    const auto guard(m_LockLog.Lock());
+    const auto guard(_LockLog.Lock());
     for (ITERATE_t i = 0;; i++) {
         cLogSink* pSink = EnumSinks(i);
         if (pSink == nullptr) return bRemoved;
         if (pSinkRemove == pSink) {
-            m_aSinks.RemoveAt(i);
+            _aSinks.RemoveAt(i);
             i--;
             bRemoved = true;
         } else if (bDescend) {
@@ -109,10 +109,9 @@ bool cLogNexus::RemoveSink(cLogSink* pSinkRemove, bool bDescend) {
 }
 
 cLogSink* cLogNexus::FindSinkType(const TYPEINFO_t& rType, bool bDescend) const {
-    const auto guard(m_LockLog.Lock());
-    for (ITERATE_t i = 0;; i++) {
-        const cLogSink* pSink = EnumSinks(i);
-        if (pSink == nullptr) break;
+    const auto guard(_LockLog.Lock());
+    for (const cLogSink* pSink : _aSinks) {
+        if (pSink == nullptr) break;                                       // never happens!
         if (typeid(*pSink) == rType) return const_cast<cLogSink*>(pSink);  // already here.
         if (bDescend) {
             const cLogNexus* pLogNexus = pSink->get_ThisLogNexus();
@@ -127,8 +126,8 @@ cLogSink* cLogNexus::FindSinkType(const TYPEINFO_t& rType, bool bDescend) const 
 
 //************************************************************************
 
-cLogMgr::cLogMgr()
-    : cSingleton<cLogMgr>(this, typeid(cLogMgr)),
+cLogMgr::cLogMgr() noexcept
+    : cSingleton<cLogMgr>(this),
 #ifdef _DEBUG
       cLogNexus((LOG_ATTR_MASK_t)LOG_ATTR_ALL_MASK, LOGLVL_t::_TRACE)
 #else
@@ -142,14 +141,19 @@ cLogMgr::cLogMgr()
 #endif
 }
 
+cLogMgr::~cLogMgr() {
+    ASSERT(get_ThisLogNexus());
+}
+
 void cLogMgr::ReleaseModuleChildren(::HMODULE hMod) {
-    // TODO  cLogNexus m_aSinks
+    // TODO  cLogNexus _aSinks
     UNREFERENCED_PARAMETER(hMod);
-    for (ITERATE_t i = m_aSinks.GetSize(); i;) {
-        const cLogSink* p = m_aSinks.GetAtCheck(--i);
+    const auto guard(_LockLog.Lock());
+    for (ITERATE_t i = _aSinks.GetSize(); i;) {
+        const cLogSink* p = EnumSinks(--i);
+        // if (p == nullptr || p->get_HModule() != hMod) continue; // TODO ?
         UNREFERENCED_PARAMETER(p);
-        // if (p == nullptr || p->get_HModule() != hMod) continue;
-        //m_aSinks.RemoveAt(i);
+        // _aSinks.RemoveAt(i);
     }
 }
 
@@ -158,9 +162,8 @@ void cLogMgr::LogExceptionV(cExceptionHolder* pEx, const LOGCHAR_t* pszCatchCont
     //! if ( !cMem::IsValidApp(this)) may be OK?
     CODEPROFILEFUNC();
 
-    TIMESECD_t tNowSec = static_cast<TIMESECD_t>(cTimeSys::GetTimeNow() / cTimeSys::k_FREQ);
-    if (sm_TimePrevException == tNowSec)  // prevent message floods. 1 per sec.
-        return;
+    const TIMESECD_t tNowSec = static_cast<TIMESECD_t>(cTimeSys::GetTimeNow() / cTimeSys::k_FREQ);
+    if (sm_TimePrevException == tNowSec) return;  // prevent message floods. throttle 1 per sec.
     sm_TimePrevException = tNowSec;
 
     if (!cMem::IsValidApp(this)) {
@@ -186,7 +189,7 @@ void cLogMgr::LogExceptionV(cExceptionHolder* pEx, const LOGCHAR_t* pszCatchCont
             sb.AddFormatV(pszCatchContext, vargs);
         }
 
-        LOGLVL_t eSeverity = (pEx == nullptr) ? LOGLVL_t::_CRIT : (pEx->get_Severity());
+        const LOGLVL_t eSeverity = (pEx == nullptr) ? LOGLVL_t::_CRIT : (pEx->get_Severity());
         addEventS(LOG_ATTR_DEBUG, eSeverity, szMsg);
     } catch (...) {
         // Not much we can do about this.
@@ -203,13 +206,13 @@ void _cdecl cLogMgr::LogExceptionF(cExceptionHolder* pEx, const LOGCHAR_t* pszCa
 
 //************************************************************************
 
-cLogSubject::cLogSubject(const char* pszSubject) : m_pszSubject(pszSubject) {}
+cLogSubject::cLogSubject(const char* pszSubject) : _pszSubject(pszSubject) {}
 
 bool cLogSubject::IsLogged(LOG_ATTR_MASK_t uAttrMask, LOGLVL_t eLogLevel) const noexcept {
     return cLogMgr::I().IsLogged(uAttrMask, eLogLevel);
 }
 HRESULT cLogSubject::addEvent(cLogEvent& rEvent) noexcept {  // override
-    rEvent.m_pszSubject = m_pszSubject;                      // categorize with this subject.
+    rEvent._pszSubject = _pszSubject;                      // categorize with this subject.
     return cLogMgr::I().addEvent(rEvent);
 }
 }  // namespace Gray

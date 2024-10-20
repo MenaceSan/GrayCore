@@ -93,9 +93,6 @@ bool StrT::StartsWithI(const TYPE* pszStr1, const TYPE* pszPrefix) {
 
 template <typename TYPE>
 bool GRAYCALL StrT::EndsWithI(const cSpan<TYPE>& str, const cSpan<TYPE>& postFix) noexcept {
-    //! Compare the end of pszStr1 with pszPostfix
-    //! Similar to .NET EndsWith()
-    //! Look for a pszPostfix ignoring case.
     if (str.isNull()) return postFix.isNull();
     if (postFix.isNull()) return false;
     const StrLen_t nOffset = str.get_MaxLen() - postFix.get_MaxLen();
@@ -291,11 +288,6 @@ bool GRAYCALL StrX<TYPE>::IsTableSorted(const cSpanUnk& t) {
 
 template <typename TYPE>
 ITERATE_t GRAYCALL StrT::TableFindHead(const TYPE* pszFindHead, const cSpanUnk& t) {
-    //! Find a string in a table.
-    //! Ignores case. unsorted table.
-    //! Use rules for StrT::CmpHeadI for compare. compare only up to the CSYM values.
-    //! @return
-    //!  -1 = not found. k_ITERATE_BAD
     if (StrT::IsNullOrEmpty(pszFindHead)) return k_ITERATE_BAD;
     if (t.isNull()) return k_ITERATE_BAD;
     for (ITERATE_t i = 0; i < t.GetSize(); i++) {
@@ -307,11 +299,6 @@ ITERATE_t GRAYCALL StrT::TableFindHead(const TYPE* pszFindHead, const cSpanUnk& 
 
 template <typename TYPE>
 ITERATE_t GRAYCALL StrT::TableFindHeadSorted(const TYPE* pszFindHead, const cSpanUnk& t) {
-    //! Find a string in a table.
-    //! Do a binary search (un-cased) on a sorted table.
-    //! Use rules for StrT::CmpHeadI for compare. compare only up to the CSYM values.
-    //! @return -1 = not found k_ITERATE_BAD
-
     if (StrT::IsNullOrEmpty(pszFindHead) || t.isEmpty() || t.isNull()) return k_ITERATE_BAD;
 
 #ifdef _DEBUG
@@ -349,10 +336,6 @@ ITERATE_t GRAYCALL StrT::TableFind(const TYPE* pszFindThis, const cSpanUnk& t) {
 
 template <typename TYPE>
 ITERATE_t GRAYCALL StrT::TableFindSorted(const TYPE* pszFindThis, const cSpanUnk& t) {
-    //! Find a string in a table.
-    //! Do a binary search (un-cased) on a sorted table.
-    //! @return -1 = not found k_ITERATE_BAD
-
     if (pszFindThis == nullptr || t.isEmpty() || t.isNull()) return k_ITERATE_BAD;
 #ifdef _DEBUG
     ASSERT(StrX<TYPE>::IsTableSorted(t));
@@ -381,11 +364,12 @@ ITERATE_t GRAYCALL StrT::TableFindSorted(const TYPE* pszFindThis, const cSpanUnk
 
 template <typename TYPE>
 StrLen_t GRAYCALL StrT::CopyLen(TYPE* pDst, const TYPE* pSrc, StrLen_t iLenMaxChars) noexcept {
-    if (pDst == nullptr || iLenMaxChars <= 0) return 0;
+    if (iLenMaxChars <= 0 || pDst == nullptr) return 0;
     StrLen_t i = 0;
     if (pSrc != nullptr) {
         iLenMaxChars--;  // save room for '\0'
-        if (pDst >= pSrc && pDst <= (pSrc + iLenMaxChars)) {
+        const bool isOverlap = pDst >= pSrc && pDst <= (pSrc + iLenMaxChars);
+        if (isOverlap) {  // overlap?
             i = StrT::Len2(pSrc, iLenMaxChars);
             if (pDst != pSrc) {  // same string. // Must do backwards copy like cMem::CopyOverlap().
                 int j = i;
@@ -404,9 +388,6 @@ StrLen_t GRAYCALL StrT::CopyLen(TYPE* pDst, const TYPE* pSrc, StrLen_t iLenMaxCh
 
 template <typename TYPE>
 StrLen_t GRAYCALL StrT::TrimWhitespaceEnd(cSpanX<TYPE> ret) {
-    //! Trim any whitespace off the end of the string.
-    //! @return
-    //!  new length of the line. (without whitespace and comments)
     const StrLen_t iLenChars = StrT::GetWhitespaceEnd(ret);
     TYPE* pStr = ret.get_PtrWork();
     if (pStr != nullptr && pStr[iLenChars] != '\0') pStr[iLenChars] = '\0';
@@ -574,16 +555,11 @@ StrLen_t GRAYCALL StrT::EscSeqDecode(cSpanX<TYPE> ret, const TYPE* pStrIn, StrLe
 
 template <typename TYPE>
 StrLen_t GRAYCALL StrT::EscSeqDecodeQ(cSpanX<TYPE> ret, const TYPE* pStrIn, StrLen_t iLenInMax) {
-    //! Remove the opening and closing quotes. Put enclosed string (decoded) into ret.
-    //! @return the consumed length of pStrIn. NOT the length of ret.
-
     if (pStrIn == nullptr || ret.isEmpty()) return 0;
-
     const StrLen_t iLenMax = cValT::Min(ret.GetSize(), iLenInMax);
 
     if (pStrIn[0] != '"') {
-        // Just copy the string untranslated.
-        return StrT::CopyLen<TYPE>(ret.get_PtrWork(), pStrIn, iLenMax);
+        return StrT::CopyLen<TYPE>(ret.get_PtrWork(), pStrIn, iLenMax);  // Just copy the string untranslated.
     }
 
     TYPE* pszBlockEnd = StrT::FindBlockEnd<TYPE>(STR_BLOCK_t::_QUOTE, pStrIn + 1, iLenMax - 1);
@@ -789,7 +765,7 @@ ITERATE_t GRAYCALL StrT::ParseArrayTmp(cSpanX<TYPE> tmp, const TYPE* pszCmdLine,
     //! @arg uFlags = deal with quoted and escaped strings.
     //! @return Quantity of arguments
     if (tmp != pszCmdLine) {
-        StrT::Copy<TYPE>(tmp, pszCmdLine);
+        StrT::CopyPtr<TYPE>(tmp, pszCmdLine);
     }
     return ParseArray(tmp, cmds, pszSep, uFlags);
 }
@@ -866,6 +842,5 @@ StrLen_t GRAYCALL StrT::ConvertToCSV(cSpanX<TYPE> ret, const cMemSpan& src) {  /
     }
     return bld.get_Length();
 }
-
 }  // namespace Gray
 #endif  // _INC_StrT_INL

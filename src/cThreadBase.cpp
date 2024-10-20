@@ -25,7 +25,7 @@ void cThreadRef::onThreadCreate() {  // virtual
     ASSERT(nThreadId != cThreadId::k_NULL);  // ASSUME set.
     UNREFERENCED_PARAMETER(nThreadId);
     ASSERT(isCurrentThread());               // GetThreadId() is set already in CreateThread
-    m_nExitCode = THREAD_EXITCODE_RUNNING;
+    _nExitCode = THREAD_EXITCODE_RUNNING;
 #if defined(_CPPUNWIND)
     cExceptionSystem::InitForCurrentThread();  // must be called for each thread.
 #endif
@@ -35,9 +35,9 @@ void cThreadRef::onThreadExit(THREAD_EXITCODE_t nExitCode) {  // virtual
     ASSERT(nExitCode != THREAD_EXITCODE_RUNNING);
     DEBUG_CHECK(isThreadRunning());
     DEBUG_CHECK(isCurrentThread());
-    m_nExitCode = nExitCode;
-    m_bThreadStopping = true;  // probably already set anyhow.
-    m_bThreadRunning = false;
+    _nExitCode = nExitCode;
+    _isThreadStopping = true;  // probably already set anyhow.
+    _isThreadRunning = false;
 }
 
 THREAD_EXITCODE_t cThreadRef::Run() {  // virtual
@@ -70,21 +70,21 @@ HRESULT cThreadRef::CreateThread(void* pArgs, THREAD_FUNC_t pEntryProc, DWORD dw
         return E_POINTER;
     }
     if (pArgs == nullptr) pArgs = this;
-    m_bThreadRunning = true;           // assume success.
-    m_bThreadStopping = false;
-    m_dwThreadId = cThreadId::k_NULL;  // we are about to query this.
+    _isThreadRunning = true;           // assume success.
+    _isThreadStopping = false;
+    _nThreadId = cThreadId::k_NULL;  // we are about to query this.
 
     // Assume onThreadCreate() will be called.
 #ifdef _WIN32
     // same as _beginthreadex()
-    // ASSUME: m_dwThreadId is set before actually run thread code.
-    m_hThread = ::CreateThread(nullptr,     // LPSECURITY_ATTRIBUTES lpThreadAttributes,
+    // ASSUME: _nThreadId is set before actually run thread code.
+    _hThread = ::CreateThread(nullptr,     // LPSECURITY_ATTRIBUTES lpThreadAttributes,
                                0,           // SIZE_T dwStackSize,
                                pEntryProc,  // LPTHREAD_START_ROUTINE lpStartAddress,
                                pArgs,       // LPVOID lpParameter,
-                               dwCreationFlags, &m_dwThreadId);
-    if (m_hThread == THREADHANDLE_NULL) {
-        m_bThreadRunning = false;  // never did anything.
+                               dwCreationFlags, &_nThreadId);
+    if (_hThread == THREADHANDLE_NULL) {
+        _isThreadRunning = false;  // never did anything.
         return HResult::GetLastDef();
     }
 #elif defined(__linux__)
@@ -92,18 +92,18 @@ HRESULT cThreadRef::CreateThread(void* pArgs, THREAD_FUNC_t pEntryProc, DWORD dw
     // pthread_attr_init(&attr);
     // pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE); // ASSUME POSIX default
 
-    const int nErrNo = ::pthread_create(&m_hThread, nullptr, pEntryProc, pArgs);
+    const int nErrNo = ::pthread_create(&_hThread, nullptr, pEntryProc, pArgs);
     // ::pthread_attr_destroy(&attr);
     if (nErrNo != 0) {
-        m_hThread = THREADHANDLE_NULL;
-        m_bThreadRunning = false;  // never did anything.
+        _hThread = THREADHANDLE_NULL;
+        _isThreadRunning = false;  // never did anything.
         return HResult::GetDef(HResult::FromPOSIX(nErrNo));
     }
 
-    m_dwThreadId = m_hThread;
+    _nThreadId = _hThread;
 #endif
 
-    ASSERT(m_dwThreadId != cThreadId::k_NULL);
+    ASSERT(_nThreadId != cThreadId::k_NULL);
     return S_OK;
 }
 
@@ -112,10 +112,10 @@ THREAD_EXITCODE_t cThreadRef::GetExitCodeThread() {
     //! @return THREAD_EXITCODE_RUNNING = the thread is still running.
     //! @return THREAD_EXITCODE_ERR = the thread was hard terminated.
 #ifdef _WIN32
-    if (m_nExitCode == THREAD_EXITCODE_RUNNING) {
+    if (_nExitCode == THREAD_EXITCODE_RUNNING) {
         // AttachToCurrentThread will not have handle!
-        if (m_hThread == nullptr) return THREAD_EXITCODE_RUNNING;
-        if (!::GetExitCodeThread(m_hThread, &m_nExitCode)) {
+        if (_hThread == nullptr) return THREAD_EXITCODE_RUNNING;
+        if (!::GetExitCodeThread(_hThread, &_nExitCode)) {
             // the thread handle is bad!
             HRESULT hRes = HResult::GetLastDef();
             UNREFERENCED_PARAMETER(hRes);
@@ -123,7 +123,7 @@ THREAD_EXITCODE_t cThreadRef::GetExitCodeThread() {
         }
     }
 #endif
-    return m_nExitCode;  // No OS support for this in __linux__
+    return _nExitCode;  // No OS support for this in __linux__
 }
 bool cThreadRef::ExitCurrentThread(THREAD_EXITCODE_t nExitCode) {
     //! Exit the current thread.

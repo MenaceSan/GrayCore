@@ -1,7 +1,7 @@
 //! @file cMimeTypes.tbl
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 //
-// MIME_t - Similar to FOURCC
+// MIME_t - Similar to FOURCC, ContentType
 // NOTE: Some Known MIME types can have multiple .EXT possible. (allow 2)
 // http://www.iana.org/assignments/media-types/index.html
 // http://www.w3schools.com/media/media_mimeref.asp
@@ -13,7 +13,7 @@ cMimeType(BIN,		"application/octet-stream",			MIME_EXT_bin,MIME_EXT_unk,	"Unknow
 cMimeType(Dll,		"application/x-ms-dos-executable",	MIME_EXT_dll,MIME_EXT_ocx,	"application/x-msdownload. DLL for Windows" )
 cMimeType(EXE,		"application/x-executable",			MIME_EXT_exe,MIME_EXT_unk,	"application/x-msdownload. EXE for Windows" )
 cMimeType(SO,		"application/x-sharedlib",			MIME_EXT_so,MIME_EXT_unk,	"Shared object for Linux. Like DLL" )
-cMimeType(HTMLFORM, "application/x-www-form-urlencoded", "","",	"alternate for 'multipart/form-data'")
+cMimeType(HTMLFORM, "application/x-www-form-urlencoded", "","",	"alternate name for HTML 'multipart/form-data'")
 
 cMimeType(ZIP,		"application/zip",					MIME_EXT_zip,MIME_EXT_jar,	"Zip compressed file format" )
 cMimeType(RTF,		"application/rtf",					MIME_EXT_rtf,MIME_EXT_unk,	"Rich Text Format document (MS)" )
@@ -64,6 +64,7 @@ cMimeType(LOG,		"text/x-log",						MIME_EXT_log,MIME_EXT_unk,	"text log file" )
 // cMimeType(LUA,	"text/x-lua",						MIME_EXT_lua,MIME_EXT_unk,	"Lua script" )
 
 // Others:
+// FON raster font.
  
 // Tried: 
 // ".key",	"application/octet-stream",	"X.509 RSA public keys."

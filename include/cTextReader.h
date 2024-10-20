@@ -16,16 +16,16 @@ namespace Gray {
 /// read text lines from a buffer / stream. Similar to FILE*, cTextFile.
 /// Allow control of read buffer size and line length.
 /// Faster than cStreamInput::ReadStringLine() since it buffers ? maybe ?
-/// m_nGrowSizeMax = max line size.
+/// _nGrowSizeMax = max line size.
 /// opposite of ITextWriter.
 /// </summary>
 class GRAYCORE_LINK cTextReaderStream : public cStreamStackInp {
-    ITERATE_t m_iLineNumCur;  /// track the line number we are on currently. (0 based) (for cTextPos.m_iLineNum)
+    ITERATE_t _iLineNumCur = 0;  /// track the line number we are on currently in _rInp. (0 based) (for cTextPos._nLineNum)
  public:
-    cStreamInput& m_rInp;  /// Source stream.
+    cStreamInput& _rInp;  /// Source stream.
 
  public:
-    cTextReaderStream(cStreamInput& rInp, size_t nSizeLineMax) : cStreamStackInp(&rInp, nSizeLineMax), m_iLineNumCur(0), m_rInp(rInp) {
+    cTextReaderStream(cStreamInput& rInp, size_t nSizeLineMax) : cStreamStackInp(&rInp, nSizeLineMax), _rInp(rInp) {
         // Max buffer size = max line length.
         this->put_AutoReadCommit(CastN(ITERATE_t, nSizeLineMax / 2));  // default = half buffer.
     }
@@ -46,7 +46,7 @@ class GRAYCORE_LINK cTextReaderStream : public cStreamStackInp {
 
  public:
     inline ITERATE_t get_CurrentLineNumber() const noexcept {
-        return m_iLineNumCur;
+        return _iLineNumCur;
     }
 
     /// <summary>

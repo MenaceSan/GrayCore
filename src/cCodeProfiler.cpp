@@ -11,6 +11,7 @@
 #include "cThreadLock.h"
 
 namespace Gray {
+
 bool cCodeProfileFunc::sm_bActive = false;  // static
 
 #pragma pack(push, 2)
@@ -18,12 +19,12 @@ bool cCodeProfileFunc::sm_bActive = false;  // static
 /// profile log file item struct
 /// </summary>
 struct CATTR_PACKED cCodeProfilerItem {
-    WORD m_wSize;          /// Number of bytes in this record
-    WORD m_uLine;          /// Line number in source file
-    UINT_PTR m_ProcessID;  /// Current process ID PROCESSID_t
-    UINT_PTR m_ThreadID;   /// Current thread ID THREADID_t
-    UINT64 m_Cycles;       /// how many cycles inside this? TIMEPERF_t
-                           // ?? INT64 m_Time;		/// What did this start absolutely ? (so sub stuff can be removed.)
+    WORD _SizeThis;          /// Number of bytes in this record
+    WORD _uLine;          /// Line number in source file
+    UINT_PTR _nProcessId;  /// Current process ID PROCESSID_t
+    UINT_PTR _nThreadId;   /// Current thread ID THREADID_t
+    UINT64 _nCycles;       /// how many cycles inside this? TIMEPERF_t
+                           // ?? INT64 _TimePerf;		/// What did this start absolutely ? (so sub stuff can be removed.)
 
     // File name string. 0 term
     // Func/Function name string. 0 term
@@ -34,59 +35,59 @@ struct CATTR_PACKED cCodeProfilerItem {
 /// Thread locked singleton stream to write out to. Can be shared by multiple threads.
 /// </summary>
 class GRAYCORE_LINK cCodeProfilerControl final : public cSingleton<cCodeProfilerControl> {
-    SINGLETON_IMPL(cCodeProfilerControl);
     friend class cCodeProfileFunc;
 
  protected:
-    cFile m_File;
-    mutable cThreadLockableX m_Lock;
-    PROCESSID_t m_ProcessId;
+    cFile _File;
+    mutable cThreadLockableX _Lock;
+    PROCESSID_t _nProcessId;
 
  protected:
-    cCodeProfilerControl() : cSingleton<cCodeProfilerControl>(this, typeid(cCodeProfilerControl)), m_ProcessId(cAppState::get_CurrentProcessId()) {}
+    DECLARE_cSingleton(cCodeProfilerControl);
+    cCodeProfilerControl() : cSingleton<cCodeProfilerControl>(this), _nProcessId(cAppState::get_CurrentProcessId()) {}
 
     bool StartTime() {
-        const auto guard(m_Lock.Lock());
+        const auto guard(_Lock.Lock());
         cCodeProfileFunc::sm_bActive = true;
-        if (m_File.isValidHandle()) return true;
+        if (_File.isValidHandle()) return true;
         // open it. PCP file.
-        HRESULT hRes = m_File.OpenX(_FN("profile.pcp"), OF_CREATE | OF_SHARE_DENY_NONE | OF_WRITE | OF_BINARY);  // append
+        HRESULT hRes = _File.OpenX(_FN("profile.pcp"), OF_CREATE | OF_SHARE_DENY_NONE | OF_WRITE | OF_BINARY);  // append
         if (FAILED(hRes)) return false;
-        m_File.SeekToEnd();  // Start at end of file
+        _File.SeekToEnd();  // Start at end of file
         return true;
     }
 
     void StopTime() {
-        const auto guard(m_Lock.Lock());
+        const auto guard(_Lock.Lock());
         cCodeProfileFunc::sm_bActive = false;
-        m_File.Close();
+        _File.Close();
     }
 
     void WriteTime(const cTimePerf& nTimeEnd, const class cCodeProfileFunc& Func) noexcept {
         DEBUG_ASSERT(get_Active(), "Active");
-        if (!m_File.isValidHandle()) return;
-        const auto guard(m_Lock.Lock());
-        if (!m_File.isValidHandle()) return;
+        if (!_File.isValidHandle()) return;
+        const auto guard(_Lock.Lock());
+        if (!_File.isValidHandle()) return;
 
-        const StrLen_t iLenFile = StrT::Len(Func.m_src.m_pszFile);
-        const StrLen_t iLenFunc = StrT::Len(Func.m_src.m_pszFunction);
+        const StrLen_t iLenFile = StrT::Len(Func._Src._pszFile);
+        const StrLen_t iLenFunc = StrT::Len(Func._Src._pszFunction);
         const StrLen_t iLenTotal = sizeof(cCodeProfilerItem) + iLenFile + iLenFunc + 2;
 
         BYTE tmp[sizeof(cCodeProfilerItem) + 1024];  // pack binary blob.
         DEBUG_ASSERT(iLenTotal < (StrLen_t)sizeof(tmp), "LenTotal");
 
         cCodeProfilerItem* pLogItem = reinterpret_cast<cCodeProfilerItem*>(tmp);
-        pLogItem->m_wSize = CastN(WORD, iLenTotal);
-        pLogItem->m_uLine = Func.m_src.m_uLine;
-        pLogItem->m_ProcessID = m_ProcessId;
-        pLogItem->m_ThreadID = cThreadId::GetCurrentId();
-        pLogItem->m_Cycles = nTimeEnd.m_nTime - Func.m_nTimeStart.m_nTime;
-        // pLogItem->m_Time = nTime;
+        pLogItem->_SizeThis = CastN(WORD, iLenTotal);
+        pLogItem->_uLine = Func._Src._uLine;
+        pLogItem->_nProcessId = _nProcessId;
+        pLogItem->_nThreadId = cThreadId::GetCurrentId();
+        pLogItem->_nCycles = nTimeEnd._nTimePerf - Func._nTimeStart._nTimePerf;
+        // pLogItem->_TimePerf = nTime;
 
-        cMem::Copy(tmp + sizeof(cCodeProfilerItem), Func.m_src.m_pszFile, iLenFile + 1);                     // include '\0'
-        cMem::Copy(tmp + sizeof(cCodeProfilerItem) + iLenFile + 1, Func.m_src.m_pszFunction, iLenFunc + 1);  // include '\0'
+        cMem::Copy(tmp + sizeof(cCodeProfilerItem), Func._Src._pszFile, iLenFile + 1);                     // include '\0'
+        cMem::Copy(tmp + sizeof(cCodeProfilerItem) + iLenFile + 1, Func._Src._pszFunction, iLenFunc + 1);  // include '\0'
 
-        m_File.WriteX(cMemSpan(tmp, iLenTotal));
+        _File.WriteX(cMemSpan(tmp, iLenTotal));
     }
 
  public:
@@ -104,12 +105,13 @@ class GRAYCORE_LINK cCodeProfilerControl final : public cSingleton<cCodeProfiler
         return true;
     }
 };
+cSingleton_IMPL(cCodeProfilerControl);
 
 void cCodeProfileFunc::StopTime() noexcept {
     //! Record time when this object is destroyed.
     cTimePerf nTimeEnd(true);  // End cycle count
     DEBUG_ASSERT(sm_bActive, "bActive");
-    DEBUG_ASSERT(m_nTimeStart.isTimeValid(), "nTimeStart");
+    DEBUG_ASSERT(_nTimeStart.isTimeValid(), "nTimeStart");
     // Write to log file
     cCodeProfilerControl* pController = cCodeProfilerControl::get_Single();
     pController->WriteTime(nTimeEnd, *this);

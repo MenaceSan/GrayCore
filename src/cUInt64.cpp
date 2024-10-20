@@ -12,7 +12,7 @@ template class GRAYCORE_LINK cBitmask<UINT64>;  // force implementation/instanti
 
 void cUInt64::BuildStr(StrBuilder<char>& sb, RADIX_t uRadixBase) const {
 #ifdef USE_INT64
-    sb.AdvanceWrite(StrT::ULtoA(m_u, sb.get_SpanWrite(), uRadixBase));
+    sb.AdvanceWrite(StrT::ULtoA(_nVal, sb.get_SpanWrite(), uRadixBase));
 #else
     ASSERT(0);  // TODO
     return 0;
@@ -31,7 +31,7 @@ cString cUInt64::GetStr(RADIX_t uRadixBase) const {
 HRESULT cUInt64::SetStr(const cSpan<char>& src, RADIX_t nRadixBase) {
 #ifdef USE_INT64
     const char* ppszEnd = nullptr;
-    m_u = StrT::toUL(src.get_PtrConst(), &ppszEnd, nRadixBase);
+    _nVal = StrT::toUL(src.get_PtrConst(), &ppszEnd, nRadixBase);
     return CastN(HRESULT, ppszEnd - src.get_PtrConst());
 #else
     ASSERT(0);  // TODO
@@ -41,25 +41,25 @@ HRESULT cUInt64::SetStr(const cSpan<char>& src, RADIX_t nRadixBase) {
 
 BIT_ENUM_t cUInt64::get_Highest1Bit() const {
 #ifdef USE_INT64
-    return cBits::Highest1Bit(m_u);
+    return cBits::Highest1Bit(_nVal);
 #else
-    if (m_uHi) return cBits::Highest1Bit(m_uHi) + k_UNIT_BITS;
-    return cBits::Highest1Bit(m_uLo);
+    if (_nHi) return cBits::Highest1Bit(_nHi) + k_UNIT_BITS;
+    return cBits::Highest1Bit(_nLo);
 #endif
 }
 
 HRESULT cUInt64::SetRandomBits(BIT_ENUM_t nBits) {
     ASSERT(nBits <= 64);
 #ifdef USE_INT64
-    g_Rand.GetNoise(TOSPANT(m_u));
-    m_u &= (((UNIT_t)1) << nBits) - 1;
+    g_Rand.GetNoise(TOSPANT(_nVal));
+    _nVal &= (((UNIT_t)1) << nBits) - 1;
 #else
-    m_uLo = g_Rand.get_RandUns();
+    _nLo = g_Rand.get_RandUns();
     if (nBits < k_UNIT_BITS) {
-        m_uLo &= (((UNIT_t)1) << nBits) - 1;
+        _nLo &= (((UNIT_t)1) << nBits) - 1;
     } else {
-        m_uHi = g_Rand.get_RandUns();
-        m_uHi &= (((UNIT_t)1) << (nBits - k_UNIT_BITS)) - 1;
+        _nHi = g_Rand.get_RandUns();
+        _nHi &= (((UNIT_t)1) << (nBits - k_UNIT_BITS)) - 1;
     }
 #endif
     return S_OK;
@@ -70,7 +70,7 @@ void cUInt64::SetPowerMod(const cUInt64& base, const cUInt64& exponent, const cU
     //! *this = ((base^exponent)%modulus)
 
 #ifdef USE_INT64
-    m_u = 1;
+    _nVal = 1;
     bool bOne = true;
     UNIT_t nBitMask = ((UNIT_t)1) << (k_UNIT_BITS - 1);
     do {
@@ -79,7 +79,7 @@ void cUInt64::SetPowerMod(const cUInt64& base, const cUInt64& exponent, const cU
             *this *= n;
             *this %= modulus;
         }
-        if (exponent.m_u & nBitMask) {
+        if (exponent._nVal & nBitMask) {
             *this *= base;
             *this %= modulus;
             bOne = false;
@@ -155,11 +155,11 @@ int cUInt64::SetRandomPrime(BIT_ENUM_t nBits, cThreadState* pCancel) {
 
 void cUInt64::OpBitShiftLeft1(UNIT_t nBitMask) {
 #ifdef USE_INT64
-    const UNIT_t nTmp = m_u;
+    const UNIT_t nTmp = _nVal;
     const UNIT_t nCarryBit = nTmp >> (k_UNIT_BITS - 1);
     ASSERT(nCarryBit == 0 || nCarryBit == 1);
     UNREFERENCED_PARAMETER(nCarryBit);
-    m_u = ((nTmp << 1) | nBitMask);
+    _nVal = ((nTmp << 1) | nBitMask);
 #else
     // _addcarry_u64
     ASSERT(0);  // TODO
@@ -184,7 +184,6 @@ void GRAYCALL cUInt64::Divide(const cUInt64& dividend, const cUInt64& divisor, O
         return;
     }
 
-    // If dividend.m_nBlksUse < divisor.m_nBlksUse, then dividend < divisor, and we can be sure that divisor doesn't go into
     // dividend at all.
     if (dividend < divisor) {
         // The quotient is 0 and dividend is the remainder
@@ -199,7 +198,7 @@ void GRAYCALL cUInt64::Divide(const cUInt64& dividend, const cUInt64& divisor, O
 
 #ifdef USE_INT64
     BIT_ENUM_t nBits = k_UNIT_BITS;
-    UNIT_t nBlkTmp = dividend.m_u;
+    UNIT_t nBlkTmp = dividend._nVal;
     while (nBits-- != 0) {
         remainder.OpBitShiftLeft1((nBlkTmp >> nBits) & 1);
         if (divisor <= remainder) {

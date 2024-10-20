@@ -40,7 +40,7 @@ enum class BITOP_t : signed char {
 /// Bit mask type operations of all sorts. on various integral data types. static class.
 /// </summary>
 struct GRAYCORE_LINK cBits {          // static
-    static const BIT_ENUM_t k_8 = 8;  /// represent the 8 bits in a byte. BIT_ENUM_t
+    static constexpr BIT_ENUM_t k_8 = 8;  /// represent the 8 bits in a byte. BIT_ENUM_t
 
     /// <summary>
     /// How many bytes to hold these bits. Round up to next byte.
@@ -158,7 +158,7 @@ struct GRAYCORE_LINK cBits {          // static
     /// <returns>1 for value of 1. 0 = no bits.</returns>
     template <typename TYPE>
     static inline BIT_ENUM_t Highest1Bit(TYPE nVal) noexcept {
-        BIT_ENUM_t nBit1 = 0;
+        BIT_ENUM_t nBit1 = 0;  // no bits set.
         while (nVal != 0) {
             nVal >>= 1;
             nBit1++;
@@ -172,7 +172,7 @@ struct GRAYCORE_LINK cBits {          // static
     /// </summary>
     /// <typeparam name="TYPE"></typeparam>
     /// <param name="nVal"></param>
-    /// <returns></returns>
+    /// <returns>1 for value of 1. 0 = no bits.</returns>
     template <typename TYPE>
     static inline BIT_ENUM_t Lowest1Bit(TYPE nVal) noexcept {
         BIT_ENUM_t nBit1 = 1;
@@ -190,7 +190,7 @@ struct GRAYCORE_LINK cBits {          // static
     /// </summary>
     /// <typeparam name="TYPE"></typeparam>
     /// <param name="nVal"></param>
-    /// <returns></returns>
+    /// <returns>0 = no bits set.</returns>
     template <typename TYPE>
     static inline BIT_ENUM_t Count1Bits(TYPE nVal) noexcept {
         BIT_ENUM_t nBits = 0;  // accumulates the total bits set in nVal
@@ -218,7 +218,7 @@ struct GRAYCORE_LINK cBits {          // static
     }
 
     /// <summary>
-    /// Reverse the order of the bits. ASSUME not signed?
+    /// Reverse the order of the bits. default impl. ASSUME not signed?
     /// </summary>
     template <typename TYPE>
     static inline TYPE Reverse(TYPE nVal) noexcept {
@@ -278,7 +278,7 @@ inline BIT_ENUM_t cBits::Lowest1Bit<UINT64>(UINT64 nVal) noexcept {  // static
 
 template <>
 constexpr BIT_ENUM_t cBits::Count1Bits<UINT32>(UINT32 nVal) noexcept {
-    //! A math trick for counting 1 bits in 32 bit numbers.
+    // A math trick for counting 1 bits in 32 bit numbers.
     nVal = (nVal & 0x55555555) + ((nVal & 0xAAAAAAAA) >> 1);
     nVal = (nVal & 0x33333333) + ((nVal & 0xCCCCCCCC) >> 2);
     nVal = (nVal + (nVal >> 4)) & 0x0F0F0F0F;
@@ -303,15 +303,13 @@ inline UINT32 cBits::Rotr<UINT32>(UINT32 nVal, BIT_ENUM_t nBits) noexcept {
 template <>
 inline BIT_ENUM_t cBits::Highest1Bit<UINT32>(UINT32 nVal) noexcept {
     DWORD nRet;
-    if (::_BitScanReverse(&nRet, nVal))  // Use intrinsic function
-        return CastN(BIT_ENUM_t, nRet + 1);
+    if (::_BitScanReverse(&nRet, nVal)) return CastN(BIT_ENUM_t, nRet + 1);  // Use intrinsic function
     return 0;
 }
 template <>
 inline BIT_ENUM_t cBits::Lowest1Bit<UINT32>(UINT32 nVal) noexcept {
     DWORD nRet;
-    if (::_BitScanForward(&nRet, nVal))  // Use intrinsic function
-        return CastN(BIT_ENUM_t, nRet + 1);
+    if (::_BitScanForward(&nRet, nVal)) return CastN(BIT_ENUM_t, nRet + 1);  // Use intrinsic function
     return 0;
 }
 #endif
@@ -321,15 +319,13 @@ inline BIT_ENUM_t cBits::Lowest1Bit<UINT32>(UINT32 nVal) noexcept {
 template <>
 inline BIT_ENUM_t cBits::Highest1Bit<UINT64>(UINT64 nVal) noexcept {
     DWORD nRet;
-    if (::_BitScanReverse64(&nRet, nVal))  // Use intrinsic function
-        return CastN(BIT_ENUM_t, nRet + 1);
+    if (::_BitScanReverse64(&nRet, nVal)) return CastN(BIT_ENUM_t, nRet + 1);  // Use intrinsic function
     return 0;
 }
 template <>
 inline BIT_ENUM_t cBits::Lowest1Bit<UINT64>(UINT64 nVal) noexcept {
     DWORD nRet;
-    if (::_BitScanForward64(&nRet, nVal))  // Use intrinsic function
-        return CastN(BIT_ENUM_t, nRet + 1);
+    if (::_BitScanForward64(&nRet, nVal)) return CastN(BIT_ENUM_t, nRet + 1);  // Use intrinsic function
     return 0;
 }
 #endif
@@ -364,6 +360,7 @@ inline UINT32 cBits::Reverse<UINT32>(UINT32 nVal) noexcept {
     return (nVal >> 16) | (nVal << 16);
 }
 
+#if 0
 template <>
 inline ULONG cBits::Reverse<ULONG>(ULONG nVal) noexcept {  // static
     //! ULONG may be equiv to UINT32 or UINT64
@@ -373,6 +370,7 @@ inline ULONG cBits::Reverse<ULONG>(ULONG nVal) noexcept {  // static
     return Reverse<UINT32>(nVal);
 #endif
 }
+#endif
 
 /// <summary>
 /// hold a mask of max MASK_t size bits. MASK_t or BIT1_t might be an enum!

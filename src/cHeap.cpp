@@ -257,9 +257,9 @@ bool GRAYCALL cHeap::IsValidHeap(const void* pData) noexcept {  // static
 /// ASSUME: alignment empty memory is here. contains 0x0BADF00D repeated.
 /// </summary>
 struct CATTR_PACKED cHeapAlignHeader {
-    void* m_pMallocHead;  /// pointer back to the returned malloc() memory. may point at self?!
+    void* _pMallocHead;  /// pointer back to the returned malloc() memory. may point at self?!
 #ifdef _DEBUG
-    DWORD m_TailGap;  /// filled with kTailGap IN _DEBUG ONLY HEAP. cMemSignature kTailGap
+    DWORD _TailGap;  /// filled with kTailGap IN _DEBUG ONLY HEAP. cMemSignature kTailGap
 #endif
 };
 // #pragma pack()
@@ -276,9 +276,9 @@ const cHeapAlignHeader* GRAYCALL cHeapAlign::GetHeader(const void* pData) noexce
     auto pHdr = CastNumToPtrT<const cHeapAlignHeader>(uDataPtr - sizeof(cHeapAlignHeader));
     // is pHdr valid ?
 #ifdef _DEBUG
-    if (pHdr->m_TailGap != kTailGap) return nullptr;
+    if (pHdr->_TailGap != kTailGap) return nullptr;
 #endif
-    const BYTE* pMallocHead = PtrCast<const BYTE>(pHdr->m_pMallocHead);
+    const BYTE* pMallocHead = PtrCast<const BYTE>(pHdr->_pMallocHead);
     // check small valid range. no point to align > HEAP_BYTE_SizeAlignMax !? iAligned vs k_SizeAlignMax
     if (pMallocHead > (const void*)pHdr || pMallocHead + k_SizeAlignMax < pData) {
         return nullptr;
@@ -298,7 +298,7 @@ bool GRAYCALL cHeapAlign::IsValidInside(const void* pData, INT_PTR iOffset) noex
     const cHeapAlignHeader* pHdr = GetHeader(pData);
     if (pHdr == nullptr) return cHeap::IsValidInside(pData, iOffset);
 
-    const void* pMallocHead = pHdr->m_pMallocHead;
+    const void* pMallocHead = pHdr->_pMallocHead;
     if (!cHeap::IsValidHeap(pMallocHead)) return false;
     const size_t nSize = cHeap::GetSize(pMallocHead);
     return CastN(size_t, iOffset) < nSize;
@@ -314,7 +314,7 @@ bool GRAYCALL cHeapAlign::IsValidHeap(const void* pData) noexcept {  // static
     if (pHdr == nullptr) return cHeap::IsValidHeap(pData);
 
     // get the cHeapHeader pointer.
-    return cHeap::IsValidHeap(pHdr->m_pMallocHead);
+    return cHeap::IsValidHeap(pHdr->_pMallocHead);
 }
 
 size_t GRAYCALL cHeapAlign::GetSize(const void* pData) noexcept {  // static
@@ -323,8 +323,8 @@ size_t GRAYCALL cHeapAlign::GetSize(const void* pData) noexcept {  // static
     if (pHdr == nullptr) return cHeap::GetSize(pData);
 
     // get the cHeapHeader pointer.
-    DEBUG_CHECK(cHeap::IsValidHeap(pHdr->m_pMallocHead));
-    return cHeap::GetSize(pHdr->m_pMallocHead);
+    DEBUG_CHECK(cHeap::IsValidHeap(pHdr->_pMallocHead));
+    return cHeap::GetSize(pHdr->_pMallocHead);
 }
 
 void GRAYCALL cHeapAlign::FreePtr(void* pData) {  // static

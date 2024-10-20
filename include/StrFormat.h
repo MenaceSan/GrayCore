@@ -26,42 +26,40 @@ typedef char IniChar_t;             /// char format even on UNICODE system! Scre
 struct GRAYCORE_LINK StrFormatParams {
     static const char k_Specs[16];  /// possible specs. "EFGXcdefgiosux"  // Omit "S" "apnA"
 
-    char m_nSpec;  /// % type. 0 = invalid. from k_Specs.
+    char _chSpec;  /// % type. 0 = invalid. from k_Specs.
 
-    BYTE m_nWidthMin;    /// specifies minimum field width. Total width of what we place in pszOut
-    short m_nPrecision;  /// how many chars from pszParam do we take? (not including '\0') -1 = default.
+    BYTE _nWidthMin;    /// specifies minimum field width. Total width of what we place in pszOut
+    short _nPrecision;  /// how many chars from pszParam do we take? (not including '\0') -1 = default.
 
     // Flags.
-    BYTE m_nLong;       /// 0=int, 1=long (32 bit usually), or 2=long long (64 bit usually). 'l' or 'll'. (char or wchar_t?)
-    bool m_bAlignLeft;  /// - sign indicates left align.
-    bool m_bPlusSign;   /// + indicates to Show sign.
-    bool m_bWidthArg;   /// Get an argument that will supply the m_nWidth.
+    BYTE _eLongType;       /// 0=int, 1=long (32 bit usually), or 2=long long (64 bit usually). 'l' or 'll'. (char or wchar_t?)
+    bool _isAlignLeft;  /// - sign indicates left align.
+    bool _isPlusSign;   /// + indicates to Show sign.
+    bool _isWidthArg;   /// Get an argument that will supply the _nWidthMin.
 
-    bool m_bAddPrefix;  /// Add a prefix 0x for hex or 0 for octal.
-    bool m_bLeadZero;   /// StrNum::k_LEN_MAX_DIGITS_INT
+    bool _isAddPrefix;  /// Add a prefix 0x for hex or 0 for octal.
+    bool _isLeadZero;   /// StrNum::k_LEN_MAX_DIGITS_INT
 
     static inline char FindSpec(char ch) noexcept {
         //! Find a valid spec char.
         for (size_t i = 0; i < _countof(k_Specs) - 1; i++) {
             const char chCur = k_Specs[i];
-            if (ch > chCur)  // keep looking.
-                continue;
-            if (ch < chCur)  // they are sorted.
-                return '\0';
+            if (ch > chCur) continue;  // keep looking.                
+            if (ch < chCur) return '\0';  // they are sorted.                
             return ch;  // got it.
         }
         return '\0';  // nothing.
     }
     void ClearParams() noexcept {
-        m_nSpec = '\0';
-        m_nWidthMin = 0;  // default = all. No padding.
-        m_nPrecision = -1;
-        m_nLong = 0;  // Account for "ll"
-        m_bAlignLeft = false;
-        m_bPlusSign = false;
-        m_bLeadZero = false;
-        m_bWidthArg = false;
-        m_bAddPrefix = false;
+        _chSpec = '\0';
+        _nWidthMin = 0;  // default = all. No padding.
+        _nPrecision = -1;
+        _eLongType = 0;  // Account for "ll"
+        _isAlignLeft = false;
+        _isPlusSign = false;
+        _isLeadZero = false;
+        _isWidthArg = false;
+        _isAddPrefix = false;
     }
 };
 

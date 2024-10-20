@@ -23,48 +23,53 @@ class cThreadLockArrayPtr : protected cArrayPtr<TYPE> {
     typedef cArrayPtr<TYPE> SUPER_t;
 
  public:
-    mutable cThreadLockableX m_Lock;
+    mutable cThreadLockableX _Lock;
 
  public:
     cThreadLockArrayPtr() {}
     ~cThreadLockArrayPtr() {}
-    ITERATE_t GetSize() const {
-        //! Used for statistical purposes. This may change of course. expose protected.
-        return SUPER_t::GetSize();  // just for stats purposes.
-    }
+
+    using SUPER_t::GetSize;  // expose for statistical purposes. This may change of course.
+
     void SetSize(ITERATE_t nNewSize) {
-        const auto guard(m_Lock.Lock());  // thread sync critical section.
-        SUPER_t::SetSize(nNewSize);        // just for stats purposes.
+        const auto guard(_Lock.Lock());  // thread sync critical section.
+        SUPER_t::SetSize(nNewSize);       // just for stats purposes.
     }
     ITERATE_t Add(TYPE* pObj) {
         // add to tail
-        const auto guard(m_Lock.Lock());  // thread sync critical section.
-        return SUPER_t::Add(pObj);         // add to tail
+        const auto guard(_Lock.Lock());  // thread sync critical section.
+        return SUPER_t::Add(pObj);        // add to tail
     }
+
+    /// <summary>
+    /// thread safe enum. return a reference counted pointer. NOT a bare pointer.
+    /// @note Its slightly dangerous to enum a thread used list. We could read the same entry 2 times !
+    /// @note NEVER NEVER lock the list and the object at the same time! This could create a permanent deadlock!
+    /// </summary>
     TYPE* GetAtCheck(ITERATE_t nIndex) const {
-        const auto guard(m_Lock.Lock());  // thread sync critical section.
+        const auto guard(_Lock.Lock());  // thread sync critical section.
         return SUPER_t::GetAtCheck(nIndex);
     }
     bool HasArg(TYPE* pObj) const {
         //! Find the index of a specified entry.
-        const auto guard(m_Lock.Lock());  // thread sync critical section.
+        const auto guard(_Lock.Lock());  // thread sync critical section.
         return SUPER_t::FindIForN(pObj) >= 0;
     }
     TYPE* PopHead() {
-        const auto guard(m_Lock.Lock());  // thread sync critical section.
+        const auto guard(_Lock.Lock());  // thread sync critical section.
         return SUPER_t::PopHead();
     }
     TYPE* PopTail() {
-        const auto guard(m_Lock.Lock());  // thread sync critical section.
+        const auto guard(_Lock.Lock());  // thread sync critical section.
         return SUPER_t::PopTail();
     }
     void DeleteAll() {
-        const auto guard(m_Lock.Lock());  // thread sync critical section.
+        const auto guard(_Lock.Lock());  // thread sync critical section.
         SUPER_t::DeleteAll();
     }
     bool RemoveArg(TYPE* pObj) {
         //! @return true = removed. false = was not here.
-        const auto guard(m_Lock.Lock());  // thread sync critical section.
+        const auto guard(_Lock.Lock());  // thread sync critical section.
         return SUPER_t::RemoveArg(pObj);
     }
 };
@@ -78,60 +83,59 @@ class cThreadLockArrayRef : protected cArrayRef<TYPE> {
     typedef cArrayRef<TYPE> SUPER_t;
 
  public:
-    mutable cThreadLockableX m_Lock;
+    mutable cThreadLockableX _Lock;
 
  public:
-    ITERATE_t GetSize() const {
-        //! Used for statistical purposes. This may change of course.
-        return SUPER_t::GetSize();  // just for stats purposes.
-    }
+    using SUPER_t::begin;
+    using SUPER_t::end;
+    using SUPER_t::GetSize;  // expose for statistical purposes. This may change of course.
 
     // Locking helpers
 
     /// <summary>
-    /// thread safe get.
+    /// thread safe enum. return a reference counted pointer. NOT a bare pointer.
     /// @note Its slightly dangerous to enum/iterate a thread used list. We could read the same entry 2 times unless we lock for the life of the iteration!
     /// @note NEVER NEVER lock the list and the object at the same time! This could create a permanent deadlock!
     /// </summary>
     /// <param name="nIndex"></param>
     /// <returns></returns>
     cRefPtr<TYPE> GetAtCheck(ITERATE_t nIndex) const {
-        const auto guard(m_Lock.Lock());  // thread sync critical section.
+        const auto guard(_Lock.Lock());  // thread sync critical section.
         return SUPER_t::GetAtCheck(nIndex);
     }
     cRefPtr<TYPE> PopHead() {
         // a queue.
-        const auto guard(m_Lock.Lock());  // thread sync critical section.
-        return SUPER_t::PopHead();         // pop off head
+        const auto guard(_Lock.Lock());  // thread sync critical section.
+        return SUPER_t::PopHead();        // pop off head
     }
     cRefPtr<TYPE> PopTail() {
         // stack form = tail = latest.
-        const auto guard(m_Lock.Lock());  // thread sync critical section.
-        return SUPER_t::PopTail();         // pop off tail
+        const auto guard(_Lock.Lock());  // thread sync critical section.
+        return SUPER_t::PopTail();        // pop off tail
     }
     bool HasArg(TYPE* pObj) const {
         //! Find a specified entry.
-        const auto guard(m_Lock.Lock());  // thread sync critical section.
+        const auto guard(_Lock.Lock());  // thread sync critical section.
         return SUPER_t::FindIFor3(pObj) >= 0;
     }
     ITERATE_t Add(TYPE* pObj) {
         // add to tail
-        const auto guard(m_Lock.Lock());  // thread sync critical section.
-        return SUPER_t::Add(pObj);         // add to tail
+        const auto guard(_Lock.Lock());  // thread sync critical section.
+        return SUPER_t::Add(pObj);        // add to tail
     }
 
     bool RemoveArg(TYPE* pObj) {
         //! @return true = removed. false = was not here.
-        const auto guard(m_Lock.Lock());  // thread sync critical section.
+        const auto guard(_Lock.Lock());  // thread sync critical section.
         return SUPER_t::RemoveArg(pObj);
     }
     void RemoveAll() {
-        const auto guard(m_Lock.Lock());  // thread sync critical section.
+        const auto guard(_Lock.Lock());  // thread sync critical section.
         SUPER_t::RemoveAll();
     }
     void DisposeAll() {
         //! ASSUME TYPE supports DisposeThis(); like cXObject
-        const auto guard(m_Lock.Lock());  // thread sync critical section.
+        const auto guard(_Lock.Lock());  // thread sync critical section.
         SUPER_t::DisposeAll();
     }
     // FindIForKey, RemoveAt must use a lock outside as well ! (for index to be meaningful)
@@ -152,31 +156,35 @@ class cThreadLockArrayName : protected cArraySortName<TYPE, _TYPECH> {
     typedef cArraySortName<TYPE, _TYPECH> SUPER_t;
 
  public:
-    mutable cThreadLockableX m_Lock;
+    mutable cThreadLockableX _Lock;
 
  public:
     cThreadLockArrayName() {}
     ~cThreadLockArrayName() {}
 
+    using SUPER_t::GetSize;  // expose for statistical purposes. This may change of course.
+
     // Locking helpers
+    
+    /// <summary>
+    /// thread safe enum. return a reference counted pointer. NOT a bare pointer.
+    /// @note Its slightly dangerous to enum a thread used list. We could read the same entry 2 times !
+    /// @note NEVER NEVER lock the list and the object at the same time! This could create a permanent deadlock!
+    /// </summary>
     cRefPtr<TYPE> GetAtCheck(ITERATE_t nIndex) const {
-        //! @note Its slightly dangerous to enum a thread used list.
-        //!  We could read the same entry 2 times !
-        //! @note NEVER NEVER lock the list and the object at the same time!
-        //!  This could create a permanent deadlock!
-        const auto guard(m_Lock.Lock());  // thread sync critical section.
+        const auto guard(_Lock.Lock());  // thread sync critical section.
         return SUPER_t::GetAtCheck(nIndex);
     }
     cRefPtr<TYPE> FindArgForKey(const _TYPECH* pszKey) const {
-        const auto guard(m_Lock.Lock());  // thread sync critical section.
+        const auto guard(_Lock.Lock());  // thread sync critical section.
         return SUPER_t::FindArgForKey(pszKey);
     }
     ITERATE_t AddSort(TYPE* pObj) {
-        const auto guard(m_Lock.Lock());  // thread sync critical section.
+        const auto guard(_Lock.Lock());  // thread sync critical section.
         return SUPER_t::AddSort(pObj);
     }
     bool RemoveArgKey(TYPE* pObj) {
-        const auto guard(m_Lock.Lock());  // thread sync critical section.
+        const auto guard(_Lock.Lock());  // thread sync critical section.
         return SUPER_t::RemoveArgKey(pObj);
     }
     ITERATE_t GetSize() const {
@@ -184,7 +192,7 @@ class cThreadLockArrayName : protected cArraySortName<TYPE, _TYPECH> {
         return SUPER_t::GetSize();  // just for stats purposes.
     }
     void RemoveAll() {
-        const auto guard(m_Lock.Lock());  // thread sync critical section.
+        const auto guard(_Lock.Lock());  // thread sync critical section.
         SUPER_t::RemoveAll();
     }
     // FindIForKey, RemoveAt must use a lock outside as well ! (for index to be meaningful)
@@ -203,59 +211,54 @@ class cThreadLockArrayHash : protected cArraySortHash<TYPE, _TYPE_HASH> {
     typedef cArraySortHash<TYPE, _TYPE_HASH> SUPER_t;
 
  public:
-    mutable cThreadLockableX m_Lock;
+    mutable cThreadLockableX _Lock;
 
  public:
     cThreadLockArrayHash() {}
     ~cThreadLockArrayHash() {}
 
-    bool IsEmpty() const {
-        //! Used for statistical purposes. This may change of course.
-        return SUPER_t::isEmpty();
-    }
-    ITERATE_t GetSize() const noexcept {
-        //! Used for statistical purposes. This may change of course.
-        return SUPER_t::GetSize();
-    }
+    using SUPER_t::isEmpty;
+    using SUPER_t::GetSize;  // expose for statistical purposes. This may change of course.
+
+    /// <summary>
+    /// thread safe enum. return a reference counted pointer. NOT a bare pointer.
+    /// @note Its slightly dangerous to enum a thread used list. We could read the same entry 2 times !
+    /// @note NEVER NEVER lock the list and the object at the same time! This could create a permanent deadlock!
+    /// </summary>
     cRefPtr<TYPE> GetAtCheck(ITERATE_t nIndex) const {
-        //! return a reference counted pointer. NOT a bare pointer.
-        //! @note Its slightly dangerous to enum a thread used list.
-        //!  We could read the same entry 2 times !
-        //! @note NEVER NEVER lock the list and the object at the same time!
-        //!  This could create a deadlock!
-        const auto guard(m_Lock.Lock());  // thread sync critical section.
+        const auto guard(_Lock.Lock());  // thread sync critical section.
         return SUPER_t::GetAtCheck(nIndex);
     }
     ITERATE_t AddSort(TYPE* pObj) {
         // AKA Push = add to Tail.
-        const auto guard(m_Lock.Lock());  // thread sync critical section.
+        const auto guard(_Lock.Lock());  // thread sync critical section.
         return SUPER_t::AddSort(pObj);    // AddTail
     }
     cRefPtr<TYPE> PopHead() {
         // Act as a Queue, not a stack.
-        const auto guard(m_Lock.Lock());  // thread sync critical section.
-        return SUPER_t::PopHead();         // pull off head
+        const auto guard(_Lock.Lock());  // thread sync critical section.
+        return SUPER_t::PopHead();        // pull off head
     }
     cRefPtr<TYPE> PopTail() {
         // Act as a stack, not a Queue
-        const auto guard(m_Lock.Lock());  // thread sync critical section.
+        const auto guard(_Lock.Lock());  // thread sync critical section.
         return SUPER_t::PopTail();
     }
     bool RemoveArgKey(TYPE* pObj) {
-        const auto guard(m_Lock.Lock());  // thread sync critical section.
+        const auto guard(_Lock.Lock());  // thread sync critical section.
         return SUPER_t::RemoveArgKey(pObj);
     }
     void RemoveAll() {
-        const auto guard(m_Lock.Lock());  // thread sync critical section.
+        const auto guard(_Lock.Lock());  // thread sync critical section.
         SUPER_t::RemoveAll();
     }
     void DisposeAll() {
         //! ASSUME TYPE supports DisposeThis(); like cXObject
-        const auto guard(m_Lock.Lock());  // thread sync critical section.
+        const auto guard(_Lock.Lock());  // thread sync critical section.
         SUPER_t::DisposeAll();
     }
     cRefPtr<TYPE> FindArgForKey(_TYPE_HASH hashcode) const {
-        const auto guard(m_Lock.Lock());  // thread sync critical section.
+        const auto guard(_Lock.Lock());  // thread sync critical section.
         return SUPER_t::FindArgForKey(hashcode);
     }
 
@@ -274,58 +277,56 @@ class cThreadLockArrayValue : protected cArraySortValue<TYPE, _TYPE_KEY> {
     typedef cArraySortValue<TYPE, _TYPE_KEY> SUPER_t;
 
  public:
-    mutable cThreadLockableX m_Lock;
+    mutable cThreadLockableX _Lock;
 
  public:
-  
-    ITERATE_t GetSize() const {
-        //! Used for statistical purposes. This may change of course.
-        return SUPER_t::GetSize();
-    }
+    using SUPER_t::GetSize;  /// Used for statistical purposes. This may change of course.
+
+    /// <summary>
+    /// thread safe enum. return a reference counted pointer. NOT a bare pointer.
+    /// @note Its slightly dangerous to enum a thread used list. We could read the same entry 2 times !
+    /// @note NEVER NEVER lock the list and the object at the same time! This could create a permanent deadlock!
+    /// </summary>
     cRefPtr<TYPE> GetAtCheck(ITERATE_t nIndex) const {
-        //! @note Its slightly dangerous to enum a thread used list.
-        //!  We could read the same entry 2 times !
-        //! @note NEVER NEVER lock the list and the object at the same time!
-        //!  This could create a permanent deadlock!
-        const auto guard(m_Lock.Lock());  // thread sync critical section.
+        const auto guard(_Lock.Lock());  // thread sync critical section.
         return SUPER_t::GetAtCheck(nIndex);
     }
     ITERATE_t AddSort(TYPE* pObj) {
         // add to tail.
-        const auto guard(m_Lock.Lock());  // thread sync critical section.
+        const auto guard(_Lock.Lock());  // thread sync critical section.
         return SUPER_t::AddSort(pObj);
     }
     ITERATE_t AddAfter(TYPE* pObj) {
-        const auto guard(m_Lock.Lock());  // thread sync critical section.
-        return SUPER_t::AddAfter(pObj);    // AddAfter
+        const auto guard(_Lock.Lock());  // thread sync critical section.
+        return SUPER_t::AddAfter(pObj);   // AddAfter
     }
     cRefPtr<TYPE> PopHead() {
         // as Queue
-        const auto guard(m_Lock.Lock());  // thread sync critical section.
-        return SUPER_t::PopHead();         // pull off tail
+        const auto guard(_Lock.Lock());  // thread sync critical section.
+        return SUPER_t::PopHead();        // pull off tail
     }
     cRefPtr<TYPE> PopTail() {
         // as Stack
-        const auto guard(m_Lock.Lock());  // thread sync critical section.
+        const auto guard(_Lock.Lock());  // thread sync critical section.
         return SUPER_t::PopTail();
     }
     bool RemoveArg(TYPE* pObj) {
         //! Since this can have dupes we should not use RemoveArgKey()
         //! @return true = removed. false = was not here.
-        const auto guard(m_Lock.Lock());  // thread sync critical section.
+        const auto guard(_Lock.Lock());  // thread sync critical section.
         return SUPER_t::RemoveArg(pObj);
     }
     void RemoveAll() {
-        const auto guard(m_Lock.Lock());  // thread sync critical section.
+        const auto guard(_Lock.Lock());  // thread sync critical section.
         SUPER_t::RemoveAll();
     }
     void DisposeAll() {
         //! ASSUME TYPE supports DisposeThis(); like cXObject
-        const auto guard(m_Lock.Lock());  // thread sync critical section.
+        const auto guard(_Lock.Lock());  // thread sync critical section.
         SUPER_t::DisposeAll();
     }
     cRefPtr<TYPE> FindArgForKey(_TYPE_KEY index) const {
-        const auto guard(m_Lock.Lock());  // thread sync critical section.
+        const auto guard(_Lock.Lock());  // thread sync critical section.
         return SUPER_t::FindArgForKey(index);
     }
 

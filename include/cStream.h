@@ -27,22 +27,21 @@ struct cStreamInput;
 /// track how much data is read or written and when.
 /// </summary>
 struct GRAYCORE_LINK cStreamStat {
-    STREAM_POS_t m_nCount;  /// Keep arbitrary stats on how much i move (bytes).
-    cTimeSys m_tLast;       /// When did i last move data?
+    STREAM_POS_t _nCount = 0;             /// Keep arbitrary stats on how much i move (bytes).
+    cTimeSys _tLast = cTimeSys::k_CLEAR;  /// When did i last move data?
 
-    cStreamStat() noexcept : m_nCount(0), m_tLast(cTimeSys::k_CLEAR) {}
     void ResetStat() noexcept {
-        m_nCount = 0;  //  Keep arbitrary stats on how much i TX/RX.
-        m_tLast.InitTime();
+        _nCount = 0;  //  Keep arbitrary stats on how much i TX/RX.
+        _tLast.InitTime();
     }
     void UpdateStat(size_t n) noexcept {
-        m_nCount += n;
-        m_tLast.InitTimeNow();
+        _nCount += n;
+        _tLast.InitTimeNow();
     }
     void Add(const cStreamStat& n) noexcept {
-        m_nCount += n.m_nCount;
-        if (n.m_tLast.get_TimeSys() > m_tLast.get_TimeSys()) {
-            m_tLast = n.m_tLast;
+        _nCount += n._nCount;
+        if (n._tLast.get_TimeSys() > _tLast.get_TimeSys()) {
+            _tLast = n._tLast;
         }
     }
 };
@@ -51,12 +50,12 @@ struct GRAYCORE_LINK cStreamStat {
 /// track how much data is read and written and when.
 /// </summary>
 struct GRAYCORE_LINK cStreamStats {
-    cStreamStat m_StatOut;
-    cStreamStat m_StatInp;
+    cStreamStat _StatOut;
+    cStreamStat _StatInp;
 
     void Add(const cStreamStats& n) noexcept {
-        m_StatOut.Add(n.m_StatOut);
-        m_StatInp.Add(n.m_StatInp);
+        _StatOut.Add(n._StatOut);
+        _StatInp.Add(n._StatInp);
     }
 };
 
@@ -129,9 +128,9 @@ struct GRAYCORE_LINK cStreamOutput : public cStreamBase, public ITextWriter {
     /// <param name="nDataSize"></param>
     /// <returns>Number of bytes actually written. -lt- 0 = error.</returns>
     virtual HRESULT WriteX(const cMemSpan& m) {  // = 0;
-        ASSERT(0);                               // should never get called. (should always be overloaded)
+        DEBUG_CHECK(0);                          // should never get called. (should always be overloaded)
         UNREFERENCED_REFERENCE(m);
-        return HRESULT_WIN32_C(ERROR_WRITE_FAULT);  // E_NOTIMPL
+        return HRESULT_WIN32_C(ERROR_WRITE_FAULT);  // or E_NOTIMPL
     }
 
     /// <summary>
@@ -146,7 +145,7 @@ struct GRAYCORE_LINK cStreamOutput : public cStreamBase, public ITextWriter {
         return hRes;
     }
 
-    // Support the base types directly. Host endian order.
+    /// Write the base types directly. Host endian order.
     template <typename TYPE>
     HRESULT WriteT(TYPE val) {
         return WriteSpan(TOSPANT(val));
@@ -293,7 +292,7 @@ struct GRAYCORE_LINK cStreamInput : public cStreamBase {
     HRESULT ReadTN(OUT TYPE& val) noexcept {
         const HRESULT hRes = ReadT(val);
         if (FAILED(hRes)) return hRes;
-        val = cMemT::NtoH(val);
+        val = cValT::NtoH(val);
         return hRes;
     }
     /// read Little Endian value. (Intel)
@@ -301,12 +300,12 @@ struct GRAYCORE_LINK cStreamInput : public cStreamBase {
     HRESULT ReadTLE(OUT TYPE& val) noexcept {
         const HRESULT hRes = ReadT(val);
         if (FAILED(hRes)) return hRes;
-        val = cMemT::LEtoH(val);
+        val = cValT::LEtoH(val);
         return hRes;
     }
 
     /// <summary>
-    /// Read a packed (variable length) unsigned size.  
+    /// Read a packed (variable length) unsigned size.
     /// Packed low to high values.
     /// Bit 7 reserved to indicate more bytes to come.
     /// opposite of WriteSize( size_t ).
@@ -404,8 +403,8 @@ struct GRAYCORE_LINK cStream : public cStreamInput, public cStreamOutput {
 
 /// Base class for file reader/importer/etc helper.
 struct GRAYCORE_LINK cStreamReader {
-    cStreamInput* m_pInp;  /// Pull transaction data from this stream.
-    explicit cStreamReader(cStreamInput* p) : m_pInp(p) {}
+    cStreamInput* _pInp;  /// Pull transaction data from this stream.
+    explicit cStreamReader(cStreamInput* p) : _pInp(p) {}
 };
 
 /// <summary>
@@ -413,8 +412,8 @@ struct GRAYCORE_LINK cStreamReader {
 /// </summary>
 class GRAYCORE_LINK cStreamTransaction : public cStreamReader {
  public:
-    STREAM_POS_t m_lPosStart;
-    size_t m_nSeekSizeMinPrev;  /// Previous value. Maybe nested transactions !
+    STREAM_POS_t _nPosStart;
+    size_t _nSeekSizeMinPrev;  /// Previous value. Maybe nested transactions !
 
  protected:
     HRESULT TransactionRollback();
@@ -425,26 +424,26 @@ class GRAYCORE_LINK cStreamTransaction : public cStreamReader {
 
     inline bool isTransactionActive() const noexcept {
         //! Was SetTransactionComplete called ?
-        return m_lPosStart != k_STREAM_POS_ERR;
+        return _nPosStart != k_STREAM_POS_ERR;
     }
     void SetTransactionComplete() {
         //! Success. we got what we wanted. no rollback.
         // ASSERT(isTransactionActive());
-        m_lPosStart = k_STREAM_POS_ERR;
+        _nPosStart = k_STREAM_POS_ERR;
         ASSERT(!isTransactionActive());
     }
     void SetTransactionFailed() noexcept {
         //! The stream broke in some way. e.g. socket close.
         //! assume connection is broken. no rollback.
-        if (m_pInp == nullptr) return;
-        m_pInp = nullptr;
+        if (_pInp == nullptr) return;
+        _pInp = nullptr;
     }
     /// <summary>
     /// I got a partial success. I used some of the data. maybe not all?
     /// </summary>
     void SetTransactionPartial(size_t nSize) {
         if (!isTransactionActive()) return;
-        m_lPosStart += nSize;  // roll back to here.
+        _nPosStart += nSize;  // roll back to here.
     }
     void SetTransactionRollback() {
         //! default behavior if closed without calling SetTransactionComplete() or SetTransactionFailed().
@@ -456,13 +455,13 @@ class GRAYCORE_LINK cStreamTransaction : public cStreamReader {
 /// <summary>
 /// A junk/null cStream that just tosses write data and has no read data. For testing.
 /// </summary>
-class GRAYCORE_LINK cStreamNull final : public cStream, public cSingleton<cStreamNull> {
-    SINGLETON_IMPL(cStreamNull);
-
+class GRAYCORE_LINK cStreamNull final : public cStream, public cSingletonStatic<cStreamNull> {
  protected:
-    cStreamNull() noexcept : cSingleton<cStreamNull>(this) {}
+    cStreamNull() noexcept : cSingletonStatic<cStreamNull>(this) {}
 
  public:
+    DECLARE_cSingletonStatic(cStreamNull);
+
     /// <summary>
     /// Write a data block to null.
     /// </summary>
@@ -470,5 +469,29 @@ class GRAYCORE_LINK cStreamNull final : public cStream, public cSingleton<cStrea
         return CastN(HRESULT, m.get_SizeBytes());
     }
 };
+
+/// <summary>
+/// unit test helper for streams. cUnitTests
+/// </summary>
+struct GRAYCORE_LINK cStreamTester final {  // static
+    /// <summary>
+    /// Write strings to cStreamOutput.
+    /// </summary>
+    static bool GRAYCALL TestWrites(cStreamOutput& testfile1);
+    /// <summary>
+    /// Read strings from cStreamInput (as binary or text). Other side of TestWrites()
+    /// </summary>
+    static bool GRAYCALL TestReads(cStreamInput& stmIn, bool bString);
+
+    /// <summary>
+    /// Write to streams in random block sizes and make sure i read the same back.
+    /// </summary>
+    /// <param name="stmOut"></param>
+    /// <param name="stmIn"></param>
+    /// <param name="nSizeTotal">How much to write/test total ?</param>
+    /// <param name="timeMax"></param>
+    static bool GRAYCALL TestReadsAndWrites(cStreamOutput& stmOut, cStreamInput& stmIn, size_t nSizeTotal, TIMESECD_t timeMax);
+};
+
 }  // namespace Gray
 #endif  // _INC_cStream_H

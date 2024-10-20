@@ -23,53 +23,54 @@ class cQueueDyn : public cQueueRW<TYPE> {
     typedef cQueueRW<TYPE> SUPER_t;
 
  private:
-    cArrayT<TYPE> m_aData;  /// dynamic sized storage for cQueueRW. Maps into cSpan. TODO USE cBlob !!
+    cArrayT<TYPE> _aData;  /// dynamic sized storage for cQueueRW. Maps into cSpan. TODO USE cBlob !!
 
  protected:
-    ITERATE_t m_nGrowSizeChunk;  /// number of TYPE elements to grow by in a single re-alloc chunk. 0 = never grow.
-    ITERATE_t m_nGrowSizeMax;    /// Total arbitrary max allowed for get_AllocQty(). 0 = never grow.
+    ITERATE_t _nGrowSizeChunk = 64;  /// number of TYPE elements to grow by in a single re-alloc chunk. 0 = never grow.
+    ITERATE_t _nGrowSizeMax = cMem::k_ALLOC_MAX / sizeof(TYPE);  /// Total arbitrary max allowed for get_AllocQty(). 0 = never grow.
 
  protected:
     bool AllocSizeMaxQ(ITERATE_t iDataAlloc) {
         //! (re)Allocate the total size we will need.
-        if (iDataAlloc > m_nGrowSizeMax) return false;  // too big !
+        if (iDataAlloc > _nGrowSizeMax) return false;  // too big !
 
         if (this->get_AllocQty() != iDataAlloc) {
-            m_aData.put_Count(iDataAlloc);  // realloc
-            this->SetSpan(m_aData->get_Span());
+            _aData.put_Count(iDataAlloc);  // realloc
+            this->SetSpan(_aData->get_Span());
         }
         return true;
     }
 
  public:
-    cQueueDyn(ITERATE_t nGrowSizeChunk = 64, ITERATE_t nGrowSizeMax = (cMem::k_ALLOC_MAX / sizeof(TYPE))) noexcept : m_nGrowSizeChunk(nGrowSizeChunk), m_nGrowSizeMax(nGrowSizeMax) {
+    cQueueDyn(ITERATE_t nGrowSizeChunk = 64, ITERATE_t nGrowSizeMax = (cMem::k_ALLOC_MAX / sizeof(TYPE))) noexcept : _nGrowSizeChunk(nGrowSizeChunk), _nGrowSizeMax(nGrowSizeMax) {
         //! @arg nGrowSizeMax = 0 = not used. write only ?
 
-        DEBUG_CHECK(m_nGrowSizeChunk >= 0);
-        DEBUG_CHECK(m_nGrowSizeMax >= 0);
-        if (m_nGrowSizeMax > 0) {
-            if (m_nGrowSizeChunk < 64)  // reasonable MIN chunk size.
-                m_nGrowSizeChunk = 64;
-            if (m_nGrowSizeChunk > m_nGrowSizeMax)  // Not allowed.
-                m_nGrowSizeMax = m_nGrowSizeChunk;
+        DEBUG_CHECK(_nGrowSizeChunk >= 0);
+        DEBUG_CHECK(_nGrowSizeMax >= 0);
+        if (_nGrowSizeMax > 0) {
+            if (_nGrowSizeChunk < 64)  // reasonable MIN chunk size.
+                _nGrowSizeChunk = 64;
+            if (_nGrowSizeChunk > _nGrowSizeMax)  // Not allowed.
+                _nGrowSizeMax = _nGrowSizeChunk;
         } else {
-            m_nGrowSizeChunk = 0;  // Must both be 0.
+            _nGrowSizeChunk = 0;  // Must both be 0.
         }
-        AllocSizeMaxQ(m_nGrowSizeChunk);
-        this->put_AutoReadCommit(m_nGrowSizeChunk / 2);  // default = half buffer.
+        AllocSizeMaxQ(_nGrowSizeChunk);
+        this->put_AutoReadCommit(_nGrowSizeChunk / 2);  // default = half buffer.
     }
     virtual ~cQueueDyn() {
-        //! m_aData is freed
+        //! _aData is freed
     }
 
+    /// <summary>
+    /// How big are the chunks if we need to grow.
+    /// </summary>
     void put_GrowSizeChunk(ITERATE_t nGrowSizeChunk) noexcept {
-        //! How big are the chunks if we need to grow.
-        if (nGrowSizeChunk > m_nGrowSizeMax)  // Must not be greater!
-            m_nGrowSizeMax = nGrowSizeChunk;
-        m_nGrowSizeChunk = nGrowSizeChunk;
+        if (nGrowSizeChunk > _nGrowSizeMax) _nGrowSizeMax = nGrowSizeChunk;  // Must not be greater!            
+        _nGrowSizeChunk = nGrowSizeChunk;
     }
     inline ITERATE_t get_GrowSizeChunk() const noexcept {
-        return m_nGrowSizeChunk;
+        return _nGrowSizeChunk;
     }
 
     /// <summary>
@@ -83,13 +84,13 @@ class cQueueDyn : public cQueueRW<TYPE> {
         const ITERATE_t iRoom = this->get_WriteSpaceQty();
         if (iNeedCount > iRoom) {  // no room?
             const ITERATE_t iOldAllocQty = this->get_AllocQty();
-            if (iOldAllocQty < m_nGrowSizeMax) {                                     // I cant get enough room. I cant write.
+            if (iOldAllocQty < _nGrowSizeMax) {                                     // I cant get enough room. I cant write.
                 const ITERATE_t iNewAllocQty = iOldAllocQty + (iNeedCount - iRoom);  // new total needed.
                 ASSERT(iNewAllocQty > 0);
-                ASSERT(m_nGrowSizeChunk > 0);                                                               // must grow by rounded up chunk size.
-                const ITERATE_t nChunksAlloc = (iNewAllocQty + (m_nGrowSizeChunk - 1)) / m_nGrowSizeChunk;  // round up to next m_nGrowSizeChunk.
+                ASSERT(_nGrowSizeChunk > 0);                                                               // must grow by rounded up chunk size.
+                const ITERATE_t nChunksAlloc = (iNewAllocQty + (_nGrowSizeChunk - 1)) / _nGrowSizeChunk;  // round up to next _nGrowSizeChunk.
                 ASSERT(nChunksAlloc > 0);
-                AllocSizeMaxQ(cValT::Min(nChunksAlloc * m_nGrowSizeChunk, m_nGrowSizeMax));
+                AllocSizeMaxQ(cValT::Min(nChunksAlloc * _nGrowSizeChunk, _nGrowSizeMax));
             }
         }
         return SUPER_t::GetWritePrep(iNeedCount);

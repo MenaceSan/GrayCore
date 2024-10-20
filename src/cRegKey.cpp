@@ -21,7 +21,7 @@
 
 namespace Gray {
 
-const cRegKeyName cRegKey::k_aNames[] = {
+const cRegKeyPath cRegKey::k_aPredefNames[] = {
     // map default HKEY values to names.
     {HKEY_CLASSES_ROOT, _FN("HKCR")},     {HKEY_CURRENT_USER, _FN("HKCU")},     {HKEY_LOCAL_MACHINE, _FN("HKLM")},       {HKEY_USERS, _FN("HKU")},
 #ifndef UNDER_CE
@@ -29,15 +29,15 @@ const cRegKeyName cRegKey::k_aNames[] = {
 #endif
 };
 
-const FILECHAR_t* GRAYCALL cRegKey::GetNameBase(::HKEY hKeyBase) noexcept {  // static
+const FILECHAR_t* GRAYCALL cRegKey::GetNamePredef(::HKEY hKeyBase) noexcept {  // static
     //! Get a text name for a base registry HKEY.
-    if (!cRegKeyName::IsKeyBase(hKeyBase)) return nullptr;
+    if (!cRegKeyPath::IsKeyPredef(hKeyBase)) return nullptr;
 
-    for (UINT i = 0; i < _countof(k_aNames); i++) {
-        if (hKeyBase == k_aNames[i].m_hKeyBase) return k_aNames[i].m_pszRegPath;
+    for (const auto& predef : k_aPredefNames) {
+        if (hKeyBase == predef._hKeyBase) return predef._pszRegPath;
     }
     // NOT a valid base key.
-    DEBUG_ASSERT(0, "GetNameBase");
+    DEBUG_ASSERT(0, "GetNamePredef");
     return _FN("H??");
 }
 
@@ -65,31 +65,28 @@ StrLen_t GRAYCALL cRegKey::MakeValueStr(cSpanX<FILECHAR_t> ret, REGVAR_t dwType,
             return StrT::ConvertToCSV(ret, src);  // convert binary blob to string.
 #endif
         }
-        case REG_DWORD:
+        case REG_DWORD: {
             if (src.get_SizeBytes() < sizeof(DWORD)) break;
-            {
-                DWORD dwVal = *src.GetTPtrC<DWORD>();
-                return StrT::ItoA(dwVal, ret);
-            }
-        case REG_DWORD_BIG_ENDIAN:
+            const DWORD dwVal = *src.GetTPtrC<DWORD>();
+            return StrT::ItoA(dwVal, ret);
+        }
+        case REG_DWORD_BIG_ENDIAN: {
             if (src.get_SizeBytes() < sizeof(DWORD)) break;
-            {
-                DWORD dwVal = cMemT::NtoH(*src.GetTPtrC<DWORD>());
-                return StrT::ItoA(dwVal, ret);
-            }
-        case REG_LINK:                      // Symbolic Link (unicode)
+            const DWORD dwVal = cValT::NtoH(*src.GetTPtrC<DWORD>());
+            return StrT::ItoA(dwVal, ret);
+        }
+        case REG_LINK:                      // Symbolic Link (UNICODE)
         case REG_MULTI_SZ:                  // Multiple Unicode strings
         case REG_RESOURCE_LIST:             // Resource list in the resource map
         case REG_FULL_RESOURCE_DESCRIPTOR:  // Resource list in the hardware description
         case REG_RESOURCE_REQUIREMENTS_LIST:
             break;
 #if _MSC_VER >= 1300
-        case REG_QWORD:  // 64-bit number
+        case REG_QWORD: {  // 64-bit number
             if (src.get_SizeBytes() < sizeof(UINT64)) break;
-            {
-                UINT64 qVal = *src.GetTPtrC<UINT64>();
-                return StrT::ILtoA(qVal, ret);
-            }
+            const UINT64 qVal = *src.GetTPtrC<UINT64>();
+            return StrT::ILtoA(qVal, ret);
+        }
 #endif
     }
     // Not sure how to convert this data!
@@ -97,6 +94,7 @@ StrLen_t GRAYCALL cRegKey::MakeValueStr(cSpanX<FILECHAR_t> ret, REGVAR_t dwType,
     DEBUG_CHECK(0);
     return 0;
 }
+
 HRESULT cRegKey::QueryValueStr(const FILECHAR_t* pszValueName, cSpanX<FILECHAR_t> ret, bool bExp) const {
     ASSERT_NN(pszValueName);
     ASSERT(!ret.isEmpty());

@@ -19,6 +19,10 @@ HRESULT cLogSinkConsole::WriteString(const LOGCHAR_t* pszText) {  // virtual
     if (FAILED(hRes)) return hRes;
     return 1;  // something was written.
 }
+HRESULT cLogSinkConsole::FlushLogs() {  // override;
+    return SUPER_t::FlushLogs();
+}
+
 HRESULT cLogSinkConsole::addEvent(cLogEvent& rEvent) noexcept {  // override;
     return WriteString(rEvent.get_FormattedDefault());
 }
@@ -29,9 +33,7 @@ cLogSinkConsole* GRAYCALL cLogSinkConsole::AddSinkCheck(cLogNexus* pLogger, bool
     //! Add this console sink to cLogMgr/pLogger if not already added.
     //! @arg bAttachOrCreate = create my own console if there is no parent to attach to.
 
-    if (pLogger == nullptr) {
-        pLogger = cLogMgr::get_Single();
-    }
+    if (pLogger == nullptr) pLogger = cLogMgr::get_Single();     
 
     cLogSink* pSink0 = pLogger->FindSinkType(typeid(cLogSinkConsole));
     if (pSink0 != nullptr) return static_cast<cLogSinkConsole*>(pSink0);  // already has this sink.
@@ -52,18 +54,15 @@ bool GRAYCALL cLogSinkConsole::RemoveSinkCheck(cLogNexus* pLogger, bool bOnlyIfP
     //! remove this sink if there is a parent console. leave it if i created the console.
     //! We only created it for start up status and errors.
     //! @arg bOnlyIfParent = only remove the console sink if its my parent process console. NOT if I'm _CONSOLE or I created the console.
-    if (pLogger == nullptr) {
-        pLogger = cLogMgr::get_Single();
-    }
-
+    if (pLogger == nullptr)  pLogger = cLogMgr::get_Single();
+ 
     cLogSink* pSink = pLogger->FindSinkType(typeid(cLogSinkConsole));
     if (pSink == nullptr) return false;
     if (bOnlyIfParent) {
         // Detach from parent console.
         cAppConsole& ac = cAppConsole::I();
-        if (ac.get_ConsoleMode() != AppCon_t::_Attach) {
-            return false;
-        }
+        if (ac.get_ConsoleMode() != AppCon_t::_Attach) return false;
+        
         ac.ReleaseConsole();
     }
     return pLogger->RemoveSink(pSink, true);

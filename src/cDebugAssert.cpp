@@ -31,15 +31,15 @@ bool CALLBACK cDebugAssert::AssertCallbackDefault(const char* pszExp, const cDeb
     // if (sm_pAssertCallback == cDebugAssert::AssertCallbackDefault && !cAppState::isDebuggerPresent()) return;	// Ignore it if no debugger present ?
 
 #if defined(__linux__)
-    assert(1);  // __assert_fail(pszExp , src.m_pszFile, src.m_uLine, "")
+    assert(1);  // __assert_fail(pszExp , src._pszFile, src._uLine, "")
 #elif defined(UNDER_CE) || !defined(_DEBUG) || !defined(_MSC_VER)
     ::DebugBreak();  // Do Int 3 - to halt all threads at point.
 #elif _MSC_VER >= 1400
-    ::_wassert(cStringW(pszExp), cStringW(src.m_pszFile), src.m_uLine);
+    ::_wassert(cStringW(pszExp), cStringW(src._pszFile), src._uLine);
 #elif _MSC_VER >= 1300
-    ::_assert(pszExp, src.m_pszFile, src.m_uLine);
+    ::_assert(pszExp, src._pszFile, src._uLine);
 #else
-    ::_assert((void*)pszExp, (void*)src.m_pszFile, src.m_uLine);
+    ::_assert((void*)pszExp, (void*)src._pszFile, src._uLine);
 #endif
     // if this returns at all, that means we chose to ignore the assert and continue.
     return true;
@@ -58,7 +58,7 @@ bool GRAYCALL cDebugAssert::Assert_Fail(const char* pszExp, const cDebugSourceLi
     }
 
     // Just log it and try to continue.
-    cLogMgr::I().addEventF(LOG_ATTR_DEBUG | LOG_ATTR_INTERNAL, LOGLVL_t::_CRIT, "Assert Fail:'%s' file '%s', line %d", LOGSTR(pszExp), LOGSTR(src.m_pszFile), src.m_uLine);
+    cLogMgr::I().addEventF(LOG_ATTR_DEBUG | LOG_ATTR_INTERNAL, LOGLVL_t::_CRIT, "Assert Fail:'%s' file '%s', line %d", LOGSTR(pszExp), LOGSTR(src._pszFile), src._uLine);
     // Flush logs.
     // cExceptionAssert?
     // true = Keep going?
@@ -76,7 +76,7 @@ bool GRAYCALL cDebugAssert::Debug_Fail(const char* pszExp, const cDebugSourceLin
     //! @note: always return false to indicate something failed. (for macro)
     // CODEPROFILEFUNC();
 #ifdef _DEBUG
-    cLogMgr::I().addEventF(LOG_ATTR_DEBUG | LOG_ATTR_INTERNAL, LOGLVL_t::_ERROR, "Check Fail:'%s' file '%s', line %d", LOGSTR(pszExp), LOGSTR(src.m_pszFile), src.m_uLine);
+    cLogMgr::I().addEventF(LOG_ATTR_DEBUG | LOG_ATTR_INTERNAL, LOGLVL_t::_ERROR, "Check Fail:'%s' file '%s', line %d", LOGSTR(pszExp), LOGSTR(src._pszFile), src._uLine);
 #endif
     // Sync the debug thread??
     return false;

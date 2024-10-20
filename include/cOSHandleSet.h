@@ -28,10 +28,10 @@ class GRAYCORE_LINK cOSHandleSet {
 
  private:
 #ifdef _WIN32
-    cArrayVal<::HANDLE> m_fds;  /// an array of OS handles. like fd_set. but dynamic.
+    cArrayVal<::HANDLE> _fds;  /// an array of OS handles. like fd_set. but dynamic.
 #elif defined(__linux__)
-    ::HANDLE m_hHandleMax;  /// Largest handle we have. <= FD_SETSIZE
-    ::fd_set m_fds;         /// array of FD_SETSIZE possible HANDLE(s). NOTE: sizeof(m_fds) varies/fixed with FD_SETSIZE
+    ::HANDLE _hHandleMax;  /// Largest handle we have. <= FD_SETSIZE
+    ::fd_set _fds;         /// array of FD_SETSIZE possible HANDLE(s). NOTE: sizeof(_fds) varies/fixed with FD_SETSIZE
 #else
 #error NOOS
 #endif
@@ -39,8 +39,8 @@ class GRAYCORE_LINK cOSHandleSet {
  private:
     void InitHandles() noexcept {
 #ifdef __linux__
-        m_hHandleMax = 0;
-        FD_ZERO(&m_fds);
+        _hHandleMax = 0;
+        FD_ZERO(&_fds);
 #endif
     }
 
@@ -51,9 +51,9 @@ class GRAYCORE_LINK cOSHandleSet {
     cOSHandleSet(HANDLE h) {
         // a handle set with a single handle.
 #ifdef __linux__
-        m_hHandleMax = h;
-        FD_ZERO(&m_fds);
-        FD_SET(h, &m_fds);
+        _hHandleMax = h;
+        FD_ZERO(&_fds);
+        FD_SET(h, &_fds);
 #else
         InitHandles();
         AddHandle(h);
@@ -70,11 +70,11 @@ class GRAYCORE_LINK cOSHandleSet {
     }
     void SetCopy(const cOSHandleSet& nss) {
 #ifdef __linux__
-        m_hHandleMax = nss.m_hHandleMax;
-        // FD_COPY(pfds,&m_fds);
-        cMem::Copy(&m_fds, &nss.m_fds, sizeof(m_fds));
+        _hHandleMax = nss._hHandleMax;
+        // FD_COPY(pfds,&_fds);
+        cMem::Copy(&_fds, &nss._fds, sizeof(_fds));
 #else
-        m_fds = nss.m_fds;
+        _fds = nss._fds;
 #endif
     }
 
@@ -86,30 +86,29 @@ class GRAYCORE_LINK cOSHandleSet {
     bool AddHandle(HANDLE h) {
         if (h == INVALID_HANDLE_VALUE) return false;
 #ifdef __linux__
-        if (h > m_hHandleMax) m_hHandleMax = h;
-        FD_SET(h, &m_fds);
+        if (h > _hHandleMax) _hHandleMax = h;
+        FD_SET(h, &_fds);
 #else
         // Only add up to
-        if (h == HANDLE_NULL)  // cOSHandle
-            return false;
-        if (m_fds.GetSize() >= MAXIMUM_WAIT_OBJECTS) return false;
-        m_fds.Add(h);
+        if (h == cOSHandle::kNULL) return false;
+        if (_fds.GetSize() >= MAXIMUM_WAIT_OBJECTS) return false;
+        _fds.Add(h);
 #endif
         return true;
     }
     void RemoveHandle(::HANDLE h) {
         if (h == INVALID_HANDLE_VALUE) return;
 #ifdef __linux__
-        FD_CLR(h, &m_fds);
+        FD_CLR(h, &_fds);
 #else
-        m_fds.RemoveArg(h);
+        _fds.RemoveArg(h);
 #endif
     }
     void ClearHandles() {
 #ifdef __linux__
         InitHandles();
 #else
-        m_fds.RemoveAll();
+        _fds.RemoveAll();
 #endif
     }
 

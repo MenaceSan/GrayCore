@@ -1128,6 +1128,9 @@
     <Text Include="CMakeLists.txt" />
     <Text Include="src\CMakeLists.txt" />
   </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="GrayCore.natvis" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

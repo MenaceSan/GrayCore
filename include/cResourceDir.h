@@ -36,10 +36,8 @@ interface IResourceLoader {
 /// <summary>
 /// Find and Load a resource from a directory of files.
 /// </summary>
-class cResourceDir : public IResourceLoader {
- public:
-    cFilePath m_Dir;  // directory holding the files i want. Can also look in attached .RC .
- public:
+struct cResourceDir : public IResourceLoader {
+    cFilePath _DirPath;  // directory holding the files i want. Can also look in attached .RC .
     virtual HRESULT LoadResource(const RESCHAR_t* pszName, MIME_t eMime, OUT cObject** ppObject);
 };
 }  // namespace Gray

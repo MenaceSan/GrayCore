@@ -16,35 +16,35 @@ namespace Gray {
 /// Similar to .NET VB TriState or bool? or Nullable<bool>.
 /// </summary>
 class cTriState {
-    BITOP_t m_iVal;  /// BITOP_t. 0=false, 1=true, -1=unknown 3rd state.
+    BITOP_t _eVal;  /// BITOP_t. 0=false, 1=true, -1=unknown 3rd state.
  public:
-    cTriState(BITOP_t eVal = BITOP_t::_Toggle) noexcept : m_iVal(eVal) {
+    cTriState(BITOP_t eVal = BITOP_t::_Toggle) noexcept : _eVal(eVal) {
         //! default = BITOP_t::_Toggle
         DEBUG_ASSERT(isInternalValidState(), "cTriState");
     }
-    cTriState(bool bVal) noexcept : m_iVal(bVal ? BITOP_t::_Set : BITOP_t::_Clear) {}
+    cTriState(bool bVal) noexcept : _eVal(bVal ? BITOP_t::_Set : BITOP_t::_Clear) {}
     bool isInternalValidState() const noexcept {
         //! Is it one of the 3 valid values ?
-        return m_iVal == BITOP_t::_Toggle || m_iVal == BITOP_t::_Clear || m_iVal == BITOP_t::_Set;
+        return _eVal == BITOP_t::_Toggle || _eVal == BITOP_t::_Clear || _eVal == BITOP_t::_Set;
     }
     bool isTriState() const noexcept {
-        return m_iVal == BITOP_t::_Toggle;
+        return _eVal == BITOP_t::_Toggle;
     }
     bool get_Bool() const {
         //! ASSUME Must not be tristate.
-        ASSERT(m_iVal != BITOP_t::_Toggle);
-        return m_iVal != BITOP_t::_Clear;
+        ASSERT(_eVal != BITOP_t::_Toggle);
+        return _eVal != BITOP_t::_Clear;
     }
     bool GetBoolDef(bool bDefault = false) const noexcept {
         //! Get the bool with supplied default if tristate.
-        if (m_iVal == BITOP_t::_Toggle) return bDefault;
-        return m_iVal != BITOP_t::_Clear;
+        if (_eVal == BITOP_t::_Toggle) return bDefault;
+        return _eVal != BITOP_t::_Clear;
     }
     BITOP_t get_Tri() const noexcept {
-        return m_iVal;
+        return _eVal;
     }
     void put_Tri(BITOP_t eVal) {
-        m_iVal = eVal;
+        _eVal = eVal;
         ASSERT(isInternalValidState());
     }
     operator BITOP_t() const noexcept {

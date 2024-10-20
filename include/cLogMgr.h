@@ -34,12 +34,12 @@ namespace Gray {
 /// </summary>
 class GRAYCORE_LINK cLogNexus : public cLogProcessor {
  protected:
-    cArrayIUnk<cLogSink> m_aSinks;      /// where do the log messages go? child sinks.
+    cArrayIUnk<cLogSink> _aSinks;      /// where do the log messages go? child sinks. Protect with _LockLog.
 
  public:
-    cLogEventParams m_LogFilter;         /// Union filter of what goes out to ALL sinks
-    cLogThrottle m_LogThrottle;          /// Measure how fast messages are going.
-    mutable cThreadLockableX m_LockLog;  /// serialize multiple threads for m_aSinks
+    cLogEventParams _LogFilter;         /// Union filter of what goes out to ALL sinks
+    cLogThrottle _LogThrottle;          /// Measure how fast messages are going.
+    mutable cThreadLockableX _LockLog;  /// serialize multiple threads for _aSinks
 
  public:
     cLogNexus(LOG_ATTR_MASK_t uAttrMask = LOG_ATTR_ALL_MASK, LOGLVL_t eLogLevel = LOGLVL_t::_ANY);
@@ -56,7 +56,7 @@ class GRAYCORE_LINK cLogNexus : public cLogProcessor {
     /// @note Check IsLogged(x) before generating the message! for speed
     /// </summary>
     bool IsLogged(LOG_ATTR_MASK_t uAttrMask, LOGLVL_t eLogLevel) const noexcept override {
-        return m_LogFilter.IsLogged(uAttrMask, eLogLevel);
+        return _LogFilter.IsLogged(uAttrMask, eLogLevel);
     }
 
     /// <summary>
@@ -68,12 +68,12 @@ class GRAYCORE_LINK cLogNexus : public cLogProcessor {
 
     HRESULT FlushLogs() override;
 
-    // manage sinks
+    // manage sinks. ASSUME _LockLog
     cLogSink* EnumSinks(ITERATE_t i) {
-        return m_aSinks.GetAtCheck(i);
+        return _aSinks.GetAtCheck(i);
     }
     const cLogSink* EnumSinks(ITERATE_t i) const {
-        return m_aSinks.GetAtCheck(i);
+        return _aSinks.GetAtCheck(i);
     }
 
     /// <summary>
@@ -117,11 +117,14 @@ class GRAYCORE_LINK cLogNexus : public cLogProcessor {
 /// Only one default singleton log manager per system.
 /// </summary>
 class GRAYCORE_LINK cLogMgr final : public cSingleton<cLogMgr>, public cLogNexus {
-    SINGLETON_IMPL(cLogMgr);
     static TIMESECD_t sm_TimePrevException;  /// throttle/don't flood log with exceptions().
 
+public:
+    DECLARE_cSingleton(cLogMgr);
+
  protected:
-    cLogMgr();
+    cLogMgr() noexcept;
+    ~cLogMgr();
     void ReleaseModuleChildren(::HMODULE hMod) override;
 
  public:
@@ -129,7 +132,7 @@ class GRAYCORE_LINK cLogMgr final : public cSingleton<cLogMgr>, public cLogNexus
     /// <summary>
     /// An exception occurred. record it. Logging of cException.
     /// </summary>
-    void LogExceptionV(cExceptionHolder* pEx, const LOGCHAR_t* pszCatchContext, va_list vargs) noexcept;
+    void LogExceptionV(cExceptionHolder* pEx, const LOGCHAR_t* pszCatchContext, ::va_list vargs) noexcept;
     void _cdecl LogExceptionF(cExceptionHolder* pEx, const LOGCHAR_t* pszCatchContext, ...) noexcept;
 #endif
 };
@@ -144,7 +147,7 @@ class GRAYCORE_LINK cLogMgr final : public cSingleton<cLogMgr>, public cLogNexus
 /// </summary>
 struct GRAYCORE_LINK cLogSubject : public cLogProcessor {
     typedef cLogProcessor SUPER_t;
-    const char* m_pszSubject;  /// static string. general subject matter tag.
+    const char* _pszSubject;  /// static string. general subject matter tag.
     cLogSubject(const char* pszSubject);
     /// <summary>
     /// Check cLogMgr levels

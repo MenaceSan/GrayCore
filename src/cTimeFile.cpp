@@ -31,7 +31,7 @@ void cTimeFile::InitTimeUnits(const cTimeUnits& rTu) {
 #ifdef _WIN32
     ::SYSTEMTIME st;
     rTu.GetSys(st);
-    SetSys(st, CastN(TZ_TYPE, rTu.m_nTZ));
+    SetSys(st, CastN(TZ_TYPE, rTu._nTZ));
 #else
     cTimeDouble ti(rTu);
     *this = ti.GetAsFileTime();
@@ -42,7 +42,7 @@ bool cTimeFile::GetTimeUnits(OUT cTimeUnits& rTu, TZ_TYPE nTimeZone) const {
     ::SYSTEMTIME st;
     const bool bRet = GetSys(st, nTimeZone);
     rTu.SetSys(st);
-    rTu.m_nTZ = CastN(TIMEVALU_t, nTimeZone);
+    rTu._nTZ = CastN(TIMEVALU_t, nTimeZone);
     return bRet;
 #else
     const cTimeDouble ti(*this);

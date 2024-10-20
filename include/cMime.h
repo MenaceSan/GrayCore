@@ -98,9 +98,9 @@ struct GRAYCORE_LINK cMime {
 
     static MIME_t GRAYCALL FindMimeTypeForExt(const RESCHAR_t* pszExt, MIME_t eMimeTypeDefault = MIME_t::_UNKNOWN);
 
-    const RESCHAR_t* m_pszName;  /// IANA name for predefined/known MIME types.
-    const RESCHAR_t* m_pExt;
-    const RESCHAR_t* m_pExt2;  // Alternate extension. // Allow an alternate extension for each MIME type.
+    const RESCHAR_t* _pszName;  /// IANA name for predefined/known MIME types.
+    const RESCHAR_t* _pExt1;
+    const RESCHAR_t* _pExt2;  // Alternate extension. // Allow an alternate extension for each MIME type.
 
     static const cMime k_Type[static_cast<int>(MIME_t::_QTY)];  // Define info for all the types i support.
 };

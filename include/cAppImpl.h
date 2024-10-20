@@ -17,43 +17,42 @@ namespace Gray {
 /// like CWinApp for MFC (maybe windowed or console)
 /// I am NOT a library/DLL. I am an application implementation. NOT the same as (or to be merged with) cAppState.
 /// Basic framework for my application I implement. Windows or Console.
-/// Assume a static like cAppImpl theApp is defined some place.
+/// Assume a global static like cAppImpl theApp is defined some place.
 /// </summary>
-class GRAYCORE_LINK cAppImpl : public cSingletonStatic<cAppImpl>, public IAppCommands, public cDependRegister {  // NOT final!
+class GRAYCORE_LINK cAppImpl : public cSingletonType<cAppImpl>, public IAppCommands, public cDependRegister {  // NOT final! may be overridden by cWinApp
+ public:
+    DECLARE_cSingletonGlobal(cAppImpl);
+
  protected:
-    THREADID_t m_nMainThreadId;  /// The first thread the app started. main().
+    THREADID_t _nMainThreadId = cThreadId::k_NULL;  /// The first thread the app started. main().
 
  public:
-    const FILECHAR_t* m_pszAppName;  /// Specifies the name of my application. (display friendly)
-    TIMESYSD_t m_nMinTickTime;       /// Minimum amount of time to spend in the OnTickApp() (mSec). cThreadId::SleepCurrent() if there is extra time.
-    cAppState& m_State;              /// Quick reference to cAppState singleton.
-    cBitmask<> m_ArgsValid;          /// Track which command line args are valid/used/executed in m_State.m_Args. assume any left over are not.
-    bool m_bCloseSignal;             /// Polite request to close the application. checked in Run() and OnTickApp() >= APPSTATE_t::_RunExit APPSTATE_t::_Exit
+    const FILECHAR_t* _pszAppName;  /// Specifies the name of my application. (display friendly)
+    TIMESYSD_t _nMinTickTime = 10;  /// Minimum amount of time to spend in the OnTickApp() (mSec). cThreadId::SleepCurrent() if there is extra time.
+    cBitmask<> _ArgsValid;          /// Track which command line args are valid/used/executed in _State._Args. assume any left over are not.
+    bool _isCloseSignaled = false;     /// Polite request to close the application. checked in Run() and OnTickApp() >= APPSTATE_t::_RunExit APPSTATE_t::_Exit
 
     cAppCommands _Commands;  /// built a list of possible commands. Dynamically add new command handlers to the app. to process cAppArgs.
 
  protected:
     void ReleaseModuleChildren(::HMODULE hMod) override;
-    const void* get_HeapPtr() const noexcept override {
-        return nullptr; // NOT heap.
-    }
 
     /// <summary>
-    /// Dont delete this! its probably static.
+    /// Dont delete this! its probably static or has external refs that use it.
     /// </summary>
     bool isReferenced() const noexcept override {
         return true;
     }
 
  public:
-    cAppImpl(const FILECHAR_t* pszAppName);
+    cAppImpl(const FILECHAR_t* pszAppName);  // always override this?
 
     /// <summary>
     /// The thread we started with.
     /// </summary>
     /// <returns></returns>
     THREADID_t inline get_MainThreadId() const noexcept {
-        return m_nMainThreadId;
+        return _nMainThreadId;
     }
     cAppCommand* GetCommand(CommandId_t id) const override {
         return _Commands.GetCommand(id);
@@ -65,7 +64,7 @@ class GRAYCORE_LINK cAppImpl : public cSingletonStatic<cAppImpl>, public IAppCom
     void SetArgValid(ITERATE_t i);
     cStringF get_InvalidArgs() const;
 
-    HRESULT RunCommand(const cAppArgs& args, int i=0);
+    HRESULT RunCommand(const cAppArgs& args, int i = 0);
     HRESULT RunCommandN(ITERATE_t i);
     HRESULT RunCommands();
 
@@ -108,6 +107,10 @@ class GRAYCORE_LINK cAppImpl : public cSingletonStatic<cAppImpl>, public IAppCom
     /// <returns>APP_EXITCODE_t</returns>
     APP_EXITCODE_t Main(::HMODULE hInstance = HMODULE_NULL);
 };
+
+#ifndef GRAY_STATICLIB  // force implementation/instantiate for DLL/SO.
+template class GRAYCORE_LINK cSingletonType<cAppImpl>;
+#endif
 #endif
 }  // namespace Gray
 #endif

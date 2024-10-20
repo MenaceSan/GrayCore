@@ -95,7 +95,7 @@ class GRAYCORE_LINK cSecurityACL : private cWinLocalT<::ACL> {
         return get_ACL()->AceCount;
     }
 
-    bool AddAllowedAce(SID* pSid, DWORD dwAccessMask = GENERIC_ALL);
+    bool AddAllowedAce(::SID* pSid, DWORD dwAccessMask = GENERIC_ALL);
 };
 
 /// <summary>
@@ -104,7 +104,7 @@ class GRAYCORE_LINK cSecurityACL : private cWinLocalT<::ACL> {
 /// some _WIN32 calls expect LocalFree() to be called for pointer returned.
 /// </summary>
 struct GRAYCORE_LINK cSecurityDesc : public cWinLocalT<SECURITY_DESCRIPTOR> {
-    static const FILECHAR_t* k_szLowIntegrity;  // L"S:(ML;;NW;;;LW)";
+    static const FILECHAR_t k_szLowIntegrity[];  // L"S:(ML;;NW;;;LW)";
 
     cSecurityDesc(::ACL* pDacl = nullptr);
     cSecurityDesc(const FILECHAR_t* pszSaclName);
@@ -173,7 +173,7 @@ struct GRAYCORE_LINK cSecurityDesc : public cWinLocalT<SECURITY_DESCRIPTOR> {
 /// </summary>
 class GRAYCORE_LINK cSecurityAttributes : public ::SECURITY_ATTRIBUTES {
  public:
-    cSecurityDesc m_sd;  /// attached SECURITY_DESCRIPTOR.
+    cSecurityDesc _Sd;  /// attached SECURITY_DESCRIPTOR.
 
  protected:
     void UpdateSecurityDescriptor();
@@ -201,11 +201,11 @@ struct GRAYCORE_LINK cSecurityAttribsLowIntegrity : public cSecurityAttributes {
 /// Consolidate all the crap into a single object.
 /// </summary>
 struct GRAYCORE_LINK cSecurityAttribsWKS : public cSecurityAttributes {
-    cSecurityId m_sid;  /// for WELL_KNOWN_SID_TYPE
-    cSecurityACL m_dacl;
+    cSecurityId _Sid;  /// for WELL_KNOWN_SID_TYPE
+    cSecurityACL _Dacl;
 
-    cSecurityAttribsWKS(WELL_KNOWN_SID_TYPE eWellKnownSidType = WinLocalSid, DWORD dwAccess = GENERIC_ALL, bool bInheritHandle = true) : cSecurityAttributes(bInheritHandle), m_sid(eWellKnownSidType), m_dacl(m_sid, dwAccess) {
-        m_sd.SetDacl(m_dacl);
+    cSecurityAttribsWKS(WELL_KNOWN_SID_TYPE eWellKnownSidType = WinLocalSid, DWORD dwAccess = GENERIC_ALL, bool bInheritHandle = true) : cSecurityAttributes(bInheritHandle), _Sid(eWellKnownSidType), _Dacl(_Sid, dwAccess) {
+        _Sd.SetDacl(_Dacl);
         UpdateSecurityDescriptor();
     }
 };

@@ -36,34 +36,34 @@ class GRAYCORE_LINK cHookJump {
     friend class cHookLock;
 
  protected:
-    FUNCPTR_t m_pFuncOrig;            /// Pointer to the original/old function. The one i will replace. Inject code here.
-    BYTE m_OldCode[k_LEN_A];          /// What was at m_pFuncOrig previously. Take more than i actually need to account for isChainable() tests.
-    BYTE m_Jump[k_LEN_J + k_LEN_JO];  /// What do i want to replace m_pFuncOrig with. k_I_JUMP to pFuncNew
-    mutable cThreadLockableX m_Lock;  /// prevent multiple threads from using this at the same time.
+    FUNCPTR_t _pFuncOrig;            /// Pointer to the original/old function. The one i will replace. Inject code here.
+    BYTE _OldCode[k_LEN_A];          /// What was at _pFuncOrig previously. Take more than i actually need to account for isChainable() tests.
+    BYTE _Jump[k_LEN_J + k_LEN_JO];  /// What do i want to replace _pFuncOrig with. k_I_JUMP to pFuncNew
+    mutable cThreadLockableX _Lock;  /// prevent multiple threads from using this at the same time.
 
  protected:
     bool SwapOld() noexcept {
         //! put back saved code fragment. temporary to call previous version of the function.
-        //! ASSUME use of cHookLock m_Lock, and SetProtectPages
+        //! ASSUME use of cHookLock _Lock, and SetProtectPages
         if (!isHookValid()) return false;
-        cMem::Copy((void*)m_pFuncOrig, m_OldCode, sizeof(m_Jump));
+        cMem::Copy((void*)_pFuncOrig, _OldCode, sizeof(_Jump));
         return true;
     }
     void SwapReset() noexcept {
         //! put back original JMP instruction again
-        //! ASSUME use of cHookLock m_Lock, and SetProtectPages
-        if (!isHookInstalled() || m_pFuncOrig == nullptr)  // hook has since been destroyed!
+        //! ASSUME use of cHookLock _Lock, and SetProtectPages
+        if (!isHookInstalled() || _pFuncOrig == nullptr)  // hook has since been destroyed!
             return;
-        cMem::Copy((void*)m_pFuncOrig, m_Jump, sizeof(m_Jump));
+        cMem::Copy((void*)_pFuncOrig, _Jump, sizeof(_Jump));
     }
 
     HRESULT SetProtectPages(bool isProtected);
     FUNCPTR_t GetChainFuncInt() const;
 
  public:
-    cHookJump() noexcept : m_pFuncOrig(nullptr) {
-        m_OldCode[0] = k_I_NULL;
-        m_Jump[0] = k_I_NULL;
+    cHookJump() noexcept : _pFuncOrig(nullptr) {
+        _OldCode[0] = k_I_NULL;
+        _Jump[0] = k_I_NULL;
         static_assert(k_LEN_A == 8 || k_LEN_A == 16, "k_LEN_A");
     }
     ~cHookJump() {
@@ -71,13 +71,13 @@ class GRAYCORE_LINK cHookJump {
     }
 
     bool isHookInstalled() const noexcept {
-        return m_Jump[0] == k_I_JUMP;
+        return _Jump[0] == k_I_JUMP;
     }
     bool isHookValid() const noexcept {
         //! @note sometimes DLLs' can reload themselves and destroy our hook behind our backs.
-        if (!isHookInstalled() || m_pFuncOrig == nullptr) return false;
+        if (!isHookInstalled() || _pFuncOrig == nullptr) return false;
         // ASSUME SetProtectPages()
-        if (!cMem::IsEqual((const void*)m_pFuncOrig, m_Jump, sizeof(m_Jump))) return false;  // NOT set !!
+        if (!cMem::IsEqual((const void*)_pFuncOrig, _Jump, sizeof(_Jump))) return false;  // NOT set !!
         return true;
     }
 
@@ -104,18 +104,18 @@ struct cHookJumpT : public cHookJump {
 class GRAYCORE_LINK cHookLock : public cLockerT<cThreadLockableX> {
     typedef cLockerT<cThreadLockableX> SUPER_t;
 
-    cHookJump& m_rJump;  /// The code we are locking for use.
-    bool m_bSwapOld;     /// has Old swapped back in. Must be locked. NOT isChainable
+    cHookJump& _rJump;  /// The code we are locking for use.
+    bool _IsSwapOld;     /// has Old swapped back in. Must be locked. NOT isChainable
 
  public:
     cHookLock(cHookJump& rJump, bool swap = true)
-        : SUPER_t(rJump.m_Lock.Lock()),  // MUST lock while we do this. single thread.
-          m_rJump(rJump) {
-        m_bSwapOld = swap ? m_rJump.SwapOld() : false;
+        : SUPER_t(rJump._Lock.Lock()),  // MUST lock while we do this. single thread.
+          _rJump(rJump) {
+        _IsSwapOld = swap ? _rJump.SwapOld() : false;
     }
     ~cHookLock() noexcept {
-        if (m_bSwapOld) {  // did i use the swap?
-            m_rJump.SwapReset();
+        if (_IsSwapOld) {  // did i use the swap?
+            _rJump.SwapReset();
         }
     }
 };
@@ -126,10 +126,10 @@ class GRAYCORE_LINK cHookLock : public cLockerT<cThreadLockableX> {
 /// <typeparam name="TYPE"></typeparam>
 template <class TYPE>
 struct cHookChain : public cHookLock {
-    TYPE m_pFuncChain;  /// chained version of m_pFuncOrig. or fallback to m_pFuncOrig. like: FARPROC/FUNCPTR_t
+    TYPE _pFuncChain;  /// chained version of _pFuncOrig. or fallback to _pFuncOrig. like: FARPROC/FUNCPTR_t
 
     cHookChain(cHookJump& rJump) : cHookLock(rJump, !rJump.isChainable()) {
-        m_pFuncChain = reinterpret_cast<TYPE>(rJump.GetChainFunc());
+        _pFuncChain = reinterpret_cast<TYPE>(rJump.GetChainFunc());
     }
 };
 }  // namespace Gray

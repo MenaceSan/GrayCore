@@ -17,48 +17,48 @@
 #endif
 
 namespace Gray {
-cFileStatus::cFileStatus() noexcept : m_Size((FILE_SIZE_t)-1), m_Attributes(FILEATTR_t::_None) {
+cFileStatus::cFileStatus() noexcept {
     DEBUG_CHECK(!isFileValid());
 }
-cFileStatus::cFileStatus(const FILECHAR_t* pszFilePath) : m_Size((FILE_SIZE_t)-1), m_Attributes(FILEATTR_t::_None) {
+cFileStatus::cFileStatus(const FILECHAR_t* pszFilePath) {
     //! @note use isFileValid() to find if this is valid.
     ASSERT(!isFileValid());
     ReadFileStatus(pszFilePath);
 }
 
 void cFileStatus::InitFileStatus() noexcept {
-    m_timeCreate.InitTime();
-    m_timeChange.InitTime();  // All OS support this.
-    m_timeLastAccess.InitTime();
-    m_Size = (FILE_SIZE_t)-1;  // Set to an invalid value.
-    m_Attributes = FILEATTR_t::_None;
+    _timeCreate.InitTime();
+    _timeChange.InitTime();  // All OS support this.
+    _timeLastAccess.InitTime();
+    _nSize = CastN(FILE_SIZE_t, -1);  // Set to an invalid value.
+    _AttributeFlags = FILEATTR_t::_None;
     DEBUG_CHECK(!isFileValid());
 }
 
 void cFileStatus::InitFileStatus(const cFileStatusSys& statusSys) {
     //! convert from OS native format.
 #ifdef _WIN32
-    m_timeCreate = statusSys.ftCreationTime;  // cTimeFile
-    m_timeChange = statusSys.ftLastWriteTime;
-    m_timeLastAccess = statusSys.ftLastAccessTime;
-    m_Size = statusSys.nFileSizeLow | ((FILE_SIZE_t)statusSys.nFileSizeHigh) << 32;
-    m_Attributes = (FILEATTR_t)statusSys.dwFileAttributes;  // truncated!
+    _timeCreate = statusSys.ftCreationTime;  // cTimeFile
+    _timeChange = statusSys.ftLastWriteTime;
+    _timeLastAccess = statusSys.ftLastAccessTime;
+    _nSize = statusSys.nFileSizeLow | ((FILE_SIZE_t)statusSys.nFileSizeHigh) << 32;
+    _AttributeFlags = CastN(FILEATTR_t, statusSys.dwFileAttributes);  // truncated!
 #elif defined(__linux__)
     // http://linux.die.net/man/2/stat
     // hidden file start with .
-    m_timeCreate = cTimeInt(statusSys.st_ctime).GetAsFileTime();  // time_t
-    m_timeChange = cTimeInt(statusSys.st_mtime).GetAsFileTime();
-    m_timeLastAccess = cTimeInt(statusSys.st_atime).GetAsFileTime();
-    m_Size = statusSys.st_size;
-    m_Attributes = FILEATTR_t::_None;  // check the read,write,execute bits?
+    _timeCreate = cTimeInt(statusSys.st_ctime).GetAsFileTime();  // time_t
+    _timeChange = cTimeInt(statusSys.st_mtime).GetAsFileTime();
+    _timeLastAccess = cTimeInt(statusSys.st_atime).GetAsFileTime();
+    _nSize = statusSys.st_size;
+    _AttributeFlags = FILEATTR_t::_None;  // check the read,write,execute bits?
     if (S_ISREG(statusSys.st_mode)) {
-        m_Attributes.SetMask(FILEATTR_t::_Normal);
+        _AttributeFlags.SetMask(FILEATTR_t::_Normal);
     } else if (S_ISDIR(statusSys.st_mode)) {
-        m_Attributes.SetMask(FILEATTR_t::_Directory);
+        _AttributeFlags.SetMask(FILEATTR_t::_Directory);
     } else if (S_ISLNK(statusSys.st_mode)) {
-        m_Attributes.SetMask(FILEATTR_t::_Link);
+        _AttributeFlags.SetMask(FILEATTR_t::_Link);
     } else {                                        // S_ISBLK, S_ISSOCK, S_ISCHR, S_ISFIFO
-        m_Attributes.SetMask(FILEATTR_t::_Volume);  // device of some sort.
+        _AttributeFlags.SetMask(FILEATTR_t::_Volume);  // device of some sort.
     }
 #endif
 }
@@ -106,16 +106,10 @@ HRESULT GRAYCALL cFileStatus::WriteFileTimes(const FILECHAR_t* pszFilePath, cons
 }
 
 HRESULT GRAYCALL cFileStatus::WriteFileTimes(const FILECHAR_t* pszFilePath, const cFileStatus& rFileStatus) {  // static
-    return WriteFileTimes(pszFilePath, &(rFileStatus.m_timeCreate), &(rFileStatus.m_timeChange));
+    return WriteFileTimes(pszFilePath, &(rFileStatus._timeCreate), &(rFileStatus._timeChange));
 }
 
 HRESULT GRAYCALL cFileStatus::ReadFileStatus2(const FILECHAR_t* pszFilePath, cFileStatus* pFileStatus, bool bFollowLink) {  // static
-    //! get info/attributes/status on a single file or dir.
-    //! Similar to the MFC CFileFind. Are wildcards allowed ??
-    //! @note cFilePath::IsFilePathRoot will fail.
-    //! @arg pFileStatus is allowed to be nullptr
-    //! @return S_OK
-
 #ifdef _WIN32
     // NOTE: same as _WIN32 GetFileAttributesEx()
     ::WIN32_FIND_DATAW statusSys;  // cFileStatusSys

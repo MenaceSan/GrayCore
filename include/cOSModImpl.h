@@ -20,7 +20,7 @@
 namespace Gray {
 /// <summary>
 /// My implementation of a DLL/SO. _WINDLL
-/// Must be only one of these in a single link space for each DLL/SO. So it is not a true cSingletonStatic.
+/// Must be only one of these in a single link space for each DLL/SO. So it is not a true cSingleton .
 /// Always static allocated. NEVER heap or Stack allocated.
 /// Assume g_Module gets defined for the DLL/SO. On some derived class based on cOSModImpl named g_Module. In some new name space.
 /// e.g. cOSModImpl g_Module("ModuleName");
@@ -33,41 +33,45 @@ class GRAYCORE_LINK cOSModImpl {
     /// <summary>
     /// My internal name. Just derive this from the file name ?
     /// </summary>
-    const char* const m_pszModuleName;
+    const char* const _pszModuleName;
     /// <summary>
     /// My id assigned to me when loaded DllMain(). DLL_PROCESS_ATTACH
     /// address NOT cOSHandle (Windows) or cOSHandle (Linux)?
     /// should be same as GetModuleHandleForAddr(g_Module)
     /// </summary>
-    ::HMODULE m_hModule = HMODULE_NULL;
+    ::HMODULE _hModule = HMODULE_NULL;
 
     /// <summary>
     /// DLL_PROCESS_ATTACH happen BEFORE constructor! OnProcessAttach only called once!
     /// </summary>
-    bool m_bProcessAttached = false;
+    bool _isProcessAttached = false;
 
 #ifdef _MFC_VER
-    ::AFX_EXTENSION_MODULE m_AFXExt;  // I might be a MFC extension module. hResource, IsInit
+    ::AFX_EXTENSION_MODULE _AFXExt;  // I might be a MFC extension module. hResource, IsInit
 #endif
 
  private:
     bool OnProcessAttachTry();
 
  public:
+    /// <summary>
+    /// Always static allocated. NEVER heap or Stack allocated. So Zero init is NEVER needed!
+    /// </summary>
     cOSModImpl(const char* pszModuleName) noexcept;
+
     virtual ~cOSModImpl() {}
 
     const char* get_Name() const {
-        return m_pszModuleName;
+        return _pszModuleName;
     }
 
     /// both constructor and OnProcessAttach called?
     bool IsLoaded() const noexcept {
-        return m_pszModuleName != nullptr && m_hModule != HMODULE_NULL;
+        return _pszModuleName != nullptr && _hModule != HMODULE_NULL;
     }
 
     ::HMODULE get_HMod() const noexcept {
-        return m_hModule;
+        return _hModule;
     }
 
     /// <summary>

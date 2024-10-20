@@ -34,9 +34,23 @@ struct GRAYCORE_LINK cIniObject : public IIniObjectDef, public IIniBaseSetter, p
     mutable cBitmask<UINT64> _DirtyMask;  /// bitmask of PROPIDX_t to be written/persisted. Max 64 props.
   
     // HRESULT PropSet(const IniChar_t* pszPropTag, const IniChar_t* pszValue) override;
+
+    /// <summary>
+    /// Read a prop by its string name. default IIniBaseGetter implementation.
+    /// </summary>
+    /// <param name="pszPropTag"></param>
+    /// <param name="rsValue"></param>
+    /// <returns></returns>
     HRESULT PropGet(const IniChar_t* pszPropTag, OUT cStringI& rsValue) const override;
 
+    /// <summary>
+    /// Write the prop out to the stream if _DirtyMask.
+    /// </summary>
+    /// <param name="sOut">cStreamOutput</param>
+    /// <param name="ePropIdx"></param>
+    /// <returns></returns>
     HRESULT FileWriteN(ITextWriter& sOut, PROPIDX_t ePropIdx) const;
+
     HRESULT FileWrite(ITextWriter& sOut, const IniChar_t* pszProp);
     HRESULT FileWriteAll(ITextWriter& sOut);
 };

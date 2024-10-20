@@ -16,7 +16,7 @@ void GRAYCALL cException::ThrowEx(const char* pszExp, const cDebugSourceLine src
     //! Leave this in release code.
     //! Similar to AfxThrowInvalidArgException()
 
-    cLogMgr::I().addEventF(LOG_ATTR_DEBUG | LOG_ATTR_INTERNAL, LOGLVL_t::_CRIT, "Assert Throw:'%s' file '%s', line %d", LOGSTR(pszExp), LOGSTR(src.m_pszFile), src.m_uLine);
+    cLogMgr::I().addEventF(LOG_ATTR_DEBUG | LOG_ATTR_INTERNAL, LOGLVL_t::_CRIT, "Assert Throw:'%s' file '%s', line %d", LOGSTR(pszExp), LOGSTR(src._pszFile), src._uLine);
 
 #ifdef _CPPUNWIND
     GRAY_THROW cExceptionAssert(pszExp, LOGLVL_t::_CRIT, src);
@@ -25,13 +25,13 @@ void GRAYCALL cException::ThrowEx(const char* pszExp, const cDebugSourceLine src
 #endif
 }
 
-cExceptionAssert::cExceptionAssert(const LOGCHAR_t* pExp, LOGLVL_t eLogLevel, const cDebugSourceLine& src) : cException("Assert", eLogLevel), m_pExp(pExp), m_Src(src) {}
+cExceptionAssert::cExceptionAssert(const LOGCHAR_t* pExp, LOGLVL_t eLogLevel, const cDebugSourceLine& src) : cException("Assert", eLogLevel), _pExp(pExp), _Src(src) {}
 
 cExceptionAssert::~cExceptionAssert() THROW_DEF {}
 
 BOOL cExceptionAssert::GetErrorMessage(StrBuilder<GChar_t>& sb, UINT* pnHelpContext) {  // virtual
     UNREFERENCED_PARAMETER(pnHelpContext);
-    sb.AddFormat(_GT("Assert pri=%d:'%s' file '%s', line %d"), get_Severity(), StrArg<GChar_t>(m_pExp), StrArg<GChar_t>(m_Src.m_pszFile), m_Src.m_uLine);
+    sb.AddFormat(_GT("Assert pri=%d:'%s' file '%s', line %d"), get_Severity(), StrArg<GChar_t>(_pExp), StrArg<GChar_t>(_Src._pszFile), _Src._uLine);
     return true;
 }
 

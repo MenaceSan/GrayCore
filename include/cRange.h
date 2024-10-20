@@ -9,34 +9,32 @@
 
 namespace Gray {
 /// <summary>
-/// Simple linearity range from m_Lo to m_Hi. Similar to cStreamProgressT<>
+/// Simple linearity range from _Lo to _Hi. Similar to cStreamProgressT<>
 /// @note assume Normalized Hi>=Lo.
 /// POD class should allow static init
 /// </summary>
 /// <typeparam name="TYPE"></typeparam>
 template <typename TYPE = int>
-class cRangeT {
+struct cRangeT {
     typedef cRangeT<TYPE> THIS_t;
 
- public:
-    TYPE m_Lo;  /// low range value.
-    TYPE m_Hi;  /// inclusive high side of range. int size = (hi-lo)+1, float size = hi-lo ?? weird.
+    TYPE _Lo;  /// low range value.
+    TYPE _Hi;  /// inclusive high side of range. int size = (hi-lo)+1, float size = hi-lo ?? weird.
 
- public:
     cRangeT() {}  // not init!
-    cRangeT(TYPE lo, TYPE hi) : m_Lo(lo), m_Hi(hi) {}
+    cRangeT(TYPE lo, TYPE hi) : _Lo(lo), _Hi(hi) {}
 
     inline bool isNormal() const noexcept {
-        return m_Lo <= m_Hi;
+        return _Lo <= _Hi;
     }
     TYPE get_Min() const noexcept {
-        return m_Lo;
+        return _Lo;
     }
     TYPE get_Max() const noexcept {
-        return m_Hi;
+        return _Hi;
     }
     TYPE get_Avg() const noexcept {
-        return (m_Lo + m_Hi) / 2;
+        return (_Lo + _Hi) / 2;
     }
 
     /// <summary>
@@ -44,8 +42,8 @@ class cRangeT {
     /// assume isNormal().
     /// </summary>
     TYPE GetClampValue(TYPE nVal) const noexcept {
-        if (nVal < m_Lo) return m_Lo;
-        if (nVal > m_Hi) return m_Hi;
+        if (nVal < _Lo) return _Lo;
+        if (nVal > _Hi) return _Hi;
         return nVal;
     }
     /// <summary>
@@ -55,7 +53,7 @@ class cRangeT {
     /// <param name="nVal"></param>
     /// <returns></returns>
     bool IsInsideI(TYPE nVal) const noexcept {
-        return nVal >= m_Lo && nVal <= m_Hi;
+        return nVal >= _Lo && nVal <= _Hi;
     }
     /// <summary>
     /// Is the index in the range? Non inclusive.
@@ -63,7 +61,7 @@ class cRangeT {
     /// assume isNormal().
     /// </summary>
     bool IsInsideX(TYPE nVal) const noexcept {
-        return nVal >= m_Lo && nVal < m_Hi;
+        return nVal >= _Lo && nVal < _Hi;
     }
 
     /// <summary>
@@ -71,22 +69,22 @@ class cRangeT {
     /// assume isNormal().
     /// </summary>
     TYPE get_RangeI() const noexcept {
-        return (m_Hi - m_Lo) + 1;  // inclusive. integer
+        return (_Hi - _Lo) + 1;  // inclusive. integer
     }
     /// <summary>
     /// Get range (size) for exclusive float types.
     /// assume isNormal().
     /// </summary>
     TYPE get_RangeX() const noexcept {
-        return m_Hi - m_Lo;  // exclusive.
+        return _Hi - _Lo;  // exclusive.
     }
     TYPE get_Size() const noexcept {
-        return m_Hi - m_Lo;  // exclusive.
+        return _Hi - _Lo;  // exclusive.
     }
 
+    /// Get a percent of this range. from 0 to 1 float.
     TYPE GetLinear1(float fOne) const noexcept {
-        //! @arg fOne = 0.0 to 1.0
-        return CastN(TYPE, m_Lo + (fOne * get_RangeI()));
+        return CastN(TYPE, _Lo + (fOne * get_RangeI()));
     }
 
     /// <summary>
@@ -96,44 +94,39 @@ class cRangeT {
     /// <param name="iVal"></param>
     /// <returns></returns>
     int GetSpinValueI(int iVal) const {
-        iVal -= (int)m_Lo;
+        iVal -= (int)_Lo;
         const int iRange = (int)get_RangeI();
         iVal %= iRange;
-        if (iVal < 0)
-            iVal += (int)(m_Hi + 1);
-        else
-            iVal += (int)(m_Lo);
+        iVal += (iVal < 0) ? CastN(int, _Hi + 1) : CastN(int, _Lo);
         DEBUG_CHECK(IsInsideI(CastN(TYPE, iVal)));
         return iVal;
     }
 
     // Setters.
     void SetZero() noexcept {
-        m_Hi = m_Lo = 0;
+        _Hi = _Lo = 0;
     }
     void put_Min(TYPE iLo) noexcept {
-        m_Lo = iLo;
+        _Lo = iLo;
     }
     void put_Max(TYPE iHi) noexcept {
-        m_Hi = iHi;
+        _Hi = iHi;
     }
     void SetRange(TYPE iLo, TYPE iHi) noexcept {
         //! May not be normalized ?
-        m_Lo = iLo;
-        m_Hi = iHi;
+        _Lo = iLo;
+        _Hi = iHi;
     }
     void NormalizeRange() noexcept {
-        if (!isNormal()) {
-            cValT::Swap<TYPE>(m_Lo, m_Hi);
-        }
+        if (!isNormal()) cMem::SwapT(_Lo, _Hi);         
     }
 
     /// <summary>
     /// Expand the range to include this value. ASSUME isNormal()
     /// </summary>
     void UnionValue(TYPE nVal) noexcept {
-        if (nVal < m_Lo) m_Lo = nVal;
-        if (nVal > m_Hi) m_Hi = nVal;
+        if (nVal < _Lo) _Lo = nVal;
+        if (nVal > _Hi) _Hi = nVal;
     }
 
     /// <summary>
@@ -142,8 +135,8 @@ class cRangeT {
     /// <param name="x"></param>
     /// <returns></returns>
     bool IsRangeOverlapI(const THIS_t& x) const noexcept {
-        if (x.m_Lo > m_Hi) return false;
-        if (x.m_Hi < m_Lo) return false;
+        if (x._Lo > _Hi) return false;
+        if (x._Hi < _Lo) return false;
         return true;
     }
     /// <summary>
@@ -151,8 +144,8 @@ class cRangeT {
     /// </summary>
     /// <param name="x"></param>
     void SetUnionRange(const THIS_t& x) noexcept {
-        if (x.m_Hi > m_Hi) m_Hi = x.m_Hi;
-        if (x.m_Lo < m_Lo) m_Lo = x.m_Lo;
+        if (x._Hi > _Hi) _Hi = x._Hi;
+        if (x._Lo < _Lo) _Lo = x._Lo;
     }
 };
 }  // namespace Gray

@@ -16,18 +16,18 @@
 #include "IUnknown.h"
 
 namespace Gray {
-typedef UINT32 REFCOUNT_t;
+typedef UINT32 REFCOUNT_t;  // never negative! high bits reserved!
 
 /// <summary>
 /// Trace each use/reference of the a pointer in cPtrFacade/cIUnkPtr/cRefPtr for _DEBUG purposes.
 /// If the lock count fails to go to 0 we know who the leaker was. or if the object is deleted but still has refs we can detect that as well.
-/// Add myself to the cPtrTraceMgr table if the m_p pointer is set.
+/// Add myself to the cPtrTraceMgr table if the _p pointer is set.
 /// </summary>
 struct GRAYCORE_LINK cPtrTrace {
     static bool sm_bActive;  /// Turn on/off global tracing via cPtrTraceMgr. be fast.
     UINT_PTR _TraceId = 0;   /// Unique id for this trace reference. 0 = no reference
 
-    static UINT_PTR GRAYCALL TraceAttachX(const TYPEINFO_t& typeInfo, ::IUnknown* pIUnk, const cDebugSourceLine* src = nullptr);
+    static UINT_PTR GRAYCALL TraceAttachX(const TYPEINFO_t& typeInfo, ::IUnknown* pIUnk, const cDebugSourceLine* pSrc = nullptr);
     static void GRAYCALL TraceUpdateX(UINT_PTR id, const cDebugSourceLine& src) noexcept;
     static void GRAYCALL TraceReleaseX(UINT_PTR id);
 

@@ -27,18 +27,24 @@ namespace Gray {
 template <class TYPE = ::IUnknown>
 class cIUnkPtr : public cPtrFacade<TYPE>
 #ifdef USE_PTRTRACE_IUNK
-    , public cPtrTrace
+    ,
+                 public cPtrTrace
 #endif
 {
     typedef cIUnkPtr<TYPE> THIS_t;
     typedef cPtrFacade<TYPE> SUPER_t;
+    template <class T>
+    friend class cIUnkTraceHelper;
 
 #ifdef _DEBUG
  public:
+    /// <summary>
+    /// Ensure pointer is based on TYPE and TYPE must be based on IUnknown.
+    /// </summary>
     static void AssertIUnk(TYPE* p2) {
         if (p2 == nullptr) return;
-        ASSERT_NN(static_cast<TYPE*>(p2));        // must be based on TYPE
-        ASSERT_NN(static_cast<::IUnknown*>(p2));  // must be based on IUnknown
+        ASSERT_NN(static_cast<TYPE*>(p2));        
+        ASSERT_NN(static_cast<::IUnknown*>(p2));
     }
 #endif
 
@@ -55,10 +61,10 @@ class cIUnkPtr : public cPtrFacade<TYPE>
 #endif
     {
         if (SUPER_t::isValidPtr()) {
-            auto p2 = this->get_Ptr();
+            TYPE* p2 = this->get_Ptr();
 #ifdef _DEBUG
             const REFCOUNT_t iRefCount = p2->AddRef();
-            ASSERT(iRefCount >= 1);
+            DEBUG_CHECK(iRefCount >= 1);
             AssertIUnk(p2);
 #else
             p2->AddRef();
@@ -69,15 +75,25 @@ class cIUnkPtr : public cPtrFacade<TYPE>
         }
     }
 
+ protected:
+    void put_Ptr(TYPE* p2) {
+        if (!SUPER_t::IsEqual(p2)) {
+            ReleasePtr();
+            this->AttachPtr(p2);
+            IncRefFirst();
+        }
+    }
+
  public:
     /// Construct and destruction
-    cIUnkPtr() {}
+    cIUnkPtr() noexcept {
+    }
     cIUnkPtr(const TYPE* p2) : SUPER_t(const_cast<TYPE*>(p2)) {
         IncRefFirst();
     }
     cIUnkPtr(const THIS_t& ref) : SUPER_t(ref.get_Ptr()) {
         // copy. using the assignment auto constructor is not working so use this.
-        // TODO cPtrTrace keep m_Src info though this might not be accurate?
+        // TODO cPtrTrace keep _Src info though this might not be accurate?
         IncRefFirst();
     }
 
@@ -98,21 +114,16 @@ class cIUnkPtr : public cPtrFacade<TYPE>
     }
 
     /// <summary>
-    /// Get the current reference count. Add and remove a ref to get the count.
+    /// Get the current reference count. Only way is Add and remove a ref to get the count.
     /// </summary>
     REFCOUNT_t get_RefCount() const {
         if (!SUPER_t::isValidPtr()) return 0;
-        auto p2 = this->get_Ptr();
+        TYPE* p2 = this->get_Ptr();
         const REFCOUNT_t iRefCount = CastN(REFCOUNT_t, p2->AddRef());  // ULONG
         p2->Release();
         return iRefCount - 1;
     }
-
-    TYPE* GetInterfacePtr() const noexcept {
-        //! like _com_ptr_t
-        return this->get_Ptr();
-    }
-
+ 
     /// <summary>
     /// Set this IUnknown from the riid interface from p2 IUnknown.
     /// Do proper COM style dynamic_cast for Interface using QueryInterface().
@@ -123,16 +134,16 @@ class cIUnkPtr : public cPtrFacade<TYPE>
     HRESULT SetQI(::IUnknown* p2, const IID& riid) {
         ReleasePtr();  // leave it empty.
         if (p2 == nullptr) return E_NOINTERFACE;
-        // Query for TYPE interface. acts like IUNK_GETPPTRV(pInterface, riid)
+        // Query for TYPE interface. acts like IUNK_GETPPTR(pInterface, riid)
         TYPE* pInterface = nullptr;
         const HRESULT hRes = p2->QueryInterface(riid, OUT reinterpret_cast<void**>(&pInterface));  // get_PPtr()
         if (FAILED(hRes)) return hRes;
 #ifdef _DEBUG
-        ASSERT(pInterface != nullptr);
+        ASSERT_NN(pInterface);
         AssertIUnk(pInterface);
 #endif
 #ifdef USE_PTRTRACE_IUNK
-        TraceAttach(typeid(TYPE), p2);  // NOTE: m_Src not set! use IUNK_TRACE()
+        TraceAttach(typeid(TYPE), p2);  // NOTE: _Src not set! use IUNK_TRACE()
 #endif
         // Save the interface without AddRef()ing. ASSUME QueryInterface already did that.
         this->AttachPtr(pInterface);
@@ -140,9 +151,11 @@ class cIUnkPtr : public cPtrFacade<TYPE>
     }
 
 #ifdef _MSC_VER
-    static const IID& GetIID() {
-        //! ASSUME we have a IID (GUID) defined for this interface.
-        //! @note this seems to only work for _MSC_VER.
+    /// <summary>
+    /// Get the associated IID. ASSUME we have a IID (GUID) defined for this interface.
+    ///  @note this seems to only work for _MSC_VER.
+    /// </summary>
+    static inline const IID& GetIID() {
         return __uuidof(TYPE);
     }
     /// <summary>
@@ -150,7 +163,6 @@ class cIUnkPtr : public cPtrFacade<TYPE>
     /// Do proper COM style dynamic_cast for Interface using QueryInterface.
     /// </summary>
     /// <param name="p2"></param>
-    /// <returns></returns>
     HRESULT SetQI(::IUnknown* p2) {
         return SetQI(p2, GetIID());
     }
@@ -185,33 +197,25 @@ class cIUnkPtr : public cPtrFacade<TYPE>
         return *this;
     }
 
-    // TODO protect THESE !!! ONLY use cIUnkTraceHelper
+    // TODO protect THESE ?!! ONLY use cIUnkTraceHelper?
 
+    /// <summary>
+    /// use IUNK_GETPPTR() macro to track this with USE_PTRTRACE_IUNK. cIUnkTraceHelper
+    /// QueryInterface() or similar wants a pointer to a pointer to fill in my interface.
+    /// </summary>
     TYPE** get_PPtr() {
-        //! use IUNK_GETPPTR() macro to track this with USE_PTRTRACE_IUNK. cIUnkTraceHelper
-        //! QueryInterface() or similar wants a pointer to a pointer to fill in my interface.
         ReleasePtr();
         ASSERT(!this->isValidPtr());
-        return SUPER_t::get_PPtr();
+        return &(SUPER_t::ref_Ptr());
     }
+    /// <summary>
+    /// get a ** to assign the pointer.
+    /// assume the caller has added the first reference for me. Don't call AddRef!
+    /// use IUNK_GETPPTR() macro to track this with USE_PTRTRACE_IUNK. cIUnkTraceHelper
+    /// QueryInterface() and others don't like the typing.
+    /// </summary>
     void** get_PPtrV() {
-        //! get a ** to assign the pointer.
-        //! assume the caller has added the first reference for me. Don't call AddRef!
-        //! use IUNK_GETPPTRV() macro to track this with USE_PTRTRACE_IUNK. cIUnkTraceHelper
-        //! QueryInterface() and others don't like the typing.
-        ReleasePtr();
-        ASSERT(!this->isValidPtr());
-        TYPE** ppObj = SUPER_t::get_PPtr();
-        return reinterpret_cast<void**>(ppObj);
-    }
-
- protected:
-    void put_Ptr(TYPE* p2) {
-        if (!SUPER_t::IsEqual(p2)) {
-            ReleasePtr();
-            this->AttachPtr(p2);
-            IncRefFirst();
-        }
+        return reinterpret_cast<void**>(get_PPtr());
     }
 };
 
@@ -228,39 +232,41 @@ typedef GRAYCORE_LINK cIUnkPtr<> cIUnkBasePtr;
 /// <typeparam name="TYPE"></typeparam>
 template <class TYPE>
 class cIUnkTraceHelper {
-    cIUnkPtr<TYPE>& m_rpIObj;  /// track the open IUnk
-    cDebugSourceLine _Src;
+    cIUnkPtr<TYPE>& _rpIObj;  /// track the open IUnk
+    cDebugSourceLine _Src;  // can be set late ?
 
  public:
-    cIUnkTraceHelper(cIUnkPtr<TYPE>& rpObj, const cDebugSourceLine& src) : m_rpIObj(rpObj), _Src(src) {
+    cIUnkTraceHelper(cIUnkPtr<TYPE>& rpObj, const cDebugSourceLine& src) : _rpIObj(rpObj), _Src(src) {
         ASSERT(!rpObj.isValidPtr());
     }
     ~cIUnkTraceHelper() {
         //! We allowed something to place a pointer here, so check it.
-        TYPE* p = m_rpIObj.get_Ptr();
+        TYPE* p = _rpIObj.get_Ptr();
         if (p != nullptr) {
 #ifdef _DEBUG
-            m_rpIObj.AssertIUnk(p);
+            _rpIObj.AssertIUnk(p);
 #endif
-            m_rpIObj.TraceAttach(typeid(TYPE), p, &_Src);
+            _rpIObj.TraceAttach(typeid(TYPE), p, &_Src);
         }
     }
-    operator TYPE**() const {
-        // the opaque function wants TYPE**
-        return m_rpIObj.get_PPtr();
+    inline TYPE*& ref_Ptr() const {
+        return _rpIObj.ref_Ptr();
     }
-    operator void**() const {
-        // the opaque function wants void**
-        return m_rpIObj.get_PPtrV();
+    inline TYPE** get_PPtr() const {
+        return _rpIObj.get_PPtr();
+    }
+    inline void** get_PPtrV() const {
+        return _rpIObj.get_PPtrV();
     }
 };
 
-#define IUNK_GETPPTR(r, TYPE) cIUnkTraceHelper<TYPE>(r, DEBUGSOURCELINE)
-#define IUNK_GETPPTRV(r, TYPE) cIUnkTraceHelper<TYPE>(r, DEBUGSOURCELINE)
+#define IUNK_GETHELP(r, TYPE) cIUnkTraceHelper<TYPE>(r, DEBUGSOURCELINE)    // See: IID_PPV_ARGS_Helper()
+#define IUNK_GETPPTR(r, TYPE) IUNK_GETHELP(r, TYPE).get_PPtr()
+#define IUNK_GETPPTRV(r, TYPE) IUNK_GETHELP(r, TYPE).get_PPtrV()
+
 #define IUNK_TRACE(p) (p).TraceUpdate(DEBUGSOURCELINE);  // attach cPtrTrace to DEBUGSOURCELINE. late.
 #else
 #define IUNK_GETPPTR(p, TYPE) (p).get_PPtr()
-#define IUNK_GETPPTRV(p, TYPE) (p).get_PPtrV()
 #define IUNK_TRACE(p) __noop  // No trace. do nothing.
 #endif                        // USE_PTRTRACE_IUNK
 

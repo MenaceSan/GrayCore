@@ -2,14 +2,14 @@
 <AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
   <!-- https://msdn.microsoft.com/en-us/library/jj620914%28v=vs.120%29.aspx#BKMK_Using_Natvis_files -->
   <Type Name="Gray::cStringT&lt;char&gt;">
-    <DisplayString>{m_pchData,s}</DisplayString>
-    <StringView>m_pchData,s</StringView>
+    <DisplayString>{_pchData,s}</DisplayString>
+    <StringView>_pchData,s</StringView>
   </Type>
   <Type Name="Gray::cStringT&lt;wchar_t&gt;">
-    <DisplayString>{m_pchData,su}</DisplayString>
-    <StringView>m_pchData,su</StringView>
+    <DisplayString>{_pchData,s}</DisplayString>
+    <StringView>_pchData,s</StringView>
   </Type>
   <Type Name="Gray::cOSHandle">
-    <DisplayString>{{{m_h}}}</DisplayString>
+    <DisplayString>{{{_h}}}</DisplayString>
   </Type>
 </AutoVisualizer>

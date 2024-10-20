@@ -7,39 +7,44 @@
 #pragma once
 #endif
 
-#include "PtrCast.h"
 #include "StrConst.h"  // StrLen_t
-#include "cMem.h"
+#include "cBits.h"     // BIT_ENUM_t
+#include "cValT.h"     // cValT::Min
 
 namespace Gray {
 /// <summary>
-/// A pointer to memory block/blob/span with known size and unknown ownership.
-/// may be heap, stack, static or const based memory pointer. don't free on destruct. (although a derived class might)
+/// A pointer to memory block/blob/span with known size but unknown ownership.
+/// may be heap, stack, static or const based memory pointer (MEMTYPE_t). don't free on destruct. (although a derived class might. e.b. cBlob)
 /// May be static init? or UN-INIT!
 /// </summary>
 class GRAYCORE_LINK cMemSpan {  // : public cMem
     typedef cMemSpan THIS_t;
-    void* m_pData = nullptr;  /// a block of memory of unknown ownership. Treat as MEMTYPE_t::_Temp
-    size_t m_nSizeBytes = 0;  /// size_t of m_pData in bytes.
+    void* _pData = nullptr;  /// a block of memory of unknown ownership. Treat as MEMTYPE_t::_Temp
+    size_t _nSizeBytes = 0;  /// size_t of _pData in bytes. upper byte is reserved.
+
+ protected:
+    static constexpr BIT_ENUM_t kUpperByteShift = (_SIZEOF_PTR - 1) * cBits::k_8;  // BIT_ENUM_t USE_64BIT
+    static constexpr size_t kLowerMask = ~(CastN(size_t, 0xFF) << kUpperByteShift);
 
  public:
-    /// <summary>
-    /// Set/Adjust size in bytes but leave data pointer alone.
-    /// </summary>
-    void put_SizeBytes(size_t nSize) noexcept {
-        m_nSizeBytes = nSize;
-    }
+    constexpr cMemSpan() noexcept {}
 
-    constexpr cMemSpan() noexcept : m_pData(nullptr), m_nSizeBytes(0) {}
-    constexpr cMemSpan(const void* pData, size_t nSize) noexcept : m_pData(nSize ? const_cast<void*>(pData) : nullptr), m_nSizeBytes(nSize) {
-        // just assume we don't modify it?
-        // read only. SetSpanConst
+    /// <summary>
+    /// assume we don't modify it? read only like SetSpanConst.
+    /// </summary>
+    constexpr cMemSpan(const void* pData, size_t nSize) noexcept : _pData(nSize ? const_cast<void*>(pData) : nullptr), _nSizeBytes(nSize) {
         DEBUG_CHECK(isValid());
     }
-    explicit cMemSpan(const cMemSpan* pBlock) noexcept {
-        // Just shared pointers. This may be dangerous!
-        m_pData = (pBlock == nullptr) ? nullptr : pBlock->m_pData;
-        m_nSizeBytes = (pBlock == nullptr) ? 0 : pBlock->m_nSizeBytes;
+    cMemSpan(BYTE* pStart, const BYTE* pEnd) noexcept : _pData(pStart), _nSizeBytes(pEnd - pStart) {
+        ASSERT_NN(pStart);
+        ASSERT_NN(pEnd);
+        DEBUG_CHECK(isValid());
+    }
+
+    /// <summary>
+    /// Init with shared pointers. This may be dangerous!
+    /// </summary>
+    explicit cMemSpan(const cMemSpan* pBlock) noexcept : _pData((pBlock == nullptr) ? nullptr : pBlock->_pData), _nSizeBytes((pBlock == nullptr) ? 0 : pBlock->_nSizeBytes) {
         DEBUG_CHECK(isValid());
     }
 
@@ -47,17 +52,44 @@ class GRAYCORE_LINK cMemSpan {  // : public cMem
     /// Get size in bytes.
     /// </summary>
     constexpr inline size_t get_SizeBytes() const noexcept {
-        return m_nSizeBytes;
+        return _nSizeBytes & kLowerMask;
+    }
+    constexpr inline BYTE get_UpperByte() const {
+        return _nSizeBytes >> kUpperByteShift;
+    }
+
+    /// <summary>
+    /// Is empty? assume NOT nullptr if not empty!
+    /// </summary>
+    constexpr inline bool isEmpty() const noexcept {
+        return get_SizeBytes() <= 0;
     }
 
     inline const BYTE* get_BytePtrC() const noexcept {
-        return PtrCast<BYTE>(m_pData);
+        return PtrCast<BYTE>(_pData);
     }
     /// <summary>
     /// Get a writable byte pointer.
     /// </summary>
     inline BYTE* get_BytePtrW() const noexcept {
-        return PtrCast<BYTE>(m_pData);
+        return PtrCast<BYTE>(_pData);
+    }
+
+    /// <summary>
+    /// Not exactly the same as empty? since nullptr and size are allowed for lockable types.
+    /// </summary>
+    constexpr inline bool isNull() const noexcept {
+        return _pData == nullptr;
+    }
+
+    /// <summary>
+    /// operator to auto cast to const pointer
+    /// </summary>
+    operator const void*() const noexcept {
+        return _pData;
+    }
+    operator const BYTE*() const noexcept {
+        return PtrCast<BYTE>(_pData);
     }
 
     /// <summary>
@@ -65,16 +97,16 @@ class GRAYCORE_LINK cMemSpan {  // : public cMem
     /// </summary>
     template <typename TYPE2 = BYTE>
     inline const TYPE2* GetTPtrC() const noexcept {
-        // DEBUG_CHECK(m_nSizeBytes == 0 || m_nSizeBytes >= sizeof(TYPE2));
-        return PtrCast<TYPE2>(m_pData);
+        // DEBUG_CHECK(isEmpty() || get_SizeBytes() >= sizeof(TYPE2));
+        return PtrCast<TYPE2>(_pData);
     }
     /// <summary>
     /// Get a writable arbitrary TYPE2 pointer.
     /// </summary>
     template <typename TYPE2 = BYTE>
     inline TYPE2* GetTPtrW() noexcept {
-        // DEBUG_CHECK(m_nSizeBytes == 0 || m_nSizeBytes >= sizeof(TYPE2));
-        return PtrCast<TYPE2>(m_pData);
+        // DEBUG_CHECK(isEmpty() || get_SizeBytes() >= sizeof(TYPE2));
+        return PtrCast<TYPE2>(_pData);
     }
 
     /// <summary>
@@ -84,38 +116,15 @@ class GRAYCORE_LINK cMemSpan {  // : public cMem
     /// <returns></returns>
     template <typename TYPE2>
     inline TYPE2* GetTPtrNC() const noexcept {
-        // DEBUG_CHECK(m_nSizeBytes == 0 || m_nSizeBytes >= sizeof(TYPE2));
-        return PtrCast<TYPE2>(m_pData);
+        // DEBUG_CHECK(isEmpty() || get_SizeBytes() >= sizeof(TYPE2));
+        return PtrCast<TYPE2>(_pData);
     }
     /// <summary>
     /// Is this (probably) valid to use/read/write. not nullptr.
     /// </summary>
     /// <returns></returns>
     constexpr inline bool isValidPtr() const noexcept {
-        return cMem::IsValidPtr(m_pData);
-    }
-    /// <summary>
-    /// Not exactly the same as empty? since nullptr and size are allowed for lockable types.
-    /// </summary>
-    constexpr inline bool isNull() const noexcept {
-        return m_pData == nullptr;
-    }
-
-    /// <summary>
-    /// operator to auto cast to const pointer
-    /// </summary>
-    operator const void*() const noexcept {
-        return m_pData;
-    }
-    operator const BYTE*() const noexcept {
-        return PtrCast<BYTE>(m_pData);
-    }
-
-    /// <summary>
-    /// Is empty? assume NOT nullptr if not empty!
-    /// </summary>
-    constexpr inline bool isEmpty() const noexcept {
-        return m_nSizeBytes <= 0;
+        return cMem::IsValidPtr(_pData);
     }
 
     /// <summary>
@@ -123,7 +132,7 @@ class GRAYCORE_LINK cMemSpan {  // : public cMem
     /// </summary>
     constexpr inline bool isValid() const noexcept {
         if (isNull()) return true;
-        return isValidPtr() && m_nSizeBytes != 0;
+        return isValidPtr() && !isEmpty();
     }
 
     /// <summary>
@@ -131,21 +140,21 @@ class GRAYCORE_LINK cMemSpan {  // : public cMem
     /// I can write or read this?
     /// </summary>
     inline bool IsInSize(size_t i) const noexcept {
-        return IS_INDEX_GOOD(i, m_nSizeBytes);
+        return i < get_SizeBytes();  // IS_INDEX_GOOD
     }
+
     /// <summary>
     /// Is byte offset inside the known valid range for the block? or at end? inclusive.
     /// </summary>
     bool IsLTESize(size_t i) const noexcept {
-        if (i == m_nSizeBytes) return true;  // at end is ok
-        return IS_INDEX_GOOD(i, m_nSizeBytes);
+        return i <= get_SizeBytes();  // at end is ok
     }
 
     /// <summary>
-    /// ptrdiff_t ?
+    /// ptrdiff_t
     /// </summary>
-    inline size_t GetOffset(const void* p) const noexcept {
-        return cMem::Diff(p, m_pData);
+    inline ptrdiff_t GetOffset(const void* p) const noexcept {
+        return cMem::Diff(p, _pData);
     }
 
     /// <summary>
@@ -163,25 +172,25 @@ class GRAYCORE_LINK cMemSpan {  // : public cMem
     }
 
     bool IsZeros() const noexcept {
-        return cMem::IsZeros(m_pData, m_nSizeBytes);
+        return cMem::IsZeros(_pData, get_SizeBytes());
     }
 
     /// <summary>
     /// Exact same span? like IsEqual3()
     /// </summary>
     /// <param name="data"></param>
-    bool IsSameSpam(const THIS_t& data) const noexcept {
-        return m_nSizeBytes == data.m_nSizeBytes && m_pData == data.m_pData;
+    bool IsSameSpan(const THIS_t& data) const noexcept {
+        return _nSizeBytes == data._nSizeBytes && _pData == data._pData;
     }
     bool IsEqualData(const void* pData) const noexcept {
-        return cMem::IsEqual(m_pData, pData, m_nSizeBytes);
+        return cMem::IsEqual(_pData, pData, get_SizeBytes());  // ASSUME pData is same size.
     }
 
     /// <summary>
     /// compare blocks of data.
     /// </summary>
     bool IsEqualSpan(const THIS_t& data) const noexcept {
-        return m_nSizeBytes == data.m_nSizeBytes && IsEqualData(data.m_pData);
+        return get_SizeBytes() == data.get_SizeBytes() && IsEqualData(data._pData);
     }
 
     bool operator==(const cMemSpan& m2) const noexcept {
@@ -214,71 +223,33 @@ class GRAYCORE_LINK cMemSpan {  // : public cMem
     }
 
     /// <summary>
-    /// Get a pointer to the end of the buffer.
+    /// Get a pointer to the end of the buffer. end().
     /// Never read/write to/past this pointer.
     /// </summary>
     /// <returns></returns>
     const BYTE* get_EndPtr() const noexcept {
-        return GetTPtrC<BYTE>() + m_nSizeBytes;
+        return GetTPtrC<BYTE>() + get_SizeBytes();
     }
 
-    void SetSpanNull() noexcept {
-        m_nSizeBytes = 0;
-        m_pData = nullptr;
-    }
-    /// set a read only span. nullptr ok.
-    void SetSpanConst(const void* pData, size_t nSize) noexcept {
-        m_pData = const_cast<void*>(pData);
-        m_nSizeBytes = nSize;  // size does not apply if nullptr.
-        DEBUG_CHECK(isValid());
-    }
-    /// set a writable span.
-    void SetSpan2(void* pData, size_t nSize) noexcept {
-        m_nSizeBytes = nSize;  // size does not apply if nullptr.
-        m_pData = nSize ? pData : nullptr;
-        DEBUG_CHECK(isValid());
-    }
-    /// make a copy of this span
-    void SetSpan(const THIS_t& a) noexcept {
-        m_nSizeBytes = a.m_nSizeBytes;  // size does not apply if nullptr.
-        m_pData = a.m_pData;
-        DEBUG_CHECK(isValid());
-    }
-
-    /// Advance the span and shrink it.
-    inline void SetSkipBytes(size_t nSize) {
-        ASSERT(nSize <= m_nSizeBytes);
-        m_pData = GetTPtrW<BYTE>() + nSize;
-        m_nSizeBytes -= nSize;
-    }
     cMemSpan GetSkipBytes(size_t nSize) const {
-        ASSERT(nSize <= m_nSizeBytes);
-        return cMemSpan(GetTPtrC<BYTE>() + nSize, m_nSizeBytes - nSize);
+        ASSERT(IsLTESize(nSize));
+        return cMemSpan(GetTPtrC<BYTE>() + nSize, get_SizeBytes() - nSize);
     }
 
-    THIS_t GetSizeBytesMax(size_t sizeMax) const noexcept {
-        return THIS_t(m_pData, cValT::Min(m_nSizeBytes, sizeMax));
+    size_t GetSizeLimit(size_t sizeMax) const noexcept {
+        return cValT::Min(get_SizeBytes(), sizeMax);
+    }
+    THIS_t GetSpanLimit(size_t sizeMax) const noexcept {
+        return THIS_t(_pData, GetSizeLimit(sizeMax));
     }
 
-    void SetZeros() noexcept {
-        cMem::ZeroSecure(m_pData, m_nSizeBytes);
-    }
-    void SetCopyN(const void* pData, size_t size) noexcept {
-        if (isNull() || pData == nullptr) return;
-        cMem::Copy(m_pData, pData, size);
-    }
-    void SetCopyAll(const void* pData) noexcept {
-        SetCopyN(pData, m_nSizeBytes);
-    }
-    size_t SetCopySpan(const cMemSpan& span2) noexcept {
-        const size_t sizeMin = cValT::Min(m_nSizeBytes, span2.get_SizeBytes());
-        SetCopyN(span2, sizeMin);
-        return sizeMin;
+    void CopyTo(void* pDest) const noexcept {
+        // ASSUME the caller knows pDest is big enough!
+        cMem::Copy(pDest, _pData, get_SizeBytes());
     }
 
-    void CopyTo(void* pData) const noexcept {
-        cMem::Copy(pData, m_pData, m_nSizeBytes);
-    }
+    //**********************************
+    // can Modify
 
     /// How much space does the hex digest need?
     static constexpr StrLen_t GetHexDigestSize(size_t nSize) noexcept {
@@ -290,17 +261,98 @@ class GRAYCORE_LINK cMemSpan {  // : public cMem
     StrLen_t get_HexDigestSize() const {
         return GetHexDigestSize(get_SizeBytes());
     }
-    /// ASSUME pszHexString output is big enough! GetHexDigestSize()
-    StrLen_t GetHexDigest(OUT char* pszHexString) const;
-    HRESULT SetHexDigest(const char* pszHexString, bool testEnd = true);
+
+    /// <summary>
+    /// Get the final hash as a pre-formatted string of hex digits. opposite of SetHexDigest
+    /// ASSUME sizeof(pszHexString) >= GetHexDigestSize()
+    /// @note using Base64 would be better.
+    /// </summary>
+    /// <param name="hexStr">ASSUME hexStr output is big enough! GetHexDigestSize(). MUST include space for '\0'</param>
+    /// <returns></returns>
+    StrLen_t GetHexDigest(cMemSpan hexStr) const;
+
+    /// <summary>
+    /// Set binary pDigest from string pszHexString
+    /// opposite of cMemSpan::GetHexDigest
+    /// @note using Base64 would be better.
+    /// </summary>
+    /// <param name="pszHexString">input hex string.</param>
+    /// <param name="testEnd"></param>
+    /// <returns>S_FALSE = was zero value.</returns>
+    HRESULT ReadHexDigest(const char* pszHexString, bool testEnd = true);
 
     /// read/write a string of comma separated numbers.
     size_t ReadFromCSV(const char* pszSrc);
 
     /// <summary>
-    /// reverse the order of an array of blocks/objects.
+    /// reverse the order of an array of blocks/objects inside.
     /// </summary>
     void ReverseSpan(size_t stride);
+
+    void SetZeros() noexcept {
+        cMem::ZeroSecure(_pData, get_SizeBytes());
+    }
+
+    /// Copy data but do not change current span size.
+    void SetCopyN(const void* pSrc, size_t nSize) noexcept {
+        if (isNull() || pSrc == nullptr) return;
+        ASSERT(IsLTESize(nSize));
+        cMem::Copy(_pData, pSrc, nSize);
+    }
+    void SetCopyAll(const void* pSrc) noexcept {
+        SetCopyN(pSrc, get_SizeBytes());
+    }
+    /// <summary>
+    ///  Copy data but do not change current span size.
+    /// </summary>
+    /// <param name="span2"></param>
+    /// <returns></returns>
+    size_t SetCopySpan(const cMemSpan& span2) noexcept {
+        const size_t sizeMin = GetSizeLimit(span2.get_SizeBytes());
+        SetCopyN(span2, sizeMin);
+        return sizeMin;
+    }
+
+    //************************************
+    // Setters.
+
+    /// <summary>
+    /// Set/Adjust size in bytes but leave data pointer alone.
+    /// </summary>
+    void put_SizeBytes(size_t nSize) noexcept {
+        _nSizeBytes = nSize;
+    }
+
+    void SetSpanNull() noexcept {
+        _nSizeBytes = 0;
+        _pData = nullptr;
+    }
+    /// set a read only span. nullptr ok.
+    void SetSpanConst(const void* pData, size_t nSize) noexcept {
+        _pData = const_cast<void*>(pData);
+        _nSizeBytes = nSize;  // size ignored if nullptr.
+        DEBUG_CHECK(isValid());
+    }
+    /// make a dupe of this span
+    void SetSpan(const THIS_t& a) noexcept {
+        _nSizeBytes = a._nSizeBytes;  // size ignored if nullptr.
+        _pData = a._pData;
+        DEBUG_CHECK(isValid());
+    }
+    /// set a writable span.
+    void SetSpan2(void* pData, size_t nSize) noexcept {
+        _nSizeBytes = nSize;  // size ignored if nullptr.
+        _pData = nSize ? pData : nullptr;
+        DEBUG_CHECK(isValid());
+    }
+
+    /// Advance the span and shrink it.
+    inline void SetSkipBytes(size_t nSize) {
+        // ASSUME NOT cBlob heap.
+        ASSERT(IsLTESize(nSize));
+        _pData = GetTPtrW<BYTE>() + nSize;
+        _nSizeBytes -= nSize;
+    }
 };
 }  // namespace Gray
 #endif

@@ -20,13 +20,13 @@ void GRAYCALL cTempPool::FreeThreadManually() {  // static
 }
 
 cMemSpan cTempPool1::GetMemSpan(size_t nLenNeed) {
-    if (m_aBlocks.isEmpty()) {  // first time alloc.
-        m_aBlocks.SetSize(k_nBlocksMax);
-        m_nBlockCur = 0;
+    if (_aBlocks.isEmpty()) {  // first time alloc.
+        _aBlocks.SetSize(k_nBlocksMax);
+        _nBlockCur = 0;
     } else {
-        if (++m_nBlockCur >= k_nBlocksMax) m_nBlockCur = 0;
+        if (++_nBlockCur >= k_nBlocksMax) _nBlockCur = 0;
     }
-    auto& r = m_aBlocks.ElementAt(m_nBlockCur);
+    auto& r = _aBlocks.ElementAt(_nBlockCur);
     r.ReAllocSize(nLenNeed);  // re-alloc to the size we need.
     return cMemSpan(r, nLenNeed);
 }

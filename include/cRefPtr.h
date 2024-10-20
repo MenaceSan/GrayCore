@@ -17,7 +17,7 @@
 
 namespace Gray {
 #if defined(_DEBUG) && !defined(UNDER_CE)
-#define USE_PTRTRACE_REF
+// #define USE_PTRTRACE_REF
 #endif
 
 /// <summary>
@@ -32,9 +32,9 @@ class GRAYCORE_LINK cRefBase : public ::IUnknown {                              
     static const REFCOUNT_t k_REFCOUNT_STATIC = 0x20000000;                            /// for structures that are 'static' or stack based. never delete
     static const REFCOUNT_t k_REFCOUNT_DEBUG = 0x40000000;                             /// mark this as debug. (even in release mode)
     static const REFCOUNT_t k_REFCOUNT_DESTRUCT = 0x80000000;                          /// we are in the process of destruction.
-    static const REFCOUNT_t k_REFCOUNT_MASK = k_REFCOUNT_DESTRUCT | k_REFCOUNT_DEBUG;  /// hide extra information in the m_nRefCount
+    static const REFCOUNT_t k_REFCOUNT_MASK = k_REFCOUNT_DESTRUCT | k_REFCOUNT_DEBUG;  /// hide extra information in the _nRefCount
 
-    mutable cInterlockedUInt32 m_nRefCount;  /// count the number of refs. Multi-Thread safe. check _MT here ?? Negative NEVER allowed!
+    mutable cInterlockedUInt32 _nRefCount;  /// count the number of refs. Multi-Thread safe. check _MT here ?? Negative NEVER allowed!
 
  private:
     void _InternalAddRef() const noexcept {
@@ -49,7 +49,7 @@ class GRAYCORE_LINK cRefBase : public ::IUnknown {                              
         }
 #endif
 #endif
-        m_nRefCount.IncV();
+        _nRefCount.IncV();
     }
     void _InternalRelease() noexcept {
 #ifdef _DEBUG
@@ -62,7 +62,7 @@ class GRAYCORE_LINK cRefBase : public ::IUnknown {                              
         }
 #endif
 #endif
-        const REFCOUNT_t nRefCount = m_nRefCount.Dec();
+        const REFCOUNT_t nRefCount = _nRefCount.Dec();
         if ((nRefCount & ~k_REFCOUNT_MASK) == 0) {
             onZeroRefCount();  // free my memory. delete this.
         } else {
@@ -85,10 +85,10 @@ class GRAYCORE_LINK cRefBase : public ::IUnknown {                              
     }
 
  public:
-    explicit cRefBase(REFCOUNT_t nRefCount = 0) noexcept : m_nRefCount(nRefCount) {}
+    explicit cRefBase(REFCOUNT_t nRefCount = 0) noexcept : _nRefCount(nRefCount) {}
 
     REFCOUNT_t get_RefCount() const noexcept {
-        return m_nRefCount.get_Value() & ~k_REFCOUNT_MASK;
+        return _nRefCount.get_Value() & ~k_REFCOUNT_MASK;
     }
 
     /// <summary>
@@ -186,14 +186,14 @@ class GRAYCORE_LINK cRefBase : public ::IUnknown {                              
 
     bool isStaticConstruct() const noexcept {
         //! Was StaticConstruct() called for this ?
-        return cBits::HasAny(m_nRefCount.get_Value(), k_REFCOUNT_STATIC);
+        return cBits::HasAny(_nRefCount.get_Value(), k_REFCOUNT_STATIC);
     }
     /// <summary>
     /// If this is really static, not dynamic. Call this in parents constructor or main (if global).
     /// </summary>
     void StaticConstruct() const {
-        ASSERT(m_nRefCount.get_Value() == 0);  // only call in constructor!
-        m_nRefCount.put_Value(k_REFCOUNT_STATIC);
+        ASSERT(_nRefCount.get_Value() == 0);  // only call in constructor!
+        _nRefCount.put_Value(k_REFCOUNT_STATIC);
     }
     /// <summary>
     /// static objects can fix themselves this way.
@@ -201,11 +201,11 @@ class GRAYCORE_LINK cRefBase : public ::IUnknown {                              
     /// </summary>
     void StaticDestruct() {
         ASSERT(isStaticConstruct());
-        m_nRefCount.put_Value(0);
+        _nRefCount.put_Value(0);
     }
 
     bool isDestructing() const noexcept {
-        return cBits::HasAny(m_nRefCount.get_Value(), k_REFCOUNT_DESTRUCT);
+        return cBits::HasAny(_nRefCount.get_Value(), k_REFCOUNT_DESTRUCT);
     }
     /// <summary>
     /// this object is in the act of destruction. Destruct never throw!
@@ -213,7 +213,7 @@ class GRAYCORE_LINK cRefBase : public ::IUnknown {                              
     void SetDestructing() noexcept {
         if (isDestructing()) return;
         DEBUG_ASSERT(get_RefCount() == 0, "SetDestructing");
-        m_nRefCount.put_Value(k_REFCOUNT_DESTRUCT);
+        _nRefCount.put_Value(k_REFCOUNT_DESTRUCT);
     }
 
     /// <summary>
@@ -221,14 +221,14 @@ class GRAYCORE_LINK cRefBase : public ::IUnknown {                              
     /// </summary>
     /// <returns></returns>
     bool isSmartDebug() const noexcept {
-        return cBits::HasAny(m_nRefCount.get_Value(), k_REFCOUNT_DEBUG);
+        return cBits::HasAny(_nRefCount.get_Value(), k_REFCOUNT_DEBUG);
     }
     /// <summary>
     /// Mark this object as debug. Trace it. maybe object is in the act of destruction?
     /// </summary>
     bool SetSmartDebug() noexcept {
-        if (isSmartDebug()) return false;  // already marked?            
-        m_nRefCount.AddX(k_REFCOUNT_DEBUG);
+        if (isSmartDebug()) return false;  // already marked?
+        _nRefCount.AddX(k_REFCOUNT_DEBUG);
         return true;
     }
 };
@@ -243,11 +243,13 @@ class GRAYCORE_LINK cRefBase : public ::IUnknown {                              
 template <class TYPE = cRefBase>
 class cRefPtr : public cPtrFacade<TYPE>
 #ifdef USE_PTRTRACE_REF
-    ,  public cPtrTrace
+    ,
+                public cPtrTrace
 #endif
 {
     typedef cRefPtr<TYPE> THIS_t;
     typedef cPtrFacade<TYPE> SUPER_t;
+    TYPE*& ref_Ptr() noexcept = delete;
 
     /// <summary>
     /// add a ref. @note IncRefCount can throw !
@@ -260,7 +262,7 @@ class cRefPtr : public cPtrFacade<TYPE>
     {
         if (SUPER_t::isValidPtr()) {
             cRefBase* p2 = this->get_Ptr();
-            p2->IncRefCount();
+            p2->IncRefCount();  // MUST be cRefBase to have this.
 #ifdef _DEBUG
             DEBUG_CHECK(!isCorruptPtr());
 #endif
@@ -298,7 +300,7 @@ class cRefPtr : public cPtrFacade<TYPE>
     /// create my own copy constructor.
     /// </summary>
     cRefPtr(const THIS_t& ref) noexcept : SUPER_t(ref.get_Ptr()) {
-        // TODO cPtrTrace keep m_Src info though this might not be accurate?
+        // TODO cPtrTrace keep _Src info though this might not be accurate?
         IncRefFirst();
     }
 

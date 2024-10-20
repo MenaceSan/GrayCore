@@ -36,8 +36,7 @@ typedef INT32 TIMESYSD_t;                                  /// Time delta. signe
 /// No need to USE clock_getres( clockid_t __clock_id, struct timespec *__res) ?
 /// @note link with 'rt' for this.
 /// </summary>
-class cTimeSpec : public /* struct*/ timespec {
- public:
+struct cTimeSpec : public /* struct*/ ::timespec {
     static const UINT k_FREQ = 1000000000;  // billionths of a sec.
 
     cTimeSpec() noexcept {
@@ -94,20 +93,20 @@ class GRAYCORE_LINK cTimeSys {
     static const TIMESYSD_t k_DMAX = INT_MAX;  /// Max delta in time.
 
  protected:
-    TIMESYS_t m_TimeSys;
+    TIMESYS_t _TimeSys = k_CLEAR;
 
  public:
-    cTimeSys() noexcept : m_TimeSys(k_CLEAR) {}
-    cTimeSys(TIMESYS_t t) noexcept : m_TimeSys(t) {}
+    cTimeSys() noexcept {}
+    cTimeSys(TIMESYS_t t) noexcept : _TimeSys(t) {}
 
     bool isTimeValid() const noexcept {
-        return m_TimeSys > k_CLEAR;
+        return _TimeSys > k_CLEAR;
     }
     TIMESYS_t get_TimeSys() const noexcept {
-        return m_TimeSys;
+        return _TimeSys;
     }
     void InitTime(TIMESYS_t t = k_CLEAR) noexcept {
-        m_TimeSys = t;
+        _TimeSys = t;
     }
 
     // ********************************************************
@@ -117,35 +116,35 @@ class GRAYCORE_LINK cTimeSys {
     static unsigned long GRAYCALL WaitSpin(TIMESYSD_t t);
 
     void InitTimeNow() noexcept {
-        m_TimeSys = GetTimeNow();
+        _TimeSys = GetTimeNow();
     }
     void InitTimeNowPlusSys(TIMESYSD_t iOffset) noexcept {
-        m_TimeSys = GetTimeNow() + iOffset;
+        _TimeSys = GetTimeNow() + iOffset;
     }
     void InitTimeNowPlusSec(float fOffsetSec) noexcept {
         InitTimeNowPlusSys(CastN(TIMESYSD_t, fOffsetSec * k_FREQ));
     }
     bool isTimeFuture() const noexcept {
-        return m_TimeSys > GetTimeNow();  // GetTimeNow
+        return _TimeSys > GetTimeNow();  // GetTimeNow
     }
 
     /// <summary>
     /// How long until this time (msec)
     /// </summary>
-    /// <returns>-gt- 0 = m_TimeSys is in the future.</returns>
+    /// <returns>-gt- 0 = _TimeSys is in the future.</returns>
     TIMESYSD_t get_TimeTilSys() const noexcept {
-        if (m_TimeSys == 0) return -k_DMAX;
-        if (m_TimeSys == k_INF) return k_DMAX;
-        return CastN(TIMESYSD_t, m_TimeSys - GetTimeNow());
+        if (_TimeSys == 0) return -k_DMAX;
+        if (_TimeSys == k_INF) return k_DMAX;
+        return CastN(TIMESYSD_t, _TimeSys - GetTimeNow());
     }
     /// <summary>
     /// How long ago was this ? (was TIMESYS_GetAge(x))
     /// </summary>
     /// <returns>signed TIMESYS_t (mSec). -lt- 0 = t is in the future. -gt- 0 = t is in the past.</returns>
     TIMESYSD_t get_AgeSys() const noexcept {
-        if (m_TimeSys == 0) return k_DMAX;
-        if (m_TimeSys == k_INF) return -k_DMAX;
-        return CastN(TIMESYSD_t, GetTimeNow() - m_TimeSys);
+        if (_TimeSys == 0) return k_DMAX;
+        if (_TimeSys == k_INF) return -k_DMAX;
+        return CastN(TIMESYSD_t, GetTimeNow() - _TimeSys);
     }
 
     TIMESECF_t get_TimeTilSecF() const noexcept {
@@ -173,7 +172,7 @@ class GRAYCORE_LINK cTimerSys : public cTimeSys {
         _Freq = freq;
     }
     void Init(TIMESYS_t now, TIMESECD_t freq) noexcept {
-        m_TimeSys = now;
+        _TimeSys = now;
         _Freq = freq;  // occur again ?
     }
     void InitFreq(TIMESECD_t freq) noexcept {
@@ -201,7 +200,7 @@ typedef UINT64 TIMEPERF_t;                                 /// The system very h
 /// </summary>
 class GRAYCORE_LINK cTimePerf {
  public:
-    TIMEPERF_t m_nTime;  /// Arbitrary start time in k_nFreq units. 64 byte unsigned type.
+    TIMEPERF_t _nTimePerf;  /// Arbitrary start time in k_nFreq units. 64 byte unsigned type.
 #ifdef _WIN32
     static TIMEPERF_t sm_nFreq;  /// The frequency might change depending on the machine. Must call InitFreq()
 #else                            // __linux__
@@ -209,10 +208,10 @@ class GRAYCORE_LINK cTimePerf {
 #endif
 
  public:
-    cTimePerf(TIMEPERF_t nTime = 0) noexcept : m_nTime(nTime) {
+    cTimePerf(TIMEPERF_t nTime = 0) noexcept : _nTimePerf(nTime) {
         //! default = init to 0.
     }
-    cTimePerf(int nTime) noexcept : m_nTime(nTime) {
+    cTimePerf(int nTime) noexcept : _nTimePerf(nTime) {
         //! default = init to 0. Allow constants to not have a convert.
     }
     cTimePerf(bool bTrue) noexcept {
@@ -220,11 +219,11 @@ class GRAYCORE_LINK cTimePerf {
         if (bTrue)
             InitTimeNow();
         else
-            m_nTime = 0;  // The test is turned off. don't record time.
+            _nTimePerf = 0;  // The test is turned off. don't record time.
     }
 
     bool isTimeValid() const noexcept {
-        return m_nTime != 0;
+        return _nTimePerf != 0;
     }
 
     static bool GRAYCALL InitFreq() noexcept;
@@ -232,11 +231,11 @@ class GRAYCORE_LINK cTimePerf {
 
     TIMEPERF_t get_Perf() const noexcept {
         //! Get the time stamp.
-        return m_nTime;
+        return _nTimePerf;
     }
     TIMEPERF_t GetAgeDiff(cTimePerf tStop) const noexcept {
         //! how long ago was this ?
-        return tStop.m_nTime - this->m_nTime;
+        return tStop._nTimePerf - this->_nTimePerf;
     }
     TIMEPERF_t get_AgePerf() const noexcept {
         //! how long ago was this ?
@@ -245,7 +244,7 @@ class GRAYCORE_LINK cTimePerf {
     }
 
     static inline double GRAYCALL ToSeconds(TIMEPERF_t t) noexcept {
-        return ((double)t) / ((double)sm_nFreq);
+        return CastN(double,t) / CastN(double,sm_nFreq);
     }
     /// <summary>
     /// convert arbitrary start time to seconds (type = double) TIMESECF_t
@@ -253,7 +252,7 @@ class GRAYCORE_LINK cTimePerf {
     /// </summary>
     double get_Seconds() const noexcept {
         // ASSERT( k_nFreq != 0 );
-        return ToSeconds(m_nTime);
+        return ToSeconds(_nTimePerf);
     }
     double get_AgeSeconds() const noexcept {
         //! how long ago was this ? TIMESECF_t
@@ -266,7 +265,7 @@ class GRAYCORE_LINK cTimePerf {
     double get_Days() const noexcept {
         //! Convert cTimePerf to double days (from arbitrary start time).
         //! @return time in days since some unknown/arbitrary starting point
-        return ToDays(m_nTime);
+        return ToDays(_nTimePerf);
     }
 };
 }  // namespace Gray

@@ -12,6 +12,8 @@ namespace Gray {
 const char* GRAYCALL cTypeInfo::GetSymName(const char* name) noexcept {  // static
     // Turn "class GrayLib::cXObject" into "XObject"
     if (name == nullptr) return name;
+    ASSERT(StrT::CmpI(name,"class type_info")); // not useful
+
     const StrLen_t len = StrT::Len2(name, k_LEN_MAX_CSYM);
     int i = len;
     while (i > 0) {
@@ -21,8 +23,8 @@ const char* GRAYCALL cTypeInfo::GetSymName(const char* name) noexcept {  // stat
             break;
         }
     }
-    if (StrChar::ToLowerA(name[i + 0]) == 'c' && StrChar::IsUpperA(name[i + 1])) i++; // StrChar::IsCSymF()
-    if (!cMem::Compare(name + i, "XObj", 4)) i += 4;
+    if (StrChar::ToLowerA(name[i + 0]) == 'c' && StrChar::IsUpperA(name[i + 1])) i++; // StrChar::IsCSymF() // drop 'c' prefix.
+    // if (!cMem::Compare(name + i, "XObj", 4)) i += 4;    // drop 'XObj' prefix. but leave 'XObject' or 'XObjMgr'
     return name + i;
 }
 

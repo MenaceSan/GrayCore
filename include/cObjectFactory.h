@@ -17,7 +17,7 @@ namespace Gray {
 /// </summary>
 DECLARE_INTERFACE(IObjectFactory) {  // MIDL_INTERFACE("0C3E2E71-B93C-11d2-AAD0-006007654325")
     IGNORE_WARN_INTERFACE(IObjectFactory);
-    /// Create cObject of some derived cTypeInfo. AKA CreateInstance(). Caller must know how to dispose this! cRefPtr or delete.
+    /// Create cObject of some derived cTypeInfo. AKA CreateInstance(). Caller must know how to dispose this! cRefPtr or delete. (or nothing)
     virtual cObject* CreateObject() const = 0;  // [[nodiscard]]
 };
 
@@ -31,22 +31,22 @@ struct GRAYCORE_LINK cObjectFactory : public IObjectFactory {
     /// <summary>
     /// The main type name static allocated. Can use this for dynamic object creation.
     /// Might have multiple alternate aliases for interfaces. e.g. "IObjectName"
-    /// MUST be first for use with StrT::SpanFindHead
+    /// @note MUST be first for use with StrT::SpanFindHead
     /// </summary>
-    const ATOMCHAR_t* const m_pszTypeName;
-    const HASHCODE32_t _HashCode;  /// Hash/ATOMCODE_t of m_pszTypeName
+    const ATOMCHAR_t* const _pszTypeName;
+    const HASHCODE32_t _HashCode;  /// Hash/ATOMCODE_t of _pszTypeName
 
     /// <summary>
     /// the typeid(TYPE) of the object we would create with CreateObject().
     /// </summary>
-    const cTypeInfo& m_TypeInfo;
+    const cTypeInfo& _TypeInfo;
 
     cObjectFactory(const TYPEINFO_t& rTypeInfo, const ATOMCHAR_t* pszTypeName = nullptr) noexcept;
     virtual ~cObjectFactory();
     ::HMODULE get_HModule() const noexcept;
 
     const ATOMCHAR_t* get_Name() const noexcept {
-        return m_pszTypeName;
+        return _pszTypeName;
     }
 
     /// <summary>
@@ -57,16 +57,17 @@ struct GRAYCORE_LINK cObjectFactory : public IObjectFactory {
     }
 };
 
+// NOT USED??
 template <typename _TYPE>
 class cObjectFactoryT : public cSingleton<cObjectFactoryT<_TYPE> >, public cObjectFactory {
     typedef cObjectFactoryT<_TYPE> THIS_t;
-    SINGLETON_IMPL(THIS_t);
 
  protected:
-    cObjectFactoryT() : cObjectFactory(typeid(_TYPE)), cSingleton<THIS_t>(this, typeid(THIS_t)) {}
+    cObjectFactoryT() : cObjectFactory(typeid(_TYPE)), cSingleton<THIS_t>(this) {}
 
  public:
-    virtual cObject* CreateObject() const {  // [[nodiscard]]
+    DECLARE_cSingleton(THIS_t);
+    cObject* CreateObject() const override {  // [[nodiscard]]
         return new _TYPE();                  // caller must know how to free this.
     }
 };

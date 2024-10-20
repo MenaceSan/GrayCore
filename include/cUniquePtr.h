@@ -17,10 +17,16 @@ namespace Gray {
 /// </summary>
 /// <typeparam name="TYPE"></typeparam>
 template <class TYPE>
-class cUniquePtr : public cPtrFacade<TYPE> { // cNonCopyable 
+class cUniquePtr : public cPtrFacade<TYPE> {  // cNonCopyable
     friend struct cValSpan;
     typedef cUniquePtr<TYPE> THIS_t;
     typedef cPtrFacade<TYPE> SUPER_t;
+
+ private:
+    /// <summary>
+    /// Dangerous! copy would be risky. who free's this?
+    /// </summary>
+    cUniquePtr(THIS_t& ref) noexcept : cPtrFacade<TYPE>(ref.get_Ptr()) {}
 
  public:
     cUniquePtr() noexcept : SUPER_t() {}
@@ -35,13 +41,6 @@ class cUniquePtr : public cPtrFacade<TYPE> { // cNonCopyable
     /// </summary>
     cUniquePtr(THIS_t&& ref) : SUPER_t(ref) {}
 
- private:
-    /// <summary>
-    /// Dangerous! copy would be risky. who free's this?
-    /// </summary>
-    cUniquePtr(THIS_t& ref) noexcept : cPtrFacade<TYPE>(ref.get_Ptr()) {}
-
- public:
     void ReleasePtr() noexcept {
         if (this->isValidPtr()) {
             TYPE* p2 = this->get_Ptr();
@@ -53,7 +52,7 @@ class cUniquePtr : public cPtrFacade<TYPE> { // cNonCopyable
     ~cUniquePtr() {
         ReleasePtr();
     }
- 
+
     void AssignPtr(TYPE* p2) noexcept {
         // AKA put_Ptr()?
         if (!this->IsEqual(p2)) {
@@ -67,7 +66,9 @@ class cUniquePtr : public cPtrFacade<TYPE> { // cNonCopyable
         AssignPtr(p2);
         return *this;
     }
-    THIS_t& operator=(THIS_t& ref) noexcept { // Sneaky transfer of ownership!
+
+#if 1
+    THIS_t& operator=(THIS_t& ref) noexcept { // Sneaky transfer/move() of ownership! Allow this ?
         if (!this->IsEqual(ref)) {
             ReleasePtr();
             this->AttachPtr(ref.get_Ptr());
@@ -75,7 +76,9 @@ class cUniquePtr : public cPtrFacade<TYPE> { // cNonCopyable
         }
         return *this;
     }
-    THIS_t& operator=(THIS_t&& ref) noexcept { // move
+#endif
+
+    THIS_t& operator=(THIS_t&& ref) noexcept {  // move
         if (!this->IsEqual(ref)) {
             ReleasePtr();
             this->AttachPtr(ref.get_Ptr());
@@ -83,6 +86,8 @@ class cUniquePtr : public cPtrFacade<TYPE> { // cNonCopyable
         }
         return *this;
     }
+
+    using SUPER_t::DetachPtr;  // dangerous but allow this.
 };
 
 /// <summary>

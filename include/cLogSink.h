@@ -16,7 +16,7 @@
 namespace Gray {
 struct cLogEvent;
 
-typedef cStringT<LOGCHAR_t> cStringL;                        /// Log string.
+typedef cStringT<LOGCHAR_t> cStringL;                     /// Log string.
 #define LOGERR(hRes) LOGSTR(cStringL::GetErrorStr(hRes))  /// Used to supply "ERR='%s'"
 
 /// <summary>
@@ -34,9 +34,9 @@ enum LOG_ATTR_TYPE_ : UINT32 {
     LOG_ATTR_NET = 0x00400000,       /// from network activity. category. (watch out that this is not also sent on the network as it might cause feedback)
     LOG_ATTR_INTERNAL = 0x00800000,  /// Do not echo this message as it may relate to my own logging internals (i.e.feedback loop)
 
-    LOG_ATTR_ODD = 0x01000000,      /// This is odd/unusual behavior for client. category. Probably not a code problem but a user/security/integrity problem.
-    LOG_ATTR_DEBUG = 0x02000000,    /// Unclassified debug stuff. category.
-    LOG_ATTR_TEMP = 0x04000000,     /// Real time status (don't bother to log permanently)
+    LOG_ATTR_ODD = 0x01000000,    /// This is odd/unusual behavior for client. category. Probably not a code problem but a user/security/integrity problem.
+    LOG_ATTR_DEBUG = 0x02000000,  /// Unclassified debug stuff. category.
+    LOG_ATTR_TEMP = 0x04000000,   /// Real time status (don't bother to log permanently)
 
     // Bit Flags to control Sink
     LOG_ATTR_PRINT = 0x10000000,      /// The equiv of a printf() to console.
@@ -57,35 +57,35 @@ typedef UINT32 LOG_ATTR_MASK_t;  // mask of LOG_ATTR_TYPE_
 /// Filtering parameters associated with a particular log event instance.
 /// </summary>
 class GRAYCORE_LINK cLogEventParams {
-    LOG_ATTR_MASK_t m_uAttrMask = LOG_ATTR_0;  /// Special attributes for the event. (regardless of level) similar to pszSubject?
-    LOGLVL_t m_eLogLevel = LOGLVL_t::_ANY;     /// Min Importance level to see. 0 = LOGLVL_t::_ANY = not important.
+    LOG_ATTR_MASK_t _nAttrMask = LOG_ATTR_0;  /// Special attributes for the event. (regardless of level) similar to pszSubject?
+    LOGLVL_t _eLogLevel = LOGLVL_t::_ANY;     /// Min Importance level to see. 0 = LOGLVL_t::_ANY = not important.
 
  public:
     cLogEventParams(LOG_ATTR_MASK_t uAttrMask = LOG_ATTR_0, LOGLVL_t eLogLevel = LOGLVL_t::_TRACE) noexcept
-        : m_uAttrMask(uAttrMask),  // Level of log detail messages. IsLogMsg()
-          m_eLogLevel(eLogLevel)   // Importance level.
+        : _nAttrMask(uAttrMask),  // Level of log detail messages. IsLogMsg()
+          _eLogLevel(eLogLevel)   // Importance level.
     {}
 
     LOG_ATTR_MASK_t get_LogAttrMask() const noexcept {
-        return m_uAttrMask;
+        return _nAttrMask;
     }
     void put_LogAttrMask(LOG_ATTR_MASK_t uAttrMask) noexcept {
         //! What types of info do we want to filter for.
-        m_uAttrMask = uAttrMask;
+        _nAttrMask = uAttrMask;
     }
     bool IsLogAttrMask(LOG_ATTR_MASK_t uAttrMask) const noexcept {
-        return cBits::HasAny(m_uAttrMask, uAttrMask);
+        return cBits::HasAny(_nAttrMask, uAttrMask);
     }
 
     LOGLVL_t get_LogLevel() const noexcept {
-        return m_eLogLevel; // Min level to show.
+        return _eLogLevel;  // Min level to show.
     }
     /// <summary>
     /// What level of importance do we want to filter for.
     /// </summary>
     /// <param name="eLogLevel">LOGLVL_t::_INFO (higher is more important)</param>
     void put_LogLevel(LOGLVL_t eLogLevel) noexcept {
-        m_eLogLevel = eLogLevel;
+        _eLogLevel = eLogLevel;
     }
     /// <summary>
     /// Is this level high enough?
@@ -93,7 +93,7 @@ class GRAYCORE_LINK cLogEventParams {
     /// <param name="eLogLevel">LOGLVL_t::_INFO (higher is more important)</param>
     /// <returns></returns>
     bool IsLoggedLevel(LOGLVL_t eLogLevel) const noexcept {
-        return eLogLevel >= m_eLogLevel;
+        return eLogLevel >= _eLogLevel;
     }
 
     /// Would/should this message be logged? LOG_ATTR_0
@@ -109,9 +109,9 @@ class GRAYCORE_LINK cLogEventParams {
 /// </summary>
 struct GRAYCORE_LINK cLogThrottle {
     // throttle.
-    float m_fLogThrottle;             /// how fast sent to me? (messages/second)
-    mutable TIMESYS_t m_TimeLogLast;  /// Last time period for throttling (1 sec).
-    mutable UINT m_nQtyLogLast;       /// Qty of messages since m_TimeLogLast.
+    float _fLogThrottle;             /// how fast sent to me? (messages/second)
+    mutable TIMESYS_t _TimeLogLast;  /// Last time period for throttling (1 sec).
+    mutable UINT _nQtyLogLast;       /// Qty of messages since _TimeLogLast.
 
     cLogThrottle() noexcept;
 
@@ -120,7 +120,7 @@ struct GRAYCORE_LINK cLogThrottle {
     /// </summary>
     /// <returns></returns>
     float get_LogThrottle() const noexcept {
-        return m_fLogThrottle;
+        return _fLogThrottle;
     }
 };
 
@@ -189,11 +189,11 @@ struct GRAYCORE_LINK cLogProcessor : public ILogProcessor, public ITextWriter { 
     /// <returns>-lt- 0 = failed, 0=not processed by anyone</returns>
     HRESULT addEventS(LOG_ATTR_MASK_t uAttrMask, LOGLVL_t eLogLevel, cStringL sMsg) noexcept;
 
-    HRESULT addEventV(LOG_ATTR_MASK_t uAttrMask, LOGLVL_t eLogLevel, const LOGCHAR_t* pszFormat, va_list vargs) noexcept;
+    HRESULT addEventV(LOG_ATTR_MASK_t uAttrMask, LOGLVL_t eLogLevel, const LOGCHAR_t* pszFormat, ::va_list vargs) noexcept;
 
     // Variadic helpers.
     HRESULT _cdecl addEventF(LOG_ATTR_MASK_t uAttrMask, LOGLVL_t eLogLevel, const LOGCHAR_t* pszFormat, ...) noexcept {
-        va_list vargs;
+        ::va_list vargs;
         va_start(vargs, pszFormat);
         const HRESULT hRes = addEventV(uAttrMask, eLogLevel, pszFormat, vargs);
         va_end(vargs);
@@ -202,7 +202,7 @@ struct GRAYCORE_LINK cLogProcessor : public ILogProcessor, public ITextWriter { 
 
     HRESULT _cdecl addInfoF(const LOGCHAR_t* pszFormat, ...) {
         //! @return <0 = failed, 0=not processed by anyone, # = number of processors.
-        va_list vargs;
+        ::va_list vargs;
         va_start(vargs, pszFormat);
         const HRESULT hRes = addEventV(LOG_ATTR_0, LOGLVL_t::_INFO, pszFormat, vargs);
         va_end(vargs);
@@ -212,28 +212,28 @@ struct GRAYCORE_LINK cLogProcessor : public ILogProcessor, public ITextWriter { 
     HRESULT _cdecl addDebugErrorF(const LOGCHAR_t* pszFormat, ...) {
         //! Add message with LOG_ATTR_DEBUG
         //! @return <0 = failed, 0=not processed by anyone, # = number of processors.
-        va_list vargs;
+        ::va_list vargs;
         va_start(vargs, pszFormat);
         const HRESULT hRes = addEventV(LOG_ATTR_DEBUG, LOGLVL_t::_ERROR, pszFormat, vargs);
         va_end(vargs);
         return hRes;
     }
     HRESULT _cdecl addDebugWarnF(const LOGCHAR_t* pszFormat, ...) {
-        va_list vargs;
+        ::va_list vargs;
         va_start(vargs, pszFormat);
         const HRESULT hRes = addEventV(LOG_ATTR_DEBUG, LOGLVL_t::_WARN, pszFormat, vargs);
         va_end(vargs);
         return hRes;
     }
     HRESULT _cdecl addDebugInfoF(const LOGCHAR_t* pszFormat, ...) {
-        va_list vargs;
+        ::va_list vargs;
         va_start(vargs, pszFormat);
         const HRESULT hRes = addEventV(LOG_ATTR_DEBUG, LOGLVL_t::_INFO, pszFormat, vargs);
         va_end(vargs);
         return hRes;
     }
     HRESULT _cdecl addDebugTraceF(const LOGCHAR_t* pszFormat, ...) {
-        va_list vargs;
+        ::va_list vargs;
         va_start(vargs, pszFormat);
         const HRESULT hRes = addEventV(LOG_ATTR_DEBUG, LOGLVL_t::_TRACE, pszFormat, vargs);
         va_end(vargs);
@@ -267,7 +267,7 @@ struct GRAYCORE_LINK cLogSink : public ::IUnknown, public cLogProcessor {
 /// No filter and take default formatted string
 /// </summary>
 class GRAYCORE_LINK cLogSinkDebug : public cLogSink, public cRefBase {
-    mutable cThreadLockableX m_Lock;  // prevent multi thread mixing of messages.
+    mutable cThreadLockableX _Lock;  // prevent multi thread mixing of messages.
  public:
     static HRESULT GRAYCALL AddSinkCheck(cLogNexus* pLogger = nullptr);
     HRESULT WriteString(const LOGCHAR_t* pszMsg) override;
@@ -281,7 +281,7 @@ class GRAYCORE_LINK cLogSinkDebug : public cLogSink, public cRefBase {
 /// If no trigger occurs in time then trash these messages.
 /// </summary>
 class GRAYCORE_LINK cLogSinkCache : public cLogSink, public cRefBase {
-    TIMESYS_t m_nCacheHold;  /// How long to hold messages. toss detail messages if nothing special happens.
+    TIMESYS_t _nCacheHold;  /// How long to hold messages. toss detail messages if nothing special happens.
 };
 }  // namespace Gray
 

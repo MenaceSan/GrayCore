@@ -120,19 +120,19 @@ StrLen_t cFloatDeco::Grisu2(double dVal, char* pszOut, OUT int& rnExp10) {  // s
     const cFloatDeco v(dVal);
     v.NormalizedBoundaries(&w_m, &w_p);
 
-    const cFloatDeco c_mk = GetCachedPower(w_p.m_iExp2, rnExp10);
+    const cFloatDeco c_mk = GetCachedPower(w_p._iExp2, rnExp10);
     const cFloatDeco W = v.Normalize() * c_mk;
     cFloatDeco Wp = w_p * c_mk;
     cFloatDeco Wm = w_m * c_mk;
-    Wm.m_uMant++;
-    Wp.m_uMant--;
+    Wm._uMant++;
+    Wp._uMant--;
 
-    UINT64 delta = Wp.m_uMant - Wm.m_uMant;
+    UINT64 delta = Wp._uMant - Wm._uMant;
 
-    const cFloatDeco one(UINT64(1) << -Wp.m_iExp2, Wp.m_iExp2);
+    const cFloatDeco one(UINT64(1) << -Wp._iExp2, Wp._iExp2);
     const cFloatDeco wp_w = Wp - W;
-    UINT32 p1 = CastN(UINT32, Wp.m_uMant >> -one.m_iExp2);
-    UINT64 p2 = Wp.m_uMant & (one.m_uMant - 1);
+    UINT32 p1 = CastN(UINT32, Wp._uMant >> -one._iExp2);
+    UINT64 p2 = Wp._uMant & (one._uMant - 1);
 
     int kappa = CastN(int, GetCountDecimalDigit32(p1));
     ASSERT(kappa <= 10);
@@ -149,10 +149,10 @@ StrLen_t cFloatDeco::Grisu2(double dVal, char* pszOut, OUT int& rnExp10) {  // s
         }
         if (d != 0 || nLength > 0) pszOut[nLength++] = '0' + static_cast<char>(d);
         kappa--;
-        UINT64 tmp = (CastN(UINT64, p1) << -one.m_iExp2) + p2;
+        UINT64 tmp = (CastN(UINT64, p1) << -one._iExp2) + p2;
         if (tmp <= delta) {
             rnExp10 += kappa;
-            GrisuRound(pszOut, nLength, delta, tmp, CastN(UINT64, k_Exp10[kappa]) << -one.m_iExp2, wp_w.m_uMant);
+            GrisuRound(pszOut, nLength, delta, tmp, CastN(UINT64, k_Exp10[kappa]) << -one._iExp2, wp_w._uMant);
             return nLength;
         }
     }
@@ -161,13 +161,13 @@ StrLen_t cFloatDeco::Grisu2(double dVal, char* pszOut, OUT int& rnExp10) {  // s
     for (;;) {
         p2 *= 10;
         delta *= 10;
-        const char d = static_cast<char>(p2 >> -one.m_iExp2);
+        const char d = static_cast<char>(p2 >> -one._iExp2);
         if (d || nLength > 0) pszOut[nLength++] = '0' + d;
-        p2 &= one.m_uMant - 1;
+        p2 &= one._uMant - 1;
         kappa--;
         if (p2 < delta) {
             rnExp10 += kappa;
-            GrisuRound(pszOut, nLength, delta, p2, one.m_uMant, wp_w.m_uMant * k_Exp10[-kappa]);
+            GrisuRound(pszOut, nLength, delta, p2, one._uMant, wp_w._uMant * k_Exp10[-kappa]);
             return nLength;
         }
     }

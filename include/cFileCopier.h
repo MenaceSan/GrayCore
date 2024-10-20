@@ -105,11 +105,11 @@ struct GRAYCORE_LINK DECLSPEC_NOVTABLE IFileCopier {
 /// </summary>
 class GRAYCORE_LINK cFileCopier : public IFileCopier {
  public:
-    cStringF m_sRemoteRoot;  /// Prefix all server/remote side (non local) paths with this.
+    cStringF _sRemoteRoot;  /// Prefix all server/remote side (non local) paths with this.
 
  protected:
     cStringF MakeRemotePath(const FILECHAR_t* pszFileName) const {
-        return cFilePath::CombineFilePathX(m_sRemoteRoot, pszFileName);
+        return cFilePath::CombineFilePathX(_sRemoteRoot, pszFileName);
     }
 
  public:
@@ -127,7 +127,7 @@ class GRAYCORE_LINK cFileCopier : public IFileCopier {
     /// <param name="pszRemoteRoot">server/Remote side names can be prefixed by "C:\etc"</param>
     /// <returns></returns>
     HRESULT Connect(const FILECHAR_t* pszRemoteRoot) override {
-        m_sRemoteRoot = pszRemoteRoot;
+        _sRemoteRoot = pszRemoteRoot;
         return S_OK;
     }
 

@@ -103,8 +103,8 @@ enum HRESULT_OTHER_TYPE_ : UINT32 {
 /// ASSUME this array is HRESULT sorted.
 /// </summary>
 struct GRAYCORE_LINK HResultCode {
-    const HRESULT m_code;        /// DWORD error code for a FACILITY_TYPE. might just use WORD?
-    const char* const m_pszMsg;  /// associated error message string. UTF8
+    const HRESULT _nCode;        /// DWORD error code for a FACILITY_TYPE. might just use WORD? 0 = reserved as SUCCESS.
+    const char* const _pszMsg;  /// associated error message string. UTF8, nullptr = end.
 
     /// <summary>
     /// Find a code by its HRESULT assuming this is the first of an array of HResultCode
@@ -127,20 +127,20 @@ struct GRAYCORE_LINK HResult {
     typedef cPair<FACILITY_TYPE, const GChar_t*> Facility_t;  /// name each FACILITY_TYPE.
     static const Facility_t k_Facility[];                     /// names of all known FACILITY_TYPE.
 
-    const HRESULT m_hRes;  // DWORD
+    const HRESULT _hRes;  // DWORD
 
-    HResult(HRESULT hRes) noexcept : m_hRes(hRes) {}
-    HResult(FACILITY_TYPE eFacility, WORD wCode) noexcept : m_hRes(MAKE_HRESULT(1, eFacility, wCode)) {
+    HResult(HRESULT hRes) noexcept : _hRes(hRes) {}
+    HResult(FACILITY_TYPE eFacility, WORD wCode) noexcept : _hRes(MAKE_HRESULT(1, eFacility, wCode)) {
         //! @arg eFacility = FACILITY_TYPE = FACILITY_WIN32
         //! e.g. HRESULT_WIN32_C(WSAEACCES) = HResult(FACILITY_WIN32,WSAEACCES)
     }
-    HResult(int eFacility, long wCode) noexcept : m_hRes(MAKE_HRESULT(1, eFacility, wCode)) {
+    HResult(int eFacility, long wCode) noexcept : _hRes(MAKE_HRESULT(1, eFacility, wCode)) {
         //! @arg eFacility = FACILITY_TYPE = FACILITY_WIN32
         //! e.g. HRESULT_WIN32_C(WSAEACCES) = HResult(FACILITY_WIN32,WSAEACCES)
     }
 
     operator HRESULT() const noexcept {
-        return m_hRes;
+        return _hRes;
     }
 
     /// <summary>
@@ -152,7 +152,7 @@ struct GRAYCORE_LINK HResult {
         return CastN(DWORD, hRes & 0xFFFF);
     }
     inline DWORD get_Code() const noexcept {
-        return GetCode(m_hRes);
+        return GetCode(_hRes);
     }
 
     static constexpr FACILITY_TYPE GetFacility(HRESULT hRes) noexcept {
@@ -160,7 +160,7 @@ struct GRAYCORE_LINK HResult {
         return CastN(FACILITY_TYPE, ((hRes) >> 16) & 0x1fff);
     }
     inline FACILITY_TYPE get_Facility() const noexcept {
-        return GetFacility(m_hRes);
+        return GetFacility(_hRes);
     }
 
     constexpr static bool IsFailure(HRESULT hRes) noexcept {
@@ -171,7 +171,7 @@ struct GRAYCORE_LINK HResult {
     bool isFailure() const noexcept {
         //! FAILED(hRes)
         //! like HRESULT_SEVERITY(hr)  (((hr) >> 31) & 0x1)
-        return m_hRes < 0;
+        return _hRes < 0;
     }
 
     /// <summary>
@@ -201,7 +201,7 @@ struct GRAYCORE_LINK HResult {
     /// <param name="dwWin32Code">maybe LSTATUS/error_status_t or already HRESULT (see GetLastError() docs)</param>
     /// <returns></returns>
     static inline HRESULT FromWin32(DWORD dwWin32Code) noexcept {
-        if (CastN(HRESULT, dwWin32Code) <= 0) { // NO_ERROR
+        if (CastN(HRESULT, dwWin32Code) <= 0) {  // NO_ERROR
             // <0 shouldn't happen! supposed to be unsigned. ASSUME its already a HRESULT code.
             return CastN(HRESULT, dwWin32Code);  // already HRESULT failure. see GetLastError() docs.
         }
@@ -242,8 +242,7 @@ struct GRAYCORE_LINK HResult {
     /// <param name="hResDef"></param>
     /// <returns></returns>
     static inline HRESULT GetDef(HRESULT hRes, HRESULT hResDef = E_FAIL) noexcept {
-        if (SUCCEEDED(hRes) && FAILED(hResDef)) 
-            return hResDef;  // Oddly no error was supplied! provide a default error.
+        if (SUCCEEDED(hRes) && FAILED(hResDef)) return hResDef;  // Oddly no error was supplied! provide a default error.
         return hRes;
     }
     /// <summary>
@@ -275,6 +274,9 @@ struct GRAYCORE_LINK HResult {
     static void GRAYCALL AddCodes(const HResultCode* pCodes);
     static void GRAYCALL AddCodesDefault();
     static HRESULT GRAYCALL AddCodesText(const char* pszText);
+    /// <summary>
+    /// add a block of codes (and text) from a text file. Lines of comma separated text.
+    /// </summary>
     static HRESULT GRAYCALL AddCodesFile(const FILECHAR_t* pszFilePath);
 
     /// <summary>
@@ -293,7 +295,7 @@ struct GRAYCORE_LINK HResult {
     /// <param name="pSource">use with FORMAT_MESSAGE_FROM_STRING or just FORMAT_MESSAGE_FROM_HMODULE</param>
     /// <param name="vargs"></param>
     /// <returns></returns>
-    static bool GRAYCALL GetTextSys(HRESULT hRes, StrBuilder<GChar_t>& sb, const void* pSource = nullptr, va_list vargs = k_va_list_empty);
+    static bool GRAYCALL GetTextSys(HRESULT hRes, StrBuilder<GChar_t>& sb, const void* pSource = nullptr, ::va_list vargs = k_va_list_empty);
 
     /// <summary>
     /// Create a string for the error code hRes. copies error message text to a string pszError. Append numeric code to the end.
@@ -304,7 +306,7 @@ struct GRAYCORE_LINK HResult {
     /// <param name="sb">destination buffer</param>
     /// <param name="pSource">module handle for "pdh.dll" ?</param>
     /// <param name="vargs">additional arguments.</param>
-    static void GRAYCALL GetTextV(HRESULT hRes, StrBuilder<GChar_t>& sb, const void* pSource = nullptr, va_list vargs = k_va_list_empty);
+    static void GRAYCALL GetTextV(HRESULT hRes, StrBuilder<GChar_t>& sb, const void* pSource = nullptr, ::va_list vargs = k_va_list_empty);
 
     static HRESULT GRAYCALL GetHResFromStr(const cSpan<GChar_t>& str);
 };

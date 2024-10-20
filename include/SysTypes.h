@@ -240,14 +240,14 @@
 
 #ifndef RC_INVOKED
 
-// see cMemT::NtoH() and cMemT::HtoN() for auto conversion to big endian (network)
+// see cValT::NtoH() and cValT::HtoN() for auto conversion to big endian (network)
 // e.g. on little endian (Intel). 0x123456 = 56 34 12 00
 #if defined(_M_IX86) || defined(_M_X64) || defined(_M_AMD64) || defined(_M_IA64) || defined(_AMD64_) || defined(__ia64__) || defined(__x86_64__)
 #define USE_INTEL 1          /// X86 type instructions and _asm.
 #define USE_LITTLE_ENDIAN 1  /// Intel = little endian = high values in high memory. increasing numeric significance with increasing memory addresses
 #endif
 
-// use 64 bit native code/pointers. __linux__ or _WIN32&_WIN64. sizeof(size_t) == 8. NOT the same as USE_INT64
+// use 64 bit native code/pointers. __linux__ or _WIN32&_WIN64. sizeof(size_t) == 8. NOT the same as USE_INT64.
 // NOT _M_IX86
 #if defined(_WIN64)
 #define USE_64BIT
@@ -263,8 +263,9 @@
 // What cases don't we do native 64 bit int types ?
 #define USE_INT64  /// has INT64(__int64 (_MSC_VER) or int64_t (C99/__GNUC__ standard)) as a base/native type. may not be true 64 bit code. USE_64BIT
 
+/// https://en.cppreference.com/w/cpp/language/types
 #if defined(__GNUC__) && defined(USE_64BIT)
-#define USE_LONG_AS_INT64  /// avoid ambiguous/duplicated types. __GNUC__ defines __int64_t as 'signed long int' but usually (_MSC_VER) long is just 32 bits
+#define USE_LONG_AS_INT64  /// avoid ambiguous/duplicated types. __GNUC__ 64 bit defines long as __int64_t as 'signed long int' but usually (_MSC_VER, 32 or 64 bit) long is just 32 bits
 #endif
 
 //********************************

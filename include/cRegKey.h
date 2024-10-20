@@ -30,16 +30,17 @@ typedef DWORD REGVAR_t;  /// Variant data type for WIN32 registry values. e.g. R
 /// <summary>
 /// Bind a hard name to the default HKEY values.
 /// </summary>
-struct cRegKeyName {
-    ::HKEY m_hKeyBase;               /// base key handle. e.g. HKEY_CLASSES_ROOT, HKEY_LOCAL_MACHINE, HKEY_CURRENT_USER, HKEY_USERS
-    const FILECHAR_t* m_pszRegPath;  /// e.g. _FN("SOFTWARE\\Menasoft"), nullptr = use previous in array.
+struct cRegKeyPath {
+    ::HKEY _hKeyBase;               /// base/predef key handle. e.g. HKEY_CLASSES_ROOT, HKEY_LOCAL_MACHINE, HKEY_CURRENT_USER, HKEY_USERS
+    const FILECHAR_t* _pszRegPath;  /// e.g. _FN("SOFTWARE\\Menasoft"), nullptr = use previous in array.
 
     /// <summary>
-    /// is this a base HKEY_* predefined key? e.g. HKEY_CLASSES_ROOT, HKEY_LOCAL_MACHINE
+    /// is this a base predefined HKEY_* key? e.g. HKEY_CLASSES_ROOT, HKEY_LOCAL_MACHINE.
+    /// https://learn.microsoft.com/en-us/windows/win32/sysinfo/predefined-keys
     /// </summary>
     /// <param name="hKey"></param>
     /// <returns></returns>
-    static inline bool IsKeyBase(::HKEY hKey) noexcept {
+    static inline bool IsKeyPredef(::HKEY hKey) noexcept {
         return cBits::HasAny(CastN(UINT_PTR, hKey), CastN(UINT_PTR, HKEY_CLASSES_ROOT));
     }
 };
@@ -48,24 +49,24 @@ struct cRegKeyName {
 /// Declare a static starting/init value for a registry/config key.
 /// </summary>
 struct cRegKeyInit {
-    cRegKeyName m_Key;
-    const FILECHAR_t* m_pszKeyName;  /// value name. can be nullptr (default) or _FN("MyValue")
-    void* m_pValue;                  /// (union) May be a string pointer or DWORD (inline). depends on m_dwType
-    REGVAR_t m_dwType;               /// REG_SZ, REG_DWORD, omitted for default key. (since default must always be a string)
+    cRegKeyPath _KeyPath;
+    const FILECHAR_t* _pszKeyName;  /// value name. can be nullptr (default) or _FN("MyValue")
+    const void* _pValue;           /// (union) May be a string pointer or DWORD (inline). depends on _nType
+    REGVAR_t _nType;                /// REG_SZ, REG_DWORD, omitted for default key. (since default must always be a string)
 
     bool isEndMarker() const noexcept {
-        return m_Key.m_hKeyBase == HANDLEPTR_NULL;  // end of an array of values.
+        return _KeyPath._hKeyBase == HANDLEPTR_NULL;  // end of an array of values.
     }
     bool isRegValue() const noexcept {
-        // ASSUME m_dwType is set as well.
-        return m_pszKeyName != nullptr;
+        // ASSUME _nType is set as well.
+        return _pszKeyName != nullptr;
     }
 };
 
 template <>
 inline void CloseHandleType(::HKEY h) noexcept {
     //! ASSUME IsValidHandle(h)
-    if (cRegKeyName::IsKeyBase(h)) return;  // never close base keys
+    if (cRegKeyPath::IsKeyPredef(h)) return;  // never close predef keys
     ::RegCloseKey(h);                       // ignored BOOL return.
 }
 
@@ -79,7 +80,7 @@ inline void CloseHandleType(::HKEY h) noexcept {
 struct GRAYCORE_LINK cRegKey : public cHandlePtr<::HKEY>, public IIniBaseGetter {
     typedef cHandlePtr<::HKEY> SUPER_t;
 
-    static const cRegKeyName k_aNames[];  // map default HKEY values to names.
+    static const cRegKeyPath k_aPredefNames[];  /// map predef HKEY values to names.
 
     cRegKey(::HKEY hKey = HKEY_LOCAL_MACHINE) noexcept : SUPER_t(hKey) {
         //! hKey = HKEY_LOCAL_MACHINE default
@@ -87,34 +88,36 @@ struct GRAYCORE_LINK cRegKey : public cHandlePtr<::HKEY>, public IIniBaseGetter 
     }
     ~cRegKey() noexcept {}
 
-    inline bool isKeyBase() const noexcept {
-        //! is it a base HKEY_* predefined key?
-        //! e.g. HKEY_CLASSES_ROOT, HKEY_LOCAL_MACHINE
-        return cRegKeyName::IsKeyBase(get_Handle());
+    /// <summary>
+    /// is it a base HKEY_* predefined key? e.g. HKEY_CLASSES_ROOT, HKEY_LOCAL_MACHINE
+    /// </summary>
+    /// <returns></returns>
+    inline bool isKeyPredef() const noexcept {
+        return cRegKeyPath::IsKeyPredef(get_Handle());
     }
 
     bool isKeyOpen() const noexcept {
-        //! was RegOpenKeyEx() used ?
-        if (isKeyBase()) return false;
+        //! was RegOpenKeyEx() used ? is close required?
+        if (isKeyPredef()) return false;
         return SUPER_t::isValidHandle();
     }
 
     HKEY DetachHandle() noexcept {
         //! like SUPER_t::DetachHandle() but use HKEY_LOCAL_MACHINE not NULL
-        ::HKEY h = get_Handle();
+        const ::HKEY h = get_Handle();
         ref_Handle() = HKEY_LOCAL_MACHINE;
         return h;
     }
 
-    static const FILECHAR_t* GRAYCALL GetNameBase(::HKEY hKeyBase) noexcept;
+    static const FILECHAR_t* GRAYCALL GetNamePredef(::HKEY hKeyBase) noexcept;
 
     const FILECHAR_t* get_NameBase() const noexcept {
-        return GetNameBase(get_Handle());
+        return GetNamePredef(get_Handle());
     }
 
     /// <summary>
     /// Open the key for reading (typically). Don't create it if not exist.
-    /// @note m_hKey = will always be changed!!! set to HANDLE_NULL on fail
+    /// @note _h = will always be changed!!! set to cOSHandle::kNULL on fail
     /// </summary>
     /// <param name="hKeyBase"></param>
     /// <param name="pszSubKey"></param>
@@ -156,7 +159,7 @@ struct GRAYCORE_LINK cRegKey : public cHandlePtr<::HKEY>, public IIniBaseGetter 
 
     HRESULT OpenBase(const FILECHAR_t* pszSubKey, ::REGSAM samDesired = KEY_READ) {
         //! open sub key from base key. Replaces get_HKey which is usually a base.
-        ASSERT(isKeyBase());
+        ASSERT(isKeyPredef());
         return Open(get_Handle(), pszSubKey, samDesired);
     }
 
@@ -167,19 +170,26 @@ struct GRAYCORE_LINK cRegKey : public cHandlePtr<::HKEY>, public IIniBaseGetter 
 
     // Keys
 
+    /// <summary>
+    /// Delete a single key by name.
+    /// @note This is for keys not values. delete values using RegDeleteValue.
+    /// this does not delete subkeys, use DeleteKeyTree().
+    /// </summary>
+    /// <param name="pszSubKey"></param>
+    /// <returns>0 = S_OK, 2=ERROR_FILE_NOT_FOUND</returns>
     HRESULT DeleteKey(const FILECHAR_t* pszSubKey) noexcept {
-        //! @return 0 = S_OK, 2=ERROR_FILE_NOT_FOUND
-        //! @note This is for keys not values. delete values using RegDeleteValue.
-        //! this does not delete subkeys, use DeleteKeyTree().
         const LSTATUS lRet = _FNF(::RegDeleteKey)(get_Handle(), pszSubKey);
         return HResult::FromWin32(lRet);
     }
 
+    /// <summary>
+    /// Walk the list of child keys by name for a registry key.
+    ///
+    /// </summary>
+    /// <param name="dwIndex"></param>
+    /// <param name="name">the max size of the buffer and the size of the name returned.</param>
+    /// <returns>0 = S_OK, or ERROR_NO_MORE_ITEMS = no more entries.</returns>
     HRESULT EnumKey(DWORD dwIndex, cSpanX<FILECHAR_t>& name) const noexcept {
-        //! Walk the list of child keys by name for a registry key.
-        //! @arg dwSizeName = the max size of the buffer and the size of the name returned.
-        //! @return
-        //!  0 = S_OK, or ERROR_NO_MORE_ITEMS = no more entries.
         DWORD dwSizeNameMax = name.get_MaxLen();
         const LSTATUS lRet = _FNF(::RegEnumKeyEx)(get_Handle(), dwIndex, name.get_PtrWork(), &dwSizeNameMax, nullptr, nullptr, nullptr, nullptr);
         if (lRet != S_OK) return HResult::FromWin32(lRet);
@@ -275,6 +285,7 @@ struct GRAYCORE_LINK cRegKey : public cHandlePtr<::HKEY>, public IIniBaseGetter 
     /// <param name="bExpand"></param>
     /// <returns> 0 = S_OK</returns>
     HRESULT QueryValueStr(const FILECHAR_t* lpszValueName, cSpanX<FILECHAR_t> ret, bool bExpand = false) const;
+
     HRESULT PropGet(const IniChar_t* pszPropTag, OUT cStringI& rsValue) const override;
 };
 }  // namespace Gray

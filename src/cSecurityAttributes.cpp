@@ -66,7 +66,7 @@ cSecurityId::cSecurityId(DWORD dwSecondSubAuth)	{
 	SubAuthorityCount = 2;
 	IdentifierAuthority.Value[5] = 5; // SECURITY_NT_AUTHORITY {0,0,0,0,5}
 	SubAuthority[0] = SECURITY_BUILTIN_DOMAIN_RID;
-	DWORD m_dwSecondSubAuth = dwSecondSubAuth;
+	// DWORD m_dwSecondSubAuth = dwSecondSubAuth;
 }
 #endif
 
@@ -162,12 +162,12 @@ cSecurityACL::cSecurityACL(SID* pSidFirst, DWORD dwAccessMask) {
 
 cSecurityACL::~cSecurityACL() {}
 
-bool cSecurityACL::AddAllowedAce(SID* pSid, DWORD dwAccessMask) {
+bool cSecurityACL::AddAllowedAce(::SID* pSid, DWORD dwAccessMask) {
     //! same as ATL CDacl::AddAllowedAce
     //! do not use the EX version - ACE inheritance is not required.
     ASSERT(isValid());
 
-    // Grow the m_pACL array ??
+    // Grow the ACL array ??
     if (!::AddAccessAllowedAce(get_ACL(), ACL_REVISION, dwAccessMask, pSid)) {
         this->Free();  // kill it.
         DEBUG_ERR(("cSecurityACL AddAccessAllowedAce"));
@@ -179,9 +179,9 @@ bool cSecurityACL::AddAllowedAce(SID* pSid, DWORD dwAccessMask) {
 
 //****************************************
 
-const FILECHAR_t* cSecurityDesc::k_szLowIntegrity = _FN("S:(ML;;NW;;;LW)");
+const FILECHAR_t cSecurityDesc::k_szLowIntegrity[] = _FN("S:(ML;;NW;;;LW)");
 
-cSecurityDesc::cSecurityDesc(ACL* pDacl) {
+cSecurityDesc::cSecurityDesc(::ACL* pDacl) {
     //! @note pDacl can be nullptr
     AllocPtr2(sizeof(SECURITY_DESCRIPTOR));
 
@@ -251,14 +251,14 @@ bool cSecurityDesc::AttachToObject(HANDLE hObject, SE_OBJECT_TYPE eType) const {
 
 //*******************************
 
-cSecurityAttributes::cSecurityAttributes(bool bInheritHandle, ACL* pDacl) : m_sd(pDacl) {
+cSecurityAttributes::cSecurityAttributes(bool bInheritHandle, ACL* pDacl) : _Sd(pDacl) {
     cMem::Zero(static_cast<SECURITY_ATTRIBUTES*>(this), sizeof(SECURITY_ATTRIBUTES));
     this->nLength = sizeof(SECURITY_ATTRIBUTES);
     this->bInheritHandle = bInheritHandle;
     UpdateSecurityDescriptor();
 }
 
-cSecurityAttributes::cSecurityAttributes(bool bInheritHandle, const FILECHAR_t* pszSaclName) : m_sd(pszSaclName) {
+cSecurityAttributes::cSecurityAttributes(bool bInheritHandle, const FILECHAR_t* pszSaclName) : _Sd(pszSaclName) {
     cMem::Zero(static_cast<SECURITY_ATTRIBUTES*>(this), sizeof(SECURITY_ATTRIBUTES));
     this->nLength = sizeof(SECURITY_ATTRIBUTES);
     this->bInheritHandle = bInheritHandle;
@@ -274,7 +274,7 @@ bool cSecurityAttributes::isValid() const noexcept {
 
 void cSecurityAttributes::UpdateSecurityDescriptor() {
     // update
-    this->lpSecurityDescriptor = m_sd.get_SD();
+    this->lpSecurityDescriptor = _Sd.get_SD();
 }
 }  // namespace Gray
 

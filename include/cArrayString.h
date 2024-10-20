@@ -54,12 +54,12 @@ struct GRAYCORE_LINK cArrayString : public cArrayImpl<cSpanX<cStringT<_TYPE_CH>,
     }
 
     /// <summary>
-    /// Get string element from the array.
+    /// Get string element from the array. safe.
     /// </summary>
     /// <param name="i"></param>
     /// <returns>"" = if index is out of range.</returns>
     STR_t GetAtCheck(ITERATE_t i) const noexcept {
-        if (!SUPER_t::IsValidIndex(i)) return cStrConst::k_Empty.GetT<_TYPE_CH>();  // STR_t("")
+        if (!SUPER_t::IsValidIndex(i)) return {};  // STR_t("")
         return SUPER_t::GetAt(i);
     }
 
@@ -119,7 +119,7 @@ struct GRAYCORE_LINK cArrayString : public cArrayImpl<cSpanX<cStringT<_TYPE_CH>,
 
     ITERATE_t _cdecl AddFormat(const _TYPE_CH* pszFormat, ...) {
         cStringT<_TYPE_CH> sTmp;
-        va_list vargs;
+        ::va_list vargs;
         va_start(vargs, pszFormat);
         sTmp.FormatV(pszFormat, vargs);
         va_end(vargs);

@@ -201,6 +201,11 @@ struct GRAYCORE_LINK StrChar {  // static
         return IsAlphaA(ch) || ch == '_' || IsDigitA(ch);
     }
 
+    static constexpr bool IsRegEx(wchar_t ch) noexcept {
+        //! FILECHR_Wildcard
+        return ch == '?' || ch == '*';
+    }
+
     /// <summary>
     /// replace std::toupper() for ASCII
     /// </summary>

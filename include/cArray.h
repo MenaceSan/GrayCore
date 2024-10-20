@@ -1,5 +1,4 @@
 //! @file cArray.h
-//! c++ Collections. MFC compatible.
 //! @copyright 1992 - 2020 Dennis Robinson (http://www.menasoft.com)
 #ifndef _INC_cArray_H
 #define _INC_cArray_H
@@ -90,8 +89,11 @@ class cArrayImpl : public SPAN_TYPE {
 
     //**************************
     // Size
+
+    /// <summary>
+    /// Get sizeof all children alloc(s). not size of *this
+    /// </summary>
     size_t CountHeapStats(OUT ITERATE_t& iAllocCount) const noexcept {
-        //! @return sizeof all children alloc(s). not size of *this
         if (this->isEmpty()) return 0;
         iAllocCount++;  // just the alloc for the array
         return cHeap::GetSize(this->get_PtrConst());
@@ -193,20 +195,20 @@ class cArrayImpl : public SPAN_TYPE {
 template <class SPAN_TYPE>
 void cArrayImpl<SPAN_TYPE>::InsertArray(ITERATE_t i, const cSpan<ELEM_t>& src) {
     if (src.isEmpty()) return;
-    const ITERATE_t nSizePrev = this->GetSize();
-    if (IS_INDEX_BAD(i, nSizePrev)) i = nSizePrev;  // to the end.
+    const ITERATE_t nCountPrev = this->GetSize();
+    if (IS_INDEX_BAD(i, nCountPrev)) i = nCountPrev;  // to the end.
 
     ASSERT(!this->IsInternalPtr(src));  // append to self not supported. ReAlloc would destroy it.
 
     const ITERATE_t nSizeCopy = src.GetSize();
-    const ITERATE_t nSizeNew = nSizePrev + nSizeCopy;  // new size.
+    const ITERATE_t nSizeNew = nCountPrev + nSizeCopy;  // new size.
     const ITERATE_t allocateCount = GetHeapCountChunk(nSizeNew);
     ELEM_t* pData = PtrCast<ELEM_t>(cHeap::ReAllocPtr(this->get_PtrWork(), allocateCount * sizeof(ELEM_t)));
     ASSERT_NN(pData);
     SUPER_t::SetSpan2(pData, nSizeNew * sizeof(ELEM_t));
 
     // Move existing elements.
-    cMem::CopyOverlap(pData + i + nSizeCopy, pData + i, (nSizePrev - i) * sizeof(ELEM_t));
+    cMem::CopyOverlap(pData + i + nSizeCopy, pData + i, (nCountPrev - i) * sizeof(ELEM_t));
     // construct new elements
     cValSpan::ConstructElementsX<ELEM_t>(pData + i, nSizeCopy);
     if (!src.isNull()) cValSpan::CopyQty(pData + i, src.get_PtrConst(), nSizeCopy);  // Copy over new.
@@ -216,9 +218,7 @@ template <class SPAN_TYPE>
 void cArrayImpl<SPAN_TYPE>::RemoveAll() {
     //! AKA RemoveAll, Empty
     //! @note SetSize(0) is slightly more efficient than RemoveAll() if u plan to re-use the array.
-#ifdef _DEBUG
-    // AssertSize();
-#endif
+
     ELEM_t* pData = this->get_PtrWork();
     if (pData != nullptr) {
         const ITERATE_t nSizeCur = this->GetSize();
@@ -233,22 +233,22 @@ void cArrayImpl<SPAN_TYPE>::SetSize(ITERATE_t nSizeNew) {
     //! @note SetSize(0) is slightly more efficient than RemoveAll() if u plan to re-use the array.
     // TODO What happens on alloc E_OUTOFMEMORY !?
     ASSERT(nSizeNew >= 0);
-    const ITERATE_t nSizePrev = this->GetSize();
+    const ITERATE_t nCountPrev = this->GetSize();
     ELEM_t* pData = this->get_PtrWork();
     if (nSizeNew <= this->get_HeapCount()) {
         // it fits. don't shrink the allocated array. just destroy unused entries. we may expand again some day.
-        cValSpan::Resize<ELEM_t>(pData, nSizeNew, nSizePrev);
+        cValSpan::Resize<ELEM_t>(pData, nSizeNew, nCountPrev);
         SUPER_t::put_Count2(nSizeNew);
     } else {
         // otherwise, grow heap array
         // MFC will heuristically determine growth when nGrowBy == 0 (this avoids heap fragmentation in many situations)
-        ASSERT(nSizeNew > nSizePrev);
+        ASSERT(nSizeNew > nCountPrev);
         ITERATE_t allocateCount = nSizeNew;
-        if (nSizePrev != 0) allocateCount = GetHeapCountChunk(allocateCount);  // not the first time we have done this.
+        if (nCountPrev != 0) allocateCount = GetHeapCountChunk(allocateCount);  // not the first time we have done this.
         pData = PtrCast<ELEM_t>(cHeap::ReAllocPtr(pData, allocateCount * sizeof(ELEM_t)));
         ASSERT_NN(pData);
         // construct new elements
-        cValSpan::ConstructElementsX<ELEM_t>(&pData[nSizePrev], nSizeNew - nSizePrev);
+        cValSpan::ConstructElementsX<ELEM_t>(&pData[nCountPrev], nSizeNew - nCountPrev);
         SUPER_t::SetSpan2(pData, nSizeNew * sizeof(ELEM_t));
     }
 }
@@ -260,16 +260,16 @@ void cArrayImpl<SPAN_TYPE>::InsertAt(ITERATE_t nIndex, ARG_t newElement) {
 
     ASSERT(nIndex >= 0);  // will expand to meet need
 
-    const ITERATE_t nSizePrev = this->GetSize();
+    const ITERATE_t nCountPrev = this->GetSize();
 
-    if (nIndex >= nSizePrev) {
+    if (nIndex >= nCountPrev) {
         // adding after the end of the array
         SetSize(nIndex + 1);  // grow so nIndex is valid
     } else {
         // inserting in the middle of the array
-        SetSize(nSizePrev + 1);  // grow it to new size
+        SetSize(nCountPrev + 1);  // grow it to new size
         // destroy initial data before copying over it (inefficient i know but is very convenient)
-        this->MoveElement(nSizePrev, nIndex);
+        this->ShiftElements(nCountPrev, nIndex);
     }
 
     // insert new value in the gap
@@ -281,42 +281,37 @@ bool cArrayImpl<SPAN_TYPE>::RemoveAt(ITERATE_t nIndex) {
     //! NOTE: Any destructor effecting the array MAY be reentrant ?!
 
     if (nIndex < 0) return false;
-    const ITERATE_t nSizePrev = this->GetSize();
-    const ITERATE_t nMoveCount = nSizePrev - (nIndex + 1);
-    if (nMoveCount < 0) return false;
+    const ITERATE_t nCountPrev = this->GetSize();
+    const ITERATE_t nAfterCount = nCountPrev - (nIndex + 1);
+    if (nAfterCount < 0) return false;
 
     ELEM_t* pData = this->get_PtrWork();
     cValSpan::DestructElementsX<ELEM_t>(&pData[nIndex], 1);
-    if (nMoveCount > 0) {  // not last.
-        cMem::CopyOverlap(&pData[nIndex], &pData[nIndex + 1], nMoveCount * sizeof(ELEM_t));
+    if (nAfterCount > 0) {  // not last.
+        cMem::CopyOverlap(&pData[nIndex], &pData[nIndex + 1], nAfterCount * sizeof(ELEM_t));
     }
-    SUPER_t::put_Count2(nSizePrev - 1);
+    SUPER_t::put_Count2(nCountPrev - 1);
     return true;
 }
 
 template <class SPAN_TYPE>
 void cArrayImpl<SPAN_TYPE>::RemoveAt(ITERATE_t nIndex, ITERATE_t iQty) {
-    // NOTE: Any destructor effecting the array will be reentrant ?!
+    // NOTE: destructor effecting the array MAY be reentrant ?!
     if (iQty <= 0 || nIndex < 0) return;
-    const ITERATE_t nSizePrev = this->GetSize();
-    ITERATE_t nMoveCount = nSizePrev - (nIndex + iQty);
-    if (nMoveCount < 0) {  // iQty beyond the end!
-        ASSERT(nMoveCount >= 0);
-        nMoveCount = 0;  // Last element.
-        iQty = nSizePrev - nIndex;
+    const ITERATE_t nCountPrev = this->GetSize();
+    if (nIndex >= nCountPrev) return;
+    ITERATE_t nAfterCount = nCountPrev - (nIndex + iQty);
+    if (nAfterCount < 0) {  // iQty beyond the end!
+        nAfterCount = 0;    // to Last element.
+        iQty = nCountPrev - nIndex;
     }
-    if (iQty >= nSizePrev) {
-        // ASSERT(nIndex == 0);	// assumed.
-        RemoveAll();
-        return;
-    }
-    // just remove a range
+    // remove a range
     ELEM_t* pData = this->get_PtrWork();
-    cValSpan::DestructElementsX<ELEM_t>(&pData[nIndex], iQty);
-    if (nMoveCount > 0) {  // not last.
-        cMem::CopyOverlap(&pData[nIndex], &pData[nIndex + iQty], nMoveCount * sizeof(ELEM_t));
+    cValSpan::DestructElementsX<ELEM_t>(pData + nIndex, iQty);
+    if (nAfterCount > 0) {  // not last.
+        cMem::CopyOverlap(pData + nIndex, pData + nIndex + iQty, nAfterCount * sizeof(ELEM_t));
     }
-    SUPER_t::put_Count2(nSizePrev - iQty);
+    SUPER_t::put_Count2(nCountPrev - iQty);
 }
 
 template <class SPAN_TYPE>
@@ -327,7 +322,7 @@ bool cArrayImpl<SPAN_TYPE>::IsValidHeapSize() const noexcept {
         if (nSizeCur != 0) return false;
     } else {
         // ASSERT(nSizeCur>0);
-        if (nSizeCur > get_HeapCount()) return false;  // NOTE: get_HeapCount will check m_pData
+        if (nSizeCur > get_HeapCount()) return false;  // NOTE: get_HeapCount will check _pData
     }
     return true;
 }
@@ -346,9 +341,15 @@ struct cArrayFacade : public cArrayImpl<SPAN_TYPE> {
     typedef typename SPAN_TYPE::ARG_t ARG_t;
 
     /// Just return nullptr if index out of bounds. AKA Safe. GetAtSafe()
-    ARG_t GetAtCheck(ITERATE_t index) const {
+    ARG_t GetAtCheck(ITERATE_t index) const noexcept {
         if (!SUPER_t::IsValidIndex(index)) return nullptr;
         return SUPER_t::GetAt(index);
+    }
+    /// <summary>
+    /// NOT the same as IsValidIndex()
+    /// </summary>
+    bool IsValidAt(ITERATE_t index) const noexcept {
+        return GetAtCheck(index) != nullptr;
     }
 
     ELEM_t PopHead() {

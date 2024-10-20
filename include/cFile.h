@@ -23,7 +23,7 @@ struct _SECURITY_ATTRIBUTES;  // stub this out
 #endif
 
 namespace Gray {
-typedef UINT32 OF_FLAGS_t;
+typedef UINT32 OF_FLAGS_t;  // cBitmask
 /// <summary>
 /// enumeration of file open mode/control flags. cBitmask
 /// </summary>
@@ -73,22 +73,22 @@ enum OF_FLAGS_ENUM_t : OF_FLAGS_t {
 struct GRAYCORE_LINK cFileStatus;
 
 /// <summary>
-/// Wrapper for General OS file access interface. Extends MFC functionality
+/// Wrapper for General OS file access interface.
 /// @note Any file can be a cStreamOutput of text as well.
 /// Dupe the MFC functionality we need from CFile. Similar to IStream and CAtlFile
 /// </summary>
 class GRAYCORE_LINK cFile : public cObject, public cOSHandle, public cStream {
  protected:
     static ITERATE_t sm_iFilesOpen;                  /// global count of all open files for this process.
-    OF_FLAGS_t m_nOpenFlags = CastN(OF_FLAGS_t, 0);  /// cBitmask MMSYSTEM uses high bits of 32 bit flags. OF_FLAGS_t OF_READ etc
-    cFilePath m_strFileName;                         /// store a copy of the full file path. MFC defined name.
+    OF_FLAGS_t _nOpenFlags = CastN(OF_FLAGS_t, 0);  /// cBitmask MMSYSTEM uses high bits of 32 bit flags. OF_FLAGS_t OF_READ etc
+    cFilePath _strFileName;                         /// store a copy of the full file path. MFC defined as m_strFileName.
 
  protected:
     HRESULT OpenSetup(cFilePath sFilePath, OF_FLAGS_t uModeFlags);
     HRESULT OpenCreate2(cFilePath sFilePath = _FN(""), OF_FLAGS_t nOpenFlags = CastN(OF_FLAGS_t, OF_CREATE | OF_WRITE), ::_SECURITY_ATTRIBUTES* pSa = nullptr);
 
  public:
-    cFile() noexcept : m_nOpenFlags(CastN(OF_FLAGS_t, 0)) {}
+    cFile() noexcept {}
     cFile(cStringF sFilePath, OF_FLAGS_t nOpenFlags) {
         OpenX(sFilePath, nOpenFlags);
     }
@@ -98,8 +98,7 @@ class GRAYCORE_LINK cFile : public cObject, public cOSHandle, public cStream {
 
     bool isValidCheck() const noexcept override {  /// memory allocation and structure definitions are valid.
         if (!cObject::isValidCheck()) return false;
-        if (!IsValidCast<const cFile>(this))  // structure definitions are valid..
-            return false;
+        if (!IsValidCast<const cFile>(this)) return false;  // structure definitions are valid?            
         return true;
     }
 
@@ -111,7 +110,7 @@ class GRAYCORE_LINK cFile : public cObject, public cOSHandle, public cStream {
     /// __linux__ readlink on /proc/self/fd/NNN where NNN is the file descriptor.
     /// </summary>
     cFilePath get_FilePath() const noexcept {
-        return m_strFileName;
+        return _strFileName;
     }
 
     /// <summary>
@@ -125,6 +124,9 @@ class GRAYCORE_LINK cFile : public cObject, public cOSHandle, public cStream {
     /// </summary>
     const FILECHAR_t* get_FileExt() const;
 
+    /// <summary>
+    /// is the ext a MIME match? 
+    /// </summary>
     bool IsFileNameExt(const cSpan<FILECHAR_t>& ext) const noexcept;
 
     // File Mode stuff.
@@ -133,22 +135,27 @@ class GRAYCORE_LINK cFile : public cObject, public cOSHandle, public cStream {
     /// get basic set of OF_FLAGS_t. get rid of OF_NONCRIT type flags. e.g. OF_READ
     /// </summary>
     OF_FLAGS_t get_Mode() const noexcept {
-        return m_nOpenFlags & OF_OPEN_MASK;  //
+        return _nOpenFlags & OF_OPEN_MASK;  //
     }
     /// <summary>
     /// Get the full/hidden elements of the OF_FLAGS_t Flags. e.g. OF_NONCRIT
     /// </summary>
     OF_FLAGS_t get_ModeFlags() const noexcept {
-        return m_nOpenFlags;
+        return _nOpenFlags;
     }
+    /// <summary>
+    /// Can i write ?
+    /// </summary>
     bool isModeWrite() const noexcept {
-        // Can i write ?
-        const OF_FLAGS_t nFlagsDir = (m_nOpenFlags & (OF_WRITE | OF_READ | OF_READWRITE));
+        const OF_FLAGS_t nFlagsDir = (_nOpenFlags & (OF_WRITE | OF_READ | OF_READWRITE));
         return nFlagsDir == OF_WRITE || nFlagsDir == OF_READWRITE;
     }
+
+    /// <summary>
+    /// Can i read ?
+    /// </summary>
     bool isModeRead() const noexcept {
-        // Can i read ?
-        const OF_FLAGS_t nFlagsDir = (m_nOpenFlags & (OF_WRITE | OF_READ | OF_READWRITE));
+        const OF_FLAGS_t nFlagsDir = (_nOpenFlags & (OF_WRITE | OF_READ | OF_READWRITE));
         return nFlagsDir == OF_READ || nFlagsDir == OF_READWRITE;  // assume OF_READ = 0
     }
 
@@ -178,14 +185,23 @@ class GRAYCORE_LINK cFile : public cObject, public cOSHandle, public cStream {
     /// <summary>
     /// Write a blob to the file. advance the current position.
     /// </summary>
-    /// <param name="m"></param>
+    /// <param name="m">cMemSpan</param>
     /// <returns>length written. -lt- 0 = FAILED. 
     /// ERROR_INVALID_USER_BUFFER = too many async calls? wait.
     /// ERROR_IO_PENDING = must wait!?</returns>
     HRESULT WriteX(const cMemSpan& m) override;  
 
     HRESULT FlushX() override;
+
+    /// <summary>
+    /// Get the current read position in the file.
+    /// </summary>
     STREAM_POS_t GetPosition() const noexcept override;
+
+    /// <summary>
+    /// Get the size of the open file HANDLE in bytes. like MFC
+    /// </summary>
+    /// <returns>-lt- 0 = error. (or directory?)</returns>
     STREAM_POS_t GetLength() const noexcept override;
 
     HRESULT SeekX(STREAM_OFFSET_t nOffset, SEEK_t eSeekOrigin = SEEK_t::_Set) noexcept override {  // disambig

@@ -38,23 +38,23 @@ enum class AppCon_t : signed char {
 /// This allows apps not compiled in _CONSOLE mode to attach to a console if they are started in one (or create one if not).
 /// </summary>
 class GRAYCORE_LINK cAppConsole final : public cSingleton<cAppConsole>, public ITextWriter {
-    SINGLETON_IMPL(cAppConsole);
-
 #if defined(_WIN32)
-    ::HANDLE m_hStd[static_cast<int>(AppStd_t::_QTY)];  /// stdin,stdout,stderr as cOSHandle. But i don't need to close these ? ::GetStdHandle()
+    ::HANDLE _hStd[static_cast<int>(AppStd_t::_QTY)];  /// stdin,stdout,stderr as cOSHandle. But i don't need to close these ? ::GetStdHandle()
 #elif defined(__linux__)
     // __iob_func
 #endif
 
-    bool m_bKeyEchoMode;   /// default true = echo the keys to the display.
-    bool m_bKeyEnterMode;  /// default true = wait for enter before return. false = get each key char as it comes in (raw).
+    bool _isKeyEchoMode = true;  /// default true = echo the keys to the display.
+    bool _isKeyEnterMode = true;  /// default true = wait for enter before return. false = get each key char as it comes in (raw).
 
-    AppCon_t m_eConsoleType;   /// 2 = I called AttachConsole(), 3 = I called AllocConsole() and must call FreeConsole()
-    bool m_bConsoleParent;     /// My parent process is a console. I may attach to it.
-    int m_iAllocConsoleCount;  /// I had to create my own console. must call FreeConsole() this many times.
+    AppCon_t _eConsoleType = AppCon_t::_Unknown;  /// 2 = I called AttachConsole(), 3 = I called AllocConsole() and must call FreeConsole()
+    bool _isConsoleParent = false;                 /// My parent process is a console. I may attach to it.
+    int _iAllocConsoleCount = 0;  /// I had to create my own console. must call FreeConsole() this many times.
 
-    mutable cThreadLockableX m_Lock;  /// serialize multiple threads.
+    mutable cThreadLockableX _Lock;  /// serialize multiple threads to console.
+
  public:
+    DECLARE_cSingleton(cAppConsole);
     static const COUNT_t k_MAX_CONSOLE_LINES = 500;  /// arbitrary max lines shown at once.
     cCmdInput _CmdInput;    // For ReadStringLine
 
@@ -86,16 +86,16 @@ class GRAYCORE_LINK cAppConsole final : public cSingleton<cAppConsole>, public I
     /// <returns></returns>
     bool HasConsoleParent() noexcept {
         CheckConsoleMode();
-        return m_bConsoleParent;
+        return _isConsoleParent;
     }
     AppCon_t get_ConsoleMode() noexcept {
         CheckConsoleMode();
-        return m_eConsoleType;
+        return _eConsoleType;
     }
 
 #if defined(_WIN32)
     ::HANDLE GetStd(AppStd_t i) const {
-        return m_hStd[(int)i];
+        return _hStd[(int)i];
     }
 #endif
 
@@ -110,6 +110,11 @@ class GRAYCORE_LINK cAppConsole final : public cSingleton<cAppConsole>, public I
 
     /// <summary>
     /// make printf() go to the console. create console if needed.
+    /// 1. Do i already have a console. use it. if _CONSOLE app.
+    /// 2. Attach to my parents console if there is one.
+    /// 3. if (bAttachElseAlloc) allocate a new console for this app.
+    /// http://stackoverflow.com/questions/493536/can-one-executable-be-both-a-console-and-gui-application/494000#494000
+    /// https://www.tillett.info/2013/05/13/how-to-create-a-windows-program-that-works-as-both-as-a-gui-and-console-application/
     /// </summary>
     /// <param name="bAttachElseAlloc"></param>
     /// <returns></returns>
@@ -149,7 +154,7 @@ class GRAYCORE_LINK cAppConsole final : public cSingleton<cAppConsole>, public I
     /// <summary>
     /// Get a single ASCII_t Key char produced by possibly multiple keys pressed (shift).
     /// Non blocking (Don't wait).
-    /// similar to INPUTKEY_TYPE and VK_TYPE -> VK_ESCAPE = INPUTKEY_ESCAPE
+    /// similar to INPUTKEY_t and VK_TYPE -> VK_ESCAPE = INPUTKEY_t::_ESCAPE
     /// </summary>
     /// <returns>-1 = no char is available. else ASCII_t character produced by key or keys pressed.</returns>
     int ReadKey();

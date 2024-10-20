@@ -56,14 +56,14 @@ struct GRAYCORE_LINK cFloat {
 /// Use FLT_MAX
 /// </summary>
 struct GRAYCORE_LINK cFloat32 : public cFloat {
-    cUnion32 m_v;  /// holds the float32 bits.
+    cUnion32 _v;  /// holds the float32 bits.
 
     static const UINT32 k_uOne = 0x3f800000;  /// (UINT32) = float 1.0f (8 bit exponent)
     static const UINT32 k_uTwo = 0x40000000;  /// (UINT32) = float 2.0f
 
-    static const UINT32 k_SIGN_MASK = 0x80000000;  /// 1 bit = value sign (Sign_bit)
+    static const UINT32 k_SIGN_MASK = 0x80000000;  /// 1 bit = value sign (Sign_bit).
 
-    static const UINT32 k_EXP_MASK = 0x7f800000;  /// 8 bits = signed exponent (base 2)
+    static const UINT32 k_EXP_MASK = 0x7f800000;  /// 8 bits = signed exponent (base 2).
 
     static const UINT32 k_MANT_MASK = 0x007fffff;  /// 23 bits = fractional mantissa = FLT_MANT_DIG
     static const UINT32 k_MANT_BITS = 23;          /// 23 bits = fractional mantissa = FLT_MANT_DIG
@@ -72,11 +72,11 @@ struct GRAYCORE_LINK cFloat32 : public cFloat {
         // undefined.
     }
     cFloat32(float f) noexcept {
-        m_v.u_f = f;
+        _v.u_f = f;
     }
 
     void put_Bits(UINT32 dw) noexcept {
-        m_v.u_dw = dw;
+        _v.u_dw = dw;
     }
 
     static inline UINT32 toBits(float src) noexcept {
@@ -99,7 +99,7 @@ struct GRAYCORE_LINK cFloat32 : public cFloat {
     // bool get_Negative() const
     // short get_Exponent() const
     UINT32 get_Mantissa() const noexcept {
-        return (m_v.u_dw & k_MANT_MASK);
+        return (_v.u_dw & k_MANT_MASK);
     }
 };
 
@@ -108,7 +108,7 @@ struct GRAYCORE_LINK cFloat32 : public cFloat {
 /// Use DBL_MAX
 /// </summary>
 struct GRAYCORE_LINK cFloat64 : public cFloat {
-    cUnion64 m_v;  /// holds the float64.
+    cUnion64 _v;  /// holds the float64.
 
     static const UINT64 k_SIGN_MASK = CUINT64(80000000, 00000000);  /// 1 bit = value sign (Sign_bit)
     static const UINT64 k_EXP_MASK = CUINT64(7FF00000, 00000000);  /// 11 bits = signed exponent (base 2)
@@ -120,11 +120,11 @@ struct GRAYCORE_LINK cFloat64 : public cFloat {
         // undefined value.
     }
     cFloat64(double d) noexcept {
-        m_v.u_d = d;
+        _v.u_d = d;
     }
 
     void put_Bits(UINT64 qw) noexcept {
-        m_v.u_qw = qw;
+        _v.u_qw = qw;
     }
 
     static inline UINT64 toBits(double src) noexcept {
@@ -148,11 +148,11 @@ struct GRAYCORE_LINK cFloat64 : public cFloat {
 	// bool get_Negative() const
 	short get_Exponent() const noexcept {
 		// TODO FIX SIGN
-		return (short)((m_v.u_qw & k_EXP_MASK) >> sdf);
+		return (short)((_v.u_qw & k_EXP_MASK) >> sdf);
 	}
 #endif
     UINT64 get_Mantissa() const noexcept {
-        return m_v.u_qw & k_MANT_MASK;
+        return _v.u_qw & k_MANT_MASK;
     }
 };
 
